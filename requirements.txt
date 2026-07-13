@@ -63,7 +63,7 @@ pytest-asyncio==0.21.0
 pyyaml==6.0.1
 
 # 其他
-python-dateutil==2.8.2
+python-dateutil==2.9.0.post0
 pytz==2023.3
 
 # LDAP/AD 域集成(Phase 2.2)
