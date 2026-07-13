@@ -1,5 +1,5 @@
 # ====================================================================
-# OfficeAgent OS 内核服务编排(AgentOS Kernel Services)
+# fnixagent OS 内核服务编排(AgentOS Kernel Services)
 # ====================================================================
 # 用途:将 AgentOS 内核各子系统映射为 Docker 容器,实现完整 Agent OS。
 #
@@ -45,7 +45,7 @@ services:
   # ------------------------------------------------------------------
   nats:
     image: nats:2.10-alpine
-    container_name: officeagent-nats
+    container_name: fnixagent-nats
     profiles: ["bus"]
     command: >
       --jetstream
@@ -82,7 +82,7 @@ services:
   # ------------------------------------------------------------------
   opa:
     image: openpolicyagent/opa:latest
-    container_name: officeagent-opa
+    container_name: fnixagent-opa
     profiles: ["policy"]
     command: >
       run --server
@@ -111,16 +111,16 @@ services:
   # ------------------------------------------------------------------
   letta:
     image: letta/letta:latest
-    container_name: officeagent-letta
+    container_name: fnixagent-letta
     profiles: ["memory"]
     environment:
       # Letta 后端(复用 Postgres)
-      LETTA_PG_URI: postgresql://officeagent:${POSTGRES_PASSWORD:-officeagent-dev}@postgres:5432/officeagent_letta
+      LETTA_PG_URI: postgresql://fnixagent:${POSTGRES_PASSWORD:-fnixagent-dev}@postgres:5432/fnixagent_letta
       # LLM 端点(走 LiteLLM 网关)
       LETTA_LLM_ENDPOINT: http://litellm:4000
-      LETTA_LLM_MODEL: officeagent-llm
+      LETTA_LLM_MODEL: fnixagent-llm
       LETTA_EMBEDDING_ENDPOINT: http://litellm:4000
-      LETTA_EMBEDDING_MODEL: officeagent-embedding
+      LETTA_EMBEDDING_MODEL: fnixagent-embedding
       # OTel 上报
       LETTA_OTEL_ENDPOINT: http://otel-collector:4317
     ports:
@@ -141,11 +141,11 @@ services:
   # ------------------------------------------------------------------
   cognee:
     image: cognita/cognee:latest
-    container_name: officeagent-cognee
+    container_name: fnixagent-cognee
     profiles: ["memory"]
     environment:
       COGNEE_LLM_ENDPOINT: http://litellm:4000
-      COGNEE_DB: postgresql://officeagent:${POSTGRES_PASSWORD:-officeagent-dev}@postgres:5432/officeagent_cognee
+      COGNEE_DB: postgresql://fnixagent:${POSTGRES_PASSWORD:-fnixagent-dev}@postgres:5432/fnixagent_cognee
       COGNEE_VECTOR_DB: milvus
       COGNEE_MILVUS_URI: http://milvus:19530
     ports:
@@ -168,10 +168,10 @@ services:
   # ------------------------------------------------------------------
   mcp-registry:
     image: mcp/registry:latest
-    container_name: officeagent-mcp-registry
+    container_name: fnixagent-mcp-registry
     profiles: ["driver"]
     environment:
-      REGISTRY_DB: postgresql://officeagent:${POSTGRES_PASSWORD:-officeagent-dev}@postgres:5432/officeagent_mcp_registry
+      REGISTRY_DB: postgresql://fnixagent:${POSTGRES_PASSWORD:-fnixagent-dev}@postgres:5432/fnixagent_mcp_registry
       REGISTRY_PORT: "8000"
     ports:
       - "18010:8000"
@@ -192,7 +192,7 @@ services:
   # ------------------------------------------------------------------
   sandbox-gvisor:
     image: python:3.11-slim
-    container_name: officeagent-sandbox-gvisor
+    container_name: fnixagent-sandbox-gvisor
     profiles: ["sandbox"]
     runtime: runsc
     environment:

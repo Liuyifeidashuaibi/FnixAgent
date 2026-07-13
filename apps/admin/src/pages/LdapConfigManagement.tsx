@@ -8,7 +8,7 @@
  *   4. 手动触发用户同步
  */
 import { useEffect, useState } from 'react';
-import { sdk, type LdapConfig } from '@officeagent/sdk';
+import { sdk, type LdapConfig } from '@fnixagent/sdk';
 import { HasPermission } from '../contexts/PermissionContext';
 
 export function LdapConfigManagement() {

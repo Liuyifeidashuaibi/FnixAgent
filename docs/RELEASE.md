@@ -1,8 +1,8 @@
-# OfficeAgent 客户端发布指南
+# fnixagent 客户端发布指南
 
 > Phase 2.6 — 全平台客户端(Win + macOS + Linux)+ 代码签名架构
 
-本文档描述如何打包发布 OfficeAgent 桌面客户端,以及如何配置代码签名证书。
+本文档描述如何打包发布 fnixagent 桌面客户端,以及如何配置代码签名证书。
 
 ---
 
@@ -12,12 +12,12 @@
 
 ```bash
 # 单平台
-pnpm --filter @officeagent/desktop build:win      # 产出未签名 .exe
-pnpm --filter @officeagent/desktop build:mac      # 产出未签名 .dmg
-pnpm --filter @officeagent/desktop build:linux    # 产出 AppImage + deb + rpm
+pnpm --filter @fnixagent/desktop build:win      # 产出未签名 .exe
+pnpm --filter @fnixagent/desktop build:mac      # 产出未签名 .dmg
+pnpm --filter @fnixagent/desktop build:linux    # 产出 AppImage + deb + rpm
 
 # 全平台(仅在同平台 runner 上执行,跨平台需借助 CI)
-pnpm --filter @officeagent/desktop build:all
+pnpm --filter @fnixagent/desktop build:all
 ```
 
 产物路径:`apps/desktop/release/<version>/`
@@ -49,7 +49,7 @@ pnpm --filter @officeagent/desktop build:all
 # PowerShell
 $env:CSC_LINK = "C:\path\to\cert.pfx"   # 本地可用文件路径,CI 用 base64
 $env:CSC_KEY_PASSWORD = "your-password"
-pnpm --filter @officeagent/desktop build:win
+pnpm --filter @fnixagent/desktop build:win
 ```
 
 ### 2.2 macOS Developer ID + Notarization
@@ -76,7 +76,7 @@ export CSC_NAME="Developer ID Application: Your Company (XXXXXXXXXX)"
 export APPLE_ID="you@example.com"
 export APPLE_APP_SPECIFIC_PASSWORD="xxxx-xxxx-xxxx-xxxx"
 export APPLE_TEAM_ID="XXXXXXXXXX"
-pnpm --filter @officeagent/desktop build:mac
+pnpm --filter @fnixagent/desktop build:mac
 ```
 
 > electron-builder 24.x 内置 Notarization:只需在 `electron-builder.yml` 的 `mac.notarize.teamId` 配置 teamId,并通过环境变量注入 Apple 凭据,签名后自动调用 `xcrun notarytool` 提交公证并轮询结果。
@@ -93,7 +93,7 @@ linux:
 ```
 
 ```bash
-export GPKey=$(gpg --export-secret-keys --armor "your-gpg-key-id@officeagent.com")
+export GPKey=$(gpg --export-secret-keys --armor "your-gpg-key-id@fnixagent.com")
 ```
 
 ---
@@ -130,14 +130,14 @@ git push origin v1.0.0
 
 | 平台 | 产物 | 文件名 |
 |---|---|---|
-| Windows | nsis 安装包 | `OfficeAgent-Setup-<version>.exe` |
-| macOS (x64) | dmg | `OfficeAgent-<version>-x64.dmg` |
-| macOS (arm64) | dmg | `OfficeAgent-<version>-arm64.dmg` |
-| Linux (x64) | AppImage | `OfficeAgent-<version>-x64.AppImage` |
-| Linux (x64) | deb | `OfficeAgent-<version>-x64.deb` |
-| Linux (x64) | rpm | `OfficeAgent-<version>-x64.rpm` |
-| Linux (arm64) | AppImage | `OfficeAgent-<version>-arm64.AppImage` |
-| Linux (arm64) | deb | `OfficeAgent-<version>-arm64.deb` |
+| Windows | nsis 安装包 | `fnixagent-Setup-<version>.exe` |
+| macOS (x64) | dmg | `fnixagent-<version>-x64.dmg` |
+| macOS (arm64) | dmg | `fnixagent-<version>-arm64.dmg` |
+| Linux (x64) | AppImage | `fnixagent-<version>-x64.AppImage` |
+| Linux (x64) | deb | `fnixagent-<version>-x64.deb` |
+| Linux (x64) | rpm | `fnixagent-<version>-x64.rpm` |
+| Linux (arm64) | AppImage | `fnixagent-<version>-arm64.AppImage` |
+| Linux (arm64) | deb | `fnixagent-<version>-arm64.deb` |
 | 全平台 | 更新元数据 | `latest.yml` / `latest-mac.yml` / `latest-linux.yml` |
 
 ---
@@ -157,7 +157,7 @@ git push origin v1.0.0
 
 **禁用更新**(开发环境):
 ```bash
-export OFFICEAGENT_DISABLE_UPDATER=1
+export fnixagent_DISABLE_UPDATER=1
 ```
 
 > 注意:electron-updater 的签名校验仅对 macOS / Windows 生效(需要代码签名)。Linux AppImage 不校验签名,依赖 HTTPS 传输保证完整性。
@@ -234,8 +234,8 @@ error while loading shared libraries: libnss3.so
 - [ ] 图标文件已放置到 `apps/desktop/buildResources/`(icon.ico / icon.icns / icon.png)
 - [ ] GitHub Secrets 已配置(如需签名)
 - [ ] `CHANGELOG.md` 已更新(如存在)
-- [ ] 本地 `pnpm --filter @officeagent/desktop typecheck` 通过
-- [ ] 本地 `pnpm --filter @officeagent/desktop build:<platform>` 成功产出
+- [ ] 本地 `pnpm --filter @fnixagent/desktop typecheck` 通过
+- [ ] 本地 `pnpm --filter @fnixagent/desktop build:<platform>` 成功产出
 - [ ] 推送 tag:`git tag v<version> && git push origin v<version>`
 - [ ] 在 GitHub Releases 页面确认产物已上传
 - [ ] 下载产物在本机验证可运行

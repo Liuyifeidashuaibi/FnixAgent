@@ -1,4 +1,4 @@
-# OfficeAgent Terraform 基础设施 — Phase 2.8
+# fnixagent Terraform 基础设施 — Phase 2.8
 
 多云支持:AWS + 阿里云,多环境:dev / staging / prod。
 
@@ -123,9 +123,9 @@ Terraform 状态存储在远程后端,支持状态锁定防止并发写入:
 
 ```bash
 # AWS(执行一次)
-aws s3api create-bucket --bucket officeagent-tfstate --region ap-east-1
+aws s3api create-bucket --bucket fnixagent-tfstate --region ap-east-1
 aws dynamodb create-table \
-  --table-name officeagent-tflock \
+  --table-name fnixagent-tflock \
   --attribute-definitions AttributeName=LockID,AttributeType=S \
   --key-schema AttributeName=LockID,KeyType=HASH \
   --billing-mode PAY_PER_REQUEST
@@ -134,7 +134,7 @@ aws dynamodb create-table \
 ## 注意事项
 
 1. **凭据安全**:切勿将 `*.tfvars` 中包含真实密钥的文件提交到 Git(已在 .gitignore 中排除 `*secret*.tfvars`)
-2. **状态隔离**:每个环境使用独立的 state key(`env:/${env}/officeagent.tfstate`)
+2. **状态隔离**:每个环境使用独立的 state key(`env:/${env}/fnixagent.tfstate`)
 3. **资源命名**:所有资源以 `${project}-${env}-` 前缀命名,避免冲突
-4. **标签**:所有资源打上 `Project=officeagent` `Env=${env}` 标签,便于成本分析
+4. **标签**:所有资源打上 `Project=fnixagent` `Env=${env}` 标签,便于成本分析
 5. **销毁顺序**:`terraform destroy` 时 RDS 会保留快照,需手动清理

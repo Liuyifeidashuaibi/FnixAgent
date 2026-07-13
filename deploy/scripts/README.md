@@ -1,4 +1,4 @@
-# OfficeAgent 备份与容灾手册 — Phase 2.9
+# fnixagent 备份与容灾手册 — Phase 2.9
 
 覆盖 PostgreSQL / Redis / Milvus / MinIO / 应用配置的备份、恢复与容灾演练。
 
@@ -60,12 +60,12 @@ vim backup.env  # 填写真实密码 / endpoint
 
 ## K8s 定时备份
 
-Helm chart 已内置 CronJob(`deploy/helm/officeagent/templates/officeagent-backup-cronjob.yaml`),每日 03:00 自动执行:
+Helm chart 已内置 CronJob(`deploy/helm/fnixagent/templates/fnixagent-backup-cronjob.yaml`),每日 03:00 自动执行:
 
 ```bash
 # 安装时启用
-helm install officeagent deploy/helm/officeagent \
-  -f deploy/helm/officeagent/values.yaml \
+helm install fnixagent deploy/helm/fnixagent \
+  -f deploy/helm/fnixagent/values.yaml \
   --set backup.enabled=true \
   --set backup.schedule="0 19 * * *" \  # UTC 19:00 = 北京 03:00
   --set backup.storage.size=100Gi
@@ -91,7 +91,7 @@ CronJob 会:
 ```bash
 # 在隔离的 staging 环境执行
 export KUBECONFIG=/path/to/staging.kubeconfig
-kubectl scale deployment officeagent --replicas=0  # 停止写入
+kubectl scale deployment fnixagent --replicas=0  # 停止写入
 
 # 选择最近一次备份
 LATEST_BACKUP=$(ls -1 /data/backups/ | sort | tail -1)
@@ -131,20 +131,20 @@ echo "恢复耗时: ${DURATION}s"
 
 ```bash
 # 重启应用
-kubectl scale deployment officeagent --replicas=3
+kubectl scale deployment fnixagent --replicas=3
 
 # 等待 Pod 就绪
-kubectl wait --for=condition=ready pod -l app=officeagent --timeout=300s
+kubectl wait --for=condition=ready pod -l app=fnixagent --timeout=300s
 
 # 验证核心功能
-curl -f https://staging.officeagent.com/healthz
-curl -f -X POST https://staging.officeagent.com/auth/login \
+curl -f https://staging.fnixagent.com/healthz
+curl -f -X POST https://staging.fnixagent.com/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username":"admin","password":"test"}'
 
 # 验证数据完整性
-kubectl exec -it deploy/officeagent -- \
-  python -c "from officeagent.db import get_session; s=get_session(); print(s.execute('SELECT COUNT(*) FROM users').scalar())"
+kubectl exec -it deploy/fnixagent -- \
+  python -c "from fnixagent.db import get_session; s=get_session(); print(s.execute('SELECT COUNT(*) FROM users').scalar())"
 ```
 
 #### Step 6: 演练报告
@@ -171,12 +171,12 @@ kubectl exec -it deploy/officeagent -- \
 ```bash
 # 配置异地 endpoint(在 backup.env 中)
 REMOTE_ENDPOINT=https://s3.ap-east-1.amazonaws.com
-REMOTE_BUCKET=officeagent-backup-dr
+REMOTE_BUCKET=fnixagent-backup-dr
 
 # 灾难恢复流程:
 # 1. 在新区域部署基础设施(terraform apply -var-file=environments/prod.tfvars)
 # 2. 从异地对象存储拉取备份
-mc mirror --overwrite remote/officeagent-backup-dr/20260101/ /data/backups/20260101/
+mc mirror --overwrite remote/fnixagent-backup-dr/20260101/ /data/backups/20260101/
 # 3. 执行恢复
 ./restore.sh --backup-dir /data/backups/20260101/20260101_030000
 # 4. 切换 DNS
@@ -188,7 +188,7 @@ mc mirror --overwrite remote/officeagent-backup-dr/20260101/ /data/backups/20260
 
 ```bash
 # 终止所有连接后重试
-psql -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='officeagent' AND pid<>pg_backend_pid();"
+psql -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='fnixagent' AND pid<>pg_backend_pid();"
 ./backup.sh --component postgres
 ```
 
@@ -219,7 +219,7 @@ mc admin info local
 mc alias list remote
 
 # 单独执行同步
-mc mirror --overwrite /data/backups/<DATE>/ remote/officeagent-backup/<DATE>/
+mc mirror --overwrite /data/backups/<DATE>/ remote/fnixagent-backup/<DATE>/
 ```
 
 ## 安全注意事项

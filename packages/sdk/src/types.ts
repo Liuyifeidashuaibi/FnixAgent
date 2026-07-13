@@ -1,5 +1,5 @@
 /**
- * OfficeAgent API 类型定义
+ * fnixagent API 类型定义
  * Phase 1.2 将通过 openapi-typescript 从后端 OpenAPI schema 自动生成
  */
 

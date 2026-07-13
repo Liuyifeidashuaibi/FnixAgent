@@ -80,7 +80,7 @@ const api = {
 
   /**
    * OAuth 回调监听(Phase 3.0)
-   * 主进程注册了自定义协议 officeagent://oauth/callback,
+   * 主进程注册了自定义协议 fnixagent://oauth/callback,
    * 当浏览器跳转回该协议时,主进程解析 query 并通过此事件推送给渲染进程。
    */
   oauth: {

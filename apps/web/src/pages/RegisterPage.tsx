@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Button, Card, Input } from '@officeagent/ui';
+import { Button, Card, Input } from '@fnixagent/ui';
 import { useAuth } from '../contexts/AuthContext';
 
 interface RegisterPageProps {
@@ -66,7 +66,7 @@ export function RegisterPage({ onSwitchToLogin }: RegisterPageProps) {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <div className="border-b border-border px-6 py-4">
-          <h1 className="text-xl font-semibold">注册 OfficeAgent 账号</h1>
+          <h1 className="text-xl font-semibold">注册 fnixagent 账号</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             创建账号,开始智能办公
           </p>

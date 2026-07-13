@@ -1,8 +1,8 @@
-# OfficeAgent Helm Chart 默认配置
+# fnixagent Helm Chart 默认配置
 # ============================================================================
 # 此文件为开发环境默认值。生产环境请使用 values.prod.yaml 覆盖:
-#   helm install officeagent deploy/helm/officeagent \
-#     -f deploy/helm/officeagent/values.prod.yaml \
+#   helm install fnixagent deploy/helm/fnixagent \
+#     -f deploy/helm/fnixagent/values.prod.yaml \
 #     -f my-secrets.yaml
 # ============================================================================
 
@@ -10,10 +10,10 @@
 nameOverride: ""
 fullnameOverride: ""
 
-# OfficeAgent API 服务
-officeagent:
+# fnixagent API 服务
+fnixagent:
   image:
-    repository: ghcr.io/officeagent/officeagent
+    repository: ghcr.io/fnixagent/fnixagent
     tag: "1.0.0"
     pullPolicy: IfNotPresent
 
@@ -81,15 +81,15 @@ officeagent:
   configMap:
     enabled: true
     # 配置内容会从 config/ 目录读取并注入为 ConfigMap
-    # 详见 templates/officeagent-configmap.yaml
+    # 详见 templates/fnixagent-configmap.yaml
     settings:
-      officeagent:
+      fnixagent:
         mode: evolve
         log_level: INFO
 
 # 环境变量(非敏感)
 env:
-  OFFICEAGENT_MODE: evolve
+  fnixagent_MODE: evolve
   SERVICE_ENV: production
   # 数据库连接(指向集群内 postgres 或外部 DATABASE_URL)
   DATABASE_URL: ""  # 留空则由 postgres 子 Chart 自动注入
@@ -103,12 +103,12 @@ env:
 
 # 敏感信息(从 Secret 注入)
 # 生产环境推荐使用 Sealed Secrets 或 External Secrets Operator
-# 详见 templates/officeagent-secret.yaml
+# 详见 templates/fnixagent-secret.yaml
 secret:
   # 设置为 true 时使用下方明文值创建 Secret(仅开发环境!)
   # 生产环境必须设为 false,通过 --set 或外部 Secret 注入
   create: true
-  name: officeagent-secrets
+  name: fnixagent-secrets
   values:
     POSTGRES_PASSWORD: "changeme"
     REDIS_PASSWORD: "changeme"
@@ -132,21 +132,21 @@ ingress:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     cert-manager.io/cluster-issuer: letsencrypt-prod
   hosts:
-    - host: officeagent.local
+    - host: fnixagent.local
       paths:
         - path: /
           pathType: Prefix
   tls:
-    - secretName: officeagent-tls
+    - secretName: fnixagent-tls
       hosts:
-        - officeagent.local
+        - fnixagent.local
 
 # PostgreSQL 子 Chart(默认禁用,使用外部数据库时设为 false)
 postgres:
   enabled: false
   auth:
     postgresPassword: ""  # 从外部 Secret 注入
-    database: officeagent
+    database: fnixagent
   primary:
     persistence:
       size: 20Gi
@@ -165,8 +165,8 @@ externalDatabase:
   enabled: true
   host: ""
   port: 5432
-  database: officeagent
-  user: officeagent
+  database: fnixagent
+  user: fnixagent
   passwordKey: POSTGRES_PASSWORD  # Secret 中的 key
 
 externalRedis:
@@ -219,7 +219,7 @@ podSecurityContext:
 # Container Security Context
 securityContext:
   allowPrivilegeEscalation: false
-  readOnlyRootFilesystem: false  # OfficeAgent 需写 logs/uploads
+  readOnlyRootFilesystem: false  # fnixagent 需写 logs/uploads
   capabilities:
     drop:
       - ALL
@@ -246,4 +246,4 @@ backup:
   # 异地对象存储(留空则跳过异地同步)
   remote:
     endpoint: ""  # 如 https://s3.ap-east-1.amazonaws.com
-    bucket: "officeagent-backup"
+    bucket: "fnixagent-backup"

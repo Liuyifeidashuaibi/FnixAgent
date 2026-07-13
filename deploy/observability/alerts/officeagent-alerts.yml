@@ -1,4 +1,4 @@
-# OfficeAgent 告警规则 — Phase 2.10
+# fnixagent 告警规则 — Phase 2.10
 #
 # 告警分级:
 #   - critical:服务宕机 / 数据库不可用 / 大量错误
@@ -11,31 +11,31 @@ groups:
   # ---------------------------------------------------------------------------
   # 1. 系统监控(HTTP / 资源)
   # ---------------------------------------------------------------------------
-  - name: officeagent-system
+  - name: fnixagent-system
     interval: 30s
     rules:
       # API 服务宕机(1 分钟无请求)
-      - alert: OfficeAgentAPIDown
-        expr: absent(up{job="officeagent"} == 1) or up{job="officeagent"} == 0
+      - alert: fnixagentAPIDown
+        expr: absent(up{job="fnixagent"} == 1) or up{job="fnixagent"} == 0
         for: 1m
         labels:
           severity: critical
-          service: officeagent
+          service: fnixagent
         annotations:
-          summary: "OfficeAgent API 服务不可用"
-          description: "Prometheus 已超过 1 分钟无法抓取 officeagent 指标,服务可能已宕机。"
+          summary: "fnixagent API 服务不可用"
+          description: "Prometheus 已超过 1 分钟无法抓取 fnixagent 指标,服务可能已宕机。"
 
       # HTTP 5xx 错误率 > 5%
       - alert: HighHTTPErrors
         expr: |
-          sum(rate(officeagent_http_requests_total{status=~"5.."}[5m])) by (service)
+          sum(rate(fnixagent_http_requests_total{status=~"5.."}[5m])) by (service)
           /
-          sum(rate(officeagent_http_requests_total[5m])) by (service)
+          sum(rate(fnixagent_http_requests_total[5m])) by (service)
           > 0.05
         for: 5m
         labels:
           severity: warning
-          service: officeagent
+          service: fnixagent
         annotations:
           summary: "HTTP 5xx 错误率过高 ({{ $value | humanizePercentage }})"
           description: "过去 5 分钟内,5xx 错误率超过 5%,请检查应用日志。"
@@ -44,12 +44,12 @@ groups:
       - alert: HighHTTPLatency
         expr: |
           histogram_quantile(0.99,
-            sum(rate(officeagent_http_request_duration_seconds_bucket[5m])) by (le, service)
+            sum(rate(fnixagent_http_request_duration_seconds_bucket[5m])) by (le, service)
           ) > 2
         for: 5m
         labels:
           severity: warning
-          service: officeagent
+          service: fnixagent
         annotations:
           summary: "HTTP P99 延迟过高 ({{ $value }}s)"
           description: "过去 5 分钟内,P99 延迟超过 2 秒,可能存在性能瓶颈。"
@@ -57,13 +57,13 @@ groups:
       # QPS 突降(比 1 小时前低 50%)
       - alert: QPSDrop
         expr: |
-          sum(rate(officeagent_http_requests_total[5m]))
+          sum(rate(fnixagent_http_requests_total[5m]))
           <
-          sum(rate(officeagent_http_requests_total[5m] offset 1h)) * 0.5
+          sum(rate(fnixagent_http_requests_total[5m] offset 1h)) * 0.5
         for: 10m
         labels:
           severity: warning
-          service: officeagent
+          service: fnixagent
         annotations:
           summary: "QPS 突降 50%+"
           description: "当前 QPS 相比 1 小时前下降超过 50%,可能有访问异常。"
@@ -71,31 +71,31 @@ groups:
   # ---------------------------------------------------------------------------
   # 2. 业务监控(用户 / 功能)
   # ---------------------------------------------------------------------------
-  - name: officeagent-business
+  - name: fnixagent-business
     interval: 60s
     rules:
       # 登录失败率 > 30%
       - alert: HighLoginFailureRate
         expr: |
-          sum(rate(officeagent_login_attempts_total{result="failure"}[5m]))
+          sum(rate(fnixagent_login_attempts_total{result="failure"}[5m]))
           /
-          sum(rate(officeagent_login_attempts_total[5m]))
+          sum(rate(fnixagent_login_attempts_total[5m]))
           > 0.3
         for: 10m
         labels:
           severity: warning
-          service: officeagent
+          service: fnixagent
         annotations:
           summary: "登录失败率过高 ({{ $value | humanizePercentage }})"
           description: "过去 10 分钟内,登录失败率超过 30%,可能存在暴力破解或密码泄露。"
 
       # 注册量异常激增(> 100/分钟)
       - alert: RegistrationSpike
-        expr: rate(officeagent_user_registrations_total[1m]) > 100
+        expr: rate(fnixagent_user_registrations_total[1m]) > 100
         for: 5m
         labels:
           severity: info
-          service: officeagent
+          service: fnixagent
         annotations:
           summary: "用户注册激增 ({{ $value | humanizeNumber }}/min)"
           description: "过去 5 分钟内,每分钟注册量超过 100,可能是营销活动或机器人注册。"
@@ -103,20 +103,20 @@ groups:
   # ---------------------------------------------------------------------------
   # 3. 应用监控(LangGraph / 工具 / LLM)
   # ---------------------------------------------------------------------------
-  - name: officeagent-application
+  - name: fnixagent-application
     interval: 30s
     rules:
       # 工具执行错误率 > 10%
       - alert: HighToolErrorRate
         expr: |
-          sum(rate(officeagent_tool_executions_total{status="error"}[5m]))
+          sum(rate(fnixagent_tool_executions_total{status="error"}[5m]))
           /
-          sum(rate(officeagent_tool_executions_total[5m]))
+          sum(rate(fnixagent_tool_executions_total[5m]))
           > 0.1
         for: 5m
         labels:
           severity: warning
-          service: officeagent
+          service: fnixagent
         annotations:
           summary: "工具执行错误率过高 ({{ $value | humanizePercentage }})"
           description: "过去 5 分钟内,工具执行错误率超过 10%,请检查工具实现。"
@@ -124,14 +124,14 @@ groups:
       # LLM 调用错误率 > 20%
       - alert: HighLLMErrorRate
         expr: |
-          sum(rate(officeagent_llm_errors_total[5m]))
+          sum(rate(fnixagent_llm_errors_total[5m]))
           /
-          sum(rate(officeagent_llm_calls_total[5m]))
+          sum(rate(fnixagent_llm_calls_total[5m]))
           > 0.2
         for: 5m
         labels:
           severity: critical
-          service: officeagent
+          service: fnixagent
         annotations:
           summary: "LLM 调用错误率过高 ({{ $value | humanizePercentage }})"
           description: "过去 5 分钟内,LLM 调用错误率超过 20%,Agent 核心功能可能受影响。"
@@ -140,12 +140,12 @@ groups:
       - alert: HighLLMLatency
         expr: |
           histogram_quantile(0.99,
-            sum(rate(officeagent_llm_call_duration_seconds_bucket[5m])) by (le, provider)
+            sum(rate(fnixagent_llm_call_duration_seconds_bucket[5m])) by (le, provider)
           ) > 30
         for: 5m
         labels:
           severity: warning
-          service: officeagent
+          service: fnixagent
         annotations:
           summary: "LLM 调用 P99 延迟过高 ({{ $value }}s)"
           description: "过去 5 分钟内,LLM 调用 P99 延迟超过 30 秒,可能需要切换 provider。"
@@ -153,49 +153,49 @@ groups:
   # ---------------------------------------------------------------------------
   # 4. 安全监控(登录 / 权限 / 注入 / 限流)
   # ---------------------------------------------------------------------------
-  - name: officeagent-security
+  - name: fnixagent-security
     interval: 30s
     rules:
       # 权限拒绝激增(> 50/分钟)
       - alert: PermissionDeniedSpike
-        expr: rate(officeagent_permission_denied_total[1m]) > 50
+        expr: rate(fnixagent_permission_denied_total[1m]) > 50
         for: 5m
         labels:
           severity: warning
-          service: officeagent
+          service: fnixagent
         annotations:
           summary: "权限拒绝激增 ({{ $value }}/min)"
           description: "过去 5 分钟内,每分钟权限拒绝超过 50 次,可能存在越权探测。"
 
       # 注入攻击激增(> 20/分钟)
       - alert: InjectionAttackSpike
-        expr: rate(officeagent_injection_blocked_total[1m]) > 20
+        expr: rate(fnixagent_injection_blocked_total[1m]) > 20
         for: 3m
         labels:
           severity: critical
-          service: officeagent
+          service: fnixagent
         annotations:
           summary: "注入攻击激增 ({{ $value }}/min)"
           description: "过去 3 分钟内,每分钟注入拦截超过 20 次,可能正在遭受攻击。"
 
       # 限流触发激增(> 100/分钟)
       - alert: RateLimitSpike
-        expr: rate(officeagent_rate_limit_triggered_total[1m]) > 100
+        expr: rate(fnixagent_rate_limit_triggered_total[1m]) > 100
         for: 5m
         labels:
           severity: warning
-          service: officeagent
+          service: fnixagent
         annotations:
           summary: "限流触发激增 ({{ $value }}/min)"
           description: "过去 5 分钟内,每分钟限流触发超过 100 次,可能需要扩容或调整限流阈值。"
 
       # MFA 失败激增(> 30/分钟)
       - alert: MFAFailureSpike
-        expr: rate(officeagent_mfa_challenge_total{result="failure"}[1m]) > 30
+        expr: rate(fnixagent_mfa_challenge_total{result="failure"}[1m]) > 30
         for: 5m
         labels:
           severity: warning
-          service: officeagent
+          service: fnixagent
         annotations:
           summary: "MFA 验证失败激增 ({{ $value }}/min)"
           description: "过去 5 分钟内,每分钟 MFA 失败超过 30 次,可能存在 MFA 爆破。"
@@ -203,7 +203,7 @@ groups:
   # ---------------------------------------------------------------------------
   # 5. 基础设施监控(节点 / Pod)
   # ---------------------------------------------------------------------------
-  - name: officeagent-infrastructure
+  - name: fnixagent-infrastructure
     interval: 30s
     rules:
       # 节点宕机
@@ -256,7 +256,7 @@ groups:
       # 备份 CronJob 失败
       - alert: BackupJobFailed
         expr: |
-          kube_job_status_failed{job_name=~"officeagent-backup-.*"} > 0
+          kube_job_status_failed{job_name=~"fnixagent-backup-.*"} > 0
         for: 1m
         labels:
           severity: critical

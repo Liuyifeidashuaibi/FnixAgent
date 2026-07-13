@@ -1,15 +1,15 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "officeagent.fullname" . }}
+  name: {{ include "fnixagent.fullname" . }}
   labels:
-    {{- include "officeagent.labels" . | nindent 4 }}
+    {{- include "fnixagent.labels" . | nindent 4 }}
 spec:
-  type: {{ .Values.officeagent.service.type }}
+  type: {{ .Values.fnixagent.service.type }}
   ports:
-    - port: {{ .Values.officeagent.service.port }}
+    - port: {{ .Values.fnixagent.service.port }}
       targetPort: http
       protocol: TCP
       name: http
   selector:
-    {{- include "officeagent.selectorLabels" . | nindent 4 }}
+    {{- include "fnixagent.selectorLabels" . | nindent 4 }}

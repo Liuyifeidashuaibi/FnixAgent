@@ -1,4 +1,4 @@
-# OfficeAgent Alertmanager 配置 — Phase 2.10
+# fnixagent Alertmanager 配置 — Phase 2.10
 #
 # 告警路由规则:
 #   - critical → 立即发送(邮件 + 钉钉/企业微信 + 电话)
@@ -11,9 +11,9 @@
 
 global:
   resolve_timeout: 5m
-  smtp_smarthost: "smtp.officeagent.com:587"
-  smtp_from: "alerts@officeagent.com"
-  smtp_auth_username: "alerts@officeagent.com"
+  smtp_smarthost: "smtp.fnixagent.com:587"
+  smtp_from: "alerts@fnixagent.com"
+  smtp_auth_username: "alerts@fnixagent.com"
   smtp_auth_password: "CHANGE_ME"
   smtp_require_tls: true
 
@@ -72,18 +72,18 @@ inhibit_rules:
 receivers:
   - name: "default"
     email_configs:
-      - to: "oncall@officeagent.com"
+      - to: "oncall@fnixagent.com"
         send_resolved: true
 
   - name: "critical"
     email_configs:
-      - to: "oncall@officeagent.com"
+      - to: "oncall@fnixagent.com"
         send_resolved: true
         headers:
           Subject: '[CRITICAL] {{ .GroupLabels.alertname }} - {{ .CommonLabels.service }}'
     # 钉钉 / 企业微信 webhook(需配置外部 webhook)
     webhook_configs:
-      - url: "http://dingtalk-webhook:8060/dingtalk/officeagent/send"
+      - url: "http://dingtalk-webhook:8060/dingtalk/fnixagent/send"
         send_resolved: true
     # 电话告警(集成 PagerDuty / Opsgenie)
     # pagerduty_configs:
@@ -92,17 +92,17 @@ receivers:
 
   - name: "warning"
     email_configs:
-      - to: "oncall@officeagent.com"
+      - to: "oncall@fnixagent.com"
         send_resolved: true
         headers:
           Subject: '[WARNING] {{ .GroupLabels.alertname }} - {{ .CommonLabels.service }}'
     webhook_configs:
-      - url: "http://dingtalk-webhook:8060/dingtalk/officeagent/send"
+      - url: "http://dingtalk-webhook:8060/dingtalk/fnixagent/send"
         send_resolved: true
 
   - name: "info"
     email_configs:
-      - to: "oncall@officeagent.com"
+      - to: "oncall@fnixagent.com"
         send_resolved: false
         headers:
           Subject: '[INFO] Daily alert summary'

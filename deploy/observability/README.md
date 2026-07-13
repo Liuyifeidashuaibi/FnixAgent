@@ -1,4 +1,4 @@
-# OfficeAgent 全链路监控运维 — Phase 2.10
+# fnixagent 全链路监控运维 — Phase 2.10
 
 Prometheus + Grafana + Alertmanager 监控栈,覆盖业务/系统/应用/安全 4 大维度。
 
@@ -10,9 +10,9 @@ deploy/observability/
 ├── alertmanager.yml                        # Alertmanager 告警路由
 ├── docker-compose.monitoring.yml           # 监控栈编排
 ├── alerts/
-│   └── officeagent-alerts.yml              # 告警规则(15+ 条)
+│   └── fnixagent-alerts.yml              # 告警规则(15+ 条)
 ├── dashboards/
-│   └── officeagent-overview.json           # Grafana 大盘(17 个面板)
+│   └── fnixagent-overview.json           # Grafana 大盘(17 个面板)
 ├── grafana/
 │   └── provisioning/
 │       ├── datasources/
@@ -53,22 +53,22 @@ helm install monitoring prometheus-community/kube-prometheus-stack \
   --set prometheus.prometheusSpec.storageSpec.volumeClaimTemplate.spec.resources.requests.storage=100Gi
 
 # 加载自定义告警规则
-kubectl create configmap officeagent-alerts \
-  --from-file=deploy/observability/alerts/officeagent-alerts.yml \
+kubectl create configmap fnixagent-alerts \
+  --from-file=deploy/observability/alerts/fnixagent-alerts.yml \
   -n monitoring
 kubectl apply -f - <<EOF
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  name: officeagent-alerts
+  name: fnixagent-alerts
   namespace: monitoring
 spec:
   groups:
-    $(cat deploy/observability/alerts/officeagent-alerts.yml | yq -r '.groups')
+    $(cat deploy/observability/alerts/fnixagent-alerts.yml | yq -r '.groups')
 EOF
 
 # 加载自定义大盘
-kubectl create configmap officeagent-dashboards \
+kubectl create configmap fnixagent-dashboards \
   --from-file=deploy/observability/dashboards/ \
   -n monitoring
 ```
@@ -117,7 +117,7 @@ kubectl create configmap officeagent-dashboards \
 
 | Job | 目标 | 指标 |
 |---|---|---|
-| officeagent | officeagent:8000/metrics | 应用全量指标 |
+| fnixagent | fnixagent:8000/metrics | 应用全量指标 |
 | postgres | postgres-exporter:9187 | 数据库指标 |
 | redis | redis-exporter:9121 | 缓存指标 |
 | milvus | milvus:9091/metrics | 向量数据库指标 |

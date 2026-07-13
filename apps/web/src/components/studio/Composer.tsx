@@ -1,5 +1,5 @@
 /**
- * OfficeAgent Studio — Composer 对话面板
+ * fnixagent Studio — Composer 对话面板
  *
  * 对标 Cursor Composer + Codex CLI:
  *   ① 消息流(用户右对齐气泡 / AI 左对齐无气泡 / 流式光标)
@@ -21,8 +21,8 @@ import {
   useState,
   type KeyboardEvent,
 } from 'react';
-import { Badge, Button } from '@officeagent/ui';
-import { sdk } from '@officeagent/sdk';
+import { Badge, Button } from '@fnixagent/ui';
+import { sdk } from '@fnixagent/sdk';
 import { useStudio } from '../../stores/studio-store';
 import { genId, type AgentStatus, type ChatMessage, type ContextChipType } from '../../stores/types';
 import {

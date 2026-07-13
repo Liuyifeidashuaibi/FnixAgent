@@ -13,7 +13,7 @@
  *   {hasPermission('role:create') && <Button>新建角色</Button>}
  */
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { sdk } from '@officeagent/sdk';
+import { sdk } from '@fnixagent/sdk';
 
 interface PermissionContextValue {
   permissions: Set<string>;

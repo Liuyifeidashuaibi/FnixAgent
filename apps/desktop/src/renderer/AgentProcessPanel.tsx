@@ -13,7 +13,7 @@
  *   - StudioLayout 右侧 Agent 面板(320px)
  */
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { auth } from '@officeagent/sdk';
+import { auth } from '@fnixagent/sdk';
 import { API_BASE } from './apiConfig';
 
 const AGENT_API = `${API_BASE}/api/v1/agentos`;

@@ -1,11 +1,11 @@
 /**
- * OfficeAgent Studio — 顶栏 (Cursor 风格)
+ * fnixagent Studio — 顶栏 (Cursor 风格)
  *
  * 左:Logo + IDE/SOLO 模式切换
  * 中:面包屑(workspace 名 > 当前文件路径)
  * 右:Composer 模式 Tab + Review Changes 按钮 + 主题切换 + 用户 + 设置
  */
-import { Badge, Button } from '@officeagent/ui';
+import { Badge, Button } from '@fnixagent/ui';
 import { useAuth } from '../../contexts/AuthContext';
 import { useStudio } from '../../stores/studio-store';
 import type { ComposerMode } from '../../stores/types';
@@ -46,7 +46,7 @@ export function TopBar({ onReviewChanges, onToggleTheme }: TopBarProps) {
       {/* 左:Logo + 模式切换 */}
       <div className="flex items-center gap-3">
         <span className="text-sm font-semibold text-foreground">
-          OfficeAgent
+          fnixagent
         </span>
         {/* IDE / SOLO Segmented Control */}
         <div className="inline-flex rounded-md border border-border bg-secondary/40 p-0.5 text-xs">

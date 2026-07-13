@@ -1,1 +1,0 @@
-"OfficeAgent kernel package."

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { sdk, type MfaEnforcement, type MfaFactor } from '@officeagent/sdk';
+import { sdk, type MfaEnforcement, type MfaFactor } from '@fnixagent/sdk';
 import { HasPermission } from '../contexts/PermissionContext';
 
 /**

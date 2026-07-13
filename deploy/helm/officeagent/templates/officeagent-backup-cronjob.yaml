@@ -1,5 +1,5 @@
 {{- if .Values.backup.enabled }}
-# OfficeAgent 定时备份 CronJob — Phase 2.9
+# fnixagent 定时备份 CronJob — Phase 2.9
 #
 # 每日在指定时间(默认 UTC 19:00 = 北京 03:00)执行全量备份。
 # 备份文件存储在专用 PVC,并同步到异地对象存储(若配置)。
@@ -11,9 +11,9 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: {{ include "officeagent.fullname" . }}-backup
+  name: {{ include "fnixagent.fullname" . }}-backup
   labels:
-    {{- include "officeagent.labels" . | nindent 4 }}
+    {{- include "fnixagent.labels" . | nindent 4 }}
     app.kubernetes.io/component: backup
 spec:
   schedule: {{ .Values.backup.schedule | quote }}
@@ -28,17 +28,17 @@ spec:
       template:
         metadata:
           labels:
-            {{- include "officeagent.selectorLabels" . | nindent 12 }}
+            {{- include "fnixagent.selectorLabels" . | nindent 12 }}
             app.kubernetes.io/component: backup
         spec:
           restartPolicy: OnFailure
-          serviceAccountName: {{ include "officeagent.serviceAccountName" . }}
+          serviceAccountName: {{ include "fnixagent.serviceAccountName" . }}
           securityContext:
             {{- toYaml .Values.podSecurityContext | nindent 12 }}
           containers:
             - name: backup
-              image: "{{ .Values.officeagent.image.repository }}:{{ .Values.officeagent.image.tag | default .Chart.AppVersion }}"
-              imagePullPolicy: {{ .Values.officeagent.image.pullPolicy }}
+              image: "{{ .Values.fnixagent.image.repository }}:{{ .Values.fnixagent.image.tag | default .Chart.AppVersion }}"
+              imagePullPolicy: {{ .Values.fnixagent.image.pullPolicy }}
               securityContext:
                 {{- toYaml .Values.securityContext | nindent 16 }}
               command:
@@ -46,7 +46,7 @@ spec:
                 - -c
                 - |
                   set -e
-                  echo "[$(date)] OfficeAgent backup job started"
+                  echo "[$(date)] fnixagent backup job started"
                   /app/deploy/scripts/backup.sh --component postgres,redis,minio,config
                   EXIT_CODE=$?
                   echo "[$(date)] Backup job finished with exit code ${EXIT_CODE}"
@@ -54,41 +54,41 @@ spec:
               env:
                 # PostgreSQL
                 - name: PG_HOST
-                  value: {{ include "officeagent.fullname" . }}-postgres
+                  value: {{ include "fnixagent.fullname" . }}-postgres
                 - name: PG_PORT
                   value: "5432"
                 - name: PG_USER
-                  value: {{ .Values.externalDatabase.user | default "officeagent" | quote }}
+                  value: {{ .Values.externalDatabase.user | default "fnixagent" | quote }}
                 - name: PG_DB
-                  value: {{ .Values.externalDatabase.database | default "officeagent" | quote }}
+                  value: {{ .Values.externalDatabase.database | default "fnixagent" | quote }}
                 - name: PG_PASSWORD
                   valueFrom:
                     secretKeyRef:
-                      name: {{ include "officeagent.secretName" . }}
+                      name: {{ include "fnixagent.secretName" . }}
                       key: {{ .Values.externalDatabase.passwordKey | default "POSTGRES_PASSWORD" }}
                 # Redis
                 - name: REDIS_HOST
-                  value: {{ include "officeagent.fullname" . }}-redis
+                  value: {{ include "fnixagent.fullname" . }}-redis
                 - name: REDIS_PORT
                   value: "6379"
                 - name: REDIS_PASSWORD
                   valueFrom:
                     secretKeyRef:
-                      name: {{ include "officeagent.secretName" . }}
+                      name: {{ include "fnixagent.secretName" . }}
                       key: {{ .Values.externalRedis.passwordKey | default "REDIS_PASSWORD" }}
                 # MinIO
                 {{- if .Values.minio.enabled }}
                 - name: MINIO_ENDPOINT
-                  value: "http://{{ include "officeagent.fullname" . }}-minio:9000"
+                  value: "http://{{ include "fnixagent.fullname" . }}-minio:9000"
                 - name: MINIO_ACCESS_KEY
                   valueFrom:
                     secretKeyRef:
-                      name: {{ include "officeagent.fullname" . }}-minio
+                      name: {{ include "fnixagent.fullname" . }}-minio
                       key: root-user
                 - name: MINIO_SECRET_KEY
                   valueFrom:
                     secretKeyRef:
-                      name: {{ include "officeagent.fullname" . }}-minio
+                      name: {{ include "fnixagent.fullname" . }}-minio
                       key: root-password
                 {{- else }}
                 - name: MINIO_ENDPOINT
@@ -96,12 +96,12 @@ spec:
                 - name: MINIO_ACCESS_KEY
                   valueFrom:
                     secretKeyRef:
-                      name: {{ include "officeagent.secretName" . }}
+                      name: {{ include "fnixagent.secretName" . }}
                       key: {{ .Values.minio.accessKeyKey | default "MINIO_ACCESS_KEY" }}
                 - name: MINIO_SECRET_KEY
                   valueFrom:
                     secretKeyRef:
-                      name: {{ include "officeagent.secretName" . }}
+                      name: {{ include "fnixagent.secretName" . }}
                       key: {{ .Values.minio.secretKeyKey | default "MINIO_SECRET_KEY" }}
                 {{- end }}
                 # 备份策略
@@ -117,12 +117,12 @@ spec:
                 - name: REMOTE_ACCESS_KEY
                   valueFrom:
                     secretKeyRef:
-                      name: {{ include "officeagent.secretName" . }}
+                      name: {{ include "fnixagent.secretName" . }}
                       key: backup-remote-access-key
                 - name: REMOTE_SECRET_KEY
                   valueFrom:
                     secretKeyRef:
-                      name: {{ include "officeagent.secretName" . }}
+                      name: {{ include "fnixagent.secretName" . }}
                       key: backup-remote-secret-key
                 {{- end }}
               volumeMounts:
@@ -136,10 +136,10 @@ spec:
           volumes:
             - name: backup-data
               persistentVolumeClaim:
-                claimName: {{ include "officeagent.fullname" . }}-backup
+                claimName: {{ include "fnixagent.fullname" . }}-backup
             - name: app-scripts
               configMap:
-                name: {{ include "officeagent.fullname" . }}-scripts
+                name: {{ include "fnixagent.fullname" . }}-scripts
                 defaultMode: 0755
 {{- end }}
 ---
@@ -147,9 +147,9 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ include "officeagent.fullname" . }}-backup
+  name: {{ include "fnixagent.fullname" . }}-backup
   labels:
-    {{- include "officeagent.labels" . | nindent 4 }}
+    {{- include "fnixagent.labels" . | nindent 4 }}
     app.kubernetes.io/component: backup
 spec:
   accessModes:
@@ -166,9 +166,9 @@ spec:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "officeagent.fullname" . }}-scripts
+  name: {{ include "fnixagent.fullname" . }}-scripts
   labels:
-    {{- include "officeagent.labels" . | nindent 4 }}
+    {{- include "fnixagent.labels" . | nindent 4 }}
     app.kubernetes.io/component: backup
 data:
   backup.sh: |-

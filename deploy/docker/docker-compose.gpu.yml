@@ -1,5 +1,5 @@
 # ====================================================================
-# OfficeAgent GPU 推理栈编排 (2026 前沿版)
+# fnixagent GPU 推理栈编排 (2026 前沿版)
 # ====================================================================
 # 用途:在现有 docker-compose.yml / docker-compose.prod.yml 基础上,
 #       叠加 GPU 推理 + 统一网关 + Token 压缩 + 可观测 + 安全护栏层。
@@ -55,7 +55,7 @@ services:
   # ------------------------------------------------------------------
   vllm:
     image: vllm/vllm-openai:v0.18.1
-    container_name: officeagent-vllm
+    container_name: fnixagent-vllm
     <<: *gpu-runtime
     environment:
       # 模型路径(本地挂载或 HF hub)
@@ -86,7 +86,7 @@ services:
       - ../../models:/models:ro
     command: >
       --model ${VLLM_MODEL:-Qwen/Qwen2.5-7B-Instruct}
-      --served-model-name officeagent-llm
+      --served-model-name fnixagent-llm
       --host 0.0.0.0
       --port 8000
       --gpu-memory-utilization ${VLLM_GPU_MEM_UTIL:-0.90}
@@ -128,7 +128,7 @@ services:
   # ------------------------------------------------------------------
   # sglang:
   #   image: lmsysorg/sglang:latest
-  #   container_name: officeagent-sglang
+  #   container_name: fnixagent-sglang
   #   <<: *gpu-runtime
   #   environment:
   #     SGLANG_MODEL: ${SGLANG_MODEL:-Qwen/Qwen2.5-7B-Instruct}
@@ -142,7 +142,7 @@ services:
   #   command: >
   #     python -m sglang.launch_server
   #     --model-path ${SGLANG_MODEL:-Qwen/Qwen2.5-7B-Instruct}
-  #     --served-model-name officeagent-llm
+  #     --served-model-name fnixagent-llm
   #     --host 0.0.0.0 --port 8000
   #     --mem-fraction-static ${SGLANG_MEM_FRACTION:-0.88}
   #     --context-length ${SGLANG_MAX_TOKENS:-32768}
@@ -180,7 +180,7 @@ services:
   # ------------------------------------------------------------------
   dynamo:
     image: nvcr.io/nvidia/ai-dynamo/dynamo:latest
-    container_name: officeagent-dynamo
+    container_name: fnixagent-dynamo
     profiles: ["dynamo"]  # 仅多卡集群场景启用
     <<: *gpu-runtime
     environment:
@@ -190,7 +190,7 @@ services:
       # etcd(服务发现,复用现有)
       DYNAMO_ETCD_ENDPOINTS: http://etcd:2379
       # Redis(请求队列,复用现有)
-      DYNAMO_REDIS_URL: redis://:${REDIS_PASSWORD:-officeagent-dev}@redis:6379/5
+      DYNAMO_REDIS_URL: redis://:${REDIS_PASSWORD:-fnixagent-dev}@redis:6379/5
       # 模型配置(MLA 架构模型,KV cache 压缩到 1/8)
       DYNAMO_MODEL: ${DYNAMO_MODEL:-deepseek-ai/DeepSeek-V3}
       # PD 分离配置
@@ -242,7 +242,7 @@ services:
   # ------------------------------------------------------------------
   ktransformers:
     image: ktransformers/ktransformers:latest
-    container_name: officeagent-ktransformers
+    container_name: fnixagent-ktransformers
     profiles: ["low-vram"]  # 仅在 --profile low-vram 时启动
     <<: *gpu-runtime
     environment:
@@ -279,25 +279,25 @@ services:
   # ------------------------------------------------------------------
   litellm:
     image: ghcr.io/berriai/litellm:main-latest
-    container_name: officeagent-litellm
+    container_name: fnixagent-litellm
     environment:
       # 主配置文件(定义模型路由策略)
       LITELLM_CONFIG: /app/config/litellm_config.yaml
       # Postgres 存储(用量/密钥/日志)
-      DATABASE_URL: postgresql://officeagent:${POSTGRES_PASSWORD:-officeagent-dev}@postgres:5432/officeagent_litellm
+      DATABASE_URL: postgresql://fnixagent:${POSTGRES_PASSWORD:-fnixagent-dev}@postgres:5432/fnixagent_litellm
       # Redis(限流计数器)
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-officeagent-dev}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-fnixagent-dev}
       # 云端 API Key(降级链)
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       GLM_API_KEY: ${GLM_API_KEY:-}
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
       QWEN_API_KEY: ${QWEN_API_KEY:-}
       # 主密钥(管理 LiteLLM API)
-      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY:-sk-officeagent-litellm}
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY:-sk-fnixagent-litellm}
       # Sage master key 模式
-      LITELLM_SALT_KEY: ${LITELLM_SALT_KEY:-sk-officeagent-salt}
+      LITELLM_SALT_KEY: ${LITELLM_SALT_KEY:-sk-fnixagent-salt}
     volumes:
       - ../../config/litellm_config.yaml:/app/config/litellm_config.yaml:ro
       - litellm_logs:/var/log/litellm
@@ -325,7 +325,7 @@ services:
   # ==================================================================
   # 第二层:Headroom Token 压缩网关 (省 60-95% Token)
   # ==================================================================
-  # 仓库: https://github.com/Officeagent/headroom (开源 context optimization layer)
+  # 仓库: https://github.com/fnixagent/headroom (开源 context optimization layer)
   # 2026 关键能力:
   #   - 实测节省 60-95% Token,精度保留 97%
   #   - 长对话历史自动摘要精简
@@ -334,19 +334,19 @@ services:
   #   - 代表工程焦点从 prompt engineering 进入 context engineering
   # ------------------------------------------------------------------
   headroom:
-    image: ghcr.io/officeagent/headroom:latest
-    container_name: officeagent-headroom
+    image: ghcr.io/fnixagent/headroom:latest
+    container_name: fnixagent-headroom
     environment:
       # 上游 LLM(指向 LiteLLM 网关)
       UPSTREAM_LLM_URL: http://litellm:4000
-      UPSTREAM_LLM_KEY: ${LITELLM_MASTER_KEY:-sk-officeagent-litellm}
+      UPSTREAM_LLM_KEY: ${LITELLM_MASTER_KEY:-sk-fnixagent-litellm}
       # 压缩策略
       HEADROOM_COMPRESS_HISTORY: "true"
       HEADROOM_COMPRESS_RAG_CONTEXT: "true"
       HEADROOM_MAX_COMPRESSION_RATIO: "0.15"
       HEADROOM_PRECISION_TARGET: "0.97"
       # 压缩用模型(轻量,走 LiteLLM)
-      HEADROOM_COMPRESSOR_MODEL: officeagent-llm-lite
+      HEADROOM_COMPRESSOR_MODEL: fnixagent-llm-lite
       # 监听端口
       HEADROOM_PORT: "8000"
     ports:
@@ -376,17 +376,17 @@ services:
   # ------------------------------------------------------------------
   langfuse:
     image: langfuse/langfuse:latest
-    container_name: officeagent-langfuse
+    container_name: fnixagent-langfuse
     environment:
-      DATABASE_URL: postgresql://officeagent:${POSTGRES_PASSWORD:-officeagent-dev}@postgres:5432/officeagent_langfuse
+      DATABASE_URL: postgresql://fnixagent:${POSTGRES_PASSWORD:-fnixagent-dev}@postgres:5432/fnixagent_langfuse
       NEXTAUTH_URL: ${LANGFUSE_URL:-http://localhost:13000}
-      NEXTAUTH_SECRET: ${LANGFUSE_SECRET:-officeagent-langfuse-secret-change-me}
-      SALT: ${LANGFUSE_SALT:-officeagent-langfuse-salt-change-me}
+      NEXTAUTH_SECRET: ${LANGFUSE_SECRET:-fnixagent-langfuse-secret-change-me}
+      SALT: ${LANGFUSE_SALT:-fnixagent-langfuse-salt-change-me}
       ENCRYPTION_KEY: ${LANGFUSE_ENCRYPTION_KEY:-0000000000000000000000000000000000000000000000000000000000000000}
       # ClickHouse(可选,大规模观测数据)
       CLICKHOUSE_URL: ${CLICKHOUSE_URL:-}
       # Redis(会话)
-      REDIS_URL: redis://:${REDIS_PASSWORD:-officeagent-dev}@redis:6379/4
+      REDIS_URL: redis://:${REDIS_PASSWORD:-fnixagent-dev}@redis:6379/4
     ports:
       - "13000:3000"
     depends_on:
@@ -415,7 +415,7 @@ services:
   # ------------------------------------------------------------------
   guardrails:
     image: guardrailsai/guardrails-server:latest
-    container_name: officeagent-guardrails
+    container_name: fnixagent-guardrails
     profiles: ["safety"]  # 按需启用
     environment:
       GUARDRAILS_PORT: "8000"
@@ -441,18 +441,18 @@ services:
   # 集成方式:
   #   每个 Agent 暴露 /.well-known/agent.json(Agent Card)
   #   Registry 服务集中索引所有 Agent Card
-  #   你 OfficeAgent 的 core/multiagent/ 通过 A2A 调用外部 Agent
+  #   你 fnixagent 的 core/multiagent/ 通过 A2A 调用外部 Agent
   # ------------------------------------------------------------------
   a2a-registry:
     image: ghcr.io/google-a2a/registry:latest
-    container_name: officeagent-a2a-registry
+    container_name: fnixagent-a2a-registry
     profiles: ["a2a"]  # 多 Agent 协作场景启用
     environment:
       REGISTRY_BIND: "0.0.0.0:8080"
       # 注册中心数据库(复用 Postgres)
-      DATABASE_URL: postgresql://officeagent:${POSTGRES_PASSWORD:-officeagent-dev}@postgres:5432/officeagent_a2a
+      DATABASE_URL: postgresql://fnixagent:${POSTGRES_PASSWORD:-fnixagent-dev}@postgres:5432/fnixagent_a2a
       # 鉴权
-      REGISTRY_API_KEY: ${A2A_REGISTRY_KEY:-sk-officeagent-a2a}
+      REGISTRY_API_KEY: ${A2A_REGISTRY_KEY:-sk-fnixagent-a2a}
     ports:
       - "18008:8080"
     depends_on:

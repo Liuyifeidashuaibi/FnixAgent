@@ -1,9 +1,9 @@
-# OfficeAgent ↔ 爬虫系统对接配置
+# fnixagent ↔ 爬虫系统对接配置
 #
 # 部署位置:config/crawler.yaml
 # 加载优先级:环境变量 > 本文件 > 默认值
 #
-# OfficeAgent 端严格无状态/无缓存/无落盘,本配置仅含连接信息。
+# fnixagent 端严格无状态/无缓存/无落盘,本配置仅含连接信息。
 
 # 爬虫系统 API 基础地址
 base_url: http://crawler:9100
@@ -25,7 +25,7 @@ retry_on_status: [500, 502, 503, 504, 429]  # 触发重试的状态码
 
 # 安全
 verify_ssl: true                      # SSL 证书校验
-user_agent: OfficeAgent-Crawler/1.0
+user_agent: fnixagent-Crawler/1.0
 max_response_size: 52428800           # 响应体上限(50MB,防 OOM)
 
 # ===========================================================
@@ -43,13 +43,13 @@ max_response_size: 52428800           # 响应体上限(50MB,防 OOM)
 # 顶层字段仅被 CrawlerConfig 读取(load_config),互不污染。
 #
 # 环境变量覆盖(优先级高于本段):
-#   OFFICEAGENT_ZHUA_BASE_URL
-#   OFFICEAGENT_ZHUA_TOKEN              已有 JWT(与 operator_token 二选一,优先)
-#   OFFICEAGENT_ZHUA_OPERATOR_TOKEN     运维静态令牌(自动调 /v1/token 换 JWT)
-#   OFFICEAGENT_ZHUA_TIMEOUT
-#   OFFICEAGENT_ZHUA_MAX_RETRIES
-#   OFFICEAGENT_ZHUA_USER_AGENT
-#   OFFICEAGENT_ZHUA_CONFIG             指向其他 YAML 文件(覆盖本段)
+#   fnixagent_ZHUA_BASE_URL
+#   fnixagent_ZHUA_TOKEN              已有 JWT(与 operator_token 二选一,优先)
+#   fnixagent_ZHUA_OPERATOR_TOKEN     运维静态令牌(自动调 /v1/token 换 JWT)
+#   fnixagent_ZHUA_TIMEOUT
+#   fnixagent_ZHUA_MAX_RETRIES
+#   fnixagent_ZHUA_USER_AGENT
+#   fnixagent_ZHUA_CONFIG             指向其他 YAML 文件(覆盖本段)
 zhua:
   # zhua-crawler API 基础地址(默认端口 8000)
   base_url: http://localhost:8000
@@ -67,7 +67,7 @@ zhua:
   max_retries: 3
 
   # 自定义 User-Agent(留空则用 SDK 默认 zhua-client-python/0.1.0)
-  # user_agent: OfficeAgent-Zhua/1.0
+  # user_agent: fnixagent-Zhua/1.0
 
 # ===========================================================
 # 爬虫系统必须实现的接口契约(供爬虫系统开发参考)

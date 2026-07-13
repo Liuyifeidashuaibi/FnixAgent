@@ -1,5 +1,5 @@
 /**
- * OfficeAgent Studio — 共享 SVG 图标
+ * fnixagent Studio — 共享 SVG 图标
  *
  * 纯 SVG 实现(不用 emoji),Cursor/VS Code 风格线性图标。
  * 所有图标继承 currentColor,通过 className 控制颜色与尺寸。

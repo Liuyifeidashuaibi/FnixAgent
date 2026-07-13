@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { sdk, type DashboardOverview, type DashboardTrendItem } from '@officeagent/sdk';
+import { sdk, type DashboardOverview, type DashboardTrendItem } from '@fnixagent/sdk';
 
 /**
  * 后台控制面板(Phase 4.4)

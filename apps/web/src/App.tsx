@@ -5,7 +5,7 @@ import { RegisterPage } from './pages/RegisterPage';
 import { ThreeColumnLayout } from './components/ThreeColumnLayout';
 
 /**
- * OfficeAgent Web 应用根组件
+ * fnixagent Web 应用根组件
  *
  * Phase 1.7 起:未登录显示登录/注册页,登录后进入三栏布局。
  */

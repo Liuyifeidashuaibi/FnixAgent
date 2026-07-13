@@ -2,9 +2,9 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ include "officeagent.fullname" . }}
+  name: {{ include "fnixagent.fullname" . }}
   labels:
-    {{- include "officeagent.labels" . | nindent 4 }}
+    {{- include "fnixagent.labels" . | nindent 4 }}
   {{- with .Values.ingress.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
@@ -27,9 +27,9 @@ spec:
             pathType: {{ .pathType }}
             backend:
               service:
-                name: {{ include "officeagent.fullname" $ }}
+                name: {{ include "fnixagent.fullname" $ }}
                 port:
-                  number: {{ $.Values.officeagent.service.port }}
+                  number: {{ $.Values.fnixagent.service.port }}
           {{- end }}
     {{- end }}
 {{- end -}}

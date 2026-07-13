@@ -2,7 +2,7 @@ import * as React from 'react';
 import { cn } from './utils';
 
 // 注入 indeterminate 模式所需 keyframes(模块级,只注入一次,SSR 安全)
-const __PROGRESS_STYLE_ID = '__officeagent_ui_progress_keyframes__';
+const __PROGRESS_STYLE_ID = '__fnixagent_ui_progress_keyframes__';
 if (typeof document !== 'undefined' && !document.getElementById(__PROGRESS_STYLE_ID)) {
   const style = document.createElement('style');
   style.id = __PROGRESS_STYLE_ID;

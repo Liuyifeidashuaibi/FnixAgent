@@ -1,5 +1,5 @@
 /**
- * OfficeAgent Studio — 全局状态管理
+ * fnixagent Studio — 全局状态管理
  *
  * 使用 React Context + useReducer 实现(不引入 zustand)。
  * 提供 StudioProvider 和 useStudio() hook。
@@ -62,7 +62,7 @@ const initialState: StudioState = {
       id: 'welcome',
       role: 'assistant',
       content:
-        '你好!我是 OfficeAgent Studio,你的智能办公助手。有什么可以帮你的?\n\n试试输入 `/` 查看命令,或 `@` 添加上下文。',
+        '你好!我是 fnixagent Studio,你的智能办公助手。有什么可以帮你的?\n\n试试输入 `/` 查看命令,或 `@` 添加上下文。',
       ts: Date.now(),
     },
   ],
@@ -99,7 +99,7 @@ function welcomeMessage(): ChatMessage {
     id: 'welcome',
     role: 'assistant',
     content:
-      '你好!我是 OfficeAgent Studio,你的智能办公助手。有什么可以帮你的?\n\n试试输入 `/` 查看命令,或 `@` 添加上下文。',
+      '你好!我是 fnixagent Studio,你的智能办公助手。有什么可以帮你的?\n\n试试输入 `/` 查看命令,或 `@` 添加上下文。',
     ts: Date.now(),
   };
 }

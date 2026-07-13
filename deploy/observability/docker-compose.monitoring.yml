@@ -1,6 +1,6 @@
 version: '3.8'
 
-# OfficeAgent 监控栈 — Phase 2.10
+# fnixagent 监控栈 — Phase 2.10
 #
 # 组件:
 #   - Prometheus  指标采集 + 存储
@@ -21,7 +21,7 @@ version: '3.8'
 services:
   prometheus:
     image: prom/prometheus:v2.51.0
-    container_name: officeagent-prometheus
+    container_name: fnixagent-prometheus
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./alerts:/etc/prometheus/alerts:ro
@@ -37,11 +37,11 @@ services:
       - "9090:9090"
     restart: always
     networks:
-      - officeagent-net
+      - fnixagent-net
 
   alertmanager:
     image: prom/alertmanager:v0.27.0
-    container_name: officeagent-alertmanager
+    container_name: fnixagent-alertmanager
     volumes:
       - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
       - alertmanager_data:/alertmanager
@@ -52,11 +52,11 @@ services:
       - "9093:9093"
     restart: always
     networks:
-      - officeagent-net
+      - fnixagent-net
 
   grafana:
     image: grafana/grafana:10.4.0
-    container_name: officeagent-grafana
+    container_name: fnixagent-grafana
     volumes:
       - ./dashboards:/etc/grafana/provisioning/dashboards:ro
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
@@ -65,38 +65,38 @@ services:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_USERS_ALLOW_SIGN_UP=false
-      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/officeagent-overview.json
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/fnixagent-overview.json
     ports:
       - "3000:3000"
     restart: always
     depends_on:
       - prometheus
     networks:
-      - officeagent-net
+      - fnixagent-net
 
   node-exporter:
     image: prom/node-exporter:v1.7.0
-    container_name: officeagent-node-exporter
+    container_name: fnixagent-node-exporter
     ports:
       - "9100:9100"
     restart: always
     networks:
-      - officeagent-net
+      - fnixagent-net
 
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter:v0.15.0
-    container_name: officeagent-postgres-exporter
+    container_name: fnixagent-postgres-exporter
     environment:
-      DATA_SOURCE_NAME: "postgresql://officeagent:${POSTGRES_PASSWORD:-changeme}@postgres:5432/officeagent?sslmode=disable"
+      DATA_SOURCE_NAME: "postgresql://fnixagent:${POSTGRES_PASSWORD:-changeme}@postgres:5432/fnixagent?sslmode=disable"
     ports:
       - "9187:9187"
     restart: always
     networks:
-      - officeagent-net
+      - fnixagent-net
 
   redis-exporter:
     image: oliver006/redis_exporter:v1.59.0
-    container_name: officeagent-redis-exporter
+    container_name: fnixagent-redis-exporter
     environment:
       REDIS_ADDR: "redis:6379"
       REDIS_PASSWORD: "${REDIS_PASSWORD:-}"
@@ -104,7 +104,7 @@ services:
       - "9121:9121"
     restart: always
     networks:
-      - officeagent-net
+      - fnixagent-net
 
 volumes:
   prometheus_data:
@@ -112,6 +112,6 @@ volumes:
   grafana_data:
 
 networks:
-  officeagent-net:
+  fnixagent-net:
     external: true
-    name: officeagent_default
+    name: fnixagent_default

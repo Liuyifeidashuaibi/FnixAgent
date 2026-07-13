@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { sdk, type ModerationConfig, type DashboardModerationStats } from '@officeagent/sdk';
+import { sdk, type ModerationConfig, type DashboardModerationStats } from '@fnixagent/sdk';
 
 /**
  * 内容审核配置页面(Phase 4.5)

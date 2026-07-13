@@ -1,5 +1,5 @@
 /**
- * OfficeAgent Studio — 代码变更汇总弹窗
+ * fnixagent Studio — 代码变更汇总弹窗
  *
  * 独立 Dialog,由 TopBar 的 "Review Changes" 按钮触发。
  * 紧凑模式:只显示文件列表 + 行数 + 整体 Accept/Reject。
@@ -14,7 +14,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@officeagent/ui';
+} from '@fnixagent/ui';
 import { useStudio } from '../../stores/studio-store';
 
 interface ChangesSummaryProps {

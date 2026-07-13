@@ -8,7 +8,7 @@
  *   4. 删除配置
  */
 import { useEffect, useState } from 'react';
-import { sdk, type SsoConfig, type SsoConfigCreateBody } from '@officeagent/sdk';
+import { sdk, type SsoConfig, type SsoConfigCreateBody } from '@fnixagent/sdk';
 import { HasPermission } from '../contexts/PermissionContext';
 
 type ProviderType = 'oauth' | 'saml';

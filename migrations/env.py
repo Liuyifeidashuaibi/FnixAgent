@@ -3,7 +3,7 @@ Alembic 迁移环境(Phase 0.3)。
 
 职责:
     1. 从环境变量 DATABASE_URL 读取连接串(覆盖 alembic.ini 默认值)
-    2. 导入 officeagent.models.db.models.Base,把 metadata 注册到 alembic
+    2. 导入 fnixagent.models.db.models.Base,把 metadata 注册到 alembic
     3. 支持 online(直接连 DB)与 offline(生成 SQL 文件)两种模式
 
 用法:
@@ -26,23 +26,23 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 # ---------------------------------------------------------------------------
-# 把 src/ 加入 sys.path,使 alembic 能 import officeagent 包
+# 把 src/ 加入 sys.path,使 alembic 能 import fnixagent 包
 # ---------------------------------------------------------------------------
 # alembic.ini 位于项目根,env.py 位于 migrations/
 # 项目结构:
-#   officeagent/
+#   fnixagent/
 #   ├── alembic.ini
 #   ├── migrations/
 #   │   └── env.py  ← 本文件
 #   └── src/
-#       └── officeagent/
+#       └── fnixagent/
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 SRC_DIR = os.path.join(PROJECT_ROOT, "src")
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
 # 导入所有 ORM 模型,确保 Base.metadata 包含全部表定义
-from officeagent.models.db.models import Base  # noqa: E402
+from fnixagent.models.db.models import Base  # noqa: E402
 
 # alembic 配置对象
 config = context.config

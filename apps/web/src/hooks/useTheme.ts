@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 type Theme = 'light' | 'dark';
 
-const STORAGE_KEY = 'officeagent-theme';
+const STORAGE_KEY = 'fnixagent-theme';
 
 /**
  * 主题切换 Hook — 亮色/暗色模式

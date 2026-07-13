@@ -1,5 +1,5 @@
 /**
- * OfficeAgent Studio — 左侧活动栏 (VS Code/Cursor 风格)
+ * fnixagent Studio — 左侧活动栏 (VS Code/Cursor 风格)
  *
  * 48px 宽,垂直排列图标按钮,选中态左侧 2px 蓝色竖条。
  */

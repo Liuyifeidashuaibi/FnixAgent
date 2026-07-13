@@ -1,5 +1,5 @@
 /**
- * OfficeAgent API Client — 轻量 HTTP 客户端
+ * fnixagent API Client — 轻量 HTTP 客户端
  * Phase 1.2 将替换为 openapi-fetch 生成的类型安全 client
  */
 import type {

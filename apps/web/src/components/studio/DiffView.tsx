@@ -1,5 +1,5 @@
 /**
- * OfficeAgent Studio — 代码差异视图
+ * fnixagent Studio — 代码差异视图
  *
  * 对标 Cursor/Continue 的 diff 视图:
  *   - 顶部标题 + 文件数 + 行数统计(+X / -Y)
@@ -10,7 +10,7 @@
  *   - 空状态
  */
 import { useMemo, useState } from 'react';
-import { Badge, Button } from '@officeagent/ui';
+import { Badge, Button } from '@fnixagent/ui';
 import { useStudio } from '../../stores/studio-store';
 import type { FileChange } from '../../stores/types';
 import { ChevronIcon } from './icons';

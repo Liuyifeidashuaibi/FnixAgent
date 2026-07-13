@@ -1,10 +1,10 @@
-# OfficeAgent Prometheus 抓取配置 — Phase 2.10
+# fnixagent Prometheus 抓取配置 — Phase 2.10
 #
 # 用法:
 #   prometheus --config.file=prometheus.yml
 #
 # 抓取目标:
-#   - officeagent API(FastAPI /metrics 端点)
+#   - fnixagent API(FastAPI /metrics 端点)
 #   - PostgreSQL exporter(可选)
 #   - Redis exporter(可选)
 #   - Milvus metrics(可选)
@@ -30,15 +30,15 @@ alerting:
 # 抓取目标
 scrape_configs:
   # ---------------------------------------------------------------------------
-  # OfficeAgent API(应用指标)
+  # fnixagent API(应用指标)
   # ---------------------------------------------------------------------------
-  - job_name: "officeagent"
+  - job_name: "fnixagent"
     metrics_path: "/metrics"
     scrape_interval: 10s  # 应用指标更频繁
     static_configs:
-      - targets: ["officeagent:8000"]
+      - targets: ["fnixagent:8000"]
         labels:
-          service: "officeagent"
+          service: "fnixagent"
           env: "production"
 
   # ---------------------------------------------------------------------------

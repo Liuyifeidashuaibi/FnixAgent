@@ -23,7 +23,7 @@ let updateDownloaded = false;
 export function initAutoUpdater(window: BrowserWindow): void {
   // 开发模式跳过(仅打包后检查更新)
   if (!app.isPackaged) return;
-  if (process.env.OFFICEAGENT_DISABLE_UPDATER === '1') return;
+  if (process.env.fnixagent_DISABLE_UPDATER === '1') return;
 
   // 配置
   autoUpdater.autoDownload = true;       // 自动后台下载

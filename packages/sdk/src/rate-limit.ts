@@ -1,5 +1,5 @@
 /**
- * OfficeAgent 速率限制感知重试拦截器 — Phase P2-01
+ * fnixagent 速率限制感知重试拦截器 — Phase P2-01
  *
  * 功能:
  *   ① 429 响应:读取 Retry-After header,等待后重试

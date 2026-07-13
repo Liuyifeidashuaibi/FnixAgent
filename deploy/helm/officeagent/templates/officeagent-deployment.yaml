@@ -1,16 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "officeagent.fullname" . }}
+  name: {{ include "fnixagent.fullname" . }}
   labels:
-    {{- include "officeagent.labels" . | nindent 4 }}
+    {{- include "fnixagent.labels" . | nindent 4 }}
 spec:
-  {{- if not .Values.officeagent.hpa.enabled }}
-  replicas: {{ .Values.officeagent.replicaCount }}
+  {{- if not .Values.fnixagent.hpa.enabled }}
+  replicas: {{ .Values.fnixagent.replicaCount }}
   {{- end }}
   selector:
     matchLabels:
-      {{- include "officeagent.selectorLabels" . | nindent 6 }}
+      {{- include "fnixagent.selectorLabels" . | nindent 6 }}
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -19,17 +19,17 @@ spec:
   template:
     metadata:
       labels:
-        {{- include "officeagent.selectorLabels" . | nindent 8 }}
+        {{- include "fnixagent.selectorLabels" . | nindent 8 }}
       annotations:
         # 配置变更时自动滚动更新
-        checksum/config: {{ include (print $.Template.BasePath "/officeagent-configmap.yaml") . | sha256sum }}
-        checksum/secret: {{ include (print $.Template.BasePath "/officeagent-secret.yaml") . | sha256sum }}
+        checksum/config: {{ include (print $.Template.BasePath "/fnixagent-configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/fnixagent-secret.yaml") . | sha256sum }}
         # Phase 2.10: Prometheus 抓取注解(供 kubernetes-pods job 自动发现)
         prometheus.io/scrape: "true"
-        prometheus.io/port: "{{ .Values.officeagent.service.targetPort }}"
+        prometheus.io/port: "{{ .Values.fnixagent.service.targetPort }}"
         prometheus.io/path: "/metrics"
     spec:
-      serviceAccountName: {{ include "officeagent.serviceAccountName" . }}
+      serviceAccountName: {{ include "fnixagent.serviceAccountName" . }}
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
@@ -52,59 +52,59 @@ spec:
       {{- end }}
 
       containers:
-        - name: officeagent
-          image: "{{ .Values.officeagent.image.repository }}:{{ .Values.officeagent.image.tag }}"
-          imagePullPolicy: {{ .Values.officeagent.image.pullPolicy }}
+        - name: fnixagent
+          image: "{{ .Values.fnixagent.image.repository }}:{{ .Values.fnixagent.image.tag }}"
+          imagePullPolicy: {{ .Values.fnixagent.image.pullPolicy }}
           {{- with .Values.securityContext }}
           securityContext:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           ports:
             - name: http
-              containerPort: {{ .Values.officeagent.service.targetPort }}
+              containerPort: {{ .Values.fnixagent.service.targetPort }}
               protocol: TCP
-          {{- if .Values.officeagent.probe.liveness.enabled }}
+          {{- if .Values.fnixagent.probe.liveness.enabled }}
           livenessProbe:
             httpGet:
-              path: {{ .Values.officeagent.probe.liveness.path }}
+              path: {{ .Values.fnixagent.probe.liveness.path }}
               port: http
-            initialDelaySeconds: {{ .Values.officeagent.probe.liveness.initialDelaySeconds }}
-            periodSeconds: {{ .Values.officeagent.probe.liveness.periodSeconds }}
-            timeoutSeconds: {{ .Values.officeagent.probe.liveness.timeoutSeconds }}
-            failureThreshold: {{ .Values.officeagent.probe.liveness.failureThreshold }}
+            initialDelaySeconds: {{ .Values.fnixagent.probe.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.fnixagent.probe.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.fnixagent.probe.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.fnixagent.probe.liveness.failureThreshold }}
           {{- end }}
-          {{- if .Values.officeagent.probe.readiness.enabled }}
+          {{- if .Values.fnixagent.probe.readiness.enabled }}
           readinessProbe:
             httpGet:
-              path: {{ .Values.officeagent.probe.readiness.path }}
+              path: {{ .Values.fnixagent.probe.readiness.path }}
               port: http
-            initialDelaySeconds: {{ .Values.officeagent.probe.readiness.initialDelaySeconds }}
-            periodSeconds: {{ .Values.officeagent.probe.readiness.periodSeconds }}
-            timeoutSeconds: {{ .Values.officeagent.probe.readiness.timeoutSeconds }}
-            failureThreshold: {{ .Values.officeagent.probe.readiness.failureThreshold }}
+            initialDelaySeconds: {{ .Values.fnixagent.probe.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.fnixagent.probe.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.fnixagent.probe.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.fnixagent.probe.readiness.failureThreshold }}
           {{- end }}
-          {{- with .Values.officeagent.resources }}
+          {{- with .Values.fnixagent.resources }}
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           env:
             # 非敏感环境变量(从 ConfigMap)
-            - name: OFFICEAGENT_MODE
+            - name: fnixagent_MODE
               valueFrom:
                 configMapKeyRef:
-                  name: {{ include "officeagent.fullname" . }}-config
-                  key: OFFICEAGENT_MODE
+                  name: {{ include "fnixagent.fullname" . }}-config
+                  key: fnixagent_MODE
             - name: SERVICE_ENV
               valueFrom:
                 configMapKeyRef:
-                  name: {{ include "officeagent.fullname" . }}-config
+                  name: {{ include "fnixagent.fullname" . }}-config
                   key: SERVICE_ENV
             # Phase 2.10: Prometheus 指标开关
             - name: PROMETHEUS_ENABLED
               value: "true"
             # Redis
             - name: REDIS_HOST
-              value: {{ default (include "officeagent.redisHost" .) .Values.env.REDIS_HOST | quote }}
+              value: {{ default (include "fnixagent.redisHost" .) .Values.env.REDIS_HOST | quote }}
             - name: REDIS_PORT
               value: {{ .Values.env.REDIS_PORT | quote }}
             # Milvus
@@ -129,13 +129,13 @@ spec:
           envFrom:
             # 敏感信息(密码/API Key)从 Secret 注入
             - secretRef:
-                name: {{ include "officeagent.secretName" . }}
+                name: {{ include "fnixagent.secretName" . }}
           {{- /* 动态拼接 DATABASE_URL 注入 */}}
-          {{- if include "officeagent.databaseUrl" . }}
+          {{- if include "fnixagent.databaseUrl" . }}
           {{- end }}
           volumeMounts:
-            {{- if .Values.officeagent.persistence.enabled }}
-            {{- range .Values.officeagent.persistence.mounts }}
+            {{- if .Values.fnixagent.persistence.enabled }}
+            {{- range .Values.fnixagent.persistence.mounts }}
             - name: data
               mountPath: {{ .mountPath }}
               subPath: {{ .subPath }}
@@ -147,33 +147,33 @@ spec:
               mountPath: /app/config
               readOnly: true
       volumes:
-        {{- if .Values.officeagent.persistence.enabled }}
+        {{- if .Values.fnixagent.persistence.enabled }}
         - name: data
           persistentVolumeClaim:
-            claimName: {{ include "officeagent.fullname" . }}-data
+            claimName: {{ include "fnixagent.fullname" . }}-data
         {{- end }}
         - name: config
           configMap:
-            name: {{ include "officeagent.fullname" . }}-config
+            name: {{ include "fnixagent.fullname" . }}-config
             items:
               - key: settings.yaml
                 path: settings.yaml
 ---
 {{/* PersistentVolumeClaim */}}
-{{- if .Values.officeagent.persistence.enabled -}}
+{{- if .Values.fnixagent.persistence.enabled -}}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ include "officeagent.fullname" . }}-data
+  name: {{ include "fnixagent.fullname" . }}-data
   labels:
-    {{- include "officeagent.labels" . | nindent 4 }}
+    {{- include "fnixagent.labels" . | nindent 4 }}
 spec:
   accessModes:
-    - {{ .Values.officeagent.persistence.accessMode }}
+    - {{ .Values.fnixagent.persistence.accessMode }}
   resources:
     requests:
-      storage: {{ .Values.officeagent.persistence.size }}
-  {{- if .Values.officeagent.persistence.storageClass }}
-  storageClassName: {{ .Values.officeagent.persistence.storageClass }}
+      storage: {{ .Values.fnixagent.persistence.size }}
+  {{- if .Values.fnixagent.persistence.storageClass }}
+  storageClassName: {{ .Values.fnixagent.persistence.storageClass }}
   {{- end }}
 {{- end -}}

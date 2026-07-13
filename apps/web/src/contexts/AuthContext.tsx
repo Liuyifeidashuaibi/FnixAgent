@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { auth, type AuthUser } from '@officeagent/sdk';
+import { auth, type AuthUser } from '@fnixagent/sdk';
 
 interface AuthState {
   user: AuthUser | null;

@@ -1,5 +1,5 @@
 /**
- * @officeagent/sdk — OfficeAgent TypeScript API Client
+ * @fnixagent/sdk — fnixagent TypeScript API Client
  *
  * 双 client 模式:
  *   - sdk: 手写轻量 client(Phase 1.1,覆盖核心端点,无构建依赖)
@@ -123,7 +123,7 @@ export const auth = new AuthManager(sdk);
 const SDK_DEFAULT_BASE_URL = 'http://localhost:8000';
 
 /**
- * 创建增强型 OfficeAgent SDK 实例
+ * 创建增强型 fnixagent SDK 实例
  *
  * 在 createTypedClient 基础上预装两个拦截器:
  *   ① 速率限制拦截器(429 → 按 Retry-After + 指数退避重试)
@@ -135,7 +135,7 @@ const SDK_DEFAULT_BASE_URL = 'http://localhost:8000';
  *
  * 用法:
  *   ```ts
- *   const oa = createOfficeAgentSDK('http://localhost:8000');
+ *   const oa = createfnixagentSDK('http://localhost:8000');
  *   await oa.auth.login('user', 'pass');
  *   // 普通请求(401/429 自动处理)
  *   const { data } = await oa.client.GET('/api/v1/auth/me');
@@ -145,7 +145,7 @@ const SDK_DEFAULT_BASE_URL = 'http://localhost:8000';
  *   }
  *   ```
  */
-export function createOfficeAgentSDK(baseUrl?: string) {
+export function createfnixagentSDK(baseUrl?: string) {
   const url = (baseUrl ?? SDK_DEFAULT_BASE_URL).replace(/\/$/, '');
 
   // 类型安全 client(openapi-fetch)

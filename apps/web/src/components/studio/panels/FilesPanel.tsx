@@ -6,8 +6,8 @@ import {
   type MouseEvent as ReactMouseEvent,
   type KeyboardEvent as ReactKeyboardEvent,
 } from 'react';
-import { sdk } from '@officeagent/sdk';
-import type { AgentOSResponse } from '@officeagent/sdk';
+import { sdk } from '@fnixagent/sdk';
+import type { AgentOSResponse } from '@fnixagent/sdk';
 import {
   Button,
   Dialog,
@@ -28,7 +28,7 @@ import {
   TabsList,
   TabsTrigger,
   cn,
-} from '@officeagent/ui';
+} from '@fnixagent/ui';
 
 /**
  * FilesPanel — 左侧文件树面板
@@ -320,7 +320,7 @@ function ExplorerTab({
 
   // 把已打开文件列表广播给 Open Editors tab
   useEffect(() => {
-    window.dispatchEvent(new CustomEvent('officeagent:open-files', { detail: openFiles }));
+    window.dispatchEvent(new CustomEvent('fnixagent:open-files', { detail: openFiles }));
   }, [openFiles]);
 
   return (
@@ -529,7 +529,7 @@ function TreeNode({
         draggable={entry.type === 'file'}
         onDragStart={(e) => {
           e.dataTransfer.setData('text/plain', entry.path);
-          e.dataTransfer.setData('application/x-officeagent-path', entry.path);
+          e.dataTransfer.setData('application/x-fnixagent-path', entry.path);
           e.dataTransfer.effectAllowed = 'copy';
         }}
         onClick={() => (entry.type === 'directory' ? onToggle(entry) : onSelect(entry))}
@@ -585,8 +585,8 @@ function OpenEditorsTab({ onFileOpen }: { onFileOpen?: (path: string) => void })
       const detail = (e as CustomEvent<string[]>).detail;
       if (Array.isArray(detail)) setFiles(detail);
     };
-    window.addEventListener('officeagent:open-files', handler);
-    return () => window.removeEventListener('officeagent:open-files', handler);
+    window.addEventListener('fnixagent:open-files', handler);
+    return () => window.removeEventListener('fnixagent:open-files', handler);
   }, []);
 
   return (
@@ -616,7 +616,7 @@ function OpenEditorsTab({ onFileOpen }: { onFileOpen?: (path: string) => void })
                     e.stopPropagation();
                     setFiles((f) => f.filter((p) => p !== path));
                     window.dispatchEvent(
-                      new CustomEvent('officeagent:open-files', {
+                      new CustomEvent('fnixagent:open-files', {
                         detail: files.filter((p) => p !== path),
                       }),
                     );

@@ -10,7 +10,7 @@
  *   4. 编辑标题(双击或点编辑按钮)
  *   5. 删除任务
  *   6. 过滤(全部 / 待办 / 进行中 / 已完成)
- *   7. localStorage 持久化(key: officeagent.tasks.v1)
+ *   7. localStorage 持久化(key: fnixagent.tasks.v1)
  *
  * 浅色主题,样式与 index.css 的 CSS 变量对齐。
  */
@@ -37,7 +37,7 @@ interface Task {
    常量
    ================================================================ */
 
-const STORAGE_KEY = 'officeagent.tasks.v1';
+const STORAGE_KEY = 'fnixagent.tasks.v1';
 
 const STATUS_LABEL: Record<TaskStatus, string> = {
   todo: '待办',

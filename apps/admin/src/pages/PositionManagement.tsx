@@ -2,7 +2,7 @@
  * Phase 2.1: 职位管理页
  */
 import { useEffect, useState } from 'react';
-import { sdk, type RbacPosition } from '@officeagent/sdk';
+import { sdk, type RbacPosition } from '@fnixagent/sdk';
 import { HasPermission } from '../contexts/PermissionContext';
 
 export function PositionManagement() {

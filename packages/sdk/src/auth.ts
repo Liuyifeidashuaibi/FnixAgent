@@ -1,5 +1,5 @@
 /**
- * OfficeAgent 鉴权模块 — Phase 1.7
+ * fnixagent 鉴权模块 — Phase 1.7
  *
  * 功能:
  *   ① 获取服务端 RSA-2048 公钥

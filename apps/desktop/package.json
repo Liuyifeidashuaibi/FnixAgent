@@ -1,9 +1,9 @@
 {
-  "name": "@officeagent/desktop",
+  "name": "@fnixagent/desktop",
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "OfficeAgent 桌面客户端(Electron + React)",
+  "description": "fnixagent 桌面客户端(Electron + React)",
   "main": "dist/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
@@ -19,8 +19,8 @@
   },
   "dependencies": {
     "@monaco-editor/react": "^4.6.0",
-    "@officeagent/sdk": "workspace:*",
-    "@officeagent/ui": "workspace:*",
+    "@fnixagent/sdk": "workspace:*",
+    "@fnixagent/ui": "workspace:*",
     "electron-updater": "^6.2.1",
     "monaco-editor": "^0.55.1",
     "react": "^18.3.1",

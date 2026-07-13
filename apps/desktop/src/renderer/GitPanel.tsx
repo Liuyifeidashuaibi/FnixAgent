@@ -1016,7 +1016,7 @@ const gs: Record<string, CSSProperties> = {
 };
 
 /* ---- spin keyframes ---- */
-const __GITPANEL_SPIN_ID = '__officeagent_gitpanel_spin__';
+const __GITPANEL_SPIN_ID = '__fnixagent_gitpanel_spin__';
 if (typeof document !== 'undefined' && !document.getElementById(__GITPANEL_SPIN_ID)) {
   const el = document.createElement('style');
   el.id = __GITPANEL_SPIN_ID;

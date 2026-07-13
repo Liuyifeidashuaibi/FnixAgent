@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { sdk } from '@officeagent/sdk';
-import type { AgentOSResponse } from '@officeagent/sdk';
+import { sdk } from '@fnixagent/sdk';
+import type { AgentOSResponse } from '@fnixagent/sdk';
 import {
   Badge,
   Button,
@@ -14,7 +14,7 @@ import {
   ScrollArea,
   Spinner,
   cn,
-} from '@officeagent/ui';
+} from '@fnixagent/ui';
 
 /**
  * ProcessesPanel — Agent 进程监视器

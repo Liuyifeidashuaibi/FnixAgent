@@ -8,7 +8,7 @@
  *   4. 删除部门(子部门级联删除)
  */
 import { useEffect, useState } from 'react';
-import { sdk, type RbacDepartment } from '@officeagent/sdk';
+import { sdk, type RbacDepartment } from '@fnixagent/sdk';
 import { HasPermission } from '../contexts/PermissionContext';
 
 export function DepartmentManagement() {

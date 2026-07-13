@@ -1,4 +1,4 @@
-# OfficeAgent Build — Docker 镜像构建与推送
+# fnixagent Build — Docker 镜像构建与推送
 # 触发: push 到 main(构建 latest) / tag v*.*.*(构建 release)
 # 任务: 构建多架构 Docker 镜像并推送到 GHCR
 

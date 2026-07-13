@@ -1,5 +1,5 @@
 # ====================================================================
-# OfficeAgent Durable Execution + Edge Compute 编排(2026 未来版)
+# fnixagent Durable Execution + Edge Compute 编排(2026 未来版)
 # ====================================================================
 # 用途:在 docker-compose.gpu.yml 基础上,叠加未来趋势组件:
 #       - Restate Durable Execution(长时 Agent 工作流不崩溃)
@@ -31,7 +31,7 @@ services:
   # ------------------------------------------------------------------
   restate:
     image: registry.docker.com/restatedev/restate:latest
-    container_name: officeagent-restate
+    container_name: fnixagent-restate
     profiles: ["durable"]
     environment:
       # Restate 监听
@@ -39,7 +39,7 @@ services:
       RESTATE_META_BIND: "0.0.0.0:9070"
       # 持久化(复用 Postgres)
       RESTATE_STORAGE: postgres
-      RESTATE_POSTGRES_URL: postgresql://officeagent:${POSTGRES_PASSWORD:-officeagent-dev}@postgres:5432/officeagent_restate
+      RESTATE_POSTGRES_URL: postgresql://fnixagent:${POSTGRES_PASSWORD:-fnixagent-dev}@postgres:5432/fnixagent_restate
       # 工作线程
       RESTATE_WORKER_THREADS: ${RESTATE_WORKERS:-4}
     ports:
@@ -67,10 +67,10 @@ services:
   # ------------------------------------------------------------------
   # dbos:
   #   image: dbosinc/dbos-transact:latest
-  #   container_name: officeagent-dbos
+  #   container_name: fnixagent-dbos
   #   profiles: ["durable"]
   #   environment:
-  #     DBOS_DATABASE: postgresql://officeagent:${POSTGRES_PASSWORD:-officeagent-dev}@postgres:5432/officeagent_dbos
+  #     DBOS_DATABASE: postgresql://fnixagent:${POSTGRES_PASSWORD:-fnixagent-dev}@postgres:5432/fnixagent_dbos
   #   ports:
   #     - "18091:8080"
 
@@ -89,7 +89,7 @@ services:
   # ------------------------------------------------------------------
   sandbox-gvisor:
     image: python:3.11-slim
-    container_name: officeagent-sandbox-gvisor
+    container_name: fnixagent-sandbox-gvisor
     profiles: ["sandbox"]
     runtime: runsc  # 需要宿主机安装 gVisor
     environment:
@@ -133,7 +133,7 @@ services:
   # ------------------------------------------------------------------
   phoenix:
     image: arizephoenix/phoenix:latest
-    container_name: officeagent-phoenix
+    container_name: fnixagent-phoenix
     profiles: ["eval"]
     environment:
       # PHOENIX_PORT: 6000
@@ -159,7 +159,7 @@ services:
   # ------------------------------------------------------------------
   otel-collector:
     image: otel/opentelemetry-collector-contrib:latest
-    container_name: officeagent-otel-collector
+    container_name: fnixagent-otel-collector
     profiles: ["eval"]
     environment:
       # 接收 OTLP
@@ -187,7 +187,7 @@ services:
   # ------------------------------------------------------------------
   brave-search-mcp:
     image: mcp/brave-search:latest
-    container_name: officeagent-brave-search-mcp
+    container_name: fnixagent-brave-search-mcp
     profiles: ["search"]
     environment:
       BRAVE_API_KEY: ${BRAVE_API_KEY:-}
@@ -207,7 +207,7 @@ services:
   # ------------------------------------------------------------------
   tavily-mcp:
     image: mcp/tavily:latest
-    container_name: officeagent-tavily-mcp
+    container_name: fnixagent-tavily-mcp
     profiles: ["search"]
     environment:
       TAVILY_API_KEY: ${TAVILY_API_KEY:-}
@@ -230,7 +230,7 @@ services:
   # ------------------------------------------------------------------
   webllm-cdn:
     image: nginx:alpine
-    container_name: officeagent-webllm-cdn
+    container_name: fnixagent-webllm-cdn
     profiles: ["edge"]
     volumes:
       - webllm_models:/usr/share/nginx/html/models:ro

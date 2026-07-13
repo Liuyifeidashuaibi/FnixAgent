@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
-import { sdk, type ChatChunk, type EvolveResponse } from '@officeagent/sdk';
+import { sdk, type ChatChunk, type EvolveResponse } from '@fnixagent/sdk';
 
 /** 对话模式 */
 export type ChatMode = 'stream' | 'evolve';
@@ -48,7 +48,7 @@ export function useChat() {
     {
       id: 'welcome',
       role: 'assistant',
-      content: '你好!我是 OfficeAgent,你的智能办公助手。有什么可以帮你的?',
+      content: '你好!我是 fnixagent,你的智能办公助手。有什么可以帮你的?',
       ts: Date.now(),
     },
   ]);
@@ -247,7 +247,7 @@ export function useChat() {
       {
         id: 'welcome',
         role: 'assistant',
-        content: '你好!我是 OfficeAgent,你的智能办公助手。有什么可以帮你的?',
+        content: '你好!我是 fnixagent,你的智能办公助手。有什么可以帮你的?',
         ts: Date.now(),
       },
     ]);

@@ -1,4 +1,4 @@
-# OfficeAgent 客户端发布工作流 — Phase 1.9 + Phase 2.6 全平台
+# fnixagent 客户端发布工作流 — Phase 1.9 + Phase 2.6 全平台
 #
 # 触发条件:推送 v* 标签(如 v1.0.0)或手动触发
 # 产物:
@@ -31,10 +31,10 @@
 # 本地开发(无证书)打包
 # ============================================================================
 # 不设置上述任何环境变量,直接运行:
-#   pnpm --filter @officeagent/desktop build:win      # 产出未签名 .exe
-#   pnpm --filter @officeagent/desktop build:mac      # 产出未签名 .dmg
-#   pnpm --filter @officeagent/desktop build:linux    # 产出 AppImage/deb/rpm
-#   pnpm --filter @officeagent/desktop build:all      # 全平台
+#   pnpm --filter @fnixagent/desktop build:win      # 产出未签名 .exe
+#   pnpm --filter @fnixagent/desktop build:mac      # 产出未签名 .dmg
+#   pnpm --filter @fnixagent/desktop build:linux    # 产出 AppImage/deb/rpm
+#   pnpm --filter @fnixagent/desktop build:all      # 全平台
 #
 # ============================================================================
 # macOS Notarization 钩子
@@ -116,7 +116,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Typecheck
-        run: pnpm --filter @officeagent/desktop typecheck
+        run: pnpm --filter @fnixagent/desktop typecheck
 
       # Linux 需要额外的系统依赖用于构建 AppImage/deb/rpm
       - name: Install Linux build deps
@@ -147,7 +147,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: officeagent-${{ matrix.platform }}-${{ github.ref_name }}
+          name: fnixagent-${{ matrix.platform }}-${{ github.ref_name }}
           path: ${{ matrix.artifact_glob }}
           retention-days: 30
 

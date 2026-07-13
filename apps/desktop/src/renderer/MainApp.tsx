@@ -1,5 +1,5 @@
 /**
- * OfficeAgent Desktop 主应用视图 — Cursor/Codex 风格
+ * fnixagent Desktop 主应用视图 — Cursor/Codex 风格
  *
  * 设计理念：浅色主题 + 极简留白 + 四栏布局（ActivityBar/Sidebar/Center/AgentPanel）
  *   - 左侧 ActivityBar（48px，竖向图标）

@@ -1,28 +1,28 @@
-{{- if .Values.officeagent.hpa.enabled -}}
+{{- if .Values.fnixagent.hpa.enabled -}}
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ include "officeagent.fullname" . }}
+  name: {{ include "fnixagent.fullname" . }}
   labels:
-    {{- include "officeagent.labels" . | nindent 4 }}
+    {{- include "fnixagent.labels" . | nindent 4 }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ include "officeagent.fullname" . }}
-  minReplicas: {{ .Values.officeagent.hpa.minReplicas }}
-  maxReplicas: {{ .Values.officeagent.hpa.maxReplicas }}
+    name: {{ include "fnixagent.fullname" . }}
+  minReplicas: {{ .Values.fnixagent.hpa.minReplicas }}
+  maxReplicas: {{ .Values.fnixagent.hpa.maxReplicas }}
   metrics:
     - type: Resource
       resource:
         name: cpu
         target:
           type: Utilization
-          averageUtilization: {{ .Values.officeagent.hpa.targetCPUUtilizationPercentage }}
+          averageUtilization: {{ .Values.fnixagent.hpa.targetCPUUtilizationPercentage }}
     - type: Resource
       resource:
         name: memory
         target:
           type: Utilization
-          averageUtilization: {{ .Values.officeagent.hpa.targetMemoryUtilizationPercentage }}
+          averageUtilization: {{ .Values.fnixagent.hpa.targetMemoryUtilizationPercentage }}
 {{- end -}}

@@ -1,5 +1,5 @@
 /**
- * OfficeAgent Studio — Monaco 编辑器区(浅色主题)
+ * fnixagent Studio — Monaco 编辑器区(浅色主题)
  *
  * 对标 Cursor IDE 编辑区:
  *   - Monaco 主题使用 light(非 vs-dark)
@@ -9,7 +9,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Editor, { type OnMount } from '@monaco-editor/react';
-import { Button } from '@officeagent/ui';
+import { Button } from '@fnixagent/ui';
 import { CloseIcon } from './icons';
 import { useStudio } from '../../stores/studio-store';
 
@@ -33,7 +33,7 @@ const EXT_LANG_MAP: Record<string, string> = {
 
 // 示例文件内容(按扩展名)— 后续通过 sdk.code.read 读取真实文件
 const SAMPLE_CONTENT: Record<string, string> = {
-  md: `# OfficeAgent Studio
+  md: `# fnixagent Studio
 
 这是一个 **Markdown** 文件示例。
 
@@ -45,7 +45,7 @@ const SAMPLE_CONTENT: Record<string, string> = {
 
 \`\`\`python
 def hello():
-    print("Hello, OfficeAgent!")
+    print("Hello, fnixagent!")
 \`\`\`
 `,
   tsx: `import { useState } from 'react';
@@ -56,7 +56,7 @@ export function Counter() {
 }
 `,
   py: `def main():
-    print("Hello, OfficeAgent!")
+    print("Hello, fnixagent!")
 
 if __name__ == "__main__":
     main()

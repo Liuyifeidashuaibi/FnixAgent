@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
-import { sdk } from '@officeagent/sdk';
-import type { AgentOSResponse } from '@officeagent/sdk';
+import { sdk } from '@fnixagent/sdk';
+import type { AgentOSResponse } from '@fnixagent/sdk';
 import {
   Badge,
   Button,
@@ -12,7 +12,7 @@ import {
   TabsList,
   TabsTrigger,
   cn,
-} from '@officeagent/ui';
+} from '@fnixagent/ui';
 
 /**
  * MemoryPanel — Agent 记忆面板

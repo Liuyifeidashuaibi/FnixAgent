@@ -2,7 +2,7 @@ title: 批量数据删除行为
 id: 5f3a2b1c-1234-5678-9abc-def012345678
 status: stable
 description: 检测批量删除文件或数据库操作
-author: OfficeAgent
+author: fnixagent
 date: 2026-07-07
 level: high
 detection:

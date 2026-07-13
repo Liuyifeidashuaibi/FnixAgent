@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Editor, { type OnMount } from '@monaco-editor/react';
-import { Button } from '@officeagent/ui';
+import { Button } from '@fnixagent/ui';
 
 interface EditorAreaProps {
   filePath?: string;
@@ -207,7 +207,7 @@ function MarkdownPreview({ content }: { content: string }) {
 
 // 示例文件内容(按扩展名)
 const SAMPLE_CONTENT: Record<string, string> = {
-  md: `#欢迎使用 OfficeAgent
+  md: `#欢迎使用 fnixagent
 
 这是一个 **Markdown** 文件示例。
 
@@ -220,24 +220,24 @@ const SAMPLE_CONTENT: Record<string, string> = {
 
 \`\`\`python
 def hello():
-    print("Hello, OfficeAgent!")
+    print("Hello, fnixagent!")
 \`\`\`
 `,
   txt: '这是一个纯文本文件。\n支持 Ctrl+S 保存和自动保存。',
-  py: `# OfficeAgent Python 示例
+  py: `# fnixagent Python 示例
 def main():
-    print("Hello, OfficeAgent!")
+    print("Hello, fnixagent!")
 
 if __name__ == "__main__":
     main()
 `,
   json: `{
-  "name": "officeagent",
+  "name": "fnixagent",
   "version": "1.0.0",
   "description": "智能办公助手"
 }
 `,
-  yaml: `# OfficeAgent 配置
+  yaml: `# fnixagent 配置
 server:
   host: localhost
   port: 8000

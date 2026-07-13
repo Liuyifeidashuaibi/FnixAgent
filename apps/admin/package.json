@@ -1,5 +1,5 @@
 {
-  "name": "@officeagent/admin",
+  "name": "@fnixagent/admin",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -11,8 +11,8 @@
     "lint": "eslint src --ext .ts,.tsx"
   },
   "dependencies": {
-    "@officeagent/sdk": "workspace:*",
-    "@officeagent/ui": "workspace:*",
+    "@fnixagent/sdk": "workspace:*",
+    "@fnixagent/ui": "workspace:*",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },

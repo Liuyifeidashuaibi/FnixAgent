@@ -1,4 +1,4 @@
-# OfficeAgent CI — 持续集成
+# fnixagent CI — 持续集成
 # 触发: pull_request / push 到 main / develop
 # 任务: 代码质量检查(ruff)+ 类型检查(pyright)+ 测试 + 安全扫描 + Docker 构建
 
@@ -59,7 +59,7 @@ jobs:
         run: pip install pyright
 
       - name: Pyright type check
-        run: pyright src/officeagent/ || true
+        run: pyright src/fnixagent/ || true
 
   # ---------------------------------------------------------------------------
   # 单元测试 + 集成测试(矩阵:3.11 / 3.12 / 3.13)
@@ -94,7 +94,7 @@ jobs:
         env:
           PYTHONPATH: src
         run: |
-          python -m pytest tests/unit/ -v --cov=src/officeagent --cov-report=xml --cov-report=term-missing
+          python -m pytest tests/unit/ -v --cov=src/fnixagent --cov-report=xml --cov-report=term-missing
 
       - name: Run integration tests
         env:
@@ -200,7 +200,7 @@ jobs:
           context: .
           file: deploy/docker/Dockerfile
           push: false
-          tags: officeagent:ci-${{ github.sha }}
+          tags: fnixagent:ci-${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

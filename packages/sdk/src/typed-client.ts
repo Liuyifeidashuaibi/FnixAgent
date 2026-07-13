@@ -1,5 +1,5 @@
 /**
- * OfficeAgent 类型安全 API Client — 基于 openapi-fetch
+ * fnixagent 类型安全 API Client — 基于 openapi-fetch
  * 利用 openapi-typescript 生成的 schema 实现端到端类型安全
  */
 import createClient from 'openapi-fetch';

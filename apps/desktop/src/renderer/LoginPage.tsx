@@ -1,9 +1,9 @@
 /**
- * OfficeAgent Desktop 登录页(Phase 3.0)
+ * fnixagent Desktop 登录页(Phase 3.0)
  *
  * 双 Tab 登录:
  *   - 国内:手机号 + 短信验证码(11 位中国大陆手机号)
- *   - 国外:Google OAuth(在系统浏览器中完成授权,通过 officeagent:// 协议回调)
+ *   - 国外:Google OAuth(在系统浏览器中完成授权,通过 fnixagent:// 协议回调)
  *
  * 登录成功后调用 onLogin 通知父组件切换到主应用视图。
  */
@@ -14,7 +14,7 @@ import {
   type AuthUser,
   type SsoProvider,
   type TokenInfo,
-} from '@officeagent/sdk';
+} from '@fnixagent/sdk';
 
 interface LoginPageProps {
   onLogin: (user: AuthUser) => void;
@@ -39,7 +39,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
       <div style={styles.card}>
         <div style={styles.header}>
           <div style={styles.logo}>OA</div>
-          <h1 style={styles.title}>OfficeAgent Desktop</h1>
+          <h1 style={styles.title}>fnixagent Desktop</h1>
           <p style={styles.subtitle}>{appInfo || '智能办公助手'}</p>
         </div>
 
@@ -230,7 +230,7 @@ function GoogleLoginForm({ onLogin }: { onLogin: (user: AuthUser) => void }) {
     })();
   }, []);
 
-  // 订阅 OAuth 回调(自定义协议 officeagent://oauth/callback 触发)
+  // 订阅 OAuth 回调(自定义协议 fnixagent://oauth/callback 触发)
   useEffect(() => {
     if (!window.electron?.oauth?.onCallback) return;
     const unsub = window.electron.oauth.onCallback(async (data) => {
@@ -274,8 +274,8 @@ function GoogleLoginForm({ onLogin }: { onLogin: (user: AuthUser) => void }) {
     }
     setLoading(true);
     try {
-      // desktop 用 officeagent:// 自定义协议作为回调
-      const redirectUri = 'officeagent://oauth/callback?provider=google';
+      // desktop 用 fnixagent:// 自定义协议作为回调
+      const redirectUri = 'fnixagent://oauth/callback?provider=google';
       const resp = await sdk.sso.getOAuthAuthorizeUrl({
         provider_code: googleProvider.provider_code,
         redirect_uri: redirectUri,

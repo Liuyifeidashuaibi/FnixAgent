@@ -4,8 +4,8 @@
 # 与代码 core/topology/schema.py 中的常量保持一致,运行时仅读取不修改。
 #
 # 任何修改必须同步更新:
-#   - src/officeagent/core/topology/schema.py
-#   - src/officeagent/core/types.py (NodeType / EdgeType / TopologyLayer)
+#   - src/fnixagent/core/topology/schema.py
+#   - src/fnixagent/core/types.py (NodeType / EdgeType / TopologyLayer)
 #   - SELF_EVOLUTION_AGENT_PLAN.md 第二部分
 
 # ===========================================================================

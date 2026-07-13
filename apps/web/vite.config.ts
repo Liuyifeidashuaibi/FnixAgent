@@ -2,7 +2,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'node:path';
 
-// OfficeAgent Web 应用 Vite 配置
+// fnixagent Web 应用 Vite 配置
 // 开发服务器默认 5173 端口,代理 /api 到后端 8000
 export default defineConfig({
   plugins: [react()],

@@ -2,7 +2,7 @@
   "version": "1.0.0",
   "created_at": "2026-07-04T00:00:00Z",
   "schema_version": "ktg_v1",
-  "description": "OfficeAgent 自进化资产包元数据",
+  "description": "fnixagent 自进化资产包元数据",
   "directories": {
     "topology": "KTG 拓扑图快照",
     "skills": "STP 技能注册表",

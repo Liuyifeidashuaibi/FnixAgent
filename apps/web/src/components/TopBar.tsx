@@ -1,4 +1,4 @@
-import { Button } from '@officeagent/ui';
+import { Button } from '@fnixagent/ui';
 import { useAuth } from '../contexts/AuthContext';
 
 interface TopBarProps {
@@ -20,7 +20,7 @@ export function TopBar({ theme, onToggleTheme }: TopBarProps) {
   return (
     <header className="flex items-center justify-between border-b border-border bg-background px-4 py-2 h-12 shrink-0">
       <div className="flex items-center gap-2">
-        <span className="text-lg font-bold">OfficeAgent</span>
+        <span className="text-lg font-bold">fnixagent</span>
       </div>
       <div className="flex items-center gap-2">
         {user && (

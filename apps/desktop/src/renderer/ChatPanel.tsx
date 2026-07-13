@@ -2,14 +2,14 @@
  * AI 对话面板(Phase 3.1 右侧栏)
  *
  * 功能:
- *   - 与 OfficeAgent 后端流式对话(SSE / NDJSON)
+ *   - 与 fnixagent 后端流式对话(SSE / NDJSON)
  *   - 显示用户消息与 AI 回复(支持 thought / action / text / error 分块)
  *   - 自动滚动到底部
  *   - 创建 / 切换会话
  *   - 错误处理与重试提示
  */
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { sdk } from '@officeagent/sdk';
+import { sdk } from '@fnixagent/sdk';
 
 interface ChatMessage {
   id: string;
@@ -146,7 +146,7 @@ export function ChatPanel({ activeFilePath }: ChatPanelProps) {
         {messages.length === 0 ? (
           <div style={styles.welcome}>
             <div style={styles.welcomeIcon}>🤖</div>
-            <p style={styles.welcomeTitle}>OfficeAgent 已就绪</p>
+            <p style={styles.welcomeTitle}>fnixagent 已就绪</p>
             <p style={styles.welcomeText}>
               输入问题,AI 会基于当前工作区上下文提供智能辅助。
             </p>

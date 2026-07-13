@@ -1,5 +1,5 @@
 /**
- * @officeagent/ui — 共享组件库
+ * @fnixagent/ui — 共享组件库
  * shadcn/ui 风格,基于 Radix UI + Tailwind CSS
  */
 export { Button, buttonVariants, type ButtonProps } from './button';

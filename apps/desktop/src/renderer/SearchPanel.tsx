@@ -1,7 +1,7 @@
 /**
  * SearchPanel — 语义代码搜索面板
  *
- * 调用 @officeagent/sdk 的 sdk.code.search({ query, top_k }) 命名空间,
+ * 调用 @fnixagent/sdk 的 sdk.code.search({ query, top_k }) 命名空间,
  * 对接后端 /api/v1/coding/search(包装 IDEServer 的语义检索能力)。
  *
  * 功能:
@@ -12,7 +12,7 @@
  *   5. 浅色主题,样式与 index.css 的 CSS 变量对齐
  */
 import { useState, type CSSProperties, type FormEvent } from 'react';
-import { sdk } from '@officeagent/sdk';
+import { sdk } from '@fnixagent/sdk';
 
 /* ================================================================
    Props

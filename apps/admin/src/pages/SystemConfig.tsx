@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { sdk } from '@officeagent/sdk';
+import { sdk } from '@fnixagent/sdk';
 
 /**
  * 系统配置页 — 查看 settings.yaml 可热更新项,支持编辑后写回(即时生效)

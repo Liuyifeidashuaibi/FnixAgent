@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { sdk, type AdminUser } from '@officeagent/sdk';
+import { sdk, type AdminUser } from '@fnixagent/sdk';
 
 /**
  * 用户管理页 — 列表 / 搜索 / 禁用 / 启用 / 重置密码 / 改角色

@@ -6,7 +6,7 @@
  *   2. 注册 IPC 处理器(文件操作 / Agent 调用 / safeStorage)
  *   3. 通过 HTTP 调用后端 API(/api/v1/health 等)
  *   4. 严格沙箱:渲染进程无法直接 require Node 模块
- *   5. Phase 3.0:注册 officeagent:// 自定义协议,处理 OAuth 回调
+ *   5. Phase 3.0:注册 fnixagent:// 自定义协议,处理 OAuth 回调
  *   6. Phase 3.1:本地文件系统 IPC(打开文件夹 / 读写文件 / 文件树)
  */
 import { app, BrowserWindow, dialog, ipcMain, safeStorage, shell } from 'electron';
@@ -18,10 +18,10 @@ import { initAutoUpdater } from './updater';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // 后端 API 地址(可通过环境变量覆盖)
-const BACKEND_URL = process.env.OFFICEAGENT_BACKEND_URL || 'http://localhost:8765';
+const BACKEND_URL = process.env.fnixagent_BACKEND_URL || 'http://localhost:8765';
 
 // Phase 3.0: OAuth 自定义协议(用于 Google OAuth 等第三方登录回调)
-const OAUTH_PROTOCOL = 'officeagent';
+const OAUTH_PROTOCOL = 'fnixagent';
 // 已缓存的 OAuth 回调 URL(应用未启动时收到的回调,会在窗口 ready 后回放)
 let pendingOAuthUrl: string | null = null;
 let mainWindow: BrowserWindow | null = null;
@@ -36,7 +36,7 @@ function createWindow(): void {
     minWidth: 900,
     minHeight: 600,
     show: false,
-    title: 'OfficeAgent',
+    title: 'fnixagent',
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
       sandbox: true, // 沙箱模式:渲染进程无法直接 require Node 模块
@@ -298,7 +298,7 @@ ipcMain.handle('shell:openExternal', async (_event, url: string) => {
  * 解析 OAuth 回调 URL,提取 provider_code / code / state。
  *
  * URL 形如:
- *   officeagent://oauth/callback?provider=google&code=xxx&state=yyy
+ *   fnixagent://oauth/callback?provider=google&code=xxx&state=yyy
  */
 function parseOAuthCallback(url: string): {
   provider_code: string;
@@ -335,7 +335,7 @@ function dispatchOAuthCallback(url: string): void {
 }
 
 /**
- * 注册 officeagent:// 自定义协议。
+ * 注册 fnixagent:// 自定义协议。
  *
  * macOS:通过 app.on('open-url') 事件接收(系统将 URL 转发给应用)。
  * Windows:通过 app.on('second-instance') 事件接收(第二个实例启动时传入 URL)。

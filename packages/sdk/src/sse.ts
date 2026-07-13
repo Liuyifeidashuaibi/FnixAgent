@@ -1,5 +1,5 @@
 /**
- * OfficeAgent SSE 流式响应封装 — Phase P2-01
+ * fnixagent SSE 流式响应封装 — Phase P2-01
  *
  * 功能:
  *   ① 自动解析 text/event-stream 格式

@@ -1,4 +1,4 @@
-# OfficeAgent 项目配置
+# fnixagent 项目配置
 
 # 服务基础配置
 server:
@@ -12,8 +12,8 @@ database:
   postgres:
     host: "localhost"
     port: 5432
-    database: "officeagent"
-    user: "officeagent"
+    database: "fnixagent"
+    user: "fnixagent"
     password: "${POSTGRES_PASSWORD}"
     pool_size: 20
     max_overflow: 10
@@ -40,7 +40,7 @@ storage:
     endpoint: "localhost:9000"
     access_key: "${MINIO_ACCESS_KEY}"
     secret_key: "${MINIO_SECRET_KEY}"
-    bucket: "officeagent-files"
+    bucket: "fnixagent-files"
     secure: false
 
 # 搜索引擎配置
@@ -48,7 +48,7 @@ search:
   elasticsearch:
     host: "localhost"
     port: 9200
-    index_prefix: "officeagent_"
+    index_prefix: "fnixagent_"
 
 # LLM 配置
 llm:
@@ -199,4 +199,4 @@ monitoring:
     port: 14268
   
   log_level: "INFO"
-  log_file: "logs/officeagent.log"
+  log_file: "logs/fnixagent.log"

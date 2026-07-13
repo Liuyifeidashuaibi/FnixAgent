@@ -1,5 +1,5 @@
 /**
- * OfficeAgent Studio — 核心类型定义
+ * fnixagent Studio — 核心类型定义
  *
  * 对标 Codex CLI + Cursor IDE,定义全局状态所需的所有类型。
  */

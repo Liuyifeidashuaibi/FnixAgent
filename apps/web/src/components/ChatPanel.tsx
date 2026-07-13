@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Button, Input } from '@officeagent/ui';
+import { Button, Input } from '@fnixagent/ui';
 import { useChat, type ChatMessage, type ToolCallRecord } from '../hooks/useChat';
 import { useTopologyStats } from '../hooks/useTopologyStats';
 import type { ChatMode } from '../hooks/useChat';

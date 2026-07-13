@@ -9,7 +9,7 @@
  *   5. 权限分配矩阵:按 resource 分组的复选框,全量替换角色权限
  */
 import { useEffect, useState } from 'react';
-import { sdk, type RbacPermission, type RbacRole } from '@officeagent/sdk';
+import { sdk, type RbacPermission, type RbacRole } from '@fnixagent/sdk';
 import { HasPermission, usePermissions } from '../contexts/PermissionContext';
 
 export function RoleManagement() {

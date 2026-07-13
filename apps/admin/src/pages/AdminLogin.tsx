@@ -5,7 +5,7 @@ import {
   MfaRequiredError,
   type AuthUser,
   type SsoProvider,
-} from '@officeagent/sdk';
+} from '@fnixagent/sdk';
 
 interface AdminLoginProps {
   onLogin: (user: AuthUser) => void;
@@ -225,7 +225,7 @@ export function AdminLogin({ onLogin }: AdminLoginProps) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-md rounded-lg border border-border bg-background p-6 shadow-sm">
-        <h1 className="mb-1 text-xl font-semibold">OfficeAgent 管理后台</h1>
+        <h1 className="mb-1 text-xl font-semibold">fnixagent 管理后台</h1>
         <p className="mb-6 text-sm text-muted-foreground">仅管理员可登录</p>
 
         {mfaChallenge ? (

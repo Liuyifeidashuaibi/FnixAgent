@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { sdk, type AuditLog, type AuditVerifyResult } from '@officeagent/sdk';
+import { sdk, type AuditLog, type AuditVerifyResult } from '@fnixagent/sdk';
 
 /**
  * 审计日志页(Phase 2.5)— 查询 / 导出 / 哈希链校验

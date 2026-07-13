@@ -8,8 +8,8 @@
  *   - 撤销注销
  */
 import { useEffect, useState } from 'react';
-import type { AuthUser } from '@officeagent/sdk';
-import { sdk, type PrivacyProfile, type PrivacyDeletionStatus } from '@officeagent/sdk';
+import type { AuthUser } from '@fnixagent/sdk';
+import { sdk, type PrivacyProfile, type PrivacyDeletionStatus } from '@fnixagent/sdk';
 import { downloadTextFile } from './utils';
 
 interface Props {
@@ -45,7 +45,7 @@ export function PrivacyCenter({ user, onBack, onLogout }: Props) {
   async function handleExport() {
     try {
       const text = await sdk.privacy.export();
-      downloadTextFile(text, `officeagent_export_${Date.now()}.json`, 'application/json');
+      downloadTextFile(text, `fnixagent_export_${Date.now()}.json`, 'application/json');
     } catch (e) {
       alert(e instanceof Error ? e.message : '导出失败');
     }

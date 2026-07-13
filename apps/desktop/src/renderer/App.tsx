@@ -1,5 +1,5 @@
 /**
- * OfficeAgent Desktop 渲染进程根组件
+ * fnixagent Desktop 渲染进程根组件
  *
  * 职责:
  *   1. 启动时尝试加载已保存的 Token,自动登录
@@ -7,7 +7,7 @@
  *   3. 已登录 → 显示 MainApp(Phase 3.0 占位,3.1 替换为三栏工作台)
  */
 import { useEffect, useState } from 'react';
-import { auth, type AuthUser } from '@officeagent/sdk';
+import { auth, type AuthUser } from '@fnixagent/sdk';
 import { LoginPage } from './LoginPage';
 import { MainApp } from './MainApp';
 

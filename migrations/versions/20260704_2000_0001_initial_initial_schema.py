@@ -4,7 +4,7 @@ Revision ID: 0001_initial
 Revises:
 Create Date: 2026-07-04 20:00:00
 
-本迁移把 src/officeagent/models/db/models.py 中定义的全部 ORM 模型转换为
+本迁移把 src/fnixagent/models/db/models.py 中定义的全部 ORM 模型转换为
 数据库表结构,包括:
     - 账号与租户:tenants / users / api_credentials
     - 会话与消息:sessions / messages

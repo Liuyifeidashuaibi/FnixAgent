@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { sdk, type TopologyStats } from '@officeagent/sdk';
+import { sdk, type TopologyStats } from '@fnixagent/sdk';
 
 /**
  * 拓扑统计 Hook — 调用 /api/v1/chat/topology/stats

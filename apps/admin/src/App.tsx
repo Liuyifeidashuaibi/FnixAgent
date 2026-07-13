@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { auth, type AuthUser } from '@officeagent/sdk';
+import { auth, type AuthUser } from '@fnixagent/sdk';
 import { AdminLogin } from './pages/AdminLogin';
 import { Dashboard } from './pages/Dashboard';
 import { UserManagement } from './pages/UserManagement';
@@ -61,7 +61,7 @@ const GROUP_LABELS: Record<string, string> = {
 };
 
 /**
- * OfficeAgent 管理后台根组件
+ * fnixagent 管理后台根组件
  *
  * Phase 4.2:侧边栏 + 极简设计,核心操作直达
  */
@@ -180,7 +180,7 @@ function AdminShell({
           <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-xs font-bold text-white">
             OA
           </div>
-          <span className="text-sm font-semibold">OfficeAgent</span>
+          <span className="text-sm font-semibold">fnixagent</span>
         </div>
 
         {/* 导航 */}

@@ -1,23 +1,23 @@
 apiVersion: v2
-name: officeagent
+name: fnixagent
 description: |
-  OfficeAgent — AI 原生办公工作站 Helm Chart。
-  部署 OfficeAgent API 服务及其依赖(PostgreSQL/Redis/Milvus/MinIO/Elasticsearch)。
-  生产环境建议使用云托管数据库,仅部署 officeagent 本身 + Ingress。
+  fnixagent — AI 原生办公工作站 Helm Chart。
+  部署 fnixagent API 服务及其依赖(PostgreSQL/Redis/Milvus/MinIO/Elasticsearch)。
+  生产环境建议使用云托管数据库,仅部署 fnixagent 本身 + Ingress。
 type: application
 version: 0.1.0
 appVersion: "1.0.0"
-home: https://github.com/officeagent/officeagent
+home: https://github.com/fnixagent/fnixagent
 maintainers:
-  - name: OfficeAgent Team
-    email: dev@officeagent.com
+  - name: fnixagent Team
+    email: dev@fnixagent.com
 keywords:
-  - officeagent
+  - fnixagent
   - ai
   - agent
   - llm
   - productivity
-icon: https://officeagent.com/logo.png
+icon: https://fnixagent.com/logo.png
 
 # 子 Chart 依赖(默认禁用,生产环境推荐使用云托管数据库)
 # 启用方式:在 values.yaml 中设置 postgres.enabled: true / redis.enabled: true

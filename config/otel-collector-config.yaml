@@ -1,5 +1,5 @@
 # ====================================================================
-# OpenTelemetry Collector 配置(OfficeAgent 统一观测管道)
+# OpenTelemetry Collector 配置(fnixagent 统一观测管道)
 # ====================================================================
 # 2026 标准:CNCF 毕业,GenAI Semantic Conventions 统一 LLM span
 # 所有观测后端(Langfuse/Phoenix/Jaeger)通过此管道统一接入
@@ -51,10 +51,10 @@ processors:
   # GenAI Semantic Conventions 属性注入
   attributes/genai:
     actions:
-      - key: officeagent.component
+      - key: fnixagent.component
         action: upsert
         from_attribute: gen_ai.system
-      - key: officeagent.tier
+      - key: fnixagent.tier
         action: upsert
         value: production
 

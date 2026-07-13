@@ -27,7 +27,7 @@ export const TopBar: React.FC<TopBarProps> = ({
     <header style={s.header}>
       {/* 左侧：品牌 */}
       <div style={s.left}>
-        <span style={s.brand}>OfficeAgent</span>
+        <span style={s.brand}>fnixagent</span>
       </div>
 
       {/* 中间：工作区路径 */}

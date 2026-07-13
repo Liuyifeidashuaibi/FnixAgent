@@ -1,6 +1,6 @@
-# OfficeAgent 部署手册
+# fnixagent 部署手册
 
-> **目标**:新人在 30 分钟内于干净的 Linux 主机上一键部署 OfficeAgent,并通过桌面客户端完成登录 / 对话 / 文件上传全流程。
+> **目标**:新人在 30 分钟内于干净的 Linux 主机上一键部署 fnixagent,并通过桌面客户端完成登录 / 对话 / 文件上传全流程。
 
 本手册覆盖三种部署形态:
 
@@ -62,7 +62,7 @@ openssl version           # OpenSSL 1.1.1+
 |---|---|---|
 | 80 | nginx HTTP(重定向到 443) | 是 |
 | 443 | nginx HTTPS | 是 |
-| 8000 | OfficeAgent 后端 | 生产环境仅容器内可达 |
+| 8000 | fnixagent 后端 | 生产环境仅容器内可达 |
 | 5432 | PostgreSQL | 生产环境仅容器内可达 |
 | 6379 | Redis | 生产环境仅容器内可达 |
 | 19530 | Milvus | 生产环境仅容器内可达 |
@@ -78,8 +78,8 @@ openssl version           # OpenSSL 1.1.1+
 ### 2.1 克隆代码(2 分钟)
 
 ```bash
-git clone <your-repo-url> officeagent
-cd officeagent
+git clone <your-repo-url> fnixagent
+cd fnixagent
 ```
 
 ### 2.2 准备环境变量(3 分钟)
@@ -101,7 +101,7 @@ POSTGRES_PASSWORD=$(openssl rand -hex 24)
 REDIS_PASSWORD=$(openssl rand -hex 24)
 
 # MinIO 访问密钥(8-20 字符)
-MINIO_ACCESS_KEY=officeagent
+MINIO_ACCESS_KEY=fnixagent
 MINIO_SECRET_KEY=$(openssl rand -hex 16)
 
 # Elasticsearch 密码
@@ -151,14 +151,14 @@ docker compose -f deploy/docker/docker-compose.prod.yml ps
 
 # 期望所有服务 STATUS 为 healthy
 # NAME                          STATUS                   PORTS
-# officeagent-app-prod          Up (healthy)             8000/tcp
-# officeagent-nginx-prod        Up                       0.0.0.0:80->80/tcp, 0.0.0.0:443->443/tcp
-# officeagent-postgres-prod     Up (healthy)             5432/tcp
-# officeagent-redis-prod        Up (healthy)             6379/tcp
-# officeagent-milvus-prod       Up (healthy)             19530/tcp
-# officeagent-minio-prod        Up (healthy)             9000/tcp
-# officeagent-etcd-prod         Up (healthy)             2379/tcp
-# officeagent-es-prod           Up (healthy)             9200/tcp
+# fnixagent-app-prod          Up (healthy)             8000/tcp
+# fnixagent-nginx-prod        Up                       0.0.0.0:80->80/tcp, 0.0.0.0:443->443/tcp
+# fnixagent-postgres-prod     Up (healthy)             5432/tcp
+# fnixagent-redis-prod        Up (healthy)             6379/tcp
+# fnixagent-milvus-prod       Up (healthy)             19530/tcp
+# fnixagent-minio-prod        Up (healthy)             9000/tcp
+# fnixagent-etcd-prod         Up (healthy)             2379/tcp
+# fnixagent-es-prod           Up (healthy)             9200/tcp
 ```
 
 > Milvus 首次启动需要约 60-90 秒做初始化,请耐心等待。
@@ -167,11 +167,11 @@ docker compose -f deploy/docker/docker-compose.prod.yml ps
 
 ```bash
 # 进入应用容器执行数据库迁移
-docker compose -f deploy/docker/docker-compose.prod.yml exec officeagent \
+docker compose -f deploy/docker/docker-compose.prod.yml exec fnixagent \
   alembic upgrade head
 
 # 可选:注入内置工具集(文档转换 / 搜索 等)
-docker compose -f deploy/docker/docker-compose.prod.yml exec officeagent \
+docker compose -f deploy/docker/docker-compose.prod.yml exec fnixagent \
   python scripts/seed_tools.py
 ```
 
@@ -180,7 +180,7 @@ docker compose -f deploy/docker/docker-compose.prod.yml exec officeagent \
 ```bash
 # 1. 健康检查
 curl -k https://localhost/health
-# 期望: {"status":"ok","service":"officeagent",...}
+# 期望: {"status":"ok","service":"fnixagent",...}
 
 # 2. 获取 OpenAPI 文档(浏览器访问)
 # https://localhost/docs
@@ -194,7 +194,7 @@ curl -k -X POST https://localhost/api/v1/auth/register \
 #   1) 先以 user 注册
 #   2) 在数据库中提权:
 #      docker compose -f deploy/docker/docker-compose.prod.yml exec postgres \
-#        psql -U officeagent -d officeagent \
+#        psql -U fnixagent -d fnixagent \
 #        -c "UPDATE users SET role='admin' WHERE username='admin';"
 ```
 
@@ -214,7 +214,7 @@ curl -k -X POST https://localhost/api/v1/auth/register \
 |---|---|---|
 | `POSTGRES_PASSWORD` | PostgreSQL 密码 | **必填** |
 | `REDIS_PASSWORD` | Redis 密码 | **必填** |
-| `MINIO_ACCESS_KEY` | MinIO 访问键 | officeagent |
+| `MINIO_ACCESS_KEY` | MinIO 访问键 | fnixagent |
 | `MINIO_SECRET_KEY` | MinIO 秘密键 | **必填** |
 | `ES_PASSWORD` | Elasticsearch elastic 用户密码 | **必填** |
 
@@ -223,7 +223,7 @@ curl -k -X POST https://localhost/api/v1/auth/register \
 | 变量 | 说明 | 默认 |
 |---|---|---|
 | `JWT_SECRET_KEY` | JWT 签名密钥(≥32 字节) | **必填** |
-| `OFFICEAGENT_MODE` | 运行模式:`legacy` / `evolve` | evolve |
+| `fnixagent_MODE` | 运行模式:`legacy` / `evolve` | evolve |
 | `SERVICE_ENV` | 环境标识 | production |
 
 #### LLM 密钥
@@ -291,7 +291,7 @@ assets/
 | 文件 | 作用 |
 |---|---|
 | [deploy/nginx/nginx.conf](../deploy/nginx/nginx.conf) | nginx 主配置:worker、日志、gzip、SSL、限流区、上游 |
-| [deploy/nginx/officeagent.conf](../deploy/nginx/officeagent.conf) | 站点配置:HTTP→HTTPS 重定向、反向代理、SSE 流式、安全头 |
+| [deploy/nginx/fnixagent.conf](../deploy/nginx/fnixagent.conf) | 站点配置:HTTP→HTTPS 重定向、反向代理、SSE 流式、安全头 |
 | `deploy/nginx/certs/fullchain.pem` | SSL 证书链 |
 | `deploy/nginx/certs/privkey.pem` | SSL 私钥 |
 
@@ -325,7 +325,7 @@ docker compose -f deploy/docker/docker-compose.prod.yml exec nginx nginx -s relo
 
 ```bash
 # 每月 1 号凌晨 3 点检查续签
-0 3 1 * * docker run --rm -v /var/www/certbot:/var/www/certbot -v /etc/letsencrypt:/etc/letsencrypt certbot/certbot renew --quiet && docker exec officeagent-nginx-prod nginx -s reload
+0 3 1 * * docker run --rm -v /var/www/certbot:/var/www/certbot -v /etc/letsencrypt:/etc/letsencrypt certbot/certbot renew --quiet && docker exec fnixagent-nginx-prod nginx -s reload
 ```
 
 ### 4.3 关键 nginx 配置说明
@@ -383,22 +383,22 @@ pnpm build:win    # 或 build:mac / build:all
 
 产物位于 `apps/desktop/dist/`:
 
-- Windows: `OfficeAgent-Setup-1.0.0.exe`(NSIS 安装包)
-- macOS: `OfficeAgent-1.0.0.dmg`(DMG 镜像)
+- Windows: `fnixagent-Setup-1.0.0.exe`(NSIS 安装包)
+- macOS: `fnixagent-1.0.0.dmg`(DMG 镜像)
 
 ### 5.2 配置后端地址
 
-桌面客户端通过环境变量 `OFFICEAGENT_BACKEND_URL` 指定后端地址,默认 `http://localhost:8000`。
+桌面客户端通过环境变量 `fnixagent_BACKEND_URL` 指定后端地址,默认 `http://localhost:8000`。
 
 #### 方式 1:安装时指定(推荐)
 
 ```bash
 # Windows (PowerShell)
-$env:OFFICEAGENT_BACKEND_URL = "https://your-domain.com"
-OfficeAgent-Setup-1.0.0.exe
+$env:fnixagent_BACKEND_URL = "https://your-domain.com"
+fnixagent-Setup-1.0.0.exe
 
 # macOS
-OFFICEAGENT_BACKEND_URL="https://your-domain.com" open OfficeAgent-1.0.0.dmg
+fnixagent_BACKEND_URL="https://your-domain.com" open fnixagent-1.0.0.dmg
 ```
 
 #### 方式 2:打包前写入配置
@@ -406,7 +406,7 @@ OFFICEAGENT_BACKEND_URL="https://your-domain.com" open OfficeAgent-1.0.0.dmg
 修改 [apps/desktop/src/main/index.ts](../apps/desktop/src/main/index.ts) 第 18 行:
 
 ```typescript
-const BACKEND_URL = process.env.OFFICEAGENT_BACKEND_URL || 'https://your-domain.com';
+const BACKEND_URL = process.env.fnixagent_BACKEND_URL || 'https://your-domain.com';
 ```
 
 #### 方式 3:用户在登录页手动切换
@@ -497,36 +497,36 @@ publish:
 docker compose -f deploy/docker/docker-compose.prod.yml logs -f
 
 # 查看指定服务日志(最近 200 行)
-docker compose -f deploy/docker/docker-compose.prod.yml logs --tail 200 officeagent
+docker compose -f deploy/docker/docker-compose.prod.yml logs --tail 200 fnixagent
 
 # 重启单个服务
-docker compose -f deploy/docker/docker-compose.prod.yml restart officeagent
+docker compose -f deploy/docker/docker-compose.prod.yml restart fnixagent
 
 # 进入容器
-docker compose -f deploy/docker/docker-compose.prod.yml exec officeagent bash
-docker compose -f deploy/docker/docker-compose.prod.yml exec postgres psql -U officeagent -d officeagent
+docker compose -f deploy/docker/docker-compose.prod.yml exec fnixagent bash
+docker compose -f deploy/docker/docker-compose.prod.yml exec postgres psql -U fnixagent -d fnixagent
 ```
 
 ### 7.2 数据库备份与恢复
 
 ```bash
 # 备份(每日凌晨 crontab)
-docker exec officeagent-postgres-prod pg_dump -U officeagent officeagent | gzip > backup_$(date +%Y%m%d).sql.gz
+docker exec fnixagent-postgres-prod pg_dump -U fnixagent fnixagent | gzip > backup_$(date +%Y%m%d).sql.gz
 
 # 恢复
-gunzip -c backup_20260101.sql.gz | docker exec -i officeagent-postgres-prod psql -U officeagent -d officeagent
+gunzip -c backup_20260101.sql.gz | docker exec -i fnixagent-postgres-prod psql -U fnixagent -d fnixagent
 ```
 
 ### 7.3 数据卷与升级
 
 ```bash
 # 查看数据卷
-docker volume ls | grep officeagent
+docker volume ls | grep fnixagent
 
 # 升级到新版本
 git pull
 docker compose -f deploy/docker/docker-compose.prod.yml --env-file .env.prod up -d --build
-docker compose -f deploy/docker/docker-compose.prod.yml exec officeagent alembic upgrade head
+docker compose -f deploy/docker/docker-compose.prod.yml exec fnixagent alembic upgrade head
 ```
 
 ### 7.4 Makefile 快捷命令
@@ -581,18 +581,18 @@ elasticsearch:
         memory: 2G
 ```
 
-#### 问题:officeagent 容器启动后立即退出
+#### 问题:fnixagent 容器启动后立即退出
 
-**现象**:`docker compose logs officeagent` 显示数据库连接失败。
+**现象**:`docker compose logs fnixagent` 显示数据库连接失败。
 
 **解决**:确认 PostgreSQL 已 healthy,且 `.env.prod` 中密码与 `DATABASE_URL` 一致:
 
 ```bash
 # 验证密码
-docker exec officeagent-postgres-prod psql -U officeagent -d officeagent -c "SELECT 1;"
+docker exec fnixagent-postgres-prod psql -U fnixagent -d fnixagent -c "SELECT 1;"
 
 # 检查环境变量是否注入
-docker compose -f deploy/docker/docker-compose.prod.yml exec officeagent env | grep DATABASE_URL
+docker compose -f deploy/docker/docker-compose.prod.yml exec fnixagent env | grep DATABASE_URL
 ```
 
 ### 8.2 nginx / HTTPS 问题
@@ -608,16 +608,16 @@ docker compose -f deploy/docker/docker-compose.prod.yml exec officeagent env | g
 
 #### 问题:502 Bad Gateway
 
-**原因**:后端 officeagent 容器未启动或未就绪。
+**原因**:后端 fnixagent 容器未启动或未就绪。
 
 **解决**:
 
 ```bash
 # 1. 确认后端健康
-docker compose -f deploy/docker/docker-compose.prod.yml ps officeagent
+docker compose -f deploy/docker/docker-compose.prod.yml ps fnixagent
 
 # 2. 直接访问后端验证
-docker compose -f deploy/docker/docker-compose.prod.yml exec nginx curl -s http://officeagent:8000/health
+docker compose -f deploy/docker/docker-compose.prod.yml exec nginx curl -s http://fnixagent:8000/health
 
 # 3. 若后端正常但仍 502,检查 nginx upstream 配置
 docker compose -f deploy/docker/docker-compose.prod.yml exec nginx nginx -t
@@ -627,7 +627,7 @@ docker compose -f deploy/docker/docker-compose.prod.yml exec nginx nginx -t
 
 **原因**:nginx 默认开启 `proxy_buffering`,会缓冲整个响应。
 
-**解决**:确认 `deploy/nginx/officeagent.conf` 中 `chat/stream` 路径配置了 `proxy_buffering off`(已默认配置)。若修改后仍不生效,重载 nginx:
+**解决**:确认 `deploy/nginx/fnixagent.conf` 中 `chat/stream` 路径配置了 `proxy_buffering off`(已默认配置)。若修改后仍不生效,重载 nginx:
 
 ```bash
 docker compose -f deploy/docker/docker-compose.prod.yml exec nginx nginx -s reload
@@ -646,13 +646,13 @@ docker compose -f deploy/docker/docker-compose.prod.yml exec nginx nginx -s relo
 
 ```bash
 # 检查 Redis
-docker exec officeagent-redis-prod redis-cli -a $REDIS_PASSWORD ping
+docker exec fnixagent-redis-prod redis-cli -a $REDIS_PASSWORD ping
 # 期望: PONG
 ```
 
 #### 问题:Token 失效后未自动刷新
 
-**原因**:`@officeagent/sdk` 的 401 拦截器依赖 `refresh_token`,若 refresh_token 也过期(7 天),需重新登录。
+**原因**:`@fnixagent/sdk` 的 401 拦截器依赖 `refresh_token`,若 refresh_token 也过期(7 天),需重新登录。
 
 **解决**:确认客户端实现了 `installAutoRefreshInterceptor`,且 `refresh_token` 未过期。详见 [packages/sdk/src/auth.ts](../packages/sdk/src/auth.ts)。
 
@@ -681,7 +681,7 @@ client_max_body_size 100M;    # 调整为期望上限
 **排查**:
 
 1. 在客户端机器上执行 `curl -k https://your-domain.com/health`
-2. 确认 `OFFICEAGENT_BACKEND_URL` 环境变量正确
+2. 确认 `fnixagent_BACKEND_URL` 环境变量正确
 3. 确认防火墙允许 443 端口入站
 4. 自签证书场景下,客户端机器需信任证书
 
@@ -700,7 +700,7 @@ client_max_body_size 100M;    # 调整为期望上限
 1. 确认客户端为打包版本(`app.isPackaged === true`),开发模式跳过更新检查
 2. 确认 `electron-builder.yml` 中 `publish.url` 可达
 3. 检查 `latest.yml` 中的版本号是否高于当前版本
-4. 查看客户端日志:`%APPDATA%/OfficeAgent/logs/`(Win)或 `~/Library/Logs/OfficeAgent/`(macOS)
+4. 查看客户端日志:`%APPDATA%/fnixagent/logs/`(Win)或 `~/Library/Logs/fnixagent/`(macOS)
 
 ### 8.6 性能问题
 
@@ -726,13 +726,13 @@ docker stats
 
 1. 通过管理后台调小 `memory.short_term.max_messages`
 2. 设置合理的 `llm.cache.ttl_seconds`(默认 3600 秒)
-3. 定期重启 officeagent 容器(`docker compose restart officeagent`)
+3. 定期重启 fnixagent 容器(`docker compose restart fnixagent`)
 
 ### 8.7 日志位置速查
 
 | 服务 | 日志位置 |
 |---|---|
-| officeagent | `docker compose logs officeagent` 或卷 `app_logs:/app/logs` |
+| fnixagent | `docker compose logs fnixagent` 或卷 `app_logs:/app/logs` |
 | nginx | `docker compose logs nginx` 或容器内 `/var/log/nginx/` |
 | postgres | `docker compose logs postgres` |
 | milvus | `docker compose logs milvus` |
@@ -746,7 +746,7 @@ docker stats
 
 ```bash
 # 1. 备份数据库
-docker exec officeagent-postgres-prod pg_dump -U officeagent officeagent | gzip > backup_pre_upgrade.sql.gz
+docker exec fnixagent-postgres-prod pg_dump -U fnixagent fnixagent | gzip > backup_pre_upgrade.sql.gz
 
 # 2. 拉取新代码
 git pull origin main
@@ -755,7 +755,7 @@ git pull origin main
 docker compose -f deploy/docker/docker-compose.prod.yml --env-file .env.prod up -d --build
 
 # 4. 执行数据库迁移
-docker compose -f deploy/docker/docker-compose.prod.yml exec officeagent alembic upgrade head
+docker compose -f deploy/docker/docker-compose.prod.yml exec fnixagent alembic upgrade head
 
 # 5. 验证
 curl -k https://localhost/health
@@ -771,10 +771,10 @@ git checkout <previous-tag>
 docker compose -f deploy/docker/docker-compose.prod.yml --env-file .env.prod up -d --build
 
 # 3. 回滚数据库迁移(谨慎!可能丢数据)
-docker compose -f deploy/docker/docker-compose.prod.yml exec officeagent alembic downgrade -1
+docker compose -f deploy/docker/docker-compose.prod.yml exec fnixagent alembic downgrade -1
 
 # 4. 必要时恢复数据库备份
-gunzip -c backup_pre_upgrade.sql.gz | docker exec -i officeagent-postgres-prod psql -U officeagent -d officeagent
+gunzip -c backup_pre_upgrade.sql.gz | docker exec -i fnixagent-postgres-prod psql -U fnixagent -d fnixagent
 ```
 
 ### 9.3 桌面客户端灰度发布
@@ -801,7 +801,7 @@ publish:
 
 ```bash
 # 1. 克隆 + 配置
-git clone <repo> officeagent && cd officeagent
+git clone <repo> fnixagent && cd fnixagent
 cp .env.prod.example .env.prod && make gen-secrets
 
 # 2. 生成自签证书(或用 Let's Encrypt)
@@ -815,7 +815,7 @@ openssl req -x509 -newkey rsa:2048 -nodes \
 make deploy-prod
 
 # 4. 初始化数据库
-docker compose -f deploy/docker/docker-compose.prod.yml exec officeagent alembic upgrade head
+docker compose -f deploy/docker/docker-compose.prod.yml exec fnixagent alembic upgrade head
 
 # 5. 验证
 curl -k https://localhost/health

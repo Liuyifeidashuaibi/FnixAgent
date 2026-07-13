@@ -7,9 +7,9 @@ requires = ["hatchling", "hatch-requirements-txt"]
 build-backend = "hatchling.build"
 
 [project]
-name = "officeagent"
+name = "fnixagent"
 version = "1.1.0"
-description = "智能办公助手 — 自进化 Agent(KTG + STP + MFP + LangGraph)"
+description = "FnixAgent — 智能办公助手，自进化 Agent(KTG + STP + MFP + LangGraph)"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0"
@@ -54,19 +54,19 @@ ocr = [
 ]
 # 聚合全部可选依赖
 all = [
-    "officeagent[security,cloud,ocr]",
+    "fnixagent[security,cloud,ocr]",
 ]
 
 [project.urls]
-Homepage = "https://github.com/officeagent/officeagent"
-Documentation = "https://github.com/officeagent/officeagent/blob/main/DEVELOPMENT.md"
-Issues = "https://github.com/officeagent/officeagent/issues"
+Homepage = "https://github.com/Liuyifeidashuaibi/FnixAgent"
+Documentation = "https://github.com/Liuyifeidashuaibi/FnixAgent/blob/main/DEVELOPMENT.md"
+Issues = "https://github.com/Liuyifeidashuaibi/FnixAgent/issues"
 
 [project.scripts]
-officeagent = "officeagent.main:main"
+fnixagent = "fnixagent.main:main"
 
 # 插件入口点:第三方 DocumentConverter 实现通过此入口点注册
-[project.entry-points."officeagent.converters"]
+[project.entry-points."fnixagent.converters"]
 # 空占位 — 插件将通过此入口点注册 DocumentConverter 实现
 
 # ---------------------------------------------------------------------------
@@ -74,11 +74,11 @@ officeagent = "officeagent.main:main"
 # ---------------------------------------------------------------------------
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/officeagent"]
+packages = ["src/fnixagent"]
 
 [tool.hatch.build.targets.sdist]
 include = [
-    "src/officeagent",
+    "src/fnixagent",
     "requirements.txt",
     "README.md",
     "LICENSE",
@@ -127,7 +127,7 @@ line-ending = "auto"
 [tool.pyright]
 typeCheckingMode = "strict"
 pythonVersion = "3.11"
-include = ["src/officeagent"]
+include = ["src/fnixagent"]
 exclude = [
     "_references",
     "tests",
@@ -156,7 +156,7 @@ markers = [
 # ---------------------------------------------------------------------------
 
 [tool.coverage.run]
-source = ["src/officeagent"]
+source = ["src/fnixagent"]
 omit = [
     "*/tests/*",
     "*/__pycache__/*",

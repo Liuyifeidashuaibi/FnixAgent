@@ -1,6 +1,6 @@
 /**
  * Electron 渲染进程全局类型声明
- * OfficeAgent Desktop — 浅色主题布局层
+ * fnixagent Desktop — 浅色主题布局层
  */
 
 export interface FileTreeNode {

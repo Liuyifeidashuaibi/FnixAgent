@@ -1,13 +1,13 @@
-# OfficeAgent Electron 桌面客户端打包配置
+# fnixagent Electron 桌面客户端打包配置
 # Phase 1.9: Win nsis + macOS dmg + 代码签名 + 自动更新
 # Phase 2.6: 全平台(Win + macOS + Linux AppImage/deb/rpm)+ 代码签名架构
 #
 # 用法:
-#   pnpm --filter @officeagent/desktop build:win      # 打包 Windows nsis
-#   pnpm --filter @officeagent/desktop build:mac      # 打包 macOS dmg
-#   pnpm --filter @officeagent/desktop build:linux    # 打包 Linux AppImage+deb+rpm
-#   pnpm --filter @officeagent/desktop build:all      # 打包全部平台
-#   pnpm --filter @officeagent/desktop publish        # 打包并发布到 GitHub Releases
+#   pnpm --filter @fnixagent/desktop build:win      # 打包 Windows nsis
+#   pnpm --filter @fnixagent/desktop build:mac      # 打包 macOS dmg
+#   pnpm --filter @fnixagent/desktop build:linux    # 打包 Linux AppImage+deb+rpm
+#   pnpm --filter @fnixagent/desktop build:all      # 打包全部平台
+#   pnpm --filter @fnixagent/desktop publish        # 打包并发布到 GitHub Releases
 #
 # 代码签名环境变量(不设置则产物未签名,开发环境可用):
 #   Windows EV 证书:
@@ -24,9 +24,9 @@
 #     无需代码签名(Linux 桌面生态无强制签名要求)
 #     可选:GPG 签名通过 signPackages=true + 环境变量 GPKey 配置(本文档暂不启用)
 
-appId: com.officeagent.desktop
-productName: OfficeAgent
-copyright: Copyright © 2026 OfficeAgent Team
+appId: com.fnixagent.desktop
+productName: fnixagent
+copyright: Copyright © 2026 fnixagent Team
 
 # 入口(由 electron-vite build 产出)
 directories:
@@ -69,9 +69,9 @@ nsis:
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: true
   createStartMenuShortcut: true
-  shortcutName: OfficeAgent
+  shortcutName: fnixagent
   # 安装包文件名
-  artifactName: OfficeAgent-Setup-${version}.${ext}
+  artifactName: fnixagent-Setup-${version}.${ext}
 
 # macOS 打包(dmg)
 mac:
@@ -92,8 +92,8 @@ mac:
   icon: buildResources/icon.icns
 
 dmg:
-  title: OfficeAgent ${version}
-  artifactName: OfficeAgent-${version}-${arch}.${ext}
+  title: fnixagent ${version}
+  artifactName: fnixagent-${version}-${arch}.${ext}
   contents:
     - x: 130
       y: 220
@@ -114,11 +114,11 @@ linux:
   category: Office
   icon: buildResources/icon.png
   # 桌面集成(.desktop 文件元数据)
-  maintainer: OfficeAgent Team <dev@officeagent.com>
-  vendor: OfficeAgent
+  maintainer: fnixagent Team <dev@fnixagent.com>
+  vendor: fnixagent
   synopsis: AI-native office workstation
   description: |
-    OfficeAgent 是一款 AI 原生的办公工作站,集成文档编辑、智能对话、
+    fnixagent 是一款 AI 原生的办公工作站,集成文档编辑、智能对话、
     自进化 Agent、知识拓扑等能力,支持私有化部署。
   # 文件关联(可选,关联 .md/.txt/.yaml 文件)
   mimeTypes:
@@ -127,32 +127,32 @@ linux:
     - application/yaml
   # AppImage 元数据(运行时集成)
   appImage:
-    artifactName: OfficeAgent-${version}-${arch}.${ext}
+    artifactName: fnixagent-${version}-${arch}.${ext}
   # deb 包元数据
   deb:
     depends:
       - libnotify4
       - libxtst6
       - libnss3
-    artifactName: OfficeAgent-${version}-${arch}.${ext}
+    artifactName: fnixagent-${version}-${arch}.${ext}
   # rpm 包元数据
   rpm:
     depends:
       - libnotify
       - libXtst
       - nss
-    artifactName: OfficeAgent-${version}-${arch}.${ext}
+    artifactName: fnixagent-${version}-${arch}.${ext}
 
 # 自动更新:发布到 GitHub Releases
 # electron-updater 运行时从 latest.yml / latest-mac.yml 检查更新
 publish:
   - provider: github
-    owner: officeagent
-    repo: officeagent
+    owner: fnixagent
+    repo: fnixagent
     releaseType: release
   # 备用 CDN(可选,自建静态资源服务器)
   - provider: generic
-    url: https://cdn.officeagent.com/releases/${version}/
+    url: https://cdn.fnixagent.com/releases/${version}/
     channel: latest
 
 # 压缩

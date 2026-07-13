@@ -1,4 +1,4 @@
-# OfficeAgent Security — 安全扫描工作流
+# fnixagent Security — 安全扫描工作流
 # 触发: push 到 main/develop + pull_request + 定时(每天 02:00 UTC)
 # 任务: 静态安全扫描 + 依赖漏洞扫描 + 文件系统扫描 + 秘密扫描 + CodeQL
 

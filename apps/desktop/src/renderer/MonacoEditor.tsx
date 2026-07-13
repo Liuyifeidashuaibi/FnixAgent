@@ -214,7 +214,7 @@ function isNonEditableFile(filePath: string): boolean {
 }
 
 // ── 自定义 Monaco 浅色主题名称 ──
-const THEME_NAME = 'officeagent-light';
+const THEME_NAME = 'fnixagent-light';
 
 // ── 通用编辑器配置 ──
 const commonOptions: editor.IStandaloneEditorConstructionOptions = {

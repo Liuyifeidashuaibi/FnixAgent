@@ -700,7 +700,7 @@ function shortenPath(p: string): string {
 }
 
 // spin keyframes(注入一次)
-const __FILESPANEL_SPIN_ID = '__officeagent_filespanel_spin__';
+const __FILESPANEL_SPIN_ID = '__fnixagent_filespanel_spin__';
 if (typeof document !== 'undefined' && !document.getElementById(__FILESPANEL_SPIN_ID)) {
   const el = document.createElement('style');
   el.id = __FILESPANEL_SPIN_ID;
@@ -936,12 +936,12 @@ const s: Record<string, CSSProperties> = {
 };
 
 // Open Editor 项 hover 时显示关闭按钮
-const __FILESPANEL_HOVER_ID = '__officeagent_filespanel_hover__';
+const __FILESPANEL_HOVER_ID = '__fnixagent_filespanel_hover__';
 if (typeof document !== 'undefined' && !document.getElementById(__FILESPANEL_HOVER_ID)) {
   const el = document.createElement('style');
   el.id = __FILESPANEL_HOVER_ID;
   el.textContent =
-    '[data-officeagent-filespanel-item]:hover button{opacity:1!important}';
+    '[data-fnixagent-filespanel-item]:hover button{opacity:1!important}';
   document.head.appendChild(el);
 }
 
