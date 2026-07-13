@@ -39,7 +39,7 @@ elasticsearch==8.10.0
 minio==7.2.0
 
 # 向量数据库
-pymilvus==2.3.0
+pymilvus==3.0.0
 
 # 工具调用
 requests==2.31.0
