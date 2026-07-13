@@ -18,7 +18,7 @@ import { initAutoUpdater } from './updater';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // 后端 API 地址(可通过环境变量覆盖)
-const BACKEND_URL = process.env.OFFICEAGENT_BACKEND_URL || 'http://localhost:8000';
+const BACKEND_URL = process.env.OFFICEAGENT_BACKEND_URL || 'http://localhost:8765';
 
 // Phase 3.0: OAuth 自定义协议(用于 Google OAuth 等第三方登录回调)
 const OAUTH_PROTOCOL = 'officeagent';

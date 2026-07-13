@@ -13,7 +13,9 @@ interface Process {
   [key: string]: unknown;
 }
 
-const API_BASE = 'http://localhost:8000/api/v1/agentos';
+import { API_BASE } from './apiConfig';
+
+const AGENT_API = `${API_BASE}/api/v1/agentos`;
 
 export function ProcessesPanel() {
   const [processes, setProcesses] = useState<Process[]>([]);
@@ -22,7 +24,7 @@ export function ProcessesPanel() {
 
   const fetchProcesses = useCallback(async () => {
     try {
-      const resp = await fetch(`${API_BASE}/ps`);
+      const resp = await fetch(`${AGENT_API}/ps`);
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const data = await resp.json();
       const list = Array.isArray(data) ? data : data.processes ?? [];
@@ -43,7 +45,7 @@ export function ProcessesPanel() {
 
   async function handleKill(pid: number) {
     try {
-      const resp = await fetch(`${API_BASE}/kill`, {
+      const resp = await fetch(`${AGENT_API}/kill`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pid, reason: '手动终止' }),

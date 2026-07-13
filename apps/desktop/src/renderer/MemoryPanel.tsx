@@ -12,7 +12,9 @@ interface MemoryResult {
   [key: string]: unknown;
 }
 
-const API_BASE = 'http://localhost:8000/api/v1/agentos/mem';
+import { API_BASE } from './apiConfig';
+
+const MEM_API = `${API_BASE}/api/v1/agentos/mem`;
 
 export function MemoryPanel() {
   const [query, setQuery] = useState('');
@@ -26,7 +28,7 @@ export function MemoryPanel() {
 
     setLoading(true);
     try {
-      const resp = await fetch(`${API_BASE}/recall`, {
+      const resp = await fetch(`${MEM_API}/recall`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

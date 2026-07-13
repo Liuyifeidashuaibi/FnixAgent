@@ -10,28 +10,30 @@ interface HistoryEntry {
   timestamp: number;
 }
 
-const API_BASE = 'http://localhost:8000/api/v1/agentos';
+import { API_BASE } from './apiConfig';
+
+const AGENT_API = `${API_BASE}/api/v1/agentos`;
 
 /** 根据命令前缀判断应调用的端点 */
 function resolveEndpoint(cmd: string): { method: string; url: string; body?: unknown } {
   const trimmed = cmd.trim().toLowerCase();
 
   if (trimmed === 'ps') {
-    return { method: 'GET', url: `${API_BASE}/ps` };
+    return { method: 'GET', url: `${AGENT_API}/ps` };
   }
   if (trimmed === 'stats') {
-    return { method: 'GET', url: `${API_BASE}/stats` };
+    return { method: 'GET', url: `${AGENT_API}/stats` };
   }
   if (trimmed === 'help') {
-    return { method: 'GET', url: `${API_BASE}/help` };
+    return { method: 'GET', url: `${AGENT_API}/help` };
   }
   if (trimmed === 'boot' || trimmed === '启动') {
-    return { method: 'POST', url: `${API_BASE}/boot` };
+    return { method: 'POST', url: `${AGENT_API}/boot` };
   }
   // 默认：自然语言命令
   return {
     method: 'POST',
-    url: `${API_BASE}/natural`,
+    url: `${AGENT_API}/natural`,
     body: { text: trimmed },
   };
 }

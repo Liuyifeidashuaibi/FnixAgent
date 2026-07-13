@@ -25,7 +25,9 @@ interface AuditLog {
   [key: string]: unknown;
 }
 
-const API_BASE = 'http://localhost:8000/api/v1/agentos';
+import { API_BASE } from './apiConfig';
+
+const AGENT_API = `${API_BASE}/api/v1/agentos`;
 
 export function PolicyPanel() {
   const [policies, setPolicies] = useState<Policy[]>([]);
@@ -42,9 +44,9 @@ export function PolicyPanel() {
     void (async () => {
       try {
         const [policyResp, guardResp, auditResp] = await Promise.all([
-          fetch(`${API_BASE}/policy/list`),
-          fetch(`${API_BASE}/guardrail/list`),
-          fetch(`${API_BASE}/audit?limit=20`),
+          fetch(`${AGENT_API}/policy/list`),
+          fetch(`${AGENT_API}/guardrail/list`),
+          fetch(`${AGENT_API}/audit?limit=20`),
         ]);
 
         const parse = async (resp: Response) => {

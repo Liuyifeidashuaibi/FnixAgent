@@ -18,6 +18,9 @@ import { Sidebar } from './Sidebar';
 import { EditorPanel } from './EditorPanel';
 import { ComposerPanel } from './ComposerPanel';
 import { WorkPanel } from './WorkPanel';
+import { AgentProcessPanel } from './AgentProcessPanel';
+import { SettingsPanel } from './SettingsPanel';
+import { CommandPalette } from './CommandPalette';
 
 /* ================================================
    Types
@@ -42,6 +45,7 @@ interface OpenFile {
 export const StudioLayout: React.FC<StudioLayoutProps> = ({ onLogout: _onLogout }) => {
   /* ---- 核心状态 ---- */
   const [activeActivity, setActiveActivity] = useState<Activity>('files');
+  const [previousActivity, setPreviousActivity] = useState<Activity>('files');
   const [sidebarVisible, setSidebarVisible] = useState(true);
   const [agentPanelVisible, setAgentPanelVisible] = useState(true);
   const [centerView, setCenterView] = useState<'editor' | 'chat'>('editor');
@@ -53,10 +57,14 @@ export const StudioLayout: React.FC<StudioLayoutProps> = ({ onLogout: _onLogout 
   const [fileContent, setFileContent] = useState('');
   const [savedContent, setSavedContent] = useState('');
   const [saving, setSaving] = useState(false);
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
 
   /* ---- 处理函数 ---- */
 
   const handleSelectActivity = useCallback((id: string) => {
+    if (id === 'settings') {
+      setPreviousActivity(activeActivity);
+    }
     setActiveActivity(id as Activity);
     if (id === 'chat' || id === 'work') {
       setCenterView('chat');
@@ -64,7 +72,7 @@ export const StudioLayout: React.FC<StudioLayoutProps> = ({ onLogout: _onLogout 
     if (!sidebarVisible) {
       setSidebarVisible(true);
     }
-  }, [sidebarVisible]);
+  }, [sidebarVisible, activeActivity]);
 
   const handleToggleSidebar = useCallback(() => {
     setSidebarVisible((v) => !v);
@@ -73,6 +81,10 @@ export const StudioLayout: React.FC<StudioLayoutProps> = ({ onLogout: _onLogout 
   const handleToggleAgentPanel = useCallback(() => {
     setAgentPanelVisible((v) => !v);
   }, []);
+
+  const handleBackFromSettings = useCallback(() => {
+    setActiveActivity(previousActivity);
+  }, [previousActivity]);
 
   const handleToggleCenterView = useCallback(() => {
     setCenterView((v) => (v === 'editor' ? 'chat' : 'editor'));
@@ -186,7 +198,7 @@ export const StudioLayout: React.FC<StudioLayoutProps> = ({ onLogout: _onLogout 
     }
   }, [activeFile, savedContent]);
 
-  /* ---- Ctrl+S 全局保存 ---- */
+  /* ---- Ctrl+S / Ctrl+Shift+P 全局快捷键 ---- */
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
@@ -195,17 +207,16 @@ export const StudioLayout: React.FC<StudioLayoutProps> = ({ onLogout: _onLogout 
           void handleSave();
         }
       }
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'P') {
+        e.preventDefault();
+        setCommandPaletteOpen(true);
+      }
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [activeFile, handleSave]);
 
-  /* ---- AgentPanel 内容 ---- */
-  const agentPanelContent = activeActivity === 'agent' ? 'agent' : 'default';
-
-  /* ================================================
-     Render
-     ================================================ */
+  /* ---- Render ---- */
 
   return (
     <div style={layout.container}>
@@ -228,23 +239,28 @@ export const StudioLayout: React.FC<StudioLayoutProps> = ({ onLogout: _onLogout 
           onToggleSidebar={handleToggleSidebar}
         />
 
-        {/* Sidebar */}
-        {sidebarVisible && (
-          <div style={layout.sidebar}>
-            <Sidebar
-              activeActivity={activeActivity}
-              workspacePath={workspacePath}
-              activeFile={activeFile}
-              openFiles={openFiles}
-              onOpenFile={handleOpenFile}
-              onCloseOpenEditor={handleCloseFile}
-              onSelectFolder={handleOpenFolder}
-            />
-          </div>
-        )}
+        {/* 设置面板 */}
+        {activeActivity === 'settings' ? (
+          <SettingsPanel onBack={handleBackFromSettings} />
+        ) : (
+          <>
+            {/* Sidebar */}
+            {sidebarVisible && (
+              <div style={layout.sidebar}>
+                <Sidebar
+                  activeActivity={activeActivity}
+                  workspacePath={workspacePath}
+                  activeFile={activeFile}
+                  openFiles={openFiles}
+                  onOpenFile={handleOpenFile}
+                  onCloseOpenEditor={handleCloseFile}
+                  onSelectFolder={handleOpenFolder}
+                />
+              </div>
+            )}
 
-        {/* CenterArea */}
-        <div style={layout.center}>
+            {/* CenterArea */}
+            <div style={layout.center}>
           {/* TabBar */}
           {centerView === 'editor' && openFiles.length > 0 && (
             <div style={layout.tabBar}>
@@ -318,46 +334,27 @@ export const StudioLayout: React.FC<StudioLayoutProps> = ({ onLogout: _onLogout 
         {/* AgentPanel */}
         {agentPanelVisible && (
           <div style={layout.agentPanel}>
-            <AgentPanelContent variant={agentPanelContent} />
+            <AgentProcessPanel onOpenFile={handleOpenFile} />
           </div>
         )}
+          </>
+        )}
       </div>
-    </div>
-  );
-};
 
-/* ================================================
-   AgentPanelContent
-   ================================================ */
-
-interface AgentPanelContentProps {
-  variant: 'agent' | 'default';
-}
-
-const AgentPanelContent: React.FC<AgentPanelContentProps> = ({ variant }) => {
-  if (variant === 'agent') {
-    return (
-      <div style={agentStyles.container}>
-        <div style={agentStyles.header}>
-          <span style={agentStyles.title}>Agent</span>
-        </div>
-        <div style={agentStyles.empty}>
-          <p style={agentStyles.emptyText}>暂无活跃进程</p>
-          <p style={agentStyles.hint}>Agent 对话中创建的进程将显示在此处</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div style={agentStyles.container}>
-      <div style={agentStyles.header}>
-        <span style={agentStyles.title}>辅助面板</span>
-      </div>
-      <div style={agentStyles.empty}>
-        <p style={agentStyles.emptyText}>进程 / 记忆 / Shell / Policy</p>
-        <p style={agentStyles.hint}>选择 Agent 活动以查看详情</p>
-      </div>
+      {/* CommandPalette */}
+      <CommandPalette
+        isOpen={commandPaletteOpen}
+        onClose={() => setCommandPaletteOpen(false)}
+        onOpenFolder={handleOpenFolder}
+        onSave={handleSave}
+        onCloseFile={() => {
+          if (activeFile) {
+            handleCloseFile(activeFile);
+          }
+        }}
+        onToggleSidebar={handleToggleSidebar}
+        onToggleAgentPanel={handleToggleAgentPanel}
+      />
     </div>
   );
 };
@@ -528,50 +525,5 @@ const layout: Record<string, React.CSSProperties> = {
     flexShrink: 0,
     borderLeft: '1px solid var(--border-color)',
     overflow: 'hidden',
-  },
-};
-
-const agentStyles: Record<string, React.CSSProperties> = {
-  container: {
-    display: 'flex',
-    flexDirection: 'column',
-    height: '100%',
-    background: 'var(--bg-secondary)',
-    userSelect: 'none',
-  },
-  header: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '8px 12px',
-    flexShrink: 0,
-    borderBottom: '1px solid var(--border-color)',
-  },
-  title: {
-    fontSize: 11,
-    fontWeight: 600,
-    color: 'var(--text-secondary)',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  empty: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
-    textAlign: 'center',
-    gap: 4,
-  },
-  emptyText: {
-    fontSize: 13,
-    color: 'var(--text-secondary)',
-    margin: 0,
-  },
-  hint: {
-    fontSize: 11,
-    color: 'var(--text-tertiary)',
-    margin: 0,
   },
 };

@@ -8,9 +8,8 @@
  *   - Ctrl+S 保存
  *   - 无文件时显示占位
  */
-import { useCallback, useRef } from 'react';
-import Editor, { type OnMount } from '@monaco-editor/react';
-import type { editor } from 'monaco-editor';
+import { useRef } from 'react';
+import { MonacoEditor } from './MonacoEditor';
 
 export interface EditorPanelProps {
   openFiles: { path: string; name: string; isDirty: boolean }[];
@@ -46,23 +45,7 @@ export function EditorPanel({
   onContentChange,
   onSave,
 }: EditorPanelProps) {
-  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  const handleEditorMount: OnMount = useCallback(
-    (editor, _monaco) => {
-      editorRef.current = editor;
-      // Ctrl+S 保存
-      editor.addCommand(
-        // monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS
-        2048 | 49,
-        () => {
-          if (activeFile) onSave(activeFile);
-        },
-      );
-    },
-    [activeFile, onSave],
-  );
 
   const activeTab = openFiles.find((f) => f.path === activeFile);
 
@@ -116,28 +99,11 @@ export function EditorPanel({
       {/* 编辑器区 */}
       {activeFile ? (
         <div style={styles.editorArea}>
-          <Editor
-            height="100%"
-            theme="light"
+          <MonacoEditor
             value={fileContent}
-            onChange={(value) => onContentChange(value ?? '')}
-            onMount={handleEditorMount}
-            options={{
-              fontSize: 14,
-              fontFamily: CSS['--font-mono'],
-              minimap: { enabled: true },
-              lineNumbers: 'on' as const,
-              wordWrap: 'on' as const,
-              tabSize: 2,
-              renderLineHighlight: 'line' as const,
-              scrollBeyondLastLine: false,
-              automaticLayout: true,
-              padding: { top: 8 },
-              folding: true,
-              glyphMargin: false,
-              lineDecorationsWidth: 8,
-              lineNumbersMinChars: 3,
-            }}
+            onChange={(value) => onContentChange(value)}
+            filePath={activeFile}
+            onSave={() => onSave(activeFile)}
           />
           {/* 状态栏 */}
           <div style={styles.statusBar}>

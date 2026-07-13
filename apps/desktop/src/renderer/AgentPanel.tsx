@@ -14,7 +14,9 @@ interface AgentPanelProps {
 
 type Tab = 'processes' | 'memory' | 'terminal' | 'policy';
 
-const API_BASE = 'http://localhost:8000/api/v1/agentos';
+import { API_BASE } from './apiConfig';
+
+const AGENT_API = `${API_BASE}/api/v1/agentos`;
 
 const tabs: { key: Tab; label: string; icon: string }[] = [
   { key: 'processes', label: '进程', icon: '🤖' },
@@ -32,7 +34,7 @@ export function AgentPanel({ visible }: AgentPanelProps) {
   // 检查内核状态
   const checkBootStatus = useCallback(async () => {
     try {
-      const resp = await fetch(`${API_BASE}/stats`);
+      const resp = await fetch(`${AGENT_API}/stats`);
       if (resp.ok) {
         setBooted(true);
       } else {
@@ -52,7 +54,7 @@ export function AgentPanel({ visible }: AgentPanelProps) {
   async function handleBoot() {
     setBootLoading(true);
     try {
-      const resp = await fetch(`${API_BASE}/boot`, { method: 'POST' });
+      const resp = await fetch(`${AGENT_API}/boot`, { method: 'POST' });
       if (resp.ok) {
         setBooted(true);
       }
@@ -66,7 +68,7 @@ export function AgentPanel({ visible }: AgentPanelProps) {
   async function handleShutdown() {
     setBootLoading(true);
     try {
-      const resp = await fetch(`${API_BASE}/shutdown`, { method: 'POST' });
+      const resp = await fetch(`${AGENT_API}/shutdown`, { method: 'POST' });
       if (resp.ok) {
         setBooted(false);
       }

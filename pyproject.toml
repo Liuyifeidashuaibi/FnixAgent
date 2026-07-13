@@ -88,7 +88,7 @@ include = [
 [tool.hatch.metadata]
 allow-direct-references = true
 
-[tool.hatch.metadata.hooks.requirements-txt]
+[tool.hatch.metadata.hooks.requirements_txt]
 requirements-file = "requirements.txt"
 
 # ---------------------------------------------------------------------------

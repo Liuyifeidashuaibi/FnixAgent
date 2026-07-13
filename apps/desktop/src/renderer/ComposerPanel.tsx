@@ -14,8 +14,7 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { CommandInput } from './CommandInput';
-
-const API_BASE = 'http://localhost:8000';
+import { API_BASE } from './apiConfig';
 
 export interface ToolCall {
   name: string;
