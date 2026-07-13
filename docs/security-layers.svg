@@ -1,0 +1,209 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" font-family="'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif">
+  <defs>
+    <linearGradient id="bgSec" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fef2f2"/>
+      <stop offset="100%" stop-color="#fff7ed"/>
+    </linearGradient>
+    <linearGradient id="ring1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#dc2626" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#ef4444" stop-opacity="0.2"/>
+    </linearGradient>
+    <linearGradient id="ring2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ea580c" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#f97316" stop-opacity="0.2"/>
+    </linearGradient>
+    <linearGradient id="ring3" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#d97706" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.2"/>
+    </linearGradient>
+    <linearGradient id="ring4" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0891b2" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#06b6d4" stop-opacity="0.2"/>
+    </linearGradient>
+    <linearGradient id="ring5" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7c3aed" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.2"/>
+    </linearGradient>
+    <linearGradient id="ring6" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#059669" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#10b981" stop-opacity="0.2"/>
+    </linearGradient>
+    <filter id="secShadow" x="-3%" y="-3%" width="106%" height="106%">
+      <feDropShadow dx="0" dy="3" stdDeviation="6" flood-color="#000" flood-opacity="0.08"/>
+    </filter>
+    <marker id="sArrIn" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 L3,5 Z" fill="#94a3b8"/>
+    </marker>
+    <marker id="sArrBlock" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 L3,5 Z" fill="#dc2626"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="800" fill="url(#bgSec)"/>
+
+  <!-- Title -->
+  <text x="600" y="42" text-anchor="middle" font-size="24" font-weight="700" fill="#1e293b" letter-spacing="1">六道纵深防御体系</text>
+  <text x="600" y="64" text-anchor="middle" font-size="12" fill="#64748b">Defense-in-Depth Security Architecture — 6 Layers from Perimeter to Audit</text>
+  <line x1="480" y1="75" x2="720" y2="75" stroke="#fecaca" stroke-width="1"/>
+
+  <!-- Concentric rings (onion model) -->
+  <!-- Center: Core Agent -->
+  <circle cx="600" cy="400" r="70" fill="#fff" stroke="#1e293b" stroke-width="2" filter="url(#secShadow)"/>
+  <text x="600" y="390" text-anchor="middle" font-size="14" font-weight="700" fill="#1e293b">Agent</text>
+  <text x="600" y="408" text-anchor="middle" font-size="11" fill="#64748b">调度中枢</text>
+  <text x="600" y="424" text-anchor="middle" font-size="10" fill="#94a3b8">(可信内核)</text>
+
+  <!-- Ring 6: Output Audit (innermost protection) -->
+  <circle cx="600" cy="400" r="130" fill="url(#ring6)" stroke="#059669" stroke-width="2" stroke-dasharray="8,4"/>
+  <text x="600" y="282" text-anchor="middle" font-size="12" font-weight="700" fill="#059669">⑤ 输出审核</text>
+  <text x="600" y="298" text-anchor="middle" font-size="9" fill="#10b981">内容审核 · 数据脱敏 · 合规检查</text>
+
+  <!-- Ring 5: Sandbox -->
+  <circle cx="600" cy="400" r="195" fill="url(#ring5)" stroke="#7c3aed" stroke-width="2" stroke-dasharray="8,4"/>
+  <text x="600" y="216" text-anchor="middle" font-size="12" font-weight="700" fill="#7c3aed">④ 沙箱隔离</text>
+  <text x="600" y="232" text-anchor="middle" font-size="9" fill="#8b5cf6">Docker/gVisor · CPU 5s · 内存 256MB · 网络白名单</text>
+
+  <!-- Ring 4: Tool Permission -->
+  <circle cx="600" cy="400" r="260" fill="url(#ring4)" stroke="#0891b2" stroke-width="2" stroke-dasharray="8,4"/>
+  <text x="600" y="148" text-anchor="middle" font-size="12" font-weight="700" fill="#0891b2">③ 工具权限</text>
+  <text x="600" y="164" text-anchor="middle" font-size="9" fill="#06b6d4">Basic/Reasoning/Meta 三级 · 频率限制 · 白名单</text>
+
+  <!-- Ring 3: Input Security -->
+  <circle cx="600" cy="400" r="325" fill="url(#ring3)" stroke="#d97706" stroke-width="2" stroke-dasharray="8,4"/>
+  <text x="280" y="404" font-size="12" font-weight="700" fill="#d97706">② 输入安全</text>
+  <text x="280" y="420" font-size="9" fill="#f59e0b">敏感词 · 注入防护 · 黑白名单</text>
+
+  <!-- Ring 2: Gateway Auth -->
+  <circle cx="600" cy="400" r="380" fill="none" stroke="#ea580c" stroke-width="2" stroke-dasharray="8,4"/>
+  <!-- Label on right side -->
+  <text x="860" y="400" font-size="12" font-weight="700" fill="#ea580c" text-anchor="end">① 网关鉴权</text>
+  <text x="860" y="416" font-size="9" fill="#f97316" text-anchor="end">JWT+OAuth2 · 多租户 · 限流 · TraceId</text>
+
+  <!-- External threat -->
+  <text x="600" y="100" text-anchor="middle" font-size="14" fill="#dc2626" font-weight="600">外部威胁</text>
+  <text x="600" y="118" text-anchor="middle" font-size="10" fill="#f87171">恶意输入 · 注入攻击 · 越权访问 · 数据泄露</text>
+  <text x="600" y="760" text-anchor="middle" font-size="12" fill="#94a3b8">→ 请求必须穿透所有防护层才能到达核心 ←</text>
+
+  <!-- Block points (X marks on rings where threats are blocked) -->
+  <g>
+    <!-- Blocked at gateway -->
+    <line x1="540" y1="85" x2="555" y2="100" stroke="#dc2626" stroke-width="2"/>
+    <line x1="555" y1="85" x2="540" y2="100" stroke="#dc2626" stroke-width="2"/>
+    <text x="565" y="100" font-size="9" fill="#dc2626" font-weight="600">未认证→拒绝</text>
+
+    <!-- Blocked at input security -->
+    <line x1="300" y1="180" x2="315" y2="195" stroke="#dc2626" stroke-width="2"/>
+    <line x1="315" y1="180" x2="300" y2="195" stroke="#dc2626" stroke-width="2"/>
+    <text x="260" y="175" font-size="9" fill="#dc2626" font-weight="600">注入→拦截</text>
+
+    <!-- Blocked at sandbox -->
+    <line x1="830" y1="270" x2="845" y2="285" stroke="#dc2626" stroke-width="2"/>
+    <line x1="845" y1="270" x2="830" y2="285" stroke="#dc2626" stroke-width="2"/>
+    <text x="855" y="280" font-size="9" fill="#dc2626" font-weight="600">高危→沙箱阻断</text>
+  </g>
+
+  <!-- ============================================================ -->
+  <!-- RIGHT: Detailed layer cards -->
+  <!-- ============================================================ -->
+  <g transform="translate(30, 580)">
+    <!-- Layer 1 -->
+    <g filter="url(#secShadow)">
+      <rect x="0" y="0" width="180" height="80" rx="10" fill="#fff" stroke="#fed7aa" stroke-width="1.5"/>
+      <rect x="0" y="0" width="4" height="80" rx="2" fill="#ea580c"/>
+    </g>
+    <text x="14" y="22" font-size="11" font-weight="700" fill="#ea580c">① 网关鉴权</text>
+    <text x="14" y="38" font-size="9" fill="#64748b">JWT + OAuth2 + LDAP/AD</text>
+    <text x="14" y="51" font-size="9" fill="#64748b">多租户隔离 · 令牌桶限流</text>
+    <text x="14" y="64" font-size="9" fill="#64748b">熔断 · TraceId 生成</text>
+    <text x="166" y="74" text-anchor="end" font-size="8" fill="#ea580c">ASGI Gateway</text>
+
+    <!-- Layer 2 -->
+    <g filter="url(#secShadow)">
+      <rect x="200" y="0" width="180" height="80" rx="10" fill="#fff" stroke="#fde68a" stroke-width="1.5"/>
+      <rect x="200" y="0" width="4" height="80" rx="2" fill="#d97706"/>
+    </g>
+    <text x="214" y="22" font-size="11" font-weight="700" fill="#d97706">② 输入安全</text>
+    <text x="214" y="38" font-size="9" fill="#64748b">敏感词检测(低/中/高)</text>
+    <text x="214" y="51" font-size="9" fill="#64748b">Prompt 注入防护</text>
+    <text x="214" y="64" font-size="9" fill="#64748b">ToolAuditor 语义审计</text>
+    <text x="366" y="74" text-anchor="end" font-size="8" fill="#d97706">SecurityEngine</text>
+
+    <!-- Layer 3 -->
+    <g filter="url(#secShadow)">
+      <rect x="400" y="0" width="180" height="80" rx="10" fill="#fff" stroke="#a5f3fc" stroke-width="1.5"/>
+      <rect x="400" y="0" width="4" height="80" rx="2" fill="#0891b2"/>
+    </g>
+    <text x="414" y="22" font-size="11" font-weight="700" fill="#0891b2">③ 工具权限</text>
+    <text x="414" y="38" font-size="9" fill="#64748b">Basic/Reasoning/Meta 三级</text>
+    <text x="414" y="51" font-size="9" fill="#64748b">ToolWhitelist 白名单</text>
+    <text x="414" y="64" font-size="9" fill="#64748b">速率限制 · RBAC</text>
+    <text x="566" y="74" text-anchor="end" font-size="8" fill="#0891b2">ToolRegistry</text>
+
+    <!-- Layer 4 -->
+    <g filter="url(#secShadow)">
+      <rect x="600" y="0" width="180" height="80" rx="10" fill="#fff" stroke="#ddd6fe" stroke-width="1.5"/>
+      <rect x="600" y="0" width="4" height="80" rx="2" fill="#7c3aed"/>
+    </g>
+    <text x="614" y="22" font-size="11" font-weight="700" fill="#7c3aed">④ 沙箱隔离</text>
+    <text x="614" y="38" font-size="9" fill="#64748b">Win Job / Linux bwrap / macOS</text>
+    <text x="614" y="51" font-size="9" fill="#64748b">CPU 5s · 内存 256MB</text>
+    <text x="614" y="64" font-size="9" fill="#64748b">网络白名单 · 文件系统限制</text>
+    <text x="766" y="74" text-anchor="end" font-size="8" fill="#7c3aed">CodeSandbox</text>
+
+    <!-- Layer 5 -->
+    <g filter="url(#secShadow)">
+      <rect x="800" y="0" width="180" height="80" rx="10" fill="#fff" stroke="#bbf7d0" stroke-width="1.5"/>
+      <rect x="800" y="0" width="4" height="80" rx="2" fill="#059669"/>
+    </g>
+    <text x="814" y="22" font-size="11" font-weight="700" fill="#059669">⑤ 输出审核</text>
+    <text x="814" y="38" font-size="9" fill="#64748b">内容审核 · 合规检查</text>
+    <text x="814" y="51" font-size="9" fill="#64748b">数据脱敏(邮箱/手机/身份证)</text>
+    <text x="814" y="64" font-size="9" fill="#64748b">数字签名验证</text>
+    <text x="966" y="74" text-anchor="end" font-size="8" fill="#059669">Moderation</text>
+
+    <!-- Layer 6 -->
+    <g filter="url(#secShadow)">
+      <rect x="1000" y="0" width="170" height="80" rx="10" fill="#fff" stroke="#e2e8f0" stroke-width="1.5"/>
+      <rect x="1000" y="0" width="4" height="80" rx="2" fill="#64748b"/>
+    </g>
+    <text x="1014" y="22" font-size="11" font-weight="700" fill="#64748b">⑥ 审计落库</text>
+    <text x="1014" y="38" font-size="9" fill="#64748b">全量操作记录</text>
+    <text x="1014" y="51" font-size="9" fill="#64748b">TraceId 串联回放</text>
+    <text x="1014" y="64" font-size="9" fill="#64748b">ImpactTracker 溯源</text>
+    <text x="1156" y="74" text-anchor="end" font-size="8" fill="#64748b">AuditLog</text>
+  </g>
+
+  <!-- Crypto bar at bottom -->
+  <g transform="translate(30, 680)">
+    <text x="0" y="0" font-size="12" font-weight="700" fill="#1e293b">密码学保障</text>
+    <g transform="translate(0, 10)">
+      <rect x="0" y="0" width="200" height="30" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+      <circle cx="16" cy="15" r="5" fill="#dc2626"/>
+      <text x="28" y="19" font-size="10" fill="#475569">Argon2id 密码哈希</text>
+    </g>
+    <g transform="translate(215, 10)">
+      <rect x="0" y="0" width="200" height="30" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+      <circle cx="16" cy="15" r="5" fill="#ea580c"/>
+      <text x="28" y="19" font-size="10" fill="#475569">RSA-2048 传输加密</text>
+    </g>
+    <g transform="translate(430, 10)">
+      <rect x="0" y="0" width="200" height="30" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+      <circle cx="16" cy="15" r="5" fill="#0891b2"/>
+      <text x="28" y="19" font-size="10" fill="#475569">AES-256-GCM 资产加密</text>
+    </g>
+    <g transform="translate(645, 10)">
+      <rect x="0" y="0" width="200" height="30" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+      <circle cx="16" cy="15" r="5" fill="#7c3aed"/>
+      <text x="28" y="19" font-size="10" fill="#475569">KDF+HKDF 密钥分离</text>
+    </g>
+    <g transform="translate(860, 10)">
+      <rect x="0" y="0" width="200" height="30" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+      <circle cx="16" cy="15" r="5" fill="#059669"/>
+      <text x="28" y="19" font-size="10" fill="#475569">Ed25519 数字签名</text>
+    </g>
+    <text x="0" y="62" font-size="9" fill="#94a3b8">SecretManager 凭证治理 · detect-secrets + gitleaks 密钥泄露检测 · 环境变量强制（禁止硬编码）</text>
+  </g>
+
+  <!-- Footer -->
+  <text x="600" y="785" text-anchor="middle" font-size="10" fill="#94a3b8">FnixAgent · Defense-in-Depth Security Architecture</text>
+</svg>

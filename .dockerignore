@@ -1,0 +1,80 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+
+# 虚拟环境
+.venv/
+venv/
+env/
+
+# 环境变量
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 测试
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+
+# Git
+.git/
+.gitignore
+
+# 日志
+logs/
+*.log
+
+# 密钥
+*.private.pem
+*.private.key
+*.p12
+*.pfx
+*.jks
+*.key
+!assets/keys/default.public.pem
+
+# 文档与临时文件
+*.md
+!README.md
+!CHANGELOG.md
+!CONTRIBUTING.md
+!SECURITY.md
+!CODE_OF_CONDUCT.md
+!ARCHITECTURE.md
+!DEVELOPMENT.md
+!docs/*.md
+
+# 部署
+deploy/
+docker-compose*.yml
+!docker-compose.yml
+
+# CI/CD
+.github/
+
+# 资产快照
+assets/topology/
+assets/skills/
+assets/flywheel/
+assets/traces/
+assets/snapshots/
+
+# 配置文件
+config/
+*.toml
+!pyproject.toml
+
+# Node (如存在前端子目录)
+node_modules/

@@ -45,6 +45,7 @@ Makefile text eol=lf
 *.woff binary
 *.woff2 binary
 *.eot binary
+*.svg text eol=lf
 *.pem binary
 *.pak binary
 *.dll binary

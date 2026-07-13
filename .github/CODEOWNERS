@@ -1,0 +1,23 @@
+# GitHub CODEOWNERS
+# 自动请求代码审查者，规则从上到下匹配，最后匹配的规则生效
+
+# 全局默认
+* @Liuyifeidashuaibi
+
+# 文档
+*.md @Liuyifeidashuaibi
+docs/ @Liuyifeidashuaibi
+
+# 安全相关
+src/fnixagent/core/security/ @Liuyifeidashuaibi
+SECURITY.md @Liuyifeidashuaibi
+.gitleaks.toml @Liuyifeidashuaibi
+
+# CI/CD
+.github/ @Liuyifeidashuaibi
+
+# 部署
+deploy/ @Liuyifeidashuaibi
+docker-compose.yml @Liuyifeidashuaibi
+Dockerfile @Liuyifeidashuaibi
+Makefile @Liuyifeidashuaibi

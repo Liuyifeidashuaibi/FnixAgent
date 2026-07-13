@@ -16,6 +16,24 @@
 
 ## [Unreleased]
 
+### Added
+
+- **架构可视化文档**: 新增 6 张专业 SVG 架构图（系统总览 / 数据流 / 自进化内核 / 安全纵深防御 / 三层记忆 / 部署拓扑）
+- **README 深度重写**: 从 167 行扩充至 770+ 行，含 16 章节、对比表格、完整代码示例、配套架构图内嵌
+
+### Changed
+
+- **requirements.txt**: 清理遗留的 flake8/black/mypy 依赖，工具链已迁移至 ruff+pyright
+- **.env.example**: 补充 DEEPSEEK_API_KEY 和 ES_PASSWORD，新增分组注释
+
+### Security
+
+- **移除已提交的私钥**: 删除 `assets/keys/default.private.pem`，新增目录 README 说明安全策略
+
+### Removed
+
+- **清理根目录冗余文件**: 移除 FNIXAGENT_CODE_LEVEL_UPGRADE.md、FNIXAGENT_TOP_TIER_UPGRADE_PLAN.md、FNIXAGENT_TECH_PLAN_V2.md 等临时规划文档
+
 ## [1.1.0] - 2026-07-13
 
 ### Added

@@ -39,7 +39,7 @@ jobs:
         run: pip install bandit
 
       - name: Run bandit
-        run: bandit -r src/ -f json -o bandit-report.json || true
+        run: bandit -r src/ -f json -o bandit-report.json
 
       - name: Upload bandit report
         if: always()
@@ -123,7 +123,7 @@ jobs:
       - name: Generate gitleaks report
         run: |
           docker run --rm -v "${{ github.workspace }}:/repo" zricethezav/gitleaks:latest \
-            detect --source /repo --report-format json --report-path /repo/gitleaks-report.json || true
+            detect --source /repo --report-format json --report-path /repo/gitleaks-report.json
 
       - name: Upload gitleaks report
         if: always()

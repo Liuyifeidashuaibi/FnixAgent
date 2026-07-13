@@ -1,4 +1,4 @@
-﻿"""单一 Runner 入口 —— P1-4。
+"""单一 Runner 入口 —— P1-4。
 
 借鉴 OpenAI Agents SDK 的 Runner 设计 + LangGraph 的 NextStep 模型,
 提供统一的 Agent 执行入口,收敛 lifecycle.py / graph.invoke / scheduler 三条路径。
@@ -382,6 +382,10 @@ class AgentRunner:
         mode = config.mode
         if mode == "auto":
             # 自动选择:有 graph 用 graph,否则 legacy
+            # TODO(P1): 接入 AgentOS 模式
+            #   - 当 self._agentos_kernel is not None 时，优先使用 agentos 模式
+            #   - 实现 _run_agentos() 方法，将任务提交为 AgentProcess
+            #   - 入口: core/agent/kernel.py -> AgentKernel
             if self._graph is not None:
                 mode = "graph"
             else:
