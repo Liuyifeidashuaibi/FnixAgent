@@ -1,7 +1,7 @@
-"""
+﻿"""
 LangGraph 节点函数单元测试。
 
-测试模块: officeagent.graph.nodes
+测试模块: fnixagent.graph.nodes
 覆盖:
     - perceive_node: 意图感知
     - make_search_node: 检索节点(闭包)
@@ -12,7 +12,7 @@ LangGraph 节点函数单元测试。
 """
 import pytest
 
-from officeagent.graph.nodes import (
+from fnixagent.graph.nodes import (
     NODE_EXECUTE,
     NODE_PERCEIVE,
     NODE_REFLECT,
@@ -24,7 +24,7 @@ from officeagent.graph.nodes import (
     perceive_node,
     reflect_node,
 )
-from officeagent.graph.state import create_initial_state
+from fnixagent.graph.state import create_initial_state
 
 
 # ---------------------------------------------------------------------------
@@ -330,8 +330,8 @@ class TestExecuteNode:
 
     def test_multiple_skills_execution(self, mock_registry):
         """多个技能应依次执行。"""
-        from officeagent.core.tools.protocol import ToolMetadata
-        from officeagent.core.types import ToolPermission
+        from fnixagent.core.tools.protocol import ToolMetadata
+        from fnixagent.core.types import ToolPermission
 
         def analyze_data(args):
             return {"analysis": "done"}

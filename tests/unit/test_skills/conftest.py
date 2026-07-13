@@ -1,4 +1,4 @@
-"""
+﻿"""
 技能-拓扑突触协议 (STP) 模块单元测试公共夹具。
 
 提供以下 fixtures:
@@ -18,14 +18,14 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", "sr
 
 import pytest
 
-from officeagent.core.skills.feedback import SkillFeedbackHandler
-from officeagent.core.skills.levels import SkillPermissionPolicy
-from officeagent.core.skills.protocol import SkillBindingProtocol
-from officeagent.core.skills.scheduler import SkillScheduler
-from officeagent.core.tools.protocol import ToolMetadata
-from officeagent.core.tools.registry import ToolRegistry
-from officeagent.core.topology.graph import TopologyGraph
-from officeagent.core.types import (
+from fnixagent.core.skills.feedback import SkillFeedbackHandler
+from fnixagent.core.skills.levels import SkillPermissionPolicy
+from fnixagent.core.skills.protocol import SkillBindingProtocol
+from fnixagent.core.skills.scheduler import SkillScheduler
+from fnixagent.core.tools.protocol import ToolMetadata
+from fnixagent.core.tools.registry import ToolRegistry
+from fnixagent.core.topology.graph import TopologyGraph
+from fnixagent.core.types import (
     EdgeType,
     NodeType,
     SkillLevel,

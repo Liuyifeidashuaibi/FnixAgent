@@ -1,5 +1,5 @@
-#!/usr/bin/env bash
-# OfficeAgent 安装包 CDN 分发脚本 — Phase 1.9
+﻿#!/usr/bin/env bash
+# FnixAgent 安装包 CDN 分发脚本 — Phase 1.9
 #
 # 用途:将 electron-builder 产物(.exe / .dmg / latest*.yml)同步到自建 CDN
 #
@@ -10,28 +10,28 @@
 #   CDN_RSYNC_HOST  CDN 服务器主机
 #   CDN_RSYNC_USER  CDN 登录用户
 #   CDN_RSYNC_KEY   SSH 私钥(base64 编码,解码后使用)
-#   CDN_REMOTE_PATH 远程目标路径(默认:/var/www/cdn/officeagent/releases)
+#   CDN_REMOTE_PATH 远程目标路径(默认:/var/www/cdn/fnixagent/releases)
 #
 # 产物结构(CDN 端):
-#   /var/www/cdn/officeagent/releases/
+#   /var/www/cdn/fnixagent/releases/
 #     ├── latest.yml              # Windows 更新元数据
 #     ├── latest-mac.yml          # macOS 更新元数据
-#     ├── OfficeAgent-Setup-1.0.0.exe
-#     ├── OfficeAgent-1.0.0-x64.dmg
-#     └── OfficeAgent-1.0.0-arm64.dmg
+#     ├── FnixAgent-Setup-1.0.0.exe
+#     ├── FnixAgent-1.0.0-x64.dmg
+#     └── FnixAgent-1.0.0-arm64.dmg
 
 set -euo pipefail
 
 VERSION="${1:?用法: publish-cdn.sh <version> <artifacts_dir>}"
 ARTIFACTS_DIR="${2:?缺少 artifacts_dir 参数}"
-REMOTE_PATH="${CDN_REMOTE_PATH:-/var/www/cdn/officeagent/releases}"
+REMOTE_PATH="${CDN_REMOTE_PATH:-/var/www/cdn/fnixagent/releases}"
 
 if [ -z "${CDN_RSYNC_HOST:-}" ] || [ -z "${CDN_RSYNC_USER:-}" ]; then
   echo "⚠️  CDN_RSYNC_HOST / CDN_RSYNC_USER 未设置,跳过 CDN 同步"
   exit 0
 fi
 
-echo "=== OfficeAgent CDN 分发 ==="
+echo "=== FnixAgent CDN 分发 ==="
 echo "版本: ${VERSION}"
 echo "产物目录: ${ARTIFACTS_DIR}"
 echo "目标: ${CDN_RSYNC_USER}@${CDN_RSYNC_HOST}:${REMOTE_PATH}/${VERSION}/"
@@ -66,5 +66,5 @@ for f in latest.yml latest-mac.yml latest-linux.yml; do
 done
 
 echo "=== CDN 分发完成 ==="
-echo "下载页: https://cdn.officeagent.com/releases/${VERSION}/"
-echo "更新检查: https://cdn.officeagent.com/releases/latest/latest.yml"
+echo "下载页: https://cdn.fnixagent.com/releases/${VERSION}/"
+echo "更新检查: https://cdn.fnixagent.com/releases/latest/latest.yml"

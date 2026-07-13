@@ -1,4 +1,4 @@
-"""单一 Runner 入口 —— P1-4。
+﻿"""单一 Runner 入口 —— P1-4。
 
 借鉴 OpenAI Agents SDK 的 Runner 设计 + LangGraph 的 NextStep 模型,
 提供统一的 Agent 执行入口,收敛 lifecycle.py / graph.invoke / scheduler 三条路径。
@@ -231,7 +231,7 @@ class AgentRunner:
         # P3-1 Handoff 支持
         self._handoff_registry: Optional[Any] = None  # HandoffRegistry
         self._agents: dict[str, Any] = {}  # name → Agent 实例(多 Agent 阶段填充)
-        self._current_agent_name: str = "office-agent"  # 当前活跃 Agent 名
+        self._current_agent_name: str = "fnix-agent"  # 当前活跃 Agent 名
         self._handoff_depth: int = 0  # 当前 handoff 深度
 
     # -- 同步入口 -----------------------------------------------------------

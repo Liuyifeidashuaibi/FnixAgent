@@ -1,13 +1,13 @@
-"""
+﻿"""
 AgentState 与 create_initial_state 单元测试。
 
-测试模块: officeagent.graph.state
+测试模块: fnixagent.graph.state
 覆盖:
     - AgentState TypedDict 构造
     - create_initial_state 字段初始化
     - create_initial_state 消息历史
 """
-from officeagent.graph.state import AgentState, create_initial_state
+from fnixagent.graph.state import AgentState, create_initial_state
 
 
 class TestCreateInitialState:

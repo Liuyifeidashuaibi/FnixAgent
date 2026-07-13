@@ -1,4 +1,4 @@
-# OfficeAgent 智能办公 Agent · 项目技术架构设计
+# FnixAgent 智能办公 Agent · 项目技术架构设计
 
 > 定位：面向 **学习 / 教育 / 办公** 场景的智能 Agent，核心能力包括：论文文献检索、Word 编辑、格式转换、图表生成、PDF 生成、文档解析、学习辅助问答，并基于「任务」实现端到端自动编排。
 >
@@ -104,7 +104,7 @@
 采用 **模块化单体（Modular Monolith）**，每个领域一个独立 package，便于未来拆为微服务。底层引擎与业务模块物理隔离。
 
 ```
-OFFICEAGENT/
+FNIXAGENT/
 ├── ARCHITECTURE.md                 # 本架构文档
 ├── README.md
 ├── pyproject.toml                  # 依赖与项目元数据（uv/poetry）
@@ -128,7 +128,7 @@ OFFICEAGENT/
 │   └── security/                   # 敏感词表/黑名单/白名单
 │
 ├── src/
-│   └── officeagent/
+│   └── fnixagent/
 │       ├── __init__.py
 │       ├── main.py                 # FastAPI 入口
 │       ├── config.py               # 配置加载(pydantic-settings)
@@ -542,7 +542,7 @@ CREATE TABLE feedbacks (
 
 > **划分准则**：底层算法模块 = 领域无关的 Agent 通用能力（换个业务也能用）；业务功能模块 = office/教育场景专属的工具与工作流。两者通过统一 **Tool Protocol** 与 **Orchestrator** 解耦。
 
-### 5.1 底层算法模块（Core Engine，`src/officeagent/core/`）
+### 5.1 底层算法模块（Core Engine，`src/fnixagent/core/`）
 
 | 模块 | 职责 | 关键产出 | 复用性 |
 |------|------|----------|--------|
@@ -557,7 +557,7 @@ CREATE TABLE feedbacks (
 | **Prompt 管理引擎** | 分层模板(角色/约束/工具/记忆/格式)、版本管理 | `PromptManager` | 通用 |
 | **向量检索引擎** | Embedding、相似度检索、向量+关键词混合检索 | `RetrievalEngine` | 通用 |
 
-### 5.2 业务功能模块（Business，`src/officeagent/business/`）
+### 5.2 业务功能模块（Business，`src/fnixagent/business/`）
 
 每个业务模块对外暴露为「标准化工具」，注册进 `ToolRegistry`，由引擎层按需调用。
 

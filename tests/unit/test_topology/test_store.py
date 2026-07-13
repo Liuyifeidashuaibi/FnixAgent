@@ -1,7 +1,7 @@
-"""
+﻿"""
 知识拓扑图 (KTG) 存储后端单元测试。
 
-测试模块: officeagent.core.topology.store
+测试模块: fnixagent.core.topology.store
 覆盖:
     - TopologyStore: 抽象基类(所有方法应 raise NotImplementedError)
     - MemoryStore: 内存存储(追加写、加载、快照)
@@ -13,15 +13,15 @@ import os
 
 import pytest
 
-from officeagent.core.exceptions import SnapshotError, TopologyError
-from officeagent.core.topology.graph import TopologyGraph
-from officeagent.core.topology.store import (
+from fnixagent.core.exceptions import SnapshotError, TopologyError
+from fnixagent.core.topology.graph import TopologyGraph
+from fnixagent.core.topology.store import (
     JSONFileStore,
     MemoryStore,
     TopologyStore,
     TopologyStoreManager,
 )
-from officeagent.core.types import (
+from fnixagent.core.types import (
     EdgeType,
     NodeType,
     TopologyEdge,

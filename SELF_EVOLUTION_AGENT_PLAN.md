@@ -15,7 +15,7 @@
 | "彻底抛弃 RAG" | 纯拓扑推理在冷启动期无数据会导致空图 | **拓扑为主(逻辑路径推理)+ 向量为辅(冷启动召回)**,飞轮成熟后向量权重趋零 |
 | LangGraph 有状态循环 | 现有 7 步流水线天然同构 | LangGraph 作为编排内核,7 步映射为图节点 |
 | 四阶飞轮全自动 | 三阶/四阶需 LLM 调用,成本与延迟非零 | 一二阶实时,三四阶后台异步(每日/每 N 次对话触发) |
-| 现有 OfficeAgent 代码 | 已有 LLM 路由/工具执行/记忆/反思/安全等成熟实现 | **5 模块直接复用 + 5 模块改造 + 1 模块替换**(详见第八部分) |
+| 现有 FnixAgent 代码 | 已有 LLM 路由/工具执行/记忆/反思/安全等成熟实现 | **5 模块直接复用 + 5 模块改造 + 1 模块替换**(详见第八部分) |
 
 **关键前提修复**:现有 `LLMResponse` 缺 `tool_calls` 字段,但 `openai_compat.py` 已向其传该参数 → function calling 场景会 `TypeError`。Day 1 必须修复。
 
@@ -403,8 +403,8 @@ TraceRecord {
 ## 第六部分:文件结构规划
 
 ```
-OFFICEAGENT/
-├── src/officeagent/
+FNIXAGENT/
+├── src/fnixagent/
 │   ├── core/                          # 复用现有(5 模块直接复用)
 │   │   ├── config.py                  # 复用 + 追加 LangGraphConfig/TopologyConfig
 │   │   ├── types.py                   # 复用 + 追加 KTG/STP/MFP 类型

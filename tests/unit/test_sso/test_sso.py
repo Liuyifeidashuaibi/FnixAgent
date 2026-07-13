@@ -1,4 +1,4 @@
-"""Phase 2.3 SSO 单点登录测试。
+﻿"""Phase 2.3 SSO 单点登录测试。
 
 覆盖:
     1. SSO 配置存储 CRUD(InMemorySSOConfigStore)
@@ -22,11 +22,11 @@ from fastapi.testclient import TestClient
 @pytest.fixture(autouse=True)
 def _reset_stores():
     """每个测试前后重置存储,确保隔离。"""
-    from officeagent.services.storage_sso import (
+    from fnixagent.services.storage_sso import (
         reset_sso_binding_store,
         reset_sso_config_store,
     )
-    from officeagent.services.storage import reset_stores
+    from fnixagent.services.storage import reset_stores
 
     reset_sso_config_store()
     reset_sso_binding_store()
@@ -187,7 +187,7 @@ def mock_saml():
 
 class TestSSOConfigStore:
     def test_create_oauth_config(self):
-        from officeagent.services.storage_sso import get_sso_config_store
+        from fnixagent.services.storage_sso import get_sso_config_store
 
         store = get_sso_config_store()
         cfg = store.create_config(
@@ -209,7 +209,7 @@ class TestSSOConfigStore:
         assert got.client_secret == "gh_secret"
 
     def test_create_saml_config(self):
-        from officeagent.services.storage_sso import get_sso_config_store
+        from fnixagent.services.storage_sso import get_sso_config_store
 
         store = get_sso_config_store()
         cfg = store.create_config(
@@ -227,7 +227,7 @@ class TestSSOConfigStore:
         assert cfg.idp_x509_cert.startswith("-----BEGIN")
 
     def test_list_configs_filter_by_type(self):
-        from officeagent.services.storage_sso import get_sso_config_store
+        from fnixagent.services.storage_sso import get_sso_config_store
 
         store = get_sso_config_store()
         store.create_config(provider_type="oauth", provider_code="github",
@@ -248,7 +248,7 @@ class TestSSOConfigStore:
         assert len(saml_only) == 1
 
     def test_get_by_code(self):
-        from officeagent.services.storage_sso import get_sso_config_store
+        from fnixagent.services.storage_sso import get_sso_config_store
 
         store = get_sso_config_store()
         store.create_config(provider_type="oauth", provider_code="github",
@@ -263,7 +263,7 @@ class TestSSOConfigStore:
         assert store.get_by_code("nonexistent") is None
 
     def test_update_config(self):
-        from officeagent.services.storage_sso import get_sso_config_store
+        from fnixagent.services.storage_sso import get_sso_config_store
 
         store = get_sso_config_store()
         cfg = store.create_config(provider_type="oauth", provider_code="github",
@@ -274,7 +274,7 @@ class TestSSOConfigStore:
         assert updated.client_secret == "new_secret"
 
     def test_delete_config(self):
-        from officeagent.services.storage_sso import get_sso_config_store
+        from fnixagent.services.storage_sso import get_sso_config_store
 
         store = get_sso_config_store()
         cfg = store.create_config(provider_type="oauth", provider_code="github",
@@ -285,7 +285,7 @@ class TestSSOConfigStore:
         assert store.delete_config(999) is False
 
     def test_to_dict_hides_secret_by_default(self):
-        from officeagent.services.storage_sso import get_sso_config_store
+        from fnixagent.services.storage_sso import get_sso_config_store
 
         store = get_sso_config_store()
         cfg = store.create_config(provider_type="oauth", provider_code="github",
@@ -299,7 +299,7 @@ class TestSSOConfigStore:
         assert d_with_secret["client_secret"] == "secret"
 
     def test_to_oauth_config_conversion(self):
-        from officeagent.services.storage_sso import get_sso_config_store
+        from fnixagent.services.storage_sso import get_sso_config_store
 
         store = get_sso_config_store()
         cfg = store.create_config(provider_type="oauth", provider_code="github",
@@ -318,7 +318,7 @@ class TestSSOConfigStore:
 
 class TestSSOBindingStore:
     def test_create_and_get_by_provider(self):
-        from officeagent.services.storage_sso import get_sso_binding_store
+        from fnixagent.services.storage_sso import get_sso_binding_store
 
         store = get_sso_binding_store()
         binding = store.create(user_id=1, provider_code="github",
@@ -332,7 +332,7 @@ class TestSSOBindingStore:
 
     def test_create_idempotent(self):
         """同 (provider, provider_user_id) 重复创建返回已有绑定。"""
-        from officeagent.services.storage_sso import get_sso_binding_store
+        from fnixagent.services.storage_sso import get_sso_binding_store
 
         store = get_sso_binding_store()
         b1 = store.create(user_id=1, provider_code="github",
@@ -342,7 +342,7 @@ class TestSSOBindingStore:
         assert b1.id == b2.id
 
     def test_list_by_user(self):
-        from officeagent.services.storage_sso import get_sso_binding_store
+        from fnixagent.services.storage_sso import get_sso_binding_store
 
         store = get_sso_binding_store()
         store.create(user_id=1, provider_code="github", provider_user_id="123")
@@ -354,7 +354,7 @@ class TestSSOBindingStore:
         assert {b.provider_code for b in binds} == {"github", "google"}
 
     def test_delete_binding(self):
-        from officeagent.services.storage_sso import get_sso_binding_store
+        from fnixagent.services.storage_sso import get_sso_binding_store
 
         store = get_sso_binding_store()
         binding = store.create(user_id=1, provider_code="github",
@@ -364,7 +364,7 @@ class TestSSOBindingStore:
         assert store.delete(999) is False
 
     def test_delete_by_user(self):
-        from officeagent.services.storage_sso import get_sso_binding_store
+        from fnixagent.services.storage_sso import get_sso_binding_store
 
         store = get_sso_binding_store()
         store.create(user_id=1, provider_code="github", provider_user_id="123")
@@ -381,7 +381,7 @@ class TestSSOBindingStore:
 
 class TestOAuthClient:
     def test_build_authorization_url_github(self, mock_requests):
-        from officeagent.core.security.auth.oauth import OAuthClient, OAuthConfig
+        from fnixagent.core.security.auth.oauth import OAuthClient, OAuthConfig
 
         cfg = OAuthConfig(
             id=1, provider_type="oauth", provider_code="github",
@@ -396,7 +396,7 @@ class TestOAuthClient:
         assert "scope=read" in url  # GitHub 默认 scope
 
     def test_build_authorization_url_generic_provider(self, mock_requests):
-        from officeagent.core.security.auth.oauth import OAuthConfig, OAuthClient
+        from fnixagent.core.security.auth.oauth import OAuthConfig, OAuthClient
 
         cfg = OAuthConfig(
             id=1, provider_type="oauth", provider_code="custom",
@@ -413,7 +413,7 @@ class TestOAuthClient:
         assert "scope=openid+profile" in url  # 空格被 urlencode 为 +
 
     def test_exchange_code_success(self, mock_requests):
-        from officeagent.core.security.auth.oauth import OAuthClient, OAuthConfig
+        from fnixagent.core.security.auth.oauth import OAuthClient, OAuthConfig
 
         # 配置 mock 响应
         mock_requests._Requests._post_callback = lambda url, data, headers: (
@@ -434,7 +434,7 @@ class TestOAuthClient:
         assert token["access_token"] == "gh-token"
 
     def test_exchange_code_failure(self, mock_requests):
-        from officeagent.core.security.auth.oauth import (
+        from fnixagent.core.security.auth.oauth import (
             OAuthAuthenticationError, OAuthClient, OAuthConfig,
         )
 
@@ -452,7 +452,7 @@ class TestOAuthClient:
             client.exchange_code("invalid-code")
 
     def test_fetch_userinfo_github(self, mock_requests):
-        from officeagent.core.security.auth.oauth import OAuthClient, OAuthConfig
+        from fnixagent.core.security.auth.oauth import OAuthClient, OAuthConfig
 
         mock_requests._Requests._get_callback = lambda url, headers: (
             mock_requests._MockResponse(200, {
@@ -481,7 +481,7 @@ class TestOAuthClient:
         assert user_info.display_name == "Alice Wang"
 
     def test_authenticate_end_to_end(self, mock_requests):
-        from officeagent.core.security.auth.oauth import OAuthClient, OAuthConfig
+        from fnixagent.core.security.auth.oauth import OAuthClient, OAuthConfig
 
         # 配置 mock:换 token + 拉用户信息
         def post_cb(url, data, headers):
@@ -510,7 +510,7 @@ class TestOAuthClient:
 
     def test_not_installed_raises(self):
         """requests 库未安装时抛 OAuthNotInstalledError。"""
-        from officeagent.core.security.auth.oauth import (
+        from fnixagent.core.security.auth.oauth import (
             OAuthClient, OAuthConfig, OAuthNotInstalledError,
         )
 
@@ -528,7 +528,7 @@ class TestOAuthClient:
                 client.exchange_code("code")
 
     def test_normalize_userinfo_uses_email_as_username(self, mock_requests):
-        from officeagent.core.security.auth.oauth import OAuthClient, OAuthConfig
+        from fnixagent.core.security.auth.oauth import OAuthClient, OAuthConfig
 
         cfg = OAuthConfig(
             id=1, provider_type="oauth", provider_code="google",
@@ -556,10 +556,10 @@ class TestOAuthClient:
 
 class TestOAuthUserSync:
     def test_sync_creates_new_user(self, mock_requests):
-        from officeagent.core.security.auth.oauth import (
+        from fnixagent.core.security.auth.oauth import (
             OAuthClient, OAuthConfig, OAuthUserInfo,
         )
-        from officeagent.services.storage import get_user_store
+        from fnixagent.services.storage import get_user_store
 
         cfg = OAuthConfig(
             id=1, provider_type="oauth", provider_code="github",
@@ -582,11 +582,11 @@ class TestOAuthUserSync:
         assert local.profile.get("oauth_provider") == "github"
 
     def test_sync_binds_existing_user_by_email(self, mock_requests):
-        from officeagent.core.security.auth.oauth import (
+        from fnixagent.core.security.auth.oauth import (
             OAuthClient, OAuthConfig, OAuthUserInfo,
         )
-        from officeagent.services.storage import get_user_store
-        from officeagent.services.storage_sso import get_sso_binding_store
+        from fnixagent.services.storage import get_user_store
+        from fnixagent.services.storage_sso import get_sso_binding_store
 
         # 先创建本地用户(已有邮箱)
         store = get_user_store()
@@ -618,14 +618,14 @@ class TestOAuthUserSync:
         assert binding.user_id == local_user.id
 
     def test_sync_returns_existing_binding(self, mock_requests):
-        from officeagent.core.security.auth.oauth import (
+        from fnixagent.core.security.auth.oauth import (
             OAuthClient, OAuthConfig, OAuthUserInfo,
         )
-        from officeagent.services.storage_sso import get_sso_binding_store
+        from fnixagent.services.storage_sso import get_sso_binding_store
 
         # 预创建绑定
         binding_store = get_sso_binding_store()
-        from officeagent.services.storage import get_user_store
+        from fnixagent.services.storage import get_user_store
         store = get_user_store()
         local_user, _ = store.create(
             username="carol", email="carol@co.com", password="Pass1234"
@@ -658,7 +658,7 @@ class TestOAuthUserSync:
 
 class TestSAMLClient:
     def test_build_authn_request(self, mock_saml):
-        from officeagent.core.security.auth.saml import SAMLClient, SAMLConfig
+        from fnixagent.core.security.auth.saml import SAMLClient, SAMLConfig
 
         cfg = SAMLConfig(
             id=1, provider_type="saml", provider_code="azure_ad",
@@ -677,7 +677,7 @@ class TestSAMLClient:
         assert result["state"] == "relay-state-123"
 
     def test_parse_response_success(self, mock_saml):
-        from officeagent.core.security.auth.saml import SAMLClient, SAMLConfig
+        from fnixagent.core.security.auth.saml import SAMLClient, SAMLConfig
 
         # 配置 mock:已认证 + 返回 alice 信息
         mock_saml._authenticated = True
@@ -703,7 +703,7 @@ class TestSAMLClient:
         assert user_info.display_name == "Alice Wang"
 
     def test_parse_response_auth_failure(self, mock_saml):
-        from officeagent.core.security.auth.saml import (
+        from fnixagent.core.security.auth.saml import (
             SAMLClient, SAMLConfig, SAMLResponseError,
         )
 
@@ -725,7 +725,7 @@ class TestSAMLClient:
             client.parse_response("invalid-response")
 
     def test_not_installed_raises(self):
-        from officeagent.core.security.auth.saml import (
+        from fnixagent.core.security.auth.saml import (
             SAMLClient, SAMLConfig, SAMLNotInstalledError,
         )
 
@@ -759,7 +759,7 @@ class TestSAMLClient:
 
 class TestSAMLUserSync:
     def test_sync_creates_new_user(self, mock_saml):
-        from officeagent.core.security.auth.saml import (
+        from fnixagent.core.security.auth.saml import (
             SAMLClient, SAMLConfig, SAMLUserInfo,
         )
 
@@ -786,11 +786,11 @@ class TestSAMLUserSync:
         assert local.profile.get("saml_provider") == "azure_ad"
 
     def test_sync_binds_existing_by_email(self, mock_saml):
-        from officeagent.core.security.auth.saml import (
+        from fnixagent.core.security.auth.saml import (
             SAMLClient, SAMLConfig, SAMLUserInfo,
         )
-        from officeagent.services.storage import get_user_store
-        from officeagent.services.storage_sso import get_sso_binding_store
+        from fnixagent.services.storage import get_user_store
+        from fnixagent.services.storage_sso import get_sso_binding_store
 
         store = get_user_store()
         local_user, _ = store.create(
@@ -831,7 +831,7 @@ class TestSSOAPIEndpoints:
     @pytest.fixture
     def client(self):
         """构建带 SSO 路由的 TestClient。"""
-        from officeagent.api.routers import admin, auth
+        from fnixagent.api.routers import admin, auth
 
         app = FastAPI()
         app.include_router(auth.router, prefix="/api/v1")
@@ -841,8 +841,8 @@ class TestSSOAPIEndpoints:
     @pytest.fixture
     def admin_token(self):
         """创建管理员 Token。"""
-        from officeagent.api.routers.auth import create_jwt_token
-        from officeagent.services.storage import get_user_store
+        from fnixagent.api.routers.auth import create_jwt_token
+        from fnixagent.services.storage import get_user_store
 
         store = get_user_store()
         user, _ = store.create(
@@ -988,8 +988,8 @@ class TestSSOAPIEndpoints:
         assert resp.json()["data"]["total"] == 0
 
     def test_sso_config_requires_admin(self, client):
-        from officeagent.api.routers.auth import create_jwt_token
-        from officeagent.services.storage import get_user_store
+        from fnixagent.api.routers.auth import create_jwt_token
+        from fnixagent.services.storage import get_user_store
 
         store = get_user_store()
         user, _ = store.create(username="normal_sso", email="n@e.com",
@@ -1031,7 +1031,7 @@ class TestSSOAPIEndpoints:
         assert resp.json()["data"]["total"] == 0
 
         # 创建绑定
-        from officeagent.services.storage_sso import get_sso_binding_store
+        from fnixagent.services.storage_sso import get_sso_binding_store
         binding_store = get_sso_binding_store()
         binding_store.create(user_id=admin_id, provider_code="github",
                              provider_user_id="123")

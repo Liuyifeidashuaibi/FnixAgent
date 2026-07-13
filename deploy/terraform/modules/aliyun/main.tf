@@ -112,7 +112,7 @@ resource "alicloud_snat_entry" "main" {
 # ----------------------------------------------------------------------------
 resource "alicloud_security_group" "main" {
   name        = "${local.name_prefix}-sg"
-  description = "OfficeAgent security group"
+  description = "FnixAgent security group"
   vpc_id      = alicloud_vpc.main.id
 
   tags = var.tags
@@ -202,14 +202,14 @@ resource "alicloud_db_instance" "main" {
 
 resource "alicloud_rds_account" "main" {
   db_instance_id   = alicloud_db_instance.main.id
-  account_name     = "officeagent"
+  account_name     = "fnixagent"
   account_password = random_password.db_password.result
   account_type     = "Super"
 }
 
 resource "alicloud_rds_database" "main" {
   db_instance_id = alicloud_db_instance.main.id
-  db_name        = "officeagent"
+  db_name        = "fnixagent"
   character_set  = "UTF8"
 }
 
@@ -326,13 +326,13 @@ resource "alicloud_cdn_domain_config" "https" {
 # ----------------------------------------------------------------------------
 resource "alicloud_kms_secret" "db_credentials" {
   secret_name   = "${var.project}/${var.env}/db/credentials"
-  description   = "OfficeAgent PostgreSQL credentials"
+  description   = "FnixAgent PostgreSQL credentials"
   secret_data   = jsonencode({
-    username = "officeagent"
+    username = "fnixagent"
     password = random_password.db_password.result
     host     = alicloud_db_instance.main.connection_string
     port     = 5432
-    dbname   = "officeagent"
+    dbname   = "fnixagent"
   })
   version_id    = "v1"
   force_delete_without_recovery = var.env != "prod"
@@ -342,7 +342,7 @@ resource "alicloud_kms_secret" "db_credentials" {
 
 resource "alicloud_kms_secret" "redis_credentials" {
   secret_name   = "${var.project}/${var.env}/redis/credentials"
-  description   = "OfficeAgent Redis credentials"
+  description   = "FnixAgent Redis credentials"
   secret_data   = jsonencode({
     host       = alicloud_kvstore_instance.main.connection_string
     port       = 6379
@@ -365,8 +365,8 @@ output "outputs" {
     kubernetes_cluster_endpoint  = alicloud_cs_managed_kubernetes.main.apiserver_internet
     kubernetes_ca_data           = alicloud_cs_managed_kubernetes.main.certificate_authority.0.certificate
     database_endpoint            = "${alicloud_db_instance.main.connection_string}:5432"
-    database_name                = "officeagent"
-    database_username            = "officeagent"
+    database_name                = "fnixagent"
+    database_username            = "fnixagent"
     redis_endpoint               = "${alicloud_kvstore_instance.main.connection_string}:6379"
     storage_bucket               = alicloud_oss_bucket.storage.bucket
     cdn_domain                   = length(alicloud_cdn_domain_new.main) > 0 ? alicloud_cdn_domain_new.main[0].domain_name : ""

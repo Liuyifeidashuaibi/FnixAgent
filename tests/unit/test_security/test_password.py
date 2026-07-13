@@ -1,4 +1,4 @@
-"""
+﻿"""
 password 模块单元测试(验收标准 ① 单元测试覆盖 Argon2id 哈希/校验)。
 
 覆盖:
@@ -14,7 +14,7 @@ password 模块单元测试(验收标准 ① 单元测试覆盖 Argon2id 哈希/
 """
 import pytest
 
-from officeagent.core.security.auth.password import (
+from fnixagent.core.security.auth.password import (
     _pbkdf2_hash,
     _pbkdf2_verify,
     argon2_hash_password,

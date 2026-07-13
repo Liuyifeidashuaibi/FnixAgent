@@ -1,6 +1,6 @@
-#!/bin/bash
+﻿#!/bin/bash
 # ===========================================================================
-# OfficeAgent SDK — 从 FastAPI OpenAPI spec 生成 TypeScript 类型
+# FnixAgent SDK — 从 FastAPI OpenAPI spec 生成 TypeScript 类型
 # Phase P2-01
 #
 # 用法:
@@ -26,7 +26,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OUTPUT_FILE="${SCRIPT_DIR}/generated/schema.ts"
 LOCAL_SPEC="${SCRIPT_DIR}/../../openapi.json"
 
-echo "▶ OfficeAgent SDK 类型生成"
+echo "▶ FnixAgent SDK 类型生成"
 echo "  目标输出: ${OUTPUT_FILE}"
 
 # 确保输出目录存在

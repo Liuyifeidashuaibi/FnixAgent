@@ -1,4 +1,4 @@
-"""
+﻿"""
 单元测试 - LLM Router 测试。
 
 测试真实接口:
@@ -8,10 +8,10 @@
 """
 import pytest
 
-from officeagent.core.llm.base import BaseLLMProvider, LLMRequest
-from officeagent.core.llm.router import LLMRouter, RouteStrategy
-from officeagent.core.llm.providers.openai_compat import MockLLMProvider
-from officeagent.core.types import LLMResponse, Message, MessageRole, TokenUsage
+from fnixagent.core.llm.base import BaseLLMProvider, LLMRequest
+from fnixagent.core.llm.router import LLMRouter, RouteStrategy
+from fnixagent.core.llm.providers.openai_compat import MockLLMProvider
+from fnixagent.core.types import LLMResponse, Message, MessageRole, TokenUsage
 
 
 def test_router_register():
@@ -81,7 +81,7 @@ def test_router_no_provider():
         messages=[Message(role=MessageRole.USER, content="test")],
     )
     # 没有 provider, _select 返回 None, 应抛 LLMCircuitOpenError
-    from officeagent.core.exceptions import LLMCircuitOpenError
+    from fnixagent.core.exceptions import LLMCircuitOpenError
     with pytest.raises(LLMCircuitOpenError):
         router.chat(request)
 

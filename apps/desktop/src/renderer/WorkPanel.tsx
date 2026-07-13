@@ -1,5 +1,5 @@
 /**
- * WorkPanel.tsx — Work Mode 面板（Office Agent 任务）
+ * WorkPanel.tsx — Work Mode 面板（Fnix Agent 任务）
  *
  * 功能：
  *   - 快速操作按钮（生成周报、分析 Excel、创建 PPT、转换 PDF、文档摘要）
@@ -234,7 +234,7 @@ export function WorkPanel({ visible }: WorkPanelProps) {
         <div style={styles.headerLeft}>
           <span style={styles.headerIcon}>⚡</span>
           <span style={styles.headerTitle}>Work Mode</span>
-          <span style={styles.headerSubtitle}>OFFICE AGENT</span>
+          <span style={styles.headerSubtitle}>FNIX AGENT</span>
         </div>
         {tasks.length > 0 && (
           <button

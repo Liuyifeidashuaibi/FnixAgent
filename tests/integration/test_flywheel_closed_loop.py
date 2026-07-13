@@ -1,4 +1,4 @@
-"""
+﻿"""
 飞轮闭环集成测试。
 
 验证 Day 7 核心交付:
@@ -24,8 +24,8 @@ os.environ.setdefault("OPENAI_API_KEY", "")
 os.environ.setdefault("QWEN_API_KEY", "")
 os.environ.setdefault("DEEPSEEK_API_KEY", "")
 
-from officeagent.core.config import get_config
-from officeagent.services.service import (
+from fnixagent.core.config import get_config
+from fnixagent.services.service import (
     GraphComponents,
     build_graph,
     process_with_graph,
@@ -42,7 +42,7 @@ def components():
     tmp_dir = os.path.join(
         os.path.dirname(__file__), "..", "..", ".tmp_trace_integration"
     )
-    os.environ["OFFICEAGENT_TRACE_DIR"] = tmp_dir
+    os.environ["FNIXAGENT_TRACE_DIR"] = tmp_dir
 
     cfg = get_config()
     comp = build_graph(cfg)
@@ -117,7 +117,7 @@ class TestFlywheelClosedLoop:
         assert "reflected" in result
 
         # trace 应为 TraceRecord 实例
-        from officeagent.core.types import TraceRecord
+        from fnixagent.core.types import TraceRecord
 
         assert isinstance(result["trace"], TraceRecord)
 
@@ -199,7 +199,7 @@ class TestBackwardCompatibility:
 
     def test_scheduler_build_still_works(self):
         """传统 build_scheduler() 仍应可工作。"""
-        from officeagent.services.service import build_scheduler, reset_scheduler
+        from fnixagent.services.service import build_scheduler, reset_scheduler
 
         try:
             scheduler = build_scheduler()

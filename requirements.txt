@@ -1,4 +1,4 @@
-# OfficeAgent 依赖清单
+# FnixAgent 依赖清单
 
 # Web框架
 fastapi==0.104.0

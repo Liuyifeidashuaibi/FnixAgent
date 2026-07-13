@@ -1,4 +1,4 @@
-"""
+﻿"""
 集成测试 - 端到端 Agent 调度流程。
 
 验证 services.build_scheduler() 构建的完整调度器能否:
@@ -19,8 +19,8 @@ os.environ.pop("QWEN_API_KEY", None)
 # 确保 src 在路径中
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
-from officeagent.services import build_scheduler, reset_scheduler
-from officeagent.core.orchestrator.scheduler import AgentScheduler, AgentResponse
+from fnixagent.services import build_scheduler, reset_scheduler
+from fnixagent.core.orchestrator.scheduler import AgentScheduler, AgentResponse
 
 
 @pytest.fixture
@@ -114,7 +114,7 @@ class TestSchedulerSession:
         ctx = scheduler._ctx
 
         # 先保存一些记忆
-        from officeagent.core.types import Message, MessageRole
+        from fnixagent.core.types import Message, MessageRole
         ctx.memory_manager.save(
             session_id="s1",
             message=Message(role=MessageRole.USER, content="test"),
@@ -133,7 +133,7 @@ class TestArxivParser:
 
     def test_parse_empty_xml(self):
         """空 XML 应返回空列表。"""
-        from officeagent.business.search.arxiv import parse_arxiv_response
+        from fnixagent.business.search.arxiv import parse_arxiv_response
 
         xml = '''<?xml version="1.0" encoding="UTF-8"?>
         <feed xmlns="http://www.w3.org/2005/Atom"></feed>'''
@@ -142,7 +142,7 @@ class TestArxivParser:
 
     def test_parse_single_paper(self):
         """解析单篇论文。"""
-        from officeagent.business.search.arxiv import parse_arxiv_response
+        from fnixagent.business.search.arxiv import parse_arxiv_response
 
         xml = '''<?xml version="1.0" encoding="UTF-8"?>
         <feed xmlns="http://www.w3.org/2005/Atom">
@@ -170,7 +170,7 @@ class TestArxivParser:
 
     def test_parse_multiple_papers(self):
         """解析多篇论文。"""
-        from officeagent.business.search.arxiv import parse_arxiv_response
+        from fnixagent.business.search.arxiv import parse_arxiv_response
 
         xml = '''<?xml version="1.0" encoding="UTF-8"?>
         <feed xmlns="http://www.w3.org/2005/Atom">
@@ -197,7 +197,7 @@ class TestDeduplication:
 
     def test_dedup_by_title(self):
         """标题相同应去重。"""
-        from officeagent.business.search.arxiv import deduplicate_papers
+        from fnixagent.business.search.arxiv import deduplicate_papers
 
         papers = [
             {"id": "1", "title": "Deep Learning", "source": "arxiv", "abstract": "A"},
@@ -213,7 +213,7 @@ class TestDeduplication:
 
     def test_dedup_by_id(self):
         """ID 相同应去重。"""
-        from officeagent.business.search.arxiv import deduplicate_papers
+        from fnixagent.business.search.arxiv import deduplicate_papers
 
         papers = [
             {"id": "2301.00001", "title": "Paper A", "source": "arxiv"},
@@ -225,7 +225,7 @@ class TestDeduplication:
 
     def test_no_dedup_different_papers(self):
         """不同论文不应被去重。"""
-        from officeagent.business.search.arxiv import deduplicate_papers
+        from fnixagent.business.search.arxiv import deduplicate_papers
 
         papers = [
             {"id": "1", "title": "Paper A", "source": "arxiv"},

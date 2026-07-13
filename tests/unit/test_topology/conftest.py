@@ -1,4 +1,4 @@
-"""
+﻿"""
 知识拓扑图 (KTG) 模块单元测试公共夹具。
 
 提供以下 fixtures:
@@ -15,8 +15,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", "sr
 
 import pytest
 
-from officeagent.core.topology.graph import TopologyGraph
-from officeagent.core.types import (
+from fnixagent.core.topology.graph import TopologyGraph
+from fnixagent.core.types import (
     EdgeType,
     NodeType,
     TopologyEdge,

@@ -1,11 +1,11 @@
-"""导出 FastAPI OpenAPI schema 到 openapi.json(供前端 SDK 生成用)。"""
+﻿"""导出 FastAPI OpenAPI schema 到 openapi.json(供前端 SDK 生成用)。"""
 import json
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from officeagent.main import app
+from fnixagent.main import app
 
 schema = app.openapi()
 out = Path(__file__).parent.parent / "openapi.json"

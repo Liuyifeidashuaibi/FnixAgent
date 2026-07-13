@@ -1,4 +1,4 @@
-# OfficeAgent 智能办公 Agent · 项目开发文档
+# FnixAgent 智能办公 Agent · 项目开发文档
 
 > 面向**学习/教育/办公**场景的智能 Agent,核心能力:论文文献检索、Word 编辑、格式转换、图表生成、PDF 生成、文档解析、学习辅助问答,基于「任务」实现端到端自动编排。
 >
@@ -40,8 +40,8 @@
 ### 2.1 目录结构
 
 ```
-OFFICEAGENT/
-├── src/officeagent/           # 主源码
+FNIXAGENT/
+├── src/fnixagent/           # 主源码
 │   ├── main.py                # FastAPI 主入口
 │   ├── core/                  # 核心算法引擎(领域无关,可复用)
 │   │   ├── config.py          # 全局配置(CoreConfig 数据类)
@@ -375,7 +375,7 @@ OFFICEAGENT/
 ```json
 {
   "id": 1,
-  "api_key": "sk-officeagent-xxxxx",
+  "api_key": "sk-fnixagent-xxxxx",
   "scopes": ["chat"],
   "created_at": "2026-07-03T12:00:00",
   "expires_at": "2027-07-03T12:00:00"
@@ -752,8 +752,8 @@ OFFICEAGENT/
 
 | 方法 | 路径 | 说明 | 出参 |
 |------|------|------|------|
-| GET | `/` | 服务信息 | `{"name": "OfficeAgent", "version": "1.0.0", "status": "running", "docs": "/docs"}` |
-| GET | `/health` | 健康检查 | `{"status": "healthy", "service": "officeagent", "uptime": "..."}` |
+| GET | `/` | 服务信息 | `{"name": "FnixAgent", "version": "1.0.0", "status": "running", "docs": "/docs"}` |
+| GET | `/health` | 健康检查 | `{"status": "healthy", "service": "fnixagent", "uptime": "..."}` |
 | GET | `/stats` | 运行统计 | `{"llm": {...}, "memory": {...}, "tools": {"count": N}}` |
 | GET | `/docs` | Swagger UI | 交互式 API 文档 |
 
@@ -773,8 +773,8 @@ OFFICEAGENT/
 #### 步骤 1:克隆项目
 
 ```bash
-git clone <repo-url> OfficeAgent
-cd OfficeAgent
+git clone <repo-url> FnixAgent
+cd FnixAgent
 ```
 
 #### 步骤 2:创建虚拟环境并安装依赖
@@ -831,10 +831,10 @@ python scripts/seed_tools.py
 make dev
 
 # 方式 B:直接运行
-python src/officeagent/main.py
+python src/fnixagent/main.py
 
 # 方式 C:uvicorn 热重载
-uvicorn officeagent.main:app --host 0.0.0.0 --port 8000 --reload
+uvicorn fnixagent.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 > 注意:需设置 `PYTHONPATH=src`(Windows: `$env:PYTHONPATH = "src"`)
@@ -843,7 +843,7 @@ uvicorn officeagent.main:app --host 0.0.0.0 --port 8000 --reload
 
 ```bash
 curl http://localhost:8000/health
-# {"status": "healthy", "service": "officeagent", ...}
+# {"status": "healthy", "service": "fnixagent", ...}
 
 # 访问 API 文档
 open http://localhost:8000/docs
@@ -868,15 +868,15 @@ docker-compose up -d
 docker-compose ps
 
 # 查看应用日志
-docker-compose logs -f officeagent
+docker-compose logs -f fnixagent
 ```
 
 #### 步骤 3:初始化数据库(首次部署)
 
 ```bash
 # 在容器内执行
-docker exec officeagent-app python scripts/init_db.py
-docker exec officeagent-app python scripts/seed_tools.py
+docker exec fnixagent-app python scripts/init_db.py
+docker exec fnixagent-app python scripts/seed_tools.py
 ```
 
 #### 步骤 4:验证
@@ -899,14 +899,14 @@ docker-compose down -v --remove-orphans
 
 ```bash
 # 构建镜像
-docker build -t officeagent:latest -f deploy/docker/Dockerfile .
+docker build -t fnixagent:latest -f deploy/docker/Dockerfile .
 
 # 运行(需外部依赖:PostgreSQL/Redis 等)
 docker run -d \
   -p 8000:8000 \
   --env-file .env \
   -v $(pwd)/config:/app/config \
-  officeagent:latest
+  fnixagent:latest
 ```
 
 ### 4.5 Makefile 命令速查
@@ -964,8 +964,8 @@ export PYTHONPATH=src    # Linux/macOS
 
 ### 4.8 常见问题
 
-**Q: 启动时报 `No module named 'officeagent'`?**
-A: 设置 `PYTHONPATH=src`,或将 `src/officeagent` 安装为包(`pip install -e .`)。
+**Q: 启动时报 `No module named 'fnixagent'`?**
+A: 设置 `PYTHONPATH=src`,或将 `src/fnixagent` 安装为包(`pip install -e .`)。
 
 **Q: 无 LLM API Key 能否运行?**
 A: 可以。系统自动回退到 `MockLLMProvider`,返回基于规则的简单响应,适用于开发测试。

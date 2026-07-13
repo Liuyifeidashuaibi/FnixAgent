@@ -1,4 +1,4 @@
-"""Phase 2.2 LDAP/AD 域集成测试。
+﻿"""Phase 2.2 LDAP/AD 域集成测试。
 
 覆盖:
     1. LDAP 配置存储 CRUD(InMemoryLDAPConfigStore)
@@ -20,8 +20,8 @@ from fastapi.testclient import TestClient
 @pytest.fixture(autouse=True)
 def _reset_stores():
     """每个测试前后重置存储,确保隔离。"""
-    from officeagent.services.storage_ldap import reset_ldap_config_store
-    from officeagent.services.storage import reset_stores
+    from fnixagent.services.storage_ldap import reset_ldap_config_store
+    from fnixagent.services.storage import reset_stores
 
     reset_ldap_config_store()
     reset_stores()
@@ -121,7 +121,7 @@ def _make_mock_ldap3():
 
 class TestLDAPConfigStore:
     def test_create_and_get(self):
-        from officeagent.services.storage_ldap import get_ldap_config_store
+        from fnixagent.services.storage_ldap import get_ldap_config_store
 
         store = get_ldap_config_store()
         cfg = store.create_config(
@@ -142,7 +142,7 @@ class TestLDAPConfigStore:
         assert got.bind_password == "secret"
 
     def test_list_configs(self):
-        from officeagent.services.storage_ldap import get_ldap_config_store
+        from fnixagent.services.storage_ldap import get_ldap_config_store
 
         store = get_ldap_config_store()
         store.create_config("AD1", "ldap://a", "dn1", "pw", "base1")
@@ -156,7 +156,7 @@ class TestLDAPConfigStore:
         assert active_only[0].name == "AD1"
 
     def test_get_active_config(self):
-        from officeagent.services.storage_ldap import get_ldap_config_store
+        from fnixagent.services.storage_ldap import get_ldap_config_store
 
         store = get_ldap_config_store()
         assert store.get_active_config() is None
@@ -167,7 +167,7 @@ class TestLDAPConfigStore:
         assert active.name == "AD1"
 
     def test_update_config(self):
-        from officeagent.services.storage_ldap import get_ldap_config_store
+        from fnixagent.services.storage_ldap import get_ldap_config_store
 
         store = get_ldap_config_store()
         cfg = store.create_config("AD", "ldap://a", "dn", "pw", "base")
@@ -176,7 +176,7 @@ class TestLDAPConfigStore:
         assert updated.server_url == "ldap://new"
 
     def test_delete_config(self):
-        from officeagent.services.storage_ldap import get_ldap_config_store
+        from fnixagent.services.storage_ldap import get_ldap_config_store
 
         store = get_ldap_config_store()
         cfg = store.create_config("AD", "ldap://a", "dn", "pw", "base")
@@ -185,7 +185,7 @@ class TestLDAPConfigStore:
         assert store.delete_config(999) is False
 
     def test_mark_synced(self):
-        from officeagent.services.storage_ldap import get_ldap_config_store
+        from fnixagent.services.storage_ldap import get_ldap_config_store
 
         store = get_ldap_config_store()
         cfg = store.create_config("AD", "ldap://a", "dn", "pw", "base")
@@ -195,7 +195,7 @@ class TestLDAPConfigStore:
         assert got.last_sync_at is not None
 
     def test_to_dict_hides_password_by_default(self):
-        from officeagent.services.storage_ldap import get_ldap_config_store
+        from fnixagent.services.storage_ldap import get_ldap_config_store
 
         store = get_ldap_config_store()
         cfg = store.create_config("AD", "ldap://a", "dn", "secret", "base")
@@ -206,7 +206,7 @@ class TestLDAPConfigStore:
         assert d2["bind_password"] == "secret"
 
     def test_to_ldap_config(self):
-        from officeagent.services.storage_ldap import get_ldap_config_store
+        from fnixagent.services.storage_ldap import get_ldap_config_store
 
         store = get_ldap_config_store()
         cfg = store.create_config("AD", "ldap://a", "dn", "pw", "base")
@@ -234,7 +234,7 @@ class TestLDAPClient:
             sys.modules.pop("ldap3", None)
 
     def test_test_connection_success(self, mock_ldap3):
-        from officeagent.core.security.auth.ldap import LDAPClient, LDAPConfig
+        from fnixagent.core.security.auth.ldap import LDAPClient, LDAPConfig
 
         config = LDAPConfig(
             id=1, name="AD", server_url="ldap://dc:389",
@@ -245,7 +245,7 @@ class TestLDAPClient:
         assert client.test_connection() is True
 
     def test_test_connection_failure(self, mock_ldap3):
-        from officeagent.core.security.auth.ldap import LDAPClient, LDAPConfig
+        from fnixagent.core.security.auth.ldap import LDAPClient, LDAPConfig
 
         config = LDAPConfig(
             id=1, name="AD", server_url="ldap://dc:389",
@@ -261,7 +261,7 @@ class TestLDAPClient:
         mock_ldap3.Connection._bind_should_succeed = True
 
     def test_authenticate_success(self, mock_ldap3):
-        from officeagent.core.security.auth.ldap import LDAPClient, LDAPConfig
+        from fnixagent.core.security.auth.ldap import LDAPClient, LDAPConfig
 
         config = LDAPConfig(
             id=1, name="AD", server_url="ldap://dc:389",
@@ -293,7 +293,7 @@ class TestLDAPClient:
         assert user.display_name == "Alice Wang"
 
     def test_authenticate_user_not_found(self, mock_ldap3):
-        from officeagent.core.security.auth.ldap import LDAPClient, LDAPConfig
+        from fnixagent.core.security.auth.ldap import LDAPClient, LDAPConfig
 
         config = LDAPConfig(
             id=1, name="AD", server_url="ldap://dc:389",
@@ -309,7 +309,7 @@ class TestLDAPClient:
         assert user is None
 
     def test_authenticate_empty_password_raises(self, mock_ldap3):
-        from officeagent.core.security.auth.ldap import LDAPClient, LDAPConfig, LDAPAuthenticationError
+        from fnixagent.core.security.auth.ldap import LDAPClient, LDAPConfig, LDAPAuthenticationError
 
         config = LDAPConfig(
             id=1, name="AD", server_url="ldap://dc:389",
@@ -322,7 +322,7 @@ class TestLDAPClient:
 
     def test_not_installed_raises(self):
         """ldap3 未安装时应抛 LDAPNotInstalledError。"""
-        from officeagent.core.security.auth.ldap import LDAPClient, LDAPConfig, LDAPNotInstalledError
+        from fnixagent.core.security.auth.ldap import LDAPClient, LDAPConfig, LDAPNotInstalledError
 
         # 确保 ldap3 未导入
         old = sys.modules.pop("ldap3", None)
@@ -358,8 +358,8 @@ class TestLDAPUserSync:
             sys.modules.pop("ldap3", None)
 
     def test_sync_user_to_local_creates_new(self, mock_ldap3):
-        from officeagent.core.security.auth.ldap import LDAPClient, LDAPConfig, LDAPUser
-        from officeagent.services.storage import get_user_store
+        from fnixagent.core.security.auth.ldap import LDAPClient, LDAPConfig, LDAPUser
+        from fnixagent.services.storage import get_user_store
 
         config = LDAPConfig(
             id=1, name="AD", server_url="ldap://dc:389",
@@ -382,8 +382,8 @@ class TestLDAPUserSync:
         assert local.profile.get("ldap_dn") == "CN=bob,OU=Users,DC=co,DC=com"
 
     def test_sync_user_to_local_updates_existing(self, mock_ldap3):
-        from officeagent.core.security.auth.ldap import LDAPClient, LDAPConfig, LDAPUser
-        from officeagent.services.storage import get_user_store
+        from fnixagent.core.security.auth.ldap import LDAPClient, LDAPConfig, LDAPUser
+        from fnixagent.services.storage import get_user_store
 
         # 先创建本地用户(已有邮箱)
         store = get_user_store()
@@ -412,8 +412,8 @@ class TestLDAPUserSync:
         assert local.profile.get("display_name") == "Bob Li (Updated)"
 
     def test_sync_users_batch(self, mock_ldap3):
-        from officeagent.core.security.auth.ldap import LDAPClient, LDAPConfig
-        from officeagent.services.storage import get_user_store
+        from fnixagent.core.security.auth.ldap import LDAPClient, LDAPConfig
+        from fnixagent.services.storage import get_user_store
 
         config = LDAPConfig(
             id=1, name="AD", server_url="ldap://dc:389",
@@ -456,7 +456,7 @@ class TestLDAPAPIEndpoints:
     @pytest.fixture
     def client(self):
         """构建带 LDAP 路由的 TestClient。"""
-        from officeagent.api.routers import admin, auth
+        from fnixagent.api.routers import admin, auth
 
         app = FastAPI()
         app.include_router(auth.router, prefix="/api/v1")
@@ -466,8 +466,8 @@ class TestLDAPAPIEndpoints:
     @pytest.fixture
     def admin_token(self):
         """创建管理员 Token。"""
-        from officeagent.api.routers.auth import create_jwt_token
-        from officeagent.services.storage import get_user_store
+        from fnixagent.api.routers.auth import create_jwt_token
+        from fnixagent.services.storage import get_user_store
 
         store = get_user_store()
         user, _ = store.create(username="admin_ldap", email="admin@e.com", password="Pass1234", role="admin")
@@ -523,8 +523,8 @@ class TestLDAPAPIEndpoints:
 
     def test_ldap_config_requires_admin(self, client):
         """非 admin 用户不能访问 LDAP 配置。"""
-        from officeagent.api.routers.auth import create_jwt_token
-        from officeagent.services.storage import get_user_store
+        from fnixagent.api.routers.auth import create_jwt_token
+        from fnixagent.services.storage import get_user_store
 
         store = get_user_store()
         user, _ = store.create(username="normal", email="n@e.com", password="Pass1234", role="user")

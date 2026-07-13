@@ -1,4 +1,4 @@
-"""Phase 3.0 手机号验证码登录测试。
+﻿"""Phase 3.0 手机号验证码登录测试。
 
 覆盖:
     1. POST /auth/sms/send-code
@@ -32,8 +32,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", "sr
 @pytest.fixture(autouse=True)
 def _reset_stores():
     """每个测试前后重置所有存储,确保隔离。"""
-    from officeagent.services.storage_mfa import reset_all_mfa_stores
-    from officeagent.services.storage import reset_stores
+    from fnixagent.services.storage_mfa import reset_all_mfa_stores
+    from fnixagent.services.storage import reset_stores
 
     reset_all_mfa_stores()
     reset_stores()
@@ -45,7 +45,7 @@ def _reset_stores():
 @pytest.fixture
 def app():
     """构建只含 auth 路由的 FastAPI 应用。"""
-    from officeagent.api.routers import auth
+    from fnixagent.api.routers import auth
     application = FastAPI()
     application.include_router(auth.router, prefix="/api/v1")
     return application
@@ -83,7 +83,7 @@ def _register_user_with_phone(client, username="smsuser", phone="13800138000"):
     user_data = resp.json()
 
     # 2. 直接通过 store 设置 phone(避免依赖 profile 更新 API)
-    from officeagent.services.storage import get_user_store
+    from fnixagent.services.storage import get_user_store
     store = get_user_store()
     store.update_profile(user_data["id"], {"phone": phone})
     return user_data
@@ -100,7 +100,7 @@ class TestSmsSendCode:
     def test_send_code_success(self, client):
         """成功发送验证码,返回 challenge_id 与 expires_in。"""
         with patch(
-            "officeagent.core.security.auth.mfa.OTPClient.send_sms",
+            "fnixagent.core.security.auth.mfa.OTPClient.send_sms",
             _capture_send_sms,
         ):
             resp = client.post(
@@ -143,7 +143,7 @@ class TestSmsSendCode:
     def test_send_code_resend_cooldown(self, client):
         """同一手机号 60s 内不可重发(429)。"""
         with patch(
-            "officeagent.core.security.auth.mfa.OTPClient.send_sms",
+            "fnixagent.core.security.auth.mfa.OTPClient.send_sms",
             _capture_send_sms,
         ):
             # 第一次发送成功
@@ -164,7 +164,7 @@ class TestSmsSendCode:
     def test_send_code_different_phones_no_cooldown(self, client):
         """不同手机号不受同一冷却限制。"""
         with patch(
-            "officeagent.core.security.auth.mfa.OTPClient.send_sms",
+            "fnixagent.core.security.auth.mfa.OTPClient.send_sms",
             _capture_send_sms,
         ):
             resp1 = client.post(
@@ -194,7 +194,7 @@ class TestSmsLogin:
 
         # 发送验证码(捕获 code)
         with patch(
-            "officeagent.core.security.auth.mfa.OTPClient.send_sms",
+            "fnixagent.core.security.auth.mfa.OTPClient.send_sms",
             _capture_send_sms,
         ):
             resp = client.post(
@@ -222,7 +222,7 @@ class TestSmsLogin:
         _register_user_with_phone(client, username="smsuser2", phone="13800138001")
 
         with patch(
-            "officeagent.core.security.auth.mfa.OTPClient.send_sms",
+            "fnixagent.core.security.auth.mfa.OTPClient.send_sms",
             _capture_send_sms,
         ):
             client.post(
@@ -243,7 +243,7 @@ class TestSmsLogin:
         _register_user_with_phone(client, username="smsuser3", phone="13800138002")
 
         with patch(
-            "officeagent.core.security.auth.mfa.OTPClient.send_sms",
+            "fnixagent.core.security.auth.mfa.OTPClient.send_sms",
             _capture_send_sms,
         ):
             client.post(
@@ -270,7 +270,7 @@ class TestSmsLogin:
     def test_login_unregistered_phone(self, client):
         """手机号未注册 → 404(明确告知未注册,引导注册)。"""
         with patch(
-            "officeagent.core.security.auth.mfa.OTPClient.send_sms",
+            "fnixagent.core.security.auth.mfa.OTPClient.send_sms",
             _capture_send_sms,
         ):
             client.post(
@@ -302,7 +302,7 @@ class TestSmsLogin:
         _register_user_with_phone(client, username="smsuser5", phone="13800138004")
 
         with patch(
-            "officeagent.core.security.auth.mfa.OTPClient.send_sms",
+            "fnixagent.core.security.auth.mfa.OTPClient.send_sms",
             _capture_send_sms,
         ):
             client.post(
@@ -312,7 +312,7 @@ class TestSmsLogin:
         code = _CAPTCHA["code"]
 
         # 手动将 challenge 的过期时间设为过去
-        from officeagent.services.storage_mfa import get_otp_challenge_store
+        from fnixagent.services.storage_mfa import get_otp_challenge_store
         import hashlib
         phone_hash = int(hashlib.sha256("13800138004".encode()).hexdigest()[:8], 16)
         store = get_otp_challenge_store()
@@ -336,7 +336,7 @@ class TestSmsLogin:
         _register_user_with_phone(client, username="smsuser6", phone="13800138005")
 
         with patch(
-            "officeagent.core.security.auth.mfa.OTPClient.send_sms",
+            "fnixagent.core.security.auth.mfa.OTPClient.send_sms",
             _capture_send_sms,
         ):
             client.post(
@@ -365,12 +365,12 @@ class TestSmsLogin:
         )
 
         # 禁用用户
-        from officeagent.services.storage import get_user_store
+        from fnixagent.services.storage import get_user_store
         store = get_user_store()
         store.set_user_disabled(user_data["id"], True)
 
         with patch(
-            "officeagent.core.security.auth.mfa.OTPClient.send_sms",
+            "fnixagent.core.security.auth.mfa.OTPClient.send_sms",
             _capture_send_sms,
         ):
             client.post(
@@ -391,7 +391,7 @@ class TestSmsLogin:
         _register_user_with_phone(client, username="smsuser8", phone="13800138007")
 
         with patch(
-            "officeagent.core.security.auth.mfa.OTPClient.send_sms",
+            "fnixagent.core.security.auth.mfa.OTPClient.send_sms",
             _capture_send_sms,
         ):
             client.post(
@@ -430,7 +430,7 @@ class TestUserStoreGetByPhone:
     """UserStore.get_by_phone 内存实现。"""
 
     def test_get_by_phone_found(self):
-        from officeagent.services.storage import get_user_store
+        from fnixagent.services.storage import get_user_store
         store = get_user_store()
         user, _ = store.create("phoneuser1", "phone1@e.com", "pass", "user")
         store.update_profile(user.id, {"phone": "13600136000"})
@@ -440,26 +440,26 @@ class TestUserStoreGetByPhone:
         assert found.username == "phoneuser1"
 
     def test_get_by_phone_not_found(self):
-        from officeagent.services.storage import get_user_store
+        from fnixagent.services.storage import get_user_store
         store = get_user_store()
         assert store.get_by_phone("19999999999") is None
 
     def test_get_by_phone_empty_input(self):
-        from officeagent.services.storage import get_user_store
+        from fnixagent.services.storage import get_user_store
         store = get_user_store()
         assert store.get_by_phone("") is None
         assert store.get_by_phone(None) is None  # type: ignore[arg-type]
 
     def test_get_by_phone_no_phone_in_profile(self):
         """用户未设置 phone 时不应被找到。"""
-        from officeagent.services.storage import get_user_store
+        from fnixagent.services.storage import get_user_store
         store = get_user_store()
         store.create("nophoneuser", "np@e.com", "pass", "user")
         assert store.get_by_phone("13800138000") is None
 
     def test_get_by_phone_multiple_users(self):
         """多个用户,通过 phone 精确匹配目标用户。"""
-        from officeagent.services.storage import get_user_store
+        from fnixagent.services.storage import get_user_store
         store = get_user_store()
         u1, _ = store.create("multi1", "m1@e.com", "pass", "user")
         u2, _ = store.create("multi2", "m2@e.com", "pass", "user")

@@ -1,4 +1,4 @@
-"""
+﻿"""
 资产模块单元测试公共夹具。
 
 提供以下 fixtures:
@@ -14,9 +14,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", "sr
 
 import pytest
 
-from officeagent.assets.bundle import AssetsBundle
-from officeagent.assets.crypto import AssetEncryptor
-from officeagent.core.types import SkillLevel, SkillRecord
+from fnixagent.assets.bundle import AssetsBundle
+from fnixagent.assets.crypto import AssetEncryptor
+from fnixagent.core.types import SkillLevel, SkillRecord
 
 
 # ---------------------------------------------------------------------------

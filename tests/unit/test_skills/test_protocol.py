@@ -1,7 +1,7 @@
-"""
+﻿"""
 技能-拓扑绑定协议 (SkillBindingProtocol) 单元测试。
 
-测试模块: officeagent.core.skills.protocol.SkillBindingProtocol
+测试模块: fnixagent.core.skills.protocol.SkillBindingProtocol
 覆盖:
     - 常量校验: HIT_COEFFICIENT_ON_PATH / SIBLING / UNRELATED
     - bind: 正常绑定、幂等绑定、异常路径(节点不存在/非 L2/已绑不同技能)
@@ -14,15 +14,15 @@
 """
 import pytest
 
-from officeagent.core.exceptions import SkillBindingError
-from officeagent.core.skills.protocol import (
+from fnixagent.core.exceptions import SkillBindingError
+from fnixagent.core.skills.protocol import (
     HIT_COEFFICIENT_ON_PATH,
     HIT_COEFFICIENT_SIBLING,
     HIT_COEFFICIENT_UNRELATED,
     SkillBindingProtocol,
 )
-from officeagent.core.topology.graph import TopologyGraph
-from officeagent.core.types import (
+from fnixagent.core.topology.graph import TopologyGraph
+from fnixagent.core.types import (
     NodeType,
     SkillLevel,
     SkillRecord,

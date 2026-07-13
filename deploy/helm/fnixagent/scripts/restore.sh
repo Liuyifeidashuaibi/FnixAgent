@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# OfficeAgent 恢复脚本 — Phase 2.9
+# FnixAgent 恢复脚本 — Phase 2.9
 #
 # 覆盖组件:
 #   1. PostgreSQL  — 从 pg_dump 逻辑恢复 / 从 pg_basebackup + WAL 做 PITR
@@ -50,8 +50,8 @@ fi
 # 数据库
 PG_HOST="${PG_HOST:-postgres}"
 PG_PORT="${PG_PORT:-5432}"
-PG_USER="${PG_USER:-officeagent}"
-PG_DB="${PG_DB:-officeagent}"
+PG_USER="${PG_USER:-fnixagent}"
+PG_DB="${PG_DB:-fnixagent}"
 PG_PASSWORD="${PG_PASSWORD:-}"
 PG_DATA_DIR="${PG_DATA_DIR:-/var/lib/postgresql/data}"
 
@@ -66,7 +66,7 @@ MINIO_ENDPOINT="${MINIO_ENDPOINT:-http://minio:9000}"
 MINIO_ACCESS_KEY="${MINIO_ACCESS_KEY:-}"
 MINIO_SECRET_KEY="${MINIO_SECRET_KEY:-}"
 MILVUS_BUCKET="${MILVUS_BUCKET:-milvus}"
-APP_BUCKET="${APP_BUCKET:-officeagent}"
+APP_BUCKET="${APP_BUCKET:-fnixagent}"
 
 # ============================================================================
 # 工具函数
@@ -326,7 +326,7 @@ restore_redis() {
 
   log "  - 启动 Redis..."
   # 在 K8s 环境下,Pod 会自动重启;在裸机环境下需手动启动
-  # systemctl start redis 2>/dev/null || docker start officeagent-redis 2>/dev/null || true
+  # systemctl start redis 2>/dev/null || docker start fnixagent-redis 2>/dev/null || true
 
   sleep 3
 
@@ -403,10 +403,10 @@ restore_config() {
 
   if [[ -f "${cfg_dir}/values.yaml" ]]; then
     log "  - 还原 Helm values.yaml"
-    cp "${cfg_dir}/values.yaml" "${PROJECT_ROOT}/deploy/helm/officeagent/values.yaml"
+    cp "${cfg_dir}/values.yaml" "${PROJECT_ROOT}/deploy/helm/fnixagent/values.yaml"
   fi
   [[ -f "${cfg_dir}/values.prod.yaml" ]] && \
-    cp "${cfg_dir}/values.prod.yaml" "${PROJECT_ROOT}/deploy/helm/officeagent/values.prod.yaml"
+    cp "${cfg_dir}/values.prod.yaml" "${PROJECT_ROOT}/deploy/helm/fnixagent/values.prod.yaml"
 
   log "  - 应用配置恢复完成(注意: .env.prod 需要手动从密码管理器恢复真实值)"
 }
@@ -420,7 +420,7 @@ main() {
   LOG_FILE="${BACKUP_DIR}/restore_$(date +%Y%m%d_%H%M%S).log"
 
   log "============================================================"
-  log "OfficeAgent 恢复开始"
+  log "FnixAgent 恢复开始"
   log "  备份目录: ${BACKUP_DIR}"
   log "  恢复组件: ${COMPONENTS[*]}"
   [[ -n "${PITR_TARGET}" ]] && log "  PITR 目标: ${PITR_TARGET}"
@@ -444,7 +444,7 @@ main() {
   done
 
   log "============================================================"
-  log "OfficeAgent 恢复结束"
+  log "FnixAgent 恢复结束"
   log "  状态: $([[ ${overall_status} -eq 0 ]] && echo 成功 || echo 部分失败)"
   log "  日志: ${LOG_FILE}"
   log "============================================================"

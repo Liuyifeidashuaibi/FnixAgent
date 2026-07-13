@@ -1,4 +1,4 @@
-OfficeAgent Desktop buildResources — 打包资源目录
+﻿FnixAgent Desktop buildResources — 打包资源目录
 ================================================
 
 此目录存放 electron-builder 打包所需的资源文件。

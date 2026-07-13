@@ -1,10 +1,10 @@
 # 安全策略
 
-OfficeAgent 团队高度重视项目安全。本文件说明支持的版本、漏洞报告流程与响应承诺。
+FnixAgent 团队高度重视项目安全。本文件说明支持的版本、漏洞报告流程与响应承诺。
 
 ## 支持的版本
 
-OfficeAgent 仅对最新稳定版本提供安全更新。下表列出当前支持状态:
+FnixAgent 仅对最新稳定版本提供安全更新。下表列出当前支持状态:
 
 | 版本    | 支持状态          | 备注                |
 | ------- | ----------------- | ------------------- |
@@ -19,12 +19,12 @@ OfficeAgent 仅对最新稳定版本提供安全更新。下表列出当前支�
 我们遵循 [协调漏洞披露](https://en.wikipedia.org/wiki/Coordinated_vulnerability_disclosure)(CVD)原则。
 如发现安全漏洞,请按以下流程报告:
 
-1. **发送邮件**至 [security@officeagent.dev](mailto:security@officeagent.dev),
+1. **发送邮件**至 [security@fnixagent.dev](mailto:security@fnixagent.dev),
    主题以 `[SECURITY]` 前缀开头。
 2. **加密通信**:如内容敏感,请使用我们的 PGP 公钥加密邮件。
    PGP 公钥获取方式:
-   - 在密钥服务器 `keys.openpgp.org` 搜索 `security@officeagent.dev`
-   - 或访问 `https://officeagent.dev/.well-known/pgp-key.txt` 下载
+   - 在密钥服务器 `keys.openpgp.org` 搜索 `security@fnixagent.dev`
+   - 或访问 `https://fnixagent.dev/.well-known/pgp-key.txt` 下载
 3. **提供以下信息**(尽量完整,以便快速定位):
    - 漏洞类型(如:SQL 注入、XSS、命令注入、权限提升等)
    - 受影响的源文件路径与相关代码位置(tag / branch / commit 或 URL)
@@ -53,11 +53,11 @@ MSRC 也接受匿名报告。
 
 ## 漏洞奖励
 
-OfficeAgent 当前为社区驱动的开源项目,暂无现金漏洞奖励计划。
+FnixAgent 当前为社区驱动的开源项目,暂无现金漏洞奖励计划。
 但我们会对报告者致谢(经报告者同意后):
 
 - 在 SECURITY.md 与发布说明中署名
-- 颁发 "OfficeAgent Security Contributor" 数字徽章
+- 颁发 "FnixAgent Security Contributor" 数字徽章
 
 ## 公开披露时机
 
@@ -67,7 +67,7 @@ OfficeAgent 当前为社区驱动的开源项目,暂无现金漏洞奖励计划�
 
 ## 安全加固建议
 
-部署 OfficeAgent 时建议遵循以下加固清单:
+部署 FnixAgent 时建议遵循以下加固清单:
 
 1. **密钥管理**:所有密钥通过环境变量或 KMS(Vault / AWS KMS / 阿里云 KMS)注入,
    禁止硬编码。`.env` 文件加入 `.gitignore`。
@@ -89,5 +89,5 @@ OfficeAgent 当前为社区驱动的开源项目,暂无现金漏洞奖励计划�
 
 ## 联系方式
 
-- 安全邮箱:[security@officeagent.dev](mailto:security@officeagent.dev)
-- 公开议题(非敏感):[GitHub Issues](https://github.com/officeagent/officeagent/issues)
+- 安全邮箱:[security@fnixagent.dev](mailto:security@fnixagent.dev)
+- 公开议题(非敏感):[GitHub Issues](https://github.com/fnixagent/fnixagent/issues)

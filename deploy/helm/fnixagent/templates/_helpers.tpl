@@ -1,12 +1,12 @@
 {{/*
-OfficeAgent Helm Chart 模板辅助函数
+FnixAgent Helm Chart 模板辅助函数
 */}}
 
-{{- define "officeagent.name" -}}
+{{- define "fnixagent.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
-{{- define "officeagent.fullname" -}}
+{{- define "fnixagent.fullname" -}}
 {{- if .Values.fullnameOverride -}}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
@@ -19,16 +19,16 @@ OfficeAgent Helm Chart 模板辅助函数
 {{- end -}}
 {{- end -}}
 
-{{- define "officeagent.chart" -}}
+{{- define "fnixagent.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{/*
 公共标签(所有资源继承)
 */}}
-{{- define "officeagent.labels" -}}
-helm.sh/chart: {{ include "officeagent.chart" . }}
-{{ include "officeagent.selectorLabels" . }}
+{{- define "fnixagent.labels" -}}
+helm.sh/chart: {{ include "fnixagent.chart" . }}
+{{ include "fnixagent.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
@@ -38,17 +38,17 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{/*
 选择器标签(必须与 Deployment.selector.matchLabels 一致)
 */}}
-{{- define "officeagent.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "officeagent.name" . }}
+{{- define "fnixagent.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "fnixagent.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
 
 {{/*
 Service Account 名称
 */}}
-{{- define "officeagent.serviceAccountName" -}}
+{{- define "fnixagent.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create -}}
-{{- default (include "officeagent.fullname" .) .Values.serviceAccount.name -}}
+{{- default (include "fnixagent.fullname" .) .Values.serviceAccount.name -}}
 {{- else -}}
 {{- default "default" .Values.serviceAccount.name -}}
 {{- end -}}
@@ -57,8 +57,8 @@ Service Account 名称
 {{/*
 Secret 名称
 */}}
-{{- define "officeagent.secretName" -}}
-{{- default (printf "%s-secrets" (include "officeagent.fullname" .)) .Values.secret.name -}}
+{{- define "fnixagent.secretName" -}}
+{{- default (printf "%s-secrets" (include "fnixagent.fullname" .)) .Values.secret.name -}}
 {{- end -}}
 
 {{/*
@@ -67,11 +67,11 @@ Secret 名称
 - 若启用 postgres 子 Chart,自动拼接
 - 若启用外部数据库,拼接外部地址
 */}}
-{{- define "officeagent.databaseUrl" -}}
+{{- define "fnixagent.databaseUrl" -}}
 {{- if .Values.env.DATABASE_URL -}}
 {{- .Values.env.DATABASE_URL -}}
 {{- else if .Values.postgres.enabled -}}
-{{- printf "postgresql://officeagent:%s@%s-postgresql:5432/%s" "$(POSTGRES_PASSWORD)" (include "officeagent.fullname" .) .Values.postgres.auth.database -}}
+{{- printf "postgresql://fnixagent:%s@%s-postgresql:5432/%s" "$(POSTGRES_PASSWORD)" (include "fnixagent.fullname" .) .Values.postgres.auth.database -}}
 {{- else if .Values.externalDatabase.enabled -}}
 {{- printf "postgresql://%s:%s@%s:%d/%s" .Values.externalDatabase.user "$(POSTGRES_PASSWORD)" .Values.externalDatabase.host (int .Values.externalDatabase.port) .Values.externalDatabase.database -}}
 {{- else -}}
@@ -85,11 +85,11 @@ Redis 主机地址
 - 若启用 redis 子 Chart,使用子 Chart 服务名
 - 若启用外部 Redis,使用外部地址
 */}}
-{{- define "officeagent.redisHost" -}}
+{{- define "fnixagent.redisHost" -}}
 {{- if .Values.env.REDIS_HOST -}}
 {{- .Values.env.REDIS_HOST -}}
 {{- else if .Values.redis.enabled -}}
-{{- printf "%s-redis-master" (include "officeagent.fullname" .) -}}
+{{- printf "%s-redis-master" (include "fnixagent.fullname" .) -}}
 {{- else if .Values.externalRedis.enabled -}}
 {{- .Values.externalRedis.host -}}
 {{- else -}}

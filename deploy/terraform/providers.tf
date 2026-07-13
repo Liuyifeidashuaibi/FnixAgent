@@ -23,10 +23,10 @@ terraform {
 
   # 远程状态后端(实际值通过 terraform init -backend-config=environments/<cloud>-backend.hcl 注入)
   # AWS 示例 environments/aws-backend.hcl:
-  #   bucket = "officeagent-tfstate"
-  #   key    = "env:/dev/officeagent.tfstate"
+  #   bucket = "fnixagent-tfstate"
+  #   key    = "env:/dev/fnixagent.tfstate"
   #   region = "ap-east-1"
-  #   dynamodb_table = "officeagent-tflock"
+  #   dynamodb_table = "fnixagent-tflock"
   backend "s3" {}
 }
 
@@ -36,7 +36,7 @@ provider "aws" {
 
   default_tags {
     tags = {
-      Project = "officeagent"
+      Project = "fnixagent"
       Env     = var.env
       Managed = "terraform"
     }
@@ -49,7 +49,7 @@ provider "alicloud" {
 
   default_tags {
     tags = {
-      Project = "officeagent"
+      Project = "fnixagent"
       Env     = var.env
       Managed = "terraform"
     }

@@ -27,11 +27,11 @@ output "database_endpoint" {
 }
 
 output "database_name" {
-  value = "officeagent"
+  value = "fnixagent"
 }
 
 output "database_username" {
-  value = "officeagent"
+  value = "fnixagent"
 }
 
 output "redis_endpoint" {

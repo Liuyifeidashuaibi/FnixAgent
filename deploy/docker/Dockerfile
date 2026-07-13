@@ -1,4 +1,4 @@
-# OfficeAgent 部署配置
+# FnixAgent 部署配置
 
 FROM python:3.11-slim
 
@@ -30,4 +30,4 @@ ENV SERVICE_ENV=production
 EXPOSE 8000
 
 # 启动命令
-CMD ["python", "src/officeagent/main.py"]
+CMD ["python", "src/fnixagent/main.py"]

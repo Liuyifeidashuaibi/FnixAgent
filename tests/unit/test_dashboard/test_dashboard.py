@@ -1,4 +1,4 @@
-"""Phase 4.4 Dashboard API 测试。
+﻿"""Phase 4.4 Dashboard API 测试。
 
 覆盖:
   1. GET /dashboard/overview       — 总览
@@ -18,11 +18,11 @@ from fastapi.testclient import TestClient
 @pytest.fixture(autouse=True)
 def _reset_stores():
     """每个测试前后重置存储。"""
-    from officeagent.services.storage_audit import reset_audit_store
-    from officeagent.services.storage import reset_stores
-    from officeagent.services.storage_rbac import reset_rbac_store
-    from officeagent.services.moderation_service import reset_moderation_service
-    from officeagent.core.security import rbac
+    from fnixagent.services.storage_audit import reset_audit_store
+    from fnixagent.services.storage import reset_stores
+    from fnixagent.services.storage_rbac import reset_rbac_store
+    from fnixagent.services.moderation_service import reset_moderation_service
+    from fnixagent.core.security import rbac
 
     reset_audit_store()
     reset_stores()
@@ -39,7 +39,7 @@ def _reset_stores():
 
 def _create_app():
     """创建带 dashboard + auth 路由的测试 app。"""
-    from officeagent.api.routers import auth, dashboard
+    from fnixagent.api.routers import auth, dashboard
     app = FastAPI()
     app.include_router(auth.router, prefix="/api/v1")
     app.include_router(dashboard.router, prefix="/api/v1")
@@ -57,7 +57,7 @@ def _register_admin_and_login(client, username="admin1"):
     user_id = resp.json()["id"]
 
     # 提升为 admin
-    from officeagent.services.storage import get_user_store
+    from fnixagent.services.storage import get_user_store
     get_user_store().update_role(user_id, "admin")
 
     # 登录
@@ -190,7 +190,7 @@ class TestDashboardOverview:
             json={"username": "todelete", "email": "td@e.com",
                   "password": "Pass1234"},
         )
-        from officeagent.services.storage import get_user_store
+        from fnixagent.services.storage import get_user_store
         store = get_user_store()
         user = store.get_by_username("todelete")
         store.soft_delete_user(user.id)

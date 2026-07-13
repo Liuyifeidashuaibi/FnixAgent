@@ -1,4 +1,4 @@
-"""类型化消息 + Handoff 协议 —— P3-1。
+﻿"""类型化消息 + Handoff 协议 —— P3-1。
 
 借鉴:
   - OpenAI Agents SDK:Handoff 作为 Agent 配置项,声明可移交的目标 Agent
@@ -191,13 +191,13 @@ class HandoffRegistry:
 
     用法:
         registry = HandoffRegistry()
-        registry.register("office-agent", make_handoff("researcher"))
-        registry.register("office-agent", make_handoff("writer"))
+        registry.register("fnix-agent", make_handoff("researcher"))
+        registry.register("fnix-agent", make_handoff("writer"))
 
-        targets = registry.list_targets("office-agent")
+        targets = registry.list_targets("fnix-agent")
         # ["researcher", "writer"]
 
-        h = registry.find("office-agent", "researcher")
+        h = registry.find("fnix-agent", "researcher")
         # Handoff(target_agent="researcher", ...)
     """
 

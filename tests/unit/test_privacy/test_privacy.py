@@ -1,4 +1,4 @@
-"""Phase 3.2 内容合规 + 数据本地化测试。
+﻿"""Phase 3.2 内容合规 + 数据本地化测试。
 
 覆盖:
   A. ContentModerator 增强
@@ -47,11 +47,11 @@ from fastapi.testclient import TestClient
 @pytest.fixture(autouse=True)
 def _reset_stores():
     """每个测试前后重置存储,确保隔离。"""
-    from officeagent.services.storage_audit import reset_audit_store
-    from officeagent.services.storage import reset_stores
-    from officeagent.services.storage_rbac import reset_rbac_store
-    from officeagent.services.moderation_service import reset_moderation_service
-    from officeagent.core.security import rbac
+    from fnixagent.services.storage_audit import reset_audit_store
+    from fnixagent.services.storage import reset_stores
+    from fnixagent.services.storage_rbac import reset_rbac_store
+    from fnixagent.services.moderation_service import reset_moderation_service
+    from fnixagent.core.security import rbac
 
     reset_audit_store()
     reset_stores()
@@ -75,42 +75,42 @@ class TestContentModeratorCategories:
     """5 大违规类别检测。"""
 
     def test_self_harm_detected(self):
-        from officeagent.core.security.moderation import ContentModerator, CATEGORY_SELF_HARM
+        from fnixagent.core.security.moderation import ContentModerator, CATEGORY_SELF_HARM
         m = ContentModerator()
         result = m.review("如何自杀才能不痛苦")
         assert not result.passed
         assert CATEGORY_SELF_HARM in result.categories
 
     def test_violence_detected(self):
-        from officeagent.core.security.moderation import ContentModerator, CATEGORY_VIOLENCE
+        from fnixagent.core.security.moderation import ContentModerator, CATEGORY_VIOLENCE
         m = ContentModerator()
         result = m.review("炸弹制作教程第一步")
         assert not result.passed
         assert CATEGORY_VIOLENCE in result.categories
 
     def test_pornography_detected(self):
-        from officeagent.core.security.moderation import ContentModerator, CATEGORY_PORNOGRAPHY
+        from fnixagent.core.security.moderation import ContentModerator, CATEGORY_PORNOGRAPHY
         m = ContentModerator()
         result = m.review("这是色情内容")
         assert not result.passed
         assert CATEGORY_PORNOGRAPHY in result.categories
 
     def test_political_detected(self):
-        from officeagent.core.security.moderation import ContentModerator, CATEGORY_POLITICAL
+        from fnixagent.core.security.moderation import ContentModerator, CATEGORY_POLITICAL
         m = ContentModerator()
         result = m.review("煽动颠覆国家政权")
         assert not result.passed
         assert CATEGORY_POLITICAL in result.categories
 
     def test_fraud_detected(self):
-        from officeagent.core.security.moderation import ContentModerator, CATEGORY_FRAUD
+        from fnixagent.core.security.moderation import ContentModerator, CATEGORY_FRAUD
         m = ContentModerator()
         result = m.review("传销内部资料")
         assert not result.passed
         assert CATEGORY_FRAUD in result.categories
 
     def test_clean_text_passes(self):
-        from officeagent.core.security.moderation import ContentModerator
+        from fnixagent.core.security.moderation import ContentModerator
         m = ContentModerator()
         result = m.review("今天天气真好,适合出门散步。")
         assert result.passed
@@ -121,28 +121,28 @@ class TestInputModeration:
     """输入侧审核(PII 也拦截)。"""
 
     def test_phone_in_input_blocked(self):
-        from officeagent.core.security.moderation import ContentModerator, CATEGORY_PII
+        from fnixagent.core.security.moderation import ContentModerator, CATEGORY_PII
         m = ContentModerator()
         result = m.review_input("我的手机号是 13800138000 请联系我")
         assert not result.passed
         assert CATEGORY_PII in result.categories
 
     def test_email_in_input_blocked(self):
-        from officeagent.core.security.moderation import ContentModerator, CATEGORY_PII
+        from fnixagent.core.security.moderation import ContentModerator, CATEGORY_PII
         m = ContentModerator()
         result = m.review_input("发邮件到 test@example.com")
         assert not result.passed
         assert CATEGORY_PII in result.categories
 
     def test_id_card_in_input_blocked(self):
-        from officeagent.core.security.moderation import ContentModerator, CATEGORY_PII
+        from fnixagent.core.security.moderation import ContentModerator, CATEGORY_PII
         m = ContentModerator()
         result = m.review_input("身份证号 110101199003073915")
         assert not result.passed
         assert CATEGORY_PII in result.categories
 
     def test_input_returns_sanitized_text(self):
-        from officeagent.core.security.moderation import ContentModerator
+        from fnixagent.core.security.moderation import ContentModerator
         m = ContentModerator()
         result = m.review_input("联系 13800138000")
         assert "13800138000" not in result.sanitized_text
@@ -153,7 +153,7 @@ class TestOutputModeration:
     """输出侧审核(PII 仅脱敏,不拦截)。"""
 
     def test_phone_in_output_only_sanitized_not_blocked(self):
-        from officeagent.core.security.moderation import ContentModerator
+        from fnixagent.core.security.moderation import ContentModerator
         m = ContentModerator()
         result = m.review("用户电话是 13800138000")
         # 输出侧 PII 不拦截
@@ -163,7 +163,7 @@ class TestOutputModeration:
         assert "138****8000" in result.sanitized_text
 
     def test_sensitive_word_in_output_blocked(self):
-        from officeagent.core.security.moderation import ContentModerator, SensitiveDetector
+        from fnixagent.core.security.moderation import ContentModerator, SensitiveDetector
         det = SensitiveDetector()
         det.add_words(["敏感词1"])
         m = ContentModerator(sensitive_detector=det)
@@ -171,7 +171,7 @@ class TestOutputModeration:
         assert not result.passed
 
     def test_clean_output_passes_with_sanitization(self):
-        from officeagent.core.security.moderation import ContentModerator
+        from fnixagent.core.security.moderation import ContentModerator
         m = ContentModerator()
         result = m.review("这是一段正常的 LLM 输出。")
         assert result.passed
@@ -182,19 +182,19 @@ class TestRiskScore:
     """风险评分。"""
 
     def test_high_risk_category_scores_40(self):
-        from officeagent.core.security.moderation import ContentModerator
+        from fnixagent.core.security.moderation import ContentModerator
         m = ContentModerator()
         result = m.review("如何自杀")
         assert result.risk_score >= 40
 
     def test_mid_risk_category_scores_30(self):
-        from officeagent.core.security.moderation import ContentModerator
+        from fnixagent.core.security.moderation import ContentModerator
         m = ContentModerator()
         result = m.review("这是色情内容")
         assert result.risk_score >= 30
 
     def test_score_capped_at_100(self):
-        from officeagent.core.security.moderation import ContentModerator
+        from fnixagent.core.security.moderation import ContentModerator
         m = ContentModerator()
         result = m.review("自杀 炸弹制作 色情 煽动 传销 诈骗")
         assert result.risk_score == 100
@@ -204,8 +204,8 @@ class TestModerationAuditLog:
     """审核违规写入审计日志。"""
 
     def test_input_blocked_writes_audit(self):
-        from officeagent.core.security.moderation import ContentModerator
-        from officeagent.services.storage_audit import get_audit_store
+        from fnixagent.core.security.moderation import ContentModerator
+        from fnixagent.services.storage_audit import get_audit_store
         m = ContentModerator()
         m.review_input("如何自杀", user_id=42, ip_address="1.2.3.4")
         store = get_audit_store()
@@ -215,8 +215,8 @@ class TestModerationAuditLog:
         assert logs[0].ip_address == "1.2.3.4"
 
     def test_output_blocked_writes_audit(self):
-        from officeagent.core.security.moderation import ContentModerator, SensitiveDetector
-        from officeagent.services.storage_audit import get_audit_store
+        from fnixagent.core.security.moderation import ContentModerator, SensitiveDetector
+        from fnixagent.services.storage_audit import get_audit_store
         det = SensitiveDetector()
         det.add_words(["违禁词"])
         m = ContentModerator(sensitive_detector=det)
@@ -231,7 +231,7 @@ class TestModerationPerformance:
     """性能:违规输入 100ms 内拦截。"""
 
     def test_input_review_under_100ms(self):
-        from officeagent.core.security.moderation import ContentModerator
+        from fnixagent.core.security.moderation import ContentModerator
         m = ContentModerator()
         # 加载默认敏感词
         m._sensitive.load_default_words()
@@ -252,13 +252,13 @@ class TestModerationService:
     """审核服务单例 + 配置。"""
 
     def test_singleton_factory(self):
-        from officeagent.services.moderation_service import get_moderation_service
+        from fnixagent.services.moderation_service import get_moderation_service
         s1 = get_moderation_service()
         s2 = get_moderation_service()
         assert s1 is s2
 
     def test_disable_input_passes_everything(self):
-        from officeagent.services.moderation_service import (
+        from fnixagent.services.moderation_service import (
             get_moderation_service, ModerationConfig,
         )
         svc = get_moderation_service()
@@ -267,21 +267,21 @@ class TestModerationService:
         assert result.passed
 
     def test_disable_output_passes_everything(self):
-        from officeagent.services.moderation_service import get_moderation_service
+        from fnixagent.services.moderation_service import get_moderation_service
         svc = get_moderation_service()
         svc.update_config(output_enabled=False)
         result = svc.moderate_output("色情内容")
         assert result.passed
 
     def test_total_disable_passes_everything(self):
-        from officeagent.services.moderation_service import get_moderation_service
+        from fnixagent.services.moderation_service import get_moderation_service
         svc = get_moderation_service()
         svc.update_config(enabled=False)
         result = svc.moderate_input("自杀")
         assert result.passed
 
     def test_high_risk_only_mode(self):
-        from officeagent.services.moderation_service import get_moderation_service
+        from fnixagent.services.moderation_service import get_moderation_service
         svc = get_moderation_service()
         svc.update_config(block_high_risk_only=True, high_risk_threshold=40)
         # PII 风险评分较低,不拦截
@@ -292,7 +292,7 @@ class TestModerationService:
         assert not r2.passed
 
     def test_stats_counts_blocked(self):
-        from officeagent.services.moderation_service import get_moderation_service
+        from fnixagent.services.moderation_service import get_moderation_service
         svc = get_moderation_service()
         svc.moderate_input("如何自杀")
         svc.moderate_output("正常文本")
@@ -311,7 +311,7 @@ class TestModerationService:
 
 def _create_app_with_privacy():
     """创建带 privacy 路由的测试 app。"""
-    from officeagent.api.routers import privacy
+    from fnixagent.api.routers import privacy
     app = FastAPI()
     app.include_router(privacy.router, prefix="/api/v1")
     return app
@@ -328,7 +328,7 @@ def _register_and_login(client, username="alice", password="Pass1234", phone="13
     user_id = resp.json()["id"]
 
     # 设置手机号
-    from officeagent.services.storage import get_user_store
+    from fnixagent.services.storage import get_user_store
     get_user_store().update_profile(user_id, {"phone": phone})
 
     # 登录
@@ -345,7 +345,7 @@ class TestPrivacyAPI:
     """隐私中心 API 端点。"""
 
     def test_get_profile_masks_phone(self):
-        from officeagent.api.routers import auth, privacy
+        from fnixagent.api.routers import auth, privacy
         app = FastAPI()
         app.include_router(auth.router, prefix="/api/v1")
         app.include_router(privacy.router, prefix="/api/v1")
@@ -368,7 +368,7 @@ class TestPrivacyAPI:
         assert resp.status_code == 401
 
     def test_export_returns_json_attachment(self):
-        from officeagent.api.routers import auth, privacy
+        from fnixagent.api.routers import auth, privacy
         app = FastAPI()
         app.include_router(auth.router, prefix="/api/v1")
         app.include_router(privacy.router, prefix="/api/v1")
@@ -392,8 +392,8 @@ class TestPrivacyAPI:
         assert data["user"]["phone"] == "138****8000"
 
     def test_delete_account_soft_deletes(self):
-        from officeagent.api.routers import auth, privacy
-        from officeagent.services.storage import get_user_store
+        from fnixagent.api.routers import auth, privacy
+        from fnixagent.services.storage import get_user_store
         app = FastAPI()
         app.include_router(auth.router, prefix="/api/v1")
         app.include_router(privacy.router, prefix="/api/v1")
@@ -414,8 +414,8 @@ class TestPrivacyAPI:
         assert user.profile.get("disabled") is True
 
     def test_delete_account_writes_audit(self):
-        from officeagent.api.routers import auth, privacy
-        from officeagent.services.storage_audit import get_audit_store
+        from fnixagent.api.routers import auth, privacy
+        from fnixagent.services.storage_audit import get_audit_store
         app = FastAPI()
         app.include_router(auth.router, prefix="/api/v1")
         app.include_router(privacy.router, prefix="/api/v1")
@@ -431,8 +431,8 @@ class TestPrivacyAPI:
         assert len(logs) >= 1
 
     def test_cancel_deletion_restores_account(self):
-        from officeagent.api.routers import auth, privacy
-        from officeagent.services.storage import get_user_store
+        from fnixagent.api.routers import auth, privacy
+        from fnixagent.services.storage import get_user_store
         app = FastAPI()
         app.include_router(auth.router, prefix="/api/v1")
         app.include_router(privacy.router, prefix="/api/v1")
@@ -458,7 +458,7 @@ class TestPrivacyAPI:
         assert user.profile.get("disabled") is False
 
     def test_cancel_deletion_without_request_400(self):
-        from officeagent.api.routers import auth, privacy
+        from fnixagent.api.routers import auth, privacy
         app = FastAPI()
         app.include_router(auth.router, prefix="/api/v1")
         app.include_router(privacy.router, prefix="/api/v1")
@@ -472,7 +472,7 @@ class TestPrivacyAPI:
         assert resp.status_code == 400
 
     def test_delete_account_twice_400(self):
-        from officeagent.api.routers import auth, privacy
+        from fnixagent.api.routers import auth, privacy
         app = FastAPI()
         app.include_router(auth.router, prefix="/api/v1")
         app.include_router(privacy.router, prefix="/api/v1")
@@ -493,7 +493,7 @@ class TestPrivacyAPI:
         assert resp2.status_code == 400
 
     def test_deletion_status_active(self):
-        from officeagent.api.routers import auth, privacy
+        from fnixagent.api.routers import auth, privacy
         app = FastAPI()
         app.include_router(auth.router, prefix="/api/v1")
         app.include_router(privacy.router, prefix="/api/v1")
@@ -510,7 +510,7 @@ class TestPrivacyAPI:
         assert data["deleted_at"] is None
 
     def test_deletion_status_pending(self):
-        from officeagent.api.routers import auth, privacy
+        from fnixagent.api.routers import auth, privacy
         app = FastAPI()
         app.include_router(auth.router, prefix="/api/v1")
         app.include_router(privacy.router, prefix="/api/v1")
@@ -542,7 +542,7 @@ class TestUserSoftDelete:
     """UserStore 软删除/硬删除。"""
 
     def test_soft_delete_marks_user(self):
-        from officeagent.services.storage import get_user_store
+        from fnixagent.services.storage import get_user_store
         store = get_user_store()
         user, _ = store.create("deluser1", "del1@example.com", "Pass1234")
         assert store.soft_delete_user(user.id, retention_days=30)
@@ -554,7 +554,7 @@ class TestUserSoftDelete:
         assert store.is_user_deleted(user.id)
 
     def test_cancel_soft_delete_restores(self):
-        from officeagent.services.storage import get_user_store
+        from fnixagent.services.storage import get_user_store
         store = get_user_store()
         user, _ = store.create("deluser2", "del2@example.com", "Pass1234")
         store.soft_delete_user(user.id)
@@ -565,7 +565,7 @@ class TestUserSoftDelete:
         assert not store.is_user_deleted(user.id)
 
     def test_hard_delete_removes_user(self):
-        from officeagent.services.storage import get_user_store
+        from fnixagent.services.storage import get_user_store
         store = get_user_store()
         user, _ = store.create("deluser3", "del3@example.com", "Pass1234")
         assert store.hard_delete_user(user.id)
@@ -575,7 +575,7 @@ class TestUserSoftDelete:
         assert store.get_by_email("del3@example.com") is None
 
     def test_get_users_to_hard_delete(self):
-        from officeagent.services.storage import get_user_store
+        from fnixagent.services.storage import get_user_store
         store = get_user_store()
         # 创建 3 个用户
         u1, _ = store.create("u1", "u1@e.com", "Pass1234")
@@ -594,7 +594,7 @@ class TestUserSoftDelete:
         assert u3.id not in candidate_ids
 
     def test_get_users_to_hard_delete_with_custom_before(self):
-        from officeagent.services.storage import get_user_store
+        from fnixagent.services.storage import get_user_store
         store = get_user_store()
         u1, _ = store.create("future1", "f1@e.com", "Pass1234")
         store.soft_delete_user(u1.id, retention_days=30)
@@ -604,14 +604,14 @@ class TestUserSoftDelete:
         assert u1.id in [u.id for u in candidates]
 
     def test_soft_delete_nonexistent_returns_false(self):
-        from officeagent.services.storage import get_user_store
+        from fnixagent.services.storage import get_user_store
         store = get_user_store()
         assert not store.soft_delete_user(99999)
         assert not store.cancel_soft_delete(99999)
         assert not store.hard_delete_user(99999)
 
     def test_is_user_deleted_for_nonexistent_returns_true(self):
-        from officeagent.services.storage import get_user_store
+        from fnixagent.services.storage import get_user_store
         store = get_user_store()
         assert store.is_user_deleted(99999)
 
@@ -625,8 +625,8 @@ class TestAuditLogDesensitization:
     """审计日志 detail 自动脱敏。"""
 
     def test_phone_in_detail_is_masked(self):
-        from officeagent.core.audit import AuditLogger
-        from officeagent.services.storage_audit import get_audit_store
+        from fnixagent.core.audit import AuditLogger
+        from fnixagent.services.storage_audit import get_audit_store
         logger = AuditLogger()
         logger.log(
             action="test.action",
@@ -642,8 +642,8 @@ class TestAuditLogDesensitization:
         assert "138****8000" in detail["text"]
 
     def test_nested_dict_is_masked(self):
-        from officeagent.core.audit import AuditLogger
-        from officeagent.services.storage_audit import get_audit_store
+        from fnixagent.core.audit import AuditLogger
+        from fnixagent.services.storage_audit import get_audit_store
         logger = AuditLogger()
         logger.log(
             action="test.nested",
@@ -667,8 +667,8 @@ class TestAuditLogDesensitization:
 
     def test_hash_chain_still_valid_after_desensitization(self):
         """脱敏后哈希链仍可校验(因为哈希基于脱敏后的内容计算)。"""
-        from officeagent.core.audit import AuditLogger, verify_hash_chain
-        from officeagent.services.storage_audit import get_audit_store
+        from fnixagent.core.audit import AuditLogger, verify_hash_chain
+        from fnixagent.services.storage_audit import get_audit_store
         logger = AuditLogger()
         logger.log(
             action="test.chain",
@@ -688,8 +688,8 @@ class TestAuditLogDesensitization:
 
     def test_non_string_fields_preserved(self):
         """非字符串字段(int/bool/None)不被脱敏影响。"""
-        from officeagent.core.audit import AuditLogger
-        from officeagent.services.storage_audit import get_audit_store
+        from fnixagent.core.audit import AuditLogger
+        from fnixagent.services.storage_audit import get_audit_store
         logger = AuditLogger()
         logger.log(
             action="test.types",
@@ -721,8 +721,8 @@ class TestAccountCleanup:
     """账号清理调度器。"""
 
     def test_run_cleanup_hard_deletes_expired(self):
-        from officeagent.services.account_cleanup import _run_cleanup
-        from officeagent.services.storage import get_user_store
+        from fnixagent.services.account_cleanup import _run_cleanup
+        from fnixagent.services.storage import get_user_store
         store = get_user_store()
         # 创建到期用户
         u1, _ = store.create("expired1", "exp1@e.com", "Pass1234")
@@ -737,9 +737,9 @@ class TestAccountCleanup:
         assert store.get_by_id(u2.id) is not None  # 保留
 
     def test_run_cleanup_writes_audit(self):
-        from officeagent.services.account_cleanup import _run_cleanup
-        from officeagent.services.storage import get_user_store
-        from officeagent.services.storage_audit import get_audit_store
+        from fnixagent.services.account_cleanup import _run_cleanup
+        from fnixagent.services.storage import get_user_store
+        from fnixagent.services.storage_audit import get_audit_store
         store = get_user_store()
         u1, _ = store.create("expired2", "exp2@e.com", "Pass1234")
         store.soft_delete_user(u1.id, retention_days=0)
@@ -752,8 +752,8 @@ class TestAccountCleanup:
         assert logs[0].user_id == u1.id
 
     def test_run_cleanup_no_candidates_noop(self):
-        from officeagent.services.account_cleanup import _run_cleanup
-        from officeagent.services.storage import get_user_store
+        from fnixagent.services.account_cleanup import _run_cleanup
+        from fnixagent.services.storage import get_user_store
         store = get_user_store()
         # 无候选
         _run_cleanup()

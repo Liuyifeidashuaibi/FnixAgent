@@ -1,4 +1,4 @@
-"""
+﻿"""
 keystore 模块单元测试。
 
 覆盖:
@@ -13,12 +13,12 @@ import os
 
 import pytest
 
-from officeagent.core.security.auth.keystore import (
+from fnixagent.core.security.auth.keystore import (
     _keypair_instance,
     get_server_keypair,
     reset_server_keypair,
 )
-from officeagent.core.security.auth.rsa_crypto import (
+from fnixagent.core.security.auth.rsa_crypto import (
     RSAKeyPair,
     generate_keypair,
     is_rsa_available,

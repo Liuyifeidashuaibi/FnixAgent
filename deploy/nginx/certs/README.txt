@@ -1,4 +1,4 @@
-# OfficeAgent nginx SSL 证书目录
+# FnixAgent nginx SSL 证书目录
 #
 # 部署时需放入以下文件:
 #   - fullchain.pem   证书链(含中间证书)
@@ -10,5 +10,5 @@
 #     -addext "subjectAltName=DNS:localhost,IP:127.0.0.1"
 #
 # 生产环境使用 Let's Encrypt:
-#   certbot certonly --webroot -w /var/www/certbot -d officeagent.example.com
+#   certbot certonly --webroot -w /var/www/certbot -d fnixagent.example.com
 #   然后将 /etc/letsencrypt/live/<domain>/{fullchain,privkey}.pem 软链或复制到本目录

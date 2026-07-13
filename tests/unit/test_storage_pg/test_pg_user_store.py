@@ -1,4 +1,4 @@
-"""
+﻿"""
 PgUserStore 单元测试。
 
 验证:
@@ -15,8 +15,8 @@ import time
 
 import pytest
 
-from officeagent.services.storage_pg import PgUserStore
-from officeagent.services.storage import MAX_LOGIN_ATTEMPTS, LOGIN_LOCKOUT_SECONDS
+from fnixagent.services.storage_pg import PgUserStore
+from fnixagent.services.storage import MAX_LOGIN_ATTEMPTS, LOGIN_LOCKOUT_SECONDS
 
 
 class TestPgUserStoreCreate:

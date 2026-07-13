@@ -12,10 +12,10 @@
 
 cloud                = "aws"
 env                  = "prod"
-project              = "officeagent"
+project              = "fnixagent"
 aws_region           = "ap-east-1"
 alicloud_region      = "cn-hangzhou"
-domain               = "officeagent.com"
+domain               = "fnixagent.com"
 kubernetes_version   = "1.30"
 
 database = {
@@ -38,12 +38,12 @@ kubernetes = {
 }
 
 storage = {
-  bucket_name = "officeagent-prod"
+  bucket_name = "fnixagent-prod"
   size_gb     = 500
 }
 
 tags = {
   Owner       = "platform-team"
-  CostCenter  = "officeagent-prod"
+  CostCenter  = "fnixagent-prod"
   Compliance  = "strict"
 }

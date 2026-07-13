@@ -1,4 +1,4 @@
-"""
+﻿"""
 core/security/auth 子包单元测试公共夹具。
 
 提供以下 fixtures:
@@ -16,10 +16,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", "sr
 
 import pytest
 
-from officeagent.core.security.auth.blacklist import TokenBlacklist, reset_blacklist
-from officeagent.core.security.auth.keystore import reset_server_keypair
-from officeagent.core.security.auth.password import is_argon2_available
-from officeagent.core.security.auth.rsa_crypto import generate_keypair, is_rsa_available
+from fnixagent.core.security.auth.blacklist import TokenBlacklist, reset_blacklist
+from fnixagent.core.security.auth.keystore import reset_server_keypair
+from fnixagent.core.security.auth.password import is_argon2_available
+from fnixagent.core.security.auth.rsa_crypto import generate_keypair, is_rsa_available
 
 
 # ---------------------------------------------------------------------------

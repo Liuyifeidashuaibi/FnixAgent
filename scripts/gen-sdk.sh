@@ -1,5 +1,5 @@
-#!/usr/bin/env bash
-# OfficeAgent OpenAPI SDK 自动生成脚本
+﻿#!/usr/bin/env bash
+# FnixAgent OpenAPI SDK 自动生成脚本
 # 用法: pnpm gen:api
 # 依赖: 后端在 localhost:8000 运行
 

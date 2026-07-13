@@ -76,5 +76,5 @@ output "cdn_domain" {
 
 output "helm_values_file" {
   description = "建议传给 Helm 的 values 文件路径(运行时由脚本渲染,这里仅占位)"
-  value       = "deploy/helm/officeagent/values.${var.env}.yaml"
+  value       = "deploy/helm/fnixagent/values.${var.env}.yaml"
 }

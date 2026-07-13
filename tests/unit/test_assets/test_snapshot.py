@@ -1,4 +1,4 @@
-"""
+﻿"""
 版本快照管理测试。
 
 覆盖:
@@ -15,8 +15,8 @@ import time
 
 import pytest
 
-from officeagent.assets.snapshot import SnapshotManager
-from officeagent.core.exceptions import SnapshotError
+from fnixagent.assets.snapshot import SnapshotManager
+from fnixagent.core.exceptions import SnapshotError
 
 
 # ---------------------------------------------------------------------------

@@ -1,16 +1,16 @@
-# OfficeAgent - 智能办公助手
+# FnixAgent - 智能办公助手
 
 > 面向学习/教育/办公场景的智能 Agent,核心能力包括论文文献检索、Word编辑、格式转换、图表生成、PDF生成、文档解析、学习辅助问答。
 
 ## 项目结构
 
 ```
-OFFICEAGENT/
+FNIXAGENT/
 ├── config/                  # 配置文件
 │   ├── settings.yaml        # 全局配置
 │   ├── prompts/             # Prompt模板
 │   └── security/            # 安全配置
-├── src/officeagent/
+├── src/fnixagent/
 │   ├── main.py              # FastAPI入口
 │   ├── core/                # 核心算法引擎
 │   ├── api/                 # API接口层
@@ -31,8 +31,8 @@ OFFICEAGENT/
 
 ```bash
 # 克隆项目
-git clone https://github.com/your-org/officeagent.git
-cd officeagent
+git clone https://github.com/your-org/fnixagent.git
+cd fnixagent
 
 # 安装依赖
 pip install -r requirements.txt
@@ -149,5 +149,5 @@ MIT License
 
 ## 联系方式
 
-- 项目主页: https://github.com/your-org/officeagent
-- 问题反馈: https://github.com/your-org/officeagent/issues
+- 项目主页: https://github.com/your-org/fnixagent
+- 问题反馈: https://github.com/your-org/fnixagent/issues

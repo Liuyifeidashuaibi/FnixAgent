@@ -1,7 +1,7 @@
-"""
+﻿"""
 飞轮 ② 知识固化环单元测试。
 
-测试模块: officeagent.core.flywheel.stage2_knowledge
+测试模块: fnixagent.core.flywheel.stage2_knowledge
 覆盖:
     - 垃圾过滤(临时话术/执行失败/无实质推理)
     - 知识萃取(规则式: 概念/事实/因果关系)
@@ -10,12 +10,12 @@
 """
 import pytest
 
-from officeagent.core.flywheel.stage2_knowledge import (
+from fnixagent.core.flywheel.stage2_knowledge import (
     JUNK_KEYWORDS,
     MIN_TOOL_CALLS_FOR_SOLIDIFICATION,
     KnowledgeSolidificationFlywheel,
 )
-from officeagent.core.types import EdgeType, NodeType, TopologyLayer
+from fnixagent.core.types import EdgeType, NodeType, TopologyLayer
 
 
 class TestStage2Constants:
@@ -99,7 +99,7 @@ class TestStage2RuleBasedExtraction:
 
     def test_no_causal_relations_for_single_tool(self, sample_graph):
         """单次工具调用不应产生因果关系。"""
-        from officeagent.core.types import ReasoningMode, TraceRecord
+        from fnixagent.core.types import ReasoningMode, TraceRecord
         trace = TraceRecord(
             trace_id="t1", task_id="tk1", goal="测试",
             mode=ReasoningMode.REACT, concept_path=["L2:concept1"],
@@ -113,7 +113,7 @@ class TestStage2RuleBasedExtraction:
 
     def test_deduplicates_concepts(self, sample_graph):
         """重复调用的工具名应去重为单个概念。"""
-        from officeagent.core.types import ReasoningMode, TraceRecord
+        from fnixagent.core.types import ReasoningMode, TraceRecord
         trace = TraceRecord(
             trace_id="t1", task_id="tk1", goal="测试",
             mode=ReasoningMode.REACT, concept_path=[],

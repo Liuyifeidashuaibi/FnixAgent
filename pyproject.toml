@@ -1,4 +1,4 @@
-# OfficeAgent 项目元数据(Python Project Metadata, PEP 621)
+# FnixAgent 项目元数据(Python Project Metadata, PEP 621)
 # 构建后端:hatchling;依赖清单仍由 requirements.txt 维护(单一来源)
 # Dockerfile 中 COPY pyproject.toml requirements.txt ./ 同时复制两份
 
@@ -14,7 +14,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0"
 authors = [
-    { name = "OfficeAgent Team" },
+    { name = "FnixAgent Team" },
 ]
 keywords = ["agent", "llm", "langgraph", "self-evolution", "ktg", "office"]
 classifiers = [

@@ -1,4 +1,4 @@
-"""
+﻿"""
 AgentOS 全量功能验证脚本 (End-to-End Verification)
 ====================================================
 覆盖 ETCLOVG 七层框架全部功能, 验证可立即使用。
@@ -31,7 +31,7 @@ from pathlib import Path
 # 确保 src 在 path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from officeagent.core.agentos import (  # noqa: E402
+from fnixagent.core.agentos import (  # noqa: E402
     AgentCard, AgentKernel, AgentPriority, AgentProcess, AgentScheduler,
     AgentShell, A2ABus, A2AMessage, AuditBackend, A2ABus as _A2ABus,
     CAPABILITY_SYSCALLS, ContextFS, DurableExecutionManager,
@@ -81,7 +81,7 @@ class TestRunner:
 async def test_imports(t: TestRunner) -> None:
     """1. 包导入完整性。"""
     t.section("1. 包导入完整性")
-    import officeagent.core.agentos as agentos
+    import fnixagent.core.agentos as agentos
     t.check("包可导入", True)
     t.check("__version__ 存在", hasattr(agentos, "__version__"))
     t.check("__all__ 非空", len(agentos.__all__) > 50,
@@ -493,7 +493,7 @@ async def test_guardrail(t: TestRunner) -> None:
 async def test_sandbox(t: TestRunner) -> None:
     """14. Sandbox。"""
     t.section("14. Sandbox")
-    from officeagent.core.agentos.sandbox import SandboxConfig
+    from fnixagent.core.agentos.sandbox import SandboxConfig
     mgr = SandboxManager()  # 默认 Inline
 
     # 执行简单命令 (跨平台)
@@ -683,7 +683,7 @@ async def test_singleton(t: TestRunner) -> None:
 
 async def main() -> int:
     print("=" * 70)
-    print("OfficeAgent OS — AgentOS 全量功能验证")
+    print("FnixAgent OS — AgentOS 全量功能验证")
     print("=" * 70)
 
     t = TestRunner()

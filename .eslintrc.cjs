@@ -1,5 +1,5 @@
 /**
- * OfficeAgent 前端 ESLint 根配置
+ * FnixAgent 前端 ESLint 根配置
  * TypeScript strict + React Hooks + React Refresh
  */
 module.exports = {

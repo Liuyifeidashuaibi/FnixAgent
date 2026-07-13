@@ -1,7 +1,7 @@
-"""
+﻿"""
 飞轮 ① 感知-执行环单元测试。
 
-测试模块: officeagent.core.flywheel.stage1_perception
+测试模块: fnixagent.core.flywheel.stage1_perception
 覆盖:
     - PerceptionFlywheel.run(): 完整感知-执行流程(使用 mock graph)
     - PerceptionFlywheel.run_stream(): 流式执行
@@ -11,12 +11,12 @@ import time
 
 import pytest
 
-from officeagent.core.flywheel.stage1_perception import (
+from fnixagent.core.flywheel.stage1_perception import (
     PerceptionFlywheel,
     trace_from_dict,
     trace_to_dict,
 )
-from officeagent.core.types import ReasoningMode, TraceRecord
+from fnixagent.core.types import ReasoningMode, TraceRecord
 
 
 class TestPerceptionFlywheelInit:

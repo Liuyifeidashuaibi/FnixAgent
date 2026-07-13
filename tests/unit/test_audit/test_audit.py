@@ -1,4 +1,4 @@
-"""Phase 2.5 全量审计日志测试。
+﻿"""Phase 2.5 全量审计日志测试。
 
 覆盖:
     1. 哈希链计算与校验(完整性 / 篡改检测)
@@ -19,10 +19,10 @@ from fastapi.testclient import TestClient
 @pytest.fixture(autouse=True)
 def _reset_stores():
     """每个测试前后重置审计存储,确保隔离。"""
-    from officeagent.services.storage_audit import reset_audit_store
-    from officeagent.services.storage import reset_stores
-    from officeagent.services.storage_rbac import reset_rbac_store
-    from officeagent.core.security import rbac
+    from fnixagent.services.storage_audit import reset_audit_store
+    from fnixagent.services.storage import reset_stores
+    from fnixagent.services.storage_rbac import reset_rbac_store
+    from fnixagent.core.security import rbac
 
     reset_audit_store()
     reset_stores()
@@ -43,7 +43,7 @@ def _reset_stores():
 class TestHashChain:
     def test_compute_entry_hash_deterministic(self):
         """相同输入应产生相同哈希。"""
-        from officeagent.core.audit.logger import _compute_entry_hash
+        from fnixagent.core.audit.logger import _compute_entry_hash
 
         h1 = _compute_entry_hash("0" * 64, "login.success", 1, "{}", "2026-01-01T00:00:00", "127.0.0.1")
         h2 = _compute_entry_hash("0" * 64, "login.success", 1, "{}", "2026-01-01T00:00:00", "127.0.0.1")
@@ -52,7 +52,7 @@ class TestHashChain:
 
     def test_compute_entry_hash_changes_on_any_field(self):
         """任一字段变化应导致哈希变化。"""
-        from officeagent.core.audit.logger import _compute_entry_hash
+        from fnixagent.core.audit.logger import _compute_entry_hash
 
         base = _compute_entry_hash("0" * 64, "login.success", 1, "{}", "2026-01-01T00:00:00", "127.0.0.1")
         assert base != _compute_entry_hash("1" * 64, "login.success", 1, "{}", "2026-01-01T00:00:00", "127.0.0.1")
@@ -64,7 +64,7 @@ class TestHashChain:
 
     def test_verify_hash_chain_empty_list(self):
         """空列表应通过校验。"""
-        from officeagent.core.audit import verify_hash_chain
+        from fnixagent.core.audit import verify_hash_chain
 
         is_valid, broken_id = verify_hash_chain([])
         assert is_valid is True
@@ -72,8 +72,8 @@ class TestHashChain:
 
     def test_verify_hash_chain_single_entry(self):
         """单条记录(prev_hash=genesis)应通过。"""
-        from officeagent.core.audit import verify_hash_chain, AuditLogDTO
-        from officeagent.core.audit.logger import _GENESIS_HASH, _compute_entry_hash
+        from fnixagent.core.audit import verify_hash_chain, AuditLogDTO
+        from fnixagent.core.audit.logger import _GENESIS_HASH, _compute_entry_hash
         from datetime import datetime
 
         now = datetime.utcnow()
@@ -93,7 +93,7 @@ class TestHashChain:
 
     def test_verify_hash_chain_detects_tampering(self):
         """篡改任一记录应导致后续哈希链断裂。"""
-        from officeagent.core.audit import AuditLogger, verify_hash_chain
+        from fnixagent.core.audit import AuditLogger, verify_hash_chain
 
         logger = AuditLogger()
         logger.log(action="login.success", user_id=1, detail={"u": "a"}, ip_address="1.1.1.1")
@@ -112,7 +112,7 @@ class TestHashChain:
 
     def test_verify_hash_chain_detects_missing_link(self):
         """prev_hash 不匹配应被检测。"""
-        from officeagent.core.audit import AuditLogger, verify_hash_chain
+        from fnixagent.core.audit import AuditLogger, verify_hash_chain
 
         logger = AuditLogger()
         logger.log(action="login.success", user_id=1, detail={}, ip_address="1.1.1.1")
@@ -133,7 +133,7 @@ class TestHashChain:
 
 class TestAuditLogger:
     def test_log_returns_dto(self):
-        from officeagent.core.audit import AuditLogger
+        from fnixagent.core.audit import AuditLogger
 
         logger = AuditLogger()
         entry = logger.log(action="login.success", user_id=1, detail={"u": "alice"})
@@ -148,7 +148,7 @@ class TestAuditLogger:
 
     def test_log_chain_links_correctly(self):
         """连续写入的记录应正确链接(prev_hash = 上一条的 entry_hash)。"""
-        from officeagent.core.audit import AuditLogger
+        from fnixagent.core.audit import AuditLogger
 
         logger = AuditLogger()
         e1 = logger.log(action="login.success", user_id=1, detail={"n": 1})
@@ -160,7 +160,7 @@ class TestAuditLogger:
 
     def test_log_with_none_user_id(self):
         """未登录操作(user_id=None)应正常记录。"""
-        from officeagent.core.audit import AuditLogger
+        from fnixagent.core.audit import AuditLogger
 
         logger = AuditLogger()
         entry = logger.log(action="login.failed", user_id=None, detail={"username": "unknown"})
@@ -168,7 +168,7 @@ class TestAuditLogger:
         assert entry.user_id is None
 
     def test_list_with_pagination(self):
-        from officeagent.core.audit import AuditLogger
+        from fnixagent.core.audit import AuditLogger
 
         logger = AuditLogger()
         for i in range(10):
@@ -181,7 +181,7 @@ class TestAuditLogger:
         assert logs[0].id > logs[-1].id
 
     def test_list_filter_by_user_id(self):
-        from officeagent.core.audit import AuditLogger
+        from fnixagent.core.audit import AuditLogger
 
         logger = AuditLogger()
         logger.log(action="login.success", user_id=1, detail={})
@@ -193,7 +193,7 @@ class TestAuditLogger:
         assert all(log.user_id == 1 for log in logs)
 
     def test_list_filter_by_action(self):
-        from officeagent.core.audit import AuditLogger
+        from fnixagent.core.audit import AuditLogger
 
         logger = AuditLogger()
         logger.log(action="login.success", user_id=1, detail={})
@@ -205,7 +205,7 @@ class TestAuditLogger:
         assert all(log.action == "login.success" for log in logs)
 
     def test_list_filter_by_ip(self):
-        from officeagent.core.audit import AuditLogger
+        from fnixagent.core.audit import AuditLogger
 
         logger = AuditLogger()
         logger.log(action="login.success", user_id=1, detail={}, ip_address="1.1.1.1")
@@ -217,7 +217,7 @@ class TestAuditLogger:
         assert all(log.ip_address == "1.1.1.1" for log in logs)
 
     def test_verify_chain_intact(self):
-        from officeagent.core.audit import AuditLogger
+        from fnixagent.core.audit import AuditLogger
 
         logger = AuditLogger()
         logger.log(action="login.success", user_id=1, detail={})
@@ -235,7 +235,7 @@ class TestAuditLogger:
 
 class TestInMemoryAuditStore:
     def test_create_and_get_last_hash(self):
-        from officeagent.services.storage_audit import InMemoryAuditStore
+        from fnixagent.services.storage_audit import InMemoryAuditStore
 
         store = InMemoryAuditStore()
         # 空存储返回空字符串
@@ -250,7 +250,7 @@ class TestInMemoryAuditStore:
         assert store.get_last_hash() == "def456"
 
     def test_query_with_filters(self):
-        from officeagent.services.storage_audit import InMemoryAuditStore
+        from fnixagent.services.storage_audit import InMemoryAuditStore
 
         store = InMemoryAuditStore()
         store.create(user_id=1, action="login.success", ip_address="1.1.1.1")
@@ -274,7 +274,7 @@ class TestInMemoryAuditStore:
         assert total == 2
 
     def test_query_with_time_range(self):
-        from officeagent.services.storage_audit import InMemoryAuditStore
+        from fnixagent.services.storage_audit import InMemoryAuditStore
         from datetime import datetime, timedelta
 
         store = InMemoryAuditStore()
@@ -295,7 +295,7 @@ class TestInMemoryAuditStore:
         assert total == 1  # 只有 entry2
 
     def test_count_and_clear(self):
-        from officeagent.services.storage_audit import InMemoryAuditStore
+        from fnixagent.services.storage_audit import InMemoryAuditStore
 
         store = InMemoryAuditStore()
         store.create(user_id=1, action="login.success")
@@ -307,7 +307,7 @@ class TestInMemoryAuditStore:
         assert store.count() == 0
 
     def test_get_all_ordered(self):
-        from officeagent.services.storage_audit import InMemoryAuditStore
+        from fnixagent.services.storage_audit import InMemoryAuditStore
 
         store = InMemoryAuditStore()
         store.create(user_id=1, action="a")
@@ -327,7 +327,7 @@ class TestInMemoryAuditStore:
 
 class TestAuditExport:
     def test_export_json(self):
-        from officeagent.core.audit import AuditLogger
+        from fnixagent.core.audit import AuditLogger
 
         logger = AuditLogger()
         logger.log(action="login.success", user_id=1, detail={"u": "alice"}, ip_address="1.1.1.1")
@@ -346,7 +346,7 @@ class TestAuditExport:
         assert "ip" in data[0]
 
     def test_export_csv(self):
-        from officeagent.core.audit import AuditLogger
+        from fnixagent.core.audit import AuditLogger
 
         logger = AuditLogger()
         logger.log(action="login.success", user_id=1, detail={"u": "alice"}, ip_address="1.1.1.1")
@@ -360,7 +360,7 @@ class TestAuditExport:
         assert "login.success" in lines[1]
 
     def test_export_empty(self):
-        from officeagent.core.audit import AuditLogger
+        from fnixagent.core.audit import AuditLogger
 
         logger = AuditLogger()
         json_content = logger.export(format="json")
@@ -370,7 +370,7 @@ class TestAuditExport:
         assert "id,timestamp" in csv_content
 
     def test_export_with_filters(self):
-        from officeagent.core.audit import AuditLogger
+        from fnixagent.core.audit import AuditLogger
 
         logger = AuditLogger()
         logger.log(action="login.success", user_id=1, detail={})
@@ -392,7 +392,7 @@ class TestAuditAPIEndpoints:
     @pytest.fixture
     def client(self):
         """构建带 audit 路由的 TestClient。"""
-        from officeagent.api.routers import audit, auth
+        from fnixagent.api.routers import audit, auth
 
         app = FastAPI()
         app.include_router(auth.router, prefix="/api/v1")
@@ -402,8 +402,8 @@ class TestAuditAPIEndpoints:
     @pytest.fixture
     def admin_token(self):
         """创建管理员 Token(super_admin 角色拥有 system:audit_log 权限)。"""
-        from officeagent.api.routers.auth import create_jwt_token
-        from officeagent.services.storage import get_user_store
+        from fnixagent.api.routers.auth import create_jwt_token
+        from fnixagent.services.storage import get_user_store
 
         store = get_user_store()
         user, _ = store.create(
@@ -415,8 +415,8 @@ class TestAuditAPIEndpoints:
     @pytest.fixture
     def user_token(self):
         """创建普通用户 Token(无 audit 权限)。"""
-        from officeagent.api.routers.auth import create_jwt_token
-        from officeagent.services.storage import get_user_store
+        from fnixagent.api.routers.auth import create_jwt_token
+        from fnixagent.services.storage import get_user_store
 
         store = get_user_store()
         user, _ = store.create(
@@ -429,7 +429,7 @@ class TestAuditAPIEndpoints:
         return {"Authorization": f"Bearer {token}"}
 
     def _write_some_logs(self):
-        from officeagent.core.audit import AuditLogger, AUDIT_LOGIN_SUCCESS, AUDIT_LOGOUT
+        from fnixagent.core.audit import AuditLogger, AUDIT_LOGIN_SUCCESS, AUDIT_LOGOUT
 
         logger = AuditLogger()
         logger.log(action=AUDIT_LOGIN_SUCCESS, user_id=1, detail={"u": "alice"})
@@ -473,7 +473,7 @@ class TestAuditAPIEndpoints:
         assert len(data["data"]["items"]) == 2
 
     def test_list_logs_filter_by_action(self, client, admin_token):
-        from officeagent.core.audit import AUDIT_LOGIN_SUCCESS
+        from fnixagent.core.audit import AUDIT_LOGIN_SUCCESS
 
         token, _ = admin_token
         self._write_some_logs()
@@ -550,7 +550,7 @@ class TestAuditInstrumentation:
     @pytest.fixture
     def client(self):
         """构建带 auth + audit 路由的 TestClient。"""
-        from officeagent.api.routers import audit, auth
+        from fnixagent.api.routers import audit, auth
 
         app = FastAPI()
         app.include_router(auth.router, prefix="/api/v1")
@@ -559,7 +559,7 @@ class TestAuditInstrumentation:
 
     def test_login_success_writes_audit(self, client):
         """登录成功应写入 login.success 审计日志。"""
-        from officeagent.services.storage import get_user_store
+        from fnixagent.services.storage import get_user_store
 
         store = get_user_store()
         store.create(username="audit_login", email="al@e.com", password="Pass1234", role="user")
@@ -571,7 +571,7 @@ class TestAuditInstrumentation:
         assert resp.status_code == 200
 
         # 检查审计日志
-        from officeagent.core.audit import AuditLogger, AUDIT_LOGIN_SUCCESS
+        from fnixagent.core.audit import AuditLogger, AUDIT_LOGIN_SUCCESS
         logger = AuditLogger()
         logs, total = logger.list(action=AUDIT_LOGIN_SUCCESS)
         assert total >= 1
@@ -579,7 +579,7 @@ class TestAuditInstrumentation:
 
     def test_login_failed_writes_audit(self, client):
         """登录失败应写入 login.failed 审计日志。"""
-        from officeagent.services.storage import get_user_store
+        from fnixagent.services.storage import get_user_store
 
         store = get_user_store()
         store.create(username="audit_fail", email="af@e.com", password="Pass1234", role="user")
@@ -590,7 +590,7 @@ class TestAuditInstrumentation:
         })
         assert resp.status_code == 401
 
-        from officeagent.core.audit import AuditLogger, AUDIT_LOGIN_FAILED
+        from fnixagent.core.audit import AuditLogger, AUDIT_LOGIN_FAILED
         logger = AuditLogger()
         logs, total = logger.list(action=AUDIT_LOGIN_FAILED)
         assert total >= 1
@@ -598,8 +598,8 @@ class TestAuditInstrumentation:
 
     def test_logout_writes_audit(self, client):
         """登出应写入 logout 审计日志。"""
-        from officeagent.services.storage import get_user_store
-        from officeagent.api.routers.auth import create_jwt_token
+        from fnixagent.services.storage import get_user_store
+        from fnixagent.api.routers.auth import create_jwt_token
 
         store = get_user_store()
         user, _ = store.create(username="audit_logout", email="alo@e.com", password="Pass1234", role="user")
@@ -608,7 +608,7 @@ class TestAuditInstrumentation:
         resp = client.post("/api/v1/auth/logout", headers={"Authorization": f"Bearer {token}"})
         assert resp.status_code == 200
 
-        from officeagent.core.audit import AuditLogger, AUDIT_LOGOUT
+        from fnixagent.core.audit import AuditLogger, AUDIT_LOGOUT
         logger = AuditLogger()
         logs, total = logger.list(action=AUDIT_LOGOUT)
         assert total >= 1
@@ -616,9 +616,9 @@ class TestAuditInstrumentation:
     def test_permission_denied_writes_audit(self):
         """权限拒绝时应写入 permission.denied 审计日志。"""
         from fastapi import Depends
-        from officeagent.api.routers.auth import create_jwt_token
-        from officeagent.services.storage import get_user_store
-        from officeagent.core.security import rbac
+        from fnixagent.api.routers.auth import create_jwt_token
+        from fnixagent.services.storage import get_user_store
+        from fnixagent.core.security import rbac
 
         # 创建普通用户(无 system:manage 权限)
         store = get_user_store()
@@ -635,7 +635,7 @@ class TestAuditInstrumentation:
         resp = client.get("/api/v1/protected", headers={"Authorization": f"Bearer {token}"})
         assert resp.status_code == 403
 
-        from officeagent.core.audit import AuditLogger, AUDIT_PERMISSION_DENIED
+        from fnixagent.core.audit import AuditLogger, AUDIT_PERMISSION_DENIED
         logger = AuditLogger()
         logs, total = logger.list(action=AUDIT_PERMISSION_DENIED)
         assert total >= 1
@@ -643,7 +643,7 @@ class TestAuditInstrumentation:
 
     def test_audit_actions_includes_all_types(self):
         """ALL_AUDIT_ACTIONS 应包含所有 26 个动作类型(20 原有 + 6 Phase 3.2 新增)。"""
-        from officeagent.core.audit import ALL_AUDIT_ACTIONS
+        from fnixagent.core.audit import ALL_AUDIT_ACTIONS
 
         assert len(ALL_AUDIT_ACTIONS) == 26
         # 关键动作都在

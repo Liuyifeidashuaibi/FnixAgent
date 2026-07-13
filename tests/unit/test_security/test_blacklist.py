@@ -1,4 +1,4 @@
-"""
+﻿"""
 blacklist 模块单元测试(验收标准 ⑤ 登出后 Access Token 在 1s 内失效 - 单元层)。
 
 覆盖:
@@ -17,7 +17,7 @@ import time
 
 import pytest
 
-from officeagent.core.security.auth.blacklist import (
+from fnixagent.core.security.auth.blacklist import (
     TokenBlacklist,
     get_blacklist,
     reset_blacklist,

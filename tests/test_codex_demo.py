@@ -1,5 +1,5 @@
-"""
-OfficeAgent Coding — Codex 对标演示
+﻿"""
+FnixAgent Coding — Codex 对标演示
 =====================================
 模拟 Codex 真实使用流程: 接收任务 → 规划 → 执行 → 审查 → 输出 diff。
 
@@ -16,10 +16,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from officeagent.core.coding import (
+from fnixagent.core.coding import (
     CodeIndexer, CodeTools, ContextBuilder, DiffEngine, IDEServer,
 )
-from officeagent.core.coding.coding_agent import CodingAgent, CodingTask
+from fnixagent.core.coding.coding_agent import CodingAgent, CodingTask
 
 
 # ============================================================================
@@ -415,7 +415,7 @@ async def demo_repo_map():
 
 async def main():
     print("=" * 70)
-    print("  OfficeAgent Coding — Codex 对标演示")
+    print("  FnixAgent Coding — Codex 对标演示")
     print("  完整 Plan→Execute→Review + CLI/MCP + RepoMap")
     print("=" * 70)
 

@@ -1,4 +1,4 @@
-"""Phase 2.1 RBAC 权限控制测试。
+﻿"""Phase 2.1 RBAC 权限控制测试。
 
 覆盖:
     1. 内置角色权限种子正确(super_admin/admin/user/visitor)
@@ -12,8 +12,8 @@
 """
 import pytest
 
-from officeagent.core.security import rbac
-from officeagent.services.storage_rbac import (
+from fnixagent.core.security import rbac
+from fnixagent.services.storage_rbac import (
     InMemoryRbacStore,
     get_rbac_store,
     reset_rbac_store,
@@ -367,8 +367,8 @@ class TestRequirePermissionDecorator:
     def client(self):
         from fastapi import FastAPI, Depends
         from fastapi.testclient import TestClient
-        from officeagent.api.routers.auth import verify_jwt_token
-        from officeagent.core.security.rbac import require_permission
+        from fnixagent.api.routers.auth import verify_jwt_token
+        from fnixagent.core.security.rbac import require_permission
 
         app = FastAPI()
 
@@ -385,8 +385,8 @@ class TestRequirePermissionDecorator:
 
     def test_insufficient_permission_returns_403(self, client):
         """携带无权限用户的 Token → 403。"""
-        from officeagent.api.routers.auth import create_jwt_token
-        from officeagent.services.storage import get_user_store
+        from fnixagent.api.routers.auth import create_jwt_token
+        from fnixagent.services.storage import get_user_store
 
         # 创建普通用户
         store = get_user_store()

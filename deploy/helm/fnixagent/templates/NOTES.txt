@@ -1,5 +1,5 @@
 ============================================================
-  OfficeAgent 已部署到 Kubernetes!
+  FnixAgent 已部署到 Kubernetes!
 ============================================================
 
 Release: {{ .Release.Name }}
@@ -12,7 +12,7 @@ Version: {{ .Chart.Version }} / App {{ .Chart.AppVersion }}
      --timeout=300s
 
 2. 检查服务:
-   kubectl --namespace {{ .Release.Namespace }} get svc {{ include "officeagent.fullname" . }}
+   kubectl --namespace {{ .Release.Namespace }} get svc {{ include "fnixagent.fullname" . }}
    kubectl --namespace {{ .Release.Namespace }} get pods -l app.kubernetes.io/instance={{ .Release.Name }}
 
 {{- if .Values.ingress.enabled }}
@@ -28,7 +28,7 @@ Version: {{ .Chart.Version }} / App {{ .Chart.AppVersion }}
 
 3. 端口转发访问(临时):
    kubectl --namespace {{ .Release.Namespace }} port-forward \
-     svc/{{ include "officeagent.fullname" . }} 8000:{{ .Values.officeagent.service.port }}
+     svc/{{ include "fnixagent.fullname" . }} 8000:{{ .Values.fnixagent.service.port }}
    然后访问 http://localhost:8000
 {{- end }}
 
@@ -47,12 +47,12 @@ Version: {{ .Chart.Version }} / App {{ .Chart.AppVersion }}
 
 5. 运行数据库迁移(首次部署):
    kubectl --namespace {{ .Release.Namespace }} exec -it \
-     deploy/{{ include "officeagent.fullname" . }} -- \
+     deploy/{{ include "fnixagent.fullname" . }} -- \
      alembic upgrade head
 
 6. 升级 Chart:
-   helm upgrade {{ .Release.Name }} deploy/helm/officeagent \
-     -f deploy/helm/officeagent/values.prod.yaml \
+   helm upgrade {{ .Release.Name }} deploy/helm/fnixagent \
+     -f deploy/helm/fnixagent/values.prod.yaml \
      -f my-secrets.yaml -n {{ .Release.Namespace }}
 
 7. 卸载:

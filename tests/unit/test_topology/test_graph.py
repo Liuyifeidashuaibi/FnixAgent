@@ -1,7 +1,7 @@
-"""
+﻿"""
 知识拓扑图 (KTG) 内存数据结构单元测试。
 
-测试模块: officeagent.core.topology.graph.TopologyGraph
+测试模块: fnixagent.core.topology.graph.TopologyGraph
 覆盖:
     - 节点操作: add_node, get_node, has_node, list_nodes, deprecate_node
     - 边操作: add_edge, get_edge, get_out_edges, get_in_edges, list_edges, deprecate_edge
@@ -10,15 +10,15 @@
 """
 import pytest
 
-from officeagent.core.exceptions import (
+from fnixagent.core.exceptions import (
     TopologyEdgeNotFoundError,
     TopologyNodeNotFoundError,
     TopologyValidationError,
     TopologyLayerViolationError,
 )
-from officeagent.core.topology import weights as weights_mod
-from officeagent.core.topology.graph import TopologyGraph
-from officeagent.core.types import (
+from fnixagent.core.topology import weights as weights_mod
+from fnixagent.core.topology.graph import TopologyGraph
+from fnixagent.core.types import (
     EdgeType,
     NodeType,
     TopologyLayer,

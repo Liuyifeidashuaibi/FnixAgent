@@ -6,10 +6,10 @@
 
 cloud                = "aws"
 env                  = "dev"
-project              = "officeagent"
+project              = "fnixagent"
 aws_region           = "ap-east-1"
 alicloud_region      = "cn-hangzhou"
-domain               = "dev.officeagent.com"
+domain               = "dev.fnixagent.com"
 kubernetes_version   = "1.30"
 
 database = {
@@ -32,7 +32,7 @@ kubernetes = {
 }
 
 storage = {
-  bucket_name = "officeagent-dev"
+  bucket_name = "fnixagent-dev"
   size_gb     = 20
 }
 

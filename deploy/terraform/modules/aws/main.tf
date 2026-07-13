@@ -144,8 +144,8 @@ resource "aws_db_instance" "main" {
   storage_type          = "gp3"
   storage_encrypted     = true
 
-  db_name  = "officeagent"
-  username = "officeagent"
+  db_name  = "fnixagent"
+  username = "fnixagent"
   password = random_password.db_password.result
 
   multi_az               = var.database.multi_az
@@ -199,7 +199,7 @@ resource "aws_elasticache_subnet_group" "main" {
 
 resource "aws_elasticache_replication_group" "main" {
   replication_group_id = "${local.name_prefix}-redis"
-  description          = "OfficeAgent Redis cache"
+  description          = "FnixAgent Redis cache"
 
   node_type            = var.redis.node_type
   num_cache_clusters   = var.redis.automatic_failover ? max(2, var.redis.num_cache_nodes) : 1
@@ -297,7 +297,7 @@ resource "aws_cloudfront_distribution" "cdn" {
 
   enabled             = true
   is_ipv6_enabled     = true
-  comment             = "OfficeAgent ${var.env} CDN"
+  comment             = "FnixAgent ${var.env} CDN"
   default_root_object = "index.html"
 
   origin {
@@ -349,7 +349,7 @@ resource "aws_cloudfront_distribution" "cdn" {
 resource "aws_cloudfront_origin_access_identity" "main" {
   count = var.env == "prod" ? 1 : 0
 
-  comment = "OfficeAgent OAI for S3 access"
+  comment = "FnixAgent OAI for S3 access"
 }
 
 # ----------------------------------------------------------------------------
@@ -357,7 +357,7 @@ resource "aws_cloudfront_origin_access_identity" "main" {
 # ----------------------------------------------------------------------------
 resource "aws_secretsmanager_secret" "db_credentials" {
   name        = "/${var.project}/${var.env}/db/credentials"
-  description = "OfficeAgent PostgreSQL credentials"
+  description = "FnixAgent PostgreSQL credentials"
 
   recovery_window_in_days = var.env == "prod" ? 30 : 0
 
@@ -368,17 +368,17 @@ resource "aws_secretsmanager_secret_version" "db_credentials" {
   secret_id = aws_secretsmanager_secret.db_credentials.id
 
   secret_string = jsonencode({
-    username = "officeagent"
+    username = "fnixagent"
     password = random_password.db_password.result
     host     = aws_db_instance.main.address
     port     = 5432
-    dbname   = "officeagent"
+    dbname   = "fnixagent"
   })
 }
 
 resource "aws_secretsmanager_secret" "redis_credentials" {
   name        = "/${var.project}/${var.env}/redis/credentials"
-  description = "OfficeAgent Redis credentials"
+  description = "FnixAgent Redis credentials"
 
   recovery_window_in_days = var.env == "prod" ? 30 : 0
 

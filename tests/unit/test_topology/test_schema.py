@@ -1,7 +1,7 @@
-"""
+﻿"""
 知识拓扑图 (KTG) Schema 校验单元测试。
 
-测试模块: officeagent.core.topology.schema
+测试模块: fnixagent.core.topology.schema
 覆盖:
     - 固定映射常量: NODE_TYPE_LAYER_MAP, LAYER_NODE_TYPES, FIXED_WEIGHT_EDGES
     - validate_node(): 正常 / 边界 / 异常
@@ -11,12 +11,12 @@
 """
 import pytest
 
-from officeagent.core.exceptions import (
+from fnixagent.core.exceptions import (
     TopologyLayerViolationError,
     TopologyValidationError,
 )
-from officeagent.core.topology import schema
-from officeagent.core.types import (
+from fnixagent.core.topology import schema
+from fnixagent.core.types import (
     EdgeType,
     NodeType,
     TopologyEdge,

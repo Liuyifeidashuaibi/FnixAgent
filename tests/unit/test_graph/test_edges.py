@@ -1,13 +1,13 @@
-"""
+﻿"""
 LangGraph 条件边路由函数单元测试。
 
-测试模块: officeagent.graph.edges
+测试模块: fnixagent.graph.edges
 覆盖:
     - route_after_reflect: 反思后路由(循环回感知 vs 结束)
     - should_stop_on_error: 错误检查路由
     - 边名称常量
 """
-from officeagent.graph.edges import (
+from fnixagent.graph.edges import (
     EDGE_LOOP_BACK,
     EDGE_TO_END,
     EDGE_TO_EXECUTE,

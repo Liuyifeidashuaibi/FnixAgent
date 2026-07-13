@@ -1,7 +1,7 @@
-"""
+﻿"""
 轨迹存储(TraceStore)单元测试。
 
-测试模块: officeagent.core.flywheel.trace
+测试模块: fnixagent.core.flywheel.trace
 覆盖:
     - append(): 追加写入
     - load_all(): 全量加载
@@ -16,9 +16,9 @@ import time
 
 import pytest
 
-from officeagent.core.flywheel.stage1_perception import trace_from_dict, trace_to_dict
-from officeagent.core.flywheel.trace import TraceStore
-from officeagent.core.types import ReasoningMode, TraceRecord
+from fnixagent.core.flywheel.stage1_perception import trace_from_dict, trace_to_dict
+from fnixagent.core.flywheel.trace import TraceStore
+from fnixagent.core.types import ReasoningMode, TraceRecord
 
 
 # ---------------------------------------------------------------------------

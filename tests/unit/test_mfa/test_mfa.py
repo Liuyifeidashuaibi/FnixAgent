@@ -1,4 +1,4 @@
-"""Phase 2.4 MFA 多因素认证测试。
+﻿"""Phase 2.4 MFA 多因素认证测试。
 
 覆盖:
     1. TOTP 客户端(secret 生成 / URI 构建 / 验证 / 时钟漂移容忍)
@@ -20,8 +20,8 @@ from fastapi.testclient import TestClient
 @pytest.fixture(autouse=True)
 def _reset_stores():
     """每个测试前后重置所有存储,确保隔离。"""
-    from officeagent.services.storage_mfa import reset_all_mfa_stores
-    from officeagent.services.storage import reset_stores
+    from fnixagent.services.storage_mfa import reset_all_mfa_stores
+    from fnixagent.services.storage import reset_stores
 
     reset_all_mfa_stores()
     reset_stores()
@@ -37,7 +37,7 @@ def _reset_stores():
 
 class TestTOTPClient:
     def test_generate_secret_length(self):
-        from officeagent.core.security.auth.mfa import TOTPClient
+        from fnixagent.core.security.auth.mfa import TOTPClient
 
         secret = TOTPClient.generate_secret()
         # 32 字节熵 → Base32 编码(去掉 padding)
@@ -46,27 +46,27 @@ class TestTOTPClient:
         assert all(c in "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567" for c in secret)
 
     def test_generate_secret_uniqueness(self):
-        from officeagent.core.security.auth.mfa import TOTPClient
+        from fnixagent.core.security.auth.mfa import TOTPClient
 
         s1 = TOTPClient.generate_secret()
         s2 = TOTPClient.generate_secret()
         assert s1 != s2
 
     def test_build_provisioning_uri(self):
-        from officeagent.core.security.auth.mfa import TOTPClient
+        from fnixagent.core.security.auth.mfa import TOTPClient
 
         uri = TOTPClient.build_provisioning_uri(
             secret="JBSWY3DPEHPK3PXP",
             account_name="alice@example.com",
         )
         assert uri.startswith("otpauth://totp/")
-        assert "OfficeAgent%3Aalice%40example.com" in uri
+        assert "FnixAgent%3Aalice%40example.com" in uri
         assert "secret=JBSWY3DPEHPK3PXP" in uri
         assert "digits=6" in uri
         assert "period=30" in uri
 
     def test_verify_correct_code(self):
-        from officeagent.core.security.auth.mfa import TOTPClient, TOTPConfig
+        from fnixagent.core.security.auth.mfa import TOTPClient, TOTPConfig
 
         secret = TOTPClient.generate_secret()
         client = TOTPClient(TOTPConfig(secret=secret, account_name="user"))
@@ -74,7 +74,7 @@ class TestTOTPClient:
         assert client.verify(code) is True
 
     def test_verify_wrong_code(self):
-        from officeagent.core.security.auth.mfa import TOTPClient, TOTPConfig
+        from fnixagent.core.security.auth.mfa import TOTPClient, TOTPConfig
 
         secret = TOTPClient.generate_secret()
         client = TOTPClient(TOTPConfig(secret=secret, account_name="user"))
@@ -82,7 +82,7 @@ class TestTOTPClient:
         assert client.verify("000000") is False or client.verify("999999") is False
 
     def test_verify_non_digit_code(self):
-        from officeagent.core.security.auth.mfa import TOTPClient, TOTPConfig
+        from fnixagent.core.security.auth.mfa import TOTPClient, TOTPConfig
 
         client = TOTPClient(TOTPConfig(secret="JBSWY3DPEHPK3PXP"))
         assert client.verify("abcdef") is False
@@ -90,7 +90,7 @@ class TestTOTPClient:
 
     def test_verify_accepts_adjacent_window(self):
         """容忍 ±1 个时间窗(±30s)防止时钟漂移。"""
-        from officeagent.core.security.auth.mfa import TOTPClient, TOTPConfig
+        from fnixagent.core.security.auth.mfa import TOTPClient, TOTPConfig
 
         secret = TOTPClient.generate_secret()
         client = TOTPClient(TOTPConfig(secret=secret))
@@ -100,7 +100,7 @@ class TestTOTPClient:
 
     def test_not_installed_raises(self):
         """pyotp 未安装时抛 MFANotInstalledError。"""
-        from officeagent.core.security.auth.mfa import (
+        from fnixagent.core.security.auth.mfa import (
             MFANotInstalledError, TOTPClient, TOTPConfig,
         )
 
@@ -118,7 +118,7 @@ class TestTOTPClient:
 
 class TestRecoveryCodeClient:
     def test_generate_count(self):
-        from officeagent.core.security.auth.mfa import (
+        from fnixagent.core.security.auth.mfa import (
             RECOVERY_CODE_COUNT, RecoveryCodeClient,
         )
 
@@ -127,7 +127,7 @@ class TestRecoveryCodeClient:
 
     def test_generate_format(self):
         """每个码 16 字符,4-4-4-4 分组(3 个连字符)。"""
-        from officeagent.core.security.auth.mfa import RecoveryCodeClient
+        from fnixagent.core.security.auth.mfa import RecoveryCodeClient
 
         codes = RecoveryCodeClient.generate(count=1)
         code = codes[0]
@@ -141,14 +141,14 @@ class TestRecoveryCodeClient:
             assert len(part) == 4
 
     def test_generate_uniqueness(self):
-        from officeagent.core.security.auth.mfa import RecoveryCodeClient
+        from fnixagent.core.security.auth.mfa import RecoveryCodeClient
 
         codes = RecoveryCodeClient.generate(count=20)
         assert len(set(codes)) == 20
 
     def test_alphabet_excludes_confusable(self):
         """易混淆字符 0/O/1/I/L 不出现在恢复码中。"""
-        from officeagent.core.security.auth.mfa import RecoveryCodeClient
+        from fnixagent.core.security.auth.mfa import RecoveryCodeClient
 
         codes = RecoveryCodeClient.generate(count=50)
         for code in codes:
@@ -157,7 +157,7 @@ class TestRecoveryCodeClient:
 
     def test_hash_code_normalization(self):
         """哈希时去除分隔符 + 转大写,容忍用户输入差异。"""
-        from officeagent.core.security.auth.mfa import RecoveryCodeClient
+        from fnixagent.core.security.auth.mfa import RecoveryCodeClient
 
         code = "ABCD-EFGH-IJKL-MNOP"
         h1 = RecoveryCodeClient.hash_code(code)
@@ -166,27 +166,27 @@ class TestRecoveryCodeClient:
         assert h1 == h2 == h3
 
     def test_verify_correct(self):
-        from officeagent.core.security.auth.mfa import RecoveryCodeClient
+        from fnixagent.core.security.auth.mfa import RecoveryCodeClient
 
         code = "ABCD-EFGH-IJKL-MNOP"
         code_hash = RecoveryCodeClient.hash_code(code)
         assert RecoveryCodeClient.verify(code, code_hash) is True
 
     def test_verify_wrong(self):
-        from officeagent.core.security.auth.mfa import RecoveryCodeClient
+        from fnixagent.core.security.auth.mfa import RecoveryCodeClient
 
         code = "ABCD-EFGH-IJKL-MNOP"
         code_hash = RecoveryCodeClient.hash_code(code)
         assert RecoveryCodeClient.verify("ZZZZ-ZZZZ-ZZZZ-ZZZZ", code_hash) is False
 
     def test_verify_empty(self):
-        from officeagent.core.security.auth.mfa import RecoveryCodeClient
+        from fnixagent.core.security.auth.mfa import RecoveryCodeClient
 
         assert RecoveryCodeClient.verify("", "somehash") is False
         assert RecoveryCodeClient.verify("ABCD", "") is False
 
     def test_verify_case_insensitive(self):
-        from officeagent.core.security.auth.mfa import RecoveryCodeClient
+        from fnixagent.core.security.auth.mfa import RecoveryCodeClient
 
         code_hash = RecoveryCodeClient.hash_code("ABCD-EFGH-IJKL-MNOP")
         assert RecoveryCodeClient.verify("abcd-efgh-ijkl-mnop", code_hash) is True
@@ -199,71 +199,71 @@ class TestRecoveryCodeClient:
 
 class TestOTPClient:
     def test_generate_code_format(self):
-        from officeagent.core.security.auth.mfa import OTPClient, OTP_DIGITS
+        from fnixagent.core.security.auth.mfa import OTPClient, OTP_DIGITS
 
         code = OTPClient.generate_code()
         assert len(code) == OTP_DIGITS
         assert code.isdigit()
 
     def test_generate_code_range(self):
-        from officeagent.core.security.auth.mfa import OTPClient
+        from fnixagent.core.security.auth.mfa import OTPClient
 
         for _ in range(100):
             code = OTPClient.generate_code()
             assert 0 <= int(code) < 10 ** 6
 
     def test_hash_code(self):
-        from officeagent.core.security.auth.mfa import OTPClient
+        from fnixagent.core.security.auth.mfa import OTPClient
 
         h = OTPClient.hash_code("123456")
         assert len(h) == 64  # SHA256 hex
         assert h != "123456"
 
     def test_mask_phone(self):
-        from officeagent.core.security.auth.mfa import FACTOR_SMS, OTPClient
+        from fnixagent.core.security.auth.mfa import FACTOR_SMS, OTPClient
 
         masked = OTPClient.mask_target("13812345678", FACTOR_SMS)
         assert masked == "138****5678"
 
     def test_mask_short_phone(self):
-        from officeagent.core.security.auth.mfa import FACTOR_SMS, OTPClient
+        from fnixagent.core.security.auth.mfa import FACTOR_SMS, OTPClient
 
         masked = OTPClient.mask_target("12345", FACTOR_SMS)
         assert masked == "***"
 
     def test_mask_email(self):
-        from officeagent.core.security.auth.mfa import FACTOR_EMAIL, OTPClient
+        from fnixagent.core.security.auth.mfa import FACTOR_EMAIL, OTPClient
 
         masked = OTPClient.mask_target("alice@example.com", FACTOR_EMAIL)
         assert masked == "a***@example.com"
 
     def test_mask_empty(self):
-        from officeagent.core.security.auth.mfa import OTPClient
+        from fnixagent.core.security.auth.mfa import OTPClient
 
         assert OTPClient.mask_target("", "sms") == ""
 
     def test_send_sms_mock(self):
-        from officeagent.core.security.auth.mfa import OTPClient, SMSConfig
+        from fnixagent.core.security.auth.mfa import OTPClient, SMSConfig
 
         client = OTPClient(sms_config=SMSConfig(provider="mock"))
         assert client.send_sms("13812345678", "123456") is True
 
     def test_send_sms_no_config(self):
-        from officeagent.core.security.auth.mfa import MFAConfigError, OTPClient
+        from fnixagent.core.security.auth.mfa import MFAConfigError, OTPClient
 
         client = OTPClient()
         with pytest.raises(MFAConfigError):
             client.send_sms("13812345678", "123456")
 
     def test_send_sms_unknown_provider(self):
-        from officeagent.core.security.auth.mfa import MFAConfigError, OTPClient, SMSConfig
+        from fnixagent.core.security.auth.mfa import MFAConfigError, OTPClient, SMSConfig
 
         client = OTPClient(sms_config=SMSConfig(provider="unknown"))
         with pytest.raises(MFAConfigError):
             client.send_sms("13812345678", "123456")
 
     def test_send_email_no_config(self):
-        from officeagent.core.security.auth.mfa import MFAConfigError, OTPClient
+        from fnixagent.core.security.auth.mfa import MFAConfigError, OTPClient
 
         client = OTPClient()
         with pytest.raises(MFAConfigError):
@@ -277,7 +277,7 @@ class TestOTPClient:
 
 class TestMFAChallengeToken:
     def test_create_and_verify_success(self):
-        from officeagent.core.security.auth.mfa import (
+        from fnixagent.core.security.auth.mfa import (
             create_mfa_challenge_token, verify_mfa_challenge_token,
         )
 
@@ -293,7 +293,7 @@ class TestMFAChallengeToken:
         assert "jti" in payload
 
     def test_verify_invalid_signature(self):
-        from officeagent.core.security.auth.mfa import (
+        from fnixagent.core.security.auth.mfa import (
             create_mfa_challenge_token, verify_mfa_challenge_token,
         )
 
@@ -308,8 +308,8 @@ class TestMFAChallengeToken:
 
     def test_verify_wrong_token_type(self):
         """非 mfa_challenge 类型的 token 应拒绝。"""
-        from officeagent.api.routers.auth import create_jwt_token
-        from officeagent.core.security.auth.mfa import verify_mfa_challenge_token
+        from fnixagent.api.routers.auth import create_jwt_token
+        from fnixagent.core.security.auth.mfa import verify_mfa_challenge_token
 
         # 创建普通 access token
         token = create_jwt_token(user_id=1, username="user")
@@ -317,31 +317,31 @@ class TestMFAChallengeToken:
             verify_mfa_challenge_token(token)
 
     def test_verify_expired_token(self):
-        from officeagent.core.security.auth.mfa import (
+        from fnixagent.core.security.auth.mfa import (
             create_mfa_challenge_token, verify_mfa_challenge_token,
             MFA_CHALLENGE_TTL_SECONDS,
         )
 
         # 创建一个已过期的 token(通过 mock time)
-        with patch("officeagent.core.security.auth.mfa.time.time",
+        with patch("fnixagent.core.security.auth.mfa.time.time",
                    return_value=1000.0):
             token = create_mfa_challenge_token(
                 user_id=1, username="user", factors=["totp"],
             )
         # 当前时间已远超过期时间
-        with patch("officeagent.core.security.auth.mfa.time.time",
+        with patch("fnixagent.core.security.auth.mfa.time.time",
                    return_value=1000.0 + MFA_CHALLENGE_TTL_SECONDS + 1):
             with pytest.raises(ValueError, match="已过期"):
                 verify_mfa_challenge_token(token)
 
     def test_verify_malformed_token(self):
-        from officeagent.core.security.auth.mfa import verify_mfa_challenge_token
+        from fnixagent.core.security.auth.mfa import verify_mfa_challenge_token
 
         with pytest.raises(ValueError, match="3 段"):
             verify_mfa_challenge_token("not.a.valid.token")
 
     def test_custom_secret_key(self):
-        from officeagent.core.security.auth.mfa import (
+        from fnixagent.core.security.auth.mfa import (
             create_mfa_challenge_token, verify_mfa_challenge_token,
         )
 
@@ -354,7 +354,7 @@ class TestMFAChallengeToken:
         assert payload["user_id"] == 1
 
     def test_custom_secret_key_mismatch(self):
-        from officeagent.core.security.auth.mfa import (
+        from fnixagent.core.security.auth.mfa import (
             create_mfa_challenge_token, verify_mfa_challenge_token,
         )
 
@@ -373,8 +373,8 @@ class TestMFAChallengeToken:
 
 class TestMFAFactorStore:
     def test_create_and_get(self):
-        from officeagent.services.storage_mfa import get_mfa_factor_store
-        from officeagent.core.security.auth.mfa import FACTOR_TOTP
+        from fnixagent.services.storage_mfa import get_mfa_factor_store
+        from fnixagent.core.security.auth.mfa import FACTOR_TOTP
 
         store = get_mfa_factor_store()
         factor = store.create(user_id=1, factor_type=FACTOR_TOTP, secret="ABC123")
@@ -389,8 +389,8 @@ class TestMFAFactorStore:
         assert fetched.secret == "ABC123"
 
     def test_list_by_user(self):
-        from officeagent.services.storage_mfa import get_mfa_factor_store
-        from officeagent.core.security.auth.mfa import FACTOR_TOTP, FACTOR_SMS
+        from fnixagent.services.storage_mfa import get_mfa_factor_store
+        from fnixagent.core.security.auth.mfa import FACTOR_TOTP, FACTOR_SMS
 
         store = get_mfa_factor_store()
         store.create(user_id=1, factor_type=FACTOR_TOTP, secret="S1")
@@ -403,8 +403,8 @@ class TestMFAFactorStore:
         assert len(factors_user2) == 1
 
     def test_list_by_user_exclude_disabled(self):
-        from officeagent.services.storage_mfa import get_mfa_factor_store
-        from officeagent.core.security.auth.mfa import FACTOR_TOTP, FACTOR_SMS
+        from fnixagent.services.storage_mfa import get_mfa_factor_store
+        from fnixagent.core.security.auth.mfa import FACTOR_TOTP, FACTOR_SMS
 
         store = get_mfa_factor_store()
         store.create(user_id=1, factor_type=FACTOR_TOTP, secret="S1")
@@ -418,8 +418,8 @@ class TestMFAFactorStore:
         assert enabled_only[0].factor_type == FACTOR_TOTP
 
     def test_get_totp(self):
-        from officeagent.services.storage_mfa import get_mfa_factor_store
-        from officeagent.core.security.auth.mfa import FACTOR_TOTP
+        from fnixagent.services.storage_mfa import get_mfa_factor_store
+        from fnixagent.core.security.auth.mfa import FACTOR_TOTP
 
         store = get_mfa_factor_store()
         store.create(user_id=1, factor_type=FACTOR_TOTP, secret="S1")
@@ -428,8 +428,8 @@ class TestMFAFactorStore:
         assert totp.secret == "S1"
 
     def test_get_totp_disabled(self):
-        from officeagent.services.storage_mfa import get_mfa_factor_store
-        from officeagent.core.security.auth.mfa import FACTOR_TOTP
+        from fnixagent.services.storage_mfa import get_mfa_factor_store
+        from fnixagent.core.security.auth.mfa import FACTOR_TOTP
 
         store = get_mfa_factor_store()
         f = store.create(user_id=1, factor_type=FACTOR_TOTP, secret="S1")
@@ -437,8 +437,8 @@ class TestMFAFactorStore:
         assert store.get_totp(1) is None
 
     def test_has_enabled_factor(self):
-        from officeagent.services.storage_mfa import get_mfa_factor_store
-        from officeagent.core.security.auth.mfa import FACTOR_TOTP
+        from fnixagent.services.storage_mfa import get_mfa_factor_store
+        from fnixagent.core.security.auth.mfa import FACTOR_TOTP
 
         store = get_mfa_factor_store()
         assert store.has_enabled_factor(1) is False
@@ -446,7 +446,7 @@ class TestMFAFactorStore:
         assert store.has_enabled_factor(1) is True
 
     def test_delete(self):
-        from officeagent.services.storage_mfa import get_mfa_factor_store
+        from fnixagent.services.storage_mfa import get_mfa_factor_store
 
         store = get_mfa_factor_store()
         f = store.create(user_id=1, factor_type="totp", secret="S")
@@ -455,7 +455,7 @@ class TestMFAFactorStore:
         assert store.delete(999) is False
 
     def test_delete_all_by_user(self):
-        from officeagent.services.storage_mfa import get_mfa_factor_store
+        from fnixagent.services.storage_mfa import get_mfa_factor_store
 
         store = get_mfa_factor_store()
         store.create(user_id=1, factor_type="totp", secret="S1")
@@ -468,8 +468,8 @@ class TestMFAFactorStore:
         assert len(store.list_by_user(2)) == 1
 
     def test_to_dict_hides_secret(self):
-        from officeagent.services.storage_mfa import get_mfa_factor_store
-        from officeagent.core.security.auth.mfa import FACTOR_TOTP
+        from fnixagent.services.storage_mfa import get_mfa_factor_store
+        from fnixagent.core.security.auth.mfa import FACTOR_TOTP
 
         store = get_mfa_factor_store()
         f = store.create(user_id=1, factor_type=FACTOR_TOTP, secret="SECRET")
@@ -479,8 +479,8 @@ class TestMFAFactorStore:
         assert d2["secret"] == "SECRET"
 
     def test_to_dict_masks_phone(self):
-        from officeagent.services.storage_mfa import get_mfa_factor_store
-        from officeagent.core.security.auth.mfa import FACTOR_SMS
+        from fnixagent.services.storage_mfa import get_mfa_factor_store
+        from fnixagent.core.security.auth.mfa import FACTOR_SMS
 
         store = get_mfa_factor_store()
         f = store.create(user_id=1, factor_type=FACTOR_SMS, phone="13812345678")
@@ -490,8 +490,8 @@ class TestMFAFactorStore:
 
 class TestRecoveryCodeStore:
     def test_create_and_find(self):
-        from officeagent.services.storage_mfa import get_recovery_code_store
-        from officeagent.core.security.auth.mfa import RecoveryCodeClient
+        from fnixagent.services.storage_mfa import get_recovery_code_store
+        from fnixagent.core.security.auth.mfa import RecoveryCodeClient
 
         store = get_recovery_code_store()
         code = "ABCD-EFGH-IJKL-MNOP"
@@ -504,7 +504,7 @@ class TestRecoveryCodeStore:
         assert found.id == record.id
 
     def test_count_unused(self):
-        from officeagent.services.storage_mfa import get_recovery_code_store
+        from fnixagent.services.storage_mfa import get_recovery_code_store
 
         store = get_recovery_code_store()
         store.create(user_id=1, code_hash="h1")
@@ -514,7 +514,7 @@ class TestRecoveryCodeStore:
         assert store.count_unused(2) == 1
 
     def test_mark_used(self):
-        from officeagent.services.storage_mfa import get_recovery_code_store
+        from fnixagent.services.storage_mfa import get_recovery_code_store
 
         store = get_recovery_code_store()
         record = store.create(user_id=1, code_hash="h1")
@@ -527,7 +527,7 @@ class TestRecoveryCodeStore:
         assert store.count_unused(1) == 0
 
     def test_delete_all_by_user(self):
-        from officeagent.services.storage_mfa import get_recovery_code_store
+        from fnixagent.services.storage_mfa import get_recovery_code_store
 
         store = get_recovery_code_store()
         store.create(user_id=1, code_hash="h1")
@@ -541,7 +541,7 @@ class TestRecoveryCodeStore:
 
     def test_to_dict_no_hash(self):
         """恢复码 to_dict 不返回 code_hash。"""
-        from officeagent.services.storage_mfa import get_recovery_code_store
+        from fnixagent.services.storage_mfa import get_recovery_code_store
 
         store = get_recovery_code_store()
         record = store.create(user_id=1, code_hash="secret-hash")
@@ -552,7 +552,7 @@ class TestRecoveryCodeStore:
 
 class TestOTPChallengeStore:
     def test_create_and_get(self):
-        from officeagent.services.storage_mfa import get_otp_challenge_store
+        from fnixagent.services.storage_mfa import get_otp_challenge_store
 
         store = get_otp_challenge_store()
         challenge = store.create(
@@ -569,14 +569,14 @@ class TestOTPChallengeStore:
         assert fetched.user_id == 1
 
     def test_get_nonexistent(self):
-        from officeagent.services.storage_mfa import get_otp_challenge_store
+        from fnixagent.services.storage_mfa import get_otp_challenge_store
 
         store = get_otp_challenge_store()
         assert store.get("nonexistent-id") is None
 
     def test_get_returns_copy(self):
         """get() 返回副本,外部修改不影响原数据。"""
-        from officeagent.services.storage_mfa import get_otp_challenge_store
+        from fnixagent.services.storage_mfa import get_otp_challenge_store
 
         store = get_otp_challenge_store()
         challenge = store.create(
@@ -588,7 +588,7 @@ class TestOTPChallengeStore:
         assert refetched.attempts == 0
 
     def test_check_resend_cooldown(self):
-        from officeagent.services.storage_mfa import get_otp_challenge_store
+        from fnixagent.services.storage_mfa import get_otp_challenge_store
 
         store = get_otp_challenge_store()
         # 初始可以发送
@@ -600,10 +600,10 @@ class TestOTPChallengeStore:
         assert store.check_resend_cooldown(1, "email") is True
 
     def test_increment_attempts(self):
-        from officeagent.services.storage_mfa import (
+        from fnixagent.services.storage_mfa import (
             get_otp_challenge_store,
         )
-        from officeagent.core.security.auth.mfa import OTP_MAX_ATTEMPTS
+        from fnixagent.core.security.auth.mfa import OTP_MAX_ATTEMPTS
 
         store = get_otp_challenge_store()
         challenge = store.create(1, "sms", "t", "h")
@@ -619,7 +619,7 @@ class TestOTPChallengeStore:
         assert c.consumed is True
 
     def test_consume(self):
-        from officeagent.services.storage_mfa import get_otp_challenge_store
+        from fnixagent.services.storage_mfa import get_otp_challenge_store
 
         store = get_otp_challenge_store()
         challenge = store.create(1, "sms", "t", "h")
@@ -628,7 +628,7 @@ class TestOTPChallengeStore:
         assert store.consume(challenge.challenge_id) is False
 
     def test_cleanup_expired(self):
-        from officeagent.services.storage_mfa import get_otp_challenge_store
+        from fnixagent.services.storage_mfa import get_otp_challenge_store
 
         store = get_otp_challenge_store()
         # 创建一个已过期的 challenge(ttl=0)
@@ -641,7 +641,7 @@ class TestOTPChallengeStore:
 
 class TestMFAEnforcementStore:
     def test_upsert_create(self):
-        from officeagent.services.storage_mfa import get_mfa_enforcement_store
+        from fnixagent.services.storage_mfa import get_mfa_enforcement_store
 
         store = get_mfa_enforcement_store()
         e = store.upsert(role="admin", factor_type="totp", enabled=True)
@@ -651,7 +651,7 @@ class TestMFAEnforcementStore:
         assert e.enabled is True
 
     def test_upsert_update(self):
-        from officeagent.services.storage_mfa import get_mfa_enforcement_store
+        from fnixagent.services.storage_mfa import get_mfa_enforcement_store
 
         store = get_mfa_enforcement_store()
         store.upsert(role="admin", factor_type="totp", enabled=True)
@@ -663,7 +663,7 @@ class TestMFAEnforcementStore:
         assert len(store.list_all()) == 1
 
     def test_get_by_role(self):
-        from officeagent.services.storage_mfa import get_mfa_enforcement_store
+        from fnixagent.services.storage_mfa import get_mfa_enforcement_store
 
         store = get_mfa_enforcement_store()
         store.upsert(role="admin", factor_type="totp")
@@ -673,7 +673,7 @@ class TestMFAEnforcementStore:
         assert store.get_by_role("nonexistent") is None
 
     def test_list_all(self):
-        from officeagent.services.storage_mfa import get_mfa_enforcement_store
+        from fnixagent.services.storage_mfa import get_mfa_enforcement_store
 
         store = get_mfa_enforcement_store()
         store.upsert(role="admin", factor_type="totp")
@@ -682,7 +682,7 @@ class TestMFAEnforcementStore:
         assert len(all_e) == 2
 
     def test_list_enabled(self):
-        from officeagent.services.storage_mfa import get_mfa_enforcement_store
+        from fnixagent.services.storage_mfa import get_mfa_enforcement_store
 
         store = get_mfa_enforcement_store()
         store.upsert(role="admin", factor_type="totp", enabled=True)
@@ -692,7 +692,7 @@ class TestMFAEnforcementStore:
         assert enabled[0].role == "admin"
 
     def test_delete(self):
-        from officeagent.services.storage_mfa import get_mfa_enforcement_store
+        from fnixagent.services.storage_mfa import get_mfa_enforcement_store
 
         store = get_mfa_enforcement_store()
         e = store.upsert(role="admin", factor_type="totp")
@@ -701,7 +701,7 @@ class TestMFAEnforcementStore:
         assert store.delete(999) is False
 
     def test_delete_by_role(self):
-        from officeagent.services.storage_mfa import get_mfa_enforcement_store
+        from fnixagent.services.storage_mfa import get_mfa_enforcement_store
 
         store = get_mfa_enforcement_store()
         store.upsert(role="admin", factor_type="totp")
@@ -709,7 +709,7 @@ class TestMFAEnforcementStore:
         assert store.delete_by_role("admin") is False
 
     def test_is_role_enforced(self):
-        from officeagent.services.storage_mfa import get_mfa_enforcement_store
+        from fnixagent.services.storage_mfa import get_mfa_enforcement_store
 
         store = get_mfa_enforcement_store()
         assert store.is_role_enforced("admin") is False
@@ -728,7 +728,7 @@ class TestMFAAPIEndpoints:
     @pytest.fixture
     def client(self):
         """构建带 MFA 路由的 TestClient。"""
-        from officeagent.api.routers import admin, auth
+        from fnixagent.api.routers import admin, auth
 
         app = FastAPI()
         app.include_router(auth.router, prefix="/api/v1")
@@ -738,8 +738,8 @@ class TestMFAAPIEndpoints:
     @pytest.fixture
     def user_token(self):
         """创建普通用户 Token。"""
-        from officeagent.api.routers.auth import create_jwt_token
-        from officeagent.services.storage import get_user_store
+        from fnixagent.api.routers.auth import create_jwt_token
+        from fnixagent.services.storage import get_user_store
 
         store = get_user_store()
         user, _ = store.create(
@@ -751,8 +751,8 @@ class TestMFAAPIEndpoints:
     @pytest.fixture
     def admin_token(self):
         """创建管理员 Token。"""
-        from officeagent.api.routers.auth import create_jwt_token
-        from officeagent.services.storage import get_user_store
+        from fnixagent.api.routers.auth import create_jwt_token
+        from fnixagent.services.storage import get_user_store
 
         store = get_user_store()
         user, _ = store.create(
@@ -808,7 +808,7 @@ class TestMFAAPIEndpoints:
     # ---- /auth/mfa/enable ----
 
     def test_enable_totp_success(self, client, user_token):
-        from officeagent.core.security.auth.mfa import TOTPClient, TOTPConfig
+        from fnixagent.core.security.auth.mfa import TOTPClient, TOTPConfig
 
         token, _ = user_token
         # 先 setup
@@ -889,7 +889,7 @@ class TestMFAAPIEndpoints:
         assert data["mfa_enabled"] is False
 
     def test_list_factors_after_enable(self, client, user_token):
-        from officeagent.core.security.auth.mfa import TOTPClient, TOTPConfig
+        from fnixagent.core.security.auth.mfa import TOTPClient, TOTPConfig
 
         token, _ = user_token
         # setup + enable
@@ -917,7 +917,7 @@ class TestMFAAPIEndpoints:
     # ---- /auth/mfa/disable ----
 
     def test_disable_all_factors(self, client, user_token):
-        from officeagent.core.security.auth.mfa import TOTPClient, TOTPConfig
+        from fnixagent.core.security.auth.mfa import TOTPClient, TOTPConfig
 
         token, _ = user_token
         # 先 enable TOTP
@@ -962,7 +962,7 @@ class TestMFAAPIEndpoints:
     # ---- /auth/mfa/recovery-codes/regenerate ----
 
     def test_regenerate_recovery_codes(self, client, user_token):
-        from officeagent.core.security.auth.mfa import TOTPClient, TOTPConfig
+        from fnixagent.core.security.auth.mfa import TOTPClient, TOTPConfig
 
         token, _ = user_token
         # 先 enable
@@ -1047,10 +1047,10 @@ class TestMFAAPIEndpoints:
     # ---- /auth/mfa/verify ----
 
     def test_verify_totp_success(self, client, user_token):
-        from officeagent.core.security.auth.mfa import (
+        from fnixagent.core.security.auth.mfa import (
             TOTPClient, TOTPConfig, create_mfa_challenge_token,
         )
-        from officeagent.services.storage_mfa import get_mfa_factor_store
+        from fnixagent.services.storage_mfa import get_mfa_factor_store
 
         token, user_id = user_token
         # 先绑定 TOTP
@@ -1083,7 +1083,7 @@ class TestMFAAPIEndpoints:
         assert "refresh_token" in data
 
     def test_verify_totp_wrong_code(self, client, user_token):
-        from officeagent.core.security.auth.mfa import (
+        from fnixagent.core.security.auth.mfa import (
             TOTPClient, TOTPConfig, create_mfa_challenge_token,
         )
 
@@ -1110,7 +1110,7 @@ class TestMFAAPIEndpoints:
         assert resp.status_code == 401
 
     def test_verify_recovery_code_success(self, client, user_token):
-        from officeagent.core.security.auth.mfa import (
+        from fnixagent.core.security.auth.mfa import (
             TOTPClient, TOTPConfig, create_mfa_challenge_token,
         )
 
@@ -1141,7 +1141,7 @@ class TestMFAAPIEndpoints:
 
     def test_verify_recovery_code_reused(self, client, user_token):
         """恢复码一次性,不能重复使用。"""
-        from officeagent.core.security.auth.mfa import (
+        from fnixagent.core.security.auth.mfa import (
             TOTPClient, TOTPConfig, create_mfa_challenge_token,
         )
 
@@ -1189,7 +1189,7 @@ class TestMFAAPIEndpoints:
 
     def test_verify_disallowed_factor(self, client, user_token):
         """mfa_token 的 factors 列表不包含请求的 factor_type 时应拒绝。"""
-        from officeagent.core.security.auth.mfa import create_mfa_challenge_token
+        from fnixagent.core.security.auth.mfa import create_mfa_challenge_token
 
         token, user_id = user_token
         # 只允许 totp,不允许 recovery
@@ -1212,7 +1212,7 @@ class TestMFAAPIEndpoints:
 class TestMFALoginFlow:
     @pytest.fixture
     def client(self):
-        from officeagent.api.routers import admin, auth
+        from fnixagent.api.routers import admin, auth
 
         app = FastAPI()
         app.include_router(auth.router, prefix="/api/v1")
@@ -1221,8 +1221,8 @@ class TestMFALoginFlow:
 
     def test_login_returns_mfa_challenge(self, client):
         """用户启用 MFA 后,登录返回 MFA Challenge 而非 Token。"""
-        from officeagent.core.security.auth.mfa import TOTPClient, TOTPConfig
-        from officeagent.services.storage import get_user_store
+        from fnixagent.core.security.auth.mfa import TOTPClient, TOTPConfig
+        from fnixagent.services.storage import get_user_store
 
         # 创建用户
         store = get_user_store()
@@ -1232,10 +1232,10 @@ class TestMFALoginFlow:
         )
 
         # 直接通过 store 绑定 TOTP(绕过 API,简化测试)
-        from officeagent.services.storage_mfa import (
+        from fnixagent.services.storage_mfa import (
             get_mfa_factor_store, get_recovery_code_store,
         )
-        from officeagent.core.security.auth.mfa import (
+        from fnixagent.core.security.auth.mfa import (
             FACTOR_TOTP, RecoveryCodeClient,
         )
 
@@ -1264,7 +1264,7 @@ class TestMFALoginFlow:
 
     def test_login_without_mfa_returns_token(self, client):
         """未启用 MFA 的用户正常登录,返回 Token。"""
-        from officeagent.services.storage import get_user_store
+        from fnixagent.services.storage import get_user_store
 
         store = get_user_store()
         store.create(
@@ -1285,11 +1285,11 @@ class TestMFALoginFlow:
 
     def test_full_mfa_login_flow(self, client):
         """完整 MFA 登录流程:密码登录 → MFA Challenge → TOTP 验证 → 获取 Token。"""
-        from officeagent.core.security.auth.mfa import (
+        from fnixagent.core.security.auth.mfa import (
             FACTOR_TOTP, RecoveryCodeClient, TOTPClient, TOTPConfig,
         )
-        from officeagent.services.storage import get_user_store
-        from officeagent.services.storage_mfa import (
+        from fnixagent.services.storage import get_user_store
+        from fnixagent.services.storage_mfa import (
             get_mfa_factor_store, get_recovery_code_store,
         )
 
@@ -1347,7 +1347,7 @@ class TestMFALoginFlow:
 class TestAdminMFAEndpoints:
     @pytest.fixture
     def client(self):
-        from officeagent.api.routers import admin, auth
+        from fnixagent.api.routers import admin, auth
 
         app = FastAPI()
         app.include_router(auth.router, prefix="/api/v1")
@@ -1356,8 +1356,8 @@ class TestAdminMFAEndpoints:
 
     @pytest.fixture
     def admin_token(self):
-        from officeagent.api.routers.auth import create_jwt_token
-        from officeagent.services.storage import get_user_store
+        from fnixagent.api.routers.auth import create_jwt_token
+        from fnixagent.services.storage import get_user_store
 
         store = get_user_store()
         user, _ = store.create(
@@ -1368,8 +1368,8 @@ class TestAdminMFAEndpoints:
 
     @pytest.fixture
     def user_token(self):
-        from officeagent.api.routers.auth import create_jwt_token
-        from officeagent.services.storage import get_user_store
+        from fnixagent.api.routers.auth import create_jwt_token
+        from fnixagent.services.storage import get_user_store
 
         store = get_user_store()
         user, _ = store.create(
@@ -1432,7 +1432,7 @@ class TestAdminMFAEndpoints:
         assert len(list_resp.json()["data"]["items"]) == 0
 
     def test_list_user_factors(self, client, admin_token, user_token):
-        from officeagent.core.security.auth.mfa import TOTPClient, TOTPConfig
+        from fnixagent.core.security.auth.mfa import TOTPClient, TOTPConfig
 
         admin_t, _ = admin_token
         user_t, user_id = user_token
@@ -1457,7 +1457,7 @@ class TestAdminMFAEndpoints:
         assert data["factors"][0]["factor_type"] == "totp"
 
     def test_admin_disable_factor(self, client, admin_token, user_token):
-        from officeagent.core.security.auth.mfa import TOTPClient, TOTPConfig
+        from fnixagent.core.security.auth.mfa import TOTPClient, TOTPConfig
 
         admin_t, _ = admin_token
         user_t, _ = user_token

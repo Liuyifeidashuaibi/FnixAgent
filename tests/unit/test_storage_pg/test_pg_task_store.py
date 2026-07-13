@@ -1,4 +1,4 @@
-"""
+﻿"""
 PgTaskStore 单元测试。
 
 验证:
@@ -11,7 +11,7 @@ PgTaskStore 单元测试。
 """
 from __future__ import annotations
 
-from officeagent.services.storage_pg import PgTaskStore
+from fnixagent.services.storage_pg import PgTaskStore
 
 
 class TestPgTaskStoreCreate:

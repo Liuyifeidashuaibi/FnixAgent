@@ -1,5 +1,5 @@
-"""
-OfficeAgent Coding 包 — 端到端验证
+﻿"""
+FnixAgent Coding 包 — 端到端验证
 =====================================
 覆盖编码智能体全部模块功能。
 """
@@ -14,7 +14,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from officeagent.core.coding import (
+from fnixagent.core.coding import (
     ChangeSet, ChangeSetBuilder, ChangeType, CodeIndexer, CodeTools,
     ContextBuilder, DiffEngine, FileChange, IDEServer, SymbolKind,
 )
@@ -46,7 +46,7 @@ class T:
 async def test_imports(t: T):
     """1. 包导入完整性。"""
     t.section("1. 包导入完整性")
-    import officeagent.core.coding as coding
+    import fnixagent.core.coding as coding
     t.check("包可导入", True)
     t.check("__all__ 非空", len(coding.__all__) >= 15)
     for name in ["CodeIndexer", "ContextBuilder", "DiffEngine",
@@ -272,7 +272,7 @@ async def test_context_builder(t: T):
 async def test_coding_agent(t: T):
     """6. CodingAgent 编码智能体。"""
     t.section("6. CodingAgent 编码智能体")
-    from officeagent.core.agentos.backends import InMemoryLLMBackend
+    from fnixagent.core.agentos.backends import InMemoryLLMBackend
 
     with tempfile.TemporaryDirectory() as tmpdir:
         indexer = CodeIndexer()
@@ -283,7 +283,7 @@ async def test_coding_agent(t: T):
         ctx_builder = ContextBuilder(indexer, project_root=tmpdir)
         llm = InMemoryLLMBackend()
 
-        from officeagent.core.coding.coding_agent import CodingAgent, CodingTask
+        from fnixagent.core.coding.coding_agent import CodingAgent, CodingTask
         agent = CodingAgent(tools, ctx_builder, llm)
 
         # 执行任务 (InMemoryLLM 返回模板, plan 解析会降级)
@@ -328,8 +328,8 @@ async def test_ide_server(t: T):
 async def test_skills(t: T):
     """8. Skills 加载。"""
     t.section("8. Skills 加载")
-    from officeagent.core.agentos.shell import SkillRegistry
-    skills_dir = str(Path(__file__).parent.parent / "src" / "officeagent" /
+    from fnixagent.core.agentos.shell import SkillRegistry
+    skills_dir = str(Path(__file__).parent.parent / "src" / "fnixagent" /
                      "core" / "coding" / "skills")
     registry = SkillRegistry()
     count = registry.load_from_directory(skills_dir)
@@ -344,7 +344,7 @@ async def test_skills(t: T):
 async def test_agentos_integration(t: T):
     """9. AgentOS 集成 (ContextFS + syscall)。"""
     t.section("9. AgentOS 集成")
-    from officeagent.core.agentos import (
+    from fnixagent.core.agentos import (
         AgentKernel, AgentShell,
         InMemoryLLMBackend, InMemoryMemoryBackend, InMemoryToolBackend,
         InMemoryStorageBackend, InMemoryPolicyBackend, InMemoryAuditBackend,
@@ -381,7 +381,7 @@ async def test_agentos_integration(t: T):
 
 async def main() -> int:
     print("=" * 70)
-    print("OfficeAgent Coding — 端到端验证")
+    print("FnixAgent Coding — 端到端验证")
     print("=" * 70)
 
     t = T()

@@ -1,10 +1,10 @@
-"""
+﻿"""
 种子数据脚本 - 初始化工具元数据。
 
 向 tools 表灌入标准工具定义。
 """
-from officeagent.adapters.db.postgres import DatabaseAdapter
-from officeagent.models.db.models import Tool
+from fnixagent.adapters.db.postgres import DatabaseAdapter
+from fnixagent.models.db.models import Tool
 
 
 def seed_tools(db: DatabaseAdapter):
@@ -194,7 +194,7 @@ if __name__ == "__main__":
 
     db_url = os.getenv(
         "DATABASE_URL",
-        "postgresql://officeagent:password@localhost:5432/officeagent"
+        "postgresql://fnixagent:password@localhost:5432/fnixagent"
     )
 
     db = DatabaseAdapter(db_url)

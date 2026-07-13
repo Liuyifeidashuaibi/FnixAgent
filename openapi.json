@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "OfficeAgent",
+    "title": "FnixAgent",
     "description": "智能办公助手 API - 论文检索/文档编辑/PDF生成/图表制作",
     "version": "1.0.0"
   },

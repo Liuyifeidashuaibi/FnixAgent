@@ -1,6 +1,6 @@
-# OfficeAgent 代码级升级方案(顶级 Agent 改造蓝图)
+﻿# FnixAgent 代码级升级方案(顶级 Agent 改造蓝图)
 
-> 本文档是 [OFFICEAGENT_TOP_TIER_UPGRADE_PLAN.md](file:///e:/Officeagent/OFFICEAGENT/OFFICEAGENT_TOP_TIER_UPGRADE_PLAN.md) 的代码级补充,基于对 LangGraph / OpenAI Agents SDK / PydanticAI / MetaGPT / AgentScope 五大顶级框架源码的深度研究,结合 OfficeAgent 现状代码调研(精确到行号),给出具体到类/接口/文件路径的改造方案。
+> 本文档是 [FNIXAGENT_TOP_TIER_UPGRADE_PLAN.md](file:///e:/Officeagent/FNIXAGENT/FNIXAGENT_TOP_TIER_UPGRADE_PLAN.md) 的代码级补充,基于对 LangGraph / OpenAI Agents SDK / PydanticAI / MetaGPT / AgentScope 五大顶级框架源码的深度研究,结合 FnixAgent 现状代码调研(精确到行号),给出具体到类/接口/文件路径的改造方案。
 >
 > **核心哲学(借鉴 AgentScope 新版)**:单 Agent 极致健壮 + 多 Agent 平滑扩展 —— 多 Agent 所需的全部原语,都应在单 Agent 阶段就内建,避免 P3 返工。
 
@@ -206,7 +206,7 @@ import abc
 from dataclasses import dataclass, field
 from typing import Any, AsyncGenerator, Optional
 
-from officeagent.core.types_msg import Msg
+from fnixagent.core.types_msg import Msg
 
 @dataclass
 class AgentContext:
@@ -304,7 +304,7 @@ from __future__ import annotations
 import abc
 from typing import Any, Callable, Optional
 
-from officeagent.core.types_msg import Msg
+from fnixagent.core.types_msg import Msg
 
 class MiddlewareBase(abc.ABC):
     """中间件基类:6 钩子,子类按需实现(is_implemented 自动检测)。"""
@@ -538,7 +538,7 @@ def merge_trace(left, right):
 ```python
 # graph/state.py 改造(原 26-56 行)
 from typing import Annotated, Any, Optional, TypedDict
-from officeagent.graph.reducers import (
+from fnixagent.graph.reducers import (
     add_int, add_messages, append_list, append_unique,
     last_value, merge_dict, merge_trace,
 )
@@ -646,8 +646,8 @@ class ObjectOutputProcessor(OutputProcessor[T]):
 
 ```python
 # core/tools/retry.py(新增)
-class RetryableError(OfficeAgentError): ...
-class NonRetryableError(OfficeAgentError): ...
+class RetryableError(FnixAgentError): ...
+class NonRetryableError(FnixAgentError): ...
 
 @dataclass(frozen=True)
 class RetryPolicy:
@@ -1239,7 +1239,7 @@ class Role(Agent):
 4. **ToolCallState 驱动单 Agent 重试,P3 复用**:handoff 后目标 Agent 接力执行,state 机保证不重复
 5. **Context 拆分使状态可跨 Agent 传递**:handoff 只传 AgentState(可序列化),不传 EngineRefs(线程池等)
 6. **Guardrail 是 SecurityMiddleware 的内部实现**:中间件是更通用的钩子框架,二者互补
-7. **Checkpoint 单表而非三表**:OfficeAgent 状态规模小,单表 + JSONB 足够,降低运维复杂度
+7. **Checkpoint 单表而非三表**:FnixAgent 状态规模小,单表 + JSONB 足够,降低运维复杂度
 8. **Runner 主循环 while True + NextStep**:而非递归,便于中断/恢复;NextStep 用 dataclass 联合类型
 9. **L1/L2 分层通过 ToolLayer 固化**:检索器用 l1_boost 加权护城河优先召回
 10. **诚实边界作为横切关注点**:在推理流程入口拦截,越界任务诚实告知不擅长

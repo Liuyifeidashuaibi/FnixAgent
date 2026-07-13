@@ -1,4 +1,4 @@
-"""
+﻿"""
 PgDocumentStore 单元测试。
 
 验证:
@@ -15,8 +15,8 @@ import os
 
 import pytest
 
-from officeagent.services.storage import MAX_UPLOAD_SIZE_BYTES
-from officeagent.services.storage_pg import PgDocumentStore
+from fnixagent.services.storage import MAX_UPLOAD_SIZE_BYTES
+from fnixagent.services.storage_pg import PgDocumentStore
 
 
 class TestPgDocumentStoreUpload:

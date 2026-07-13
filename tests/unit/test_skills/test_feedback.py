@@ -1,7 +1,7 @@
-"""
+﻿"""
 技能反馈处理器 (SkillFeedbackHandler) 单元测试。
 
-测试模块: officeagent.core.skills.feedback.SkillFeedbackHandler
+测试模块: fnixagent.core.skills.feedback.SkillFeedbackHandler
 覆盖:
     - on_skill_success: 节点权重增加 SUCCESS_BONUS、置信度增加、边强化、统计返回
     - on_skill_failure: 节点权重减少 FAILURE_PENALTY、边惩罚、废弃标记、统计返回
@@ -14,10 +14,10 @@
 """
 import pytest
 
-from officeagent.core.skills.feedback import SkillFeedbackHandler
-from officeagent.core.topology import weights as weights_mod
-from officeagent.core.topology.graph import TopologyGraph
-from officeagent.core.types import (
+from fnixagent.core.skills.feedback import SkillFeedbackHandler
+from fnixagent.core.topology import weights as weights_mod
+from fnixagent.core.topology.graph import TopologyGraph
+from fnixagent.core.types import (
     NodeType,
     SkillLevel,
     TopologyLayer,

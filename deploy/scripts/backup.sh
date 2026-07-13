@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# OfficeAgent 备份脚本 — Phase 2.9
+# FnixAgent 备份脚本 — Phase 2.9
 #
 # 覆盖组件:
 #   1. PostgreSQL  — 全量 + WAL 归档(pg_dump + pg_basebackup)
@@ -43,8 +43,8 @@ PARALLEL_JOBS="${PARALLEL_JOBS:-4}"
 # 数据库
 PG_HOST="${PG_HOST:-postgres}"
 PG_PORT="${PG_PORT:-5432}"
-PG_USER="${PG_USER:-officeagent}"
-PG_DB="${PG_DB:-officeagent}"
+PG_USER="${PG_USER:-fnixagent}"
+PG_DB="${PG_DB:-fnixagent}"
 PG_PASSWORD="${PG_PASSWORD:-}"
 
 # Redis
@@ -57,13 +57,13 @@ MINIO_ENDPOINT="${MINIO_ENDPOINT:-http://minio:9000}"
 MINIO_ACCESS_KEY="${MINIO_ACCESS_KEY:-}"
 MINIO_SECRET_KEY="${MINIO_SECRET_KEY:-}"
 MILVUS_BUCKET="${MILVUS_BUCKET:-milvus}"
-APP_BUCKET="${APP_BUCKET:-officeagent}"
+APP_BUCKET="${APP_BUCKET:-fnixagent}"
 
 # 异地对象存储(留空则跳过异地同步)
 REMOTE_ENDPOINT="${REMOTE_ENDPOINT:-}"
 REMOTE_ACCESS_KEY="${REMOTE_ACCESS_KEY:-}"
 REMOTE_SECRET_KEY="${REMOTE_SECRET_KEY:-}"
-REMOTE_BUCKET="${REMOTE_BUCKET:-officeagent-backup}"
+REMOTE_BUCKET="${REMOTE_BUCKET:-fnixagent-backup}"
 
 # ============================================================================
 # 工具函数
@@ -106,7 +106,7 @@ init() {
   export REDISCLI_AUTH="${REDIS_PASSWORD}"
 
   log "============================================================"
-  log "OfficeAgent 备份开始"
+  log "FnixAgent 备份开始"
   log "  备份目录: ${BACKUP_DIR}"
   log "  日志文件: ${LOG_FILE}"
   log "============================================================"
@@ -334,11 +334,11 @@ backup_config() {
   fi
 
   # 3) Helm values(用于恢复时重建 K8s 部署)
-  if [[ -d "${PROJECT_ROOT}/deploy/helm/officeagent" ]]; then
+  if [[ -d "${PROJECT_ROOT}/deploy/helm/fnixagent" ]]; then
     log "  - 备份 Helm values"
-    cp -r "${PROJECT_ROOT}/deploy/helm/officeagent/values.yaml" "${cfg_dir}/values.yaml"
-    [[ -f "${PROJECT_ROOT}/deploy/helm/officeagent/values.prod.yaml" ]] && \
-      cp "${PROJECT_ROOT}/deploy/helm/officeagent/values.prod.yaml" "${cfg_dir}/values.prod.yaml"
+    cp -r "${PROJECT_ROOT}/deploy/helm/fnixagent/values.yaml" "${cfg_dir}/values.yaml"
+    [[ -f "${PROJECT_ROOT}/deploy/helm/fnixagent/values.prod.yaml" ]] && \
+      cp "${PROJECT_ROOT}/deploy/helm/fnixagent/values.prod.yaml" "${cfg_dir}/values.prod.yaml"
   fi
 
   cat > "${cfg_dir}/MANIFEST.json" <<EOF
@@ -449,7 +449,7 @@ main() {
 EOF
 
   log "============================================================"
-  log "OfficeAgent 备份结束"
+  log "FnixAgent 备份结束"
   log "  状态: $([[ ${overall_status} -eq 0 ]] && echo 成功 || echo 部分失败)"
   log "  备份目录: ${BACKUP_DIR}"
   log "============================================================"

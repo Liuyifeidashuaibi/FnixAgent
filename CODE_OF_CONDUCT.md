@@ -48,7 +48,7 @@
 
 若发现辱骂、骚扰或其他不可接受的行为,可通过以下方式举报:
 
-- 邮件:[conduct@officeagent.dev](mailto:conduct@officeagent.dev)
+- 邮件:[conduct@fnixagent.dev](mailto:conduct@fnixagent.dev)
 - GitHub:私信任意维护者
 
 所有举报都会被及时审查并严肃处理,举报者的隐私将得到保护。

@@ -1,4 +1,4 @@
-"""
+﻿"""
 单元测试 - Memory 测试。
 
 测试真实接口:
@@ -8,10 +8,10 @@
 """
 import pytest
 
-from officeagent.core.memory.entity import EntityMemory
-from officeagent.core.memory.manager import MemoryManager
-from officeagent.core.memory.short_term import ShortTermMemory
-from officeagent.core.types import Entity, Message, MessageRole
+from fnixagent.core.memory.entity import EntityMemory
+from fnixagent.core.memory.manager import MemoryManager
+from fnixagent.core.memory.short_term import ShortTermMemory
+from fnixagent.core.types import Entity, Message, MessageRole
 
 
 # ---------------------------------------------------------------------------

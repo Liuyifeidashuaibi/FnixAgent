@@ -1,10 +1,10 @@
-"""
+﻿"""
 数据库初始化脚本。
 
 使用 SQLAlchemy 创建所有表。
 """
-from officeagent.adapters.db.postgres import DatabaseAdapter
-from officeagent.models.db.models import Base
+from fnixagent.adapters.db.postgres import DatabaseAdapter
+from fnixagent.models.db.models import Base
 
 
 def init_db(connection_url: str):
@@ -26,7 +26,7 @@ if __name__ == "__main__":
 
     db_url = os.getenv(
         "DATABASE_URL",
-        "postgresql://officeagent:password@localhost:5432/officeagent"
+        "postgresql://fnixagent:password@localhost:5432/fnixagent"
     )
 
     init_db(db_url)

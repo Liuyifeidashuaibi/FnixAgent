@@ -1,6 +1,6 @@
 # Changelog
 
-本文件记录 OfficeAgent 项目的所有值得关注的变更(notable changes)。
+本文件记录 FnixAgent 项目的所有值得关注的变更(notable changes)。
 
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/),
 并遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
@@ -32,7 +32,7 @@
 - **架构增强**:
   - DocumentConverter 协议(统一文档转换接口)
   - 三层质量梯度(fast / balanced / hi_res)
-  - 插件生态(officeagent.converters 入口点)
+  - 插件生态(fnixagent.converters 入口点)
   - MCP 规范化(Model Context Protocol 标准化接入)
 - **构建系统**:pyproject.toml 迁移到 hatchling + ruff 工具链
 
@@ -58,7 +58,7 @@
 
 ### Added
 
-- 首个稳定版本,包含完整 OfficeAgent 能力栈(L1-L6):
+- 首个稳定版本,包含完整 FnixAgent 能力栈(L1-L6):
   - L1 文档处理:Word / Excel / PPT / PDF 读写与格式转换
   - L2 数据分析:数据清洗、可视化、统计建模
   - L3 知识管理:向量检索、知识图谱、长期记忆

@@ -1,4 +1,4 @@
-"""Agent 基类(借鉴 AgentScope Agent + OpenAI SDK Agent)。
+﻿"""Agent 基类(借鉴 AgentScope Agent + OpenAI SDK Agent)。
 
 设计哲学(AgentScope 核心):
   单 Agent 极致健壮 + 多 Agent 平滑扩展
@@ -100,7 +100,7 @@ class Agent(abc.ABC):
             async def act(self, ctx, thought): ...
             async def reflect(self, ctx, trace): ...
 
-        agent = MyAgent("office-agent")
+        agent = MyAgent("fnix-agent")
         result = await agent.reply(ctx)
 
     多 Agent 用法(P3):

@@ -1,5 +1,5 @@
-"""
-OfficeAgent Prometheus 指标模块测试 — Phase 2.10
+﻿"""
+FnixAgent Prometheus 指标模块测试 — Phase 2.10
 
 覆盖:
   1. 指标初始化(幂等)
@@ -18,7 +18,7 @@ import pytest
 from unittest.mock import patch, MagicMock
 from prometheus_client import REGISTRY, generate_latest
 
-from officeagent.core.observability.metrics import (
+from fnixagent.core.observability.metrics import (
     _init_metrics,
     _normalize_path,
     setup_metrics,
@@ -75,20 +75,20 @@ class TestMetricsInit:
         """验证所有指标族已注册到 REGISTRY。"""
         latest = generate_latest().decode("utf-8")
         # 系统监控
-        assert "officeagent_http_requests_total" in latest
-        assert "officeagent_http_request_duration_seconds" in latest
-        assert "officeagent_http_requests_in_progress" in latest
+        assert "fnixagent_http_requests_total" in latest
+        assert "fnixagent_http_request_duration_seconds" in latest
+        assert "fnixagent_http_requests_in_progress" in latest
         # 业务监控
-        assert "officeagent_user_active_total" in latest
-        assert "officeagent_chat_messages_total" in latest
+        assert "fnixagent_user_active_total" in latest
+        assert "fnixagent_chat_messages_total" in latest
         # 应用监控
-        assert "officeagent_langgraph_node_duration_seconds" in latest
-        assert "officeagent_tool_executions_total" in latest
-        assert "officeagent_llm_calls_total" in latest
+        assert "fnixagent_langgraph_node_duration_seconds" in latest
+        assert "fnixagent_tool_executions_total" in latest
+        assert "fnixagent_llm_calls_total" in latest
         # 安全监控
-        assert "officeagent_login_attempts_total" in latest
-        assert "officeagent_permission_denied_total" in latest
-        assert "officeagent_injection_blocked_total" in latest
+        assert "fnixagent_login_attempts_total" in latest
+        assert "fnixagent_permission_denied_total" in latest
+        assert "fnixagent_injection_blocked_total" in latest
 
 
 # ============================================================================
@@ -134,37 +134,37 @@ class TestBusinessMetrics:
     def test_record_login_success(self):
         record_login(success=True, method="password")
         latest = generate_latest().decode("utf-8")
-        assert 'officeagent_login_attempts_total{method="password",result="success"}' in latest
+        assert 'fnixagent_login_attempts_total{method="password",result="success"}' in latest
 
     def test_record_login_failure(self):
         record_login(success=False, method="ldap")
         latest = generate_latest().decode("utf-8")
-        assert 'officeagent_login_attempts_total{method="ldap",result="failure"}' in latest
+        assert 'fnixagent_login_attempts_total{method="ldap",result="failure"}' in latest
 
     def test_record_user_active(self):
         record_user_active(user_id="user_123")
         latest = generate_latest().decode("utf-8")
-        assert 'officeagent_user_active_total{user_id="user_123"}' in latest
+        assert 'fnixagent_user_active_total{user_id="user_123"}' in latest
 
     def test_record_user_registration(self):
         record_user_registration(source="ldap")
         latest = generate_latest().decode("utf-8")
-        assert 'officeagent_user_registrations_total{source="ldap"}' in latest
+        assert 'fnixagent_user_registrations_total{source="ldap"}' in latest
 
     def test_record_chat_message(self):
         record_chat_message(mode="evolve")
         latest = generate_latest().decode("utf-8")
-        assert 'officeagent_chat_messages_total{mode="evolve"}' in latest
+        assert 'fnixagent_chat_messages_total{mode="evolve"}' in latest
 
     def test_record_document_operation(self):
         record_document_operation(operation="upload")
         latest = generate_latest().decode("utf-8")
-        assert 'officeagent_document_operations_total{operation="upload"}' in latest
+        assert 'fnixagent_document_operations_total{operation="upload"}' in latest
 
     def test_record_task_created(self):
         record_task_created(task_type="research")
         latest = generate_latest().decode("utf-8")
-        assert 'officeagent_tasks_created_total{task_type="research"}' in latest
+        assert 'fnixagent_tasks_created_total{task_type="research"}' in latest
 
 
 # ============================================================================
@@ -176,40 +176,40 @@ class TestApplicationMetrics:
     def test_record_langgraph_node(self):
         record_langgraph_node(node_name="planner", duration_seconds=0.5, success=True)
         latest = generate_latest().decode("utf-8")
-        assert 'officeagent_langgraph_node_executions_total{node_name="planner",status="success"}' in latest
+        assert 'fnixagent_langgraph_node_executions_total{node_name="planner",status="success"}' in latest
 
     def test_record_langgraph_node_failure(self):
         record_langgraph_node(node_name="executor", duration_seconds=1.2, success=False)
         latest = generate_latest().decode("utf-8")
-        assert 'officeagent_langgraph_node_executions_total{node_name="executor",status="error"}' in latest
+        assert 'fnixagent_langgraph_node_executions_total{node_name="executor",status="error"}' in latest
 
     def test_record_flywheel_trigger(self):
         record_flywheel_trigger(stage="perception")
         latest = generate_latest().decode("utf-8")
-        assert 'officeagent_flywheel_trigger_total{stage="perception"}' in latest
+        assert 'fnixagent_flywheel_trigger_total{stage="perception"}' in latest
 
     def test_update_topology_stats(self):
         update_topology_stats(node_count=100, edge_count=500)
         latest = generate_latest().decode("utf-8")
-        assert "officeagent_topology_node_count 100.0" in latest
-        assert "officeagent_topology_edge_count 500.0" in latest
+        assert "fnixagent_topology_node_count 100.0" in latest
+        assert "fnixagent_topology_edge_count 500.0" in latest
 
     def test_record_tool_execution(self):
         record_tool_execution(tool_name="web_search", duration_seconds=2.5, success=True)
         latest = generate_latest().decode("utf-8")
         # Prometheus 按字母序输出 label(status 在 tool_name 之前)
-        assert 'officeagent_tool_executions_total{status="success",tool_name="web_search"}' in latest
+        assert 'fnixagent_tool_executions_total{status="success",tool_name="web_search"}' in latest
 
     def test_record_tool_error(self):
         record_tool_error(tool_name="pdf_gen", error_type="TimeoutError")
         latest = generate_latest().decode("utf-8")
         # Prometheus 按字母序输出 label(error_type 在 tool_name 之前)
-        assert 'officeagent_tool_errors_total{error_type="TimeoutError",tool_name="pdf_gen"}' in latest
+        assert 'fnixagent_tool_errors_total{error_type="TimeoutError",tool_name="pdf_gen"}' in latest
 
     def test_record_llm_call(self):
         record_llm_call(provider="openai", model="gpt-4", duration_seconds=3.2)
         latest = generate_latest().decode("utf-8")
-        assert 'officeagent_llm_calls_total{model="gpt-4",provider="openai"}' in latest
+        assert 'fnixagent_llm_calls_total{model="gpt-4",provider="openai"}' in latest
 
     def test_record_llm_tokens(self):
         record_llm_tokens(
@@ -219,13 +219,13 @@ class TestApplicationMetrics:
             completion_tokens=200,
         )
         latest = generate_latest().decode("utf-8")
-        assert 'officeagent_llm_tokens_used_total{model="deepseek-chat",provider="deepseek",type="prompt"}' in latest
-        assert 'officeagent_llm_tokens_used_total{model="deepseek-chat",provider="deepseek",type="completion"}' in latest
+        assert 'fnixagent_llm_tokens_used_total{model="deepseek-chat",provider="deepseek",type="prompt"}' in latest
+        assert 'fnixagent_llm_tokens_used_total{model="deepseek-chat",provider="deepseek",type="completion"}' in latest
 
     def test_record_llm_error(self):
         record_llm_error(provider="qwen", error_type="RateLimitError")
         latest = generate_latest().decode("utf-8")
-        assert 'officeagent_llm_errors_total{error_type="RateLimitError",provider="qwen"}' in latest
+        assert 'fnixagent_llm_errors_total{error_type="RateLimitError",provider="qwen"}' in latest
 
 
 # ============================================================================
@@ -237,37 +237,37 @@ class TestSecurityMetrics:
     def test_record_permission_denied(self):
         record_permission_denied(permission="user:read", endpoint="/api/v1/users")
         latest = generate_latest().decode("utf-8")
-        assert 'officeagent_permission_denied_total{endpoint="/api/v1/users",permission="user:read"}' in latest
+        assert 'fnixagent_permission_denied_total{endpoint="/api/v1/users",permission="user:read"}' in latest
 
     def test_record_rate_limit_triggered(self):
         record_rate_limit_triggered(limiter_type="llm")
         latest = generate_latest().decode("utf-8")
-        assert 'officeagent_rate_limit_triggered_total{limiter_type="llm"}' in latest
+        assert 'fnixagent_rate_limit_triggered_total{limiter_type="llm"}' in latest
 
     def test_record_injection_blocked(self):
         record_injection_blocked(injection_type="prompt_injection")
         latest = generate_latest().decode("utf-8")
-        assert 'officeagent_injection_blocked_total{injection_type="prompt_injection"}' in latest
+        assert 'fnixagent_injection_blocked_total{injection_type="prompt_injection"}' in latest
 
     def test_record_sensitive_hit(self):
         record_sensitive_hit(category="secret_key")
         latest = generate_latest().decode("utf-8")
-        assert 'officeagent_sensitive_hit_total{category="secret_key"}' in latest
+        assert 'fnixagent_sensitive_hit_total{category="secret_key"}' in latest
 
     def test_record_mfa_challenge_success(self):
         record_mfa_challenge(factor_type="totp", success=True)
         latest = generate_latest().decode("utf-8")
-        assert 'officeagent_mfa_challenge_total{factor_type="totp",result="success"}' in latest
+        assert 'fnixagent_mfa_challenge_total{factor_type="totp",result="success"}' in latest
 
     def test_record_mfa_challenge_failure(self):
         record_mfa_challenge(factor_type="sms", success=False)
         latest = generate_latest().decode("utf-8")
-        assert 'officeagent_mfa_challenge_total{factor_type="sms",result="failure"}' in latest
+        assert 'fnixagent_mfa_challenge_total{factor_type="sms",result="failure"}' in latest
 
     def test_record_audit_log(self):
         record_audit_log(action="login.success")
         latest = generate_latest().decode("utf-8")
-        assert 'officeagent_audit_log_entries_total{action="login.success"}' in latest
+        assert 'fnixagent_audit_log_entries_total{action="login.success"}' in latest
 
 
 # ============================================================================
@@ -287,7 +287,7 @@ class TestSetupMetrics:
         client = TestClient(app)
         response = client.get("/metrics")
         assert response.status_code == 200
-        assert "officeagent_http_requests_total" in response.text
+        assert "fnixagent_http_requests_total" in response.text
 
     def test_setup_metrics_disabled_when_env_false(self):
         """PROMETHEUS_ENABLED=false 时不挂载 /metrics。"""
@@ -324,7 +324,7 @@ class TestSetupMetrics:
 
         # 检查 /metrics 是否记录了请求
         metrics_response = client.get("/metrics")
-        assert "officeagent_http_requests_total" in metrics_response.text
+        assert "fnixagent_http_requests_total" in metrics_response.text
         assert 'path="/test"' in metrics_response.text
         assert 'status="200"' in metrics_response.text
 
@@ -377,9 +377,9 @@ class TestEdgeCases:
     def test_record_functions_safe_when_metrics_not_initialized(self):
         """指标未初始化时,record 函数应安全跳过(不抛异常)。"""
         # 通过 mock 使所有指标为 None
-        with patch("officeagent.core.observability.metrics.HTTP_REQUESTS_TOTAL", None), \
-             patch("officeagent.core.observability.metrics.LOGIN_ATTEMPTS_TOTAL", None), \
-             patch("officeagent.core.observability.metrics.CHAT_MESSAGES_TOTAL", None):
+        with patch("fnixagent.core.observability.metrics.HTTP_REQUESTS_TOTAL", None), \
+             patch("fnixagent.core.observability.metrics.LOGIN_ATTEMPTS_TOTAL", None), \
+             patch("fnixagent.core.observability.metrics.CHAT_MESSAGES_TOTAL", None):
             # 这些调用不应抛异常
             record_login(success=True)
             record_chat_message()
@@ -398,7 +398,7 @@ class TestEdgeCases:
 
         latest = generate_latest().decode("utf-8")
         # 应该看到计数 >= 3(可能包含其他测试的调用)
-        lines = [l for l in latest.split("\n") if 'officeagent_login_attempts_total{method="password",result="success"}' in l]
+        lines = [l for l in latest.split("\n") if 'fnixagent_login_attempts_total{method="password",result="success"}' in l]
         assert len(lines) == 1
         value = float(lines[0].split()[-1])
         assert value >= 3

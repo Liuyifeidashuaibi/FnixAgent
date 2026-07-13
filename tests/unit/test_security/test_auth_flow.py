@@ -1,4 +1,4 @@
-"""
+﻿"""
 端到端鉴权流程测试(覆盖验收标准 ③④⑤⑥)。
 
 通过 FastAPI TestClient 模拟完整客户端链路:
@@ -24,11 +24,11 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding as rsa_padding
 
-from officeagent.api.routers import auth as auth_router
-from officeagent.core.security.auth.keystore import reset_server_keypair
-from officeagent.core.security.auth.blacklist import reset_blacklist
-from officeagent.core.security.auth.rsa_crypto import is_rsa_available
-from officeagent.services.storage import reset_stores
+from fnixagent.api.routers import auth as auth_router
+from fnixagent.core.security.auth.keystore import reset_server_keypair
+from fnixagent.core.security.auth.blacklist import reset_blacklist
+from fnixagent.core.security.auth.rsa_crypto import is_rsa_available
+from fnixagent.services.storage import reset_stores
 
 
 # ---------------------------------------------------------------------------
@@ -234,7 +234,7 @@ class TestRefreshTokenFlow:
     def test_refresh_for_nonexistent_user_rejected(self, client):
         """Refresh Token 中 user_id 对应用户不存在 → 401。"""
         # 直接构造一个 Refresh Token(用户不存在)
-        from officeagent.core.security.auth.token import create_refresh_token
+        from fnixagent.core.security.auth.token import create_refresh_token
         refresh = create_refresh_token(user_id=99999, username="ghost", role="user")
         r = client.post("/api/v1/auth/refresh", json={"refresh_token": refresh})
         assert r.status_code == 401
@@ -435,7 +435,7 @@ class TestAutoHashUpgrade:
 
     def test_pbkdf2_user_upgraded_on_login(self, client):
         """老用户(PBKDF2 哈希)登录后,哈希自动升级为 Argon2id。"""
-        from officeagent.core.security.auth.password import (
+        from fnixagent.core.security.auth.password import (
             is_argon2_available,
             _pbkdf2_hash,
         )
@@ -443,12 +443,12 @@ class TestAutoHashUpgrade:
             pytest.skip("argon2-cffi 不可用")
 
         # 直接用 PBKDF2 哈希创建一个"老用户"
-        from officeagent.services.storage import get_user_store
+        from fnixagent.services.storage import get_user_store
         store = get_user_store()
         with store._lock:
             uid = store._next_id
             store._next_id += 1
-            from officeagent.services.storage import StoredUser
+            from fnixagent.services.storage import StoredUser
             user = StoredUser(
                 id=uid,
                 username="legacy_user",
@@ -475,7 +475,7 @@ class TestAutoHashUpgrade:
     def test_argon2_user_not_rehashed_on_login(self, client):
         """新用户(Argon2id 哈希)登录不会触发重新哈希。"""
         _register_user(client, "new_user", "Secret123!")
-        from officeagent.services.storage import get_user_store
+        from fnixagent.services.storage import get_user_store
 
         # 注册后已经是 Argon2id
         user_before = get_user_store().get_by_username("new_user")

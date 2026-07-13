@@ -1,7 +1,7 @@
-"""
+﻿"""
 知识拓扑图 (KTG) 路径搜索单元测试。
 
-测试模块: officeagent.core.topology.search.TopologySearch
+测试模块: fnixagent.core.topology.search.TopologySearch
 覆盖:
     - match_concepts(): 意图匹配 L2 概念节点
     - search(): BFS 权重优先路径搜索
@@ -11,9 +11,9 @@
 """
 import pytest
 
-from officeagent.core.topology.graph import TopologyGraph
-from officeagent.core.topology.search import TopologySearch
-from officeagent.core.types import (
+from fnixagent.core.topology.graph import TopologyGraph
+from fnixagent.core.topology.search import TopologySearch
+from fnixagent.core.types import (
     EdgeType,
     NodeType,
     TopologyLayer,

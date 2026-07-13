@@ -1,4 +1,4 @@
-"""
+﻿"""
 Phase 0.3 数据库迁移单元测试。
 
 验证 initial migration 的结构正确性:
@@ -18,7 +18,7 @@ from pathlib import Path
 
 import pytest
 
-PROJECT_ROOT = Path(__file__).resolve().parents[3]  # OFFICEAGENT/
+PROJECT_ROOT = Path(__file__).resolve().parents[3]  # FNIXAGENT/
 MIGRATION_FILE = (
     PROJECT_ROOT
     / "migrations"

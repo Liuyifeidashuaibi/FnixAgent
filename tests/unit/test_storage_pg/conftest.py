@@ -1,4 +1,4 @@
-"""
+﻿"""
 Phase 0.8 PostgreSQL 持久化 Store 单元测试 fixture。
 
 使用 SQLite 内存数据库测试 Pg*Store(得益于 StringArray/SmallIntArray 跨数据库类型)。
@@ -14,9 +14,9 @@ from pathlib import Path
 import pytest
 from sqlalchemy import create_engine
 
-from officeagent.adapters.db.postgres import DatabaseAdapter
-from officeagent.models.db.models import Base
-from officeagent.services.storage import reset_stores
+from fnixagent.adapters.db.postgres import DatabaseAdapter
+from fnixagent.models.db.models import Base
+from fnixagent.services.storage import reset_stores
 
 
 @pytest.fixture
@@ -48,7 +48,7 @@ def db_adapter():
 @pytest.fixture
 def storage_dir():
     """临时文件存储目录(用于 PgDocumentStore 文件落盘)。"""
-    d = tempfile.mkdtemp(prefix="officeagent_test_")
+    d = tempfile.mkdtemp(prefix="fnixagent_test_")
     yield d
     shutil.rmtree(d, ignore_errors=True)
 

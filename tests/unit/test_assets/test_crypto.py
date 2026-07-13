@@ -1,4 +1,4 @@
-"""
+﻿"""
 资产加密测试。
 
 覆盖:
@@ -12,7 +12,7 @@ import os
 
 import pytest
 
-from officeagent.assets.crypto import AssetEncryptor, is_encryption_available
+from fnixagent.assets.crypto import AssetEncryptor, is_encryption_available
 
 
 # ---------------------------------------------------------------------------
@@ -32,7 +32,7 @@ class TestEncryptionAvailable:
 
     def test_encrypt_decrypt_round_trip_bytes(self, encryptor):
         """字节级加密-解密往返一致。"""
-        plain = b"Hello, OfficeAgent! \xe4\xb8\xad\xe6\x96\x87"
+        plain = b"Hello, FnixAgent! \xe4\xb8\xad\xe6\x96\x87"
         cipher = encryptor.encrypt(plain)
         assert cipher != plain
         decrypted = encryptor.decrypt(cipher)

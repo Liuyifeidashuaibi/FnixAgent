@@ -1,7 +1,7 @@
-"""
+﻿"""
 LangGraph 图装配与编译单元测试。
 
-测试模块: officeagent.graph.builder.GraphBuilder
+测试模块: fnixagent.graph.builder.GraphBuilder
 覆盖:
     - GraphBuilder.build(): 装配并编译图
     - GraphBuilder.build_with_checkpointer(): 带检查点的图
@@ -9,8 +9,8 @@ LangGraph 图装配与编译单元测试。
 """
 import pytest
 
-from officeagent.graph.builder import GraphBuilder
-from officeagent.graph.state import create_initial_state
+from fnixagent.graph.builder import GraphBuilder
+from fnixagent.graph.state import create_initial_state
 
 
 class TestGraphBuilderInit:

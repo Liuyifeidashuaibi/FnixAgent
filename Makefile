@@ -1,4 +1,4 @@
-# OfficeAgent Makefile
+# FnixAgent Makefile
 # 提供常用命令的快捷方式:安装 / 测试 / 迁移 / 启动 / 部署 / 清理
 
 # Windows 兼容:PowerShell 默认 sh,但 Python 命令通用
@@ -6,7 +6,7 @@ PYTHON := python
 PIP := $(PYTHON) -m pip
 
 # 数据库连接(可被环境变量覆盖)
-DATABASE_URL ?= postgresql+psycopg2://officeagent:officeagent@localhost:5432/officeagent
+DATABASE_URL ?= postgresql+psycopg2://fnixagent:fnixagent@localhost:5432/fnixagent
 
 # Docker Compose 生产环境编排文件
 COMPOSE_PROD := docker compose -f deploy/docker/docker-compose.prod.yml
@@ -18,7 +18,7 @@ COMPOSE_PROD := docker compose -f deploy/docker/docker-compose.prod.yml
 # ---------------------------------------------------------------------------
 
 help:
-	@echo "OfficeAgent Makefile — 常用命令:"
+	@echo "FnixAgent Makefile — 常用命令:"
 	@echo ""
 	@echo "  make install         安装运行时依赖"
 	@echo "  make install-dev     安装开发依赖(含测试/格式化/类型检查)"
@@ -66,11 +66,11 @@ test:
 	$(PYTHON) -m pytest tests/ -v --tb=short
 
 test-cov:
-	$(PYTHON) -m pytest tests/ --cov=src/officeagent --cov-report=term-missing --cov-report=html
+	$(PYTHON) -m pytest tests/ --cov=src/fnixagent --cov-report=term-missing --cov-report=html
 
 lint:
 	$(PYTHON) -m flake8 src/ tests/ --max-line-length=100 --extend-ignore=E203,W503
-	$(PYTHON) -m mypy src/officeagent/
+	$(PYTHON) -m mypy src/fnixagent/
 
 format:
 	$(PYTHON) -m black src/ tests/ --line-length 100
@@ -103,7 +103,7 @@ migrate-history:
 # ---------------------------------------------------------------------------
 
 run:
-	$(PYTHON) -m uvicorn officeagent.main:app --host 0.0.0.0 --port 8000 --reload
+	$(PYTHON) -m uvicorn fnixagent.main:app --host 0.0.0.0 --port 8000 --reload
 
 # ---------------------------------------------------------------------------
 # 部署(Phase 1.10) — 详见 docs/DEPLOY.md
@@ -151,7 +151,7 @@ deploy-prod:
 	@echo ""
 	@echo "生产环境已启动。等待健康检查(约 90 秒,期间 Milvus 在初始化)..."
 	@echo "查看状态:    make deploy-ps"
-	@echo "初始化数据库:$(COMPOSE_PROD) exec officeagent alembic upgrade head"
+	@echo "初始化数据库:$(COMPOSE_PROD) exec fnixagent alembic upgrade head"
 	@echo "访问 HTTPS:  https://localhost/health"
 
 # 查看服务状态

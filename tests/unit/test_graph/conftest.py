@@ -1,4 +1,4 @@
-"""
+﻿"""
 LangGraph 编排层单元测试公共夹具。
 
 提供以下 fixtures:
@@ -18,10 +18,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", "sr
 
 import pytest
 
-from officeagent.core.tools.protocol import ToolMetadata
-from officeagent.core.tools.registry import ToolRegistry
-from officeagent.core.types import ToolPermission, TopologyPath
-from officeagent.graph.state import AgentState, create_initial_state
+from fnixagent.core.tools.protocol import ToolMetadata
+from fnixagent.core.tools.registry import ToolRegistry
+from fnixagent.core.types import ToolPermission, TopologyPath
+from fnixagent.graph.state import AgentState, create_initial_state
 
 
 # ---------------------------------------------------------------------------

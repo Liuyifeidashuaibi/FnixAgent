@@ -1,7 +1,7 @@
-"""
+﻿"""
 技能权限策略 (SkillPermissionPolicy) 单元测试。
 
-测试模块: officeagent.core.skills.levels.SkillPermissionPolicy
+测试模块: fnixagent.core.skills.levels.SkillPermissionPolicy
 覆盖:
     - 常量校验: AUTO_INVOKE_LEVELS / CONFIRM_LEVELS / FORBIDDEN_LEVELS / KTG_WRITE_PERMISSION
     - can_auto_invoke / needs_confirmation / is_forbidden / can_write_ktg
@@ -13,15 +13,15 @@
 """
 import pytest
 
-from officeagent.core.exceptions import SkillPermissionDeniedError
-from officeagent.core.skills.levels import (
+from fnixagent.core.exceptions import SkillPermissionDeniedError
+from fnixagent.core.skills.levels import (
     AUTO_INVOKE_LEVELS,
     CONFIRM_LEVELS,
     FORBIDDEN_LEVELS,
     KTG_WRITE_PERMISSION,
     SkillPermissionPolicy,
 )
-from officeagent.core.types import SkillLevel
+from fnixagent.core.types import SkillLevel
 
 
 # ---------------------------------------------------------------------------

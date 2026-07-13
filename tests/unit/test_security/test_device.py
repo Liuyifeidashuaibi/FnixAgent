@@ -1,4 +1,4 @@
-"""
+﻿"""
 device 模块单元测试(验收标准 ④ 设备指纹不匹配时拒绝 Refresh - 单元层)。
 
 覆盖:
@@ -18,7 +18,7 @@ import hashlib
 
 import pytest
 
-from officeagent.core.security.auth.device import (
+from fnixagent.core.security.auth.device import (
     _extract_ip_segment,
     compute_device_fingerprint,
     is_valid_client_uuid,

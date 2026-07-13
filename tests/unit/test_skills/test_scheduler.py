@@ -1,7 +1,7 @@
-"""
+﻿"""
 技能调度器 (SkillScheduler) 单元测试。
 
-测试模块: officeagent.core.skills.scheduler.SkillScheduler
+测试模块: fnixagent.core.skills.scheduler.SkillScheduler
 覆盖:
     - __init__: 默认策略 / 自定义策略
     - select_skills: 优先级降序、top_k 限制、category 过滤、auto_invoke_only、权限过滤、disabled 跳过
@@ -11,11 +11,11 @@
 """
 import pytest
 
-from officeagent.core.skills.levels import SkillPermissionPolicy
-from officeagent.core.skills.scheduler import SkillScheduler
-from officeagent.core.tools.protocol import ToolMetadata
-from officeagent.core.tools.registry import ToolRegistry
-from officeagent.core.types import SkillLevel, TopologyPath
+from fnixagent.core.skills.levels import SkillPermissionPolicy
+from fnixagent.core.skills.scheduler import SkillScheduler
+from fnixagent.core.tools.protocol import ToolMetadata
+from fnixagent.core.tools.registry import ToolRegistry
+from fnixagent.core.types import SkillLevel, TopologyPath
 
 
 # ---------------------------------------------------------------------------

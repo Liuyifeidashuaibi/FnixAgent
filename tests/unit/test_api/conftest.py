@@ -1,4 +1,4 @@
-"""
+﻿"""
 API 路由单元测试公共夹具。
 
 为 auth/documents/tasks 路由构建独立的 FastAPI 应用,
@@ -14,8 +14,8 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from officeagent.api.routers import auth, documents, tasks
-from officeagent.services.storage import reset_stores
+from fnixagent.api.routers import auth, documents, tasks
+from fnixagent.services.storage import reset_stores
 
 
 @pytest.fixture

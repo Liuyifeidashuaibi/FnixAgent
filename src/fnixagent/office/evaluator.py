@@ -1,4 +1,4 @@
-"""Office Agent 评测框架(借鉴 OfficeBench + SpreadsheetBench)。
+"""Fnix Agent 评测框架(借鉴 OfficeBench + SpreadsheetBench)。
 
 设计参考:
   - OfficeBench 的声明式评测:任务 JSON 中定义 evaluation 检查项列表
@@ -117,7 +117,7 @@ class ScoreSummary:
 
 
 class Evaluator(BaseExpert):
-    """Office Agent 评测器。
+    """Fnix Agent 评测器。
 
     提供声明式评测函数库,支持:
       - 文件存在性检查

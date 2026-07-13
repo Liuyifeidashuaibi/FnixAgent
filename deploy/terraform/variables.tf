@@ -25,7 +25,7 @@ variable "env" {
 variable "project" {
   description = "项目名(资源前缀)"
   type        = string
-  default     = "officeagent"
+  default     = "fnixagent"
 }
 
 variable "aws_region" {
@@ -43,7 +43,7 @@ variable "alicloud_region" {
 variable "domain" {
   description = "主域名(已在该云厂商的 DNS 服务托管)"
   type        = string
-  default     = "officeagent.com"
+  default     = "fnixagent.com"
 }
 
 variable "kubernetes_version" {
@@ -103,7 +103,7 @@ variable "storage" {
     size_gb     = number
   })
   default = {
-    bucket_name = "officeagent-storage"
+    bucket_name = "fnixagent-storage"
     size_gb     = 50
   }
 }

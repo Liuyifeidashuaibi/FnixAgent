@@ -2,9 +2,9 @@
 
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
 
-👍🎉 感谢您愿意为 OfficeAgent 贡献力量!🎉👍
+👍🎉 感谢您愿意为 FnixAgent 贡献力量!🎉👍
 
-本文件是参与 OfficeAgent 项目贡献的指南。遵守本指南有助于 review 流程顺畅,
+本文件是参与 FnixAgent 项目贡献的指南。遵守本指南有助于 review 流程顺畅,
 节省维护者时间,并避免 PR 被 CI 拒绝。
 
 ## 目录
@@ -28,7 +28,7 @@
 
 ## 入门
 
-1. 浏览 [GitHub Issues](https://github.com/officeagent/officeagent/issues),
+1. 浏览 [GitHub Issues](https://github.com/Liuyifeidashuaibi/FnixAgent/issues),
    从带 `good first issue` 标签的简单 issue 开始。
 2. 找到感兴趣的 issue 后,在评论区留言认领,避免重复劳动。
 3. Fork 仓库并创建功能分支(见 [分支策略](#分支策略))。
@@ -36,7 +36,7 @@
 
 ## 开发环境搭建
 
-OfficeAgent 推荐使用 [uv](https://docs.astral.sh/uv/) 作为包管理器,
+FnixAgent 推荐使用 [uv](https://docs.astral.sh/uv/) 作为包管理器,
 它比 pip 快 10-100 倍并自带虚拟环境管理。
 
 ### 1. 安装 uv
@@ -52,8 +52,8 @@ powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | ie
 ### 2. 克隆并安装依赖
 
 ```bash
-git clone https://github.com/officeagent/officeagent.git
-cd officeagent
+git clone https://github.com/Liuyifeidashuaibi/FnixAgent.git
+cd fnixagent
 
 # 创建虚拟环境并安装依赖(含开发依赖)
 uv sync --extra dev
@@ -109,7 +109,7 @@ ruff check --fix src/ tests/
 ruff format src/ tests/
 
 # 类型检查
-pyright src/officeagent/
+pyright src/fnixagent/
 ```
 
 ### 代码要求
@@ -122,7 +122,7 @@ pyright src/officeagent/
 
 ## 提交规范
 
-OfficeAgent 遵循 [Conventional Commits](https://www.conventionalcommits.org/zh-hans/v1.0.0/)
+FnixAgent 遵循 [Conventional Commits](https://www.conventionalcommits.org/zh-hans/v1.0.0/)
 规范。提交信息格式:
 
 ```
@@ -162,7 +162,7 @@ Closes #42
 
 ## 分支策略
 
-OfficeAgent 采用简化的 [GitHub Flow](https://docs.github.com/zh/get-started/quickstart/github-flow):
+FnixAgent 采用简化的 [GitHub Flow](https://docs.github.com/zh/get-started/quickstart/github-flow):
 
 - `main`:稳定发布分支,始终保持可发布状态
 - `develop`:开发集成分支(可选,小项目可直接在 main 上 PR)
@@ -218,7 +218,7 @@ chore/<描述>      # 杂项
 
 ```bash
 # 运行所有单元测试并生成覆盖率报告
-pytest tests/unit/ -v --cov=src/officeagent --cov-report=term-missing
+pytest tests/unit/ -v --cov=src/fnixagent --cov-report=term-missing
 
 # 运行集成测试
 pytest tests/integration/ -v
@@ -242,7 +242,7 @@ pytest -m "not slow" tests/
 1. 搜索已有 Issue,确认问题未被报告过。
 2. 使用 Issue 模板(如已配置)。
 3. 提供以下信息:
-   - OfficeAgent 版本号
+   - FnixAgent 版本号
    - Python 版本与操作系统
    - 复现步骤(最小化示例)
    - 期望行为与实际行为
@@ -256,4 +256,4 @@ pytest -m "not slow" tests/
 
 ## 致谢
 
-感谢每一位为 OfficeAgent 贡献代码、文档、Issue 和建议的贡献者!
+感谢每一位为 FnixAgent 贡献代码、文档、Issue 和建议的贡献者!

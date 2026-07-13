@@ -1,4 +1,4 @@
-"""MCP 服务器(P2-3)。
+﻿"""MCP 服务器(P2-3)。
 
 把本地工具暴露为 MCP server,供外部 MCP client(如 Claude Desktop / 其他 agent)消费。
 职责:
@@ -63,7 +63,7 @@ class MCPServer:
 
     用法:
         server = MCPServer(
-            server_id="my-office-agent",
+            server_id="my-fnix-agent",
             tool_registry=my_registry,
             tool_executor=my_executor,
         )

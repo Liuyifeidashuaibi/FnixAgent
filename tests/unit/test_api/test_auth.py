@@ -1,4 +1,4 @@
-"""
+﻿"""
 auth 路由单元测试。
 
 覆盖:
@@ -213,7 +213,7 @@ class TestApiKey:
         resp = client.post("/api/v1/auth/apikey", headers=auth_headers)
         assert resp.status_code == 200
         data = resp.json()
-        assert data["api_key"].startswith("sk-officeagent-")
+        assert data["api_key"].startswith("sk-fnixagent-")
         assert data["id"] >= 1
         assert "expires_at" in data
 

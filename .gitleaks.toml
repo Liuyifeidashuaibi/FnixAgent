@@ -1,7 +1,7 @@
-# OfficeAgent Gitleaks 配置
+# FnixAgent Gitleaks 配置
 # 自定义密钥泄露检测规则,排除已知误报
 
-title = "OfficeAgent Gitleaks Config"
+title = "FnixAgent Gitleaks Config"
 
 # 允许列表(已知误报)
 [allowlist]

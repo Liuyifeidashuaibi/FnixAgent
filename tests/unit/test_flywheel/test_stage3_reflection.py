@@ -1,7 +1,7 @@
-"""
+﻿"""
 飞轮 ③ 元反思修正环单元测试。
 
-测试模块: officeagent.core.flywheel.stage3_reflection
+测试模块: fnixagent.core.flywheel.stage3_reflection
 覆盖:
     - should_trigger(): 触发间隔判断
     - 三维评估: 路径质量/技能准确率/知识完整性
@@ -10,15 +10,15 @@
 """
 import pytest
 
-from officeagent.core.flywheel.stage3_reflection import (
+from fnixagent.core.flywheel.stage3_reflection import (
     DEFAULT_TRIGGER_INTERVAL,
     EFFECTIVE_PATH_BONUS,
     INEFFECTIVE_PATH_PENALTY,
     MISSING_KNOWLEDGE_CONFIDENCE,
     MetaReflectionFlywheel,
 )
-from officeagent.core.topology import weights as weights_mod
-from officeagent.core.types import NodeType, ReasoningMode, TopologyLayer, TraceRecord
+from fnixagent.core.topology import weights as weights_mod
+from fnixagent.core.types import NodeType, ReasoningMode, TopologyLayer, TraceRecord
 
 
 class TestStage3ShouldTrigger:

@@ -1,7 +1,7 @@
-"""
+﻿"""
 知识拓扑图 (KTG) 权重体系单元测试。
 
-测试模块: officeagent.core.topology.weights
+测试模块: fnixagent.core.topology.weights
 覆盖:
     - 固化常量值校验
     - 纯函数: clamp_weight, reinforce, penalize, decay, should_deprecate
@@ -10,8 +10,8 @@
 """
 import pytest
 
-from officeagent.core.topology import weights
-from officeagent.core.types import (
+from fnixagent.core.topology import weights
+from fnixagent.core.types import (
     EdgeType,
     TopologyEdge,
     TopologyLayer,

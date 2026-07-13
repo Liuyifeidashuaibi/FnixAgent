@@ -4,18 +4,18 @@
 #   terraform init -backend-config=environments/aliyun-backend.hcl
 #
 # 前置条件:
-#   1. 已创建 OSS 桶 officeagent-tfstate
-#   2. 已开通 TableStore 实例 officeagent-tflock + 表 tfstate(主键 LockID)
+#   1. 已创建 OSS 桶 fnixagent-tfstate
+#   2. 已开通 TableStore 实例 fnixagent-tflock + 表 tfstate(主键 LockID)
 #   3. RAM 权限:oss:PutObject / oss:GetObject / ots:* 等
 #
 # 多环境隔离:不同 env 使用不同 key,状态完全隔离。
-#   dev     → env:/dev/officeagent.tfstate
-#   staging → env:/staging/officeagent.tfstate
-#   prod    → env:/prod/officeagent.tfstate
+#   dev     → env:/dev/fnixagent.tfstate
+#   staging → env:/staging/fnixagent.tfstate
+#   prod    → env:/prod/fnixagent.tfstate
 
 # 注意:阿里云 OSS backend 复用 S3 协议(terraform 也支持 oss backend,这里用 s3 兼容方式)
-bucket         = "officeagent-tfstate"
-key            = "env:/dev/officeagent.tfstate"
+bucket         = "fnixagent-tfstate"
+key            = "env:/dev/fnixagent.tfstate"
 region         = "cn-hangzhou"
 endpoint       = "oss-cn-hangzhou.aliyuncs.com"
 encrypt        = true

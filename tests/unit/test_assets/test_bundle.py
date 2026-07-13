@@ -1,4 +1,4 @@
-"""
+﻿"""
 资产包加载/保存测试。
 
 覆盖:
@@ -12,13 +12,13 @@ import os
 
 import pytest
 
-from officeagent.assets.bundle import (
+from fnixagent.assets.bundle import (
     ASSETS_VERSION,
     AssetsBundle,
     load_assets,
     save_assets,
 )
-from officeagent.core.types import SkillLevel
+from fnixagent.core.types import SkillLevel
 
 
 # ---------------------------------------------------------------------------
@@ -208,11 +208,11 @@ class TestSkillRecordSerialization:
 
     def test_skill_level_enum_restored(self, tmp_bundle_dir):
         """技能级别枚举正确还原为 SkillLevel。"""
-        from officeagent.assets.bundle import (
+        from fnixagent.assets.bundle import (
             skill_record_from_dict,
             skill_record_to_dict,
         )
-        from officeagent.core.types import SkillRecord
+        from fnixagent.core.types import SkillRecord
 
         record = SkillRecord(
             name="meta_skill",
@@ -227,7 +227,7 @@ class TestSkillRecordSerialization:
 
     def test_invalid_skill_level_falls_back_to_basic(self):
         """无效的 skill_level 字符串回退到 BASIC。"""
-        from officeagent.assets.bundle import skill_record_from_dict
+        from fnixagent.assets.bundle import skill_record_from_dict
 
         d = {"name": "x", "skill_level": "unknown_level"}
         record = skill_record_from_dict(d)

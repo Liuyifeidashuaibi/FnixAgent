@@ -1,4 +1,4 @@
-"""
+﻿"""
 rsa_crypto 模块单元测试(验收标准 ② RSA 加解密往返测试)。
 
 覆盖:
@@ -14,7 +14,7 @@ import base64
 
 import pytest
 
-from officeagent.core.security.auth.rsa_crypto import (
+from fnixagent.core.security.auth.rsa_crypto import (
     RSAKeyPair,
     generate_keypair,
     is_rsa_available,

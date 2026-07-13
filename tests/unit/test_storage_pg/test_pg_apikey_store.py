@@ -1,4 +1,4 @@
-"""
+﻿"""
 PgApiKeyStore 单元测试。
 
 验证:
@@ -9,7 +9,7 @@ PgApiKeyStore 单元测试。
 """
 from __future__ import annotations
 
-from officeagent.services.storage_pg import PgApiKeyStore, PgUserStore
+from fnixagent.services.storage_pg import PgApiKeyStore, PgUserStore
 
 
 class TestPgApiKeyStoreCreate:
@@ -23,7 +23,7 @@ class TestPgApiKeyStoreCreate:
         key = store.create(user.id, scopes=["chat", "read"])
         assert key.id > 0
         assert key.user_id == user.id
-        assert key.api_key.startswith("sk-officeagent-")
+        assert key.api_key.startswith("sk-fnixagent-")
         assert key.api_key_hash != key.api_key  # 哈希 != 明文
         assert key.scopes == ["chat", "read"]
         assert key.expires_at is not None

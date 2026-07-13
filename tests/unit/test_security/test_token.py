@@ -1,4 +1,4 @@
-"""
+﻿"""
 token 模块单元测试(验收标准 ③ 双 Token 刷新流程测试 - 单元层)。
 
 覆盖:
@@ -17,7 +17,7 @@ import time
 
 import pytest
 
-from officeagent.core.security.auth.token import (
+from fnixagent.core.security.auth.token import (
     ACCESS_TOKEN_TTL,
     JWT_ALGORITHM,
     REFRESH_TOKEN_TTL,
@@ -250,7 +250,7 @@ class TestTokenVerification:
         payload_b64 = _b64url_encode(json.dumps(payload, separators=(",", ":")).encode())
         signing_input = f"{header_b64}.{payload_b64}"
         sig = hmac.new(
-            "officeagent-dev-secret-change-me".encode(),
+            "fnixagent-dev-secret-change-me".encode(),
             signing_input.encode(),
             hashlib.sha256,
         ).digest()
