@@ -78,4 +78,4 @@ python3-saml==1.16.0; python_version >= "3.8"
 # - TOTP 使用 pyotp(Google Authenticator 兼容)
 # - 短信/邮箱验证码使用标准库 + SMTP,无第三方依赖
 # - 二维码 URI 用标准库 urllib 构建(可选 qrcode 库渲染 PNG)
-pyotp==2.9.0
+pyotp==2.10.0
