@@ -22,7 +22,16 @@ CodingAgent - 编码智能体核心
 
 Usage:
     agent = CodingAgent(code_tools, context_builder, llm_backend)
+
+    # 同步执行
     result = await agent.execute_task("为 AgentKernel 添加 health_check 方法")
+
+    # 流式执行 (实时进度)
+    async for event in agent.streaming_execute("为 AgentKernel 添加 health_check 方法"):
+        print(event.type, event.status)
+
+    # 带回调的同步执行
+    result = await agent.execute_task("任务", on_event=lambda e: print(e))
 """
 from __future__ import annotations
 
@@ -30,8 +39,10 @@ import asyncio
 import json
 import re
 import time
+from collections.abc import AsyncGenerator, Callable
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any
 from uuid import uuid4
 
 from officeagent.core.agentos.types import utcnow_iso
@@ -120,6 +131,37 @@ class TaskResult:
     error: str | None = None
 
 
+@dataclass
+class CodingAgentEvent:
+    """流式执行事件。
+
+    用于 streaming_execute() 和 execute_task() 的 on_event 回调。
+
+    Attributes:
+        type: 事件类型 (status/plan/step/file_change/review/done)。
+        status: 当前状态 (planning/executing/reviewing/completed/failed)，
+            type=status 时有效。
+        steps: 计划步骤列表，type=plan 时有效。
+        step: 当前步骤信息 (dict)，type=step 时有效。
+        file_path: 文件变更路径，type=file_change 时有效。
+        file_action: 文件变更操作 (create/modify/delete)，type=file_change 时有效。
+        diff: 文件变更 diff 文本，type=file_change 时有效。
+        review_passed: 审查是否通过，type=review 时有效。
+        review_notes: 审查意见，type=review 时有效。
+        result: 最终结果 (TaskResult)，type=done 时有效。
+    """
+    type: str
+    status: str | None = None
+    steps: list[dict] | None = None
+    step: dict | None = None
+    file_path: str | None = None
+    file_action: str | None = None
+    diff: str | None = None
+    review_passed: bool | None = None
+    review_notes: str | None = None
+    result: TaskResult | None = None
+
+
 # ============================================================================
 # 编码智能体
 # ============================================================================
@@ -129,6 +171,10 @@ class CodingAgent:
 
     架构: Planner → Executor → Reviewer
     底座: AgentOS Process + DiffEngine + CodeTools
+
+    支持两种执行模式:
+      - execute_task(): 同步执行, 返回 TaskResult
+      - streaming_execute(): 流式执行, 逐步产出 CodingAgentEvent 事件
 
     Usage:
         agent = CodingAgent(code_tools, context_builder, llm_backend)
@@ -151,12 +197,18 @@ class CodingAgent:
         # 每个任务执行期间产生的变更集 ID 列表 (task_id -> [changeset_id])
         # 用于 Review 阶段收集 diff (CodeTools 的写操作不返回 changeset_id, 只能从 DiffEngine 历史提取)
         self._task_changesets: dict[str, list[str]] = {}
+        # 事件回调 (流式执行时由 streaming_execute / execute_task 设置)
+        self._event_cb: Callable[[CodingAgentEvent], Any] | None = None
 
     # ========================================================================
     # 主入口
     # ========================================================================
 
-    async def execute_task(self, task: CodingTask | str) -> TaskResult:
+    async def execute_task(
+        self,
+        task: CodingTask | str,
+        on_event: Callable[[CodingAgentEvent], Any] | None = None,
+    ) -> TaskResult:
         """执行编码任务 (Plan → Execute → Review)。
 
         流程:
@@ -167,6 +219,8 @@ class CodingAgent:
 
         Args:
             task: 编码任务 (CodingTask 对象或任务描述字符串)。
+            on_event: 可选事件回调, 在关键节点接收 CodingAgentEvent 事件。
+                支持同步和异步回调。若不需要事件通知可省略, 保持向后兼容。
 
         Returns:
             TaskResult 任务执行结果。
@@ -177,6 +231,7 @@ class CodingAgent:
 
         self._active_tasks[task.id] = task
         self._task_changesets[task.id] = []
+        self._event_cb = on_event
         start_time = time.perf_counter()
 
         plan: list[TaskStep] = []
@@ -189,15 +244,28 @@ class CodingAgent:
         try:
             # 1. PLAN: 生成执行计划
             status = TaskStatus.PLANNING
+            await self._emit(CodingAgentEvent(type="status", status="planning"))
             plan = await self._plan(task)
+            await self._emit(CodingAgentEvent(
+                type="plan",
+                steps=[{
+                    "id": s.id, "description": s.description,
+                    "action": s.action, "target": s.target,
+                } for s in plan],
+            ))
 
             # 2. EXECUTE: 按计划执行
             status = TaskStatus.EXECUTING
+            await self._emit(CodingAgentEvent(type="status", status="executing"))
             changeset_id = await self._execute(task, plan)
 
             # 3. REVIEW: 测试 + diff 审查
             status = TaskStatus.REVIEWING
+            await self._emit(CodingAgentEvent(type="status", status="reviewing"))
             review_passed, review_notes = await self._review(task, plan)
+            await self._emit(CodingAgentEvent(
+                type="review", review_passed=review_passed, review_notes=review_notes,
+            ))
 
             # 审查未通过视为失败
             if not review_passed:
@@ -216,8 +284,9 @@ class CodingAgent:
             duration = time.perf_counter() - start_time
             self._active_tasks.pop(task.id, None)
             self._task_changesets.pop(task.id, None)
+            self._event_cb = None
 
-        return TaskResult(
+        result = TaskResult(
             task_id=task.id,
             status=status,
             plan=plan,
@@ -227,6 +296,148 @@ class CodingAgent:
             duration_sec=duration,
             error=error,
         )
+
+        await self._emit(CodingAgentEvent(
+            type="status", status=status.value,
+        ))
+        await self._emit(CodingAgentEvent(type="done", result=result))
+
+        return result
+
+    async def streaming_execute(
+        self,
+        task: CodingTask | str,
+    ) -> AsyncGenerator[CodingAgentEvent, None]:
+        """流式执行编码任务 (Plan → Execute → Review)。
+
+        与 execute_task() 执行相同的 Plan→Execute→Review 流程,
+        但以异步生成器方式逐步产出 CodingAgentEvent 事件,
+        调用方可通过 async for 逐事件消费, 实现实时进度展示。
+
+        产出的事件类型:
+          - {"type": "status", "status": "planning"} — 开始规划
+          - {"type": "plan", "steps": [...]} — 规划完成, 返回步骤列表
+          - {"type": "status", "status": "executing"} — 开始执行
+          - {"type": "step", "step": {...}} — 每个步骤开始/完成/失败
+          - {"type": "file_change", "file_path": "...", "file_action": "modify", "diff": "..."} — 文件变更
+          - {"type": "status", "status": "reviewing"} — 开始审查
+          - {"type": "review", "review_passed": true/false, "review_notes": "..."} — 审查结果
+          - {"type": "status", "status": "completed"|"failed"} — 最终状态
+          - {"type": "done", "result": TaskResult} — 最终结果
+
+        Args:
+            task: 编码任务 (CodingTask 对象或任务描述字符串)。
+
+        Yields:
+            CodingAgentEvent 流式事件。
+        """
+        # 标准化任务对象
+        if isinstance(task, str):
+            task = CodingTask(description=task)
+
+        self._active_tasks[task.id] = task
+        self._task_changesets[task.id] = []
+        start_time = time.perf_counter()
+
+        plan: list[TaskStep] = []
+        changeset_id: str | None = None
+        review_passed = False
+        review_notes = ""
+        error: str | None = None
+        status = TaskStatus.PENDING
+
+        # 使用队列收集 _emit 发出的事件, 从生成器逐条产出
+        queue: asyncio.Queue[CodingAgentEvent | None] = asyncio.Queue()
+
+        async def _queue_cb(event: CodingAgentEvent) -> None:
+            await queue.put(event)
+
+        self._event_cb = _queue_cb
+
+        # 后台执行任务, 事件通过队列传递
+        async def _run() -> None:
+            nonlocal plan, changeset_id, review_passed, review_notes, error, status
+            try:
+                # 1. PLAN
+                status = TaskStatus.PLANNING
+                await self._emit(CodingAgentEvent(type="status", status="planning"))
+                plan = await self._plan(task)
+                await self._emit(CodingAgentEvent(
+                    type="plan",
+                    steps=[{
+                        "id": s.id, "description": s.description,
+                        "action": s.action, "target": s.target,
+                    } for s in plan],
+                ))
+
+                # 2. EXECUTE
+                status = TaskStatus.EXECUTING
+                await self._emit(CodingAgentEvent(type="status", status="executing"))
+                changeset_id = await self._execute(task, plan)
+
+                # 3. REVIEW
+                status = TaskStatus.REVIEWING
+                await self._emit(CodingAgentEvent(type="status", status="reviewing"))
+                review_passed, review_notes = await self._review(task, plan)
+                await self._emit(CodingAgentEvent(
+                    type="review", review_passed=review_passed,
+                    review_notes=review_notes,
+                ))
+
+                if not review_passed:
+                    status = TaskStatus.FAILED
+                    error = review_notes or "审查未通过"
+                else:
+                    status = TaskStatus.COMPLETED
+
+            except RuntimeError as exc:
+                status = TaskStatus.FAILED
+                error = str(exc)
+            except Exception as exc:  # noqa: BLE001
+                status = TaskStatus.FAILED
+                error = f"未预期错误: {type(exc).__name__}: {exc}"
+            finally:
+                duration = time.perf_counter() - start_time
+                self._active_tasks.pop(task.id, None)
+                self._task_changesets.pop(task.id, None)
+
+            result = TaskResult(
+                task_id=task.id,
+                status=status,
+                plan=plan,
+                changeset_id=changeset_id,
+                review_passed=review_passed,
+                review_notes=review_notes,
+                duration_sec=duration,
+                error=error,
+            )
+
+            await self._emit(CodingAgentEvent(
+                type="status", status=status.value,
+            ))
+            await self._emit(CodingAgentEvent(type="done", result=result))
+            # 发送结束标记
+            await queue.put(None)
+
+        # 启动后台任务
+        runner = asyncio.ensure_future(_run())
+
+        try:
+            # 从队列中逐条产出事件
+            while True:
+                event = await queue.get()
+                if event is None:
+                    break
+                yield event
+            await runner  # 确保后台任务完成, 捕获可能遗漏的异常
+        finally:
+            self._event_cb = None
+            if not runner.done():
+                runner.cancel()
+                try:
+                    await runner
+                except asyncio.CancelledError:
+                    pass
 
     # ========================================================================
     # Plan 阶段
@@ -286,6 +497,8 @@ class CodingAgent:
 
         任一步失败 → 抛 RuntimeError。
 
+        执行过程中会通过 _emit 发送 step 和 file_change 事件。
+
         Args:
             task: 编码任务。
             steps: 执行计划。
@@ -301,6 +514,19 @@ class CodingAgent:
 
         try:
             for step in steps:
+                # 发送步骤开始事件
+                await self._emit(CodingAgentEvent(
+                    type="step",
+                    step={
+                        "id": step.id, "description": step.description,
+                        "action": step.action, "target": step.target,
+                        "status": "running",
+                    },
+                ))
+
+                # 记录步骤执行前的历史长度, 用于检测文件变更
+                step_hist_before = len(self._tools._diff.get_history())
+
                 try:
                     await self._execute_step(step)
                     # _execute_step 未标记 skipped 时视为成功
@@ -309,9 +535,37 @@ class CodingAgent:
                 except Exception as exc:  # noqa: BLE001
                     step.status = "failed"
                     step.error = str(exc)
+                    # 发送步骤失败事件
+                    await self._emit(CodingAgentEvent(
+                        type="step",
+                        step={"id": step.id, "status": "failed", "error": str(exc)},
+                    ))
                     raise RuntimeError(
                         f"步骤 {step.id} ({step.description[:60]}) 执行失败: {exc}"
                     ) from exc
+
+                # 发送步骤完成事件
+                await self._emit(CodingAgentEvent(
+                    type="step",
+                    step={
+                        "id": step.id, "status": step.status,
+                        "result": step.result,
+                    },
+                ))
+
+                # 检测写操作产生的文件变更并发送 file_change 事件
+                if step.action in ("write", "edit"):
+                    new_history = self._tools._diff.get_history()
+                    new_changesets = [
+                        (cs, _) for cs, _ in new_history[step_hist_before:]
+                    ]
+                    for cs, _ in new_changesets:
+                        await self._emit(CodingAgentEvent(
+                            type="file_change",
+                            file_path=step.target,
+                            file_action="modify",
+                            diff=cs.to_diff(),
+                        ))
         finally:
             # 收集本次执行产生的所有变更集 ID (无论成功失败, 便于 Review 阶段取 diff)
             history = self._tools._diff.get_history()
@@ -643,6 +897,23 @@ class CodingAgent:
         )]
 
     # ========================================================================
+    # 事件发送
+    # ========================================================================
+
+    async def _emit(self, event: CodingAgentEvent) -> None:
+        """发送事件到已注册的回调。
+
+        同时支持同步和异步回调: 若回调为异步函数则 await, 否则直接调用。
+
+        Args:
+            event: 要发送的 CodingAgentEvent 事件。
+        """
+        if self._event_cb is not None:
+            result = self._event_cb(event)
+            if result is not None and hasattr(result, '__await__'):
+                await result
+
+    # ========================================================================
     # 辅助
     # ========================================================================
 
@@ -667,5 +938,6 @@ __all__ = [
     "TaskStep",
     "CodingTask",
     "TaskResult",
+    "CodingAgentEvent",
     "CodingAgent",
 ]

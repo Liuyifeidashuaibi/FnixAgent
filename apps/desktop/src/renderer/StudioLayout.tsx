@@ -17,6 +17,7 @@ import { ActivityBar } from './ActivityBar';
 import { Sidebar } from './Sidebar';
 import { EditorPanel } from './EditorPanel';
 import { ComposerPanel } from './ComposerPanel';
+import { WorkPanel } from './WorkPanel';
 
 /* ================================================
    Types
@@ -26,7 +27,7 @@ interface StudioLayoutProps {
   onLogout: () => void;
 }
 
-type Activity = 'files' | 'search' | 'agent' | 'git' | 'settings';
+type Activity = 'files' | 'search' | 'agent' | 'git' | 'settings' | 'work';
 
 interface OpenFile {
   path: string;
@@ -57,7 +58,7 @@ export const StudioLayout: React.FC<StudioLayoutProps> = ({ onLogout: _onLogout 
 
   const handleSelectActivity = useCallback((id: string) => {
     setActiveActivity(id as Activity);
-    if (id === 'chat') {
+    if (id === 'chat' || id === 'work') {
       setCenterView('chat');
     }
     if (!sidebarVisible) {
@@ -278,7 +279,7 @@ export const StudioLayout: React.FC<StudioLayoutProps> = ({ onLogout: _onLogout 
             </div>
           )}
 
-          {/* 编辑器 / 对话 */}
+          {/* 编辑器 / 对话 / Work */}
           <div style={layout.editorArea}>
             {centerView === 'editor' ? (
               <EditorPanel
@@ -290,6 +291,8 @@ export const StudioLayout: React.FC<StudioLayoutProps> = ({ onLogout: _onLogout 
                 onContentChange={handleChangeContent}
                 onSave={handleSave}
               />
+            ) : activeActivity === 'work' ? (
+              <WorkPanel visible={true} />
             ) : (
               <ComposerPanel visible={true} />
             )}

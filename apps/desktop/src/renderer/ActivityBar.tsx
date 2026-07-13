@@ -24,6 +24,7 @@ const activities: ActivityItem[] = [
   { id: 'files',   icon: '📁', label: '文件资源管理器' },
   { id: 'search',  icon: '🔍', label: '搜索' },
   { id: 'chat',    icon: '💬', label: '对话' },
+  { id: 'work',    icon: '📋', label: 'Work' },
   { id: 'agent',   icon: '🤖', label: 'Agent' },
   { id: 'git',     icon: '⊿',  label: '源代码管理' },
 ];

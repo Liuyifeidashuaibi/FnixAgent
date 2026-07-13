@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic_settings import BaseSettings
 
-from officeagent.api.routers import admin, agentos, audit, auth, chat, coding, dashboard, documents, privacy, rbac, tasks, tools
+from officeagent.api.routers import admin, agentos, audit, auth, chat, chat_agent, coding, dashboard, documents, privacy, rbac, tasks, tools
 from officeagent.services import (
     build_graph,
     build_scheduler,
@@ -173,6 +173,7 @@ app.include_router(dashboard.router, prefix="/api/v1")
 app.include_router(dashboard.stats_router, prefix="/api/v1")
 app.include_router(agentos.router, prefix="/api/v1")
 app.include_router(coding.router, prefix="/api/v1")
+app.include_router(chat_agent.router, prefix="/api/v1")
 
 
 # ---------------------------------------------------------------------------

@@ -1,9 +1,15 @@
 /**
  * ComposerPanel.tsx — Codex 风格统一对话面板
  *
- * 对标 Cursor Composer：
+ * 对标 Cursor Composer + TRAE Agent Mode：
  *   - Ask / Edit / Agent 三模式统一面板
- *   - NDJSON 流式响应解析
+ *   - Ask/Edit: NDJSON 流式响应 (/api/v1/chat/stream)
+ *   - Agent: 增强流式响应 (/api/v1/chat/agent)
+ *     - thinking: Agent 思考过程
+ *     - plan: 执行计划步骤
+ *     - step_start/step_end: 步骤执行状态
+ *     - file_change: 文件变更(diff)
+ *     - done: 最终结果
  *   - 浅色主题风格
  */
 import { useEffect, useRef, useState } from 'react';
@@ -18,12 +24,28 @@ export interface ToolCall {
   success?: boolean;
 }
 
+export interface PlanStep {
+  description: string;
+  action: string;
+  target: string;
+  status: 'pending' | 'running' | 'done' | 'failed';
+}
+
+export interface FileChange {
+  path: string;
+  action: 'create' | 'modify' | 'delete';
+  diff: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: number;
   toolCalls?: ToolCall[];
+  planSteps?: PlanStep[];
+  fileChanges?: FileChange[];
+  thinking?: string;
   streaming?: boolean;
 }
 
@@ -66,8 +88,8 @@ export function ComposerPanel({ visible }: ComposerPanelProps) {
     }
   }, [messages, isStreaming]);
 
-  // 解析 NDJSON（每一行是一个 JSON）
-  async function handleSend() {
+  // Ask/Edit 模式流式调用
+  async function handleSendAsk() {
     const text = input.trim();
     if (!text || isStreaming) return;
 
@@ -94,18 +116,11 @@ export function ComposerPanel({ visible }: ComposerPanelProps) {
     try {
       const response = await fetch(`${API_BASE}/api/v1/chat/stream`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          mode,
-          messages: [...messages, userMsg],
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode, messages: [...messages, userMsg] }),
       });
 
-      if (!response.ok || !response.body) {
-        throw new Error(`Request failed: ${response.status}`);
-      }
+      if (!response.ok || !response.body) throw new Error(`Request failed: ${response.status}`);
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
@@ -120,21 +135,14 @@ export function ComposerPanel({ visible }: ComposerPanelProps) {
           if (data.content) {
             fullContent += data.content;
             setMessages((prev) =>
-              prev.map((m) =>
-                m.id === assistantMsg.id
-                  ? { ...m, content: fullContent }
-                  : m,
-              ),
+              prev.map((m) => (m.id === assistantMsg.id ? { ...m, content: fullContent } : m)),
             );
           }
           if (data.tool_call) {
             setMessages((prev) =>
               prev.map((m) =>
                 m.id === assistantMsg.id
-                  ? {
-                      ...m,
-                      toolCalls: [...(m.toolCalls || []), data.tool_call],
-                    }
+                  ? { ...m, toolCalls: [...(m.toolCalls || []), data.tool_call] }
                   : m,
               ),
             );
@@ -144,7 +152,6 @@ export function ComposerPanel({ visible }: ComposerPanelProps) {
         }
       };
 
-      // 流式读取
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -154,30 +161,154 @@ export function ComposerPanel({ visible }: ComposerPanelProps) {
         lines.forEach(processLine);
       }
 
-      // 处理最后剩余 buffer
-      if (buffer) {
-        processLine(buffer);
-      }
+      if (buffer) processLine(buffer);
     } catch (e) {
       console.error('Stream error:', e);
       setMessages((prev) =>
         prev.map((m) =>
           m.id === assistantMsg.id
-            ? {
-                ...m,
-                content: m.content + `\n\n❌ **错误**: ${e instanceof Error ? e.message : String(e)}`,
-                streaming: false,
-              }
+            ? { ...m, content: m.content + `\n\n❌ **错误**: ${e instanceof Error ? e.message : String(e)}`, streaming: false }
             : m,
         ),
       );
     } finally {
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === assistantMsg.id ? { ...m, streaming: false } : m,
-        ),
-      );
+      setMessages((prev) => prev.map((m) => (m.id === assistantMsg.id ? { ...m, streaming: false } : m)));
       setIsStreaming(false);
+    }
+  }
+
+  // Agent 模式流式调用 (/api/v1/chat/agent)
+  async function handleSendAgent() {
+    const text = input.trim();
+    if (!text || isStreaming) return;
+
+    const userMsg: ChatMessage = {
+      id: `u-${Date.now()}`,
+      role: 'user',
+      content: text,
+      timestamp: Date.now(),
+    };
+
+    const assistantMsg: ChatMessage = {
+      id: `a-${Date.now()}`,
+      role: 'assistant',
+      content: '',
+      timestamp: Date.now(),
+      streaming: true,
+      planSteps: [],
+      fileChanges: [],
+    };
+
+    setMessages((prev) => [...prev, userMsg, assistantMsg]);
+    setInput('');
+    setIsStreaming(true);
+
+    const updateMsg = (updater: (m: ChatMessage) => ChatMessage) => {
+      setMessages((prev) => prev.map((m) => (m.id === assistantMsg.id ? updater(m) : m)));
+    };
+
+    try {
+      const response = await fetch(`${API_BASE}/api/v1/chat/agent`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: [...messages, userMsg] }),
+      });
+
+      if (!response.ok || !response.body) throw new Error(`Agent request failed: ${response.status}`);
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let fullContent = '';
+
+      const processLine = (line: string) => {
+        line = line.trim();
+        if (!line) return;
+        try {
+          const data = JSON.parse(line);
+          switch (data.type) {
+            case 'thinking':
+              updateMsg((m) => ({ ...m, thinking: (m.thinking || '') + data.content }));
+              break;
+            case 'message':
+              fullContent += data.content;
+              updateMsg((m) => ({ ...m, content: fullContent }));
+              break;
+            case 'plan':
+              updateMsg((m) => ({
+                ...m,
+                planSteps: (data.steps || []).map((s: any) => ({ ...s, status: 'pending' as const })),
+              }));
+              break;
+            case 'step_start':
+              updateMsg((m) => ({
+                ...m,
+                planSteps: (m.planSteps || []).map((s, i) =>
+                  i === data.index ? { ...s, status: 'running' as const } : s,
+                ),
+              }));
+              break;
+            case 'step_end':
+              updateMsg((m) => ({
+                ...m,
+                planSteps: (m.planSteps || []).map((s, i) =>
+                  i === data.index ? { ...s, status: data.error ? ('failed' as const) : ('done' as const) } : s,
+                ),
+              }));
+              break;
+            case 'file_change':
+              updateMsg((m) => ({
+                ...m,
+                fileChanges: [...(m.fileChanges || []), { path: data.path, action: data.action, diff: data.diff || '' }],
+              }));
+              fullContent += `\n📝 **${data.action === 'create' ? '创建' : data.action === 'delete' ? '删除' : '修改'}**: \`${data.path}\`\n`;
+              updateMsg((m) => ({ ...m, content: fullContent }));
+              break;
+            case 'done':
+              updateMsg((m) => ({ ...m, streaming: false }));
+              if (data.status === 'failed') {
+                fullContent += `\n\n❌ **执行失败**: ${data.error || '未知错误'}`;
+                updateMsg((m) => ({ ...m, content: fullContent }));
+              } else {
+                fullContent += `\n\n✅ **任务完成** (${(data.changes || []).length} 个文件变更)`;
+                updateMsg((m) => ({ ...m, content: fullContent }));
+              }
+              break;
+          }
+        } catch (e) {
+          console.warn('Agent NDJSON parse error:', line, e);
+        }
+      };
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+        lines.forEach(processLine);
+      }
+
+      if (buffer) processLine(buffer);
+    } catch (e) {
+      console.error('Agent stream error:', e);
+      updateMsg((m) => ({
+        ...m,
+        content: m.content + `\n\n❌ **错误**: ${e instanceof Error ? e.message : String(e)}`,
+        streaming: false,
+      }));
+    } finally {
+      updateMsg((m) => ({ ...m, streaming: false }));
+      setIsStreaming(false);
+    }
+  }
+
+  // 统一入口
+  function handleSend() {
+    if (mode === 'agent') {
+      handleSendAgent();
+    } else {
+      handleSendAsk();
     }
   }
 
@@ -277,6 +408,8 @@ function MessageBubble({
   onCopyCode: (code: string) => void;
 }) {
   const [toolExpanded, setToolExpanded] = useState(true);
+  const [planExpanded, setPlanExpanded] = useState(true);
+  const [thinkingExpanded, setThinkingExpanded] = useState(false);
 
   if (message.role === 'user') {
     return (
@@ -290,6 +423,67 @@ function MessageBubble({
   return (
     <div style={styles.assistantContainer}>
       <div style={styles.assistantContent}>
+        {/* Thinking (Agent 思考过程) */}
+        {message.thinking && (
+          <div style={styles.thinkingContainer}>
+            <button
+              style={styles.thinkingHeader}
+              onClick={() => setThinkingExpanded(!thinkingExpanded)}
+            >
+              <span style={{ fontSize: 12 }}>🧠 思考过程</span>
+              <span style={styles.toolToggle}>{thinkingExpanded ? '▼' : '▶'}</span>
+            </button>
+            {thinkingExpanded && (
+              <pre style={styles.thinkingContent}>{message.thinking}</pre>
+            )}
+          </div>
+        )}
+
+        {/* Plan Steps (Agent 执行计划) */}
+        {message.planSteps && message.planSteps.length > 0 && (
+          <div style={styles.planContainer}>
+            <button
+              style={styles.planHeader}
+              onClick={() => setPlanExpanded(!planExpanded)}
+            >
+              <span style={{ fontSize: 12, fontWeight: 600 }}>
+                📋 执行计划 ({message.planSteps.filter(s => s.status === 'done').length}/{message.planSteps.length} 完成)
+              </span>
+              <span style={styles.toolToggle}>{planExpanded ? '▼' : '▶'}</span>
+            </button>
+            {planExpanded && (
+              <div style={styles.planSteps}>
+                {message.planSteps.map((step, idx) => (
+                  <div key={idx} style={styles.planStep}>
+                    <span style={{
+                      ...styles.planStepStatus,
+                      color: step.status === 'done' ? CSS['--success'] :
+                             step.status === 'failed' ? CSS['--error'] :
+                             step.status === 'running' ? CSS['--accent'] : CSS['--text-tertiary'],
+                    }}>
+                      {step.status === 'done' ? '✓' : step.status === 'failed' ? '✗' : step.status === 'running' ? '⟳' : '○'}
+                    </span>
+                    <span style={styles.planStepText}>
+                      {step.description}
+                      {step.target && <span style={styles.planStepTarget}> → {step.target}</span>}
+                    </span>
+                    <span style={styles.planStepAction}>{step.action}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* File Changes (Agent 文件变更) */}
+        {message.fileChanges && message.fileChanges.length > 0 && (
+          <div style={styles.fileChangesContainer}>
+            {message.fileChanges.map((fc, idx) => (
+              <FileChangeCard key={idx} change={fc} />
+            ))}
+          </div>
+        )}
+
         <MessageContent content={message.content} streaming={message.streaming} onCopyCode={onCopyCode} />
         {message.toolCalls && message.toolCalls.length > 0 && (
           <div style={styles.toolCallsContainer}>
@@ -331,6 +525,26 @@ function MessageBubble({
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+/** 文件变更卡片 */
+function FileChangeCard({ change }: { change: FileChange }) {
+  const [expanded, setExpanded] = useState(false);
+  const actionLabel = change.action === 'create' ? '创建' : change.action === 'delete' ? '删除' : '修改';
+  const actionColor = change.action === 'create' ? CSS['--success'] : change.action === 'delete' ? CSS['--error'] : CSS['--accent'];
+
+  return (
+    <div style={styles.fileChangeCard}>
+      <button style={styles.fileChangeHeader} onClick={() => setExpanded(!expanded)}>
+        <span style={{ color: actionColor, marginRight: 6, fontWeight: 600 }}>{actionLabel}</span>
+        <span style={styles.fileChangePath}>{change.path}</span>
+        <span style={styles.toolToggle}>{expanded ? '▼' : '▶'}</span>
+      </button>
+      {expanded && change.diff && (
+        <pre style={styles.fileChangeDiff}>{change.diff}</pre>
+      )}
     </div>
   );
 }
@@ -602,6 +816,140 @@ const styles: Record<string, React.CSSProperties> = {
     lineHeight: 1.5,
     fontFamily: CSS['--font-mono'],
     overflowX: 'auto' as const,
+  },
+  // Agent 模式新增样式
+  thinkingContainer: {
+    marginBottom: 8,
+    border: `1px solid ${CSS['--border-color']}`,
+    borderRadius: 6,
+    overflow: 'hidden' as const,
+    background: 'var(--bg-tertiary)',
+  },
+  thinkingHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    background: 'none',
+    border: 'none',
+    padding: '6px 10px',
+    cursor: 'pointer',
+    color: CSS['--text-secondary'],
+    fontSize: 11,
+  },
+  thinkingContent: {
+    margin: 0,
+    padding: '8px 10px',
+    fontSize: 11,
+    fontFamily: 'var(--font-mono), monospace',
+    color: CSS['--text-tertiary'],
+    lineHeight: 1.5,
+    whiteSpace: 'pre-wrap' as const,
+    wordBreak: 'break-word' as const,
+    maxHeight: 200,
+    overflow: 'auto',
+    borderTop: `1px solid ${CSS['--border-color']}`,
+  },
+  planContainer: {
+    marginBottom: 8,
+    border: `1px solid ${CSS['--border-color']}`,
+    borderRadius: 6,
+    overflow: 'hidden' as const,
+    background: CSS['--bg-primary'],
+  },
+  planHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    background: 'none',
+    border: 'none',
+    padding: '6px 10px',
+    cursor: 'pointer',
+    color: CSS['--text-primary'],
+  },
+  planSteps: {
+    borderTop: `1px solid ${CSS['--border-color']}`,
+    padding: '4px 0',
+  },
+  planStep: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    padding: '4px 10px',
+    fontSize: 12,
+  },
+  planStepStatus: {
+    width: 16,
+    textAlign: 'center' as const,
+    fontWeight: 600,
+    flexShrink: 0,
+  },
+  planStepText: {
+    flex: 1,
+    color: CSS['--text-primary'],
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap' as const,
+  },
+  planStepTarget: {
+    color: CSS['--accent'],
+    fontFamily: 'var(--font-mono), monospace',
+    fontSize: 11,
+  },
+  planStepAction: {
+    fontSize: 10,
+    padding: '1px 6px',
+    background: 'var(--bg-tertiary)',
+    borderRadius: 3,
+    color: CSS['--text-secondary'],
+    flexShrink: 0,
+  },
+  fileChangesContainer: {
+    marginBottom: 8,
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: 4,
+  },
+  fileChangeCard: {
+    border: `1px solid ${CSS['--border-color']}`,
+    borderRadius: 6,
+    overflow: 'hidden' as const,
+    background: CSS['--bg-primary'],
+  },
+  fileChangeHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    width: '100%',
+    background: 'none',
+    border: 'none',
+    padding: '6px 10px',
+    cursor: 'pointer',
+    fontSize: 12,
+  },
+  fileChangePath: {
+    flex: 1,
+    textAlign: 'left' as const,
+    fontFamily: 'var(--font-mono), monospace',
+    fontSize: 11,
+    color: CSS['--text-primary'],
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap' as const,
+  },
+  fileChangeDiff: {
+    margin: 0,
+    padding: '8px 10px',
+    fontSize: 10,
+    fontFamily: 'var(--font-mono), monospace',
+    background: 'var(--bg-secondary)',
+    color: CSS['--text-primary'],
+    lineHeight: 1.5,
+    whiteSpace: 'pre-wrap' as const,
+    wordBreak: 'break-word' as const,
+    maxHeight: 200,
+    overflow: 'auto',
+    borderTop: `1px solid ${CSS['--border-color']}`,
   },
   toolCallsContainer: {
     marginTop: 8,
