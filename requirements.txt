@@ -29,7 +29,7 @@ reportlab==4.0.7
 pypdf==3.17.0
 
 # 数据可视化
-matplotlib==3.8.2
+matplotlib==3.11.0
 plotly==5.18.0
 
 # 搜索引擎
