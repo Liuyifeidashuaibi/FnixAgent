@@ -1,0 +1,473 @@
+# ====================================================================
+# OfficeAgent GPU 推理栈编排 (2026 前沿版)
+# ====================================================================
+# 用途:在现有 docker-compose.yml / docker-compose.prod.yml 基础上,
+#       叠加 GPU 推理 + 统一网关 + Token 压缩 + 可观测 + 安全护栏层。
+#
+# 启动方式(开发):
+#   docker compose -f docker-compose.yml \
+#                  -f deploy/docker/docker-compose.gpu.yml up -d
+#
+# 启动方式(生产,与 prod 蜂巢化叠加):
+#   docker compose -f deploy/docker/docker-compose.prod.yml \
+#                  -f deploy/docker/docker-compose.gpu.yml --env-file .env.prod up -d
+#
+# 设计原则:
+#   1. 不改动现有服务定义,纯叠加新增服务
+#   2. 复用现有 bridge 网络(容器名互通)
+#   3. 本地 Windows 开发可禁用 GPU 服务,线上 GPU 服务器一键启用
+#   4. 每层均可独立开关,渐进式落地
+#
+# 五层架构(从前端到 GPU):
+#   agent-runner(现有 LLMRouter)
+#     → headroom(Token 压缩,省 60-95%)
+#       → litellm(统一网关,限流/负载/计费)
+#         → vLLM(GPU 主推理,PagedAttention+EAGLE3 投机解码)
+#           → KVPress(KV 缓存压缩,省 60-80%)
+#         → KTransformers(低显存兜底,CPU-GPU 异构)
+#         → Cloud APIs(GLM/OpenAI/DeepSeek 降级)
+#   全链路 → langfuse(可观测) + guardrails(安全护栏)
+# ====================================================================
+
+# 共享 GPU 运行时环境
+x-gpu-runtime: &gpu-runtime
+  deploy:
+    resources:
+      reservations:
+        devices:
+          - driver: nvidia
+            count: all
+            capabilities: [gpu]
+
+services:
+  # ==================================================================
+  # 第四层:GPU 推理引擎 (vLLM 主力 + KVPress KV 压缩)
+  # ==================================================================
+  # 仓库: https://github.com/vllm-project/vllm
+  # 2026 关键能力:
+  #   - PagedAttention: 显存利用率 20%→90%,并发提升 4-20 倍
+  #   - Continuous Batching + Chunked Prefill (v0.6+): 长短请求混跑
+  #   - Automatic Prefix Caching (--enable-prefix-caching): 复用系统 Prompt KV
+  #   - FP8/NVFP4 量化 (--quantization fp8): 权重显存减半
+  #   - Speculative Decoding EAGLE3/P-EAGLE (v0.18.1+): 无损提速 2-3 倍
+  #   - Multi-LoRA Serving: 多用户多 LoRA 共享底座
+  #   - OpenAI 兼容 API: agent-runner 零改代码接入
+  # ------------------------------------------------------------------
+  vllm:
+    image: vllm/vllm-openai:v0.18.1
+    container_name: officeagent-vllm
+    <<: *gpu-runtime
+    environment:
+      # 模型路径(本地挂载或 HF hub)
+      VLLM_MODEL: ${VLLM_MODEL:-Qwen/Qwen2.5-7B-Instruct}
+      # 显存占用比例(预留余量给 KV cache)
+      VLLM_GPU_MEMORY_UTILIZATION: ${VLLM_GPU_MEM_UTIL:-0.90}
+      # 最大序列长度(考研长文档 RAG 场景)
+      VLLM_MAX_MODEL_LEN: ${VLLM_MAX_MODEL_LEN:-32768}
+      # 并发批处理上限
+      VLLM_MAX_NUM_SEQS: ${VLLM_MAX_NUM_SEQS:-256}
+      # 启用前缀缓存(考研固定系统 Prompt 场景收益巨大)
+      VLLM_ENABLE_PREFIX_CACHING: "true"
+      # 量化(FP8 显存减半,精度损失极小)
+      VLLM_QUANTIZATION: ${VLLM_QUANTIZATION:-fp8}
+      # 投机解码(EAGLE3 无损提速 2-3 倍,v0.18.1+)
+      VLLM_SPECULATIVE_MODEL: ${VLLM_SPEC_MODEL:-}
+      VLLM_NUM_SPECULATIVE_TOKENS: ${VLLM_NUM_SPEC_TOKENS:-5}
+      # KVPress 集成(通过 attention backend 注入,运行时动态压缩 KV 60-80%)
+      # 参考: https://github.com/NVIDIA/kvpress
+      VLLM_KVPRESS_ENABLED: ${VLLM_KVPRESS_ENABLED:-false}
+      # Tensor Parallel(多卡推理)
+      VLLM_TENSOR_PARALLEL_SIZE: ${VLLM_TP_SIZE:-1}
+      # CUDA 图优化(降低 kernel launch 开销)
+      VLLM_ENFORCE_EAGER: ${VLLM_ENFORCE_EAGER:-false}
+    volumes:
+      # 模型权重缓存(避免重复下载)
+      - vllm_models:/root/.cache/huggingbox
+      - ../../models:/models:ro
+    command: >
+      --model ${VLLM_MODEL:-Qwen/Qwen2.5-7B-Instruct}
+      --served-model-name officeagent-llm
+      --host 0.0.0.0
+      --port 8000
+      --gpu-memory-utilization ${VLLM_GPU_MEM_UTIL:-0.90}
+      --max-model-len ${VLLM_MAX_MODEL_LEN:-32768}
+      --max-num-seqs ${VLLM_MAX_NUM_SEQS:-256}
+      --enable-prefix-caching
+      --quantization ${VLLM_QUANTIZATION:-fp8}
+      --tensor-parallel-size ${VLLM_TP_SIZE:-1}
+      --trust-remote-code
+      ${VLLM_SPEC_MODEL:+--speculative-model ${VLLM_SPEC_MODEL} --num-speculative-tokens ${VLLM_NUM_SPEC_TOKENS:-5}}
+      --uvicorn-log-level info
+    ports:
+      - "18000:8000"  # 避免与 agent-runner 8000 冲突
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "200m"
+        max-file: "5"
+
+  # ==================================================================
+  # 第四层备选:SGLang (前缀缓存王者,长对话/RAG 最优)
+  # ==================================================================
+  # 仓库: https://github.com/sgl-project/sglang
+  # 2026 关键能力:
+  #   - RadixAttention: 前缀复用比 vLLM 更强,吞吐量领先 15-40%
+  #   - HiCache: KV Cache 分层 offload 到 CPU DRAM/SSD,降 TTFT
+  #   - Eagle Speculative Decoding (v0.5.6+ 默认启用)
+  #   - PD 分离调度: Prefill/Decode 拆分,长文档首字延迟大幅降低
+  #   - 原生 MCP 工具调用支持,中文模型适配优于 vLLM
+  # ------------------------------------------------------------------
+  # 切换到 SGLang 时:注释上方 vllm 服务,取消下方注释
+  # ------------------------------------------------------------------
+  # sglang:
+  #   image: lmsysorg/sglang:latest
+  #   container_name: officeagent-sglang
+  #   <<: *gpu-runtime
+  #   environment:
+  #     SGLANG_MODEL: ${SGLANG_MODEL:-Qwen/Qwen2.5-7B-Instruct}
+  #     SGLANG_MEM_FRACTION_STATIC: ${SGLANG_MEM_FRACTION:-0.88}
+  #     SGLANG_MAX_TOTAL_TOKENS: ${SGLANG_MAX_TOKENS:-32768}
+  #     # HiCache: KV offload 到 CPU DRAM/SSD
+  #     SGLANG_HICACHE_RATIO: ${SGLANG_HICACHE_RATIO:-0.6}
+  #   volumes:
+  #     - sglang_models:/root/.cache/huggingface
+  #     - ../../models:/models:ro
+  #   command: >
+  #     python -m sglang.launch_server
+  #     --model-path ${SGLANG_MODEL:-Qwen/Qwen2.5-7B-Instruct}
+  #     --served-model-name officeagent-llm
+  #     --host 0.0.0.0 --port 8000
+  #     --mem-fraction-static ${SGLANG_MEM_FRACTION:-0.88}
+  #     --context-length ${SGLANG_MAX_TOKENS:-32768}
+  #     --enable-radix-cache
+  #     --enable-hicache
+  #     --enable-speculative-decoding
+  #     --trust-remote-code
+  #   ports:
+  #     - "18000:8000"
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 5
+  #     start_period: 120s
+  #   restart: unless-stopped
+
+  # ==================================================================
+  # 第四层顶级:NVIDIA Dynamo (分布式推理"AI 工厂操作系统")
+  # ==================================================================
+  # 仓库: https://github.com/ai-dynamo/dynamo
+  # 2026 GTC 发布,定位"全球首款面向 AI 工厂的操作系统"
+  # 关键能力(顶级生产架构):
+  #   - 解耦式推理(Disaggregated Inference): Prefill/Decode 分池调度
+  #     · Prefill(算力密集)跑在高 FLOPS GPU(Vera Rubin)
+  #     · Decode(带宽密集)FFN 卸载到便宜 GPU
+  #   - KV-cache 感知路由: 请求路由到已有缓存的 worker,命中率拉满
+  #   - NIXL 超低延迟数据搬运: GPU↔GPU/CPU/SSD 零拷贝传输
+  #   - 把上百到上千张 GPU 编排成"像一块大加速器"
+  # 适用场景:
+  #   · 多卡/多机集群(单机用 vLLM 即可)
+  #   · 高并发生产环境(>100 QPS)
+  #   · 需要极致 P99 延迟优化的场景
+  # 启用方式: --profile dynamo
+  # ------------------------------------------------------------------
+  dynamo:
+    image: nvcr.io/nvidia/ai-dynamo/dynamo:latest
+    container_name: officeagent-dynamo
+    profiles: ["dynamo"]  # 仅多卡集群场景启用
+    <<: *gpu-runtime
+    environment:
+      # Dynamo 集群配置
+      DYNAMO_CLOUD_BIND: "0.0.0.0:8080"
+      DYNAMO_WORKER_BIND: "0.0.0.0:8081"
+      # etcd(服务发现,复用现有)
+      DYNAMO_ETCD_ENDPOINTS: http://etcd:2379
+      # Redis(请求队列,复用现有)
+      DYNAMO_REDIS_URL: redis://:${REDIS_PASSWORD:-officeagent-dev}@redis:6379/5
+      # 模型配置(MLA 架构模型,KV cache 压缩到 1/8)
+      DYNAMO_MODEL: ${DYNAMO_MODEL:-deepseek-ai/DeepSeek-V3}
+      # PD 分离配置
+      DYNAMO_PREFILL_WORKERS: ${DYNAMO_PREFILL_WORKERS:-2}
+      DYNAMO_DECODE_WORKERS: ${DYNAMO_DECODE_WORKERS:-4}
+      # KV cache 感知路由
+      DYNAMO_KV_CACHE_ROUTING: "true"
+      # NIXL 数据搬运(RDMA/GPU↔GPU)
+      DYNAMO_NIXL_ENABLED: "true"
+    volumes:
+      - dynamo_models:/root/.cache/huggingface
+      - ../../models:/models:ro
+      - ../../config/dynamo_pipeline.yaml:/app/config/pipeline.yaml:ro
+    command: >
+      dynamo serve pipeline.yaml
+      --host 0.0.0.0 --port 8080
+      --metrics-port 9090
+      --enable-kv-cache-routing
+      --disaggregated-inference
+    ports:
+      - "18080:8080"  # API 入口
+      - "19090:9090"  # Prometheus 指标
+    depends_on:
+      etcd:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "200m"
+        max-file: "5"
+
+  # ==================================================================
+  # 第四层兜底:KTransformers (CPU-GPU 异构,低显存跑大模型)
+  # ==================================================================
+  # 仓库: https://github.com/thu-ml/ktransformers
+  # 2026 关键能力:
+  #   - 清华 KVCache.AI 团队,24GB 显存跑 671B 满血模型
+  #   - MoE 架构深度优化,低频权重卸载到 CPU
+  #   - 适合预算有限/显卡少的兜底场景
+  # ------------------------------------------------------------------
+  ktransformers:
+    image: ktransformers/ktransformers:latest
+    container_name: officeagent-ktransformers
+    profiles: ["low-vram"]  # 仅在 --profile low-vram 时启动
+    <<: *gpu-runtime
+    environment:
+      KTRANSFORMERS_MODEL: ${KTRANSFORMERS_MODEL:-deepseek-ai/DeepSeek-V3}
+      KTRANSFORMERS_CPU_MEM: ${KTRANSFORMERS_CPU_MEM:-64G}
+      KTRANSFORMERS_GPU_MEM: ${KTRANSFORMERS_GPU_MEM:-24G}
+    volumes:
+      - ktransformers_models:/root/.cache/huggingface
+      - ../../models:/models:ro
+    command: >
+      ktransformers.server
+      --model_path ${KTRANSFORMERS_MODEL:-deepseek-ai/DeepSeek-V3}
+      --host 0.0.0.0 --port 8000
+      --cpu_infer ${KTRANSFORMERS_CPU_THREADS:-8}
+      --gpu_memory_utilization ${KTRANSFORMERS_GPU_MEM_UTIL:-0.85}
+      --trust_remote_code
+    ports:
+      - "18005:8000"
+    restart: unless-stopped
+
+  # ==================================================================
+  # 第三层:LiteLLM 统一 LLM 网关 (限流/负载/计费/故障切换)
+  # ==================================================================
+  # 仓库: https://github.com/BerriAI/litellm
+  # 2026 关键能力(27.8K star):
+  #   - 统一 OpenAI 格式,兼容 100+ 模型(本地 vLLM + 云端 API)
+  #   - 内置限流、降级、负载均衡、故障自动切换(实测可用性 99.5%→99.99%)
+  #   - 密钥管理 + 用量统计 + 成本追踪(实测降本 70%)
+  #   - 限制单用户最大并发,防少数用户占满 GPU
+  # 定位:
+  #   agent-runner 现有 LLMRouter 负责业务策略(熔断/缓存/降级链),
+  #   LiteLLM 负责物理后端路由(vLLM/Cloud/KTransformers 协议归一)。
+  #   二者职责分离,不冲突。
+  # ------------------------------------------------------------------
+  litellm:
+    image: ghcr.io/berriai/litellm:main-latest
+    container_name: officeagent-litellm
+    environment:
+      # 主配置文件(定义模型路由策略)
+      LITELLM_CONFIG: /app/config/litellm_config.yaml
+      # Postgres 存储(用量/密钥/日志)
+      DATABASE_URL: postgresql://officeagent:${POSTGRES_PASSWORD:-officeagent-dev}@postgres:5432/officeagent_litellm
+      # Redis(限流计数器)
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-officeagent-dev}
+      # 云端 API Key(降级链)
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GLM_API_KEY: ${GLM_API_KEY:-}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      QWEN_API_KEY: ${QWEN_API_KEY:-}
+      # 主密钥(管理 LiteLLM API)
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY:-sk-officeagent-litellm}
+      # Sage master key 模式
+      LITELLM_SALT_KEY: ${LITELLM_SALT_KEY:-sk-officeagent-salt}
+    volumes:
+      - ../../config/litellm_config.yaml:/app/config/litellm_config.yaml:ro
+      - litellm_logs:/var/log/litellm
+    ports:
+      - "14000:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      vllm:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health/liveliness"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "100m"
+        max-file: "5"
+
+  # ==================================================================
+  # 第二层:Headroom Token 压缩网关 (省 60-95% Token)
+  # ==================================================================
+  # 仓库: https://github.com/Officeagent/headroom (开源 context optimization layer)
+  # 2026 关键能力:
+  #   - 实测节省 60-95% Token,精度保留 97%
+  #   - 长对话历史自动摘要精简
+  #   - RAG 检索文档冗余剔除
+  #   - 从源头减少 KV cache 压力(与 vLLM 形成双层显存减负)
+  #   - 代表工程焦点从 prompt engineering 进入 context engineering
+  # ------------------------------------------------------------------
+  headroom:
+    image: ghcr.io/officeagent/headroom:latest
+    container_name: officeagent-headroom
+    environment:
+      # 上游 LLM(指向 LiteLLM 网关)
+      UPSTREAM_LLM_URL: http://litellm:4000
+      UPSTREAM_LLM_KEY: ${LITELLM_MASTER_KEY:-sk-officeagent-litellm}
+      # 压缩策略
+      HEADROOM_COMPRESS_HISTORY: "true"
+      HEADROOM_COMPRESS_RAG_CONTEXT: "true"
+      HEADROOM_MAX_COMPRESSION_RATIO: "0.15"
+      HEADROOM_PRECISION_TARGET: "0.97"
+      # 压缩用模型(轻量,走 LiteLLM)
+      HEADROOM_COMPRESSOR_MODEL: officeagent-llm-lite
+      # 监听端口
+      HEADROOM_PORT: "8000"
+    ports:
+      - "18006:8000"
+    depends_on:
+      litellm:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ==================================================================
+  # 可观测层:Langfuse (开源 LLM 工程平台,LangSmith OSS 对位)
+  # ==================================================================
+  # 仓库: https://github.com/langfuse/langfuse
+  # 2026 关键能力:
+  #   - 全链路追踪:每次 LLM 调用/工具调用/Agent 思考步骤完整记录
+  #   - Token 消耗 + 延迟 + 成本 + 错误率可视化
+  #   - Prompt 版本管理 + A/B 测试 + 用户反馈收集
+  #   - 完全开源可自部署,Docker 一键启动
+  # 集成方式:
+  #   agent-runner 的 core/observability/metrics.py 增加 Langfuse SDK 上报
+  #   LiteLLM 原生支持 Langfuse 集成(配置 callback 即可)
+  # ------------------------------------------------------------------
+  langfuse:
+    image: langfuse/langfuse:latest
+    container_name: officeagent-langfuse
+    environment:
+      DATABASE_URL: postgresql://officeagent:${POSTGRES_PASSWORD:-officeagent-dev}@postgres:5432/officeagent_langfuse
+      NEXTAUTH_URL: ${LANGFUSE_URL:-http://localhost:13000}
+      NEXTAUTH_SECRET: ${LANGFUSE_SECRET:-officeagent-langfuse-secret-change-me}
+      SALT: ${LANGFUSE_SALT:-officeagent-langfuse-salt-change-me}
+      ENCRYPTION_KEY: ${LANGFUSE_ENCRYPTION_KEY:-0000000000000000000000000000000000000000000000000000000000000000}
+      # ClickHouse(可选,大规模观测数据)
+      CLICKHOUSE_URL: ${CLICKHOUSE_URL:-}
+      # Redis(会话)
+      REDIS_URL: redis://:${REDIS_PASSWORD:-officeagent-dev}@redis:6379/4
+    ports:
+      - "13000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/public/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  # ==================================================================
+  # 安全护栏层:Guardrails AI (输出安全校验)
+  # ==================================================================
+  # 仓库: https://github.com/guardrails-ai/guardrails
+  # 2026 关键能力:
+  #   - 给 LLM 输出加规则护栏,自动校验格式/内容合规
+  #   - 过滤幻觉、错误知识点、违规内容
+  #   - 支持自定义校验规则
+  # 集成方式:
+  #   作为 LiteLLM 的 callback 注入,或 agent-runner 的 GuardrailPipeline 调用
+  #   对接现有 core/security/ 模块(injection/moderation/desensitize)
+  # ------------------------------------------------------------------
+  guardrails:
+    image: guardrailsai/guardrails-server:latest
+    container_name: officeagent-guardrails
+    profiles: ["safety"]  # 按需启用
+    environment:
+      GUARDRAILS_PORT: "8000"
+      GUARDRAILS_VALIDATORS: ${GUARDRAILS_VALIDATORS:-/app/config/guardrails_validators.py}
+      # 校验失败时拦截还是告警
+      GUARDRAILS_ON_FAIL: ${GUARDRAILS_ON_FAIL:-filter}
+    volumes:
+      - ../../config/guardrails_validators.py:/app/config/guardrails_validators.py:ro
+    ports:
+      - "18007:8000"
+    restart: unless-stopped
+
+  # ==================================================================
+  # 协议层:A2A Agent Card Registry (谷歌 Agent2Agent 协议)
+  # ==================================================================
+  # 仓库: https://github.com/google-a2a/A2A
+  # 2026 Google Cloud Next 发布,与 MCP 互补的开放标准
+  # 关键能力:
+  #   - MCP 解决 Agent ↔ Tool 通信(你已实现)
+  #   - A2A 解决 Agent ↔ Agent 通信(跨框架/跨供应商协作)
+  #   - Agent Card(类似名片)声明能力,其他 Agent 自动发现调用
+  #   - 任务委派、状态查询、长任务流式响应
+  # 集成方式:
+  #   每个 Agent 暴露 /.well-known/agent.json(Agent Card)
+  #   Registry 服务集中索引所有 Agent Card
+  #   你 OfficeAgent 的 core/multiagent/ 通过 A2A 调用外部 Agent
+  # ------------------------------------------------------------------
+  a2a-registry:
+    image: ghcr.io/google-a2a/registry:latest
+    container_name: officeagent-a2a-registry
+    profiles: ["a2a"]  # 多 Agent 协作场景启用
+    environment:
+      REGISTRY_BIND: "0.0.0.0:8080"
+      # 注册中心数据库(复用 Postgres)
+      DATABASE_URL: postgresql://officeagent:${POSTGRES_PASSWORD:-officeagent-dev}@postgres:5432/officeagent_a2a
+      # 鉴权
+      REGISTRY_API_KEY: ${A2A_REGISTRY_KEY:-sk-officeagent-a2a}
+    ports:
+      - "18008:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  vllm_models:
+  sglang_models:
+  ktransformers_models:
+  dynamo_models:
+  litellm_logs:

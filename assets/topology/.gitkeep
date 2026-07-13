@@ -1,0 +1,4 @@
+# Topology snapshots directory
+# KTG 拓扑图快照存储(由 TopologyStoreManager 自动写入)
+# 格式: snapshot_<timestamp>.json
+# 加密: 可选 AES-256-GCM(由 assets/crypto.py 加密)

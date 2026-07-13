@@ -1,0 +1,25 @@
+{
+  "name": "officeagent-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "OfficeAgent 桌面客户端 monorepo(Vite + React 18 + TS + Electron)",
+  "packageManager": "pnpm@9.15.9",
+  "engines": {
+    "node": ">=18.12"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @officeagent/web dev",
+    "dev:desktop": "pnpm --filter @officeagent/desktop dev",
+    "dev:admin": "pnpm --filter @officeagent/admin dev",
+    "build": "pnpm --filter @officeagent/web build",
+    "preview": "pnpm --filter @officeagent/web preview",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "pnpm -r lint",
+    "format": "prettier --write \"apps/**/*.{ts,tsx,css}\" \"packages/**/*.{ts,tsx}\"",
+    "gen:api": "python scripts/export_openapi.py && cd packages/sdk && npx openapi-typescript ../../openapi.json -o src/generated/schema.ts"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.0",
+    "typescript": "^5.5.0"
+  }
+}

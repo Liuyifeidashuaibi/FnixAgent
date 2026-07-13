@@ -1,0 +1,151 @@
+# OfficeAgent ↔ 爬虫系统对接配置
+#
+# 部署位置:config/crawler.yaml
+# 加载优先级:环境变量 > 本文件 > 默认值
+#
+# OfficeAgent 端严格无状态/无缓存/无落盘,本配置仅含连接信息。
+
+# 爬虫系统 API 基础地址
+base_url: http://crawler:9100
+
+# 认证(若爬虫系统启用)
+# api_key: sk-your-secret-key
+# api_key_header: Authorization       # 认证头名称
+# api_key_prefix: Bearer              # 认证前缀(如 "Bearer xxx")
+
+# 超时(秒)
+timeout: 60.0
+connect_timeout: 10.0
+
+# 重试策略
+max_retries: 3                        # 最大重试次数(不含首次)
+retry_backoff: 0.5                    # 指数退避起始(秒)
+retry_max_delay: 30.0                 # 重试最大延迟
+retry_on_status: [500, 502, 503, 504, 429]  # 触发重试的状态码
+
+# 安全
+verify_ssl: true                      # SSL 证书校验
+user_agent: OfficeAgent-Crawler/1.0
+max_response_size: 52428800           # 响应体上限(50MB,防 OOM)
+
+# ===========================================================
+# zhua-crawler 系统配置(ZhuaConfig,与顶层 CrawlerConfig 平行)
+# ===========================================================
+# zhua-crawler 是独立的爬虫系统(端口 8000,/v1/* 接口),能力更丰富:
+#   - 多适配器抓取(auto/http/browser/agent/mobile)
+#   - LLM 结构化提取(按 JSON Schema)
+#   - Agent 多步任务(浏览器自动化)
+#   - 异步批量任务全生命周期(create/status/result/cancel)
+#   - API 嗅探(逆向工程)
+#   - WebSocket 流式任务事件
+#
+# 本段配置仅被 ZhuaConfig 读取(load_zhua_config);
+# 顶层字段仅被 CrawlerConfig 读取(load_config),互不污染。
+#
+# 环境变量覆盖(优先级高于本段):
+#   OFFICEAGENT_ZHUA_BASE_URL
+#   OFFICEAGENT_ZHUA_TOKEN              已有 JWT(与 operator_token 二选一,优先)
+#   OFFICEAGENT_ZHUA_OPERATOR_TOKEN     运维静态令牌(自动调 /v1/token 换 JWT)
+#   OFFICEAGENT_ZHUA_TIMEOUT
+#   OFFICEAGENT_ZHUA_MAX_RETRIES
+#   OFFICEAGENT_ZHUA_USER_AGENT
+#   OFFICEAGENT_ZHUA_CONFIG             指向其他 YAML 文件(覆盖本段)
+zhua:
+  # zhua-crawler API 基础地址(默认端口 8000)
+  base_url: http://localhost:8000
+
+  # 认证(二选一):
+  #   token:          已有 JWT(优先使用,跳过 /v1/token 换取)
+  #   operator_token: 运维静态令牌(SDK 自动调用 /v1/token 换取 JWT)
+  # token: eyJhbGciOi...
+  # operator_token: op-xxx
+
+  # HTTP 超时(秒)
+  timeout: 60.0
+
+  # 5xx 重试次数(不含首次请求;仅 5xx 触发,4xx 不重试)
+  max_retries: 3
+
+  # 自定义 User-Agent(留空则用 SDK 默认 zhua-client-python/0.1.0)
+  # user_agent: OfficeAgent-Zhua/1.0
+
+# ===========================================================
+# 爬虫系统必须实现的接口契约(供爬虫系统开发参考)
+# ===========================================================
+#
+# 所有端点:
+#   - 请求体:JSON(UTF-8)
+#   - 响应体:JSON(UTF-8)
+#   - 认证:Header(api_key_header: api_key_prefix api_key)
+#
+# POST /api/v1/fetch
+#   请求:FetchRequest  {url, method?, headers?, body?, timeout?, use_browser?, extract_text?, max_chars?}
+#   响应:FetchResponse {success, url, final_url, status_code, html, text?, title?, elapsed_ms, error?}
+#
+# POST /api/v1/render
+#   请求:RenderRequest {url, wait_for?, wait_until?, timeout?, screenshot?, execute_js?, block_resources?}
+#   响应:RenderResponse {success, url, final_url, title, html, text?, screenshot?(base64), elapsed_ms, error?}
+#
+# POST /api/v1/extract
+#   请求:ExtractRequest {html?, url?, extract_tables?, extract_links?, extract_metadata?}
+#   响应:ExtractResponse {success, title, text, tables, links, metadata, language?, word_count, error?}
+#
+# POST /api/v1/search
+#   请求:SearchRequest {query, num_results, language, time_range?, safe_search}
+#   响应:SearchResponse {success, query, results:[{title,url,snippet,published_at?}], total, elapsed_ms, error?}
+#
+# POST /api/v1/summary
+#   请求:SummaryRequest {url?, html?, text?, summary_style, summary_language, max_key_points}
+#   响应:SummaryResponse {success, title, summary, key_points, keywords, language, elapsed_ms, error?}
+#
+# POST /api/v1/batch
+#   请求:BatchRequest {urls, task_type, config?}
+#   响应:BatchResponse {success, task_id, total, status, error?}
+#   task_type: fetch / render / extract / summary
+#
+# GET /api/v1/task/{task_id}
+#   响应:TaskStatus {task_id, status, progress, results?, error?, created_at?, completed_at?}
+#   status: pending / running / completed / failed
+#   results: 任务结果数组(每项是对应 task_type 的响应 dict)
+#
+# GET /api/v1/health
+#   响应:HealthStatus {healthy, version?, uptime_seconds?, active_tasks}
+#
+# ===========================================================
+# zhua-crawler 系统接口契约(/v1/* 端点,供参考)
+# ===========================================================
+#
+# POST /v1/scrape
+#   请求:{url, adapter?, output?, fit?, screenshot?, wait_for?, timeout?, impersonate?, proxy?}
+#   响应:{url, status_code, markdown?, html?, raw?, elapsed, screenshots[], metadata, request_id}
+#
+# POST /v1/extract
+#   请求:{url, schema?, selector?, html_mode?}
+#   响应:{url, extracted_data, model?, prompt_tokens, completion_tokens, total_tokens, elapsed, request_id}
+#
+# POST /v1/agent
+#   请求:{url, task, max_steps?}
+#   响应:{url, success, actions[], final_text?, elapsed, request_id}
+#
+# POST /v1/task
+#   请求:{urls[], adapter?, priority?, webhook?}
+#   响应:{task_id, accepted, status, request_id}
+#
+# GET /v1/task/{task_id}
+#   响应:{task_id, status, total, succeeded, failed, pending, created_at?, updated_at?, error?, request_id}
+#
+# GET /v1/task/{task_id}/result
+#   响应:{task_id, results[], request_id}
+#
+# DELETE /v1/task/{task_id}
+#   响应:{task_id, cancelled, request_id}
+#
+# POST /v1/reverse-api
+#   请求:{url, probe?, discover?, capture?, max_requests?}
+#   响应:{url, api_catalog[], probe_results[], request_id}
+#
+# GET /v1/health
+#   响应:{status, version?, uptime?, request_id}
+#
+# WS /v1/stream/{task_id}
+#   流式任务事件(SDK 内 task_stream / async_task_stream 使用,不暴露为工具)

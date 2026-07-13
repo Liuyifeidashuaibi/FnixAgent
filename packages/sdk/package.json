@@ -1,0 +1,23 @@
+{
+  "name": "@officeagent/sdk",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts",
+    "gen": "openapi-typescript ../../openapi.json -o src/generated/schema.ts"
+  },
+  "dependencies": {
+    "openapi-fetch": "^0.12.0"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "eslint": "^8.57.0",
+    "openapi-typescript": "^7.3.0",
+    "typescript": "^5.5.4"
+  }
+}

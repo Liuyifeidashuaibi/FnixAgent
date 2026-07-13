@@ -1,0 +1,193 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+ * OfficeAgent Studio — Codex/Cursor 浅色风格
+ * 纯白底 + 浅灰边框 + 深灰文字 + 蓝色强调 + 大量留白
+ * ============================================================ */
+
+:root {
+  /* 基础色板 (浅色为主) */
+  --background: 0 0% 100%;           /* #ffffff 纯白主背景 */
+  --foreground: 220 13% 18%;         /* #28282c 深灰文字 */
+
+  /* 卡片/面板 (略灰于背景,营造层次) */
+  --card: 0 0% 100%;
+  --card-foreground: 220 13% 18%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 220 13% 18%;
+
+  /* 主强调色 — Cursor 蓝 (#007acc 系) */
+  --primary: 203 100% 32%;           /* #0066b8 */
+  --primary-foreground: 0 0% 100%;
+
+  /* 次级色 — 浅灰背景 */
+  --secondary: 220 14% 96%;          /* #f4f5f7 */
+  --secondary-foreground: 220 13% 18%;
+
+  /* 静音色 (muted) — 辅助文字/图标 */
+  --muted: 220 14% 96%;
+  --muted-foreground: 220 9% 46%;    /* #6b7280 */
+
+  /* 强调色 (accent) — hover/选中背景 */
+  --accent: 220 14% 94%;             /* #ebecee */
+  --accent-foreground: 220 13% 18%;
+
+  /* 状态色 */
+  --destructive: 0 72% 51%;          /* #dc2626 */
+  --destructive-foreground: 0 0% 100%;
+  --success: 142 71% 45%;            /* #22c55e */
+  --success-foreground: 0 0% 100%;
+  --warning: 38 92% 50%;             /* #f59e0b */
+  --warning-foreground: 0 0% 100%;
+  --info: 203 100% 40%;              /* #0284c7 */
+  --info-foreground: 0 0% 100%;
+
+  /* 边框/输入框 (浅灰) */
+  --border: 220 13% 91%;             /* #e4e4e7 */
+  --input: 220 13% 91%;
+  --ring: 203 100% 32%;
+
+  /* 代码区背景 (Monaco light 风格) */
+  --code-bg: 220 14% 98%;            /* #fafafa */
+  --code-border: 220 13% 91%;
+
+  /* 阴影 */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.04);
+  --shadow-md: 0 2px 8px -2px rgb(0 0 0 / 0.06), 0 1px 3px -1px rgb(0 0 0 / 0.04);
+  --shadow-lg: 0 8px 24px -4px rgb(0 0 0 / 0.08), 0 2px 6px -2px rgb(0 0 0 / 0.04);
+}
+
+/* 暗色主题 (保留切换能力,但默认浅色) */
+.dark {
+  --background: 220 13% 10%;
+  --foreground: 220 9% 92%;
+  --card: 220 13% 13%;
+  --card-foreground: 220 9% 92%;
+  --popover: 220 13% 13%;
+  --popover-foreground: 220 9% 92%;
+  --primary: 203 100% 45%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 220 13% 18%;
+  --secondary-foreground: 220 9% 92%;
+  --muted: 220 13% 18%;
+  --muted-foreground: 220 9% 65%;
+  --accent: 220 13% 22%;
+  --accent-foreground: 220 9% 92%;
+  --destructive: 0 72% 55%;
+  --destructive-foreground: 0 0% 100%;
+  --success: 142 71% 50%;
+  --success-foreground: 0 0% 100%;
+  --warning: 38 92% 55%;
+  --warning-foreground: 0 0% 100%;
+  --info: 203 100% 55%;
+  --info-foreground: 0 0% 100%;
+  --border: 220 13% 22%;
+  --input: 220 13% 22%;
+  --ring: 203 100% 45%;
+  --code-bg: 220 13% 13%;
+  --code-border: 220 13% 22%;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-feature-settings: 'cv11', 'ss01', 'ss03';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 代码字体 — JetBrains Mono / SF Mono / Menlo */
+code, pre, .font-mono {
+  font-family: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+  font-feature-settings: 'liga' 0, 'calt' 0;
+}
+
+/* 滚动条 — 浅色风格 (Chrome/Safari) */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(220 9% 80%);
+  border-radius: 5px;
+  border: 2px solid hsl(var(--background));
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(220 9% 65%);
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* 选中文字 — 蓝色半透明 */
+::selection {
+  background: hsl(203 100% 40% / 0.18);
+  color: inherit;
+}
+
+/* 焦点环 — 蓝色细环 */
+*:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* 动画工具类 */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-in-scale {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+@keyframes blink-cursor {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-fade-in { animation: fade-in 0.2s ease-out; }
+.animate-fade-in-up { animation: fade-in-up 0.25s ease-out; }
+.animate-fade-in-scale { animation: fade-in-scale 0.18s ease-out; }
+.animate-pulse-soft { animation: pulse-soft 1.5s ease-in-out infinite; }
+
+/* 流式光标 — 逐字输出时尾部闪烁光标 */
+.stream-cursor::after {
+  content: '▋';
+  display: inline-block;
+  margin-left: 2px;
+  animation: blink-cursor 1s step-end infinite;
+  color: hsl(var(--primary));
+  font-weight: 300;
+}
+
+/* Shimmer 占位 — 加载态 */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted)) 0%,
+    hsl(var(--accent)) 50%,
+    hsl(var(--muted)) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}

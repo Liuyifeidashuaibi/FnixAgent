@@ -1,0 +1,210 @@
+# OfficeAgent 客户端发布工作流 — Phase 1.9 + Phase 2.6 全平台
+#
+# 触发条件:推送 v* 标签(如 v1.0.0)或手动触发
+# 产物:
+#   - Windows nsis 安装包(.exe,带 EV 代码签名)
+#   - macOS dmg(.dmg,带 Developer ID 签名 + Notarization)
+#   - Linux AppImage + deb + rpm
+# 分发:GitHub Releases(供 electron-updater 检查更新)+ 自建 CDN(可选)
+#
+# ============================================================================
+# 必需的 GitHub Secrets(不设置则产物未签名,仅本地开发可用)
+# ============================================================================
+# Windows EV 证书:
+#   CSC_LINK                    Windows pfx 证书(base64 编码)
+#   CSC_KEY_PASSWORD            Windows 证书密码
+# macOS Developer ID + Notarization:
+#   CSC_NAME                    macOS Developer ID Application 证书名
+#                               (如 "Developer ID Application: Your Company")
+#   APPLE_ID                    Apple ID 邮箱(用于 Notarization)
+#   APPLE_APP_SPECIFIC_PASSWORD Apple 应用专用密码
+#                               (https://appleid.apple.com → 登录与安全 → 应用专用密码)
+#   APPLE_TEAM_ID               Apple Team ID(10 位字母数字,Developer 账户可查)
+# 通用(发布):
+#   GH_TOKEN                    GitHub Token(可用 GITHUB_TOKEN,发布到 Releases)
+# CDN 同步(可选):
+#   CDN_RSYNC_HOST              CDN 主机
+#   CDN_RSYNC_USER              CDN 用户名
+#   CDN_RSYNC_KEY               CDN SSH 私钥(base64)
+#
+# ============================================================================
+# 本地开发(无证书)打包
+# ============================================================================
+# 不设置上述任何环境变量,直接运行:
+#   pnpm --filter @officeagent/desktop build:win      # 产出未签名 .exe
+#   pnpm --filter @officeagent/desktop build:mac      # 产出未签名 .dmg
+#   pnpm --filter @officeagent/desktop build:linux    # 产出 AppImage/deb/rpm
+#   pnpm --filter @officeagent/desktop build:all      # 全平台
+#
+# ============================================================================
+# macOS Notarization 钩子
+# ============================================================================
+# electron-builder 24.x 内置 notarize 支持,只需在 electron-builder.yml 的
+# mac.notarize.teamId 字段配置 teamId,并通过环境变量注入 APPLE_ID /
+# APPLE_APP_SPECIFIC_PASSWORD / APPLE_TEAM_ID,electron-builder 会在签名后
+# 自动调用 xcrun altool/notarytool 提交公证并轮询结果。
+# 若需自定义 afterSign 钩子(如对 zip 包也做公证),在 package.json 的 build
+# 字段中添加 afterSign: "buildResources/notarize.js",并提供脚本文件。
+
+name: Release Desktop Client
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '版本号(如 1.0.1,不带 v 前缀)'
+        required: true
+
+permissions:
+  contents: write  # 发布 Release 需要
+
+env:
+  NODE_VERSION: '20'
+  PNPM_VERSION: '9.15.9'
+
+jobs:
+  release:
+    name: Build & Publish (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Windows:nsis 安装包 + EV 代码签名
+          - os: windows-latest
+            platform: win
+            build_cmd: build:win
+            artifact_glob: |
+              apps/desktop/release/**/*.exe
+              apps/desktop/release/**/latest*.yml
+          # macOS:dmg + Developer ID 签名 + Notarization(支持 x64 + arm64)
+          - os: macos-latest
+            platform: mac
+            build_cmd: build:mac
+            artifact_glob: |
+              apps/desktop/release/**/*.dmg
+              apps/desktop/release/**/latest*.yml
+          # Linux:AppImage + deb + rpm(无强制签名要求)
+          - os: ubuntu-latest
+            platform: linux
+            build_cmd: build:linux
+            artifact_glob: |
+              apps/desktop/release/**/*.AppImage
+              apps/desktop/release/**/*.deb
+              apps/desktop/release/**/*.rpm
+              apps/desktop/release/**/latest*.yml
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Enable corepack
+        run: corepack enable
+
+      - name: Setup pnpm
+        run: corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm --filter @officeagent/desktop typecheck
+
+      # Linux 需要额外的系统依赖用于构建 AppImage/deb/rpm
+      - name: Install Linux build deps
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libnotify4 libxtst6 libnss3 libnspr4 \
+            dpkg fakeroot rpm
+          # arm64 交叉构建需要额外配置(此处仅构建 x64 + arm64 AppImage,
+          # deb/rpm 的 arm64 在 x64 runner 上通过 electron-builder 的 multiarch 完成)
+
+      - name: Build desktop client (${{ matrix.platform }})
+        env:
+          # Windows 代码签名(未配置 CSC_LINK 时自动跳过签名)
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          # macOS 代码签名 + Notarization(未配置 CSC_NAME 时跳过签名)
+          CSC_NAME: ${{ secrets.CSC_NAME }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          # 发布到 GitHub Releases
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        working-directory: apps/desktop
+        run: pnpm run publish
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: officeagent-${{ matrix.platform }}-${{ github.ref_name }}
+          path: ${{ matrix.artifact_glob }}
+          retention-days: 30
+
+  # ---------------------------------------------------------------------------
+  # 汇总 + 发布 GitHub Release(只在 tag 推送时触发)
+  # ---------------------------------------------------------------------------
+  github-release:
+    name: Publish GitHub Release
+    needs: release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/**/*.exe
+            artifacts/**/*.dmg
+            artifacts/**/*.AppImage
+            artifacts/**/*.deb
+            artifacts/**/*.rpm
+            artifacts/**/latest*.yml
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-rc') || contains(github.ref_name, '-beta') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ---------------------------------------------------------------------------
+  # CDN 分发(可选,将产物同步到自建 CDN)
+  # ---------------------------------------------------------------------------
+  cdn-sync:
+    name: Sync to CDN
+    needs: release
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && secrets.CDN_RSYNC_HOST != ''
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Sync to CDN
+        env:
+          CDN_RSYNC_HOST: ${{ secrets.CDN_RSYNC_HOST }}
+          CDN_RSYNC_USER: ${{ secrets.CDN_RSYNC_USER }}
+          CDN_RSYNC_KEY: ${{ secrets.CDN_RSYNC_KEY }}
+          VERSION: ${{ github.ref_name }}
+        run: bash scripts/publish-cdn.sh "${VERSION}" artifacts/

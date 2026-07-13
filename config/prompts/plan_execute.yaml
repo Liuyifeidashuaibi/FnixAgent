@@ -1,0 +1,101 @@
+# Plan & Execute 规划 Prompt - 分步规划与执行
+
+name: "plan_execute"
+version: "1.0.0"
+mode: "plan_execute"
+
+# Plan & Execute 流程说明
+instruction: |
+  使用 Plan & Execute 模式处理复杂任务:
+  
+  第一阶段 - Planning:
+  1. 分析任务目标,拆解为多个子任务
+  2. 确定子任务的依赖关系和执行顺序
+  3. 为每个子任务选择合适的工具
+  4. 生成完整执行计划(JSON格式)
+  
+  第二阶段 - Execution:
+  1. 按计划顺序执行子任务
+  2. 记录每个步骤的执行结果
+  3. 遇到失败时,触发Replanner重新规划
+  4. 所有步骤完成后,汇总最终结果
+
+# 计划生成模板
+plan_template: |
+  任务: {task}
+  
+  执行计划:
+  {
+    "steps": [
+      {
+        "step_no": 1,
+        "description": "步骤描述",
+        "tool": "工具名称",
+        "arguments": {"参数": "值"},
+        "depends_on": []
+      },
+      {
+        "step_no": 2,
+        "description": "步骤描述",
+        "tool": "工具名称",
+        "arguments": {"参数": "值"},
+        "depends_on": [1]
+      }
+    ]
+  }
+
+# 规划原则
+planning_guidelines:
+  - "每个步骤必须明确可执行,避免抽象描述"
+  - "依赖关系必须正确标注,支持串行/并行执行"
+  - "工具选择要匹配步骤目标,参数要符合Schema"
+  - "计划要具备容错性,考虑可能的失败情况"
+
+# 示例任务
+examples:
+  - task: "搜索深度学习论文,下载PDF,生成摘要,创建Word文档"
+    plan:
+      steps:
+        - step_no: 1
+          description: "搜索arXiv深度学习论文"
+          tool: "search_paper"
+          arguments: {"query": "deep learning", "source": "arxiv", "max_results": 5}
+          depends_on: []
+        
+        - step_no: 2
+          description: "下载论文PDF文件"
+          tool: "download_paper"
+          arguments: {"paper_ids": ["${step1.result.ids}"]}
+          depends_on: [1]
+        
+        - step_no: 3
+          description: "解析PDF提取摘要"
+          tool: "parse_pdf"
+          arguments: {"files": ["${step2.result.files}"]}
+          depends_on: [2]
+        
+        - step_no: 4
+          description: "生成论文摘要综述"
+          tool: "summarize"
+          arguments: {"texts": ["${step3.result.abstracts}"]}
+          depends_on: [3]
+        
+        - step_no: 5
+          description: "创建Word文档并插入摘要"
+          tool: "create_docx"
+          arguments: {"content": "${step4.result.summary}", "template": "academic"}
+          depends_on: [4]
+
+# 执行监控
+execution_monitoring:
+  - "记录每个步骤的开始时间、结束时间、执行状态"
+  - "捕获异常并保存错误信息"
+  - "校验步骤输出是否符合预期"
+  - "触发Replanner的条件: 步骤失败/超时/结果校验不通过"
+
+# 重规划触发条件
+replan_conditions:
+  - "单个步骤执行失败超过3次"
+  - "步骤依赖的上游步骤失败"
+  - "执行时间超过预期阈值"
+  - "中间结果校验不通过"

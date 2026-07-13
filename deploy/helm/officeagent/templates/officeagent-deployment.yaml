@@ -1,0 +1,179 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "officeagent.fullname" . }}
+  labels:
+    {{- include "officeagent.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.officeagent.hpa.enabled }}
+  replicas: {{ .Values.officeagent.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "officeagent.selectorLabels" . | nindent 6 }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        {{- include "officeagent.selectorLabels" . | nindent 8 }}
+      annotations:
+        # 配置变更时自动滚动更新
+        checksum/config: {{ include (print $.Template.BasePath "/officeagent-configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/officeagent-secret.yaml") . | sha256sum }}
+        # Phase 2.10: Prometheus 抓取注解(供 kubernetes-pods job 自动发现)
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "{{ .Values.officeagent.service.targetPort }}"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: {{ include "officeagent.serviceAccountName" . }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      containers:
+        - name: officeagent
+          image: "{{ .Values.officeagent.image.repository }}:{{ .Values.officeagent.image.tag }}"
+          imagePullPolicy: {{ .Values.officeagent.image.pullPolicy }}
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.officeagent.service.targetPort }}
+              protocol: TCP
+          {{- if .Values.officeagent.probe.liveness.enabled }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.officeagent.probe.liveness.path }}
+              port: http
+            initialDelaySeconds: {{ .Values.officeagent.probe.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.officeagent.probe.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.officeagent.probe.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.officeagent.probe.liveness.failureThreshold }}
+          {{- end }}
+          {{- if .Values.officeagent.probe.readiness.enabled }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.officeagent.probe.readiness.path }}
+              port: http
+            initialDelaySeconds: {{ .Values.officeagent.probe.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.officeagent.probe.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.officeagent.probe.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.officeagent.probe.readiness.failureThreshold }}
+          {{- end }}
+          {{- with .Values.officeagent.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          env:
+            # 非敏感环境变量(从 ConfigMap)
+            - name: OFFICEAGENT_MODE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "officeagent.fullname" . }}-config
+                  key: OFFICEAGENT_MODE
+            - name: SERVICE_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "officeagent.fullname" . }}-config
+                  key: SERVICE_ENV
+            # Phase 2.10: Prometheus 指标开关
+            - name: PROMETHEUS_ENABLED
+              value: "true"
+            # Redis
+            - name: REDIS_HOST
+              value: {{ default (include "officeagent.redisHost" .) .Values.env.REDIS_HOST | quote }}
+            - name: REDIS_PORT
+              value: {{ .Values.env.REDIS_PORT | quote }}
+            # Milvus
+            {{- if .Values.milvus.enabled }}
+            - name: MILVUS_HOST
+              value: {{ .Values.milvus.host | quote }}
+            - name: MILVUS_PORT
+              value: {{ .Values.milvus.port | quote }}
+            {{- end }}
+            # MinIO
+            {{- if .Values.minio.enabled }}
+            - name: MINIO_ENDPOINT
+              value: {{ .Values.minio.endpoint | quote }}
+            {{- end }}
+            # Elasticsearch
+            {{- if .Values.elasticsearch.enabled }}
+            - name: ES_HOST
+              value: {{ .Values.elasticsearch.host | quote }}
+            - name: ES_PORT
+              value: {{ .Values.elasticsearch.port | quote }}
+            {{- end }}
+          envFrom:
+            # 敏感信息(密码/API Key)从 Secret 注入
+            - secretRef:
+                name: {{ include "officeagent.secretName" . }}
+          {{- /* 动态拼接 DATABASE_URL 注入 */}}
+          {{- if include "officeagent.databaseUrl" . }}
+          {{- end }}
+          volumeMounts:
+            {{- if .Values.officeagent.persistence.enabled }}
+            {{- range .Values.officeagent.persistence.mounts }}
+            - name: data
+              mountPath: {{ .mountPath }}
+              subPath: {{ .subPath }}
+              readOnly: {{ .readOnly | default false }}
+            {{- end }}
+            {{- end }}
+            # 配置文件只读挂载
+            - name: config
+              mountPath: /app/config
+              readOnly: true
+      volumes:
+        {{- if .Values.officeagent.persistence.enabled }}
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "officeagent.fullname" . }}-data
+        {{- end }}
+        - name: config
+          configMap:
+            name: {{ include "officeagent.fullname" . }}-config
+            items:
+              - key: settings.yaml
+                path: settings.yaml
+---
+{{/* PersistentVolumeClaim */}}
+{{- if .Values.officeagent.persistence.enabled -}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "officeagent.fullname" . }}-data
+  labels:
+    {{- include "officeagent.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - {{ .Values.officeagent.persistence.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.officeagent.persistence.size }}
+  {{- if .Values.officeagent.persistence.storageClass }}
+  storageClassName: {{ .Values.officeagent.persistence.storageClass }}
+  {{- end }}
+{{- end -}}

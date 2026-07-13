@@ -1,0 +1,54 @@
+# OfficeAgent Git 属性配置
+# 统一换行符处理,确保跨平台一致性
+
+# 自动检测文本文件,转换换行符为 LF
+* text=auto
+
+# 源代码文件(强制 LF)
+*.py text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.js text eol=lf
+*.jsx text eol=lf
+*.css text eol=lf
+*.json text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.toml text eol=lf
+*.md text eol=lf
+*.html text eol=lf
+*.xml text eol=lf
+*.cfg text eol=lf
+*.ini text eol=lf
+*.sh text eol=lf
+*.env text eol=lf
+*.txt text eol=lf
+*.rego text eol=lf
+Dockerfile text eol=lf
+Makefile text eol=lf
+*.cjs text eol=lf
+
+# 二进制文件(不转换)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.docx binary
+*.xlsx binary
+*.pptx binary
+*.zip binary
+*.tar.gz binary
+*.epub binary
+*.ttf binary
+*.woff binary
+*.woff2 binary
+*.eot binary
+*.pem binary
+*.pak binary
+*.dll binary
+*.exe binary
+*.so binary
+*.dylib binary
+*.lock binary

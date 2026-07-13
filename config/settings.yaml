@@ -1,0 +1,202 @@
+# OfficeAgent 项目配置
+
+# 服务基础配置
+server:
+  host: "0.0.0.0"
+  port: 8000
+  debug: false
+  workers: 4
+
+# 数据库配置
+database:
+  postgres:
+    host: "localhost"
+    port: 5432
+    database: "officeagent"
+    user: "officeagent"
+    password: "${POSTGRES_PASSWORD}"
+    pool_size: 20
+    max_overflow: 10
+
+# 缓存配置
+cache:
+  redis:
+    host: "localhost"
+    port: 6379
+    password: "${REDIS_PASSWORD}"
+    db: 0
+    max_connections: 50
+
+# 向量数据库配置
+vector_store:
+  milvus:
+    host: "localhost"
+    port: 19530
+    collection_name: "long_term_memory"
+
+# 文件存储配置
+storage:
+  minio:
+    endpoint: "localhost:9000"
+    access_key: "${MINIO_ACCESS_KEY}"
+    secret_key: "${MINIO_SECRET_KEY}"
+    bucket: "officeagent-files"
+    secure: false
+
+# 搜索引擎配置
+search:
+  elasticsearch:
+    host: "localhost"
+    port: 9200
+    index_prefix: "officeagent_"
+
+# LLM 配置
+llm:
+  providers:
+    - name: "glm"
+      api_key: "${GLM_API_KEY}"
+      model: "glm-4"
+      max_tokens: 4096
+      temperature: 0.7
+      enabled: true
+    
+    - name: "openai"
+      api_key: "${OPENAI_API_KEY}"
+      model: "gpt-4-turbo"
+      max_tokens: 4096
+      temperature: 0.7
+      enabled: false
+    
+    - name: "qwen"
+      api_key: "${QWEN_API_KEY}"
+      model: "qwen2.5-72b-instruct"
+      max_tokens: 4096
+      temperature: 0.7
+      enabled: false
+
+  router:
+    default_provider: "glm"
+    fallback_provider: "openai"
+    max_retries: 3
+    timeout_ms: 30000
+
+# 记忆配置
+memory:
+  short_term:
+    max_messages: 20
+    max_tokens: 2000
+  
+  long_term:
+    embedding_model: "text-embedding-ada-002"
+    chunk_size: 500
+    chunk_overlap: 100
+    similarity_threshold: 0.75
+  
+  entity:
+    auto_update: true
+    expire_days: 30
+
+# 安全配置
+security:
+  sensitive_words:
+    enabled: true
+    check_level: "medium"  # low/medium/high
+  
+  injection_protection:
+    enabled: true
+    max_attempts: 3
+  
+  moderation:
+    enabled: true
+    provider: "internal"
+  
+  desensitize:
+    enabled: true
+    patterns:
+      - email
+      - phone
+      - id_card
+
+# 工具执行配置
+tools:
+  sandbox:
+    enabled: true
+    timeout_ms: 10000
+    network_whitelist:
+      - "arxiv.org"
+      - "semanticscholar.org"
+      - "cnki.net"
+  
+  executor:
+    max_concurrent: 5
+    timeout_ms: 30000
+
+# 计费配置(已废弃,Phase 0 起不再启用)
+billing:
+  enabled: false
+
+# ===========================================================================
+# 自进化 Agent 配置(Phase 0.7 新增)
+# ===========================================================================
+
+# 知识拓扑图(KTG)配置
+topology:
+  schema_file: "config/topology_schema.yaml"
+  search_top_k: 3                    # 路径搜索返回 Top-K
+  search_max_depth: 6                # 路径展开最大深度
+  search_min_weight: 0.05            # 路径剪枝阈值
+  cold_start_threshold: 5            # 冷启动判定阈值
+
+# 技能-拓扑突触协议(STP)配置
+skills:
+  bindings_file: "config/skill_bindings.yaml"
+  default_permission_level: "basic"
+  require_confirmation_for_reasoning: true
+  require_authorization_for_meta: true
+
+# 四阶进化飞轮(MFP)配置
+flywheel:
+  rules_file: "config/flywheel_rules.yaml"
+  stage1_perception:
+    enabled: true
+    max_iterations: 5
+  stage2_knowledge:
+    enabled: true
+    filter_junk: true
+  stage3_reflection:
+    enabled: true
+    trigger_interval: 10             # 每 10 次对话触发
+  stage4_climbing:
+    enabled: true
+    evolution_interval: 50           # 每 50 次对话触发
+    snapshot_before_evolution: true
+
+# 资产目录(自进化 Agent 持久化资产)
+assets:
+  base_dir: "assets"
+  topology_dir: "assets/topology"
+  skills_dir: "assets/skills"
+  flywheel_dir: "assets/flywheel"
+  traces_dir: "assets/traces"
+  snapshots_dir: "assets/snapshots"
+  prompts_dir: "assets/prompts"
+  meta_dir: "assets/meta"
+  encryption:
+    enabled: true                    # 启用 AES-256-GCM 加密
+    key_derivation: "pbkdf2-sha256"
+    iterations: 100000
+    key_length: 32                   # 256 bits
+
+# 监控配置
+monitoring:
+  prometheus:
+    enabled: true
+    port: 9090
+  
+  jaeger:
+    enabled: true
+    host: "localhost"
+    port: 14268
+  
+  log_level: "INFO"
+  log_file: "logs/officeagent.log"

@@ -1,0 +1,266 @@
+# OfficeAgent 告警规则 — Phase 2.10
+#
+# 告警分级:
+#   - critical:服务宕机 / 数据库不可用 / 大量错误
+#   - warning :资源使用率高 / 延迟增加 / 错误率上升
+#   - info    :常规通知(部署完成 / 备份成功等)
+#
+# 验收标准:告警 5min 内触达 oncall
+
+groups:
+  # ---------------------------------------------------------------------------
+  # 1. 系统监控(HTTP / 资源)
+  # ---------------------------------------------------------------------------
+  - name: officeagent-system
+    interval: 30s
+    rules:
+      # API 服务宕机(1 分钟无请求)
+      - alert: OfficeAgentAPIDown
+        expr: absent(up{job="officeagent"} == 1) or up{job="officeagent"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: officeagent
+        annotations:
+          summary: "OfficeAgent API 服务不可用"
+          description: "Prometheus 已超过 1 分钟无法抓取 officeagent 指标,服务可能已宕机。"
+
+      # HTTP 5xx 错误率 > 5%
+      - alert: HighHTTPErrors
+        expr: |
+          sum(rate(officeagent_http_requests_total{status=~"5.."}[5m])) by (service)
+          /
+          sum(rate(officeagent_http_requests_total[5m])) by (service)
+          > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          service: officeagent
+        annotations:
+          summary: "HTTP 5xx 错误率过高 ({{ $value | humanizePercentage }})"
+          description: "过去 5 分钟内,5xx 错误率超过 5%,请检查应用日志。"
+
+      # P99 延迟 > 2s
+      - alert: HighHTTPLatency
+        expr: |
+          histogram_quantile(0.99,
+            sum(rate(officeagent_http_request_duration_seconds_bucket[5m])) by (le, service)
+          ) > 2
+        for: 5m
+        labels:
+          severity: warning
+          service: officeagent
+        annotations:
+          summary: "HTTP P99 延迟过高 ({{ $value }}s)"
+          description: "过去 5 分钟内,P99 延迟超过 2 秒,可能存在性能瓶颈。"
+
+      # QPS 突降(比 1 小时前低 50%)
+      - alert: QPSDrop
+        expr: |
+          sum(rate(officeagent_http_requests_total[5m]))
+          <
+          sum(rate(officeagent_http_requests_total[5m] offset 1h)) * 0.5
+        for: 10m
+        labels:
+          severity: warning
+          service: officeagent
+        annotations:
+          summary: "QPS 突降 50%+"
+          description: "当前 QPS 相比 1 小时前下降超过 50%,可能有访问异常。"
+
+  # ---------------------------------------------------------------------------
+  # 2. 业务监控(用户 / 功能)
+  # ---------------------------------------------------------------------------
+  - name: officeagent-business
+    interval: 60s
+    rules:
+      # 登录失败率 > 30%
+      - alert: HighLoginFailureRate
+        expr: |
+          sum(rate(officeagent_login_attempts_total{result="failure"}[5m]))
+          /
+          sum(rate(officeagent_login_attempts_total[5m]))
+          > 0.3
+        for: 10m
+        labels:
+          severity: warning
+          service: officeagent
+        annotations:
+          summary: "登录失败率过高 ({{ $value | humanizePercentage }})"
+          description: "过去 10 分钟内,登录失败率超过 30%,可能存在暴力破解或密码泄露。"
+
+      # 注册量异常激增(> 100/分钟)
+      - alert: RegistrationSpike
+        expr: rate(officeagent_user_registrations_total[1m]) > 100
+        for: 5m
+        labels:
+          severity: info
+          service: officeagent
+        annotations:
+          summary: "用户注册激增 ({{ $value | humanizeNumber }}/min)"
+          description: "过去 5 分钟内,每分钟注册量超过 100,可能是营销活动或机器人注册。"
+
+  # ---------------------------------------------------------------------------
+  # 3. 应用监控(LangGraph / 工具 / LLM)
+  # ---------------------------------------------------------------------------
+  - name: officeagent-application
+    interval: 30s
+    rules:
+      # 工具执行错误率 > 10%
+      - alert: HighToolErrorRate
+        expr: |
+          sum(rate(officeagent_tool_executions_total{status="error"}[5m]))
+          /
+          sum(rate(officeagent_tool_executions_total[5m]))
+          > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: officeagent
+        annotations:
+          summary: "工具执行错误率过高 ({{ $value | humanizePercentage }})"
+          description: "过去 5 分钟内,工具执行错误率超过 10%,请检查工具实现。"
+
+      # LLM 调用错误率 > 20%
+      - alert: HighLLMErrorRate
+        expr: |
+          sum(rate(officeagent_llm_errors_total[5m]))
+          /
+          sum(rate(officeagent_llm_calls_total[5m]))
+          > 0.2
+        for: 5m
+        labels:
+          severity: critical
+          service: officeagent
+        annotations:
+          summary: "LLM 调用错误率过高 ({{ $value | humanizePercentage }})"
+          description: "过去 5 分钟内,LLM 调用错误率超过 20%,Agent 核心功能可能受影响。"
+
+      # LLM 调用 P99 延迟 > 30s
+      - alert: HighLLMLatency
+        expr: |
+          histogram_quantile(0.99,
+            sum(rate(officeagent_llm_call_duration_seconds_bucket[5m])) by (le, provider)
+          ) > 30
+        for: 5m
+        labels:
+          severity: warning
+          service: officeagent
+        annotations:
+          summary: "LLM 调用 P99 延迟过高 ({{ $value }}s)"
+          description: "过去 5 分钟内,LLM 调用 P99 延迟超过 30 秒,可能需要切换 provider。"
+
+  # ---------------------------------------------------------------------------
+  # 4. 安全监控(登录 / 权限 / 注入 / 限流)
+  # ---------------------------------------------------------------------------
+  - name: officeagent-security
+    interval: 30s
+    rules:
+      # 权限拒绝激增(> 50/分钟)
+      - alert: PermissionDeniedSpike
+        expr: rate(officeagent_permission_denied_total[1m]) > 50
+        for: 5m
+        labels:
+          severity: warning
+          service: officeagent
+        annotations:
+          summary: "权限拒绝激增 ({{ $value }}/min)"
+          description: "过去 5 分钟内,每分钟权限拒绝超过 50 次,可能存在越权探测。"
+
+      # 注入攻击激增(> 20/分钟)
+      - alert: InjectionAttackSpike
+        expr: rate(officeagent_injection_blocked_total[1m]) > 20
+        for: 3m
+        labels:
+          severity: critical
+          service: officeagent
+        annotations:
+          summary: "注入攻击激增 ({{ $value }}/min)"
+          description: "过去 3 分钟内,每分钟注入拦截超过 20 次,可能正在遭受攻击。"
+
+      # 限流触发激增(> 100/分钟)
+      - alert: RateLimitSpike
+        expr: rate(officeagent_rate_limit_triggered_total[1m]) > 100
+        for: 5m
+        labels:
+          severity: warning
+          service: officeagent
+        annotations:
+          summary: "限流触发激增 ({{ $value }}/min)"
+          description: "过去 5 分钟内,每分钟限流触发超过 100 次,可能需要扩容或调整限流阈值。"
+
+      # MFA 失败激增(> 30/分钟)
+      - alert: MFAFailureSpike
+        expr: rate(officeagent_mfa_challenge_total{result="failure"}[1m]) > 30
+        for: 5m
+        labels:
+          severity: warning
+          service: officeagent
+        annotations:
+          summary: "MFA 验证失败激增 ({{ $value }}/min)"
+          description: "过去 5 分钟内,每分钟 MFA 失败超过 30 次,可能存在 MFA 爆破。"
+
+  # ---------------------------------------------------------------------------
+  # 5. 基础设施监控(节点 / Pod)
+  # ---------------------------------------------------------------------------
+  - name: officeagent-infrastructure
+    interval: 30s
+    rules:
+      # 节点宕机
+      - alert: NodeDown
+        expr: up{job="node"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: node
+        annotations:
+          summary: "节点 {{ $labels.instance }} 宕机"
+          description: "节点已超过 1 分钟无响应。"
+
+      # 磁盘使用率 > 85%
+      - alert: HighDiskUsage
+        expr: |
+          (1 - node_filesystem_avail_bytes / node_filesystem_size_bytes) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          service: node
+        annotations:
+          summary: "磁盘使用率过高 ({{ $value }}%)"
+          description: "节点 {{ $labels.instance }} 的 {{ $labels.mountpoint }} 使用率超过 85%。"
+
+      # 内存使用率 > 90%
+      - alert: HighMemoryUsage
+        expr: |
+          (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+          service: node
+        annotations:
+          summary: "内存使用率过高 ({{ $value }}%)"
+          description: "节点 {{ $labels.instance }} 内存使用率超过 90%。"
+
+      # CPU 使用率 > 80%
+      - alert: HighCPUUsage
+        expr: |
+          100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: node
+        annotations:
+          summary: "CPU 使用率过高 ({{ $value }}%)"
+          description: "节点 {{ $labels.instance }} CPU 使用率超过 80%。"
+
+      # 备份 CronJob 失败
+      - alert: BackupJobFailed
+        expr: |
+          kube_job_status_failed{job_name=~"officeagent-backup-.*"} > 0
+        for: 1m
+        labels:
+          severity: critical
+          service: backup
+        annotations:
+          summary: "备份任务失败"
+          description: "备份 CronJob 执行失败,请检查备份脚本日志。"

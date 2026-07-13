@@ -1,0 +1,355 @@
+version: '3.8'
+
+# OfficeAgent 生产环境编排(蜂巢化部署 P2-7)
+# 启动: docker compose -f deploy/docker/docker-compose.prod.yml --env-file .env.prod up -d
+#
+# 蜂巢化架构:把单体应用拆为 4 个独立服务(共享同一镜像,不同入口)
+#   1. doc-parser    — 文档解析(OCR/Parse/Chunk/Extract),CPU 密集
+#   2. knowledge     — 知识检索(Embed/向量搜索),GPU/内存密集
+#   3. agent-runner  — 推理调度(Reasoning Engine + Agent 主循环)
+#   4. tool-executor — 工具执行(沙箱 + MCP + Office Expert)
+#
+# 与开发环境差异:
+#   1. 不暴露内部服务端口(PostgreSQL/Redis/Milvus/MinIO/ES 仅内部网络可达)
+#   2. 增加 nginx 反向代理作为 API 网关,统一 443 入口,按路径路由到 4 服务
+#   3. 资源限制 + 各服务独立扩缩(横向扩容请用 K8s Helm Chart)
+#   4. 日志驱动 json-file,自动轮转
+#   5. 关闭 debug 模式
+
+x-app-base: &app-base
+  build:
+    context: ../..
+    dockerfile: deploy/docker/Dockerfile
+  env_file:
+    - ../../.env.prod
+  environment: &app-env
+    DATABASE_URL: postgresql://officeagent:${POSTGRES_PASSWORD}@postgres:5432/officeagent
+    REDIS_HOST: redis
+    REDIS_PORT: 6379
+    REDIS_PASSWORD: ${REDIS_PASSWORD}
+    MILVUS_HOST: milvus
+    MILVUS_PORT: 19530
+    MINIO_ENDPOINT: minio:9000
+    MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+    MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+    ES_HOST: elasticsearch
+    ES_PORT: 9200
+    ES_PASSWORD: ${ES_PASSWORD}
+    GLM_API_KEY: ${GLM_API_KEY:-}
+    OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+    QWEN_API_KEY: ${QWEN_API_KEY:-}
+    JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+    OFFICEAGENT_MODE: ${OFFICEAGENT_MODE:-evolve}
+    SERVICE_ENV: production
+  volumes:
+    - ../../config:/app/config:ro
+    - ../../assets:/app/assets
+    - app_logs:/app/logs
+    - ../../data/uploads:/app/data/uploads
+  restart: always
+  logging:
+    driver: json-file
+    options:
+      max-size: "100m"
+      max-file: "10"
+
+services:
+  # ------------------------------------------------------------------
+  # 基础设施层
+  # ------------------------------------------------------------------
+  postgres:
+    image: postgres:16
+    container_name: officeagent-postgres-prod
+    environment:
+      POSTGRES_DB: officeagent
+      POSTGRES_USER: officeagent
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U officeagent"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+
+  redis:
+    image: redis:7-alpine
+    container_name: officeagent-redis-prod
+    command: redis-server --requirepass ${REDIS_PASSWORD} --maxmemory 512mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.5
+    container_name: officeagent-etcd-prod
+    environment:
+      - ETCD_AUTO_COMPACTION_MODE=revision
+      - ETCD_AUTO_COMPACTION_RETENTION=1000
+      - ETCD_QUOTA_BACKEND_BYTES=4294967296
+      - ETCD_SNAPSHOT_COUNT=50000
+    volumes:
+      - etcd_data:/etcd
+    command: etcd -advertise-client-urls=http://127.0.0.1:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/etcd", "endpoint", "health"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    restart: always
+
+  minio:
+    image: minio/minio:latest
+    container_name: officeagent-minio-prod
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  milvus:
+    image: milvusdb/milvus:v2.3.3
+    container_name: officeagent-milvus-prod
+    command: ["milvus", "run", "standalone"]
+    security_opt:
+      - seccomp:unconfined
+    environment:
+      ETCD_ENDPOINTS: etcd:2379
+      MINIO_ADDRESS: minio:9000
+    volumes:
+      - milvus_data:/var/lib/milvus
+    depends_on:
+      etcd:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
+      interval: 30s
+      start_period: 90s
+      timeout: 20s
+      retries: 3
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.10.0
+    container_name: officeagent-es-prod
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms2g -Xmx2g
+      - xpack.security.enabled=true
+      - ELASTIC_PASSWORD=${ES_PASSWORD}
+      - bootstrap.memory_lock=true
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf -u elastic:${ES_PASSWORD} http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+
+  # ------------------------------------------------------------------
+  # 蜂巢化应用层(4 个独立服务)
+  # ------------------------------------------------------------------
+
+  # 服务 1:doc-parser — 文档解析(OCR/Parse/Chunk/Extract)
+  # CPU 密集型,处理用户上传的文档,产出 chunks + metadata
+  doc-parser:
+    <<: *app-base
+    container_name: officeagent-doc-parser-prod
+    environment:
+      <<: *app-env
+      OFFICEAGENT_SERVICE: doc-parser
+      # Knowledge Pipeline 工作目录
+      PIPELINE_WORKERS: ${DOC_PARSER_WORKERS:-2}
+      # OCR 语言包
+      OCR_LANG: ${OCR_LANG:-chi_sim+eng}
+    command: ["python", "-m", "officeagent.main", "--service", "doc-parser"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    expose:
+      - "8001"
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: "2.0"
+
+  # 服务 2:knowledge — 知识检索(Embed + 向量搜索)
+  # 内存/GPU 密集型,负责 Embedding 与向量检索
+  knowledge:
+    <<: *app-base
+    container_name: officeagent-knowledge-prod
+    environment:
+      <<: *app-env
+      OFFICEAGENT_SERVICE: knowledge
+      # Embedder 配置
+      EMBEDDER_NAME: ${EMBEDDER_NAME:-hashing}
+      EMBEDDER_DIM: ${EMBEDDER_DIM:-256}
+      # 检索参数
+      RETRIEVAL_TOP_K: ${RETRIEVAL_TOP_K:-10}
+    command: ["python", "-m", "officeagent.main", "--service", "knowledge"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      milvus:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    expose:
+      - "8002"
+    deploy:
+      resources:
+        limits:
+          memory: 3G
+          cpus: "1.5"
+
+  # 服务 3:agent-runner — 推理调度(Reasoning + Agent 主循环)
+  # LLM 调用密集型,负责对话编排、ReAct/Plan&Execute
+  agent-runner:
+    <<: *app-base
+    container_name: officeagent-agent-runner-prod
+    environment:
+      <<: *app-env
+      OFFICEAGENT_SERVICE: agent-runner
+      # 推理配置
+      REASONING_MAX_ITERATIONS: ${REASONING_MAX_ITERATIONS:-10}
+      # 思考模式默认关闭(成本控制)
+      DEFAULT_THINK_MODE: ${DEFAULT_THINK_MODE:-false}
+      # Checkpoint 持久化
+      CHECKPOINT_BACKEND: postgres
+    command: ["python", "-m", "officeagent.main", "--service", "agent-runner"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      knowledge:
+        condition: service_started
+      tool-executor:
+        condition: service_started
+    expose:
+      - "8003"
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: "1.0"
+
+  # 服务 4:tool-executor — 工具执行(沙箱 + MCP + Office Expert)
+  # I/O 与文件操作密集型,负责调用 Office 专家与外部 MCP 工具
+  tool-executor:
+    <<: *app-base
+    container_name: officeagent-tool-executor-prod
+    environment:
+      <<: *app-env
+      OFFICEAGENT_SERVICE: tool-executor
+      # 沙箱配置
+      SANDBOX_ENABLED: "true"
+      SANDBOX_TIMEOUT_SECONDS: ${SANDBOX_TIMEOUT:-30}
+      # MCP 配置
+      MCP_SERVERS_CONFIG: /app/config/mcp_servers.yaml
+    command: ["python", "-m", "officeagent.main", "--service", "tool-executor"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    expose:
+      - "8004"
+    # tool-executor 需要访问宿主机 LibreOffice(用于格式转换)
+    # 部署时请确保宿主机已安装 libreoffice 或挂载二进制
+    volumes:
+      - ../../config:/app/config:ro
+      - ../../assets:/app/assets
+      - app_logs:/app/logs
+      - ../../data/uploads:/app/data/uploads
+      - /tmp:/tmp/host:rw  # 沙箱临时目录
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: "1.5"
+
+  # ------------------------------------------------------------------
+  # API 网关层
+  # ------------------------------------------------------------------
+  gateway:
+    image: nginx:1.25-alpine
+    container_name: officeagent-gateway-prod
+    depends_on:
+      - doc-parser
+      - knowledge
+      - agent-runner
+      - tool-executor
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ../../deploy/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../../deploy/nginx/officeagent.conf:/etc/nginx/conf.d/officeagent.conf:ro
+      - ../../deploy/nginx/certs:/etc/nginx/certs:ro
+      - nginx_cache:/var/cache/nginx
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+volumes:
+  postgres_data:
+  redis_data:
+  etcd_data:
+  milvus_data:
+  minio_data:
+  es_data:
+  app_logs:
+  nginx_cache:

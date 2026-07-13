@@ -1,0 +1,85 @@
+# OfficeAgent pre-commit 配置
+# 参考 unstructured 项目,统一使用 ruff 作为代码质量与格式化工具
+# 安装: pip install pre-commit && pre-commit install
+
+default_stages: [pre-commit, pre-push]
+default_language_version:
+  python: python3.11
+
+# 全局排除参考代码与生成产物
+exclude: |
+  (?x)^(
+      _references/.*|
+      src/officeagent/assets/generated/.*|
+      packages/sdk/src/generated/.*|
+      .*\.lock$|
+      .*\.min\.js$|
+      openapi\.json
+  )$
+
+repos:
+  # ---------------------------------------------------------------------------
+  # ruff:代码检查 + 自动格式化(替代 black + isort + flake8)
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.9
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+        stages: [pre-commit, pre-push]
+      - id: ruff-format
+        stages: [pre-commit, pre-push]
+
+  # ---------------------------------------------------------------------------
+  # 通用文件卫生检查
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: _references/
+      - id: end-of-file-fixer
+        exclude: _references/
+      - id: check-yaml
+        args: [--unsafe]
+      - id: check-added-large-files
+        args: [--maxkb=1024]
+      - id: check-merge-conflict
+      - id: check-toml
+      - id: check-json
+        exclude: |
+          (?x)^(
+              _references/.*|
+              .*tsconfig.*|
+              .*\.vscode/.*
+          )$
+      - id: debug-statements
+      - id: requirements-txt-fixer
+
+  # ---------------------------------------------------------------------------
+  # 密钥泄露检测(detect-secrets)
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: [--baseline, .secrets.baseline]
+        exclude: |
+          (?x)^(
+              _references/.*|
+              \.env\.example|
+              \.env\.prod\.example|
+              .*\.lock$|
+              .*package-lock\.json|
+              .*pnpm-lock\.yaml
+          )$
+
+  # ---------------------------------------------------------------------------
+  # 秘密扫描(gitleaks)
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.19.1
+    hooks:
+      - id: gitleaks
+        args: [--config, .gitleaks.toml]
+        exclude: _references/

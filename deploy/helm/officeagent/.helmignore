@@ -1,0 +1,23 @@
+# Patterns to ignore when packaging the Helm chart.
+
+# Source control
+.git/
+.gitignore
+.github/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Helm
+Chart.lock
+charts/*.tgz
+
+# Documentation
+README.md.gotmpl

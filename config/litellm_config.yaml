@@ -1,0 +1,176 @@
+# ====================================================================
+# LiteLLM 模型路由配置 (OfficeAgent GPU 栈)
+# ====================================================================
+# 文档: https://docs.litellm.ai/docs/proxy/configs
+# 定位:
+#   agent-runner 的 LLMRouter 调用 LiteLLM 统一网关,
+#   LiteLLM 按本配置路由到 vLLM(本地 GPU)/ Cloud / KTransformers。
+#
+# 模型列表(前端/Agent 调用的逻辑模型名):
+#   - officeagent-llm       主力对话模型(本地 vLLM,FP8 量化)
+#   - officeagent-llm-lite  轻量压缩模型(Headroom 用)
+#   - officeagent-llm-pro   高质量模型(云端降级,DeepSeek/GLM)
+#   - officeagent-embedding 向量模型(本地 vLLM Embedding)
+# ====================================================================
+
+model_list:
+  # ------------------------------------------------------------------
+  # 主力对话模型:本地 vLLM 优先,云端降级
+  # ------------------------------------------------------------------
+  - model_name: officeagent-llm
+    # 主路由:本地 vLLM(GPU 推理,延迟最低)
+    litellm_params:
+      model: openai/officeagent-llm
+      api_base: http://vllm:8000/v1
+      api_key: "vllm-no-key-needed"
+      # 限流:单用户最大并发
+      rpm: 600
+      tpm: 2000000
+      # 超时(秒)
+      timeout: 120
+      # 重试
+      num_retries: 2
+      # 成本追踪标签
+      metadata:
+        backend: vllm-local
+        tier: primary
+
+  - model_name: officeagent-llm
+    # 降级1:DeepSeek 云端(高质量,成本低)
+    litellm_params:
+      model: deepseek/deepseek-chat
+      api_key: os.environ/DEEPSEEK_API_KEY
+      rpm: 300
+      timeout: 90
+      num_retries: 2
+      metadata:
+        backend: deepseek-cloud
+        tier: fallback-1
+
+  - model_name: officeagent-llm
+    # 降级2:GLM 云端(国产备案,合规优先)
+    litellm_params:
+      model: openai/glm-4-plus
+      api_base: https://open.bigmodel.cn/api/paas/v4
+      api_key: os.environ/GLM_API_KEY
+      rpm: 300
+      timeout: 90
+      num_retries: 2
+      metadata:
+        backend: glm-cloud
+        tier: fallback-2
+
+  # ------------------------------------------------------------------
+  # 轻量模型:Headroom Token 压缩用(走本地 vLLM 小模型)
+  # ------------------------------------------------------------------
+  - model_name: officeagent-llm-lite
+    litellm_params:
+      model: openai/officeagent-llm
+      api_base: http://vllm:8000/v1
+      api_key: "vllm-no-key-needed"
+      rpm: 1000
+      timeout: 30
+      metadata:
+        backend: vllm-local
+        usage: compression
+
+  # ------------------------------------------------------------------
+  # 高质量模型:复杂推理任务(云端主力)
+  # ------------------------------------------------------------------
+  - model_name: officeagent-llm-pro
+    # 主路由:DeepSeek(推理能力强)
+    litellm_params:
+      model: deepseek/deepseek-reasoner
+      api_key: os.environ/DEEPSEEK_API_KEY
+      rpm: 200
+      timeout: 180
+      metadata:
+        backend: deepseek-cloud
+        tier: primary-pro
+
+  - model_name: officeagent-llm-pro
+    # 降级:GLM-4 思考模式
+    litellm_params:
+      model: openai/glm-4-plus
+      api_base: https://open.bigmodel.cn/api/paas/v4
+      api_key: os.environ/GLM_API_KEY
+      rpm: 200
+      timeout: 180
+      metadata:
+        backend: glm-cloud
+        tier: fallback-pro
+
+  # ------------------------------------------------------------------
+  # 低显存兜底:KTransformers(仅 low-vram profile 启用时可用)
+  # ------------------------------------------------------------------
+  - model_name: officeagent-llm-lowvram
+    litellm_params:
+      model: openai/officeagent-llm
+      api_base: http://ktransformers:8000/v1
+      api_key: "ktransformers-no-key-needed"
+      rpm: 60
+      timeout: 300
+      metadata:
+        backend: ktransformers-cpu-gpu
+        tier: low-vram-fallback
+
+# ====================================================================
+# 路由策略
+# ====================================================================
+router_settings:
+  # 路由策略:基于延迟的智能路由
+  routing_strategy: latency-based-routing
+  # 健康检查间隔(秒)
+  num_retries: 2
+  # 冷启动超时
+  timeout: 30
+  # 重试退避
+  retry_after: 5
+  # 故障 fallback(主链全挂时用)
+  fallbacks:
+    - officeagent-llm:
+        - deepseek/deepseek-chat
+        - openai/glm-4-plus
+        - officeagent-llm-lowvram
+    - officeagent-llm-pro:
+        - openai/glm-4-plus
+  # 冷却时间(熔断后多久重试)
+  cooldown_time: 60
+
+# ====================================================================
+# 限流策略(防少数用户占满 GPU)
+# ====================================================================
+litellm_settings:
+  # 全局并发上限
+  max_budget: 1000
+  # 按用户限流(基于 API key)
+  user_api_key_rate_limit:
+    officeagent-llm:
+      rpm: 60
+      tpm: 200000
+    officeagent-llm-pro:
+      rpm: 20
+      tpm: 100000
+
+# ====================================================================
+# 可观测:Langfuse 全链路追踪
+# ====================================================================
+langfuse_settings:
+  # Langfuse 公钥/私钥(在 Langfuse 控制台创建项目获取)
+  public_key: os.environ/LANGFUSE_PUBLIC_KEY
+  secret_key: os.environ/LANGFUSE_SECRET_KEY
+  # Langfuse 服务地址
+  host: http://langfuse:3000
+  # 追踪所有 LLM 调用
+  flush_interval: 1
+
+# ====================================================================
+# 日志与回调
+# ====================================================================
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  database_url: os.environ/DATABASE_URL
+  # 成本追踪
+  spend_report_frequency: daily
+  # 审计日志
+  audit_log: true

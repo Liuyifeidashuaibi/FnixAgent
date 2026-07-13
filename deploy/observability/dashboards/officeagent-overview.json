@@ -1,0 +1,202 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "OfficeAgent 全链路监控大盘 - Phase 2.10",
+  "editable": true,
+  "graphTooltip": 1,
+  "id": null,
+  "panels": [
+    {
+      "title": "HTTP QPS (请求/秒)",
+      "type": "stat",
+      "datasource": "Prometheus",
+      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
+      "targets": [
+        {"expr": "sum(rate(officeagent_http_requests_total[1m]))", "legendFormat": "QPS"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "reqps"}}
+    },
+    {
+      "title": "P99 延迟 (秒)",
+      "type": "stat",
+      "datasource": "Prometheus",
+      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0},
+      "targets": [
+        {"expr": "histogram_quantile(0.99, sum(rate(officeagent_http_request_duration_seconds_bucket[5m])) by (le))", "legendFormat": "P99"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "s", "thresholds": {"steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 1}, {"color": "red", "value": 2}]}}}
+    },
+    {
+      "title": "5xx 错误率",
+      "type": "stat",
+      "datasource": "Prometheus",
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0},
+      "targets": [
+        {"expr": "sum(rate(officeagent_http_requests_total{status=~\"5..\"}[5m])) / sum(rate(officeagent_http_requests_total[5m]))", "legendFormat": "5xx %"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "percentunit", "thresholds": {"steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 0.01}, {"color": "red", "value": 0.05}]}}}
+    },
+    {
+      "title": "活跃请求",
+      "type": "stat",
+      "datasource": "Prometheus",
+      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0},
+      "targets": [
+        {"expr": "sum(officeagent_http_requests_in_progress)", "legendFormat": "In-Progress"}
+      ]
+    },
+    {
+      "title": "HTTP 请求趋势 (按状态码)",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+      "targets": [
+        {"expr": "sum(rate(officeagent_http_requests_total[5m])) by (status)", "legendFormat": "{{status}}"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "reqps"}}
+    },
+    {
+      "title": "HTTP 延迟分布 (P50/P90/P99)",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+      "targets": [
+        {"expr": "histogram_quantile(0.50, sum(rate(officeagent_http_request_duration_seconds_bucket[5m])) by (le))", "legendFormat": "P50"},
+        {"expr": "histogram_quantile(0.90, sum(rate(officeagent_http_request_duration_seconds_bucket[5m])) by (le))", "legendFormat": "P90"},
+        {"expr": "histogram_quantile(0.99, sum(rate(officeagent_http_request_duration_seconds_bucket[5m])) by (le))", "legendFormat": "P99"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "s"}}
+    },
+    {
+      "title": "聊天消息 QPS (按模式)",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {"h": 8, "w": 8, "x": 0, "y": 12},
+      "targets": [
+        {"expr": "sum(rate(officeagent_chat_messages_total[5m])) by (mode)", "legendFormat": "{{mode}}"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "reqps"}}
+    },
+    {
+      "title": "工具执行 (成功率 + 延迟)",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {"h": 8, "w": 8, "x": 8, "y": 12},
+      "targets": [
+        {"expr": "sum(rate(officeagent_tool_executions_total{status=\"success\"}[5m])) by (tool_name)", "legendFormat": "{{tool_name}} success"},
+        {"expr": "sum(rate(officeagent_tool_executions_total{status=\"error\"}[5m])) by (tool_name)", "legendFormat": "{{tool_name}} error"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "ops"}}
+    },
+    {
+      "title": "LLM 调用 (按 Provider)",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {"h": 8, "w": 8, "x": 16, "y": 12},
+      "targets": [
+        {"expr": "sum(rate(officeagent_llm_calls_total[5m])) by (provider)", "legendFormat": "{{provider}} calls"},
+        {"expr": "sum(rate(officeagent_llm_errors_total[5m])) by (provider)", "legendFormat": "{{provider}} errors"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "ops"}}
+    },
+    {
+      "title": "登录尝试 (成功 vs 失败)",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {"h": 8, "w": 8, "x": 0, "y": 20},
+      "targets": [
+        {"expr": "sum(rate(officeagent_login_attempts_total{result=\"success\"}[5m])) by (method)", "legendFormat": "{{method}} success"},
+        {"expr": "sum(rate(officeagent_login_attempts_total{result=\"failure\"}[5m])) by (method)", "legendFormat": "{{method}} failure"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "ops"}}
+    },
+    {
+      "title": "安全事件 (注入 + 敏感词 + 限流 + 权限拒绝)",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {"h": 8, "w": 8, "x": 8, "y": 20},
+      "targets": [
+        {"expr": "sum(rate(officeagent_injection_blocked_total[5m]))", "legendFormat": "Injection Blocked"},
+        {"expr": "sum(rate(officeagent_sensitive_hit_total[5m]))", "legendFormat": "Sensitive Hit"},
+        {"expr": "sum(rate(officeagent_rate_limit_triggered_total[5m]))", "legendFormat": "Rate Limited"},
+        {"expr": "sum(rate(officeagent_permission_denied_total[5m]))", "legendFormat": "Permission Denied"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "ops"}}
+    },
+    {
+      "title": "MFA 验证 (成功 vs 失败)",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {"h": 8, "w": 8, "x": 16, "y": 20},
+      "targets": [
+        {"expr": "sum(rate(officeagent_mfa_challenge_total{result=\"success\"}[5m])) by (factor_type)", "legendFormat": "{{factor_type}} success"},
+        {"expr": "sum(rate(officeagent_mfa_challenge_total{result=\"failure\"}[5m])) by (factor_type)", "legendFormat": "{{factor_type}} failure"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "ops"}}
+    },
+    {
+      "title": "LLM Token 用量 (按 Provider)",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 28},
+      "targets": [
+        {"expr": "sum(rate(officeagent_llm_tokens_used_total[5m])) by (provider, type)", "legendFormat": "{{provider}} {{type}}"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "ops"}}
+    },
+    {
+      "title": "审计日志写入速率",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 28},
+      "targets": [
+        {"expr": "sum(rate(officeagent_audit_log_entries_total[5m])) by (action)", "legendFormat": "{{action}}"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "ops"}}
+    },
+    {
+      "title": "拓扑图增长 (节点 + 边)",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 36},
+      "targets": [
+        {"expr": "officeagent_topology_node_count", "legendFormat": "Nodes"},
+        {"expr": "officeagent_topology_edge_count", "legendFormat": "Edges"}
+      ]
+    },
+    {
+      "title": "飞轮触发 (按阶段)",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 36},
+      "targets": [
+        {"expr": "sum(rate(officeagent_flywheel_trigger_total[5m])) by (stage)", "legendFormat": "{{stage}}"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "ops"}}
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["officeagent", "overview"],
+  "templating": {
+    "list": []
+  },
+  "time": {"from": "now-1h", "to": "now"},
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "OfficeAgent 全链路监控",
+  "uid": "officeagent-overview",
+  "version": 1
+}

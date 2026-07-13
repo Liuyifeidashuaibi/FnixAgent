@@ -1,0 +1,20 @@
+{{/* OfficeAgent 配置 ConfigMap(非敏感配置) */}}
+{{- if .Values.officeagent.configMap.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "officeagent.fullname" . }}-config
+  labels:
+    {{- include "officeagent.labels" . | nindent 4 }}
+data:
+  {{- range $key, $value := .Values.env }}
+  {{ $key }}: {{ $value | quote }}
+  {{- end }}
+  {{- /* 数据库 URL 占位符,实际值由 envFrom Secret 注入后拼接 */}}
+  {{- if not .Values.env.DATABASE_URL }}
+  DATABASE_URL_PLACEHOLDER: "true"
+  {{- end }}
+  {{- /* 配置文件内容 */}}
+  settings.yaml: |
+    {{- .Values.officeagent.configMap.settings | toYaml | nindent 4 }}
+{{- end -}}

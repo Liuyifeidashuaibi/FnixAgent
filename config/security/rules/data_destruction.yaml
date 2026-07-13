@@ -1,0 +1,20 @@
+title: 批量数据删除行为
+id: 5f3a2b1c-1234-5678-9abc-def012345678
+status: stable
+description: 检测批量删除文件或数据库操作
+author: OfficeAgent
+date: 2026-07-07
+level: high
+detection:
+  selection_batch_delete:
+    action|startswith: data.delete
+    detail.batch: true
+  selection_drop:
+    action|contains: drop
+    detail.target|contains: table
+  condition: selection_batch_delete or selection_drop
+mitre:
+  - T1485
+  - TA0040
+falsepositives:
+  - 合法的批量清理任务

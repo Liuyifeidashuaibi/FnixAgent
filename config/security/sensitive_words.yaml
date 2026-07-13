@@ -1,0 +1,28 @@
+# 敏感词库(占位,待填充)
+# 生产环境需扩充为完整词库
+
+political:
+  - 敏感词1
+  - 敏感词2
+
+violence:
+  - 敏感词3
+
+pornography:
+  - 敏感词4
+
+gambling:
+  - 敏感词5
+
+drugs:
+  - 敏感词6
+
+fraud:
+  - 敏感词7
+
+advertising:
+  - 敏感词8
+
+insult:
+  - 敏感词9
+  - 敏感词10

@@ -1,0 +1,86 @@
+# OfficeAgent 依赖清单
+
+# Web框架
+fastapi==0.104.0
+uvicorn[standard]==0.24.0
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# 数据库
+sqlalchemy==2.0.23
+psycopg2-binary==2.9.9
+alembic==1.12.1
+
+# 缓存
+redis==5.0.1
+
+# LLM
+openai==1.3.0
+tiktoken==0.5.2
+
+# Agent 编排(LangGraph 生态)
+langgraph>=0.2.0
+langchain-core>=0.1.0
+langchain-openai>=0.1.0
+
+# 文档处理
+python-docx==0.8.11
+reportlab==4.0.7
+pypdf==3.17.0
+
+# 数据可视化
+matplotlib==3.8.2
+plotly==5.18.0
+
+# 搜索引擎
+elasticsearch==8.10.0
+
+# 文件存储
+minio==7.2.0
+
+# 向量数据库
+pymilvus==2.3.0
+
+# 工具调用
+requests==2.31.0
+
+# 安全(Phase 0.4 已切换为 Argon2id + RSA + AES-256-GCM)
+argon2-cffi==23.1.0
+cryptography==42.0.0
+
+# 监控
+prometheus-client==0.19.0
+
+# 日志(P0-01 ASGI 网关审计使用)
+loguru==0.7.3
+
+# 测试
+pytest==7.4.3
+pytest-cov==4.1.0
+pytest-asyncio==0.21.0
+
+# 代码质量
+flake8==6.1.0
+black==23.11.0
+mypy==1.7.0
+
+# 配置
+yaml==0.2.5
+
+# 其他
+python-dateutil==2.8.2
+pytz==2023.3
+
+# LDAP/AD 域集成(Phase 2.2)
+ldap3==2.9.1
+
+# SSO 单点登录(Phase 2.3)
+# - OAuth2.0 直接使用标准库 requests(已在依赖中)
+# - SAML 2.0 SP 使用 python3-saml(可选,延迟导入)
+python3-saml==1.16.0; python_version >= "3.8"
+
+# MFA 多因素认证(Phase 2.4)
+# - TOTP 使用 pyotp(Google Authenticator 兼容)
+# - 短信/邮箱验证码使用标准库 + SMTP,无第三方依赖
+# - 二维码 URI 用标准库 urllib 构建(可选 qrcode 库渲染 PNG)
+pyotp==2.9.0

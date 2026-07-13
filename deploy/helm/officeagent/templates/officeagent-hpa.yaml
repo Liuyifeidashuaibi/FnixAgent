@@ -1,0 +1,28 @@
+{{- if .Values.officeagent.hpa.enabled -}}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "officeagent.fullname" . }}
+  labels:
+    {{- include "officeagent.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "officeagent.fullname" . }}
+  minReplicas: {{ .Values.officeagent.hpa.minReplicas }}
+  maxReplicas: {{ .Values.officeagent.hpa.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.officeagent.hpa.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.officeagent.hpa.targetMemoryUtilizationPercentage }}
+{{- end -}}

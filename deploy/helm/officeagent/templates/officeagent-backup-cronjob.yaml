@@ -1,0 +1,178 @@
+{{- if .Values.backup.enabled }}
+# OfficeAgent 定时备份 CronJob — Phase 2.9
+#
+# 每日在指定时间(默认 UTC 19:00 = 北京 03:00)执行全量备份。
+# 备份文件存储在专用 PVC,并同步到异地对象存储(若配置)。
+#
+# 触发告警的条件:
+#   - CronJob 连续 3 次失败(Prometheus alertmanager 规则)
+#   - 异地同步失败(backup.sh 退出码 4)
+
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "officeagent.fullname" . }}-backup
+  labels:
+    {{- include "officeagent.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backup
+spec:
+  schedule: {{ .Values.backup.schedule | quote }}
+  timeZone: "UTC"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: {{ .Values.backup.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.backup.failedJobsHistoryLimit }}
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 3600
+      template:
+        metadata:
+          labels:
+            {{- include "officeagent.selectorLabels" . | nindent 12 }}
+            app.kubernetes.io/component: backup
+        spec:
+          restartPolicy: OnFailure
+          serviceAccountName: {{ include "officeagent.serviceAccountName" . }}
+          securityContext:
+            {{- toYaml .Values.podSecurityContext | nindent 12 }}
+          containers:
+            - name: backup
+              image: "{{ .Values.officeagent.image.repository }}:{{ .Values.officeagent.image.tag | default .Chart.AppVersion }}"
+              imagePullPolicy: {{ .Values.officeagent.image.pullPolicy }}
+              securityContext:
+                {{- toYaml .Values.securityContext | nindent 16 }}
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -e
+                  echo "[$(date)] OfficeAgent backup job started"
+                  /app/deploy/scripts/backup.sh --component postgres,redis,minio,config
+                  EXIT_CODE=$?
+                  echo "[$(date)] Backup job finished with exit code ${EXIT_CODE}"
+                  exit ${EXIT_CODE}
+              env:
+                # PostgreSQL
+                - name: PG_HOST
+                  value: {{ include "officeagent.fullname" . }}-postgres
+                - name: PG_PORT
+                  value: "5432"
+                - name: PG_USER
+                  value: {{ .Values.externalDatabase.user | default "officeagent" | quote }}
+                - name: PG_DB
+                  value: {{ .Values.externalDatabase.database | default "officeagent" | quote }}
+                - name: PG_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "officeagent.secretName" . }}
+                      key: {{ .Values.externalDatabase.passwordKey | default "POSTGRES_PASSWORD" }}
+                # Redis
+                - name: REDIS_HOST
+                  value: {{ include "officeagent.fullname" . }}-redis
+                - name: REDIS_PORT
+                  value: "6379"
+                - name: REDIS_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "officeagent.secretName" . }}
+                      key: {{ .Values.externalRedis.passwordKey | default "REDIS_PASSWORD" }}
+                # MinIO
+                {{- if .Values.minio.enabled }}
+                - name: MINIO_ENDPOINT
+                  value: "http://{{ include "officeagent.fullname" . }}-minio:9000"
+                - name: MINIO_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "officeagent.fullname" . }}-minio
+                      key: root-user
+                - name: MINIO_SECRET_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "officeagent.fullname" . }}-minio
+                      key: root-password
+                {{- else }}
+                - name: MINIO_ENDPOINT
+                  value: {{ .Values.minio.endpoint | quote }}
+                - name: MINIO_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "officeagent.secretName" . }}
+                      key: {{ .Values.minio.accessKeyKey | default "MINIO_ACCESS_KEY" }}
+                - name: MINIO_SECRET_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "officeagent.secretName" . }}
+                      key: {{ .Values.minio.secretKeyKey | default "MINIO_SECRET_KEY" }}
+                {{- end }}
+                # 备份策略
+                - name: BACKUP_ROOT
+                  value: /backups
+                - name: RETENTION_DAYS_LOCAL
+                  value: {{ .Values.backup.retentionDays | quote }}
+                {{- if .Values.backup.remote.endpoint }}
+                - name: REMOTE_ENDPOINT
+                  value: {{ .Values.backup.remote.endpoint | quote }}
+                - name: REMOTE_BUCKET
+                  value: {{ .Values.backup.remote.bucket | quote }}
+                - name: REMOTE_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "officeagent.secretName" . }}
+                      key: backup-remote-access-key
+                - name: REMOTE_SECRET_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "officeagent.secretName" . }}
+                      key: backup-remote-secret-key
+                {{- end }}
+              volumeMounts:
+                - name: backup-data
+                  mountPath: /backups
+                - name: app-scripts
+                  mountPath: /app/deploy/scripts
+                  readOnly: true
+              resources:
+                {{- toYaml .Values.backup.resources | nindent 16 }}
+          volumes:
+            - name: backup-data
+              persistentVolumeClaim:
+                claimName: {{ include "officeagent.fullname" . }}-backup
+            - name: app-scripts
+              configMap:
+                name: {{ include "officeagent.fullname" . }}-scripts
+                defaultMode: 0755
+{{- end }}
+---
+{{- if .Values.backup.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "officeagent.fullname" . }}-backup
+  labels:
+    {{- include "officeagent.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backup
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.backup.storage.size }}
+  {{- if .Values.backup.storage.storageClass }}
+  storageClassName: {{ .Values.backup.storage.storageClass | quote }}
+  {{- end }}
+{{- end }}
+---
+{{- if .Values.backup.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "officeagent.fullname" . }}-scripts
+  labels:
+    {{- include "officeagent.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backup
+data:
+  backup.sh: |-
+{{ .Files.Get "scripts/backup.sh" | default "" | indent 4 }}
+  restore.sh: |-
+{{ .Files.Get "scripts/restore.sh" | default "" | indent 4 }}
+{{- end }}
