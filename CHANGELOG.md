@@ -16,6 +16,8 @@
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-07-13
+
 ### Added
 
 - **协议升级**:Apache 2.0 协议替换原 MIT 协议,提供专利授权条款
@@ -68,3 +70,7 @@
 - 安全基线:Argon2id 密码哈希、RSA-2048 传输加密、AES-256-GCM 资产加密
 - 身份认证:LDAP/AD 域集成、SSO(SAML 2.0 / OAuth 2.0)、MFA(TOTP / 短信)
 - 部署:Docker / docker-compose / Helm / Terraform 多环境部署支持
+
+[Unreleased]: https://github.com/Liuyifeidashuaibi/FnixAgent/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/Liuyifeidashuaibi/FnixAgent/compare/v1.0.0...v1.1.0
+[1.0.0]: https://github.com/Liuyifeidashuaibi/FnixAgent/releases/tag/v1.0.0

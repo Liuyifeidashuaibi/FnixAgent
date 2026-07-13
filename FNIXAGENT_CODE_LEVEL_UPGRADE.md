@@ -1,6 +1,6 @@
-﻿# FnixAgent 代码级升级方案(顶级 Agent 改造蓝图)
+# FnixAgent 代码级升级方案(顶级 Agent 改造蓝图)
 
-> 本文档是 [FNIXAGENT_TOP_TIER_UPGRADE_PLAN.md](file:///e:/Officeagent/FNIXAGENT/FNIXAGENT_TOP_TIER_UPGRADE_PLAN.md) 的代码级补充,基于对 LangGraph / OpenAI Agents SDK / PydanticAI / MetaGPT / AgentScope 五大顶级框架源码的深度研究,结合 FnixAgent 现状代码调研(精确到行号),给出具体到类/接口/文件路径的改造方案。
+> 本文档是 [FNIXAGENT_TOP_TIER_UPGRADE_PLAN.md](./FNIXAGENT_TOP_TIER_UPGRADE_PLAN.md) 的代码级补充,基于对 LangGraph / OpenAI Agents SDK / PydanticAI / MetaGPT / AgentScope 五大顶级框架源码的深度研究,结合 FnixAgent 现状代码调研(精确到行号),给出具体到类/接口/文件路径的改造方案。
 >
 > **核心哲学(借鉴 AgentScope 新版)**:单 Agent 极致健壮 + 多 Agent 平滑扩展 —— 多 Agent 所需的全部原语,都应在单 Agent 阶段就内建,避免 P3 返工。
 

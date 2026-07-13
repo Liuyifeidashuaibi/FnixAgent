@@ -24,8 +24,8 @@ help:
 	@echo "  make install-dev     安装开发依赖(含测试/格式化/类型检查)"
 	@echo "  make test            运行测试"
 	@echo "  make test-cov        运行测试 + 覆盖率报告"
-	@echo "  make lint            代码检查(flake8 + mypy)"
-	@echo "  make format          代码格式化(black + isort)"
+	@echo "  make lint            代码检查(ruff)"
+	@echo "  make format          代码格式化(ruff)"
 	@echo ""
 	@echo "  数据库迁移(Phase 0.3):"
 	@echo "  make migrate             应用所有未执行的迁移(= migrate-upgrade)"
@@ -69,12 +69,12 @@ test-cov:
 	$(PYTHON) -m pytest tests/ --cov=src/fnixagent --cov-report=term-missing --cov-report=html
 
 lint:
-	$(PYTHON) -m flake8 src/ tests/ --max-line-length=100 --extend-ignore=E203,W503
-	$(PYTHON) -m mypy src/fnixagent/
+	$(PYTHON) -m ruff check src/ tests/
+	$(PYTHON) -m pyright src/fnixagent/
 
 format:
-	$(PYTHON) -m black src/ tests/ --line-length 100
-	$(PYTHON) -m isort src/ tests/ --profile black --line-length 100
+	$(PYTHON) -m ruff check --fix src/ tests/
+	$(PYTHON) -m ruff format src/ tests/
 
 # ---------------------------------------------------------------------------
 # 数据库迁移(Phase 0.3)

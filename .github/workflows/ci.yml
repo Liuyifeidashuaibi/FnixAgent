@@ -59,7 +59,7 @@ jobs:
         run: pip install pyright
 
       - name: Pyright type check
-        run: pyright src/fnixagent/ || true
+        run: pyright src/fnixagent/
 
   # ---------------------------------------------------------------------------
   # 单元测试 + 集成测试(矩阵:3.11 / 3.12 / 3.13)
@@ -128,10 +128,10 @@ jobs:
         run: pip install bandit pip-audit
 
       - name: Bandit static analysis
-        run: bandit -r src/ -f json -o bandit-report.json || true
+        run: bandit -r src/ -ll -f json -o bandit-report.json
 
       - name: pip-audit dependency scan
-        run: pip-audit -r requirements.txt || true
+        run: pip-audit -r requirements.txt
 
       - name: Upload bandit report
         if: always()

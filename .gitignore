@@ -71,3 +71,15 @@ _dbg_*.png
 # 操作系统
 .DS_Store
 Thumbs.db
+
+# 日志文件
+*.log
+
+# 私钥文件通配
+*.private.pem
+*.private.key
+
+# 运行时数据(保留种子数据)
+data/cache/
+data/db/
+data/logs/

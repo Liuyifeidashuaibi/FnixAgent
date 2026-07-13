@@ -2,6 +2,7 @@
   "name": "fnixagent-monorepo",
   "version": "1.0.0",
   "private": true,
+  "license": "Apache-2.0",
   "description": "FnixAgent 桌面客户端 monorepo(Vite + React 18 + TS + Electron)",
   "packageManager": "pnpm@9.15.9",
   "engines": {

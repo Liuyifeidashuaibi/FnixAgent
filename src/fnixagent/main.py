@@ -98,13 +98,13 @@ def load_yaml_config() -> dict:
 async def lifespan(app: FastAPI):
     """应用生命周期: 启动时构建调度器,关闭时清理。
 
-    模式选择(通过环境变量 fnixagent_MODE):
+    模式选择(通过环境变量 FNIXAGENT_MODE):
       - "legacy"  (默认): 仅初始化传统 AgentScheduler
       - "evolve"         : 仅初始化自进化 GraphComponents
       - "both"           : 两者皆初始化(开发/对比场景)
     """
     settings = Settings()
-    mode = os.getenv("fnixagent_MODE", "legacy").lower()
+    mode = os.getenv("FNIXAGENT_MODE", "legacy").lower()
     print(f"[main] 启动 {settings.service_name} (env={settings.service_env}, mode={mode})")
 
     app.state.settings = settings

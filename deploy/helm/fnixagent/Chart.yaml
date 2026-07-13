@@ -7,17 +7,16 @@ description: |
 type: application
 version: 0.1.0
 appVersion: "1.0.0"
-home: https://github.com/fnixagent/fnixagent
+home: https://github.com/Liuyifeidashuaibi/FnixAgent
 maintainers:
   - name: fnixagent Team
-    email: dev@fnixagent.com
+    email: dev@fnixagent.dev
 keywords:
   - fnixagent
   - ai
   - agent
   - llm
   - productivity
-icon: https://fnixagent.com/logo.png
 
 # 子 Chart 依赖(默认禁用,生产环境推荐使用云托管数据库)
 # 启用方式:在 values.yaml 中设置 postgres.enabled: true / redis.enabled: true

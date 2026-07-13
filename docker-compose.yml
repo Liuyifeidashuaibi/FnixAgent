@@ -168,7 +168,7 @@ services:
       QWEN_API_KEY: ${QWEN_API_KEY:-}
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:-fnixagent-dev-secret-change-me}
-      fnixagent_MODE: ${fnixagent_MODE:-legacy}
+      FNIXAGENT_MODE: ${FNIXAGENT_MODE:-legacy}
       SERVICE_ENV: development
     ports:
       - "8000:8000"

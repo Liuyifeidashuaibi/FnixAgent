@@ -90,4 +90,4 @@ FnixAgent 当前为社区驱动的开源项目,暂无现金漏洞奖励计划。
 ## 联系方式
 
 - 安全邮箱:[security@fnixagent.dev](mailto:security@fnixagent.dev)
-- 公开议题(非敏感):[GitHub Issues](https://github.com/fnixagent/fnixagent/issues)
+- 公开议题(非敏感):[GitHub Issues](https://github.com/Liuyifeidashuaibi/FnixAgent/issues)

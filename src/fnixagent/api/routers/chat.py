@@ -166,7 +166,7 @@ async def stream_chat(request: ChatRequest, http_request: Request):
     # Phase 2.10: 记录聊天消息指标
     try:
         from fnixagent.core.observability.metrics import record_chat_message
-        mode = os.getenv("fnixagent_MODE", "legacy").lower()
+        mode = os.getenv("FNIXAGENT_MODE", "legacy").lower()
         record_chat_message(mode=mode)
     except Exception:
         pass

@@ -284,7 +284,7 @@ async def get_system_info(_admin: dict = Depends(require_admin)):
             "storage_mode": storage_mode,
             "python_version": f"{os.sys.version_info.major}.{os.sys.version_info.minor}.{os.sys.version_info.micro}",
             "environment": os.getenv("fnixagent_ENV", "development"),
-            "mode": os.getenv("fnixagent_MODE", "legacy"),
+            "mode": os.getenv("FNIXAGENT_MODE", "legacy"),
         },
     )
 

@@ -89,7 +89,7 @@ fnixagent:
 
 # 环境变量(非敏感)
 env:
-  fnixagent_MODE: evolve
+  FNIXAGENT_MODE: evolve
   SERVICE_ENV: production
   # 数据库连接(指向集群内 postgres 或外部 DATABASE_URL)
   DATABASE_URL: ""  # 留空则由 postgres 子 Chart 自动注入

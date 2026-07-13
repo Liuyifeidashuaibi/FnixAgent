@@ -1,11 +1,15 @@
 # FnixAgent - 智能办公助手
 
+[![CI](https://github.com/Liuyifeidashuaibi/FnixAgent/actions/workflows/ci.yml/badge.svg)](https://github.com/Liuyifeidashuaibi/FnixAgent/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+![Python](https://img.shields.io/badge/python-3.11+-blue.svg)
+
 > 面向学习/教育/办公场景的智能 Agent,核心能力包括论文文献检索、Word编辑、格式转换、图表生成、PDF生成、文档解析、学习辅助问答。
 
 ## 项目结构
 
 ```
-FNIXAGENT/
+FnixAgent/
 ├── config/                  # 配置文件
 │   ├── settings.yaml        # 全局配置
 │   ├── prompts/             # Prompt模板
@@ -22,7 +26,8 @@ FNIXAGENT/
 ├── deploy/                  # 部署配置
 ├── docker-compose.yml       # Docker编排
 ├── Makefile                 # 构建脚本
-└── requirements.txt         # 依赖清单
+├── requirements.txt         # 依赖清单
+└── _references/             # 第三方参考项目
 ```
 
 ## 快速开始
@@ -31,8 +36,8 @@ FNIXAGENT/
 
 ```bash
 # 克隆项目
-git clone https://github.com/your-org/fnixagent.git
-cd fnixagent
+git clone https://github.com/Liuyifeidashuaibi/FnixAgent.git
+cd FnixAgent
 
 # 安装依赖
 pip install -r requirements.txt
@@ -142,12 +147,23 @@ make docker-clean
 | MINIO_SECRET_KEY | MinIO密钥 | ✅ |
 | GLM_API_KEY | GLM API密钥 | ✅ |
 | JWT_SECRET_KEY | JWT密钥 | ✅ |
+| DEEPSEEK_API_KEY | DeepSeek API密钥 | ❌ |
+| ES_PASSWORD | Elasticsearch密码 | ✅ |
+
+## 社区
+
+- [CONTRIBUTING.md](CONTRIBUTING.md) - 贡献指南
+- [SECURITY.md](SECURITY.md) - 安全策略
+- [CHANGELOG.md](CHANGELOG.md) - 变更日志
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) - 行为准则
+- [ARCHITECTURE.md](ARCHITECTURE.md) - 架构设计
+- [DEVELOPMENT.md](DEVELOPMENT.md) - 开发指南
 
 ## 许可证
 
-MIT License
+Apache License 2.0 - 详见 [LICENSE](LICENSE)
 
 ## 联系方式
 
-- 项目主页: https://github.com/your-org/fnixagent
-- 问题反馈: https://github.com/your-org/fnixagent/issues
+- 项目主页: https://github.com/Liuyifeidashuaibi/FnixAgent
+- 问题反馈: https://github.com/Liuyifeidashuaibi/FnixAgent/issues

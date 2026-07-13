@@ -752,7 +752,7 @@ FNIXAGENT/
 
 | 方法 | 路径 | 说明 | 出参 |
 |------|------|------|------|
-| GET | `/` | 服务信息 | `{"name": "FnixAgent", "version": "1.0.0", "status": "running", "docs": "/docs"}` |
+| GET | `/` | 服务信息 | `{"name": "FnixAgent", "version": "1.1.0", "status": "running", "docs": "/docs"}` |
 | GET | `/health` | 健康检查 | `{"status": "healthy", "service": "fnixagent", "uptime": "..."}` |
 | GET | `/stats` | 运行统计 | `{"llm": {...}, "memory": {...}, "tools": {"count": N}}` |
 | GET | `/docs` | Swagger UI | 交互式 API 文档 |
@@ -916,7 +916,7 @@ docker run -d \
 | `make install` | 安装依赖 |
 | `make dev` | 启动开发服务 |
 | `make test` | 运行测试(带覆盖率) |
-| `make lint` | 代码检查(flake8 + black) |
+| `make lint` | 代码检查(ruff) |
 | `make migrate` | 数据库迁移 |
 | `make seed` | 导入种子数据 |
 | `make docker-up` | Docker Compose 启动 |
@@ -988,8 +988,8 @@ A: 默认落盘到 `data/uploads/` 目录。生产环境可对接 MinIO(配置 `
 - **语言**: 代码注释与文档使用中文
 - **类型注解**: 全部函数使用类型注解(`from __future__ import annotations`)
 - **docstring**: 模块/类/函数三级 docstring 齐全
-- **格式化**: `black`(行宽 88)
-- **检查**: `flake8` + `mypy`
+- **格式化**: `ruff`(行宽 100)
+- **检查**: `ruff check` + `pyright`
 
 ### 5.2 分层依赖原则
 

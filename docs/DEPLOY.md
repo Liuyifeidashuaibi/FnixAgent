@@ -223,7 +223,7 @@ curl -k -X POST https://localhost/api/v1/auth/register \
 | 变量 | 说明 | 默认 |
 |---|---|---|
 | `JWT_SECRET_KEY` | JWT 签名密钥(≥32 字节) | **必填** |
-| `fnixagent_MODE` | 运行模式:`legacy` / `evolve` | evolve |
+| `FNIXAGENT_MODE` | 运行模式:`legacy` / `evolve` | evolve |
 | `SERVICE_ENV` | 环境标识 | production |
 
 #### LLM 密钥
