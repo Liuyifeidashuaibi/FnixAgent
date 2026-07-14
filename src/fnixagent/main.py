@@ -283,19 +283,19 @@ app = GatewayMiddleware(app, auth_required=not _settings.debug)
 
 
 # ---------------------------------------------------------------------------
-# 启动
+# CLI 入口
 # ---------------------------------------------------------------------------
 
 
-if __name__ == "__main__":
+def _run_serve(args) -> None:
+    """启动 FastAPI 服务器 (fnixagent serve)。"""
     import uvicorn
 
     cfg = load_yaml_config()
     server_cfg = cfg.get("server", {}) or {}
-    port = server_cfg.get("port", 8000)
-    host = server_cfg.get("host", "0.0.0.0")
+    port = args.port or server_cfg.get("port", 8000)
+    host = args.host or server_cfg.get("host", "0.0.0.0")
 
-    # CLI 参数校验
     if not isinstance(host, str) or not host:
         raise ValueError(f"server.host 必须为非空字符串, 收到 {host!r}")
     if not isinstance(port, int) or isinstance(port, bool):
@@ -307,6 +307,207 @@ if __name__ == "__main__":
         "fnixagent.main:app",
         host=host,
         port=port,
-        reload=True,
-        log_level="info",
+        reload=not args.no_reload,
+        log_level=args.log_level or "info",
     )
+
+
+def _run_chat(args) -> None:
+    """启动交互式 REPL 对话 (fnixagent chat)。"""
+    import asyncio
+
+    async def _chat():
+        from fnixagent.core.agent.shell import AgentShell, create_shell
+        from fnixagent.core.agent.loop import AgenticLoop
+
+        print("FnixAgent Chat — 交互式 AI 编程助手")
+        print(f"工作区: {args.workspace or os.getcwd()}")
+        print("输入消息开始对话，输入 /exit 退出，/help 查看帮助\n")
+
+        # 创建 Shell
+        shell = create_shell(in_memory=True, boot=True)
+        workspace_root = args.workspace or os.getcwd()
+
+        # 创建 AgenticLoop
+        agent = _build_agent_loop(shell, workspace_root, max_steps=args.max_steps)
+
+        while True:
+            try:
+                user_input = await asyncio.to_thread(input, ">>> ")
+            except (EOFError, KeyboardInterrupt):
+                print("\n再见！")
+                break
+
+            user_input = user_input.strip()
+            if not user_input:
+                continue
+            if user_input in ("/exit", "/quit"):
+                print("再见！")
+                break
+            if user_input == "/help":
+                print("命令:")
+                print("  /exit, /quit  退出")
+                print("  /help         帮助")
+                print("  /reset        重置对话")
+                print("  /stats        查看统计")
+                print("  /workspace    查看工作区")
+                continue
+            if user_input == "/reset":
+                agent.reset()
+                print("对话已重置")
+                continue
+            if user_input == "/stats":
+                print(f"步骤数: {len(agent.traces)}")
+                continue
+            if user_input == "/workspace":
+                print(f"工作区: {agent.workspace_root}")
+                continue
+
+            print()
+            result = await agent.run(user_input)
+            if result.success:
+                print(f"\n{result.response}\n")
+            else:
+                print(f"\n错误: {result.error}\n")
+
+    asyncio.run(_chat())
+
+
+def _run_execute(args) -> None:
+    """单次执行 (fnixagent run)。"""
+    import asyncio
+
+    async def _execute():
+        from fnixagent.core.agent.shell import create_shell
+
+        workspace_root = args.workspace or os.getcwd()
+        shell = create_shell(in_memory=True, boot=True)
+        agent = _build_agent_loop(shell, workspace_root, max_steps=args.max_steps)
+
+        print(f"执行中: {args.prompt}")
+        result = await agent.run(args.prompt)
+        if result.success:
+            print(result.response)
+        else:
+            print(f"错误: {result.error}", file=sys.stderr)
+
+    asyncio.run(_execute())
+
+
+def _run_mcp(args) -> None:
+    """启动 MCP Server (fnixagent mcp)。"""
+    from fnixagent.core.mcp.server import MCPServer, StdioTransport, HTTPTransport
+
+    workspace = args.workspace or os.getcwd()
+    server = MCPServer(workspace)
+
+    if args.transport == "http":
+        transport = HTTPTransport(server)
+        app = transport.get_app()
+        import uvicorn
+        uvicorn.run(app, host=args.host or "0.0.0.0", port=args.port or 8000)
+    else:
+        transport = StdioTransport(server)
+        transport.run()
+
+
+def _build_agent_loop(shell, workspace_root: str, max_steps: int = 30):
+    """构建 AgenticLoop 实例。
+
+    连接 shell/kernel 的 LLM 后端和工具注册表。
+    """
+    from fnixagent.core.agent.loop import AgenticLoop
+    from fnixagent.core.tools.workspace import register_workspace_tools
+    from fnixagent.core.tools.registry import ToolRegistry
+
+    # 创建工具注册表并注册 workspace 工具
+    registry = ToolRegistry()
+    register_workspace_tools(registry, workspace_root)
+
+    # 创建 LLM 调用函数 — 通过 kernel 的 LLM backend
+    async def llm_call(messages, tools=None):
+        kernel = shell.kernel
+        if kernel._llm_backend:
+            try:
+                return await kernel._llm_backend.chat(messages, tools=tools)
+            except Exception:
+                pass
+        # 回退: 返回简单文本
+        return {
+            "choices": [{
+                "message": {
+                    "role": "assistant",
+                    "content": "[LLM 后端未配置] 请在 .env 中设置 API Key (如 OPENAI_API_KEY)",
+                }
+            }]
+        }
+
+    return AgenticLoop(
+        llm_call=llm_call,
+        tool_executor=registry,
+        workspace_root=workspace_root,
+        max_steps=max_steps,
+    )
+
+
+def main():
+    """FnixAgent CLI 主入口。
+
+    子命令:
+      fnixagent serve   启动 FastAPI 服务器
+      fnixagent chat    启动交互式 REPL 对话
+      fnixagent run     单次执行任务
+      fnixagent mcp     启动 MCP Server (stdio/http)
+    """
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="FnixAgent — 智能 AI 编程助手 & 自进化 Agent 框架",
+    )
+    subparsers = parser.add_subparsers(dest="command", help="子命令")
+
+    # ---- serve ----
+    serve_parser = subparsers.add_parser("serve", help="启动 FastAPI 服务器")
+    serve_parser.add_argument("--host", default=None, help="绑定地址 (默认 0.0.0.0)")
+    serve_parser.add_argument("--port", "-p", type=int, default=None, help="端口 (默认 8000)")
+    serve_parser.add_argument("--no-reload", action="store_true", help="禁用热重载")
+    serve_parser.add_argument("--log-level", default=None, help="日志级别")
+
+    # ---- chat ----
+    chat_parser = subparsers.add_parser("chat", help="交互式 REPL 对话")
+    chat_parser.add_argument("--workspace", "-w", default=None, help="工作区路径")
+    chat_parser.add_argument("--max-steps", type=int, default=30, help="最大执行步数")
+
+    # ---- run ----
+    run_parser = subparsers.add_parser("run", help="单次执行任务")
+    run_parser.add_argument("prompt", help="任务描述")
+    run_parser.add_argument("--workspace", "-w", default=None, help="工作区路径")
+    run_parser.add_argument("--max-steps", type=int, default=30, help="最大执行步数")
+
+    # ---- mcp ----
+    mcp_parser = subparsers.add_parser("mcp", help="启动 MCP Server")
+    mcp_parser.add_argument("--workspace", "-w", default=None, help="工作区路径")
+    mcp_parser.add_argument("--transport", "-t", choices=["stdio", "http"], default="stdio",
+                            help="传输方式 (默认 stdio)")
+    mcp_parser.add_argument("--host", default=None, help="HTTP 绑定地址")
+    mcp_parser.add_argument("--port", "-p", type=int, default=None, help="HTTP 端口")
+
+    args = parser.parse_args()
+
+    if args.command == "serve":
+        _run_serve(args)
+    elif args.command == "chat":
+        _run_chat(args)
+    elif args.command == "run":
+        _run_execute(args)
+    elif args.command == "mcp":
+        _run_mcp(args)
+    else:
+        # 默认: 启动服务器 (向后兼容)
+        parser.print_help()
+        print("\n未指定子命令，默认启动 serve 模式...")
+        _run_serve(argparse.Namespace(host=None, port=None, no_reload=False, log_level=None))
+
+
+if __name__ == "__main__":
+    main()

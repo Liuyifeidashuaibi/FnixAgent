@@ -11,6 +11,7 @@ API 路由 - Agent 对话接口。
 
 Phase 3.2: 接入内容审核(输入/输出双向审核)
 """
+import json
 import os
 import uuid
 from typing import Optional
@@ -157,9 +158,15 @@ async def send_message(request: ChatRequest, http_request: Request):
 
 @router.post("/stream")
 async def stream_chat(request: ChatRequest, http_request: Request):
-    """流式对话(逐步返回思考过程)。"""
-    scheduler = _get_scheduler(http_request)
+    """流式对话 — 真正的逐步流式输出。
 
+    使用 AgenticLoop 的 run_stream() 方法，逐步返回:
+      - thinking: 思考中
+      - tool_call: 工具调用
+      - tool_result: 工具结果
+      - text: 最终文本响应
+      - done: 完成
+    """
     # Phase 3.2: 输入审核
     _moderate_input(request.user_input, http_request)
 
@@ -172,30 +179,41 @@ async def stream_chat(request: ChatRequest, http_request: Request):
         pass
 
     async def generate():
-        """生成流式输出。"""
+        """真正的流式生成器 — 使用 AgenticLoop"""
         try:
-            # 同步调用 scheduler,然后分段返回
-            response = scheduler.process(
-                user_input=request.user_input,
-                session_id=str(request.session_id) if request.session_id else "",
-            )
+            # 尝试使用 AgenticLoop 进行真正的流式输出
+            agent = _build_agent_loop_for_stream(http_request)
+            if agent is None:
+                # 回退到传统 scheduler 模式
+                scheduler = _get_scheduler(http_request)
+                response = scheduler.process(
+                    user_input=request.user_input,
+                    session_id=str(request.session_id) if request.session_id else "",
+                )
+                final_answer = _moderate_output(response.final_answer, http_request)
+                yield f'{{"chunk_type":"text","content":{json.dumps(final_answer)},"done":true}}\n'
+                return
 
-            # 返回执行轨迹中的思考步骤
-            if response.trace:
-                for i, thought in enumerate(response.trace.thoughts):
-                    yield f'{{"chunk_type":"thought","content":"{thought.thought}","done":false}}\n'
+            async for event in agent.run_stream(request.user_input):
+                chunk_type = event.get("type", "")
+                data = event.get("data", "")
 
-                for tc in response.trace.tool_calls:
-                    yield f'{{"chunk_type":"action","content":"{tc.name}","done":false}}\n'
-
-            # Phase 3.2: 输出审核 + 脱敏
-            final_answer = _moderate_output(response.final_answer, http_request)
-
-            # 返回最终答案
-            yield f'{{"chunk_type":"text","content":{repr(final_answer)},"done":true}}\n'
+                if chunk_type == "thinking":
+                    yield f'{{"chunk_type":"thought","content":{json.dumps(str(data))},"done":false}}\n'
+                elif chunk_type == "tool_call":
+                    yield f'{{"chunk_type":"action","content":{json.dumps(data)},"done":false}}\n'
+                elif chunk_type == "tool_result":
+                    yield f'{{"chunk_type":"observation","content":{json.dumps(str(data))},"done":false}}\n'
+                elif chunk_type == "text":
+                    final = _moderate_output(str(data), http_request)
+                    yield f'{{"chunk_type":"text","content":{json.dumps(final)},"done":true}}\n'
+                elif chunk_type == "done":
+                    yield f'{{"chunk_type":"done","content":{json.dumps(data)},"done":true}}\n'
+                elif chunk_type == "error":
+                    yield f'{{"chunk_type":"error","content":{json.dumps(str(data))},"done":true}}\n'
 
         except Exception as e:
-            yield f'{{"chunk_type":"error","content":"{str(e)}","done":true}}\n'
+            yield f'{{"chunk_type":"error","content":{json.dumps(str(e))},"done":true}}\n'
 
     return StreamingResponse(generate(), media_type="application/x-ndjson")
 
@@ -386,6 +404,55 @@ async def get_trace_stats(http_request: Request):
 # ---------------------------------------------------------------------------
 # P1-4: AgentRunner 入口(新增,不替换现有端点)
 # ---------------------------------------------------------------------------
+
+
+def _build_agent_loop_for_stream(http_request: Request):
+    """为流式输出构建 AgenticLoop 实例。
+
+    从应用状态获取 kernel/shell 并创建可流式执行的 AgenticLoop。
+    """
+    try:
+        from fnixagent.core.agent.loop import AgenticLoop
+        from fnixagent.core.agent.shell import create_shell
+        from fnixagent.core.tools.workspace import register_workspace_tools
+        from fnixagent.core.tools.registry import ToolRegistry
+
+        # 获取工作区
+        workspace_root = os.getenv("FNIXAGENT_WORKSPACE", os.getcwd())
+
+        # 创建 shell/kernel
+        shell = create_shell(in_memory=True, boot=True)
+
+        # 创建工具注册表
+        registry = ToolRegistry()
+        register_workspace_tools(registry, workspace_root)
+
+        # LLM 调用函数
+        async def llm_call(messages, tools=None):
+            kernel = shell.kernel
+            if kernel._llm_backend:
+                try:
+                    return await kernel._llm_backend.chat(messages, tools=tools)
+                except Exception:
+                    pass
+            return {
+                "choices": [{
+                    "message": {
+                        "role": "assistant",
+                        "content": "[LLM 后端未配置] 请在 .env 中设置 API Key",
+                    }
+                }]
+            }
+
+        return AgenticLoop(
+            llm_call=llm_call,
+            tool_executor=registry,
+            workspace_root=workspace_root,
+            max_steps=30,
+            enable_evolution=False,  # 流式模式下暂不触发进化
+        )
+    except Exception:
+        return None
 
 
 def _get_runner(request: Request):

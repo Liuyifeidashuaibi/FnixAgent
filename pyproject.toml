@@ -64,6 +64,7 @@ Issues = "https://github.com/Liuyifeidashuaibi/FnixAgent/issues"
 
 [project.scripts]
 fnixagent = "fnixagent.main:main"
+fnixagent-mcp = "fnixagent.core.mcp.server:main"
 
 # 插件入口点:第三方 DocumentConverter 实现通过此入口点注册
 [project.entry-points."fnixagent.converters"]
