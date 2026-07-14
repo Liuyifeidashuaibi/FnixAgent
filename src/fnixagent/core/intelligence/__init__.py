@@ -101,6 +101,14 @@ from .self_judge import (
     MultiDimensionScorer, ComparativeJudge,
     RegressionDetector, CriteriaEvolver, SelfJudge,
 )
+from .collection_pipeline import (
+    SourceTier, CollectionMethod, SourceConfig,
+    SOURCES, SUPPLEMENTARY_SOURCES,
+    RawItem, NormalizedItem, CollectionBatch,
+    DataNormalizer, UnifiedCollector,
+    AgentRole, AgentTask, MultiAgentOrchestrator,
+    ScheduleFrequency, IntelligentScheduler,
+)
 
 __all__ = [
     # === 基础采集 ===
@@ -137,4 +145,11 @@ __all__ = [
     "EvaluateDimension", "EvolvingCriteria", "JudgeVerdict",
     "MultiDimensionScorer", "ComparativeJudge",
     "RegressionDetector", "CriteriaEvolver", "SelfJudge",
+    # === v2.0: Collection Pipeline 采集管道 ===
+    "SourceTier", "CollectionMethod", "SourceConfig",
+    "SOURCES", "SUPPLEMENTARY_SOURCES",
+    "RawItem", "NormalizedItem", "CollectionBatch",
+    "DataNormalizer", "UnifiedCollector",
+    "AgentRole", "AgentTask", "MultiAgentOrchestrator",
+    "ScheduleFrequency", "IntelligentScheduler",
 ]
