@@ -55,6 +55,7 @@ FnixAgent ∞ 自进化飞轮 v2.0 — 七层闭环进化体系 (Intelligence & 
 
 使用方式:
   from fnixagent.core.intelligence import (
+      EvolutionMaster,        # 进化主控器 (中枢协调所有七层)
       SelfEvolutionFlywheel,  # 飞轮调度
       LoopEngine,             # 循环工程
       GeneticEvolver,         # 遗传进化
@@ -62,6 +63,9 @@ FnixAgent ∞ 自进化飞轮 v2.0 — 七层闭环进化体系 (Intelligence & 
       SelfJudge,              # 自我审判
       ContinuousCollector,    # 连续采集
       SynthesisEngine,        # 知识合成
+      MemoryOS,               # 记忆操作系统
+      SkillMarketplace,       # 技能市场
+      AgentHarness,           # 全方位优化引擎
   )
 """
 
@@ -109,6 +113,26 @@ from .collection_pipeline import (
     AgentRole, AgentTask, MultiAgentOrchestrator,
     ScheduleFrequency, IntelligentScheduler,
 )
+from .agent_optimizer import (
+    CacheStrategy, CacheEntry, TokenOptimizer,
+    ModelTier, ModelConfig, ModelRouter,
+    TaskStatus, TaskNode, ParallelExecutor,
+    CircuitState, CostCircuitBreaker,
+    ErrorCategory, ErrorRecoveryEngine,
+    PerformanceSnapshot, PerformanceMonitor,
+    AgentHarness,
+)
+from .evolution_master import (
+    EvolutionStage, EvolutionStatistics, EvolutionMaster,
+)
+from .memory_os import (
+    MemoryTier, MemoryType, MemoryEntry,
+    MemoryOS, MemoryFactory,
+)
+from .skill_marketplace import (
+    SkillStatus, SkillCategory, SkillGene,
+    Skill, SkillMarketplace, SkillEvolutionFactory,
+)
 
 __all__ = [
     # === 基础采集 ===
@@ -152,4 +176,20 @@ __all__ = [
     "DataNormalizer", "UnifiedCollector",
     "AgentRole", "AgentTask", "MultiAgentOrchestrator",
     "ScheduleFrequency", "IntelligentScheduler",
+    # === v2.0: Agent Optimizer 全方位优化引擎 ===
+    "CacheStrategy", "CacheEntry", "TokenOptimizer",
+    "ModelTier", "ModelConfig", "ModelRouter",
+    "TaskStatus", "TaskNode", "ParallelExecutor",
+    "CircuitState", "CostCircuitBreaker",
+    "ErrorCategory", "ErrorRecoveryEngine",
+    "PerformanceSnapshot", "PerformanceMonitor",
+    "AgentHarness",
+    # === v2.0: Evolution Master 进化主控器 ===
+    "EvolutionStage", "EvolutionStatistics", "EvolutionMaster",
+    # === v2.0: Memory OS 记忆操作系统 ===
+    "MemoryTier", "MemoryType", "MemoryEntry",
+    "MemoryOS", "MemoryFactory",
+    # === v2.0: Skill Marketplace 技能市场 ===
+    "SkillStatus", "SkillCategory", "SkillGene",
+    "Skill", "SkillMarketplace", "SkillEvolutionFactory",
 ]

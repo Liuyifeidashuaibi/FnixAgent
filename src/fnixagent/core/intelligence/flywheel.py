@@ -17,16 +17,19 @@
   - 每天: GitHub Trending + arXiv 新论文 + Hacker News
   - 每周: 监控仓库发布 + 技术博客 + Reddit 讨论
   - 每月: 会议论文 + 协议更新 + 领域全景
+
+v2.0 集成: 与 EvolutionMaster 进化主控器配合，形成完整七层闭环
 """
 
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 from datetime import datetime, timedelta, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 from croniter import croniter
 from pydantic import BaseModel
@@ -34,6 +37,9 @@ from pydantic import BaseModel
 from .collector import IntelligenceCollector
 from .knowledge import KnowledgeExtractor, FlywheelKnowledgeBase
 from .upgrade import UpgradeEngine, UpgradeProposal
+
+if TYPE_CHECKING:
+    from .evolution_master import EvolutionMaster
 
 logger = logging.getLogger(__name__)
 
@@ -236,6 +242,33 @@ class SelfEvolutionFlywheel:
             "upgrade_stats": self.upgrade_engine.get_statistics(),
             "config": self.config.model_dump(),
         }
+
+    # ============================================================
+    # v2.0: 进化主控器集成
+    # ============================================================
+
+    async def run_with_evolution_master(self, frequency: str = "daily") -> dict:
+        """
+        使用进化主控器运行完整七层闭环进化周期
+
+        这是推荐的运行方式，整合了所有2026年前沿进化算法：
+        - Layer 0: 感知采集 (30+信息源)
+        - Layer 1: 循环工程 (8个预定义Loop)
+        - Layer 2: 遗传进化 (GEPA遗传帕累托)
+        - Layer 3: 安全检查 (KnowRL+Misevolution)
+        - Layer 4: 知识合成 (GPT-Researcher风格)
+        - Layer 5: 记忆巩固 (Letta/MemGPT三层)
+        - Layer 6: 技能进化 (OpenClaw AutoSkill)
+        - Layer 7: 自我审判 (Agent-as-a-Judge+RQGM)
+        """
+        from .evolution_master import EvolutionMaster
+
+        master = EvolutionMaster(
+            data_dir=str(Path(__file__).parent.parent.parent.parent / "data" / "evolution")
+        )
+        return await master.run_full_evolution_cycle(
+            trigger_source="schedule"
+        )
 
 
 # ============================================================
