@@ -415,32 +415,44 @@ def _build_agent_loop(shell, workspace_root: str, max_steps: int = 30):
     """构建 AgenticLoop 实例。
 
     连接 shell/kernel 的 LLM 后端和工具注册表。
+    优先使用 LLMAdapter (API Key 接入)，回退到 kernel 的 mock 后端。
     """
     from fnixagent.core.agent.loop import AgenticLoop
     from fnixagent.core.tools.workspace import register_workspace_tools
     from fnixagent.core.tools.registry import ToolRegistry
+    from fnixagent.core.llm.adapter import LLMAdapter
 
     # 创建工具注册表并注册 workspace 工具
     registry = ToolRegistry()
     register_workspace_tools(registry, workspace_root)
 
-    # 创建 LLM 调用函数 — 通过 kernel 的 LLM backend
-    async def llm_call(messages, tools=None):
-        kernel = shell.kernel
-        if kernel._llm_backend:
-            try:
-                return await kernel._llm_backend.chat(messages, tools=tools)
-            except Exception:
-                pass
-        # 回退: 返回简单文本
-        return {
-            "choices": [{
-                "message": {
-                    "role": "assistant",
-                    "content": "[LLM 后端未配置] 请在 .env 中设置 API Key (如 OPENAI_API_KEY)",
-                }
-            }]
-        }
+    # 尝试使用 LLMAdapter (API Key 接入)
+    adapter = LLMAdapter()
+    if adapter.is_configured:
+        print(f"[main] LLM 后端: {adapter.provider_name} (API Key)")
+        llm_call = adapter.chat
+    else:
+        # 回退到 kernel 的 mock 后端
+        print("[main] LLM 后端: Mock (未配置 API Key，返回模拟响应)")
+        async def llm_call(messages, tools=None):
+            kernel = shell.kernel
+            if kernel._llm_backend:
+                try:
+                    return await kernel._llm_backend.chat(messages, tools=tools)
+                except Exception:
+                    pass
+            return {
+                "choices": [{
+                    "message": {
+                        "role": "assistant",
+                        "content": "[LLM 未配置] 请在 .env 中设置 API Key:\n"
+                                   "  OPENAI_API_KEY=sk-xxx\n"
+                                   "  GLM_API_KEY=xxx\n"
+                                   "  DEEPSEEK_API_KEY=xxx\n"
+                                   "  CUSTOM_API_KEY=xxx",
+                    }
+                }]
+            }
 
     return AgenticLoop(
         llm_call=llm_call,

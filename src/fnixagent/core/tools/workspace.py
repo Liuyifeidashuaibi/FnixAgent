@@ -576,21 +576,21 @@ def register_workspace_tools(registry, workspace_root: str = ".") -> WorkspaceTo
     registry.register(
         ToolMetadata(
             name="read_file",
-            description="读取文件内容。参数: rel_path(文件路径), offset(起始行,默认0), limit(最大行数)",
+            description="读取文件内容。参数: file_path(文件路径), offset(起始行,默认0), limit(最大行数)",
             category="filesystem",
             permission_level=ToolPermission.LOW,
             input_schema={
                 "type": "object",
                 "properties": {
-                    "rel_path": {"type": "string", "description": "相对于workspace的文件路径"},
+                    "file_path": {"type": "string", "description": "相对于workspace的文件路径"},
                     "offset": {"type": "integer", "description": "起始行号(1-based)", "default": 0},
                     "limit": {"type": "integer", "description": "最大行数"},
                 },
-                "required": ["rel_path"],
+                "required": ["file_path"],
             },
         ),
         lambda args: tools.read_file(
-            args.get("rel_path", ""),
+            args.get("file_path", args.get("rel_path", "")),
             args.get("offset", 0),
             args.get("limit"),
         ),
@@ -599,20 +599,20 @@ def register_workspace_tools(registry, workspace_root: str = ".") -> WorkspaceTo
     registry.register(
         ToolMetadata(
             name="write_file",
-            description="写入文件(覆盖模式)。参数: rel_path(路径), content(内容)",
+            description="写入文件(覆盖模式)。参数: file_path(路径), content(内容)",
             category="filesystem",
             permission_level=ToolPermission.MIDDLE,
             input_schema={
                 "type": "object",
                 "properties": {
-                    "rel_path": {"type": "string"},
+                    "file_path": {"type": "string"},
                     "content": {"type": "string"},
                 },
-                "required": ["rel_path", "content"],
+                "required": ["file_path", "content"],
             },
         ),
         lambda args: tools.write_file(
-            args.get("rel_path", ""),
+            args.get("file_path", args.get("rel_path", "")),
             args.get("content", ""),
         ),
     )
@@ -620,22 +620,22 @@ def register_workspace_tools(registry, workspace_root: str = ".") -> WorkspaceTo
     registry.register(
         ToolMetadata(
             name="edit_file",
-            description="精确字符串替换编辑文件。参数: rel_path, old_string, new_string, replace_all(默认False)",
+            description="精确字符串替换编辑文件。参数: file_path, old_string, new_string, replace_all(默认False)",
             category="filesystem",
             permission_level=ToolPermission.MIDDLE,
             input_schema={
                 "type": "object",
                 "properties": {
-                    "rel_path": {"type": "string"},
+                    "file_path": {"type": "string"},
                     "old_string": {"type": "string"},
                     "new_string": {"type": "string"},
                     "replace_all": {"type": "boolean", "default": False},
                 },
-                "required": ["rel_path", "old_string", "new_string"],
+                "required": ["file_path", "old_string", "new_string"],
             },
         ),
         lambda args: tools.edit_file(
-            args.get("rel_path", ""),
+            args.get("file_path", args.get("rel_path", "")),
             args.get("old_string", ""),
             args.get("new_string", ""),
             args.get("replace_all", False),

@@ -203,3 +203,50 @@ class ToolRegistry:
         """清空全部注册。"""
         with self._lock:
             self._tools.clear()
+
+    # ============================================================
+    # AgenticLoop 兼容接口
+    # ============================================================
+
+    def execute(self, tool_name: str, args: dict) -> Any:
+        """执行工具调用 (AgenticLoop 兼容接口)。
+
+        调用已注册工具的执行函数，返回原始结果。
+
+        Args:
+            tool_name: 工具名
+            args: 工具参数字典
+
+        Returns:
+            工具执行结果 (ToolResult / dict / str 等)
+
+        Raises:
+            ToolNotFoundError: 工具未注册
+        """
+        with self._lock:
+            tool = self._tools.get(tool_name)
+            if tool is None:
+                raise ToolNotFoundError(f"工具 '{tool_name}' 未注册")
+        return tool.func(args)
+
+    def get_tool_definitions(self) -> list[dict]:
+        """获取 OpenAI tools API 兼容的工具定义列表 (AgenticLoop 兼容接口)。
+
+        Returns:
+            OpenAI function-calling 格式的工具定义列表
+        """
+        return self.list_for_llm()
+
+    def get_tools_description(self) -> str:
+        """获取人类可读的工具描述文本 (AgenticLoop 兼容接口)。
+
+        Returns:
+            格式化的工具列表文本
+        """
+        with self._lock:
+            lines = []
+            for tool in self._tools.values():
+                if not tool.metadata.enabled:
+                    continue
+                lines.append(f"- {tool.metadata.name}: {tool.metadata.description}")
+            return "\n".join(lines) if lines else "(无可用工具)"

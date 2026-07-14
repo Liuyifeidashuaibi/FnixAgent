@@ -410,12 +410,14 @@ def _build_agent_loop_for_stream(http_request: Request):
     """为流式输出构建 AgenticLoop 实例。
 
     从应用状态获取 kernel/shell 并创建可流式执行的 AgenticLoop。
+    优先使用 LLMAdapter (API Key 接入)，回退到 kernel 的 mock 后端。
     """
     try:
         from fnixagent.core.agent.loop import AgenticLoop
         from fnixagent.core.agent.shell import create_shell
         from fnixagent.core.tools.workspace import register_workspace_tools
         from fnixagent.core.tools.registry import ToolRegistry
+        from fnixagent.core.llm.adapter import LLMAdapter
 
         # 获取工作区
         workspace_root = os.getenv("FNIXAGENT_WORKSPACE", os.getcwd())
@@ -427,22 +429,20 @@ def _build_agent_loop_for_stream(http_request: Request):
         registry = ToolRegistry()
         register_workspace_tools(registry, workspace_root)
 
-        # LLM 调用函数
-        async def llm_call(messages, tools=None):
-            kernel = shell.kernel
-            if kernel._llm_backend:
-                try:
-                    return await kernel._llm_backend.chat(messages, tools=tools)
-                except Exception:
-                    pass
-            return {
-                "choices": [{
-                    "message": {
-                        "role": "assistant",
-                        "content": "[LLM 后端未配置] 请在 .env 中设置 API Key",
-                    }
-                }]
-            }
+        # 尝试使用 LLMAdapter (API Key 接入)
+        adapter = LLMAdapter()
+        if adapter.is_configured:
+            llm_call = adapter.chat
+        else:
+            async def llm_call(messages, tools=None):
+                return {
+                    "choices": [{
+                        "message": {
+                            "role": "assistant",
+                            "content": "[LLM 未配置] 请在 .env 中设置 API Key",
+                        }
+                    }]
+                }
 
         return AgenticLoop(
             llm_call=llm_call,
