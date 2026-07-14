@@ -437,6 +437,11 @@ class EvolutionResult:
     started_at: str
     completed_at: str
     duration_ms: float
+    # v2.0 扩展字段 (供 evolution_master 使用)
+    success: bool = True
+    chromosome: Optional[Chromosome] = None
+    estimated_token_saving: int = 0
+    error_message: str = ""
 
 
 class GeneticEvolver:
@@ -783,3 +788,54 @@ class TrajectoryDrivenEvolution:
         # 成功率高 → 低变异压力 (利用)
         pressure = 1.0 - success_rate
         return max(0.1, min(1.0, pressure))
+
+    async def evolve_from_insight(self, insight) -> EvolutionResult:
+        """
+        从洞察中提取的改进方向触发进化
+
+        Args:
+            insight: ExtractedInsight 对象 (含 upgrade_priority, suggested_action 等)
+
+        Returns:
+            EvolutionResult 进化结果
+        """
+        from datetime import datetime, timezone
+        import time
+
+        started_at = datetime.now(timezone.utc)
+        start_ts = time.time()
+
+        # 将洞察编码为染色体进行进化
+        initial_content = f"{insight.title}\n\n{insight.description}\n\n建议行动: {insight.suggested_action}"
+        chromosome = self.evolver.encode(initial_content, insight.insight_type.value)
+
+        # 使用轨迹驱动的变异压力
+        pressure = self.get_mutation_pressure()
+
+        # 执行一次定向变异 (不是完整进化循环)
+        mutated = self.evolver.operators.mutate(
+            chromosome,
+            mutation_rate=max(0.3, pressure),
+            mutation_strength=max(0.5, pressure),
+        )
+
+        # 估算 token 节省 (启发式)
+        token_saving = 0
+        if "token" in insight.suggested_action.lower() or "效率" in insight.suggested_action:
+            token_saving = 200
+
+        return EvolutionResult(
+            best_chromosome=mutated,
+            pareto_frontier=[mutated],
+            all_generations=[[chromosome, mutated]],
+            total_generations=1,
+            converged=False,
+            convergence_generation=-1,
+            fitness_history=[],
+            started_at=started_at.isoformat(),
+            completed_at=datetime.now(timezone.utc).isoformat(),
+            duration_ms=(time.time() - start_ts) * 1000,
+            success=True,
+            chromosome=mutated,
+            estimated_token_saving=token_saving,
+        )

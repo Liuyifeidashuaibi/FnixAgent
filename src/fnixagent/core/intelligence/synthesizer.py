@@ -78,6 +78,54 @@ class SynthesisReport:
     upgrade_roadmap: str
     ktg_injections: list[dict]  # 注入 KTG 的新知识节点
 
+    def count_insights_by_urgency(self, urgency: str) -> int:
+        """按紧急程度统计洞察数量"""
+        if urgency == "critical":
+            return len(self.critical_insights)
+        elif urgency == "high":
+            return len(self.high_insights)
+        elif urgency == "medium":
+            return len(self.medium_insights)
+        return 0
+
+    def save_to_file(self, output_dir: str | None = None) -> str:
+        """将报告保存到文件"""
+        from pathlib import Path
+        dir_path = Path(output_dir) if output_dir else Path("data/synthesis")
+        dir_path.mkdir(parents=True, exist_ok=True)
+
+        path = dir_path / f"{self.report_id}.json"
+        data = {
+            "report_id": self.report_id,
+            "generated_at": self.generated_at,
+            "total_sources": self.total_sources,
+            "total_insights": self.total_insights,
+            "executive_summary": self.executive_summary,
+            "upgrade_roadmap": self.upgrade_roadmap,
+            "critical_insights": [
+                {
+                    "insight_id": i.insight_id,
+                    "title": i.title,
+                    "description": i.description,
+                    "upgrade_priority": i.upgrade_priority,
+                    "suggested_action": i.suggested_action,
+                    "related_modules": i.related_modules,
+                }
+                for i in self.critical_insights
+            ],
+            "high_insights": [
+                {"insight_id": i.insight_id, "title": i.title, "upgrade_priority": i.upgrade_priority}
+                for i in self.high_insights
+            ],
+            "medium_insights": [
+                {"insight_id": i.insight_id, "title": i.title, "upgrade_priority": i.upgrade_priority}
+                for i in self.medium_insights
+            ],
+            "ktg_injections": self.ktg_injections,
+        }
+        path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+        return str(path)
+
 
 # ============================================================
 # 规则提取器 (无需LLM, 快速预筛选)

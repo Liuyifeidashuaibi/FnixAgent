@@ -37,6 +37,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import math
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -716,4 +717,3 @@ class EvolutionGuard:
             return "healthy"
 
 
-import math  # 用于 cosine_similarity

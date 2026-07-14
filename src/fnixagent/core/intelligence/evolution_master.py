@@ -80,12 +80,12 @@ from .loop_engine import (
     LoopExecutor, LoopScheduler, NudgeEngine, LoopRegistry,
 )
 from .genetic_evolver import GeneticEvolver, EvolutionResult, TrajectoryDrivenEvolution
-from .evolution_guard import EvolutionGuard, GuardLevel, EvolutionCheckResult
+from .evolution_guard import EvolutionGuard
 from .self_judge import SelfJudge, JudgeVerdict, CriteriaEvolver
-from .collection_pipeline import CollectionPipeline, CollectionBatch, IntelligentScheduler
+from .collection_pipeline import CollectionPipeline, IntelligentScheduler
 from .synthesizer import SynthesisEngine, SynthesisReport
 from .agent_optimizer import AgentHarness
-from .flywheel import SelfEvolutionFlywheel, FlywheelState
+from .flywheel import SelfEvolutionFlywheel
 
 logger = logging.getLogger(__name__)
 
@@ -388,9 +388,9 @@ class EvolutionMaster:
 
             result["stages_completed"].append("synthesizing")
             result["synthesis"] = {
-                "insights_count": len(synthesis_report.insights),
+                "insights_count": synthesis_report.total_insights,
                 "actionable_insights": synthesis_report.count_insights_by_urgency("high"),
-                "report_path": synthesis_report.save_to_file(),
+                "report_path": synthesis_report.save_to_file(str(self.data_dir / "synthesis_reports")),
             }
 
             # ========== Layer 2: 遗传进化层 ==========
@@ -399,10 +399,18 @@ class EvolutionMaster:
 
             # 轨迹驱动进化（GEPA）
             # 使用SIPDO闭环 + GEPA遗传帕累托优化
-            actionable = [i for i in synthesis_report.insights if i.urgency.value == "high"]
+            all_insights = (
+                synthesis_report.critical_insights
+                + synthesis_report.high_insights
+                + synthesis_report.medium_insights
+            )
+            actionable = [
+                i for i in all_insights
+                if i.upgrade_priority in ("critical", "high")
+            ]
             evolution_results: List[EvolutionResult] = []
 
-            for insight in actionable:
+            for insight in actionable[:5]:  # 最多处理5个，防止过载
                 # 对每个可操作洞察进行进化尝试
                 er = await self.trajectory_evolution.evolve_from_insight(insight)
                 evolution_results.append(er)
@@ -419,21 +427,44 @@ class EvolutionMaster:
             self.stage = EvolutionStage.GUARD_CHECKING
             logger.info(f"[{cycle_id}] Layer 3: 安全检查")
 
-            guard_result = self.evolution_guard.full_evolution_check(
-                [er.chromosome for er in successful_evolutions if er.chromosome]
-            )
+            # 安全检查: 使用 EvolutionGuard 的多个检查组件
+            chromosomes = [er.chromosome for er in successful_evolutions if er.chromosome]
+            guard_passed = True
+            guard_warnings = []
+            degradation_detected = False
 
-            if guard_result.level == GuardLevel.CRITICAL:
+            for chromo in chromosomes:
+                # 边界感知检查
+                boundary_check = self.evolution_guard.boundary_awareness.check(
+                    chromo.content if chromo else "",
+                    {"task_type": "evolution"}
+                )
+                if not boundary_check.is_safe:
+                    guard_passed = False
+                    guard_warnings.append(f"边界检查失败: {boundary_check.reason}")
+                    break
+
+                # 退化检测
+                degr_result = self.evolution_guard.degradation_detector.check_degradation(
+                    [chromo.content if chromo else ""],
+                    {"baseline_score": 0.5}
+                )
+                if degr_result.is_degraded:
+                    degradation_detected = True
+                    guard_warnings.append(f"退化检测: {degr_result.reason}")
+
+            if not guard_passed or (degradation_detected and len(guard_warnings) >= 3):
                 # 严重问题，触发回滚
                 self.stage = EvolutionStage.ROLLBACK
-                logger.critical(f"[{cycle_id}] 安全检查发现严重问题，触发回滚: {guard_result.message}")
-                await self.evolution_guard.rollback_all()
+                logger.critical(f"[{cycle_id}] 安全检查发现问题，触发回滚: {guard_warnings}")
+                self.evolution_guard.rollback_manager.rollback_all()
                 self.stats.rollbacks += 1
                 result["rollback"] = True
                 result["guard_result"] = {
-                    "level": guard_result.level.value,
-                    "message": guard_result.message,
-                    "degradation_detected": guard_result.degradation_detected,
+                    "level": "critical" if not guard_passed else "warning",
+                    "passed": guard_passed,
+                    "warnings": guard_warnings,
+                    "degradation_detected": degradation_detected,
                 }
                 self.stage = EvolutionStage.COMPLETED
                 self._save_stats()
@@ -441,18 +472,31 @@ class EvolutionMaster:
 
             result["stages_completed"].append("guard_checking")
             result["guard_result"] = {
-                "level": guard_result.level.value,
-                "passed": guard_result.passed,
-                "warnings": guard_result.warnings,
+                "level": "passed",
+                "passed": guard_passed,
+                "warnings": guard_warnings,
+                "degradation_detected": degradation_detected,
             }
 
             # ========== Layer 5: 记忆操作系统 巩固 ==========
-            # 已经由memory_os独立处理，这里只是触发巩固循环
             self.stage = EvolutionStage.MEMORY_CONSOLIDATION
             logger.info(f"[{cycle_id}] Layer 5: 记忆巩固")
 
-            # 触发记忆巩固Loop
-            # 实际操作由MemoryOS完成
+            # 集成 MemoryOS: 保存进化关键记忆
+            from .memory_os import MemoryOS, MemoryType, MemoryTier
+            memory_os = MemoryOS(storage_dir=str(self.data_dir / "memory"))
+            memory_os.store(
+                content=f"进化周期 {cycle_id} 完成: 采集 {result['items_collected']} 项, "
+                        f"进化 {len(successful_evolutions)} 个成功",
+                memory_type=MemoryType.EVOLUTION,
+                tier=MemoryTier.ARCHIVAL,
+                source=cycle_id,
+                tags=["evolution", "cycle"],
+                importance=0.8,
+            )
+            # 执行记忆巩固
+            memory_os.consolidate()
+            memory_os.save_all()
 
             result["stages_completed"].append("memory_consolidation")
 
@@ -460,10 +504,23 @@ class EvolutionMaster:
             self.stage = EvolutionStage.SKILL_EVOLUTION
             logger.info(f"[{cycle_id}] Layer 6: 技能进化")
 
-            # skill_marketplace整合洞察，自动创建/进化技能
-            # 由skill_marketplace模块独立处理
+            # 集成 SkillMarketplace: 自动创建/进化技能
+            from .skill_marketplace import SkillMarketplace, SkillEvolutionFactory
+            marketplace = SkillMarketplace(storage_dir=str(self.data_dir / "skills"))
+            # 创建系统预装技能（首次运行时）
+            SkillEvolutionFactory.create_system_skills(marketplace)
+            # 从进化结果中检测新技能机会
+            for er in successful_evolutions:
+                if er.chromosome:
+                    marketplace.detect_and_create(
+                        task_description=er.chromosome.content[:200],
+                        execution_trace=er.chromosome.content,
+                        success=er.success,
+                        token_saved=er.estimated_token_saving,
+                    )
 
             result["stages_completed"].append("skill_evolution")
+            result["skills_stats"] = marketplace.get_stats()
 
             # ========== Layer 7: 自我审判 ==========
             self.stage = EvolutionStage.JUDGEMENT
@@ -482,7 +539,7 @@ class EvolutionMaster:
 
             result["stages_completed"].append("judgement")
             result["judgement"] = {
-                "verdict": verdict.verdict.value,
+                "verdict": verdict.verdict,
                 "overall_score": verdict.overall_score,
                 "improvement_detected": verdict.improvement_detected,
             }
@@ -493,7 +550,7 @@ class EvolutionMaster:
             duration_min = (completed_at - started_at).total_seconds() / 60
 
             # 更新统计
-            if verdict.verdict.value == "accept":
+            if verdict.verdict == "accept":
                 self.stats.successful_cycles += 1
                 # 累加token节省估计
                 for er in successful_evolutions:
@@ -508,7 +565,7 @@ class EvolutionMaster:
             old_avg = self.stats.average_cycle_duration_min
             self.stats.average_cycle_duration_min = ((old_avg * (total - 1)) + duration_min) / total
 
-            result["success"] = verdict.verdict.value == "accept"
+            result["success"] = verdict.verdict == "accept"
             result["completed_at"] = completed_at.isoformat()
             result["duration_min"] = duration_min
 

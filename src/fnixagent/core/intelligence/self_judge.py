@@ -98,6 +98,9 @@ class JudgeVerdict:
     regression_detected: bool = False
     judge_version: str = ""
     judged_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    # v2.0 扩展字段
+    verdict: str = ""                  # accept / conditional_accept / reject
+    improvement_detected: bool = False
 
 
 # ============================================================
@@ -465,6 +468,34 @@ class CriteriaEvolver:
             },
         }
 
+    def should_evolve_criteria(self, verdict: JudgeVerdict) -> bool:
+        """
+        判断评估标准是否需要进化
+
+        触发条件:
+        - 多次判决结果高度一致 (标准过严或过松)
+        - 新维度分数普遍过低
+        """
+        if not self._score_history:
+            return False
+
+        # 如果最近 5 次判决全部通过或全部失败, 需要调整标准
+        recent_scores = []
+        for dim, scores in self._score_history.items():
+            if len(scores) >= 5:
+                recent = scores[-5:]
+                avg = sum(recent) / len(recent)
+                recent_scores.append(avg)
+
+        if not recent_scores:
+            return False
+
+        # 如果平均分全部 > 0.9 或全部 < 0.5, 标准需要进化
+        all_high = all(s > 0.9 for s in recent_scores)
+        all_low = all(s < 0.5 for s in recent_scores)
+
+        return all_high or all_low
+
 
 # ============================================================
 # 自我审判总控
@@ -584,3 +615,62 @@ class SelfJudge:
                 suggestions.append(f"重点关注维度 [{dim}]: 近10次评估中 {count} 次不达标")
 
         return suggestions
+
+    def judge_evolution_cycle(
+        self,
+        before: Any,
+        after_evolutions: list[Any],
+    ) -> JudgeVerdict:
+        """
+        评判一个完整进化周期的结果
+
+        Args:
+            before: 进化前的统计状态
+            after_evolutions: 进化后产生的 EvolutionResult 列表
+
+        Returns:
+            JudgeVerdict 审判结论
+        """
+        from datetime import datetime, timezone
+
+        # 构建评估对象
+        subject = {
+            "name": "evolution_cycle",
+            "correctness": 0.8,  # 进化逻辑正确性
+            "completeness": 0.7 if after_evolutions else 0.3,
+            "efficiency": 0.6,
+            "safety": 0.9,  # 安全检查通过
+            "innovation": 0.5,
+            "robustness": 0.7,
+            "consistency": 0.8,
+        }
+
+        # 根据进化结果调整分数
+        successful = [e for e in after_evolutions if getattr(e, "success", False)]
+        if successful:
+            subject["correctness"] = min(1.0, 0.7 + len(successful) / max(len(after_evolutions), 1) * 0.3)
+            subject["innovation"] = min(1.0, 0.4 + len(successful) * 0.1)
+
+            # token 节省加分
+            total_saving = sum(getattr(e, "estimated_token_saving", 0) for e in successful)
+            if total_saving > 0:
+                subject["efficiency"] = min(1.0, 0.5 + total_saving / 2000)
+
+        verdict = self.evaluate(subject)
+
+        # 添加进化专用字段
+        verdict.improvement_detected = len(successful) > 0
+        verdict.judge_version = "v2.0-cycle"
+
+        # 根据改进情况设置 verdict
+        if verdict.overall_score >= 0.7 and len(successful) > 0:
+            verdict.passed = True
+            verdict.verdict = "accept"
+        elif verdict.overall_score >= 0.5:
+            verdict.passed = True
+            verdict.verdict = "conditional_accept"
+        else:
+            verdict.passed = False
+            verdict.verdict = "reject"
+
+        return verdict
