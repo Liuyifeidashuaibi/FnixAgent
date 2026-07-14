@@ -125,10 +125,22 @@ async def lifespan(app: FastAPI):
 
     print("[main] fnixagent 启动完成 → http://0.0.0.0:8000/docs")
 
+    # Phase 2.2: LDAP 定时同步
+    from fnixagent.core.security.auth.ldap_sync import start_ldap_sync_scheduler
+    start_ldap_sync_scheduler()
+
+    # Phase 3.2: 账号注销清理
+    from fnixagent.services.account_cleanup import start_cleanup_scheduler
+    start_cleanup_scheduler()
+
     yield
 
     # Shutdown
     print("[main] 正在关闭 fnixagent...")
+    from fnixagent.core.security.auth.ldap_sync import stop_ldap_sync_scheduler
+    stop_ldap_sync_scheduler()
+    from fnixagent.services.account_cleanup import stop_cleanup_scheduler
+    stop_cleanup_scheduler()
     reset_scheduler()
     reset_graph()
     print("[main] 已关闭")
@@ -174,44 +186,6 @@ app.include_router(dashboard.stats_router, prefix="/api/v1")
 app.include_router(agentos.router, prefix="/api/v1")
 app.include_router(coding.router, prefix="/api/v1")
 app.include_router(chat_agent.router, prefix="/api/v1")
-
-
-# ---------------------------------------------------------------------------
-# Phase 2.2: LDAP 定时同步调度器
-# ---------------------------------------------------------------------------
-
-
-@app.on_event("startup")
-async def _start_ldap_sync_scheduler():
-    """应用启动时启动 LDAP 同步调度器(后台守护线程)。"""
-    from fnixagent.core.security.auth.ldap_sync import start_ldap_sync_scheduler
-    start_ldap_sync_scheduler()
-
-
-@app.on_event("shutdown")
-async def _stop_ldap_sync_scheduler():
-    """应用关闭时停止 LDAP 同步调度器。"""
-    from fnixagent.core.security.auth.ldap_sync import stop_ldap_sync_scheduler
-    stop_ldap_sync_scheduler()
-
-
-# ---------------------------------------------------------------------------
-# Phase 3.2: 账号注销清理调度器(每 6 小时硬删除已过保留期的账号)
-# ---------------------------------------------------------------------------
-
-
-@app.on_event("startup")
-async def _start_account_cleanup_scheduler():
-    """应用启动时启动账号清理调度器。"""
-    from fnixagent.services.account_cleanup import start_cleanup_scheduler
-    start_cleanup_scheduler()
-
-
-@app.on_event("shutdown")
-async def _stop_account_cleanup_scheduler():
-    """应用关闭时停止账号清理调度器。"""
-    from fnixagent.services.account_cleanup import stop_cleanup_scheduler
-    stop_cleanup_scheduler()
 
 
 # ---------------------------------------------------------------------------
@@ -325,7 +299,9 @@ def _run_chat(args) -> None:
         print("输入消息开始对话，输入 /exit 退出，/help 查看帮助\n")
 
         # 创建 Shell
-        shell = create_shell(in_memory=True, boot=True)
+        loop = asyncio.get_running_loop()
+        shell = create_shell(in_memory=True, boot=True, _loop=loop)
+        await shell.kernel.boot()  # 在已有事件循环中手动启动
         workspace_root = args.workspace or os.getcwd()
 
         # 创建 AgenticLoop
@@ -381,7 +357,9 @@ def _run_execute(args) -> None:
         from fnixagent.core.agent.shell import create_shell
 
         workspace_root = args.workspace or os.getcwd()
-        shell = create_shell(in_memory=True, boot=True)
+        loop = asyncio.get_running_loop()
+        shell = create_shell(in_memory=True, boot=True, _loop=loop)
+        await shell.kernel.boot()  # 在已有事件循环中手动启动
         agent = _build_agent_loop(shell, workspace_root, max_steps=args.max_steps)
 
         print(f"执行中: {args.prompt}")

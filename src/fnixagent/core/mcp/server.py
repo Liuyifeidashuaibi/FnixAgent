@@ -42,6 +42,21 @@ SERVER_VERSION = "1.0.0"
 # MCP Server 核心
 # ============================================================
 
+class MCPServerError(Exception):
+    """MCP Server 基类异常"""
+    pass
+
+
+class MCPServerAlreadyRunningError(MCPServerError):
+    """MCP Server 已在运行"""
+    pass
+
+
+class MCPToolNotExposedError(MCPServerError):
+    """MCP 工具未暴露"""
+    pass
+
+
 class MCPServer:
     """
     MCP Server — 标准 MCP JSON-RPC 协议实现

@@ -32,6 +32,7 @@ import json
 import logging
 import re
 import time
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from enum import Enum
 from pathlib import Path

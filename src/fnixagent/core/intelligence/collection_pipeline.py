@@ -1671,3 +1671,16 @@ class IntelligentScheduler:
                 "activity_score": self._source_activity.get(sid, 0),
             }
         return health
+
+
+# ============================================================
+# CollectionPipeline 别名 (evolution_master 兼容)
+# ============================================================
+
+class CollectionPipeline(UnifiedCollector):
+    """
+    CollectionPipeline — UnifiedCollector 的别名，兼容 EvolutionMaster。
+
+    集成采集管道、数据标准化、多Agent编排、智能调度于一体。
+    """
+    pass

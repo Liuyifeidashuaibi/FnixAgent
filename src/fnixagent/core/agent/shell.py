@@ -898,6 +898,7 @@ def create_shell(
     skills_dir: str | None = None,
     in_memory: bool = True,
     boot: bool = True,
+    _loop=None,
 ) -> AgentShell:
     """便捷构造 Shell (含 boot)。
 
@@ -905,6 +906,7 @@ def create_shell(
         skills_dir: Skill 加载目录
         in_memory: 是否使用内存后端 (True = 零依赖, False = 使用真实后端)
         boot: 是否自动启动内核
+        _loop: 已有事件循环 (避免嵌套 asyncio.run())
 
     Returns:
         AgentShell 实例
@@ -928,7 +930,11 @@ def create_shell(
         kernel = AgentKernel(enable_scheduler_loop=False)
     shell = AgentShell(kernel=kernel, skills_dir=skills_dir)
     if boot:
-        asyncio.run(kernel.boot())
+        if _loop is not None:
+            # 在已有事件循环中，由调用方 await 启动
+            pass  # 调用方负责: await kernel.boot()
+        else:
+            asyncio.run(kernel.boot())
     return shell
 
 
