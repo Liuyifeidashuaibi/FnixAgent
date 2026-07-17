@@ -102,3 +102,7 @@ data/logs/
 scripts/restore_fnix_se_from_trae_history.py
 scripts/scaffold_fnix_se_partial.py
 
+# Draft AgentOS docs — canonical copies live in FnixAi
+docs/FNIX-SE-*.md
+docs/archive/blueprint-ch12-plus.md
+
