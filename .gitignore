@@ -105,4 +105,5 @@ scripts/scaffold_fnix_se_partial.py
 # Draft AgentOS docs — canonical copies live in FnixAi
 docs/FNIX-SE-*.md
 docs/archive/blueprint-ch12-plus.md
+_references/REFERENCES.md
 
