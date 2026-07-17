@@ -83,3 +83,22 @@ Thumbs.db
 data/cache/
 data/db/
 data/logs/
+
+# FNIX-SE local index / durable / storage
+.fnix/
+**/.fnix/
+
+# AgentOS (fnix-se) canonical repo is FnixAi — keep local copy optional, never publish here
+/fnix-se/
+
+# Large third-party reference trees (study only; not FnixAgent product source)
+/_references/grok-build/
+/_references/ui/
+
+# AgentOS CI lives in FnixAi, not this repo
+.github/workflows/fnix-se-core.yml
+
+# Local AgentOS scaffold helpers (history)
+scripts/restore_fnix_se_from_trae_history.py
+scripts/scaffold_fnix_se_partial.py
+

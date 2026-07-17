@@ -19,6 +19,8 @@
 
 </div>
 
+> **姊妹项目 [FnixAi](https://github.com/Liuyifeidashuaibi/FnixAi)**：全 Rust AgentOS（未来趋势向），独立仓库、独立排期，与本仓互相吸收、不互相依赖。说明见 [`docs/FNIXAI_SIBLING.md`](docs/FNIXAI_SIBLING.md) / [`docs/SISTER_PROJECTS.md`](docs/SISTER_PROJECTS.md)。本仓继续作为学习/教育/办公智能 Agent（当前流行向）独立开发。AgentOS 代码请到 FnixAi，勿在本仓 `fnix-se/` 作为主真相。
+
 ---
 
 ## 目录
