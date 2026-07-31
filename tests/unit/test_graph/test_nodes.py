@@ -1,4 +1,4 @@
-﻿"""
+"""
 LangGraph 节点函数单元测试。
 
 测试模块: fnixagent.graph.nodes
@@ -10,7 +10,6 @@ LangGraph 节点函数单元测试。
     - reflect_node: 反思节点
     - 节点名称常量
 """
-import pytest
 
 from fnixagent.graph.nodes import (
     NODE_EXECUTE,
@@ -26,10 +25,10 @@ from fnixagent.graph.nodes import (
 )
 from fnixagent.graph.state import create_initial_state
 
-
 # ---------------------------------------------------------------------------
 # 节点名称常量
 # ---------------------------------------------------------------------------
+
 
 class TestNodeConstants:
     """测试节点名称常量。"""
@@ -51,6 +50,7 @@ class TestNodeConstants:
 # ---------------------------------------------------------------------------
 # perceive_node
 # ---------------------------------------------------------------------------
+
 
 class TestPerceiveNode:
     """测试 perceive_node() 函数。"""
@@ -105,6 +105,7 @@ class TestPerceiveNode:
 # ---------------------------------------------------------------------------
 # make_search_node
 # ---------------------------------------------------------------------------
+
 
 class TestSearchNode:
     """测试 make_search_node() 闭包。"""
@@ -183,6 +184,7 @@ class TestSearchNode:
     def test_empty_paths_returns_empty_lists(self):
         """搜索引擎返回空路径时,concept_path 与 topology_paths 应为空。"""
         from tests.unit.test_graph.conftest import FakeSearchEngine
+
         empty_search = FakeSearchEngine(paths=[])
         node = make_search_node(empty_search)
         state = create_initial_state("test")
@@ -195,6 +197,7 @@ class TestSearchNode:
 # ---------------------------------------------------------------------------
 # make_skill_select_node
 # ---------------------------------------------------------------------------
+
 
 class TestSkillSelectNode:
     """测试 make_skill_select_node() 闭包。"""
@@ -260,6 +263,7 @@ class TestSkillSelectNode:
 # make_execute_node
 # ---------------------------------------------------------------------------
 
+
 class TestExecuteNode:
     """测试 make_execute_node() 闭包。"""
 
@@ -309,6 +313,7 @@ class TestExecuteNode:
 
     def test_uses_executor_when_provided(self, mock_registry):
         """提供 executor 时应使用 executor.execute 而非 tool.func。"""
+
         class FakeExecutor:
             def __init__(self):
                 self.call_count = 0
@@ -331,7 +336,6 @@ class TestExecuteNode:
     def test_multiple_skills_execution(self, mock_registry):
         """多个技能应依次执行。"""
         from fnixagent.core.tools.protocol import ToolMetadata
-        from fnixagent.core.types import ToolPermission
 
         def analyze_data(args):
             return {"analysis": "done"}
@@ -352,6 +356,7 @@ class TestExecuteNode:
 # ---------------------------------------------------------------------------
 # reflect_node
 # ---------------------------------------------------------------------------
+
 
 class TestReflectNode:
     """测试 reflect_node() 函数。"""

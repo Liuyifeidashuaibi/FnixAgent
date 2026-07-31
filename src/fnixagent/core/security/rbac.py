@@ -19,18 +19,18 @@ RBAC 细粒度权限控制(Phase 2.1)。
     - 角色权限聚合使用 visited 集合防止继承循环
     - 线程安全(threading.Lock 保护缓存)
 """
+
 from __future__ import annotations
 
 import threading
 import time
-from typing import Callable, Optional, Set, Union
+from collections.abc import Callable
 
 from fastapi import Depends, HTTPException, Request
 
-from fnixagent.core.exceptions import fnixagentError
 from fnixagent.api.routers.auth import verify_jwt_token
+from fnixagent.core.exceptions import fnixagentError
 from fnixagent.services.storage import get_user_store
-
 
 # ---------------------------------------------------------------------------
 # PermissionDenied 异常
@@ -50,8 +50,8 @@ class PermissionDenied(fnixagentError):
 
     def __init__(
         self,
-        user_id: Optional[int],
-        required_permissions: Union[str, list[str]],
+        user_id: int | None,
+        required_permissions: str | list[str],
     ) -> None:
         """初始化权限拒绝异常。
 
@@ -65,9 +65,7 @@ class PermissionDenied(fnixagentError):
         else:
             self.required_permissions = list(required_permissions)
         perms_str = ", ".join(self.required_permissions)
-        super().__init__(
-            f"权限不足: 用户 {user_id} 缺少权限 [{perms_str}]"
-        )
+        super().__init__(f"权限不足: 用户 {user_id} 缺少权限 [{perms_str}]")
 
 
 # ---------------------------------------------------------------------------
@@ -76,9 +74,9 @@ class PermissionDenied(fnixagentError):
 
 
 def _audit_permission_denied(
-    user_id: Optional[int],
+    user_id: int | None,
     required_perms: list[str],
-    http_request: Optional[Request] = None,
+    http_request: Request | None = None,
 ) -> None:
     """权限拒绝时写入审计日志(失败不影响主流程)。
 
@@ -88,9 +86,10 @@ def _audit_permission_denied(
         http_request: FastAPI Request(可选,用于提取 IP/UA)
     """
     try:
-        from fnixagent.core.audit import AuditLogger, AUDIT_PERMISSION_DENIED
-        ip: Optional[str] = None
-        ua: Optional[str] = None
+        from fnixagent.core.audit import AUDIT_PERMISSION_DENIED, AuditLogger
+
+        ip: str | None = None
+        ua: str | None = None
         endpoint = ""
         if http_request:
             ua = http_request.headers.get("user-agent", "")
@@ -110,6 +109,7 @@ def _audit_permission_denied(
         # Phase 2.10: 记录权限拒绝 Prometheus 指标
         try:
             from fnixagent.core.observability.metrics import record_permission_denied
+
             for perm in required_perms:
                 record_permission_denied(permission=perm, endpoint=endpoint)
         except Exception:
@@ -124,7 +124,7 @@ def _audit_permission_denied(
 
 _CACHE_TTL_SECONDS: int = 60  # 60 秒 TTL
 
-_permission_cache: dict[int, tuple[Set[str], float]] = {}
+_permission_cache: dict[int, tuple[set[str], float]] = {}
 _cache_lock = threading.Lock()
 
 
@@ -151,27 +151,62 @@ def invalidate_all_permission_cache() -> None:
 # ---------------------------------------------------------------------------
 
 # super_admin / admin 拥有的回退权限(DB 不可用时)
-_FALLBACK_ADMIN_PERMS: Set[str] = {
-    "user:read", "user:create", "user:update", "user:delete", "user:manage", "user:reset_password",
-    "role:read", "role:create", "role:update", "role:delete", "role:assign", "role:manage",
-    "department:read", "department:create", "department:update", "department:delete", "department:manage",
-    "position:read", "position:create", "position:update", "position:delete", "position:manage",
-    "document:read", "document:upload", "document:delete", "document:manage",
-    "chat:read", "chat:write", "chat:evolve", "chat:manage",
-    "task:read", "task:create", "task:cancel", "task:manage",
-    "system:config", "system:audit_log", "system:manage",
+_FALLBACK_ADMIN_PERMS: set[str] = {
+    "user:read",
+    "user:create",
+    "user:update",
+    "user:delete",
+    "user:manage",
+    "user:reset_password",
+    "role:read",
+    "role:create",
+    "role:update",
+    "role:delete",
+    "role:assign",
+    "role:manage",
+    "department:read",
+    "department:create",
+    "department:update",
+    "department:delete",
+    "department:manage",
+    "position:read",
+    "position:create",
+    "position:update",
+    "position:delete",
+    "position:manage",
+    "document:read",
+    "document:upload",
+    "document:delete",
+    "document:manage",
+    "chat:read",
+    "chat:write",
+    "chat:evolve",
+    "chat:manage",
+    "task:read",
+    "task:create",
+    "task:cancel",
+    "task:manage",
+    "system:config",
+    "system:audit_log",
+    "system:manage",
 }
 
 # 普通用户回退权限
-_FALLBACK_USER_PERMS: Set[str] = {
-    "document:read", "document:upload",
-    "chat:read", "chat:write", "chat:evolve",
-    "task:read", "task:create",
+_FALLBACK_USER_PERMS: set[str] = {
+    "document:read",
+    "document:upload",
+    "chat:read",
+    "chat:write",
+    "chat:evolve",
+    "task:read",
+    "task:create",
 }
 
 # 访客回退权限(仅 :read)
-_FALLBACK_VISITOR_PERMS: Set[str] = {
-    "document:read", "chat:read", "task:read",
+_FALLBACK_VISITOR_PERMS: set[str] = {
+    "document:read",
+    "chat:read",
+    "task:read",
 }
 
 
@@ -180,7 +215,7 @@ _FALLBACK_VISITOR_PERMS: Set[str] = {
 # ---------------------------------------------------------------------------
 
 
-def _query_permissions_from_store(user_id: int) -> Optional[Set[str]]:
+def _query_permissions_from_store(user_id: int) -> set[str] | None:
     """从 RBAC 存储查询用户全部权限码(兼容 Pg / InMemory)。
 
     通过 get_rbac_store() 获取存储单例,查询用户角色并聚合权限码。
@@ -211,8 +246,8 @@ def _query_permissions_from_store(user_id: int) -> Optional[Set[str]]:
 
         # 聚合所有活跃角色的权限(get_role 会填充 permission_codes)
         # visited 集合防止角色继承循环(如 A→B→A 导致无限递归)
-        perms: Set[str] = set()
-        visited: Set[int] = set()
+        perms: set[str] = set()
+        visited: set[int] = set()
         for role in roles:
             if not role.is_active:
                 continue
@@ -228,7 +263,7 @@ def _query_permissions_from_store(user_id: int) -> Optional[Set[str]]:
         return None
 
 
-def _fallback_permissions(role: str) -> Set[str]:
+def _fallback_permissions(role: str) -> set[str]:
     """DB 不可用时的回退:根据 User.role 字段返回权限集合。
 
     Args:
@@ -249,7 +284,7 @@ def _fallback_permissions(role: str) -> Set[str]:
     return set(_FALLBACK_USER_PERMS)
 
 
-def get_user_permissions(user_id: int) -> Set[str]:
+def get_user_permissions(user_id: int) -> set[str]:
     """获取用户全部权限码集合(带缓存)。
 
     优先级:
@@ -461,7 +496,7 @@ def require_all_permissions(*codes: str) -> Callable:
     return _dep
 
 
-def get_current_user_permissions(payload: dict = Depends(verify_jwt_token)) -> Set[str]:
+def get_current_user_permissions(payload: dict = Depends(verify_jwt_token)) -> set[str]:
     """FastAPI 依赖:返回当前用户全部权限码集合(供前端菜单/按钮展示)。
 
     用法:

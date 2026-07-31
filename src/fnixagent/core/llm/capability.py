@@ -16,12 +16,12 @@
   - LLMRouter._select_for(request) 按需筛选(如 think_mode=True 时跳过不支持的 provider)
   - LLMRequest 新增 think_mode: bool = False 字段(对接 P2-6 策略)
 """
+
 from __future__ import annotations
 
 import enum
 from dataclasses import dataclass, field
 from typing import Any
-
 
 # ---------------------------------------------------------------------------
 # 能力位标志
@@ -32,17 +32,27 @@ class ModelCapabilityFlag(enum.IntFlag):
     """模型能力位标志(可用 | 组合,& 检测)。"""
 
     NONE = 0
-    THINK_MODE = 1 << 0           # 思考模式(GLM-4.5 / DeepSeek-R1)
-    VISION = 1 << 1               # 多模态视觉
-    FUNCTION_CALLING = 1 << 2     # 函数调用(tools 参数)
-    JSON_MODE = 1 << 3            # JSON 模式(强制输出 JSON)
-    LONG_CONTEXT = 1 << 4         # 长上下文(>32K)
-    STREAMING = 1 << 5            # 流式输出
-    HIGH_QUALITY = 1 << 6         # 高质量(贵模型)
-    LOW_COST = 1 << 7             # 低成本(便宜模型)
-    TOOL_CHOICE_REQUIRED = 1 << 8 # 支持工具强制选择(tool_choice="required")
+    THINK_MODE = 1 << 0  # 思考模式(GLM-4.5 / DeepSeek-R1)
+    VISION = 1 << 1  # 多模态视觉
+    FUNCTION_CALLING = 1 << 2  # 函数调用(tools 参数)
+    JSON_MODE = 1 << 3  # JSON 模式(强制输出 JSON)
+    LONG_CONTEXT = 1 << 4  # 长上下文(>32K)
+    STREAMING = 1 << 5  # 流式输出
+    HIGH_QUALITY = 1 << 6  # 高质量(贵模型)
+    LOW_COST = 1 << 7  # 低成本(便宜模型)
+    TOOL_CHOICE_REQUIRED = 1 << 8  # 支持工具强制选择(tool_choice="required")
     # 预留扩展位
-    ALL = THINK_MODE | VISION | FUNCTION_CALLING | JSON_MODE | LONG_CONTEXT | STREAMING | HIGH_QUALITY | LOW_COST | TOOL_CHOICE_REQUIRED
+    ALL = (
+        THINK_MODE
+        | VISION
+        | FUNCTION_CALLING
+        | JSON_MODE
+        | LONG_CONTEXT
+        | STREAMING
+        | HIGH_QUALITY
+        | LOW_COST
+        | TOOL_CHOICE_REQUIRED
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -73,7 +83,7 @@ class ModelCapability:
     params: dict[str, Any] = field(default_factory=dict)
     # 上下文窗口与成本(供 Cheap/Precise 策略参考)
     max_context_tokens: int = 8192
-    cost_per_1k_input: float = 0.001    # USD
+    cost_per_1k_input: float = 0.001  # USD
     cost_per_1k_output: float = 0.002
     avg_latency_ms: float = 1000.0
 
@@ -97,12 +107,12 @@ class ModelCapability:
         """检查是否具备任一指定能力。"""
         return bool(self.flags & flags)
 
-    def add(self, flag: ModelCapabilityFlag) -> "ModelCapability":
+    def add(self, flag: ModelCapabilityFlag) -> ModelCapability:
         """添加能力(链式)。"""
         self.flags |= flag
         return self
 
-    def remove(self, flag: ModelCapabilityFlag) -> "ModelCapability":
+    def remove(self, flag: ModelCapabilityFlag) -> ModelCapability:
         """移除能力(链式)。"""
         self.flags &= ~flag
         return self
@@ -139,7 +149,7 @@ class ModelCapability:
     # ------------------------------------------------------------------
 
     @classmethod
-    def for_think_mode(cls, model_name: str = "") -> "ModelCapability":
+    def for_think_mode(cls, model_name: str = "") -> ModelCapability:
         """构造仅具备 think_mode 能力的实例。"""
         return cls(
             model_name=model_name,
@@ -149,7 +159,7 @@ class ModelCapability:
         )
 
     @classmethod
-    def for_high_quality(cls, model_name: str = "") -> "ModelCapability":
+    def for_high_quality(cls, model_name: str = "") -> ModelCapability:
         """构造高质量模型能力。"""
         return cls(
             model_name=model_name,
@@ -165,7 +175,7 @@ class ModelCapability:
         )
 
     @classmethod
-    def for_low_cost(cls, model_name: str = "") -> "ModelCapability":
+    def for_low_cost(cls, model_name: str = "") -> ModelCapability:
         """构造低成本模型能力。"""
         return cls(
             model_name=model_name,
@@ -193,15 +203,17 @@ class CapabilityRequirement:
 
     required: ModelCapabilityFlag = ModelCapabilityFlag.NONE
     preferred: ModelCapabilityFlag = ModelCapabilityFlag.NONE  # 优先选择(非强制)
-    forbidden: ModelCapabilityFlag = ModelCapabilityFlag.NONE  # 禁止(如 Cheap 策略禁止 HIGH_QUALITY)
+    forbidden: ModelCapabilityFlag = (
+        ModelCapabilityFlag.NONE
+    )  # 禁止(如 Cheap 策略禁止 HIGH_QUALITY)
 
     @classmethod
-    def for_think_mode(cls) -> "CapabilityRequirement":
+    def for_think_mode(cls) -> CapabilityRequirement:
         """需要思考模式(Precise/Compliance 策略)。"""
         return cls(required=ModelCapabilityFlag.THINK_MODE)
 
     @classmethod
-    def for_low_cost(cls) -> "CapabilityRequirement":
+    def for_low_cost(cls) -> CapabilityRequirement:
         """偏好低成本(Cheap 策略)。"""
         return cls(
             preferred=ModelCapabilityFlag.LOW_COST,
@@ -209,7 +221,7 @@ class CapabilityRequirement:
         )
 
     @classmethod
-    def for_high_quality(cls) -> "CapabilityRequirement":
+    def for_high_quality(cls) -> CapabilityRequirement:
         """偏好高质量(Precise 策略)。"""
         return cls(preferred=ModelCapabilityFlag.HIGH_QUALITY)
 

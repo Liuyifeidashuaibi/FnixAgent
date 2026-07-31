@@ -18,6 +18,7 @@ UEBA 行为基线引擎 (User & Entity Behavior Analytics) - P2 安全模块。
   - 不修改 office/base.py 与其他现有源文件
   - 可选依赖 sklearn 缺失时自动降级
 """
+
 from __future__ import annotations
 
 import logging
@@ -26,13 +27,13 @@ import threading
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
 # 尝试导入 sklearn(可选依赖,缺失时降级到统计方法)
 try:
     from sklearn.ensemble import IsolationForest  # type: ignore[import-not-found]
+
     _SKLEARN_AVAILABLE: bool = True
 except ImportError:
     _SKLEARN_AVAILABLE = False
@@ -53,6 +54,7 @@ def _audit_behavior_anomaly(
     """将行为异常写入审计日志(异常吞掉)。"""
     try:
         from fnixagent.core.audit import AuditLogger
+
         AuditLogger().log(
             action="behavior.anomaly",
             detail={
@@ -84,6 +86,7 @@ class BehaviorFeatures:
         tools_used:     使用的工具列表
         data_volume_kb: 数据量(KB)
     """
+
     user_id: str
     timestamp: float
     call_count_1h: int = 0
@@ -106,6 +109,7 @@ class BehaviorBaseline:
         active_hours:      活跃时段(0-23 列表)
         trained_at:        训练时间(ISO 字符串)
     """
+
     user_id: str
     mean_calls_1h: float = 0.0
     std_calls_1h: float = 0.0
@@ -126,11 +130,12 @@ class AnomalyScore:
         recommendation: 处置建议 allow/monitor/challenge_mfa/block
         features:       触发评分的行为特征
     """
+
     user_id: str
     score: float
     reasons: list[str] = field(default_factory=list)
     recommendation: str = "allow"
-    features: Optional[BehaviorFeatures] = None
+    features: BehaviorFeatures | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -170,9 +175,7 @@ class BehaviorAnalyzer:
         # 是否启用 ML 路径(sklearn 不可用时强制降级)
         self._use_ml: bool = use_ml and _SKLEARN_AVAILABLE
         if use_ml and not _SKLEARN_AVAILABLE:
-            logger.warning(
-                "[behavior] sklearn 不可用,降级到统计基线方法"
-            )
+            logger.warning("[behavior] sklearn 不可用,降级到统计基线方法")
         # 滑动窗口:user_id -> deque[BehaviorFeatures]
         self._windows: dict[str, deque[BehaviorFeatures]] = defaultdict(
             lambda: deque(maxlen=self.WINDOW_SIZE)
@@ -228,9 +231,7 @@ class BehaviorAnalyzer:
             hour_counts: dict[int, int] = {}
             for h in hours:
                 hour_counts[h] = hour_counts.get(h, 0) + 1
-            active_hours = sorted(
-                h for h, c in hour_counts.items() if c >= 2
-            )
+            active_hours = sorted(h for h, c in hour_counts.items() if c >= 2)
 
             baseline = BehaviorBaseline(
                 user_id=user_id,
@@ -277,8 +278,8 @@ class BehaviorAnalyzer:
                     features, features.user_id
                 )
             else:
-                freq_score, time_score, data_score, reasons = (
-                    self._statistical_anomaly(features, baseline)
+                freq_score, time_score, data_score, reasons = self._statistical_anomaly(
+                    features, baseline
                 )
 
             # 聚合评分
@@ -300,9 +301,7 @@ class BehaviorAnalyzer:
 
             # 触发 MFA 或阻断时记录审计
             if recommendation in ("challenge_mfa", "block"):
-                _audit_behavior_anomaly(
-                    features.user_id, score, recommendation, reasons
-                )
+                _audit_behavior_anomaly(features.user_id, score, recommendation, reasons)
                 with self._lock:
                     self._anomalies.append(result)
                     # 防止内存无限增长
@@ -320,7 +319,7 @@ class BehaviorAnalyzer:
                 features=features,
             )
 
-    def get_baseline(self, user_id: str) -> Optional[BehaviorBaseline]:
+    def get_baseline(self, user_id: str) -> BehaviorBaseline | None:
         """获取用户基线(未训练返回 None)。"""
         with self._lock:
             return self._baselines.get(user_id)
@@ -369,9 +368,7 @@ class BehaviorAnalyzer:
             deviation = f.call_count_1h - baseline.mean_calls_1h
             if deviation > self.SIGMA_MULTIPLIER * baseline.std_calls_1h:
                 # 超出倍数越多评分越高(线性映射到 0.5-1.0)
-                excess = deviation / (
-                    self.SIGMA_MULTIPLIER * baseline.std_calls_1h
-                )
+                excess = deviation / (self.SIGMA_MULTIPLIER * baseline.std_calls_1h)
                 freq_score = min(1.0, 0.5 + 0.5 * (excess - 1.0))
                 reasons.append(
                     f"调用频次异常: {f.call_count_1h} > 均值 "
@@ -382,54 +379,38 @@ class BehaviorAnalyzer:
                 # 倍数异常(标准差为 0 但频次翻倍)
                 freq_score = 0.5
                 reasons.append(
-                    f"调用频次翻倍: {f.call_count_1h} > "
-                    f"2×均值 {baseline.mean_calls_1h:.1f}"
+                    f"调用频次翻倍: {f.call_count_1h} > 2×均值 {baseline.mean_calls_1h:.1f}"
                 )
         elif baseline.mean_calls_1h > 0 and f.call_count_1h > baseline.mean_calls_1h * 2:
             freq_score = 0.5
-            reasons.append(
-                f"调用频次翻倍: {f.call_count_1h} > "
-                f"2×均值 {baseline.mean_calls_1h:.1f}"
-            )
+            reasons.append(f"调用频次翻倍: {f.call_count_1h} > 2×均值 {baseline.mean_calls_1h:.1f}")
 
         # 2. 时段异常:凌晨 2-5 点 或 非活跃时段
         if f.hour_of_day in self.OFF_HOURS:
             time_score = 1.0
-            reasons.append(
-                f"非工作时段访问: 小时 {f.hour_of_day}"
-            )
-        elif (
-            baseline.active_hours
-            and f.hour_of_day not in baseline.active_hours
-        ):
+            reasons.append(f"非工作时段访问: 小时 {f.hour_of_day}")
+        elif baseline.active_hours and f.hour_of_day not in baseline.active_hours:
             # 不在历史活跃时段(中等可疑)
             time_score = 0.6
             reasons.append(
-                f"非活跃时段访问: 小时 {f.hour_of_day} "
-                f"不在活跃时段 {baseline.active_hours}"
+                f"非活跃时段访问: 小时 {f.hour_of_day} 不在活跃时段 {baseline.active_hours}"
             )
 
         # 3. 数据量异常:超过均值 + 3σ
         if baseline.std_data_volume > 0:
             deviation = f.data_volume_kb - baseline.mean_data_volume
             if deviation > self.SIGMA_MULTIPLIER * baseline.std_data_volume:
-                excess = deviation / (
-                    self.SIGMA_MULTIPLIER * baseline.std_data_volume
-                )
+                excess = deviation / (self.SIGMA_MULTIPLIER * baseline.std_data_volume)
                 data_score = min(1.0, 0.5 + 0.5 * (excess - 1.0))
                 reasons.append(
                     f"数据量异常: {f.data_volume_kb:.1f}KB > 均值 "
                     f"{baseline.mean_data_volume:.1f}KB + "
                     f"{self.SIGMA_MULTIPLIER}σ"
                 )
-        elif (
-            baseline.mean_data_volume > 0
-            and f.data_volume_kb > baseline.mean_data_volume * 2
-        ):
+        elif baseline.mean_data_volume > 0 and f.data_volume_kb > baseline.mean_data_volume * 2:
             data_score = 0.5
             reasons.append(
-                f"数据量翻倍: {f.data_volume_kb:.1f}KB > "
-                f"2×均值 {baseline.mean_data_volume:.1f}KB"
+                f"数据量翻倍: {f.data_volume_kb:.1f}KB > 2×均值 {baseline.mean_data_volume:.1f}KB"
             )
 
         return freq_score, time_score, data_score, reasons
@@ -475,9 +456,7 @@ class BehaviorAnalyzer:
             freq_score = anomaly_strength
             time_score = anomaly_strength
             data_score = anomaly_strength
-            reasons.append(
-                f"IsolationForest 检测异常(decision={decision:.4f})"
-            )
+            reasons.append(f"IsolationForest 检测异常(decision={decision:.4f})")
             # 补充时段原因(可解释性)
             if f.hour_of_day in self.OFF_HOURS:
                 reasons.append(f"非工作时段: 小时 {f.hour_of_day}")
@@ -512,7 +491,8 @@ class BehaviorAnalyzer:
                 self._models[user_id] = model
             logger.info(
                 "[behavior] IsolationForest 训练完成(user=%s, 样本=%d)",
-                user_id, len(X),
+                user_id,
+                len(X),
             )
         except Exception as exc:
             logger.warning("[behavior] IsolationForest 训练失败: %s", exc)
@@ -549,7 +529,7 @@ class BehaviorAnalyzer:
 # ---------------------------------------------------------------------------
 
 
-_analyzer_instance: Optional[BehaviorAnalyzer] = None
+_analyzer_instance: BehaviorAnalyzer | None = None
 _analyzer_lock = threading.Lock()
 
 

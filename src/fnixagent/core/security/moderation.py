@@ -19,27 +19,26 @@
 
 Phase 2.11 验收:违规输入 100ms 内拦截,违规输出不展示,审计可查。
 """
+
 from __future__ import annotations
 
 import re
 import time
 from dataclasses import dataclass, field
-from typing import Optional
 
 from fnixagent.core.security.desensitize import Desensitizer
 from fnixagent.core.security.sensitive import SensitiveDetector
-
 
 # ---------------------------------------------------------------------------
 # 审核类别常量
 # ---------------------------------------------------------------------------
 
-CATEGORY_SELF_HARM: str = "self_harm"      # 自伤/自杀
-CATEGORY_VIOLENCE: str = "violence"         # 暴力/武器
-CATEGORY_PORNOGRAPHY: str = "pornography"   # 色情/低俗
-CATEGORY_POLITICAL: str = "political"       # 政治/极端
-CATEGORY_FRAUD: str = "fraud"               # 诈骗/违法
-CATEGORY_PII: str = "pii"                   # PII 泄露
+CATEGORY_SELF_HARM: str = "self_harm"  # 自伤/自杀
+CATEGORY_VIOLENCE: str = "violence"  # 暴力/武器
+CATEGORY_PORNOGRAPHY: str = "pornography"  # 色情/低俗
+CATEGORY_POLITICAL: str = "political"  # 政治/极端
+CATEGORY_FRAUD: str = "fraud"  # 诈骗/违法
+CATEGORY_PII: str = "pii"  # PII 泄露
 CATEGORY_SENSITIVE: str = "sensitive_word"  # 敏感词
 
 ALL_CATEGORIES: tuple[str, ...] = (
@@ -61,14 +60,15 @@ ALL_CATEGORIES: tuple[str, ...] = (
 @dataclass
 class ModerationResult:
     """内容审核结果。"""
-    passed: bool                                # 是否通过
+
+    passed: bool  # 是否通过
     issues: list[str] = field(default_factory=list)
-    sanitized_text: str = ""                    # 脱敏后的文本
+    sanitized_text: str = ""  # 脱敏后的文本
     sensitive_hits: list[str] = field(default_factory=list)
     pii_hits: list[str] = field(default_factory=list)
-    categories: list[str] = field(default_factory=list)   # 命中的违规类别
-    risk_score: int = 0                                  # 风险评分 0-100
-    duration_ms: int = 0                                 # 审核耗时
+    categories: list[str] = field(default_factory=list)  # 命中的违规类别
+    risk_score: int = 0  # 风险评分 0-100
+    duration_ms: int = 0  # 审核耗时
 
 
 # ---------------------------------------------------------------------------
@@ -77,15 +77,38 @@ class ModerationResult:
 
 _HARMFUL_PATTERNS: list[tuple[str, re.Pattern]] = [
     # 自伤/自杀
-    (CATEGORY_SELF_HARM, re.compile(r"(?i)(自杀|自残|自伤|割腕|安眠药|跳楼|轻生|结束生命|想死|kill\s+yourself|commit\s+suicide)")),
+    (
+        CATEGORY_SELF_HARM,
+        re.compile(
+            r"(?i)(自杀|自残|自伤|割腕|安眠药|跳楼|轻生|结束生命|想死|kill\s+yourself|commit\s+suicide)"
+        ),
+    ),
     # 暴力/武器
-    (CATEGORY_VIOLENCE, re.compile(r"(?i)(炸弹制作|制毒|制枪|黑客教程|杀人方法|buy\s+gun|how\s+to\s+make\s+bomb|explosive\s+recipe)")),
+    (
+        CATEGORY_VIOLENCE,
+        re.compile(
+            r"(?i)(炸弹制作|制毒|制枪|黑客教程|杀人方法|buy\s+gun|how\s+to\s+make\s+bomb|explosive\s+recipe)"
+        ),
+    ),
     # 色情/低俗
-    (CATEGORY_PORNOGRAPHY, re.compile(r"(?i)(色情|黄色电影|裸聊|一夜情| AV |成人视频|porn|xxx|nude|sexual\s+content)")),
+    (
+        CATEGORY_PORNOGRAPHY,
+        re.compile(r"(?i)(色情|黄色电影|裸聊|一夜情| AV |成人视频|porn|xxx|nude|sexual\s+content)"),
+    ),
     # 政治/极端
-    (CATEGORY_POLITICAL, re.compile(r"(?i)(颠覆|煽动|分裂国家|反动|极端主义|恐怖主义|邪教|法轮|terrorist\s+attack|extremism)")),
+    (
+        CATEGORY_POLITICAL,
+        re.compile(
+            r"(?i)(颠覆|煽动|分裂国家|反动|极端主义|恐怖主义|邪教|法轮|terrorist\s+attack|extremism)"
+        ),
+    ),
     # 诈骗/违法
-    (CATEGORY_FRAUD, re.compile(r"(?i)(传销|诈骗|洗钱|贩毒|走私|贿赂|fake\s+id|money\s+laundering|drug\s+trafficking)")),
+    (
+        CATEGORY_FRAUD,
+        re.compile(
+            r"(?i)(传销|诈骗|洗钱|贩毒|走私|贿赂|fake\s+id|money\s+laundering|drug\s+trafficking)"
+        ),
+    ),
 ]
 
 # PII 正则
@@ -105,8 +128,8 @@ def _audit_moderation(
     text: str,
     categories: list[str],
     risk_score: int,
-    user_id: Optional[int] = None,
-    ip_address: Optional[str] = None,
+    user_id: int | None = None,
+    ip_address: str | None = None,
     direction: str = "output",
 ) -> None:
     """将审核违规写入审计日志(失败不影响主流程)。
@@ -122,6 +145,7 @@ def _audit_moderation(
     """
     try:
         from fnixagent.core.audit import AuditLogger
+
         AuditLogger().log(
             action=action,
             user_id=user_id,
@@ -158,8 +182,8 @@ class ContentModerator:
 
     def __init__(
         self,
-        sensitive_detector: Optional[SensitiveDetector] = None,
-        desensitizer: Optional[Desensitizer] = None,
+        sensitive_detector: SensitiveDetector | None = None,
+        desensitizer: Desensitizer | None = None,
     ) -> None:
         """初始化内容审核器。
 
@@ -175,8 +199,8 @@ class ContentModerator:
     def review_input(
         self,
         text: str,
-        user_id: Optional[int] = None,
-        ip_address: Optional[str] = None,
+        user_id: int | None = None,
+        ip_address: str | None = None,
         auto_sanitize: bool = True,
     ) -> ModerationResult:
         """对用户输入做严格审核。
@@ -269,8 +293,8 @@ class ContentModerator:
         self,
         text: str,
         auto_sanitize: bool = True,
-        user_id: Optional[int] = None,
-        ip_address: Optional[str] = None,
+        user_id: int | None = None,
+        ip_address: str | None = None,
     ) -> ModerationResult:
         """对 LLM 输出做合规审核。
 
@@ -325,9 +349,7 @@ class ContentModerator:
             sanitized = self._desensitizer.mask_all(text)
 
         # 5. 判定:敏感词或有害内容不通过;PII 仅脱敏
-        blocking_categories = [
-            c for c in categories if c != CATEGORY_PII
-        ]
+        blocking_categories = [c for c in categories if c != CATEGORY_PII]
         passed = len(blocking_categories) == 0
         risk_score = self._compute_risk_score(categories, sensitive_hits, pii_hits)
 

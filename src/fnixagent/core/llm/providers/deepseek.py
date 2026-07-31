@@ -20,6 +20,7 @@ DeepSeek LLM Provider。
     )
     router.register(provider, weight=2.0)
 """
+
 from __future__ import annotations
 
 from fnixagent.core.llm.providers.openai import OpenAICompatibleProvider

@@ -30,13 +30,14 @@
     - zhua_*     对接 zhua-crawler 系统(/v1/* 接口,端口 8000,能力更丰富:
                   含 agent 多步 / reverse_api 嗅探 / 异步任务全生命周期)
 """
+
 from __future__ import annotations
 
 import logging
 import threading
-from typing import Any, Optional
+from typing import Any
 
-from fnixagent.business.crawler.zhua_config import ZhuaConfig, load_zhua_config
+from fnixagent.business.crawler.zhua_config import load_zhua_config
 from fnixagent.business.crawler.zhua_sdk import (
     ZhuaClient,
     ZhuaError,
@@ -46,7 +47,7 @@ from fnixagent.core.tools.protocol import ToolLayer, ToolMetadata, ToolPermissio
 _logger = logging.getLogger(__name__)
 
 # 全局单例 ZhuaClient(首次调用时从配置创建)
-_global_client: Optional[ZhuaClient] = None
+_global_client: ZhuaClient | None = None
 _global_client_lock = threading.Lock()
 
 
@@ -68,7 +69,7 @@ def _get_client() -> ZhuaClient:
     return _global_client  # type: ignore[return-value]
 
 
-def _set_global_client(client: Optional[ZhuaClient]) -> None:
+def _set_global_client(client: ZhuaClient | None) -> None:
     """设置全局单例 client(register_zhua_tools 传入时调用)。"""
     global _global_client
     with _global_client_lock:
@@ -104,10 +105,10 @@ def _tool_scrape(
     output: str = "markdown",
     fit: bool = False,
     screenshot: bool = False,
-    wait_for: Optional[str] = None,
+    wait_for: str | None = None,
     timeout: float = 60.0,
-    impersonate: Optional[str] = None,
-    proxy: Optional[str] = None,
+    impersonate: str | None = None,
+    proxy: str | None = None,
 ) -> dict:
     """zhua_scrape 工具实现 —— 单页抓取。
 
@@ -149,8 +150,8 @@ def _tool_scrape(
 
 def _tool_extract(
     url: str,
-    schema: Optional[dict] = None,
-    selector: Optional[str] = None,
+    schema: dict | None = None,
+    selector: str | None = None,
     html_mode: str = "markdown",
 ) -> dict:
     """zhua_extract 工具实现 —— LLM 结构化提取。
@@ -212,7 +213,7 @@ def _tool_task_create(
     urls: list[str],
     adapter: str = "auto",
     priority: int = 5,
-    webhook: Optional[str] = None,
+    webhook: str | None = None,
 ) -> dict:
     """zhua_task_create 工具实现 —— 批量任务创建(异步)。
 
@@ -473,8 +474,7 @@ TOOL_METADATA: dict[str, ToolMetadata] = {
     ),
     "zhua_agent": _make_metadata(
         "zhua_agent",
-        "zhua-crawler Agent 多步任务(浏览器自动化,自然语言描述任务,"
-        "自动规划与执行多步操作)",
+        "zhua-crawler Agent 多步任务(浏览器自动化,自然语言描述任务,自动规划与执行多步操作)",
         {
             "type": "object",
             "properties": {
@@ -623,7 +623,7 @@ TOOL_FUNCS: dict[str, Any] = {
 
 def register_zhua_tools(
     registry: Any,
-    client: Optional[ZhuaClient] = None,
+    client: ZhuaClient | None = None,
 ) -> None:
     """注册 zhua-crawler 工具到 ToolRegistry。
 

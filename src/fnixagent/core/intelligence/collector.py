@@ -22,10 +22,10 @@ import logging
 import re
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 from urllib.parse import urlparse
 
 import httpx
@@ -38,8 +38,10 @@ logger = logging.getLogger(__name__)
 # 数据模型
 # ============================================================
 
+
 class SourceType(str, Enum):
     """信息源类型"""
+
     GITHUB_REPO = "github_repo"
     GITHUB_TRENDING = "github_trending"
     ARXIV = "arxiv"
@@ -59,6 +61,7 @@ class Priority(str, Enum):
 
 class IntelligenceCategory(str, Enum):
     """情报分类"""
+
     SELF_EVOLVING_AGENT = "self_evolving_agent"
     AGENT_FRAMEWORK = "agent_framework"
     MULTI_AGENT = "multi_agent"
@@ -77,6 +80,7 @@ class IntelligenceCategory(str, Enum):
 @dataclass
 class IntelligenceItem:
     """单条情报"""
+
     id: str
     title: str
     source_type: SourceType
@@ -89,7 +93,7 @@ class IntelligenceItem:
     actionable: bool = False
     upgrade_suggestion: str = ""
     tags: list[str] = field(default_factory=list)
-    collected_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    collected_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     raw_content: str = ""
     metadata: dict[str, Any] = field(default_factory=dict)
 
@@ -101,10 +105,11 @@ class IntelligenceItem:
 @dataclass
 class CollectionResult:
     """一次采集结果"""
+
     source_type: SourceType
     source_name: str
     items: list[IntelligenceItem]
-    collected_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    collected_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     errors: list[str] = field(default_factory=list)
     duration_ms: float = 0.0
 
@@ -112,6 +117,7 @@ class CollectionResult:
 # ============================================================
 # 采集器基类
 # ============================================================
+
 
 class BaseCollector:
     """采集器基类"""
@@ -128,24 +134,20 @@ class BaseCollector:
         max_retries = 3
         for attempt in range(max_retries):
             try:
-                response = await self.client.get(
-                    url,
-                    timeout=30.0,
-                    follow_redirects=True,
-                    **kwargs
-                )
+                response = await self.client.get(url, timeout=30.0, follow_redirects=True, **kwargs)
                 response.raise_for_status()
                 return response.text
-            except Exception as e:
+            except Exception:
                 if attempt == max_retries - 1:
                     raise
-                await asyncio.sleep(2 ** attempt)
+                await asyncio.sleep(2**attempt)
         return ""
 
 
 # ============================================================
 # GitHub 采集器
 # ============================================================
+
 
 class GitHubCollector(BaseCollector):
     """GitHub 仓库监控 + Trending 采集"""
@@ -174,7 +176,7 @@ class GitHubCollector(BaseCollector):
             source_name="GitHub",
             items=items,
             errors=errors,
-            duration_ms=(time.monotonic() - start) * 1000
+            duration_ms=(time.monotonic() - start) * 1000,
         )
 
     async def _collect_repo(self, repo: dict) -> list[IntelligenceItem]:
@@ -184,27 +186,33 @@ class GitHubCollector(BaseCollector):
         try:
             # 获取最新 Release
             releases_url = f"{self.GITHUB_API}/repos/{repo_name}/releases?per_page=3"
-            releases_text = await self._fetch(releases_url, headers={"Accept": "application/vnd.github+json"})
+            releases_text = await self._fetch(
+                releases_url, headers={"Accept": "application/vnd.github+json"}
+            )
             releases = json.loads(releases_text)
             for rel in releases:
-                items.append(IntelligenceItem(
-                    id=IntelligenceItem.generate_id(f"{repo_name}-{rel['tag_name']}", rel.get("html_url", "")),
-                    title=f"[{repo['name']}] {rel.get('name', rel['tag_name'])}",
-                    source_type=SourceType.GITHUB_REPO,
-                    source_name=repo["name"],
-                    url=rel.get("html_url", ""),
-                    category=IntelligenceCategory(repo.get("category", "agent_framework")),
-                    priority=Priority(repo.get("priority", "medium")),
-                    summary=rel.get("body", "")[:500] if rel.get("body") else "",
-                    key_insights=self._extract_insights(rel.get("body", "")),
-                    tags=repo.get("watch", []),
-                    metadata={
-                        "repo": repo_name,
-                        "tag": rel["tag_name"],
-                        "published_at": rel.get("published_at", ""),
-                        "stars": repo.get("stars", 0)
-                    }
-                ))
+                items.append(
+                    IntelligenceItem(
+                        id=IntelligenceItem.generate_id(
+                            f"{repo_name}-{rel['tag_name']}", rel.get("html_url", "")
+                        ),
+                        title=f"[{repo['name']}] {rel.get('name', rel['tag_name'])}",
+                        source_type=SourceType.GITHUB_REPO,
+                        source_name=repo["name"],
+                        url=rel.get("html_url", ""),
+                        category=IntelligenceCategory(repo.get("category", "agent_framework")),
+                        priority=Priority(repo.get("priority", "medium")),
+                        summary=rel.get("body", "")[:500] if rel.get("body") else "",
+                        key_insights=self._extract_insights(rel.get("body", "")),
+                        tags=repo.get("watch", []),
+                        metadata={
+                            "repo": repo_name,
+                            "tag": rel["tag_name"],
+                            "published_at": rel.get("published_at", ""),
+                            "stars": repo.get("stars", 0),
+                        },
+                    )
+                )
         except Exception as e:
             logger.warning(f"Failed to collect {repo_name}: {e}")
         return items
@@ -212,30 +220,46 @@ class GitHubCollector(BaseCollector):
     async def _collect_trending(self) -> list[IntelligenceItem]:
         """采集 GitHub Trending"""
         items: list[IntelligenceItem] = []
-        ai_keywords = ["agent", "llm", "ai", "gpt", "claude", "langchain", "rag",
-                       "autonomous", "self-improving", "multi-agent", "mcp", "a2a"]
+        ai_keywords = [
+            "agent",
+            "llm",
+            "ai",
+            "gpt",
+            "claude",
+            "langchain",
+            "rag",
+            "autonomous",
+            "self-improving",
+            "multi-agent",
+            "mcp",
+            "a2a",
+        ]
         try:
             html = await self._fetch(self.TRENDING_URL)
             pattern = r'<h2[^>]*>\s*<a[^>]*href="(/[^"]+)"[^>]*>\s*<span[^>]*>([^<]+)</span>\s*/\s*<span[^>]*>([^<]+)</span>'
             matches = re.findall(pattern, html)
             for owner, repo_name in matches:
                 full_name = f"{owner.strip('/')}/{repo_name}"
-                desc_pattern = rf'<p[^>]*>\s*({full_name}[^<]*|[^<]*{full_name}[^<]*)</p>'
+                desc_pattern = rf"<p[^>]*>\s*({full_name}[^<]*|[^<]*{full_name}[^<]*)</p>"
                 desc_match = re.search(desc_pattern, html, re.IGNORECASE)
                 description = desc_match.group(1).strip() if desc_match else ""
                 if any(kw in full_name.lower() or kw in description.lower() for kw in ai_keywords):
-                    items.append(IntelligenceItem(
-                        id=IntelligenceItem.generate_id(full_name, f"https://github.com/{full_name}"),
-                        title=f"[Trending] {full_name}",
-                        source_type=SourceType.GITHUB_TRENDING,
-                        source_name="GitHub Trending",
-                        url=f"https://github.com/{full_name}",
-                        category=IntelligenceCategory.AGENT_FRAMEWORK,
-                        priority=Priority.HIGH,
-                        summary=description[:300],
-                        tags=["trending"],
-                        metadata={"repo": full_name}
-                    ))
+                    items.append(
+                        IntelligenceItem(
+                            id=IntelligenceItem.generate_id(
+                                full_name, f"https://github.com/{full_name}"
+                            ),
+                            title=f"[Trending] {full_name}",
+                            source_type=SourceType.GITHUB_TRENDING,
+                            source_name="GitHub Trending",
+                            url=f"https://github.com/{full_name}",
+                            category=IntelligenceCategory.AGENT_FRAMEWORK,
+                            priority=Priority.HIGH,
+                            summary=description[:300],
+                            tags=["trending"],
+                            metadata={"repo": full_name},
+                        )
+                    )
         except Exception as e:
             logger.warning(f"Failed to fetch trending: {e}")
         return items
@@ -250,9 +274,24 @@ class GitHubCollector(BaseCollector):
             line = line.strip().lstrip("-*# ")
             if not line:
                 continue
-            if any(kw in line.lower() for kw in
-                   ["feature", "improve", "add", "fix", "new", "breaking", "deprecate",
-                    "self-improving", "skill", "memory", "auto", "evolve", "learn"]):
+            if any(
+                kw in line.lower()
+                for kw in [
+                    "feature",
+                    "improve",
+                    "add",
+                    "fix",
+                    "new",
+                    "breaking",
+                    "deprecate",
+                    "self-improving",
+                    "skill",
+                    "memory",
+                    "auto",
+                    "evolve",
+                    "learn",
+                ]
+            ):
                 insights.append(line[:200])
         return insights[:8]
 
@@ -260,6 +299,7 @@ class GitHubCollector(BaseCollector):
 # ============================================================
 # arXiv 采集器
 # ============================================================
+
 
 class ArxivCollector(BaseCollector):
     """arXiv 论文采集"""
@@ -284,7 +324,7 @@ class ArxivCollector(BaseCollector):
             source_name="arXiv",
             items=items,
             errors=errors,
-            duration_ms=(time.monotonic() - start) * 1000
+            duration_ms=(time.monotonic() - start) * 1000,
         )
 
     async def _collect_category(self, cat: dict) -> list[IntelligenceItem]:
@@ -297,9 +337,9 @@ class ArxivCollector(BaseCollector):
         try:
             xml_text = await self._fetch(f"{self.ARXIV_API}?{query}")
             from xml.etree import ElementTree as ET
+
             root = ET.fromstring(xml_text)
-            ns = {"atom": "http://www.w3.org/2005/Atom",
-                  "arxiv": "http://arxiv.org/schemas/atom"}
+            ns = {"atom": "http://www.w3.org/2005/Atom", "arxiv": "http://arxiv.org/schemas/atom"}
 
             for entry in root.findall("atom:entry", ns):
                 title = entry.find("atom:title", ns)
@@ -308,25 +348,29 @@ class ArxivCollector(BaseCollector):
                 published = entry.find("atom:published", ns)
 
                 title_text = title.text.strip() if title is not None and title.text else ""
-                summary_text = summary.text.strip()[:500] if summary is not None and summary.text else ""
+                summary_text = (
+                    summary.text.strip()[:500] if summary is not None and summary.text else ""
+                )
                 link_text = link.text.strip() if link is not None and link.text else ""
 
-                items.append(IntelligenceItem(
-                    id=IntelligenceItem.generate_id(title_text, link_text),
-                    title=title_text,
-                    source_type=SourceType.ARXIV,
-                    source_name=f"arXiv:{cat_filter}",
-                    url=link_text,
-                    category=IntelligenceCategory.AGENT_FRAMEWORK,
-                    priority=Priority(cat.get("priority", "medium")),
-                    summary=summary_text,
-                    key_insights=self._extract_paper_insights(summary_text),
-                    tags=[cat_filter],
-                    metadata={
-                        "category": cat_filter,
-                        "published": published.text if published is not None else ""
-                    }
-                ))
+                items.append(
+                    IntelligenceItem(
+                        id=IntelligenceItem.generate_id(title_text, link_text),
+                        title=title_text,
+                        source_type=SourceType.ARXIV,
+                        source_name=f"arXiv:{cat_filter}",
+                        url=link_text,
+                        category=IntelligenceCategory.AGENT_FRAMEWORK,
+                        priority=Priority(cat.get("priority", "medium")),
+                        summary=summary_text,
+                        key_insights=self._extract_paper_insights(summary_text),
+                        tags=[cat_filter],
+                        metadata={
+                            "category": cat_filter,
+                            "published": published.text if published is not None else "",
+                        },
+                    )
+                )
         except Exception as e:
             logger.warning(f"arXiv {cat_filter} failed: {e}")
         return items
@@ -339,9 +383,22 @@ class ArxivCollector(BaseCollector):
             sent = sent.strip()
             if not sent:
                 continue
-            if any(kw in sent.lower() for kw in
-                   ["propose", "achieve", "improve", "outperform", "novel", "state-of-the-art",
-                    "self-improving", "self-evolving", "continual", "autonomous", "agent"]):
+            if any(
+                kw in sent.lower()
+                for kw in [
+                    "propose",
+                    "achieve",
+                    "improve",
+                    "outperform",
+                    "novel",
+                    "state-of-the-art",
+                    "self-improving",
+                    "self-evolving",
+                    "continual",
+                    "autonomous",
+                    "agent",
+                ]
+            ):
                 sent = sent[:200]
                 if sent and sent[-1] != ".":
                     sent += "."
@@ -353,6 +410,7 @@ class ArxivCollector(BaseCollector):
 # 技术博客采集器
 # ============================================================
 
+
 class TechBlogCollector(BaseCollector):
     """大厂技术博客采集"""
 
@@ -362,9 +420,22 @@ class TechBlogCollector(BaseCollector):
         start = time.monotonic()
 
         blogs = self.config.get("tech_blogs", [])
-        ai_keywords = ["agent", "llm", "gpt", "claude", "gemini", "autonomous",
-                       "self-improving", "multi-agent", "tool", "reasoning",
-                       "memory", "multi-modal", "safety", "alignment"]
+        ai_keywords = [
+            "agent",
+            "llm",
+            "gpt",
+            "claude",
+            "gemini",
+            "autonomous",
+            "self-improving",
+            "multi-agent",
+            "tool",
+            "reasoning",
+            "memory",
+            "multi-modal",
+            "safety",
+            "alignment",
+        ]
 
         for blog in blogs:
             try:
@@ -374,24 +445,32 @@ class TechBlogCollector(BaseCollector):
                 matches = re.findall(link_pattern, html, re.IGNORECASE)
                 seen = set()
                 for href, text in matches:
-                    text = re.sub(r'<[^>]+>', '', text).strip()
+                    text = re.sub(r"<[^>]+>", "", text).strip()
                     if not text or text in seen:
                         continue
                     seen.add(text)
                     if any(kw in text.lower() for kw in ai_keywords):
-                        full_url = href if href.startswith("http") else f"{blog['url'].rstrip('/')}/{href.lstrip('/')}"
-                        items.append(IntelligenceItem(
-                            id=IntelligenceItem.generate_id(text, full_url),
-                            title=f"[{blog['name']}] {text}",
-                            source_type=SourceType.TECH_BLOG,
-                            source_name=blog["name"],
-                            url=full_url,
-                            category=IntelligenceCategory(blog.get("category", "frontier_research")),
-                            priority=Priority(blog.get("priority", "high")),
-                            summary=text,
-                            tags=[blog["name"]],
-                            metadata={"blog": blog["name"]}
-                        ))
+                        full_url = (
+                            href
+                            if href.startswith("http")
+                            else f"{blog['url'].rstrip('/')}/{href.lstrip('/')}"
+                        )
+                        items.append(
+                            IntelligenceItem(
+                                id=IntelligenceItem.generate_id(text, full_url),
+                                title=f"[{blog['name']}] {text}",
+                                source_type=SourceType.TECH_BLOG,
+                                source_name=blog["name"],
+                                url=full_url,
+                                category=IntelligenceCategory(
+                                    blog.get("category", "frontier_research")
+                                ),
+                                priority=Priority(blog.get("priority", "high")),
+                                summary=text,
+                                tags=[blog["name"]],
+                                metadata={"blog": blog["name"]},
+                            )
+                        )
             except Exception as e:
                 errors.append(f"{blog['name']}: {e}")
 
@@ -400,13 +479,14 @@ class TechBlogCollector(BaseCollector):
             source_name="Tech Blogs",
             items=items,
             errors=errors,
-            duration_ms=(time.monotonic() - start) * 1000
+            duration_ms=(time.monotonic() - start) * 1000,
         )
 
 
 # ============================================================
 # 采集引擎
 # ============================================================
+
 
 class IntelligenceCollector:
     """智能信息采集引擎 — 统一调度所有采集器"""
@@ -416,7 +496,7 @@ class IntelligenceCollector:
             Path(__file__).parent.parent.parent.parent / "config" / "intelligence_sources.yaml"
         )
         self.config = self._load_config()
-        self._client: Optional[httpx.AsyncClient] = None
+        self._client: httpx.AsyncClient | None = None
         self._collectors: dict[SourceType, BaseCollector] = {}
 
     def _load_config(self) -> dict[str, Any]:
@@ -426,8 +506,7 @@ class IntelligenceCollector:
     async def _get_client(self) -> httpx.AsyncClient:
         if self._client is None or self._client.is_closed:
             self._client = httpx.AsyncClient(
-                headers={"User-Agent": "FnixAgent-Intelligence/1.0"},
-                timeout=30.0
+                headers={"User-Agent": "FnixAgent-Intelligence/1.0"}, timeout=30.0
             )
         return self._client
 
@@ -469,7 +548,9 @@ class IntelligenceCollector:
                 output.append(result)
         return output
 
-    async def collect_and_save(self, frequency: str = "daily", output_dir: str | None = None) -> int:
+    async def collect_and_save(
+        self, frequency: str = "daily", output_dir: str | None = None
+    ) -> int:
         """采集并保存到文件"""
         if output_dir is None:
             output_dir = str(Path(__file__).parent.parent.parent.parent / "assets" / "intelligence")
@@ -482,7 +563,7 @@ class IntelligenceCollector:
 
         # 保存原始数据
         data = {
-            "collected_at": datetime.now(timezone.utc).isoformat(),
+            "collected_at": datetime.now(UTC).isoformat(),
             "frequency": frequency,
             "total_items": total_items,
             "results": [
@@ -501,16 +582,16 @@ class IntelligenceCollector:
                             "summary": item.summary,
                             "key_insights": item.key_insights,
                             "tags": item.tags,
-                            "metadata": item.metadata
+                            "metadata": item.metadata,
                         }
                         for item in r.items
-                    ]
+                    ],
                 }
                 for r in results
-            ]
+            ],
         }
 
-        date_str = datetime.now(timezone.utc).strftime("%Y%m%d")
+        date_str = datetime.now(UTC).strftime("%Y%m%d")
         output_path = Path(output_dir) / f"intelligence_{frequency}_{date_str}.json"
         with open(output_path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)

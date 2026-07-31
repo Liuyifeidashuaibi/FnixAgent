@@ -22,13 +22,14 @@
     - 恢复创建新分支: restore 仅返回数据,调用方负责"另存为新快照"实现分支
     - 清理策略: 保留最近 max_daily 天内的每日最新快照 + 最近 max_weekly 周的每周最新快照
 """
+
 from __future__ import annotations
 
 import datetime as _dt
 import json
 import os
 import time
-from typing import Any, Optional
+from typing import Any
 
 from fnixagent.core.exceptions import SnapshotError
 
@@ -60,8 +61,8 @@ class SnapshotManager:
 
     def create_snapshot(
         self,
-        name: Optional[str] = None,
-        payload: Optional[dict[str, Any]] = None,
+        name: str | None = None,
+        payload: dict[str, Any] | None = None,
         node_count: int = 0,
         edge_count: int = 0,
     ) -> str:
@@ -121,7 +122,7 @@ class SnapshotManager:
         if not os.path.exists(path):
             raise SnapshotError(f"快照不存在: {name}")
         try:
-            with open(path, "r", encoding="utf-8") as f:
+            with open(path, encoding="utf-8") as f:
                 return json.load(f)
         except (OSError, json.JSONDecodeError) as e:
             raise SnapshotError(f"快照加载失败: {e}") from e
@@ -144,16 +145,18 @@ class SnapshotManager:
                 continue
             path = os.path.join(self._snapshot_dir, fname)
             try:
-                with open(path, "r", encoding="utf-8") as f:
+                with open(path, encoding="utf-8") as f:
                     data = json.load(f)
             except (OSError, json.JSONDecodeError):
                 continue
-            snapshots.append({
-                "name": data.get("name", fname[:-5]),
-                "timestamp": data.get("timestamp", 0.0),
-                "node_count": data.get("node_count", 0),
-                "edge_count": data.get("edge_count", 0),
-            })
+            snapshots.append(
+                {
+                    "name": data.get("name", fname[:-5]),
+                    "timestamp": data.get("timestamp", 0.0),
+                    "node_count": data.get("node_count", 0),
+                    "edge_count": data.get("edge_count", 0),
+                }
+            )
         snapshots.sort(key=lambda x: x["timestamp"])
         return snapshots
 
@@ -206,11 +209,14 @@ class SnapshotManager:
 
         for snap in snapshots:
             ts = snap["timestamp"]
-            snap_name = snap["name"]
+            snap["name"]
             dt = _dt.datetime.fromtimestamp(ts)
             day_key = dt.strftime("%Y-%m-%d")
-            iso_year, iso_week, _ = dt.isocalendar()
-            week_key = f"{iso_year}-W{iso_week:02d}"
+            # 使用固定 7 天滑动窗口作为"周"分桶,而非 ISO 日历周。
+            # ISO 日历周在周末/周一交界会让相差仅数天的两个快照落入不同周,
+            # 导致"每周保留最新"语义不稳定(相邻快照被同时保留)。
+            week_index = int(ts // (7 * 86400))
+            week_key = f"w{week_index}"
 
             if ts >= daily_cutoff:
                 # 最近 max_daily 天内:按天保留最新

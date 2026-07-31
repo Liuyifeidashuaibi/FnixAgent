@@ -15,6 +15,36 @@
   - 异步优先(client 内部 async,提供同步包装)
   - 白名单模式(server 默认不暴露任何工具)
 """
+
+from fnixagent.core.mcp.client import (
+    MCPClient,
+    MCPClientError,
+    MCPConnectionError,
+    MCPTimeoutError,
+    MCPToolExecutionError,
+)
+from fnixagent.core.mcp.registry import (
+    MCPRegistryError,
+    MCPServerAlreadyExistsError,
+    MCPServerNotFoundError,
+    MCPToolNotFoundError,
+    MCPToolRegistry,
+)
+from fnixagent.core.mcp.server import (
+    MCPServer,
+    MCPServerAlreadyRunningError,
+    MCPServerError,
+    MCPToolNotExposedError,
+)
+from fnixagent.core.mcp.trust import (
+    McpTrustEntry,
+    McpTrustError,
+    approve_server,
+    assert_trusted_for_connect,
+    deny_server,
+    generate_pkce_pair,
+    list_entries,
+)
 from fnixagent.core.mcp.types import (
     JSONRPCError,
     JSONRPCRequest,
@@ -26,26 +56,6 @@ from fnixagent.core.mcp.types import (
     MCPServerStatus,
     MCPToolDef,
     MCPTransport,
-)
-from fnixagent.core.mcp.client import (
-    MCPClient,
-    MCPClientError,
-    MCPConnectionError,
-    MCPTimeoutError,
-    MCPToolExecutionError,
-)
-from fnixagent.core.mcp.registry import (
-    MCPServerAlreadyExistsError,
-    MCPServerNotFoundError,
-    MCPRegistryError,
-    MCPToolNotFoundError,
-    MCPToolRegistry,
-)
-from fnixagent.core.mcp.server import (
-    MCPServer,
-    MCPServerAlreadyRunningError,
-    MCPServerError,
-    MCPToolNotExposedError,
 )
 
 __all__ = [
@@ -77,4 +87,12 @@ __all__ = [
     "MCPServerError",
     "MCPServerAlreadyRunningError",
     "MCPToolNotExposedError",
+    # trust / OAuth
+    "McpTrustEntry",
+    "McpTrustError",
+    "approve_server",
+    "assert_trusted_for_connect",
+    "deny_server",
+    "generate_pkce_pair",
+    "list_entries",
 ]

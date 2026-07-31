@@ -20,6 +20,7 @@
     from fnixagent.core.gateway.middleware import GatewayMiddleware
     app = GatewayMiddleware(app, auth_required=not settings.debug)
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -27,7 +28,7 @@ import json
 import time
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 from urllib.parse import parse_qs
 
 from loguru import logger
@@ -36,14 +37,42 @@ from loguru import logger
 # 公共路径(跳过鉴权,但仍计入审计)
 # ---------------------------------------------------------------------------
 
-PUBLIC_PATHS: frozenset[str] = frozenset({
-    "/",
-    "/health",
-    "/stats",
-    "/docs",
-    "/redoc",
-    "/openapi.json",
-})
+PUBLIC_PATHS: frozenset[str] = frozenset(
+    {
+        "/",
+        "/health",
+        "/stats",
+        "/docs",
+        "/redoc",
+        "/openapi.json",
+        # Auth entrypoints must be reachable before a token exists
+        "/api/v1/auth/pubkey",
+        "/api/v1/auth/login",
+        "/api/v1/auth/register",
+        "/api/v1/auth/refresh",
+        "/api/v1/auth/owner/login",
+    }
+)
+
+# Prefixes for login/bootstrap flows (SMS / SSO / SAML / MFA challenge).
+PUBLIC_PATH_PREFIXES: tuple[str, ...] = (
+    "/api/v1/auth/sms/",
+    "/api/v1/auth/sso/",
+    "/api/v1/auth/saml/",
+    "/api/v1/auth/mfa/",
+    # Locus UI compat (local BYOK workbench; no login wall)
+    "/api/me",
+    "/api/workspaces",
+    "/api/workspace/",
+    "/api/settings/",
+)
+
+
+def _is_public_path(path: str) -> bool:
+    """Return True if the path may skip authentication."""
+    if path in PUBLIC_PATHS:
+        return True
+    return any(path.startswith(prefix) for prefix in PUBLIC_PATH_PREFIXES)
 
 
 # ---------------------------------------------------------------------------
@@ -238,8 +267,8 @@ class QuotaManager:
 # 模块级单例
 # ---------------------------------------------------------------------------
 
-_quota_manager: Optional[QuotaManager] = None
-_audit_logger: Optional[AuditLogger] = None
+_quota_manager: QuotaManager | None = None
+_audit_logger: AuditLogger | None = None
 
 
 def get_quota_manager() -> QuotaManager:
@@ -303,16 +332,22 @@ class GatewayMiddleware:
             # 鉴权失败:fail-closed(在进入任何 handler 前拒绝)
             status = self.WS_CLOSE_AUTH_FAIL if is_ws else 401
             if is_ws:
-                await send({
-                    "type": "websocket.close",
-                    "code": self.WS_CLOSE_AUTH_FAIL,
-                    "reason": "Unauthorized",
-                })
+                await send(
+                    {
+                        "type": "websocket.close",
+                        "code": self.WS_CLOSE_AUTH_FAIL,
+                        "reason": "Unauthorized",
+                    }
+                )
             else:
                 await self._send_json(send, 401, {"detail": "Unauthorized"})
             self._audit_log(
-                principal="(denied)", path=path, method=method,
-                status=status, start=start, via="denied",
+                principal="(denied)",
+                path=path,
+                method=method,
+                status=status,
+                start=start,
+                via="denied",
             )
             return
 
@@ -325,20 +360,28 @@ class GatewayMiddleware:
         if not ok:
             status = self.WS_CLOSE_QUOTA_EXCEEDED if is_ws else 429
             if is_ws:
-                await send({
-                    "type": "websocket.close",
-                    "code": self.WS_CLOSE_QUOTA_EXCEEDED,
-                    "reason": f"Quota exceeded: {reason}",
-                })
+                await send(
+                    {
+                        "type": "websocket.close",
+                        "code": self.WS_CLOSE_QUOTA_EXCEEDED,
+                        "reason": f"Quota exceeded: {reason}",
+                    }
+                )
             else:
                 await self._send_json(
-                    send, 429, {"detail": f"Quota exceeded: {reason}"},
+                    send,
+                    429,
+                    {"detail": f"Quota exceeded: {reason}"},
                     extra_headers=[(b"retry-after", b"1")],
                 )
             # acquire 返回 False 时未持有信号量,无需 release
             self._audit_log(
-                principal=principal.sub, path=path, method=method,
-                status=status, start=start, via=principal.via,
+                principal=principal.sub,
+                path=path,
+                method=method,
+                status=status,
+                start=start,
+                via=principal.via,
             )
             return
 
@@ -365,15 +408,19 @@ class GatewayMiddleware:
             except Exception:
                 pass
             self._audit_log(
-                principal=principal.sub, path=path, method=method,
-                status=status_holder["status"], start=start, via=principal.via,
+                principal=principal.sub,
+                path=path,
+                method=method,
+                status=status_holder["status"],
+                start=start,
+                via=principal.via,
             )
 
     # ------------------------------------------------------------------
     # Gate 1: 鉴权实现
     # ------------------------------------------------------------------
 
-    def _authenticate(self, scope: dict, path: str) -> Optional[Principal]:
+    def _authenticate(self, scope: dict, path: str) -> Principal | None:
         """Gate 1: 鉴权。返回 Principal 或 None(失败)。
 
         优先级:
@@ -387,7 +434,7 @@ class GatewayMiddleware:
                - 生产模式 → None(fail-closed)
         """
         # 1. 公共路径:跳过鉴权但仍审计
-        if path in PUBLIC_PATHS:
+        if _is_public_path(path):
             return Principal(sub="anonymous", scope=[], via="public")
 
         # 2. 提取 Token
@@ -444,7 +491,7 @@ class GatewayMiddleware:
         return Principal(sub=sub, scope=scopes, via="token")
 
     @staticmethod
-    def _extract_token(scope: dict) -> Optional[str]:
+    def _extract_token(scope: dict) -> str | None:
         """从 ASGI scope 提取 Token。
 
         HTTP:      Authorization: Bearer <token>
@@ -482,14 +529,16 @@ class GatewayMiddleware:
     ) -> None:
         """记录一条审计日志(latency 由 start 计算)。"""
         latency_ms = (time.monotonic() - start) * 1000.0
-        self._audit.log(AuditEntry(
-            principal=principal,
-            path=path,
-            method=method,
-            status=status,
-            latency_ms=latency_ms,
-            via=via,
-        ))
+        self._audit.log(
+            AuditEntry(
+                principal=principal,
+                path=path,
+                method=method,
+                status=status,
+                latency_ms=latency_ms,
+                via=via,
+            )
+        )
 
     # ------------------------------------------------------------------
     # HTTP 响应辅助
@@ -500,16 +549,18 @@ class GatewayMiddleware:
         send: Any,
         status: int,
         payload: dict,
-        extra_headers: Optional[list] = None,
+        extra_headers: list | None = None,
     ) -> None:
         """直接发送 JSON HTTP 响应(用于闸门拒绝场景,不进入下游 handler)。"""
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         headers: list = [(b"content-type", b"application/json")]
         if extra_headers:
             headers.extend(extra_headers)
-        await send({
-            "type": "http.response.start",
-            "status": status,
-            "headers": headers,
-        })
+        await send(
+            {
+                "type": "http.response.start",
+                "status": status,
+                "headers": headers,
+            }
+        )
         await send({"type": "http.response.body", "body": body})

@@ -1,0 +1,22 @@
+{
+  "id": "seed.search.fix_helper",
+  "title": "Find and fix helper in utils",
+  "prompt": "The project has utils/helpers.py and utils/core.py. core.py imports format_name from helpers but helpers.format_name is broken (returns empty string). Find helpers.py and fix format_name to return name.upper().",
+  "capability": ["search", "edit", "bugfix"],
+  "difficulty": 3,
+  "language": "python",
+  "tags": ["seed"],
+  "timeout_s": 180,
+  "setup": {
+    "files": {
+      "utils/helpers.py": "def format_name(name: str) -> str:\n    return ''  # bug\n",
+      "utils/core.py": "from utils.helpers import format_name\n\n\ndef label(name: str) -> str:\n    return f'NAME:{format_name(name)}'\n",
+      "test_label.py": "from utils.core import label\n\n\ndef test_label():\n    assert label('bob') == 'NAME:BOB'\n"
+    }
+  },
+  "checks": [
+    { "function": "pytest_passes", "args": { "path": "test_label.py" } },
+    { "function": "file_contains", "args": { "path": "utils/helpers.py", "text": "upper()" } },
+    { "function": "no_stub_content", "args": {} }
+  ]
+}

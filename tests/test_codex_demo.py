@@ -1,4 +1,4 @@
-﻿"""
+"""
 FnixAgent Coding — Codex 对标演示
 =====================================
 模拟 Codex 真实使用流程: 接收任务 → 规划 → 执行 → 审查 → 输出 diff。
@@ -6,6 +6,7 @@ FnixAgent Coding — Codex 对标演示
 场景: 修复 calculator.py 的除零 bug + 自动生成测试。
 使用 ScriptedLLM 按调用顺序返回预设 JSON, 让 Plan→Execute→Review 三阶段真实跑通。
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -16,15 +17,19 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from fnixagent.core.coding import (
-    CodeIndexer, CodeTools, ContextBuilder, DiffEngine, IDEServer,
+from fnixagent.core.code import (
+    CodeIndexer,
+    CodeTools,
+    ContextBuilder,
+    DiffEngine,
+    IDEServer,
 )
-from fnixagent.core.coding.coding_agent import CodingAgent, CodingTask
-
+from fnixagent.core.code.agent import CodingAgent, CodingTask
 
 # ============================================================================
 # ScriptedLLM — 按调用顺序返回预设响应 (模拟真实 LLM)
 # ============================================================================
+
 
 class ScriptedLLM:
     """脚本化 LLM, 按调用顺序返回预设响应。
@@ -164,15 +169,19 @@ def build_plan_response():
 
 def build_review_response():
     """构造 Review 阶段 LLM 返回的 JSON (审查通过)。"""
-    return json.dumps({
-        "passed": True,
-        "notes": "除零检查正确, 测试覆盖正常路径和异常路径, 修复通过。",
-    }, ensure_ascii=False)
+    return json.dumps(
+        {
+            "passed": True,
+            "notes": "除零检查正确, 测试覆盖正常路径和异常路径, 修复通过。",
+        },
+        ensure_ascii=False,
+    )
 
 
 # ============================================================================
 # 演示主流程
 # ============================================================================
+
 
 def print_stage(title):
     print(f"\n{'=' * 70}")
@@ -192,19 +201,20 @@ async def demo_codex_flow():
         # --- 准备含 bug 的项目 ---
         (Path(tmpdir) / "calculator.py").write_text(BUGGY_CALC, encoding="utf-8")
         print(f"项目目录: {tmpdir}")
-        print(f"初始文件: calculator.py (含 divide 除零 bug)")
+        print("初始文件: calculator.py (含 divide 除零 bug)")
 
         # --- 装配 CodingAgent ---
         indexer = CodeIndexer()
         await indexer.index_directory(tmpdir)
         diff_engine = DiffEngine(project_root=tmpdir)
-        tools = CodeTools(project_root=tmpdir, diff_engine=diff_engine,
-                          code_indexer=indexer)
+        tools = CodeTools(project_root=tmpdir, diff_engine=diff_engine, code_indexer=indexer)
         ctx_builder = ContextBuilder(indexer, project_root=tmpdir)
-        llm = ScriptedLLM([
-            build_plan_response(),   # 第 1 次调用: Plan 阶段
-            build_review_response(),  # 第 2 次调用: Review 阶段
-        ])
+        llm = ScriptedLLM(
+            [
+                build_plan_response(),  # 第 1 次调用: Plan 阶段
+                build_review_response(),  # 第 2 次调用: Review 阶段
+            ]
+        )
         agent = CodingAgent(tools, ctx_builder, llm)
 
         # --- 执行任务 ---
@@ -224,15 +234,14 @@ async def demo_codex_flow():
         # --- 输出 Plan ---
         print_sub(f"PLAN 阶段 — {len(result.plan)} 步执行计划")
         for i, step in enumerate(result.plan, 1):
-            desc_preview = step.description[:60].replace('\n', '\\n')
+            desc_preview = step.description[:60].replace("\n", "\\n")
             print(f"  {i}. [{step.action or 'skip'}] {step.target}")
             print(f"     {desc_preview}")
 
         # --- 输出 Execute 结果 ---
         print_sub("EXECUTE 阶段 — 步骤执行结果")
         for i, step in enumerate(result.plan, 1):
-            status_icon = {"done": "OK", "failed": "FAIL",
-                           "skipped": "SKIP"}.get(step.status, "?")
+            status_icon = {"done": "OK", "failed": "FAIL", "skipped": "SKIP"}.get(step.status, "?")
             print(f"  {i}. [{status_icon}] {step.action} {step.target}")
             if step.error:
                 print(f"     错误: {step.error[:100]}")
@@ -277,9 +286,9 @@ async def demo_codex_flow():
         for i, log in enumerate(llm.call_log, 1):
             print(f"  调用 {i}: {log[:80]}")
 
-        overall = (result.status.value == "completed"
-                   and result.review_passed
-                   and fixed_ok and test_ok)
+        overall = (
+            result.status.value == "completed" and result.review_passed and fixed_ok and test_ok
+        )
         print_sub("总结")
         print(f"  对标 Codex 流程完整跑通: {'YES' if overall else 'NO'}")
         return overall
@@ -326,10 +335,13 @@ async def demo_cli_mcp():
         print(f"  output={str(r.get('result', ''))[:60]}")
 
         print_sub("MCP: code.write new_module.py")
-        r = await server.mcp_call("code.write", {
-            "file_path": "new_module.py",
-            "content": "x = 42\n",
-        })
+        r = await server.mcp_call(
+            "code.write",
+            {
+                "file_path": "new_module.py",
+                "content": "x = 42\n",
+            },
+        )
         print(f"  success={r['success']}, result={r.get('result')}")
 
         print_sub("MCP: code.search greet")
@@ -337,11 +349,14 @@ async def demo_cli_mcp():
         print(f"  success={r['success']}, 结果数={len(r.get('result', []))}")
 
         print_sub("MCP: code.edit hello.py (唯一匹配替换)")
-        r = await server.mcp_call("code.edit", {
-            "file_path": "hello.py",
-            "old_text": "hello {name}",
-            "new_text": "hi {name}",
-        })
+        r = await server.mcp_call(
+            "code.edit",
+            {
+                "file_path": "hello.py",
+                "old_text": "hello {name}",
+                "new_text": "hi {name}",
+            },
+        )
         print(f"  success={r['success']}, result={r.get('result')}")
 
         r = await server.mcp_call("code.read", {"file_path": "hello.py"})
@@ -349,9 +364,12 @@ async def demo_cli_mcp():
 
         # --- 沙箱安全演示 ---
         print_sub("安全: 路径穿越防护")
-        r = await server.mcp_call("code.read", {
-            "file_path": "../../../etc/passwd",
-        })
+        r = await server.mcp_call(
+            "code.read",
+            {
+                "file_path": "../../../etc/passwd",
+            },
+        )
         print(f"  success={r['success']} (应 False), error={r.get('error', '')[:60]}")
 
         print_sub("安全: Git 危险命令拦截")
@@ -386,10 +404,7 @@ async def demo_repo_map():
             encoding="utf-8",
         )
         (Path(tmpdir) / "utils.py").write_text(
-            "def format_time(ts):\n"
-            "    pass\n"
-            "def parse_json(text):\n"
-            "    pass\n",
+            "def format_time(ts):\n    pass\ndef parse_json(text):\n    pass\n",
             encoding="utf-8",
         )
 

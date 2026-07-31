@@ -13,25 +13,22 @@
   - 最大步数限制: 防止无限循环(ASI08 级联故障)
   - 最小权限原则: 默认只授予 LOW 权限
 """
+
 from __future__ import annotations
 
-import time
 import threading
-from concurrent.futures import ThreadPoolExecutor, as_completed, TimeoutError as FuturesTimeout
-from dataclasses import dataclass
-from typing import Any, Optional
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import TimeoutError as FuturesTimeout
+from typing import Any
 
 from fnixagent.core.config import ToolConfig
 from fnixagent.core.exceptions import (
     ToolCyclicDependencyError,
     ToolNotFoundError,
-    ToolPermissionDeniedError,
-    ToolTimeoutError,
-    ToolValidationError,
 )
 from fnixagent.core.scheduler import AutoscaledPool
 from fnixagent.core.tools.protocol import (
-    RegisteredTool,
     ToolMetadata,
     validate_arguments,
 )
@@ -57,8 +54,8 @@ class ToolExecutor:
     def __init__(
         self,
         registry: ToolRegistry,
-        config: Optional[ToolConfig] = None,
-        autoscale_pool: Optional[AutoscaledPool] = None,
+        config: ToolConfig | None = None,
+        autoscale_pool: AutoscaledPool | None = None,
     ) -> None:
         self._registry = registry
         self._config = config or ToolConfig()
@@ -68,25 +65,21 @@ class ToolExecutor:
         self._before_hooks: list = []
         self._after_hooks: list = []
         # 编排线程池:用于 execute_parallel / execute_dag 的并行调度
-        self._executor_pool = ThreadPoolExecutor(
-            max_workers=self._config.max_parallel
-        )
+        self._executor_pool = ThreadPoolExecutor(max_workers=self._config.max_parallel)
         # P0-05: 自适应并发池(可选)。提供时由其信号量动态限流,
         # 工具执行改用按 max_concurrency 配置的共享执行器;否则回退固定池。
-        self._autoscale_pool: Optional[AutoscaledPool] = autoscale_pool
+        self._autoscale_pool: AutoscaledPool | None = autoscale_pool
         if autoscale_pool is not None:
             # 不创建固定 _tool_pool;改用共享执行器,容量按 max_concurrency 配置,
             # 实际并发由 autoscale_pool 的信号量(current_concurrency)动态限制
-            self._tool_pool: Optional[ThreadPoolExecutor] = None
-            self._autoscale_executor: Optional[ThreadPoolExecutor] = ThreadPoolExecutor(
+            self._tool_pool: ThreadPoolExecutor | None = None
+            self._autoscale_executor: ThreadPoolExecutor | None = ThreadPoolExecutor(
                 max_workers=autoscale_pool.config.max_concurrency
             )
         else:
             # 向后兼容: 工具执行线程池,专门运行 tool.func,与编排池隔离
             # 避免 execute_parallel → execute → tool.func 嵌套提交导致死锁
-            self._tool_pool = ThreadPoolExecutor(
-                max_workers=max(self._config.max_parallel * 2, 8)
-            )
+            self._tool_pool = ThreadPoolExecutor(max_workers=max(self._config.max_parallel * 2, 8))
             self._autoscale_executor = None
         self._step_counter = 0
         self._lock = threading.Lock()
@@ -116,7 +109,7 @@ class ToolExecutor:
         """
         self._after_hooks.append(hook)
 
-    def _run_before_hooks(self, call: ToolCall) -> Optional[ToolResult]:
+    def _run_before_hooks(self, call: ToolCall) -> ToolResult | None:
         """执行前置 Hook,返回非 None 则拦截。"""
         for hook in self._before_hooks:
             try:
@@ -165,12 +158,14 @@ class ToolExecutor:
         trace = None
         try:
             from fnixagent.core.observability.tracing import get_provider
+
             trace = get_provider().get_current_trace()
         except Exception:
             pass
 
         if trace is not None:
             from fnixagent.core.observability.tracing import ToolSpanData
+
             tool_span_data = ToolSpanData(
                 tool_name=call.name,
                 arguments=dict(call.arguments),
@@ -179,8 +174,10 @@ class ToolExecutor:
                 result = self._execute_impl(call)
                 # 回填结果到 Span
                 tool_span_data.status = (
-                    "success" if result.status == ToolExecutionStatus.SUCCESS
-                    else result.status.value if hasattr(result.status, "value")
+                    "success"
+                    if result.status == ToolExecutionStatus.SUCCESS
+                    else result.status.value
+                    if hasattr(result.status, "value")
                     else str(result.status)
                 )
                 tool_span_data.duration_ms = result.duration_ms or (span.duration_ms or 0.0)
@@ -205,6 +202,40 @@ class ToolExecutor:
         intercepted = self._run_before_hooks(call)
         if intercepted is not None:
             return self._run_after_hooks(call, intercepted)
+
+        # Policy gate: risk / approval / idempotency (Day 31–60)
+        from fnixagent.core.tools.policy import get_tool_policy
+
+        policy = get_tool_policy()
+        decision = policy.evaluate(call.name, dict(call.arguments or {}))
+        if decision.cached_result is not None and decision.reason == "idempotent_cache_hit":
+            cached = decision.cached_result
+            if isinstance(cached, ToolResult):
+                return self._run_after_hooks(call, cached)
+            return self._run_after_hooks(
+                call,
+                ToolResult(
+                    call_id=call.call_id,
+                    name=call.name,
+                    status=ToolExecutionStatus.SUCCESS,
+                    output=cached,
+                    state=ToolCallState.SUCCESS,
+                ),
+            )
+        if not decision.allowed:
+            return self._run_after_hooks(
+                call,
+                ToolResult(
+                    call_id=call.call_id,
+                    name=call.name,
+                    status=ToolExecutionStatus.FAILED,
+                    error=(
+                        f"{decision.reason}: tool '{call.name}' risk={decision.risk.value} "
+                        f"key={decision.idempotency_key}"
+                    ),
+                    state=ToolCallState.FAILED,
+                ),
+            )
 
         # 步数限制(防止无限循环)
         with self._lock:
@@ -253,7 +284,7 @@ class ToolExecutor:
         timeout_sec = tool.metadata.timeout_ms / 1000.0
         retry_policy = tool.metadata.retry_policy
         max_attempts = retry_policy.max_attempts if retry_policy is not None else 1
-        last_error: Optional[Exception] = None
+        last_error: Exception | None = None
         # P0-05: 获取自适应并发槽位(阻塞直到有可用槽位;无 autoscale_pool 时跳过)
         if self._autoscale_pool is not None:
             self._autoscale_pool.acquire()
@@ -270,12 +301,15 @@ class ToolExecutor:
                     # Phase 2.10: 记录工具执行指标
                     try:
                         from fnixagent.core.observability.metrics import record_tool_execution
-                        record_tool_execution(tool_name=call.name, duration_seconds=duration_ms / 1000, success=True)
+
+                        record_tool_execution(
+                            tool_name=call.name, duration_seconds=duration_ms / 1000, success=True
+                        )
                     except Exception:
                         pass
                     # P0-4: 成功时更新 ToolCall 状态
                     call.state = ToolCallState.SUCCESS
-                    return ToolResult(
+                    result = ToolResult(
                         call_id=call.call_id,
                         name=call.name,
                         status=ToolExecutionStatus.SUCCESS,
@@ -283,6 +317,8 @@ class ToolExecutor:
                         duration_ms=duration_ms,
                         state=ToolCallState.SUCCESS,
                     )
+                    policy.remember_success(decision.idempotency_key, result)
+                    return result
                 except FuturesTimeout:
                     last_error = TimeoutError(f"工具 '{call.name}' 执行超时 ({timeout_sec}s)")
                     # 尝试取消未开始的 future,释放线程池资源
@@ -290,6 +326,7 @@ class ToolExecutor:
                     # Phase 2.10: 记录工具超时错误
                     try:
                         from fnixagent.core.observability.metrics import record_tool_error
+
                         record_tool_error(tool_name=call.name, error_type="timeout")
                     except Exception:
                         pass
@@ -313,6 +350,7 @@ class ToolExecutor:
                     # Phase 2.10: 记录工具执行错误
                     try:
                         from fnixagent.core.observability.metrics import record_tool_error
+
                         record_tool_error(tool_name=call.name, error_type=type(exc).__name__)
                     except Exception:
                         pass
@@ -349,9 +387,7 @@ class ToolExecutor:
 
     # -- 串行执行 ----------------------------------------------------------
 
-    def execute_serial(
-        self, calls: list[ToolCall]
-    ) -> list[ToolResult]:
+    def execute_serial(self, calls: list[ToolCall]) -> list[ToolResult]:
         """
         串行执行工具链。
         每步结果独立返回;若需将前一步结果注入下一步,由上层编排器处理。
@@ -365,9 +401,7 @@ class ToolExecutor:
 
     # -- 并行执行 ----------------------------------------------------------
 
-    def execute_parallel(
-        self, calls: list[ToolCall]
-    ) -> list[ToolResult]:
+    def execute_parallel(self, calls: list[ToolCall]) -> list[ToolResult]:
         """
         并行执行多个无依赖的工具调用。
         使用 ThreadPoolExecutor, 最大并行数由 config.max_parallel 控制。
@@ -387,18 +421,18 @@ class ToolExecutor:
             except Exception as exc:
                 # execute() 内部已包装异常为 ToolResult,
                 # 此处兜底防止编排线程池本身的异常逃逸
-                results.append(ToolResult(
-                    call_id=call.call_id,
-                    name=call.name,
-                    status=ToolExecutionStatus.FAILED,
-                    error=f"并行执行异常: {exc}",
-                    state=ToolCallState.FAILED,
-                ))
+                results.append(
+                    ToolResult(
+                        call_id=call.call_id,
+                        name=call.name,
+                        status=ToolExecutionStatus.FAILED,
+                        error=f"并行执行异常: {exc}",
+                        state=ToolCallState.FAILED,
+                    )
+                )
         # 按原始调用顺序排序
         call_order = {c.call_id or c.name: i for i, c in enumerate(calls)}
-        results.sort(
-            key=lambda r: call_order.get(r.call_id or r.name, 0)
-        )
+        results.sort(key=lambda r: call_order.get(r.call_id or r.name, 0))
         return results
 
     # -- DAG 拓扑编排 ------------------------------------------------------
@@ -423,9 +457,7 @@ class ToolExecutor:
         # 构建依赖图
         step_map = {s["step_no"]: s for s in steps}
         in_degree: dict[int, int] = {s["step_no"]: 0 for s in steps}
-        dependents: dict[int, list[int]] = {
-            s["step_no"]: [] for s in steps
-        }
+        dependents: dict[int, list[int]] = {s["step_no"]: [] for s in steps}
 
         for s in steps:
             for dep in s.get("depends_on", []):
@@ -435,9 +467,8 @@ class ToolExecutor:
 
         # Kahn 拓扑排序
         from collections import deque
-        queue = deque(
-            s_no for s_no, deg in in_degree.items() if deg == 0
-        )
+
+        queue = deque(s_no for s_no, deg in in_degree.items() if deg == 0)
         results: list[ToolResult] = []
         completed: set[int] = set()
 
@@ -449,14 +480,18 @@ class ToolExecutor:
             calls = []
             for s_no in batch:
                 step = step_map[s_no]
-                calls.append(ToolCall(
-                    name=step.get("tool_name", ""),
-                    arguments=step.get("arguments", {}),
-                    call_id=f"step_{s_no}",
-                ))
+                calls.append(
+                    ToolCall(
+                        name=step.get("tool_name", ""),
+                        arguments=step.get("arguments", {}),
+                        call_id=f"step_{s_no}",
+                    )
+                )
 
             # 并行执行当前层
-            batch_results = self.execute_parallel(calls) if len(calls) > 1 else [self.execute(calls[0])]
+            batch_results = (
+                self.execute_parallel(calls) if len(calls) > 1 else [self.execute(calls[0])]
+            )
 
             for s_no, result in zip(batch, batch_results):
                 completed.add(s_no)
@@ -470,9 +505,7 @@ class ToolExecutor:
         # 环检测
         if len(completed) < len(steps):
             uncompleted = set(step_map.keys()) - completed
-            raise ToolCyclicDependencyError(
-                f"DAG 存在环依赖, 未完成的步骤: {uncompleted}"
-            )
+            raise ToolCyclicDependencyError(f"DAG 存在环依赖, 未完成的步骤: {uncompleted}")
 
         return results
 

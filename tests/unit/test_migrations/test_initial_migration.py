@@ -1,4 +1,4 @@
-﻿"""
+"""
 Phase 0.3 数据库迁移单元测试。
 
 验证 initial migration 的结构正确性:
@@ -9,6 +9,7 @@ Phase 0.3 数据库迁移单元测试。
 不依赖真实 PostgreSQL,使用 `alembic upgrade head --sql` 离线生成 SQL,
 然后解析 SQL 文本统计 DDL 语句数量。
 """
+
 from __future__ import annotations
 
 import os
@@ -20,10 +21,7 @@ import pytest
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]  # FNIXAGENT/
 MIGRATION_FILE = (
-    PROJECT_ROOT
-    / "migrations"
-    / "versions"
-    / "20260704_2000_0001_initial_initial_schema.py"
+    PROJECT_ROOT / "migrations" / "versions" / "20260704_2000_0001_initial_initial_schema.py"
 )
 
 
@@ -47,7 +45,7 @@ class TestMigrationStructure:
     def test_down_revision_is_none(self) -> None:
         """down_revision 为 None(初始迁移)。"""
         text = MIGRATION_FILE.read_text(encoding="utf-8")
-        assert 'down_revision: Union[str, None] = None' in text
+        assert "down_revision: Union[str, None] = None" in text
 
     def test_upgrade_function_defined(self) -> None:
         """upgrade() 函数已定义。"""
@@ -198,9 +196,9 @@ def upgrade_sql() -> str:
 
 @pytest.fixture(scope="module")
 def downgrade_sql() -> str:
-    """运行 alembic downgrade 0001_initial:base --sql,返回 SQL 文本。"""
+    """运行 alembic downgrade head:base --sql,返回 SQL 文本(完整回滚到 base)。"""
     result = subprocess.run(
-        [sys.executable, "-m", "alembic", "downgrade", "0001_initial:base", "--sql"],
+        [sys.executable, "-m", "alembic", "downgrade", "head:base", "--sql"],
         cwd=str(PROJECT_ROOT),
         capture_output=True,
         text=True,
@@ -212,20 +210,69 @@ def downgrade_sql() -> str:
 
 
 class TestOfflineSqlGeneration:
-    """通过 alembic --sql 离线生成 DDL,校验 SQL 语句数量。
+    """通过 alembic --sql 离线生成 DDL,校验 SQL 语句数量与结构。
 
     不需要真实 PostgreSQL 数据库,仅验证迁移逻辑能正确生成 DDL。
+    采用「升级/回滚对称」校验: upgrade 创建的表数量应与 downgrade 删除的
+    表数量一致(迁移可逆),索引则校验关键索引存在 + 数量下限。
     """
 
-    def test_upgrade_creates_18_application_tables(self, upgrade_sql: str) -> None:
-        """upgrade SQL 包含 18 张应用表 + 1 张 alembic_version = 19 个 CREATE TABLE。"""
-        count = upgrade_sql.count("CREATE TABLE")
-        assert count == 19, f"expected 19 CREATE TABLE, got {count}"
+    # 关键业务表(初始 18 张 + RBAC 6 张)
+    KEY_TABLES = [
+        "tenants",
+        "users",
+        "api_credentials",
+        "sessions",
+        "messages",
+        "tasks",
+        "task_steps",
+        "tool_executions",
+        "tools",
+        "documents",
+        "knowledge_chunks",
+        "entities",
+        "entity_relations",
+        "reflection_logs",
+        "audit_logs",
+        "prompt_templates",
+        "billing_records",
+        "feedbacks",
+        "roles",
+        "permissions",
+        "departments",
+        "positions",
+    ]
 
-    def test_upgrade_creates_8_indexes(self, upgrade_sql: str) -> None:
-        """upgrade SQL 包含 8 个 CREATE INDEX。"""
+    # 关键索引
+    KEY_INDEXES = [
+        "idx_sessions_user",
+        "idx_messages_session",
+        "idx_tasks_user_status",
+        "idx_tool_exec_task",
+        "idx_tool_exec_name_time",
+        "idx_docs_user_type",
+        "idx_chunks_doc",
+        "idx_entities_user_type",
+    ]
+
+    def test_upgrade_creates_expected_tables(self, upgrade_sql: str, downgrade_sql: str) -> None:
+        """upgrade 创建的表数量应与 downgrade 删除的表数量一致(迁移可逆)。"""
+        created = upgrade_sql.count("CREATE TABLE")
+        dropped = downgrade_sql.count("DROP TABLE")
+        assert created == dropped, (
+            f"upgrade CREATE TABLE ({created}) 与 downgrade DROP TABLE ({dropped}) 数量不一致"
+        )
+        assert created >= 19, f"期望至少 19 张表,实际 {created}"
+        normalized = upgrade_sql.replace('"', "")
+        for t in self.KEY_TABLES:
+            assert f"CREATE TABLE {t}" in normalized, f"upgrade 缺少表 {t}"
+
+    def test_upgrade_creates_indexes(self, upgrade_sql: str) -> None:
+        """upgrade SQL 包含全部关键索引(数量下限 8)。"""
         count = upgrade_sql.count("CREATE INDEX")
-        assert count == 8, f"expected 8 CREATE INDEX, got {count}"
+        assert count >= 8, f"期望至少 8 个 CREATE INDEX,实际 {count}"
+        for idx in self.KEY_INDEXES:
+            assert idx in upgrade_sql, f"upgrade 缺少索引 {idx}"
 
     def test_upgrade_includes_postgres_array_type(self, upgrade_sql: str) -> None:
         """upgrade SQL 包含 PostgreSQL ARRAY 类型(TEXT[] / SMALLINT[])。"""
@@ -237,12 +284,15 @@ class TestOfflineSqlGeneration:
         cascade_count = upgrade_sql.count("ON DELETE CASCADE")
         assert cascade_count >= 3, f"expected >=3 ON DELETE CASCADE, got {cascade_count}"
 
-    def test_downgrade_drops_18_application_tables(self, downgrade_sql: str) -> None:
-        """downgrade SQL 包含 18 张应用表 + 1 张 alembic_version = 19 个 DROP TABLE。"""
-        count = downgrade_sql.count("DROP TABLE")
-        assert count == 19, f"expected 19 DROP TABLE, got {count}"
+    def test_downgrade_drops_all_tables(self, upgrade_sql: str, downgrade_sql: str) -> None:
+        """downgrade 删除的表数量应与 upgrade 创建的表数量一致(可逆)。"""
+        created = upgrade_sql.count("CREATE TABLE")
+        dropped = downgrade_sql.count("DROP TABLE")
+        assert dropped == created, (
+            f"downgrade DROP TABLE ({dropped}) 与 upgrade CREATE TABLE ({created}) 数量不一致"
+        )
 
-    def test_downgrade_drops_8_indexes(self, downgrade_sql: str) -> None:
-        """downgrade SQL 包含 8 个 DROP INDEX。"""
+    def test_downgrade_drops_indexes(self, downgrade_sql: str) -> None:
+        """downgrade SQL 至少删除 8 个索引。"""
         count = downgrade_sql.count("DROP INDEX")
-        assert count == 8, f"expected 8 DROP INDEX, got {count}"
+        assert count >= 8, f"expected >=8 DROP INDEX, got {count}"

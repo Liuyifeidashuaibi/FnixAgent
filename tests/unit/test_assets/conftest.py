@@ -1,4 +1,4 @@
-﻿"""
+"""
 资产模块单元测试公共夹具。
 
 提供以下 fixtures:
@@ -6,6 +6,7 @@
     - sample_bundle:  含示例数据的 AssetsBundle
     - encryptor:      AssetEncryptor 实例(测试密码)
 """
+
 import os
 import sys
 
@@ -18,10 +19,10 @@ from fnixagent.assets.bundle import AssetsBundle
 from fnixagent.assets.crypto import AssetEncryptor
 from fnixagent.core.types import SkillLevel, SkillRecord
 
-
 # ---------------------------------------------------------------------------
 # 临时资产目录
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def tmp_bundle_dir(tmp_path) -> str:
@@ -34,6 +35,7 @@ def tmp_bundle_dir(tmp_path) -> str:
 # ---------------------------------------------------------------------------
 # 示例资产包
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def sample_bundle() -> AssetsBundle:
@@ -143,6 +145,7 @@ def sample_bundle() -> AssetsBundle:
 # ---------------------------------------------------------------------------
 # 加密器
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def encryptor() -> AssetEncryptor:

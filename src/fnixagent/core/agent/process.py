@@ -11,6 +11,7 @@ AgentProcess - 进程抽象 (Process Abstraction)
   - 资源限制: token/step/duration/child 四项 cgroup 风格限制
   - 父子关系: 进程树, 父进程可限制子进程能力
 """
+
 from __future__ import annotations
 
 import json
@@ -19,7 +20,12 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from fnixagent.core.agent.types import (
-    AgentPriority, AgentState, ResourceLimits, TraceContext, utcnow, utcnow_iso,
+    AgentPriority,
+    AgentState,
+    ResourceLimits,
+    TraceContext,
+    utcnow,
+    utcnow_iso,
 )
 
 
@@ -52,6 +58,7 @@ class AgentProcess:
         exit_code: 退出码 (None = 未退出)
         exit_reason: 退出原因
     """
+
     pid: str = field(default_factory=lambda: str(uuid.uuid4()))
     name: str = ""
     state: AgentState = AgentState.CREATED
@@ -79,8 +86,12 @@ class AgentProcess:
     @property
     def is_alive(self) -> bool:
         """进程是否存活 (类比 kill -0)。"""
-        return self.state in (AgentState.READY, AgentState.RUNNING,
-                              AgentState.BLOCKED, AgentState.SUSPENDED)
+        return self.state in (
+            AgentState.READY,
+            AgentState.RUNNING,
+            AgentState.BLOCKED,
+            AgentState.SUSPENDED,
+        )
 
     @property
     def is_running(self) -> bool:
@@ -98,6 +109,7 @@ class AgentProcess:
         if self.started_at is None:
             return 0.0
         from datetime import datetime
+
         start = datetime.fromisoformat(self.started_at)
         if self.finished_at:
             end = datetime.fromisoformat(self.finished_at)
@@ -112,16 +124,19 @@ class AgentProcess:
         legal = {
             AgentState.CREATED: {AgentState.READY, AgentState.TERMINATED},
             AgentState.READY: {AgentState.RUNNING, AgentState.TERMINATED, AgentState.SUSPENDED},
-            AgentState.RUNNING: {AgentState.READY, AgentState.BLOCKED,
-                                 AgentState.SUSPENDED, AgentState.TERMINATED},
+            AgentState.RUNNING: {
+                AgentState.READY,
+                AgentState.BLOCKED,
+                AgentState.SUSPENDED,
+                AgentState.TERMINATED,
+            },
             AgentState.BLOCKED: {AgentState.READY, AgentState.TERMINATED},
             AgentState.SUSPENDED: {AgentState.READY, AgentState.TERMINATED},
             AgentState.TERMINATED: set(),  # 终态
         }
         if new_state not in legal.get(self.state, set()):
             raise ValueError(
-                f"非法状态转换: {self.state.value} → {new_state.value} "
-                f"(pid={self.pid})"
+                f"非法状态转换: {self.state.value} → {new_state.value} (pid={self.pid})"
             )
         self.state = new_state
         if new_state == AgentState.RUNNING and self.started_at is None:
@@ -138,11 +153,9 @@ class AgentProcess:
         if self.steps_executed > self.limits.max_steps:
             return f"步数超限: {self.steps_executed} > {self.limits.max_steps}"
         if self.elapsed_sec > self.limits.max_duration_sec:
-            return (f"时长超限: {self.elapsed_sec:.1f}s > "
-                    f"{self.limits.max_duration_sec}s")
+            return f"时长超限: {self.elapsed_sec:.1f}s > {self.limits.max_duration_sec}s"
         if len(self.child_pids) > self.limits.max_child_processes:
-            return (f"子进程超限: {len(self.child_pids)} > "
-                    f"{self.limits.max_child_processes}")
+            return f"子进程超限: {len(self.child_pids)} > {self.limits.max_child_processes}"
         return None
 
     def consume_tokens(self, count: int) -> None:
@@ -198,17 +211,15 @@ class AgentProcess:
         # 恢复资源限制
         limits_dict = cp.get("limits", {})
         if limits_dict:
-            self.limits = ResourceLimits(**{
-                k: v for k, v in limits_dict.items()
-                if k in ResourceLimits.__dataclass_fields__
-            })
+            self.limits = ResourceLimits(
+                **{k: v for k, v in limits_dict.items() if k in ResourceLimits.__dataclass_fields__}
+            )
         # 恢复 trace 上下文
         trace_dict = cp.get("trace_context", {})
         if trace_dict:
-            self.trace_context = TraceContext(**{
-                k: v for k, v in trace_dict.items()
-                if k in TraceContext.__dataclass_fields__
-            })
+            self.trace_context = TraceContext(
+                **{k: v for k, v in trace_dict.items() if k in TraceContext.__dataclass_fields__}
+            )
         # 恢复后进入 READY 状态, 等待重新调度
         if self.state == AgentState.RUNNING:
             self.state = AgentState.READY
@@ -251,8 +262,10 @@ class AgentProcess:
         }
 
     def __repr__(self) -> str:
-        return (f"AgentProcess(pid={self.pid[:8]}, name={self.name!r}, "
-                f"state={self.state.value}, priority={int(self.priority)})")
+        return (
+            f"AgentProcess(pid={self.pid[:8]}, name={self.name!r}, "
+            f"state={self.state.value}, priority={int(self.priority)})"
+        )
 
 
 __all__ = ["AgentProcess"]

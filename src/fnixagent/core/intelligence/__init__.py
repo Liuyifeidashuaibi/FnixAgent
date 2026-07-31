@@ -32,7 +32,7 @@ FnixAgent ∞ 自进化飞轮 v2.0 — 七层闭环进化体系 (Intelligence & 
   ├──────────────────────────────────────────────────────────────────┤
   │  Layer 6: 技能市场层 (Skill Marketplace)   ← OpenClaw ClawHub    │
   ├──────────────────────────────────────────────────────────────────┤
-  │  Layer 5: 记忆操作系统 (Memory OS)         ← Letta/MemGPT        │
+  │  Layer 5: 记忆层 (MemoryManager)            ← Letta/MemGPT        │
   ├──────────────────────────────────────────────────────────────────┤
   │  Layer 4: 知识合成层 (SynthesisEngine)     ← GPT-Researcher      │
   │  RuleBasedExtractor → LLMSynthesizer → SynthesisReport          │
@@ -55,7 +55,6 @@ FnixAgent ∞ 自进化飞轮 v2.0 — 七层闭环进化体系 (Intelligence & 
 
 使用方式:
   from fnixagent.core.intelligence import (
-      EvolutionMaster,        # 进化主控器 (中枢协调所有七层)
       SelfEvolutionFlywheel,  # 飞轮调度
       LoopEngine,             # 循环工程
       GeneticEvolver,         # 遗传进化
@@ -63,133 +62,262 @@ FnixAgent ∞ 自进化飞轮 v2.0 — 七层闭环进化体系 (Intelligence & 
       SelfJudge,              # 自我审判
       ContinuousCollector,    # 连续采集
       SynthesisEngine,        # 知识合成
-      MemoryOS,               # 记忆操作系统
       SkillMarketplace,       # 技能市场
       AgentHarness,           # 全方位优化引擎
   )
 """
 
-from .collector import IntelligenceCollector, IntelligenceItem, CollectionResult, SourceType, Priority, IntelligenceCategory
-from .knowledge import KnowledgeExtractor, KnowledgeItem, KnowledgeDigest, FlywheelKnowledgeBase
-from .upgrade import UpgradeEngine, UpgradeProposal, UpgradeType, UpgradeImpact
-from .flywheel import SelfEvolutionFlywheel, FlywheelState, ScheduleConfig
-from .continuous_collector import (
-    SourceCategory, SourceItem,
-    GitHubDeepCollector, SemanticScholarCollector,
-    ArxivEnhancedCollector, RSSFeedCollector,
-    ContinuousCollector,
-)
-from .synthesizer import (
-    InsightType, ExtractedInsight, SynthesisReport,
-    RuleBasedExtractor, LLMSynthesizer, SynthesisEngine,
-)
-from .loop_engine import (
-    LoopPhase, LoopPriority, LoopOutcome,
-    Loop, LoopTrigger, LoopStep, LoopPlan,
-    LoopExperience, LoopResult,
-    LoopExecutor, LoopScheduler, NudgeEngine, LoopRegistry,
-)
-from .genetic_evolver import (
-    GeneType, Gene, Chromosome,
-    ParetoFrontier, GeneticOperators,
-    EvolutionConfig, EvolutionResult,
-    GeneticEvolver, TrajectoryDrivenEvolution,
-)
-from .evolution_guard import (
-    GuardLevel, DegradationType, BenchmarkSnapshot,
-    BoundaryAwareness, DegradationDetector,
-    SandboxValidator, RollbackManager, EvolutionGuard,
-)
-from .self_judge import (
-    EvaluateDimension, EvolvingCriteria, JudgeVerdict,
-    MultiDimensionScorer, ComparativeJudge,
-    RegressionDetector, CriteriaEvolver, SelfJudge,
+from .agent_optimizer import (
+    AgentHarness,
+    CacheEntry,
+    CacheStrategy,
+    CircuitState,
+    CostCircuitBreaker,
+    ErrorCategory,
+    ErrorRecoveryEngine,
+    ModelConfig,
+    ModelRouter,
+    ModelTier,
+    ParallelExecutor,
+    PerformanceMonitor,
+    PerformanceSnapshot,
+    TaskNode,
+    TaskStatus,
+    TokenOptimizer,
 )
 from .collection_pipeline import (
-    SourceTier, CollectionMethod, SourceConfig,
-    SOURCES, SUPPLEMENTARY_SOURCES,
-    RawItem, NormalizedItem, CollectionBatch,
-    DataNormalizer, UnifiedCollector,
-    AgentRole, AgentTask, MultiAgentOrchestrator,
-    ScheduleFrequency, IntelligentScheduler,
+    SOURCES,
+    SUPPLEMENTARY_SOURCES,
+    AgentRole,
+    AgentTask,
+    CollectionBatch,
+    CollectionMethod,
+    DataNormalizer,
+    IntelligentScheduler,
+    MultiAgentOrchestrator,
+    NormalizedItem,
+    RawItem,
+    ScheduleFrequency,
+    SourceConfig,
+    SourceTier,
+    UnifiedCollector,
 )
-from .agent_optimizer import (
-    CacheStrategy, CacheEntry, TokenOptimizer,
-    ModelTier, ModelConfig, ModelRouter,
-    TaskStatus, TaskNode, ParallelExecutor,
-    CircuitState, CostCircuitBreaker,
-    ErrorCategory, ErrorRecoveryEngine,
-    PerformanceSnapshot, PerformanceMonitor,
-    AgentHarness,
+from .collector import (
+    CollectionResult,
+    IntelligenceCategory,
+    IntelligenceCollector,
+    IntelligenceItem,
+    Priority,
+    SourceType,
 )
-from .evolution_master import (
-    EvolutionStage, EvolutionStatistics, EvolutionMaster,
+from .continuous_collector import (
+    ArxivEnhancedCollector,
+    ContinuousCollector,
+    GitHubDeepCollector,
+    RSSFeedCollector,
+    SemanticScholarCollector,
+    SourceCategory,
+    SourceItem,
 )
-from .memory_os import (
-    MemoryTier, MemoryType, MemoryEntry,
-    MemoryOS, MemoryFactory,
+from .evolution_guard import (
+    BenchmarkSnapshot,
+    BoundaryAwareness,
+    DegradationDetector,
+    DegradationType,
+    EvolutionGuard,
+    GuardLevel,
+    RollbackManager,
+    SandboxValidator,
+)
+from .flywheel import FlywheelState, ScheduleConfig, SelfEvolutionFlywheel
+from .genetic_evolver import (
+    Chromosome,
+    EvolutionConfig,
+    EvolutionResult,
+    Gene,
+    GeneticEvolver,
+    GeneticOperators,
+    GeneType,
+    ParetoFrontier,
+    TrajectoryDrivenEvolution,
+)
+from .integration import IntelligenceIntegrator
+from .knowledge import FlywheelKnowledgeBase, KnowledgeDigest, KnowledgeExtractor, KnowledgeItem
+from .loop_engine import (
+    Loop,
+    LoopExecutor,
+    LoopExperience,
+    LoopOutcome,
+    LoopPhase,
+    LoopPlan,
+    LoopPriority,
+    LoopRegistry,
+    LoopResult,
+    LoopScheduler,
+    LoopStep,
+    LoopTrigger,
+    NudgeEngine,
+)
+from .memory_manager import IntelligenceMemoryManager, MemoryEntry
+from .self_judge import (
+    ComparativeJudge,
+    CriteriaEvolver,
+    EvaluateDimension,
+    EvolvingCriteria,
+    JudgeVerdict,
+    MultiDimensionScorer,
+    RegressionDetector,
+    SelfJudge,
+)
+from .self_optimizing import (
+    FewShotExample,
+    SelfOptimizingLibrary,
+    extract_examples_from_trace,
+    success_score,
 )
 from .skill_marketplace import (
-    SkillStatus, SkillCategory, SkillGene,
-    Skill, SkillMarketplace, SkillEvolutionFactory,
+    Skill,
+    SkillCategory,
+    SkillEvolutionFactory,
+    SkillGene,
+    SkillMarketplace,
+    SkillStatus,
 )
+from .synthesizer import (
+    ExtractedInsight,
+    InsightType,
+    LLMSynthesizer,
+    RuleBasedExtractor,
+    SynthesisEngine,
+    SynthesisReport,
+)
+from .upgrade import UpgradeEngine, UpgradeImpact, UpgradeProposal, UpgradeType
 
 __all__ = [
     # === 基础采集 ===
-    "IntelligenceCollector", "IntelligenceItem", "CollectionResult",
-    "SourceType", "Priority", "IntelligenceCategory",
+    "IntelligenceCollector",
+    "IntelligenceItem",
+    "CollectionResult",
+    "SourceType",
+    "Priority",
+    "IntelligenceCategory",
     # === 知识+升级 ===
-    "KnowledgeExtractor", "KnowledgeItem", "KnowledgeDigest", "FlywheelKnowledgeBase",
-    "UpgradeEngine", "UpgradeProposal", "UpgradeType", "UpgradeImpact",
+    "KnowledgeExtractor",
+    "KnowledgeItem",
+    "KnowledgeDigest",
+    "FlywheelKnowledgeBase",
+    "UpgradeEngine",
+    "UpgradeProposal",
+    "UpgradeType",
+    "UpgradeImpact",
     # === 飞轮调度 ===
-    "SelfEvolutionFlywheel", "FlywheelState", "ScheduleConfig",
+    "SelfEvolutionFlywheel",
+    "FlywheelState",
+    "ScheduleConfig",
     # === 连续采集引擎 ===
-    "SourceCategory", "SourceItem",
-    "GitHubDeepCollector", "SemanticScholarCollector",
-    "ArxivEnhancedCollector", "RSSFeedCollector",
+    "SourceCategory",
+    "SourceItem",
+    "GitHubDeepCollector",
+    "SemanticScholarCollector",
+    "ArxivEnhancedCollector",
+    "RSSFeedCollector",
     "ContinuousCollector",
     # === LLM 合成引擎 ===
-    "InsightType", "ExtractedInsight", "SynthesisReport",
-    "RuleBasedExtractor", "LLMSynthesizer", "SynthesisEngine",
+    "InsightType",
+    "ExtractedInsight",
+    "SynthesisReport",
+    "RuleBasedExtractor",
+    "LLMSynthesizer",
+    "SynthesisEngine",
     # === v2.0: Loop 循环工程层 ===
-    "LoopPhase", "LoopPriority", "LoopOutcome",
-    "Loop", "LoopTrigger", "LoopStep", "LoopPlan",
-    "LoopExperience", "LoopResult",
-    "LoopExecutor", "LoopScheduler", "NudgeEngine", "LoopRegistry",
+    "LoopPhase",
+    "LoopPriority",
+    "LoopOutcome",
+    "Loop",
+    "LoopTrigger",
+    "LoopStep",
+    "LoopPlan",
+    "LoopExperience",
+    "LoopResult",
+    "LoopExecutor",
+    "LoopScheduler",
+    "NudgeEngine",
+    "LoopRegistry",
     # === v2.0: Genetic 遗传进化层 ===
-    "GeneType", "Gene", "Chromosome",
-    "ParetoFrontier", "GeneticOperators",
-    "EvolutionConfig", "EvolutionResult",
-    "GeneticEvolver", "TrajectoryDrivenEvolution",
+    "GeneType",
+    "Gene",
+    "Chromosome",
+    "ParetoFrontier",
+    "GeneticOperators",
+    "EvolutionConfig",
+    "EvolutionResult",
+    "GeneticEvolver",
+    "TrajectoryDrivenEvolution",
     # === v2.0: Evolution Guard 安全认知层 ===
-    "GuardLevel", "DegradationType", "BenchmarkSnapshot",
-    "BoundaryAwareness", "DegradationDetector",
-    "SandboxValidator", "RollbackManager", "EvolutionGuard",
+    "GuardLevel",
+    "DegradationType",
+    "BenchmarkSnapshot",
+    "BoundaryAwareness",
+    "DegradationDetector",
+    "SandboxValidator",
+    "RollbackManager",
+    "EvolutionGuard",
     # === v2.0: Self-Judge 自我审判层 ===
-    "EvaluateDimension", "EvolvingCriteria", "JudgeVerdict",
-    "MultiDimensionScorer", "ComparativeJudge",
-    "RegressionDetector", "CriteriaEvolver", "SelfJudge",
+    "EvaluateDimension",
+    "EvolvingCriteria",
+    "JudgeVerdict",
+    "MultiDimensionScorer",
+    "ComparativeJudge",
+    "RegressionDetector",
+    "CriteriaEvolver",
+    "SelfJudge",
     # === v2.0: Collection Pipeline 采集管道 ===
-    "SourceTier", "CollectionMethod", "SourceConfig",
-    "SOURCES", "SUPPLEMENTARY_SOURCES",
-    "RawItem", "NormalizedItem", "CollectionBatch",
-    "DataNormalizer", "UnifiedCollector",
-    "AgentRole", "AgentTask", "MultiAgentOrchestrator",
-    "ScheduleFrequency", "IntelligentScheduler",
+    "SourceTier",
+    "CollectionMethod",
+    "SourceConfig",
+    "SOURCES",
+    "SUPPLEMENTARY_SOURCES",
+    "RawItem",
+    "NormalizedItem",
+    "CollectionBatch",
+    "DataNormalizer",
+    "UnifiedCollector",
+    "AgentRole",
+    "AgentTask",
+    "MultiAgentOrchestrator",
+    "ScheduleFrequency",
+    "IntelligentScheduler",
     # === v2.0: Agent Optimizer 全方位优化引擎 ===
-    "CacheStrategy", "CacheEntry", "TokenOptimizer",
-    "ModelTier", "ModelConfig", "ModelRouter",
-    "TaskStatus", "TaskNode", "ParallelExecutor",
-    "CircuitState", "CostCircuitBreaker",
-    "ErrorCategory", "ErrorRecoveryEngine",
-    "PerformanceSnapshot", "PerformanceMonitor",
+    "CacheStrategy",
+    "CacheEntry",
+    "TokenOptimizer",
+    "ModelTier",
+    "ModelConfig",
+    "ModelRouter",
+    "TaskStatus",
+    "TaskNode",
+    "ParallelExecutor",
+    "CircuitState",
+    "CostCircuitBreaker",
+    "ErrorCategory",
+    "ErrorRecoveryEngine",
+    "PerformanceSnapshot",
+    "PerformanceMonitor",
     "AgentHarness",
-    # === v2.0: Evolution Master 进化主控器 ===
-    "EvolutionStage", "EvolutionStatistics", "EvolutionMaster",
-    # === v2.0: Memory OS 记忆操作系统 ===
-    "MemoryTier", "MemoryType", "MemoryEntry",
-    "MemoryOS", "MemoryFactory",
     # === v2.0: Skill Marketplace 技能市场 ===
-    "SkillStatus", "SkillCategory", "SkillGene",
-    "Skill", "SkillMarketplace", "SkillEvolutionFactory",
+    "SkillStatus",
+    "SkillCategory",
+    "SkillGene",
+    "Skill",
+    "SkillMarketplace",
+    "SkillEvolutionFactory",
+    # === Spec 6: Self-Optimizing 离线轨迹优化 ===
+    "FewShotExample",
+    "SelfOptimizingLibrary",
+    "success_score",
+    "extract_examples_from_trace",
+    # === v2.0: L5 记忆层 + 七层集成协调层 ===
+    "IntelligenceMemoryManager",
+    "MemoryEntry",
+    "IntelligenceIntegrator",
 ]

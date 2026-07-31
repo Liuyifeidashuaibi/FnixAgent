@@ -14,11 +14,10 @@
   敏感词中间穿插空白/标点也能命中(如 "敏 感 词" 匹配 "敏感词")。
   实现: 遇到非字母数字字符时跳过,不消耗 DFA 状态。
 """
+
 from __future__ import annotations
 
-import re
 import threading
-from typing import Optional
 
 _END = "\x00"  # 终结标记
 
@@ -83,8 +82,16 @@ class SensitiveDetector:
             添加的词数
         """
         default = [
-            "赌博", "色情", "毒品", "诈骗", "暴力",
-            "枪支", "弹药", "炸弹", "黑客", "攻击",
+            "赌博",
+            "色情",
+            "毒品",
+            "诈骗",
+            "暴力",
+            "枪支",
+            "弹药",
+            "炸弹",
+            "黑客",
+            "攻击",
         ]
         return self.add_words(default)
 

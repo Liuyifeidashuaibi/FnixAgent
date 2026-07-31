@@ -182,6 +182,61 @@ jobs:
           exit 1
 
   # ---------------------------------------------------------------------------
+  # Desktop Tauri — typecheck + Rust compile
+  # ---------------------------------------------------------------------------
+  desktop-tauri:
+    name: Workbench Tauri (typecheck + cargo)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Enable corepack
+        run: corepack enable
+
+      - name: Setup pnpm
+        run: corepack prepare pnpm@9.15.9 --activate
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Python deps
+        run: |
+          pip install -r requirements.txt
+          pip install -e ".[dev,security]"
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Linux Tauri deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf
+
+      - name: Install Node deps
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate icons
+        run: python scripts/generate-app-icon.py
+
+      - name: Tauri icons
+        working-directory: apps/workbench
+        run: pnpm exec tauri icon app-icon.png
+
+      - name: Verify beta
+        run: node scripts/verify-beta.mjs
+
+  # ---------------------------------------------------------------------------
   # Docker 构建验证(不推送)
   # ---------------------------------------------------------------------------
   docker-build:

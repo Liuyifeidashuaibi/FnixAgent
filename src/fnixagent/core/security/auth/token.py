@@ -20,6 +20,7 @@ Token 格式: JWT HS256(保持与旧实现一致,便于无缝替换)
     - Refresh Token 的 jti 写入 Redis(或内存),换发时校验
     - 黑名单通过 blacklist 模块实现
 """
+
 from __future__ import annotations
 
 import base64
@@ -30,7 +31,6 @@ import os
 import time
 import uuid
 from dataclasses import dataclass
-from typing import Optional
 
 # ---------------------------------------------------------------------------
 # 配置(从环境变量读取,带安全默认)
@@ -64,9 +64,7 @@ def _b64url_decode(s: str) -> bytes:
 
 def _jwt_sign(message: str) -> str:
     """HMAC-SHA256 签名。"""
-    sig = hmac.new(
-        JWT_SECRET_KEY.encode("utf-8"), message.encode("utf-8"), hashlib.sha256
-    ).digest()
+    sig = hmac.new(JWT_SECRET_KEY.encode("utf-8"), message.encode("utf-8"), hashlib.sha256).digest()
     return _b64url_encode(sig)
 
 
@@ -82,7 +80,7 @@ class TokenPair:
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
-    expires_in: int = ACCESS_TOKEN_TTL      # Access Token 剩余有效期(秒)
+    expires_in: int = ACCESS_TOKEN_TTL  # Access Token 剩余有效期(秒)
     refresh_expires_in: int = REFRESH_TOKEN_TTL  # Refresh Token 剩余有效期(秒)
 
 
@@ -97,8 +95,8 @@ def _create_token(
     role: str,
     token_type: str,
     ttl: int,
-    device_fp: Optional[str] = None,
-    extra_payload: Optional[dict] = None,
+    device_fp: str | None = None,
+    extra_payload: dict | None = None,
 ) -> str:
     """创建 JWT Token。"""
     header = {"alg": JWT_ALGORITHM, "typ": "JWT"}
@@ -128,7 +126,7 @@ def create_access_token(
     user_id: int,
     username: str,
     role: str = "user",
-    device_fp: Optional[str] = None,
+    device_fp: str | None = None,
 ) -> str:
     """创建 Access Token(2h)。"""
     return _create_token(
@@ -145,7 +143,7 @@ def create_refresh_token(
     user_id: int,
     username: str,
     role: str = "user",
-    device_fp: Optional[str] = None,
+    device_fp: str | None = None,
 ) -> str:
     """创建 Refresh Token(7d)。
 
@@ -166,7 +164,7 @@ def create_token_pair(
     user_id: int,
     username: str,
     role: str = "user",
-    device_fp: Optional[str] = None,
+    device_fp: str | None = None,
 ) -> TokenPair:
     """创建双 Token(Access + Refresh)。
 
@@ -186,7 +184,7 @@ def create_token_pair(
 # ---------------------------------------------------------------------------
 
 
-def verify_token(token: str, expected_type: Optional[str] = None) -> dict:
+def verify_token(token: str, expected_type: str | None = None) -> dict:
     """校验 JWT Token 签名 + 过期 + 类型,返回 payload。
 
     Args:

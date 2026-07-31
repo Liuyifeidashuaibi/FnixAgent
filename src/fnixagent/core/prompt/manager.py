@@ -9,24 +9,25 @@ Prompt 模板管理。
 
 线程安全: threading.RLock。
 """
+
 from __future__ import annotations
 
 import re
 import threading
 from dataclasses import dataclass, field
-from typing import Optional
-
 
 # ---------------------------------------------------------------------------
 # 模板数据结构
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class PromptTemplate:
     """Prompt 模板。"""
+
     name: str
     version: str
-    layer: str               # role/constraint/tools/memory/format/reflection
+    layer: str  # role/constraint/tools/memory/format/reflection
     content: str
     is_active: bool = False
     variables: list[str] = field(default_factory=list)
@@ -113,6 +114,7 @@ DEFAULT_REFLECTION_TEMPLATE = """## 结果校验
 # 模板管理器
 # ---------------------------------------------------------------------------
 
+
 class PromptManager:
     """
     Prompt 模板管理器。
@@ -137,22 +139,34 @@ class PromptManager:
         """加载内置默认模板。"""
         defaults = [
             PromptTemplate(
-                name="system_role", version="1.0", layer="role",
-                content=DEFAULT_SYSTEM_ROLE, is_active=True,
+                name="system_role",
+                version="1.0",
+                layer="role",
+                content=DEFAULT_SYSTEM_ROLE,
+                is_active=True,
                 variables=["user_name", "date"],
             ),
             PromptTemplate(
-                name="react", version="1.0", layer="reflection",
-                content=DEFAULT_REACT_TEMPLATE, is_active=True,
+                name="react",
+                version="1.0",
+                layer="reflection",
+                content=DEFAULT_REACT_TEMPLATE,
+                is_active=True,
             ),
             PromptTemplate(
-                name="plan_execute", version="1.0", layer="constraint",
-                content=DEFAULT_PLAN_TEMPLATE, is_active=True,
+                name="plan_execute",
+                version="1.0",
+                layer="constraint",
+                content=DEFAULT_PLAN_TEMPLATE,
+                is_active=True,
                 variables=["goal"],
             ),
             PromptTemplate(
-                name="reflection", version="1.0", layer="reflection",
-                content=DEFAULT_REFLECTION_TEMPLATE, is_active=True,
+                name="reflection",
+                version="1.0",
+                layer="reflection",
+                content=DEFAULT_REFLECTION_TEMPLATE,
+                is_active=True,
             ),
         ]
         for t in defaults:
@@ -178,13 +192,13 @@ class PromptManager:
             # 取消同名的其他版本激活
             for (n, v), t in self._templates.items():
                 if n == name:
-                    t.is_active = (v == version)
+                    t.is_active = v == version
             self._active[name] = version
             return True
 
     # -- 查询 --------------------------------------------------------------
 
-    def get(self, name: str, version: Optional[str] = None) -> Optional[PromptTemplate]:
+    def get(self, name: str, version: str | None = None) -> PromptTemplate | None:
         """获取模板。不指定版本则取激活版本。"""
         with self._lock:
             if version is None:
@@ -193,7 +207,7 @@ class PromptManager:
                 return None
             return self._templates.get((name, version))
 
-    def list_templates(self, layer: Optional[str] = None) -> list[PromptTemplate]:
+    def list_templates(self, layer: str | None = None) -> list[PromptTemplate]:
         """列出所有模板(可按层过滤)。"""
         with self._lock:
             templates = list(self._templates.values())
@@ -203,9 +217,7 @@ class PromptManager:
 
     # -- 渲染 --------------------------------------------------------------
 
-    def render(
-        self, name: str, variables: dict[str, str] | None = None
-    ) -> str:
+    def render(self, name: str, variables: dict[str, str] | None = None) -> str:
         """加载模板并替换变量。模板不存在则返回空串。"""
         template = self.get(name)
         if template is None:

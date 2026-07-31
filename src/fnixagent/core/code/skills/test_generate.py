@@ -3,8 +3,8 @@ Skill: 测试生成 (Test Generation)
 ==================================
 为指定函数生成单元测试骨架。
 """
+
 import ast
-import json
 
 SKILL_NAME = "test_generate"
 SKILL_DESCRIPTION = "为指定函数生成单元测试骨架"
@@ -25,6 +25,7 @@ async def handler(kernel, args):
 
     # 读取文件
     from fnixagent.core.agent.syscall import SyscallRequest, SyscallType
+
     req = SyscallRequest(
         syscall=SyscallType.FS_READ,
         args={"path": f"/workspace/{file_path}"},

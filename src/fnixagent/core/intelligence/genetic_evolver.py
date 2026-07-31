@@ -44,10 +44,9 @@ import logging
 import math
 import random
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -56,16 +55,18 @@ logger = logging.getLogger(__name__)
 # 基因编码模型
 # ============================================================
 
+
 class GeneType(str, Enum):
     """基因类型"""
-    SYSTEM_PROMPT = "system_prompt"      # 系统提示词模块
-    TASK_PROMPT = "task_prompt"          # 任务提示词模块
-    TOOL_INSTRUCTION = "tool_instruction" # 工具使用指令
-    FEW_SHOT_EXAMPLE = "few_shot"        # Few-shot 示例
-    CHAIN_OF_THOUGHT = "chain_of_thought" # 思维链引导
-    OUTPUT_FORMAT = "output_format"      # 输出格式约束
-    CONSTRAINT = "constraint"            # 约束条件
-    SKILL_STEP = "skill_step"            # 技能步骤
+
+    SYSTEM_PROMPT = "system_prompt"  # 系统提示词模块
+    TASK_PROMPT = "task_prompt"  # 任务提示词模块
+    TOOL_INSTRUCTION = "tool_instruction"  # 工具使用指令
+    FEW_SHOT_EXAMPLE = "few_shot"  # Few-shot 示例
+    CHAIN_OF_THOUGHT = "chain_of_thought"  # 思维链引导
+    OUTPUT_FORMAT = "output_format"  # 输出格式约束
+    CONSTRAINT = "constraint"  # 约束条件
+    SKILL_STEP = "skill_step"  # 技能步骤
 
 
 @dataclass
@@ -75,14 +76,15 @@ class Gene:
 
     每个 Gene 是可以独立变异的基本单元
     """
+
     gene_id: str
     gene_type: GeneType
-    content: str                      # 基因内容 (Prompt 文本)
-    weight: float = 1.0               # 权重 (0-1, 越高越重要)
+    content: str  # 基因内容 (Prompt 文本)
+    weight: float = 1.0  # 权重 (0-1, 越高越重要)
     parent_gene_ids: list[str] = field(default_factory=list)  # 来源基因 (追踪进化)
     mutation_history: list[str] = field(default_factory=list)  # 变异历史
-    performance_score: float = 0.0    # 该基因的性能贡献
-    generation: int = 0               # 所属代数
+    performance_score: float = 0.0  # 该基因的性能贡献
+    generation: int = 0  # 所属代数
 
 
 @dataclass
@@ -92,28 +94,32 @@ class Chromosome:
 
     由多个 Gene 组成, 代表一个可执行的完整 Prompt
     """
+
     chromosome_id: str
-    gene_type: str                    # 染色体类型 (对应 Loop category)
+    gene_type: str  # 染色体类型 (对应 Loop category)
     genes: list[Gene] = field(default_factory=list)
     generation: int = 0
     parent_ids: list[str] = field(default_factory=list)
     # 多维度适应度
-    fitness: dict[str, float] = field(default_factory=lambda: {
-        "quality": 0.0,       # 输出质量
-        "efficiency": 0.0,    # 执行效率 (token 消耗)
-        "robustness": 0.0,    # 鲁棒性 (错误恢复)
-        "safety": 0.0,        # 安全性
-        "novelty": 0.0,       # 新颖性 (避免收敛到局部最优)
-    })
-    pareto_rank: int = 0             # 帕累托前沿层级
-    crowding_distance: float = 0.0   # 拥挤距离
-    total_score: float = 0.0         # 综合评分
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    fitness: dict[str, float] = field(
+        default_factory=lambda: {
+            "quality": 0.0,  # 输出质量
+            "efficiency": 0.0,  # 执行效率 (token 消耗)
+            "robustness": 0.0,  # 鲁棒性 (错误恢复)
+            "safety": 0.0,  # 安全性
+            "novelty": 0.0,  # 新颖性 (避免收敛到局部最优)
+        }
+    )
+    pareto_rank: int = 0  # 帕累托前沿层级
+    crowding_distance: float = 0.0  # 拥挤距离
+    total_score: float = 0.0  # 综合评分
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
 
 # ============================================================
 # 帕累托前沿引擎
 # ============================================================
+
 
 class ParetoFrontier:
     """
@@ -212,9 +218,8 @@ class ParetoFrontier:
 
             for i in range(1, len(sorted_front) - 1):
                 sorted_front[i].crowding_distance += (
-                    (sorted_front[i + 1].fitness[key] - sorted_front[i - 1].fitness[key])
-                    / (f_max - f_min)
-                )
+                    sorted_front[i + 1].fitness[key] - sorted_front[i - 1].fitness[key]
+                ) / (f_max - f_min)
 
     def get_pareto_frontier(self) -> list[Chromosome]:
         """获取帕累托前沿 (第一层)"""
@@ -244,8 +249,7 @@ class ParetoFrontier:
         max_move = 0
         for i in range(1, len(centers)):
             move = math.sqrt(
-                (centers[i][0] - centers[i-1][0]) ** 2 +
-                (centers[i][1] - centers[i-1][1]) ** 2
+                (centers[i][0] - centers[i - 1][0]) ** 2 + (centers[i][1] - centers[i - 1][1]) ** 2
             )
             max_move = max(max_move, move)
 
@@ -255,6 +259,7 @@ class ParetoFrontier:
 # ============================================================
 # 遗传算子
 # ============================================================
+
 
 class GeneticOperators:
     """遗传算子集合 — 选择、交叉、变异"""
@@ -314,7 +319,9 @@ class GeneticOperators:
 
         # 更新元数据
         for child, pa, pb in [(child_a, parent_a, parent_b), (child_b, parent_b, parent_a)]:
-            child.chromosome_id = f"{pa.chromosome_id}_x_{pb.chromosome_id}_{random.randint(1000, 9999)}"
+            child.chromosome_id = (
+                f"{pa.chromosome_id}_x_{pb.chromosome_id}_{random.randint(1000, 9999)}"
+            )
             child.parent_ids = [pa.chromosome_id, pb.chromosome_id]
             child.generation = max(pa.generation, pb.generation) + 1
 
@@ -410,9 +417,11 @@ class GeneticOperators:
 # 遗传进化引擎
 # ============================================================
 
+
 @dataclass
 class EvolutionConfig:
     """进化配置"""
+
     population_size: int = 20
     max_generations: int = 50
     crossover_rate: float = 0.7
@@ -427,6 +436,7 @@ class EvolutionConfig:
 @dataclass
 class EvolutionResult:
     """进化结果"""
+
     best_chromosome: Chromosome
     pareto_frontier: list[Chromosome]
     all_generations: list[list[Chromosome]]
@@ -437,9 +447,9 @@ class EvolutionResult:
     started_at: str
     completed_at: str
     duration_ms: float
-    # v2.0 扩展字段 (供 evolution_master 使用)
+    # 扩展字段
     success: bool = True
-    chromosome: Optional[Chromosome] = None
+    chromosome: Chromosome | None = None
     estimated_token_saving: int = 0
     error_message: str = ""
 
@@ -455,7 +465,7 @@ class GeneticEvolver:
 
     def __init__(
         self,
-        config: Optional[EvolutionConfig] = None,
+        config: EvolutionConfig | None = None,
         state_dir: str = "data/evolution_state",
     ):
         self.config = config or EvolutionConfig()
@@ -464,7 +474,7 @@ class GeneticEvolver:
         self.pareto = ParetoFrontier()
         self.operators = GeneticOperators()
         self._generation_count: int = 0
-        self._best_ever: Optional[Chromosome] = None
+        self._best_ever: Chromosome | None = None
         self._fitness_history: list[dict] = []
 
     def encode(self, content: str, gene_type: str) -> Chromosome:
@@ -482,7 +492,7 @@ class GeneticEvolver:
         )
 
         # 按段落分割
-        paragraphs = re.split(r'\n\n+', content)
+        paragraphs = re.split(r"\n\n+", content)
         paragraphs = [p.strip() for p in paragraphs if p.strip()]
 
         for i, para in enumerate(paragraphs):
@@ -519,7 +529,7 @@ class GeneticEvolver:
         initial_content: str,
         gene_type: str,
         fitness_fn,
-        max_generations: Optional[int] = None,
+        max_generations: int | None = None,
     ) -> EvolutionResult:
         """
         执行遗传进化
@@ -533,7 +543,7 @@ class GeneticEvolver:
         import time
 
         max_gen = max_generations or self.config.max_generations
-        started_at = datetime.now(timezone.utc)
+        started_at = datetime.now(UTC)
         start_time = time.time()
 
         # 1. 编码并初始化种群
@@ -542,7 +552,6 @@ class GeneticEvolver:
         all_generations = [population]
 
         no_improvement_count = 0
-        prev_best_score = 0
 
         logger.info(f"开始进化: {gene_type}, 种群大小: {self.config.population_size}")
 
@@ -555,7 +564,7 @@ class GeneticEvolver:
                     chromo.fitness = await fitness_fn(chromo)
                 except Exception as e:
                     logger.error(f"适应度评估失败 {chromo.chromosome_id}: {e}")
-                    chromo.fitness = {k: 0.0 for k in chromo.fitness}
+                    chromo.fitness = dict.fromkeys(chromo.fitness, 0.0)
 
             # 3. 帕累托排序
             self.pareto.compute_pareto_ranks(population)
@@ -566,16 +575,17 @@ class GeneticEvolver:
             best = self._get_best(population)
             best_score = best.total_score
             avg_fitness = {
-                k: sum(c.fitness[k] for c in population) / len(population)
-                for k in best.fitness
+                k: sum(c.fitness[k] for c in population) / len(population) for k in best.fitness
             }
 
-            self._fitness_history.append({
-                "generation": generation,
-                "best_score": best_score,
-                "avg_fitness": avg_fitness,
-                "pareto_front_size": len(self.pareto.get_pareto_frontier()),
-            })
+            self._fitness_history.append(
+                {
+                    "generation": generation,
+                    "best_score": best_score,
+                    "avg_fitness": avg_fitness,
+                    "pareto_front_size": len(self.pareto.get_pareto_frontier()),
+                }
+            )
 
             if self._best_ever is None or best_score > self._best_ever.total_score:
                 self._best_ever = best
@@ -604,7 +614,7 @@ class GeneticEvolver:
                     convergence_generation=generation,
                     fitness_history=self._fitness_history,
                     started_at=started_at.isoformat(),
-                    completed_at=datetime.now(timezone.utc).isoformat(),
+                    completed_at=datetime.now(UTC).isoformat(),
                     duration_ms=(time.time() - start_time) * 1000,
                 )
 
@@ -627,7 +637,7 @@ class GeneticEvolver:
             convergence_generation=-1,
             fitness_history=self._fitness_history,
             started_at=started_at.isoformat(),
-            completed_at=datetime.now(timezone.utc).isoformat(),
+            completed_at=datetime.now(UTC).isoformat(),
             duration_ms=(time.time() - start_time) * 1000,
         )
 
@@ -661,26 +671,32 @@ class GeneticEvolver:
             parent_b = self.operators.tournament_select(population)
 
             # 交叉
-            child_a, child_b = self.operators.crossover(parent_a, parent_b, self.config.crossover_rate)
+            child_a, child_b = self.operators.crossover(
+                parent_a, parent_b, self.config.crossover_rate
+            )
 
             # 变异
-            child_a = self.operators.mutate(child_a, self.config.mutation_rate, self.config.mutation_strength)
-            child_b = self.operators.mutate(child_b, self.config.mutation_rate, self.config.mutation_strength)
+            child_a = self.operators.mutate(
+                child_a, self.config.mutation_rate, self.config.mutation_strength
+            )
+            child_b = self.operators.mutate(
+                child_b, self.config.mutation_rate, self.config.mutation_strength
+            )
 
             next_gen.append(child_a)
             if len(next_gen) < self.config.population_size:
                 next_gen.append(child_b)
 
-        return next_gen[:self.config.population_size]
+        return next_gen[: self.config.population_size]
 
     def _get_best(self, population: list[Chromosome]) -> Chromosome:
         """获取综合最优个体"""
         for chromo in population:
             chromo.total_score = (
-                chromo.fitness.get("quality", 0) * 0.4 +
-                chromo.fitness.get("efficiency", 0) * 0.3 +
-                chromo.fitness.get("robustness", 0) * 0.2 +
-                chromo.fitness.get("safety", 0) * 0.1
+                chromo.fitness.get("quality", 0) * 0.4
+                + chromo.fitness.get("efficiency", 0) * 0.3
+                + chromo.fitness.get("robustness", 0) * 0.2
+                + chromo.fitness.get("safety", 0) * 0.1
             )
 
         return max(population, key=lambda c: c.total_score)
@@ -707,6 +723,7 @@ class GeneticEvolver:
 # 轨迹驱动的进化 (SCOPE 启发)
 # ============================================================
 
+
 class TrajectoryDrivenEvolution:
     """
     轨迹驱动进化 — 从执行轨迹中学习
@@ -729,13 +746,15 @@ class TrajectoryDrivenEvolution:
 
     def record_trajectory(self, chromosome_id: str, success: bool, metrics: dict, error: str = ""):
         """记录一条执行轨迹"""
-        self._trajectories.append({
-            "chromosome_id": chromosome_id,
-            "success": success,
-            "metrics": metrics,
-            "error": error,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-        })
+        self._trajectories.append(
+            {
+                "chromosome_id": chromosome_id,
+                "success": success,
+                "metrics": metrics,
+                "error": error,
+                "timestamp": datetime.now(UTC).isoformat(),
+            }
+        )
 
         # 提取模式
         if error:
@@ -764,9 +783,9 @@ class TrajectoryDrivenEvolution:
 
         direction = {
             "success_rate": success_rate,
-            "top_error_patterns": sorted(
-                self._patterns.items(), key=lambda x: x[1], reverse=True
-            )[:3],
+            "top_error_patterns": sorted(self._patterns.items(), key=lambda x: x[1], reverse=True)[
+                :3
+            ],
             "suggestion": "",
         }
 
@@ -799,14 +818,16 @@ class TrajectoryDrivenEvolution:
         Returns:
             EvolutionResult 进化结果
         """
-        from datetime import datetime, timezone
         import time
+        from datetime import datetime
 
-        started_at = datetime.now(timezone.utc)
+        started_at = datetime.now(UTC)
         start_ts = time.time()
 
         # 将洞察编码为染色体进行进化
-        initial_content = f"{insight.title}\n\n{insight.description}\n\n建议行动: {insight.suggested_action}"
+        initial_content = (
+            f"{insight.title}\n\n{insight.description}\n\n建议行动: {insight.suggested_action}"
+        )
         chromosome = self.evolver.encode(initial_content, insight.insight_type.value)
 
         # 使用轨迹驱动的变异压力
@@ -833,7 +854,7 @@ class TrajectoryDrivenEvolution:
             convergence_generation=-1,
             fitness_history=[],
             started_at=started_at.isoformat(),
-            completed_at=datetime.now(timezone.utc).isoformat(),
+            completed_at=datetime.now(UTC).isoformat(),
             duration_ms=(time.time() - start_ts) * 1000,
             success=True,
             chromosome=mutated,

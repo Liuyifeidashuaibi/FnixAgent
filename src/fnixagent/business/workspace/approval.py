@@ -19,21 +19,19 @@
   - Provider 调用包裹 try-except,捕获厂商 API(钉钉/飞书/企微/泛微)异常,
     统一转为 ConnectorResult(success=False, error=...)
 """
+
 from __future__ import annotations
 
 import abc
 import logging
 from dataclasses import dataclass
-from typing import Optional
 
 from fnixagent.business.workspace.base import (
     BaseProvider,
-    ConnectorConfig,
     ConnectorResult,
     StubProvider,
     WorkspaceConnector,
 )
-
 
 _logger = logging.getLogger(__name__)
 
@@ -46,15 +44,16 @@ _logger = logging.getLogger(__name__)
 @dataclass
 class ApprovalRequest:
     """审批请求。"""
+
     request_id: str = ""
-    template_code: str = ""       # 审批模板编码
+    template_code: str = ""  # 审批模板编码
     title: str = ""
     applicant: str = ""
     applicant_dept: str = ""
-    submitted_at: str = ""        # ISO 8601
+    submitted_at: str = ""  # ISO 8601
     form_data: dict = None  # type: ignore
     approvers: list[dict] = None  # type: ignore  # [{name, status, comment, time}]
-    status: str = "pending"       # pending / approved / rejected / cancelled / withdrawn
+    status: str = "pending"  # pending / approved / rejected / cancelled / withdrawn
     current_step: int = 0
     total_steps: int = 1
     cc_list: list[str] = None  # type: ignore
@@ -80,14 +79,14 @@ VALID_STATUSES = frozenset({"pending", "approved", "rejected", "cancelled", "wit
 # approve/reject 仅在 pending 状态合法;终态(approved/rejected/cancelled/withdrawn)不可再转移
 VALID_TRANSITIONS: dict[str, frozenset[str]] = {
     "pending": frozenset({"approve", "reject", "cancel", "withdraw"}),
-    "approved": frozenset(),      # 终态
-    "rejected": frozenset(),      # 终态
-    "cancelled": frozenset(),     # 终态
-    "withdrawn": frozenset(),     # 终态
+    "approved": frozenset(),  # 终态
+    "rejected": frozenset(),  # 终态
+    "cancelled": frozenset(),  # 终态
+    "withdrawn": frozenset(),  # 终态
 }
 
 
-def validate_state_transition(current_status: str, action: str) -> Optional[str]:
+def validate_state_transition(current_status: str, action: str) -> str | None:
     """校验状态转移是否合法。
 
     Args:
@@ -98,12 +97,13 @@ def validate_state_transition(current_status: str, action: str) -> Optional[str]
         None 表示合法;非 None 为错误描述。
     """
     if current_status not in VALID_STATUSES:
-        return f"unknown current status {current_status!r}, " \
-               f"must be one of {sorted(VALID_STATUSES)}"
+        return f"unknown current status {current_status!r}, must be one of {sorted(VALID_STATUSES)}"
     allowed = VALID_TRANSITIONS.get(current_status, frozenset())
     if action not in allowed:
-        return f"illegal transition: cannot {action} a request in " \
-               f"{current_status!r} state (allowed: {sorted(allowed) or 'none'})"
+        return (
+            f"illegal transition: cannot {action} a request in "
+            f"{current_status!r} state (allowed: {sorted(allowed) or 'none'})"
+        )
     return None
 
 
@@ -130,18 +130,16 @@ class ApprovalProvider(BaseProvider):
         applicant: str,
         form_data: dict,
         approvers: list[str],
-        cc_list: Optional[list[str]] = None,
+        cc_list: list[str] | None = None,
         applicant_dept: str = "",
-    ) -> ConnectorResult:
-        ...
+    ) -> ConnectorResult: ...
 
     @abc.abstractmethod
     def list_pending(
         self,
-        approver: Optional[str] = None,
+        approver: str | None = None,
         limit: int = 20,
-    ) -> ConnectorResult:
-        ...
+    ) -> ConnectorResult: ...
 
     @abc.abstractmethod
     def approve(
@@ -149,8 +147,7 @@ class ApprovalProvider(BaseProvider):
         request_id: str,
         approver: str,
         comment: str = "",
-    ) -> ConnectorResult:
-        ...
+    ) -> ConnectorResult: ...
 
     @abc.abstractmethod
     def reject(
@@ -158,12 +155,10 @@ class ApprovalProvider(BaseProvider):
         request_id: str,
         approver: str,
         comment: str = "",
-    ) -> ConnectorResult:
-        ...
+    ) -> ConnectorResult: ...
 
     @abc.abstractmethod
-    def get_status(self, request_id: str) -> ConnectorResult:
-        ...
+    def get_status(self, request_id: str) -> ConnectorResult: ...
 
 
 # ---------------------------------------------------------------------------
@@ -184,7 +179,7 @@ class StubApprovalProvider(StubProvider, ApprovalProvider):
         applicant: str,
         form_data: dict,
         approvers: list[str],
-        cc_list: Optional[list[str]] = None,
+        cc_list: list[str] | None = None,
         applicant_dept: str = "",
     ) -> ConnectorResult:
         return self._stub_result(
@@ -195,8 +190,9 @@ class StubApprovalProvider(StubProvider, ApprovalProvider):
                 applicant=applicant,
                 applicant_dept=applicant_dept,
                 form_data=form_data,
-                approvers=[{"name": a, "status": "pending", "comment": "", "time": ""}
-                           for a in approvers],
+                approvers=[
+                    {"name": a, "status": "pending", "comment": "", "time": ""} for a in approvers
+                ],
                 cc_list=cc_list or [],
             ).__dict__,
             action="submit",
@@ -204,7 +200,7 @@ class StubApprovalProvider(StubProvider, ApprovalProvider):
 
     def list_pending(
         self,
-        approver: Optional[str] = None,
+        approver: str | None = None,
         limit: int = 20,
     ) -> ConnectorResult:
         # 空结果统一 data=[]
@@ -217,8 +213,12 @@ class StubApprovalProvider(StubProvider, ApprovalProvider):
         comment: str = "",
     ) -> ConnectorResult:
         return self._stub_result(
-            data={"request_id": request_id, "approver": approver,
-                  "action": "approved", "comment": comment},
+            data={
+                "request_id": request_id,
+                "approver": approver,
+                "action": "approved",
+                "comment": comment,
+            },
         )
 
     def reject(
@@ -228,8 +228,12 @@ class StubApprovalProvider(StubProvider, ApprovalProvider):
         comment: str = "",
     ) -> ConnectorResult:
         return self._stub_result(
-            data={"request_id": request_id, "approver": approver,
-                  "action": "rejected", "comment": comment},
+            data={
+                "request_id": request_id,
+                "approver": approver,
+                "action": "rejected",
+                "comment": comment,
+            },
         )
 
     def get_status(self, request_id: str) -> ConnectorResult:
@@ -271,7 +275,7 @@ class ApprovalConnector(WorkspaceConnector):
         applicant: str,
         form_data: dict,
         approvers: list[str],
-        cc_list: Optional[list[str]] = None,
+        cc_list: list[str] | None = None,
         applicant_dept: str = "",
     ) -> ConnectorResult:
         """提交审批申请。
@@ -297,7 +301,8 @@ class ApprovalConnector(WorkspaceConnector):
             return ConnectorResult(success=False, error="applicant must not be empty")
         if not approvers:
             return ConnectorResult(
-                success=False, error="approvers list must not be empty",
+                success=False,
+                error="approvers list must not be empty",
             )
 
         err = self._ensure_connected()
@@ -306,9 +311,13 @@ class ApprovalConnector(WorkspaceConnector):
         assert self._active_provider is not None
         try:
             return self._active_provider.submit(
-                template_code=template_code, title=title, applicant=applicant,
-                form_data=form_data, approvers=approvers,
-                cc_list=cc_list, applicant_dept=applicant_dept,
+                template_code=template_code,
+                title=title,
+                applicant=applicant,
+                form_data=form_data,
+                approvers=approvers,
+                cc_list=cc_list,
+                applicant_dept=applicant_dept,
             )
         except Exception as e:
             _logger.exception("approval.submit failed: %s: %s", type(e).__name__, e)
@@ -319,7 +328,7 @@ class ApprovalConnector(WorkspaceConnector):
 
     def list_pending(
         self,
-        approver: Optional[str] = None,
+        approver: str | None = None,
         limit: int = 20,
     ) -> ConnectorResult:
         """列出待审批申请。
@@ -338,7 +347,8 @@ class ApprovalConnector(WorkspaceConnector):
         assert self._active_provider is not None
         try:
             return self._active_provider.list_pending(
-                approver=approver, limit=safe_limit,
+                approver=approver,
+                limit=safe_limit,
             )
         except Exception as e:
             _logger.exception("approval.list_pending failed: %s: %s", type(e).__name__, e)
@@ -352,7 +362,7 @@ class ApprovalConnector(WorkspaceConnector):
         request_id: str,
         approver: str,
         comment: str = "",
-        current_status: Optional[str] = None,
+        current_status: str | None = None,
     ) -> ConnectorResult:
         """审批通过。
 
@@ -377,7 +387,9 @@ class ApprovalConnector(WorkspaceConnector):
             if trans_err is not None:
                 _logger.warning(
                     "approval.approve rejected: request=%s approver=%s %s",
-                    request_id, approver, trans_err,
+                    request_id,
+                    approver,
+                    trans_err,
                 )
                 return ConnectorResult(success=False, error=trans_err)
 
@@ -387,7 +399,9 @@ class ApprovalConnector(WorkspaceConnector):
         assert self._active_provider is not None
         try:
             return self._active_provider.approve(
-                request_id=request_id, approver=approver, comment=comment,
+                request_id=request_id,
+                approver=approver,
+                comment=comment,
             )
         except Exception as e:
             _logger.exception("approval.approve failed: %s: %s", type(e).__name__, e)
@@ -401,7 +415,7 @@ class ApprovalConnector(WorkspaceConnector):
         request_id: str,
         approver: str,
         comment: str = "",
-        current_status: Optional[str] = None,
+        current_status: str | None = None,
     ) -> ConnectorResult:
         """审批驳回。
 
@@ -426,7 +440,9 @@ class ApprovalConnector(WorkspaceConnector):
             if trans_err is not None:
                 _logger.warning(
                     "approval.reject rejected: request=%s approver=%s %s",
-                    request_id, approver, trans_err,
+                    request_id,
+                    approver,
+                    trans_err,
                 )
                 return ConnectorResult(success=False, error=trans_err)
 
@@ -436,7 +452,9 @@ class ApprovalConnector(WorkspaceConnector):
         assert self._active_provider is not None
         try:
             return self._active_provider.reject(
-                request_id=request_id, approver=approver, comment=comment,
+                request_id=request_id,
+                approver=approver,
+                comment=comment,
             )
         except Exception as e:
             _logger.exception("approval.reject failed: %s: %s", type(e).__name__, e)

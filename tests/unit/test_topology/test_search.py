@@ -1,4 +1,4 @@
-﻿"""
+"""
 知识拓扑图 (KTG) 路径搜索单元测试。
 
 测试模块: fnixagent.core.topology.search.TopologySearch
@@ -9,7 +9,6 @@
     - is_cold_start(): 冷启动检测
     - search_stats(): 搜索统计
 """
-import pytest
 
 from fnixagent.core.topology.graph import TopologyGraph
 from fnixagent.core.topology.search import TopologySearch
@@ -20,10 +19,10 @@ from fnixagent.core.types import (
     TopologyPath,
 )
 
-
 # ---------------------------------------------------------------------------
 # match_concepts
 # ---------------------------------------------------------------------------
+
 
 class TestMatchConcepts:
     """测试 match_concepts() 方法。"""
@@ -114,6 +113,7 @@ class TestMatchConcepts:
 # ---------------------------------------------------------------------------
 # search
 # ---------------------------------------------------------------------------
+
 
 class TestSearch:
     """测试 search() 方法。"""
@@ -229,6 +229,7 @@ class TestSearch:
 # check_constraints
 # ---------------------------------------------------------------------------
 
+
 class TestCheckConstraints:
     """测试 check_constraints() 方法。"""
 
@@ -254,9 +255,7 @@ class TestCheckConstraints:
             node_id="L3:con1",
             metadata={"threshold": 10, "rule_type": "count"},
         )
-        graph.add_edge(
-            "L2:c1", "L3:con1", EdgeType.DEPENDS_ON, weight=0.5, edge_id="e1"
-        )
+        graph.add_edge("L2:c1", "L3:con1", EdgeType.DEPENDS_ON, weight=0.5, edge_id="e1")
         return graph
 
     def test_no_constraint_nodes(self, sample_graph):
@@ -318,9 +317,7 @@ class TestCheckConstraints:
     def test_path_with_nonexistent_node(self, sample_graph):
         """路径含不存在的节点时应跳过(不报错)。"""
         search = TopologySearch(sample_graph)
-        path = TopologyPath(
-            nodes=["L2:concept1", "L3:nonexistent"], edges=["e2"]
-        )
+        path = TopologyPath(nodes=["L2:concept1", "L3:nonexistent"], edges=["e2"])
         passed, reason = search.check_constraints(path, {})
         assert passed is True
 
@@ -335,6 +332,7 @@ class TestCheckConstraints:
 # ---------------------------------------------------------------------------
 # is_cold_start
 # ---------------------------------------------------------------------------
+
 
 class TestIsColdStart:
     """测试 is_cold_start() 方法。"""
@@ -392,6 +390,7 @@ class TestIsColdStart:
 # ---------------------------------------------------------------------------
 # search_stats
 # ---------------------------------------------------------------------------
+
 
 class TestSearchStats:
     """测试 search_stats() 方法。"""

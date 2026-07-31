@@ -25,6 +25,7 @@ LangGraph 图装配与编译。
 便捷函数:
     graph = build_graph(search_engine=..., scheduler=..., registry=...)
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -32,10 +33,6 @@ from typing import Any
 from fnixagent.graph.edges import (
     EDGE_LOOP_BACK,
     EDGE_TO_END,
-    EDGE_TO_EXECUTE,
-    EDGE_TO_REFLECT,
-    EDGE_TO_SEARCH,
-    EDGE_TO_SKILL_SELECT,
     route_after_reflect,
 )
 from fnixagent.graph.nodes import (
@@ -126,7 +123,7 @@ class GraphBuilder:
             route_after_reflect,
             {
                 EDGE_LOOP_BACK: NODE_PERCEIVE,  # 继续循环 → 回到感知
-                EDGE_TO_END: end,                # 结束 → END
+                EDGE_TO_END: end,  # 结束 → END
             },
         )
 
@@ -149,9 +146,7 @@ class GraphBuilder:
         try:
             from langgraph.graph import END, START, StateGraph
         except ImportError as e:
-            raise ImportError(
-                "LangGraph 未安装,请运行: pip install langgraph>=0.2.0"
-            ) from e
+            raise ImportError("LangGraph 未安装,请运行: pip install langgraph>=0.2.0") from e
 
         # 创建状态图(以 GraphState 为状态 schema)
         graph = StateGraph(GraphState)
@@ -162,14 +157,10 @@ class GraphBuilder:
         try:
             compiled = graph.compile()
         except Exception as e:
-            raise RuntimeError(
-                f"LangGraph 图编译失败: {type(e).__name__}: {e}"
-            ) from e
+            raise RuntimeError(f"LangGraph 图编译失败: {type(e).__name__}: {e}") from e
         return compiled
 
-    def build_with_checkpointer(
-        self, checkpointer: Any = None
-    ) -> Any:
+    def build_with_checkpointer(self, checkpointer: Any = None) -> Any:
         """装配带检查点的图(支持中断恢复)。
 
         Args:
@@ -185,9 +176,7 @@ class GraphBuilder:
         try:
             from langgraph.graph import END, START, StateGraph
         except ImportError as e:
-            raise ImportError(
-                "LangGraph 未安装,请运行: pip install langgraph>=0.2.0"
-            ) from e
+            raise ImportError("LangGraph 未安装,请运行: pip install langgraph>=0.2.0") from e
 
         graph = StateGraph(GraphState)
         # 添加节点与边(同 build)
@@ -198,6 +187,7 @@ class GraphBuilder:
             # 默认使用内存检查点
             try:
                 from langgraph.checkpoint.memory import MemorySaver
+
                 checkpointer = MemorySaver()
             except ImportError:
                 pass  # 无检查点也可工作
@@ -208,15 +198,14 @@ class GraphBuilder:
             else:
                 compiled = graph.compile()
         except Exception as e:
-            raise RuntimeError(
-                f"LangGraph 图编译失败(带检查点): {type(e).__name__}: {e}"
-            ) from e
+            raise RuntimeError(f"LangGraph 图编译失败(带检查点): {type(e).__name__}: {e}") from e
         return compiled
 
 
 # ---------------------------------------------------------------------------
 # 便捷函数: 一行构建图(隐藏 GraphBuilder 细节)
 # ---------------------------------------------------------------------------
+
 
 def build_graph(
     search_engine: Any,

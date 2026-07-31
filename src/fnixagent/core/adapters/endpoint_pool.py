@@ -23,6 +23,7 @@
 
 依赖: 仅标准库(threading / time / random / logging / dataclasses / enum),零新增依赖。
 """
+
 from __future__ import annotations
 
 import logging
@@ -31,7 +32,7 @@ import threading
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -44,9 +45,9 @@ logger = logging.getLogger(__name__)
 class EndpointStrategy(str, Enum):
     """端点选择策略。"""
 
-    ROUND_ROBIN = "round_robin"    # 加权轮询
-    RANDOM = "random"              # 加权随机
-    STICKY = "sticky"              # 粘性会话(同一 key 优先同一端点)
+    ROUND_ROBIN = "round_robin"  # 加权轮询
+    RANDOM = "random"  # 加权随机
+    STICKY = "sticky"  # 粘性会话(同一 key 优先同一端点)
 
 
 @dataclass
@@ -164,33 +165,23 @@ class EndpointPool:
             ValueError: 参数非正数。
         """
         if not isinstance(strategy, EndpointStrategy):
-            raise TypeError(
-                f"strategy must be EndpointStrategy, got {type(strategy).__name__}"
-            )
-        if isinstance(cooldown_seconds, bool) or not isinstance(
-            cooldown_seconds, (int, float)
-        ):
+            raise TypeError(f"strategy must be EndpointStrategy, got {type(strategy).__name__}")
+        if isinstance(cooldown_seconds, bool) or not isinstance(cooldown_seconds, (int, float)):
             raise TypeError(
                 f"cooldown_seconds must be numeric, got {type(cooldown_seconds).__name__}"
             )
-        if isinstance(isolation_threshold, bool) or not isinstance(
-            isolation_threshold, int
-        ):
+        if isinstance(isolation_threshold, bool) or not isinstance(isolation_threshold, int):
             raise TypeError(
                 f"isolation_threshold must be int, got {type(isolation_threshold).__name__}"
             )
-        if isinstance(isolation_seconds, bool) or not isinstance(
-            isolation_seconds, (int, float)
-        ):
+        if isinstance(isolation_seconds, bool) or not isinstance(isolation_seconds, (int, float)):
             raise TypeError(
                 f"isolation_seconds must be numeric, got {type(isolation_seconds).__name__}"
             )
         if cooldown_seconds <= 0:
             raise ValueError(f"cooldown_seconds must be positive, got {cooldown_seconds}")
         if isolation_threshold <= 0:
-            raise ValueError(
-                f"isolation_threshold must be positive, got {isolation_threshold}"
-            )
+            raise ValueError(f"isolation_threshold must be positive, got {isolation_threshold}")
         if isolation_seconds <= 0:
             raise ValueError(f"isolation_seconds must be positive, got {isolation_seconds}")
 
@@ -217,9 +208,7 @@ class EndpointPool:
             ValueError: name 已存在,或 name/base_url 为空,或 weight/max_concurrent/timeout 非正。
         """
         if not isinstance(endpoint, Endpoint):
-            raise TypeError(
-                f"endpoint must be Endpoint, got {type(endpoint).__name__}"
-            )
+            raise TypeError(f"endpoint must be Endpoint, got {type(endpoint).__name__}")
         if not endpoint.name:
             raise ValueError("endpoint.name must be non-empty")
         if not endpoint.base_url:
@@ -261,15 +250,13 @@ class EndpointPool:
             del self._stats[name]
             self._rr_weights.pop(name, None)
             # 清理指向该端点的粘性会话绑定
-            self._sticky_map = {
-                k: v for k, v in self._sticky_map.items() if v != name
-            }
+            self._sticky_map = {k: v for k, v in self._sticky_map.items() if v != name}
             logger.info("已移除端点: name=%s", name)
             return True
 
     # -- 选择 --------------------------------------------------------------
 
-    def get_endpoint(self, sticky_key: str = "") -> Optional[Endpoint]:
+    def get_endpoint(self, sticky_key: str = "") -> Endpoint | None:
         """获取一个可用端点。
 
         Args:
@@ -313,7 +300,7 @@ class EndpointPool:
 
     def _pick(
         self, available: list[tuple[Endpoint, EndpointStats]]
-    ) -> Optional[tuple[Endpoint, EndpointStats]]:
+    ) -> tuple[Endpoint, EndpointStats] | None:
         """按策略选择端点(调用者需持锁)。"""
         if self._strategy == EndpointStrategy.RANDOM:
             return self._pick_random(available)
@@ -322,7 +309,7 @@ class EndpointPool:
 
     def _pick_round_robin(
         self, available: list[tuple[Endpoint, EndpointStats]]
-    ) -> Optional[tuple[Endpoint, EndpointStats]]:
+    ) -> tuple[Endpoint, EndpointStats] | None:
         """平滑加权轮询(Smooth Weighted Round-Robin,nginx 风格)。
 
         算法:
@@ -334,7 +321,7 @@ class EndpointPool:
         调用者需持锁。
         """
         total_weight = 0
-        best: Optional[tuple[Endpoint, EndpointStats]] = None
+        best: tuple[Endpoint, EndpointStats] | None = None
         best_cw = 0
         for ep, stats in available:
             cw = self._rr_weights.get(ep.name, 0) + ep.weight
@@ -381,9 +368,9 @@ class EndpointPool:
             stats.isolated_until = 0.0
             if latency_ms > 0:
                 # 增量平均: new_avg = old_avg + (value - old_avg) / count
-                stats.avg_latency_ms = stats.avg_latency_ms + (
-                    latency_ms - stats.avg_latency_ms
-                ) / stats.success_count
+                stats.avg_latency_ms = (
+                    stats.avg_latency_ms + (latency_ms - stats.avg_latency_ms) / stats.success_count
+                )
 
     def record_failure(self, name: str) -> None:
         """记录一次失败调用。
@@ -461,8 +448,7 @@ class EndpointPool:
     def __repr__(self) -> str:
         with self._lock:
             return (
-                f"<EndpointPool strategy={self._strategy.value} "
-                f"endpoints={len(self._endpoints)}>"
+                f"<EndpointPool strategy={self._strategy.value} endpoints={len(self._endpoints)}>"
             )
 
 
@@ -470,7 +456,7 @@ class EndpointPool:
 # 模块级单例(double-checked locking)
 # ============================================================================
 
-_default_pool: Optional[EndpointPool] = None
+_default_pool: EndpointPool | None = None
 _default_lock = threading.Lock()
 
 

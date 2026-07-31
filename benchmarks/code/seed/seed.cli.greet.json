@@ -1,0 +1,19 @@
+{
+  "id": "seed.cli.greet",
+  "title": "CLI greet script",
+  "prompt": "Implement main.py: running `python main.py Alice` must print exactly `Hello, Alice!` (with newline).",
+  "capability": ["cli", "write"],
+  "difficulty": 1,
+  "language": "python",
+  "tags": ["seed", "smoke"],
+  "timeout_s": 120,
+  "setup": { "files": {} },
+  "checks": [
+    { "function": "file_exists", "args": { "path": "main.py" } },
+    {
+      "function": "stdout_equals",
+      "args": { "command": ["python", "main.py", "Alice"], "expected": "Hello, Alice!" }
+    },
+    { "function": "no_stub_content", "args": { "path": "main.py" } }
+  ]
+}

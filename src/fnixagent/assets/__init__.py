@@ -23,6 +23,7 @@
     - 快照不可变(immutable),恢复时创建新分支而非覆盖
     - 迁移脚本单向不可逆,每次升级前自动备份
 """
+
 from fnixagent.assets.bundle import (
     ASSETS_VERSION,
     AssetsBundle,
@@ -36,8 +37,8 @@ from fnixagent.assets.snapshot import SnapshotManager
 
 __all__ = [
     "ASSETS_VERSION",
-    "AssetsBundle",
     "AssetEncryptor",
+    "AssetsBundle",
     "SnapshotManager",
     "is_encryption_available",
     "load_assets",

@@ -1,0 +1,41 @@
+{
+  "id": "gen.cli.greet.epsilon.v76",
+  "title": "greet epsilon",
+  "prompt": "Fix `main.py` so running `python main.py epsilon` prints exactly `Hello, epsilon!`",
+  "capability": [
+    "bugfix",
+    "cli"
+  ],
+  "difficulty": 2,
+  "language": "python",
+  "tags": [
+    "generated",
+    "cli",
+    "full"
+  ],
+  "timeout_s": 120,
+  "setup": {
+    "files": {
+      "main.py": "def main():\n    print(\"hello\")\n\nif __name__ == \"__main__\":\n    main()\n"
+    }
+  },
+  "checks": [
+    {
+      "function": "stdout_equals",
+      "args": {
+        "command": [
+          "python",
+          "main.py",
+          "epsilon"
+        ],
+        "expected": "Hello, epsilon!"
+      }
+    },
+    {
+      "function": "no_stub_content",
+      "args": {
+        "path": "main.py"
+      }
+    }
+  ]
+}

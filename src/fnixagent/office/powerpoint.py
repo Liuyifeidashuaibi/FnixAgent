@@ -16,10 +16,10 @@ PowerPoint 演示文稿创建/slide/主题/图片/图表/导出图片。
   - COM 调用后必须 Quit + CoUninitialize 释放
   - LibreOffice headless 失败时返回 _failure,不崩溃
 """
+
 from __future__ import annotations
 
 import os
-from typing import Any, Optional
 
 from fnixagent.office.base import BaseExpert, ExpertError, ExpertResult
 
@@ -48,7 +48,7 @@ class PPTExpert(BaseExpert):
         output_path: str,
         title: str = "",
         subtitle: str = "",
-        slides: Optional[list[dict]] = None,
+        slides: list[dict] | None = None,
     ) -> ExpertResult:
         """创建 PPT 文稿。
 
@@ -68,7 +68,6 @@ class PPTExpert(BaseExpert):
         try:
             self._require_lib("pptx")
             from pptx import Presentation
-            from pptx.util import Inches, Pt
         except ExpertError as e:
             return self._failure(str(e))
 
@@ -113,7 +112,7 @@ class PPTExpert(BaseExpert):
 
             prs.save(output_path)
             return self._success(output_path, slides=len(prs.slides))
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"create ppt IO failed: {e}")
         except Exception as e:
             return self._failure(f"create ppt failed: {e}")
@@ -126,7 +125,7 @@ class PPTExpert(BaseExpert):
         self,
         path: str,
         title: str = "",
-        bullets: Optional[list[str]] = None,
+        bullets: list[str] | None = None,
         layout: int = 1,
     ) -> ExpertResult:
         """向现有 PPT 追加一页。
@@ -140,9 +139,7 @@ class PPTExpert(BaseExpert):
         Returns:
             ExpertResult(output=slide_index)
         """
-        err = self._validate_path(
-            path, must_exist=True, allowed_exts=("pptx",)
-        )
+        err = self._validate_path(path, must_exist=True, allowed_exts=("pptx",))
         if err:
             return self._failure(err)
         err = self._validate_int(layout, "layout", min_value=0)
@@ -175,7 +172,7 @@ class PPTExpert(BaseExpert):
                         break
             prs.save(path)
             return self._success(len(prs.slides) - 1)
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"add_slide IO failed: {e}")
         except Exception as e:
             return self._failure(f"add_slide failed: {e}")
@@ -204,9 +201,7 @@ class PPTExpert(BaseExpert):
         Returns:
             ExpertResult(output=theme_color)
         """
-        err = self._validate_path(
-            path, must_exist=True, allowed_exts=("pptx",)
-        )
+        err = self._validate_path(path, must_exist=True, allowed_exts=("pptx",))
         if err:
             return self._failure(err)
         err = self._validate_string(theme_color, "theme_color")
@@ -222,8 +217,8 @@ class PPTExpert(BaseExpert):
         try:
             self._require_lib("pptx")
             from pptx import Presentation
-            from pptx.util import Pt
             from pptx.dml.color import RGBColor
+            from pptx.util import Pt
         except ExpertError as e:
             return self._failure(str(e))
 
@@ -246,7 +241,7 @@ class PPTExpert(BaseExpert):
                                 run.font.size = Pt(font_size_body)
             prs.save(path)
             return self._success(theme_color, font=font_name)
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"apply_theme IO failed: {e}")
         except Exception as e:
             return self._failure(f"apply_theme failed: {e}")
@@ -262,8 +257,8 @@ class PPTExpert(BaseExpert):
         slide_index: int,
         left: float = 1.0,
         top: float = 2.0,
-        width: Optional[float] = None,
-        height: Optional[float] = None,
+        width: float | None = None,
+        height: float | None = None,
     ) -> ExpertResult:
         """向指定 slide 插入图片。
 
@@ -277,9 +272,7 @@ class PPTExpert(BaseExpert):
         Returns:
             ExpertResult(output=slide_index)
         """
-        err = self._validate_path(
-            path, must_exist=True, allowed_exts=("pptx",)
-        )
+        err = self._validate_path(path, must_exist=True, allowed_exts=("pptx",))
         if err:
             return self._failure(err)
         # 图片格式校验:常见光栅/矢量图
@@ -314,7 +307,7 @@ class PPTExpert(BaseExpert):
             slide.shapes.add_picture(image_path, **kwargs)
             prs.save(path)
             return self._success(slide_index)
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"insert_image IO failed: {e}")
         except Exception as e:
             return self._failure(f"insert_image failed: {e}")
@@ -350,9 +343,7 @@ class PPTExpert(BaseExpert):
         Returns:
             ExpertResult(output=slide_index)
         """
-        err = self._validate_path(
-            path, must_exist=True, allowed_exts=("pptx",)
-        )
+        err = self._validate_path(path, must_exist=True, allowed_exts=("pptx",))
         if err:
             return self._failure(err)
         err = self._validate_int(slide_index, "slide_index", min_value=0)
@@ -365,9 +356,9 @@ class PPTExpert(BaseExpert):
         try:
             self._require_lib("pptx")
             from pptx import Presentation
-            from pptx.util import Inches
             from pptx.chart.data import CategoryChartData
             from pptx.enum.chart import XL_CHART_TYPE
+            from pptx.util import Inches
         except ExpertError as e:
             return self._failure(str(e))
 
@@ -393,7 +384,10 @@ class PPTExpert(BaseExpert):
                 return self._failure(f"unsupported chart_type: {chart_type}")
             chart_frame = slide.shapes.add_chart(
                 chart_type_map[ct],
-                Inches(left), Inches(top), Inches(width), Inches(height),
+                Inches(left),
+                Inches(top),
+                Inches(width),
+                Inches(height),
                 chart_data,
             )
             chart = chart_frame.chart
@@ -404,7 +398,7 @@ class PPTExpert(BaseExpert):
                 chart.has_title = False
             prs.save(path)
             return self._success(slide_index, chart_type=ct)
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"insert_chart IO failed: {e}")
         except Exception as e:
             return self._failure(f"insert_chart failed: {e}")
@@ -417,7 +411,7 @@ class PPTExpert(BaseExpert):
         self,
         path: str,
         output_dir: str,
-        slide_indices: Optional[list[int]] = None,
+        slide_indices: list[int] | None = None,
     ) -> ExpertResult:
         """将 PPT 每页导出为图片(需 LibreOffice 或 COM 接口)。
 
@@ -436,9 +430,7 @@ class PPTExpert(BaseExpert):
         import shutil
         import subprocess
 
-        err = self._validate_path(
-            path, must_exist=True, allowed_exts=("pptx",)
-        )
+        err = self._validate_path(path, must_exist=True, allowed_exts=("pptx",))
         if err:
             return self._failure(err)
         if not output_dir or not isinstance(output_dir, str):
@@ -447,9 +439,7 @@ class PPTExpert(BaseExpert):
         try:
             # 优先 Windows COM(PowerPoint 已安装)
             if os.name == "nt":
-                com_result = self._export_images_via_com(
-                    path, output_dir, slide_indices
-                )
+                com_result = self._export_images_via_com(path, output_dir, slide_indices)
                 if com_result.success or com_result.metadata.get("tried_com"):
                     return com_result
 
@@ -462,9 +452,18 @@ class PPTExpert(BaseExpert):
                 # 先转 PDF(LibreOffice 子进程,设超时避免挂死)
                 try:
                     subprocess.run(
-                        [soffice, "--headless", "--convert-to", "pdf",
-                         "--outdir", abs_out, abs_path],
-                        check=True, capture_output=True, timeout=120,
+                        [
+                            soffice,
+                            "--headless",
+                            "--convert-to",
+                            "pdf",
+                            "--outdir",
+                            abs_out,
+                            abs_path,
+                        ],
+                        check=True,
+                        capture_output=True,
+                        timeout=120,
                     )
                 except subprocess.CalledProcessError as e:
                     return self._failure(
@@ -483,8 +482,7 @@ class PPTExpert(BaseExpert):
                     import fitz  # PyMuPDF
                 except ImportError:
                     return self._failure(
-                        "export_images requires PyMuPDF (pip install pymupdf) "
-                        "for image extraction",
+                        "export_images requires PyMuPDF (pip install pymupdf) for image extraction",
                     )
 
                 doc = None
@@ -501,10 +499,8 @@ class PPTExpert(BaseExpert):
                         out_file = os.path.join(abs_out, f"slide_{idx:03d}.png")
                         pix.save(out_file)
                         image_paths.append(out_file)
-                    return self._success(
-                        image_paths, count=len(image_paths), backend="libreoffice"
-                    )
-                except (PermissionError, IOError) as e:
+                    return self._success(image_paths, count=len(image_paths), backend="libreoffice")
+                except (OSError, PermissionError) as e:
                     return self._failure(f"export_images IO failed: {e}")
                 except Exception as e:
                     return self._failure(f"export_images (libreoffice) failed: {e}")
@@ -529,7 +525,7 @@ class PPTExpert(BaseExpert):
     def read(
         self,
         path: str,
-        slide_range: Optional[tuple[int, int]] = None,
+        slide_range: tuple[int, int] | None = None,
     ) -> ExpertResult:
         """读取 PPT 内容(每页标题/文本/图片/表格/备注)。
 
@@ -543,23 +539,18 @@ class PPTExpert(BaseExpert):
                 has_image, has_table, tables, notes}], raw_text
             })
         """
-        err = self._validate_path(
-            path, must_exist=True, allowed_exts=("pptx",)
-        )
+        err = self._validate_path(path, must_exist=True, allowed_exts=("pptx",))
         if err:
             return self._failure(err)
         if slide_range is not None:
-            if (not isinstance(slide_range, (tuple, list))
-                    or len(slide_range) != 2
-                    or not all(isinstance(i, int) and not isinstance(i, bool)
-                               for i in slide_range)):
-                return self._failure(
-                    "slide_range must be a tuple of two ints (start, end)"
-                )
+            if (
+                not isinstance(slide_range, (tuple, list))
+                or len(slide_range) != 2
+                or not all(isinstance(i, int) and not isinstance(i, bool) for i in slide_range)
+            ):
+                return self._failure("slide_range must be a tuple of two ints (start, end)")
             if slide_range[0] < 1 or slide_range[1] < slide_range[0]:
-                return self._failure(
-                    "slide_range must satisfy 1 <= start <= end"
-                )
+                return self._failure("slide_range must satisfy 1 <= start <= end")
 
         try:
             self._require_lib("pptx")
@@ -574,9 +565,7 @@ class PPTExpert(BaseExpert):
                 start = max(1, slide_range[0])
                 end = min(total, slide_range[1])
                 if start > end:
-                    return self._failure(
-                        f"slide_range {slide_range} out of range (total={total})"
-                    )
+                    return self._failure(f"slide_range {slide_range} out of range (total={total})")
                 target_indices = list(range(start - 1, end))
             else:
                 target_indices = list(range(total))
@@ -608,17 +597,17 @@ class PPTExpert(BaseExpert):
                 has_table = False
                 tables: list[list[list[str]]] = []
                 for shape in slide.shapes:
-                    if title_shape_id is not None and getattr(shape, "shape_id", None) == title_shape_id:
+                    if (
+                        title_shape_id is not None
+                        and getattr(shape, "shape_id", None) == title_shape_id
+                    ):
                         continue  # 标题已单独提取
                     # 表格
                     if getattr(shape, "has_table", False):
                         has_table = True
                         try:
                             tbl = shape.table
-                            rows = [
-                                [cell.text for cell in row.cells]
-                                for row in tbl.rows
-                            ]
+                            rows = [[cell.text for cell in row.cells] for row in tbl.rows]
                             tables.append(rows)
                         except Exception:
                             pass
@@ -644,15 +633,17 @@ class PPTExpert(BaseExpert):
                 except Exception:
                     notes = ""
 
-                slides_data.append({
-                    "index": i + 1,
-                    "title": title,
-                    "text_blocks": text_blocks,
-                    "has_image": has_image,
-                    "has_table": has_table,
-                    "tables": tables,
-                    "notes": notes,
-                })
+                slides_data.append(
+                    {
+                        "index": i + 1,
+                        "title": title,
+                        "text_blocks": text_blocks,
+                        "has_image": has_image,
+                        "has_table": has_table,
+                        "tables": tables,
+                        "notes": notes,
+                    }
+                )
                 if title:
                     raw_parts.append(title)
                 raw_parts.extend(text_blocks)
@@ -669,7 +660,7 @@ class PPTExpert(BaseExpert):
                 },
                 read_count=len(slides_data),
             )
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"read ppt IO failed: {e}")
         except Exception as e:
             return self._failure(f"read ppt failed: {e}")
@@ -713,7 +704,7 @@ class PPTExpert(BaseExpert):
         self,
         path: str,
         output_dir: str,
-        slide_indices: Optional[list[int]],
+        slide_indices: list[int] | None,
     ) -> ExpertResult:
         """通过 Windows PowerPoint COM 接口导出图片(内部辅助)。
 
@@ -745,13 +736,9 @@ class PPTExpert(BaseExpert):
                 # PNG 导出,1280x720 适合预览
                 pres.Slides(idx).Export(out_file, "PNG", 1280, 720)
                 image_paths.append(out_file)
-            return self._success(
-                image_paths, count=len(image_paths), backend="com", tried_com=True
-            )
+            return self._success(image_paths, count=len(image_paths), backend="com", tried_com=True)
         except Exception as e:
-            return self._failure(
-                f"export_images (COM) failed: {e}", tried_com=True
-            )
+            return self._failure(f"export_images (COM) failed: {e}", tried_com=True)
         finally:
             # 严格按 COM 反向释放顺序:presentation → app → COM 库
             if pres is not None:

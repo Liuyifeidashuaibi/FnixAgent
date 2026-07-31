@@ -2,14 +2,14 @@
 
 基于 Pydantic BaseModel,与 DB 表结构对齐。
 """
+
 from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
-
 
 # ---------------------------------------------------------------------------
 # 枚举
@@ -19,8 +19,8 @@ from pydantic import BaseModel, Field
 class ProjectRole(str, Enum):
     """项目成员角色(4 级权限)。"""
 
-    OWNER = "owner"    # 所有者:全部权限 + 删除/转让
-    ADMIN = "admin"    # 管理员:全部权限 + 成员管理
+    OWNER = "owner"  # 所有者:全部权限 + 删除/转让
+    ADMIN = "admin"  # 管理员:全部权限 + 成员管理
     EDITOR = "editor"  # 编辑者:读写资产
     VIEWER = "viewer"  # 只读
 
@@ -43,28 +43,28 @@ class ProjectRole(str, Enum):
 class ProjectStatus(str, Enum):
     """项目状态。"""
 
-    ACTIVE = "active"      # 活跃
+    ACTIVE = "active"  # 活跃
     ARCHIVED = "archived"  # 归档(只读)
-    DELETED = "deleted"    # 已删除(软删除)
+    DELETED = "deleted"  # 已删除(软删除)
 
 
 class AssetType(str, Enum):
     """资产类型。"""
 
     DOCUMENT = "document"  # 文档(Word/Excel/PPT/PDF)
-    TASK = "task"          # 任务
-    TOOL = "tool"          # 工具配置
+    TASK = "task"  # 任务
+    TOOL = "tool"  # 工具配置
     TEMPLATE = "template"  # 模板
-    DATASET = "dataset"    # 数据集
-    OTHER = "other"        # 其他
+    DATASET = "dataset"  # 数据集
+    OTHER = "other"  # 其他
 
 
 class AssetPermission(str, Enum):
     """资产权限。"""
 
-    READ = "read"      # 只读
-    WRITE = "write"    # 读写
-    ADMIN = "admin"    # 管理(可删除/分享)
+    READ = "read"  # 只读
+    WRITE = "write"  # 读写
+    ADMIN = "admin"  # 管理(可删除/分享)
 
 
 # ---------------------------------------------------------------------------
@@ -88,7 +88,7 @@ class Project(BaseModel):
     tags: list[str] = Field(default_factory=list, description="项目标签")
     created_at: datetime = Field(default_factory=datetime.now, description="创建时间")
     updated_at: datetime = Field(default_factory=datetime.now, description="更新时间")
-    archived_at: Optional[datetime] = Field(default=None, description="归档时间")
+    archived_at: datetime | None = Field(default=None, description="归档时间")
 
     class Config:
         use_enum_values = True
@@ -105,7 +105,7 @@ class ProjectMember(BaseModel):
     user_id: str = Field(..., description="用户 ID")
     role: ProjectRole = Field(..., description="成员角色")
     joined_at: datetime = Field(default_factory=datetime.now, description="加入时间")
-    invited_by: Optional[str] = Field(default=None, description="邀请人")
+    invited_by: str | None = Field(default=None, description="邀请人")
 
     class Config:
         use_enum_values = True
@@ -123,9 +123,7 @@ class ProjectAsset(BaseModel):
     asset_type: AssetType = Field(..., description="资产类型")
     ref_id: str = Field(..., description="外部资源 ID(如 document_id)")
     name: str = Field(..., description="资产名称(便于展示)")
-    permission: AssetPermission = Field(
-        default=AssetPermission.READ, description="资产权限级别"
-    )
+    permission: AssetPermission = Field(default=AssetPermission.READ, description="资产权限级别")
     added_by: str = Field(..., description="添加者用户 ID")
     added_at: datetime = Field(default_factory=datetime.now, description="添加时间")
     metadata: dict[str, Any] = Field(default_factory=dict, description="资产元信息")

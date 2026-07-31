@@ -15,20 +15,24 @@
     - JSONFileStore: 纯 JSONL 文件(单机,开发期默认)
     - MemoryStore:   纯内存(单元测试用)
 """
+
 from __future__ import annotations
 
 import json
 import os
 import time
-from typing import Optional
+from typing import TYPE_CHECKING
 
 from fnixagent.core.exceptions import SnapshotError, TopologyError
 from fnixagent.core.types import EdgeType, TopologyEdge, TopologyLayer, TopologyNode
 
+if TYPE_CHECKING:
+    from fnixagent.core.topology.graph import TopologyGraph
 
 # ---------------------------------------------------------------------------
 # 存储后端抽象接口
 # ---------------------------------------------------------------------------
+
 
 class TopologyStore:
     """拓扑图存储后端抽象基类。"""
@@ -49,7 +53,7 @@ class TopologyStore:
         """加载全部边。"""
         raise NotImplementedError
 
-    def save_snapshot(self, snapshot: dict, name: Optional[str] = None) -> str:
+    def save_snapshot(self, snapshot: dict, name: str | None = None) -> str:
         """保存快照。"""
         raise NotImplementedError
 
@@ -65,6 +69,7 @@ class TopologyStore:
 # ---------------------------------------------------------------------------
 # 内存存储(单元测试用,不落盘)
 # ---------------------------------------------------------------------------
+
 
 class MemoryStore(TopologyStore):
     """纯内存存储(单元测试用)。"""
@@ -86,7 +91,7 @@ class MemoryStore(TopologyStore):
     def load_all_edges(self) -> list[TopologyEdge]:
         return list(self._edges)
 
-    def save_snapshot(self, snapshot: dict, name: Optional[str] = None) -> str:
+    def save_snapshot(self, snapshot: dict, name: str | None = None) -> str:
         name = name or f"snapshot_{int(time.time())}"
         self._snapshots[name] = snapshot
         return name
@@ -103,6 +108,7 @@ class MemoryStore(TopologyStore):
 # ---------------------------------------------------------------------------
 # JSONL 文件存储(单机生产用)
 # ---------------------------------------------------------------------------
+
 
 class JSONFileStore(TopologyStore):
     """JSONL 文件存储后端。
@@ -157,7 +163,7 @@ class JSONFileStore(TopologyStore):
             edges.append(self._dict_to_edge(line))
         return edges
 
-    def save_snapshot(self, snapshot: dict, name: Optional[str] = None) -> str:
+    def save_snapshot(self, snapshot: dict, name: str | None = None) -> str:
         """保存快照到 snapshots/<name>.json。"""
         name = name or time.strftime("%Y-%m-%d")
         path = os.path.join(self._snapshot_dir, f"{name}.json")
@@ -174,7 +180,7 @@ class JSONFileStore(TopologyStore):
         if not os.path.exists(path):
             raise SnapshotError(f"快照不存在: {name}")
         try:
-            with open(path, "r", encoding="utf-8") as f:
+            with open(path, encoding="utf-8") as f:
                 return json.load(f)
         except (OSError, json.JSONDecodeError) as e:
             raise SnapshotError(f"快照加载失败: {e}") from e
@@ -207,7 +213,7 @@ class JSONFileStore(TopologyStore):
         """读取 JSONL 文件全部行。"""
         records = []
         try:
-            with open(path, "r", encoding="utf-8") as f:
+            with open(path, encoding="utf-8") as f:
                 for line_no, line in enumerate(f, 1):
                     line = line.strip()
                     if not line:
@@ -215,9 +221,7 @@ class JSONFileStore(TopologyStore):
                     try:
                         records.append(json.loads(line))
                     except json.JSONDecodeError as e:
-                        raise TopologyError(
-                            f"{path} 第 {line_no} 行 JSON 解析失败: {e}"
-                        ) from e
+                        raise TopologyError(f"{path} 第 {line_no} 行 JSON 解析失败: {e}") from e
         except OSError as e:
             raise TopologyError(f"读取 {path} 失败: {e}") from e
         return records
@@ -268,7 +272,9 @@ class JSONFileStore(TopologyStore):
         return TopologyNode(
             node_id=d["node_id"],
             layer=TopologyLayer(d["layer"]),
-            node_type=__import__("fnixagent.core.types", fromlist=["NodeType"]).NodeType(d["node_type"]),
+            node_type=__import__("fnixagent.core.types", fromlist=["NodeType"]).NodeType(
+                d["node_type"]
+            ),
             name=d["name"],
             content=d.get("content", ""),
             weight=d["weight"],
@@ -303,6 +309,7 @@ class JSONFileStore(TopologyStore):
 # 存储管理器(封装"图 ↔ 存储"同步逻辑)
 # ---------------------------------------------------------------------------
 
+
 class TopologyStoreManager:
     """拓扑图与存储后端的同步管理器。
 
@@ -314,7 +321,7 @@ class TopologyStoreManager:
 
     def __init__(
         self,
-        graph: "TopologyGraph",
+        graph: TopologyGraph,
         store: TopologyStore,
         snapshot_interval: int = 100,
     ) -> None:
@@ -326,7 +333,6 @@ class TopologyStoreManager:
             snapshot_interval: 每 N 次写入触发快照
         """
         # 延迟导入避免循环
-        from fnixagent.core.topology.graph import TopologyGraph
         self._graph = graph
         self._store = store
         self._snapshot_interval = snapshot_interval
@@ -334,7 +340,6 @@ class TopologyStoreManager:
 
     def load_from_store(self) -> None:
         """从存储加载全部数据到内存图。"""
-        from fnixagent.core.topology.graph import TopologyGraph
         # 用快照恢复更快,否则逐条加载
         snapshots = self._store.list_snapshots()
         if snapshots:
@@ -366,7 +371,7 @@ class TopologyStoreManager:
         self._write_count += 1
         self._maybe_snapshot()
 
-    def save_snapshot(self, name: Optional[str] = None) -> str:
+    def save_snapshot(self, name: str | None = None) -> str:
         """手动触发快照。"""
         snapshot = self._graph.snapshot()
         return self._store.save_snapshot(snapshot, name)

@@ -36,6 +36,7 @@ help:
 	@echo "  make migrate-history     查看迁移历史"
 	@echo ""
 	@echo "  make run              启动开发服务器"
+	@echo "  make dev-all          Standalone 一键启动(API+Desktop)"
 	@echo "  make clean            清理构建产物"
 	@echo ""
 	@echo "  部署(Phase 1.10,详见 docs/DEPLOY.md):"

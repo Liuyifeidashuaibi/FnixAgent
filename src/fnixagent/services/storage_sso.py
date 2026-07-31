@@ -11,13 +11,12 @@ SSO 配置 + 用户绑定存储层(Phase 2.3)。
     - 绑定关系按 (provider_code, provider_user_id) 唯一索引
     - 一个本地用户可绑定多个 SSO provider(如同时绑定 GitHub + Google)
 """
+
 from __future__ import annotations
 
 import threading
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Optional
-
 
 # ---------------------------------------------------------------------------
 # SSO 配置 DTO
@@ -27,10 +26,11 @@ from typing import Any, Optional
 @dataclass
 class SSOConfigDTO:
     """SSO provider 配置(支持 OAuth / SAML)。"""
+
     id: int
-    provider_type: str               # "oauth" / "saml"
-    provider_code: str               # "github" / "google" / "azure_ad" / 自定义
-    name: str                        # 显示名
+    provider_type: str  # "oauth" / "saml"
+    provider_code: str  # "github" / "google" / "azure_ad" / 自定义
+    name: str  # 显示名
     # OAuth 字段
     client_id: str = ""
     client_secret: str = ""
@@ -49,8 +49,8 @@ class SSOConfigDTO:
     name_id_format: str = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
     # 通用
     is_active: bool = True
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
     def to_dict(self, include_secret: bool = False) -> dict:
         """转换为 dict。
@@ -68,26 +68,30 @@ class SSOConfigDTO:
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
         if self.provider_type == "oauth":
-            d.update({
-                "client_id": self.client_id,
-                "redirect_uri": self.redirect_uri,
-                "scopes": list(self.scopes),
-                "authorize_url": self.authorize_url,
-                "token_url": self.token_url,
-                "userinfo_url": self.userinfo_url,
-                "field_mapping": dict(self.field_mapping),
-            })
+            d.update(
+                {
+                    "client_id": self.client_id,
+                    "redirect_uri": self.redirect_uri,
+                    "scopes": list(self.scopes),
+                    "authorize_url": self.authorize_url,
+                    "token_url": self.token_url,
+                    "userinfo_url": self.userinfo_url,
+                    "field_mapping": dict(self.field_mapping),
+                }
+            )
             if include_secret:
                 d["client_secret"] = self.client_secret
         elif self.provider_type == "saml":
-            d.update({
-                "sp_entity_id": self.sp_entity_id,
-                "acs_url": self.acs_url,
-                "idp_entity_id": self.idp_entity_id,
-                "idp_sso_url": self.idp_sso_url,
-                "name_id_format": self.name_id_format,
-                "field_mapping": dict(self.field_mapping),
-            })
+            d.update(
+                {
+                    "sp_entity_id": self.sp_entity_id,
+                    "acs_url": self.acs_url,
+                    "idp_entity_id": self.idp_entity_id,
+                    "idp_sso_url": self.idp_sso_url,
+                    "name_id_format": self.name_id_format,
+                    "field_mapping": dict(self.field_mapping),
+                }
+            )
             if include_secret:
                 d["idp_x509_cert"] = self.idp_x509_cert
         return d
@@ -95,6 +99,7 @@ class SSOConfigDTO:
     def to_oauth_config(self):
         """转换为 OAuthConfig(供 OAuthClient 使用)。"""
         from fnixagent.core.security.auth.oauth import OAuthConfig
+
         return OAuthConfig(
             id=self.id,
             provider_type=self.provider_type,
@@ -116,6 +121,7 @@ class SSOConfigDTO:
     def to_saml_config(self):
         """转换为 SAMLConfig(供 SAMLClient 使用)。"""
         from fnixagent.core.security.auth.saml import SAMLConfig
+
         return SAMLConfig(
             id=self.id,
             provider_type=self.provider_type,
@@ -142,11 +148,12 @@ class SSOConfigDTO:
 @dataclass
 class SSOBindingDTO:
     """SSO 用户绑定关系(provider_user_id ↔ local_user_id)。"""
+
     id: int
     user_id: int
-    provider_code: str               # github / google / azure_ad / 自定义
-    provider_user_id: str            # OAuth id 或 SAML name_id
-    created_at: Optional[datetime] = None
+    provider_code: str  # github / google / azure_ad / 自定义
+    provider_user_id: str  # OAuth id 或 SAML name_id
+    created_at: datetime | None = None
 
     def to_dict(self) -> dict:
         return {
@@ -171,8 +178,9 @@ class InMemorySSOConfigStore:
         self._configs: dict[int, SSOConfigDTO] = {}
         self._next_id = 1
 
-    def list_configs(self, include_inactive: bool = True,
-                     provider_type: Optional[str] = None) -> list[SSOConfigDTO]:
+    def list_configs(
+        self, include_inactive: bool = True, provider_type: str | None = None
+    ) -> list[SSOConfigDTO]:
         with self._lock:
             result = list(self._configs.values())
             if not include_inactive:
@@ -181,12 +189,13 @@ class InMemorySSOConfigStore:
                 result = [c for c in result if c.provider_type == provider_type]
             return sorted(result, key=lambda x: (x.is_active, -x.id), reverse=True)
 
-    def get_config(self, config_id: int) -> Optional[SSOConfigDTO]:
+    def get_config(self, config_id: int) -> SSOConfigDTO | None:
         with self._lock:
             return self._configs.get(config_id)
 
-    def get_by_code(self, provider_code: str,
-                    provider_type: Optional[str] = None) -> Optional[SSOConfigDTO]:
+    def get_by_code(
+        self, provider_code: str, provider_type: str | None = None
+    ) -> SSOConfigDTO | None:
         """按 provider_code 查找 active 配置。"""
         with self._lock:
             for c in self._configs.values():
@@ -223,22 +232,37 @@ class InMemorySSOConfigStore:
                     "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
                 ),
                 is_active=kwargs.get("is_active", True),
-                created_at=now, updated_at=now,
+                created_at=now,
+                updated_at=now,
             )
             self._configs[cid] = cfg
             return cfg
 
-    def update_config(self, config_id: int, **kwargs) -> Optional[SSOConfigDTO]:
+    def update_config(self, config_id: int, **kwargs) -> SSOConfigDTO | None:
         with self._lock:
             cfg = self._configs.get(config_id)
             if not cfg:
                 return None
-            for k in ("provider_type", "provider_code", "name",
-                      "client_id", "client_secret", "redirect_uri",
-                      "scopes", "authorize_url", "token_url", "userinfo_url",
-                      "field_mapping", "sp_entity_id", "acs_url",
-                      "idp_entity_id", "idp_sso_url", "idp_x509_cert",
-                      "name_id_format", "is_active"):
+            for k in (
+                "provider_type",
+                "provider_code",
+                "name",
+                "client_id",
+                "client_secret",
+                "redirect_uri",
+                "scopes",
+                "authorize_url",
+                "token_url",
+                "userinfo_url",
+                "field_mapping",
+                "sp_entity_id",
+                "acs_url",
+                "idp_entity_id",
+                "idp_sso_url",
+                "idp_x509_cert",
+                "name_id_format",
+                "is_active",
+            ):
                 if k in kwargs and kwargs[k] is not None:
                     if k == "scopes":
                         setattr(cfg, k, list(kwargs[k]))
@@ -274,8 +298,7 @@ class InMemorySSOBindingStore:
         # 索引:user_id -> [binding_id, ...]
         self._user_idx: dict[int, list[int]] = {}
 
-    def create(self, user_id: int, provider_code: str,
-               provider_user_id: str) -> SSOBindingDTO:
+    def create(self, user_id: int, provider_code: str, provider_user_id: str) -> SSOBindingDTO:
         """创建绑定。若已存在(provider + provider_user_id),返回已有绑定。"""
         with self._lock:
             key = (provider_code, provider_user_id)
@@ -297,8 +320,7 @@ class InMemorySSOBindingStore:
             self._user_idx.setdefault(user_id, []).append(bid)
             return binding
 
-    def get_by_provider(self, provider_code: str,
-                        provider_user_id: str) -> Optional[SSOBindingDTO]:
+    def get_by_provider(self, provider_code: str, provider_user_id: str) -> SSOBindingDTO | None:
         with self._lock:
             bid = self._provider_idx.get((provider_code, provider_user_id))
             return self._bindings.get(bid) if bid else None
@@ -329,9 +351,7 @@ class InMemorySSOBindingStore:
             for bid in list(bids):
                 binding = self._bindings.get(bid)
                 if binding:
-                    self._provider_idx.pop(
-                        (binding.provider_code, binding.provider_user_id), None
-                    )
+                    self._provider_idx.pop((binding.provider_code, binding.provider_user_id), None)
                     del self._bindings[bid]
                     count += 1
             self._user_idx.pop(user_id, None)
@@ -343,10 +363,10 @@ class InMemorySSOBindingStore:
 # ---------------------------------------------------------------------------
 
 
-_sso_config_store: Optional[InMemorySSOConfigStore] = None
+_sso_config_store: InMemorySSOConfigStore | None = None
 _sso_config_store_lock = threading.Lock()
 
-_sso_binding_store: Optional[InMemorySSOBindingStore] = None
+_sso_binding_store: InMemorySSOBindingStore | None = None
 _sso_binding_store_lock = threading.Lock()
 
 

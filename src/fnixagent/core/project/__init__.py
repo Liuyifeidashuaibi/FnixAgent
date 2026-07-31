@@ -15,6 +15,7 @@
   - models:  Pydantic 数据模型
   - service: 业务服务层(CRUD + 权限检查)
 """
+
 from fnixagent.core.project.models import (
     Project,
     ProjectAsset,
@@ -29,6 +30,6 @@ __all__ = [
     "ProjectAsset",
     "ProjectMember",
     "ProjectRole",
-    "ProjectStatus",
     "ProjectService",
+    "ProjectStatus",
 ]

@@ -25,19 +25,20 @@
     cfg = loader.load("office-expert")
     # cfg.name / cfg.display_name / cfg.tools / cfg.reasoning_strategy ...
 """
+
 from __future__ import annotations
 
 import logging
-import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 # 尝试导入 yaml(Python 标准库不含 PyYAML,需安装)
 try:
     import yaml  # type: ignore
+
     _HAS_YAML = True
 except ImportError:
     _HAS_YAML = False
@@ -73,13 +74,9 @@ class HandoffSpec:
             raise ValueError("HandoffSpec.target must be a non-empty string")
         # 参数校验:max_depth 必须 >= 1(防死循环;与 Handoff.max_depth 一致)
         if not isinstance(self.max_depth, int):
-            raise TypeError(
-                f"max_depth must be int, got {type(self.max_depth).__name__}"
-            )
+            raise TypeError(f"max_depth must be int, got {type(self.max_depth).__name__}")
         if self.max_depth < 1:
-            raise ValueError(
-                f"HandoffSpec.max_depth must be >= 1, got {self.max_depth}"
-            )
+            raise ValueError(f"HandoffSpec.max_depth must be >= 1, got {self.max_depth}")
 
 
 @dataclass
@@ -96,7 +93,7 @@ class ModelPreference:
     primary: str = ""
     fallback: str = ""
     temperature: float = 0.5
-    max_tokens: Optional[int] = None
+    max_tokens: int | None = None
 
 
 @dataclass
@@ -244,8 +241,7 @@ class RoleLoader:
 
         if not _HAS_YAML:
             logger.warning(
-                "PyYAML not installed; role loading disabled. "
-                "Install with: pip install pyyaml"
+                "PyYAML not installed; role loading disabled. Install with: pip install pyyaml"
             )
             self._loaded = True
             return
@@ -259,10 +255,10 @@ class RoleLoader:
             except Exception as exc:
                 logger.error("failed to load role from %s: %s", yfile, exc)
 
-    def _load_file(self, path: Path) -> Optional[RoleConfig]:
+    def _load_file(self, path: Path) -> RoleConfig | None:
         """加载单个 YAML 文件为 RoleConfig。"""
         try:
-            with open(path, "r", encoding="utf-8") as f:
+            with open(path, encoding="utf-8") as f:
                 data = yaml.safe_load(f)  # type: ignore
         except Exception as exc:
             logger.error("failed to read %s: %s", path, exc)
@@ -278,7 +274,7 @@ class RoleLoader:
         self,
         data: dict[str, Any],
         source: str = "",
-    ) -> Optional[RoleConfig]:
+    ) -> RoleConfig | None:
         """将 dict 转为 RoleConfig(含校验)。"""
         if not self.validate(data):
             logger.warning("%s: role config validation failed, skipped", source)
@@ -298,13 +294,15 @@ class RoleLoader:
                 if max_depth < 1:
                     logger.warning(
                         "role '%s': handoff max_depth %d < 1, using default 5",
-                        data.get("name", "?"), max_depth,
+                        data.get("name", "?"),
+                        max_depth,
                     )
                     max_depth = 5
             except (TypeError, ValueError):
                 logger.warning(
                     "role '%s': handoff max_depth invalid (%r), using default 5",
-                    data.get("name", "?"), h.get("max_depth"),
+                    data.get("name", "?"),
+                    h.get("max_depth"),
                 )
                 max_depth = 5
             try:
@@ -318,7 +316,9 @@ class RoleLoader:
             except (ValueError, TypeError) as exc:
                 logger.warning(
                     "role '%s': failed to create HandoffSpec to '%s': %s",
-                    data.get("name", "?"), target, exc,
+                    data.get("name", "?"),
+                    target,
+                    exc,
                 )
 
         # model_preference
@@ -331,9 +331,7 @@ class RoleLoader:
         )
 
         # extra(未识别字段)
-        extra = {
-            k: v for k, v in data.items() if k not in _KNOWN_FIELDS
-        }
+        extra = {k: v for k, v in data.items() if k not in _KNOWN_FIELDS}
 
         return RoleConfig(
             name=str(data["name"]).strip(),
@@ -352,7 +350,7 @@ class RoleLoader:
 
     # -- 公共 API ----------------------------------------------------------
 
-    def load(self, role_name: str) -> Optional[RoleConfig]:
+    def load(self, role_name: str) -> RoleConfig | None:
         """按名加载角色配置。
 
         Args:
@@ -406,9 +404,10 @@ class RoleLoader:
         strategy = role_config.get("reasoning_strategy")
         if strategy is not None and strategy not in _VALID_STRATEGIES:
             logger.warning(
-                "role '%s': invalid reasoning_strategy '%s' "
-                "(must be one of %s)",
-                name, strategy, sorted(_VALID_STRATEGIES),
+                "role '%s': invalid reasoning_strategy '%s' (must be one of %s)",
+                name,
+                strategy,
+                sorted(_VALID_STRATEGIES),
             )
             return False
 
@@ -431,15 +430,14 @@ class RoleLoader:
                 return False
             for i, h in enumerate(handoffs):
                 if not isinstance(h, dict) or not h.get("target"):
-                    logger.warning(
-                        "role '%s': handoffs[%d] missing 'target'", name, i
-                    )
+                    logger.warning("role '%s': handoffs[%d] missing 'target'", name, i)
                     return False
                 # 自循环检测:A→A 是立即死循环
                 if str(h.get("target")).strip() == str(name).strip():
                     logger.warning(
                         "role '%s': handoffs[%d] target == self (self-loop)",
-                        name, i,
+                        name,
+                        i,
                     )
                     return False
                 # max_depth 校验(若提供):必须 >= 1
@@ -449,13 +447,15 @@ class RoleLoader:
                         if int(md) < 1:
                             logger.warning(
                                 "role '%s': handoffs[%d] max_depth must be >= 1",
-                                name, i,
+                                name,
+                                i,
                             )
                             return False
                     except (TypeError, ValueError):
                         logger.warning(
                             "role '%s': handoffs[%d] max_depth not an int",
-                            name, i,
+                            name,
+                            i,
                         )
                         return False
 
@@ -472,7 +472,7 @@ class RoleLoader:
     def register_handoffs(
         self,
         registry: Any,
-        role_name: Optional[str] = None,
+        role_name: str | None = None,
     ) -> int:
         """将角色配置中的 handoffs 注册到 HandoffRegistry。
 
@@ -489,7 +489,7 @@ class RoleLoader:
         Returns:
             注册的 handoff 数量
         """
-        from fnixagent.core.handoff import Handoff, make_handoff
+        from fnixagent.core.handoff import make_handoff
 
         # 参数校验
         if registry is None:
@@ -508,7 +508,8 @@ class RoleLoader:
                 if spec.target == cfg.name:
                     logger.warning(
                         "skip self-handoff: role '%s' → '%s' (would loop)",
-                        cfg.name, spec.target,
+                        cfg.name,
+                        spec.target,
                     )
                     continue
                 try:
@@ -524,19 +525,23 @@ class RoleLoader:
                     # 参数校验失败(max_depth 非法 / target 空)
                     logger.error(
                         "failed to register handoff %s→%s: %s",
-                        cfg.name, spec.target, exc,
+                        cfg.name,
+                        spec.target,
+                        exc,
                     )
                 except Exception as exc:
                     logger.error(
                         "failed to register handoff %s→%s: %s",
-                        cfg.name, spec.target, exc,
+                        cfg.name,
+                        spec.target,
+                        exc,
                     )
         return count
 
 
 __all__ = [
-    "RoleConfig",
     "HandoffSpec",
     "ModelPreference",
+    "RoleConfig",
     "RoleLoader",
 ]

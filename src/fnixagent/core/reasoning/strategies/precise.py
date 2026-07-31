@@ -14,6 +14,7 @@ BUG 修复:
     会抛 AttributeError;改用 getattr 安全访问。
   - 原直接修改 ctx.max_iterations / ctx.extra,并发不安全;改用 override 透传。
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -80,7 +81,7 @@ class PreciseStrategy(BaseStrategy):
             # 用 getattr 安全访问,避免 AttributeError 中断执行
             reflect_final = getattr(reflect_trace, "final_response", None)
             if reflect_final:
-                setattr(trace, "final_response", reflect_final)
+                trace.final_response = reflect_final
         return trace
 
     def estimate_cost(self, ctx: StrategyContext) -> dict[str, Any]:

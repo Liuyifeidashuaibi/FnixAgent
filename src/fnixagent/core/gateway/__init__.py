@@ -18,6 +18,7 @@
     from fnixagent.core.gateway import GatewayMiddleware
     app = GatewayMiddleware(app, auth_required=not settings.debug)
 """
+
 from fnixagent.core.gateway.middleware import (
     PUBLIC_PATHS,
     AuditEntry,
@@ -30,12 +31,12 @@ from fnixagent.core.gateway.middleware import (
 )
 
 __all__ = [
+    "PUBLIC_PATHS",
+    "AuditEntry",
+    "AuditLogger",
     "GatewayMiddleware",
     "Principal",
     "QuotaManager",
-    "AuditEntry",
-    "AuditLogger",
-    "PUBLIC_PATHS",
-    "get_quota_manager",
     "get_audit_logger",
+    "get_quota_manager",
 ]

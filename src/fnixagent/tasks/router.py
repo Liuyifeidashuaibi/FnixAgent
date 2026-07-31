@@ -21,20 +21,19 @@
   - 路由步骤为模板化生成,不感知文件实际内容
   - 高风险判断基于启发式规则(批量/覆盖/删除/加密)
 """
+
 from __future__ import annotations
 
 import os
-from typing import Any, Optional
+from typing import Any
 
 from fnixagent.office.base import BaseExpert
-
 from fnixagent.tasks.dsl import (
     Intent,
     TaskRequest,
     TaskStep,
     TaskType,
 )
-
 
 # 表格类文件扩展名(用于 TABLE_EXTRACT 推断)
 _TABLE_EXTS = {"xlsx", "xls", "csv", "xlsm"}
@@ -62,7 +61,12 @@ class TaskRouter(BaseExpert):
             Intent.FIX_GARBLED: ["乱码", "修复", "恢复", "decode"],
             Intent.UNIFY_FORMAT: ["格式统一", "统一格式", "字体", "字号", "加粗", "行距"],
             Intent.DELETE_NUMBER: [
-                "删题号", "删除题号", "删除序号", "去掉编号", "去题号", "删除编号",
+                "删题号",
+                "删除题号",
+                "删除序号",
+                "去掉编号",
+                "去题号",
+                "删除编号",
             ],
             Intent.EXTRACT_CONTENT: ["提取", "抽取"],
             Intent.CONVERT_FORMAT: ["转换", "转成", "to pdf", "转pdf", "导出"],
@@ -101,9 +105,7 @@ class TaskRouter(BaseExpert):
     # 任务类型推断
     # ------------------------------------------------------------------
 
-    def infer_task_type(
-        self, intents: list[Intent], file_paths: list[str]
-    ) -> TaskType:
+    def infer_task_type(self, intents: list[Intent], file_paths: list[str]) -> TaskType:
         """从意图 + 文件类型推断任务类型。
 
         优先级(从高到低):
@@ -228,9 +230,7 @@ class TaskRouter(BaseExpert):
                 return True
 
         # 4. 紧急优先级 + 破坏性意图
-        if request.priority >= 2 and (
-            intent_set & {Intent.DELETE_NUMBER, Intent.FIX_GARBLED}
-        ):
+        if request.priority >= 2 and (intent_set & {Intent.DELETE_NUMBER, Intent.FIX_GARBLED}):
             return True
 
         # 5. 批量处理且文件数过多
@@ -294,9 +294,7 @@ class TaskRouter(BaseExpert):
     # 各任务类型的步骤模板
     # ------------------------------------------------------------------
 
-    def _route_question_bank(
-        self, request: TaskRequest, common: dict[str, Any]
-    ) -> list[TaskStep]:
+    def _route_question_bank(self, request: TaskRequest, common: dict[str, Any]) -> list[TaskStep]:
         """题库处理:解析 → 检测乱码 → 解析答案 → 填答案 → [删题号] → [统一格式] → 校验。
 
         delete_number / normalize_format 根据意图条件包含,避免无意义步骤。
@@ -359,9 +357,7 @@ class TaskRouter(BaseExpert):
             ],
         )
 
-    def _route_batch_process(
-        self, request: TaskRequest, common: dict[str, Any]
-    ) -> list[TaskStep]:
+    def _route_batch_process(self, request: TaskRequest, common: dict[str, Any]) -> list[TaskStep]:
         """批量处理:按意图选择 合并/拆分/逐文件处理,均以解析开头、校验结尾。
 
         以单步聚合形式表达(实际执行器内部循环),保持步骤计划简洁。
@@ -435,7 +431,7 @@ class TaskRouter(BaseExpert):
         common 参数合并进每个步骤的 params,key 字段标识步骤语义。
         """
         steps: list[TaskStep] = []
-        prev_id: Optional[str] = None
+        prev_id: str | None = None
         for idx, (key, name, handler) in enumerate(spec, start=1):
             step_id = f"s{idx}"
             depends = [prev_id] if prev_id else []

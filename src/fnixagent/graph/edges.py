@@ -15,25 +15,25 @@ P1-3 扩展:
     - route_after_reflect_v2: 增强版反思路由(含 human_review/replan 分支)
     - route_after_execute:    执行后路由(含 fallback 分支)
 """
+
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Callable, Optional
+from collections.abc import Callable
+from dataclasses import dataclass
 
-from fnixagent.graph.nodes import NODE_PERCEIVE
 from fnixagent.graph.state import GraphState
 
 # 边名称常量(对应 LangGraph add_conditional_edges 的字典 key)
-EDGE_TO_SEARCH = "to_search"              # perceive → search(无条件, 仅命名)
+EDGE_TO_SEARCH = "to_search"  # perceive → search(无条件, 仅命名)
 EDGE_TO_SKILL_SELECT = "to_skill_select"  # search → skill_select(无条件)
-EDGE_TO_EXECUTE = "to_execute"            # skill_select → execute(无条件)
-EDGE_TO_REFLECT = "to_reflect"            # execute → reflect(无条件)
-EDGE_LOOP_BACK = "loop_back"              # reflect → perceive(循环)
-EDGE_TO_END = "to_end"                    # reflect → END(结束)
+EDGE_TO_EXECUTE = "to_execute"  # skill_select → execute(无条件)
+EDGE_TO_REFLECT = "to_reflect"  # execute → reflect(无条件)
+EDGE_LOOP_BACK = "loop_back"  # reflect → perceive(循环)
+EDGE_TO_END = "to_end"  # reflect → END(结束)
 # P1-3 新增边(增强路由分支)
 EDGE_TO_HUMAN_REVIEW = "to_human_review"  # 人工审核分支
-EDGE_TO_REPLAN = "to_replan"              # 重规划分支
-EDGE_TO_FALLBACK = "to_fallback"          # 降级处理分支
+EDGE_TO_REPLAN = "to_replan"  # 重规划分支
+EDGE_TO_FALLBACK = "to_fallback"  # 降级处理分支
 
 
 def route_after_reflect(state: GraphState) -> str:
@@ -109,7 +109,7 @@ class RouteRegistry:
         self,
         node_name: str,
         route_fn: RouteFn,
-        targets: Optional[list[str]] = None,
+        targets: list[str] | None = None,
     ) -> None:
         """注册节点的路由函数。
 
@@ -124,7 +124,7 @@ class RouteRegistry:
         """移除节点的路由函数。"""
         self._routes.pop(node_name, None)
 
-    def get(self, node_name: str) -> Optional[RouteFn]:
+    def get(self, node_name: str) -> RouteFn | None:
         """获取节点的路由函数(无则返回 None)。"""
         entry = self._routes.get(node_name)
         return entry[0] if entry else None
@@ -160,7 +160,7 @@ class RouteRegistry:
 
 
 # 全局默认注册表(单例)
-_default_registry: Optional[RouteRegistry] = None
+_default_registry: RouteRegistry | None = None
 
 
 def get_default_registry() -> RouteRegistry:
@@ -170,11 +170,13 @@ def get_default_registry() -> RouteRegistry:
         _default_registry = RouteRegistry()
         # 注册默认路由
         _default_registry.register(
-            "reflect", route_after_reflect,
+            "reflect",
+            route_after_reflect,
             targets=[EDGE_LOOP_BACK, EDGE_TO_END],
         )
         _default_registry.register(
-            "error_check", should_stop_on_error,
+            "error_check",
+            should_stop_on_error,
             targets=[EDGE_TO_END, "continue"],
         )
     return _default_registry
@@ -242,8 +244,7 @@ def route_after_execute(state: GraphState) -> str:
 
     # 检查失败比例
     failed_count = sum(
-        1 for r in tool_results
-        if isinstance(r, dict) and r.get("status") == "failed"
+        1 for r in tool_results if isinstance(r, dict) and r.get("status") == "failed"
     )
     total = len(tool_results)
 
@@ -252,4 +253,3 @@ def route_after_execute(state: GraphState) -> str:
         return EDGE_TO_FALLBACK
 
     return EDGE_TO_REFLECT
-

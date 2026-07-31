@@ -15,6 +15,7 @@
 (或 ``from fnixagent.core.governance import get_limiter`` 获取默认单例)。
 两者互补: 本类专注 LLM per-key 限流,治理层专注跨 LLM/工具/上游 API 的整体流量治理。
 """
+
 from __future__ import annotations
 
 import threading
@@ -25,10 +26,11 @@ from dataclasses import dataclass
 @dataclass
 class _Bucket:
     """单个限流桶的内部状态。"""
-    tokens: float          # 当前令牌数
-    capacity: float        # 桶容量
-    refill_rate: float     # 每秒补充令牌数
-    last_refill: float     # 上次补充的时间戳(monotonic)
+
+    tokens: float  # 当前令牌数
+    capacity: float  # 桶容量
+    refill_rate: float  # 每秒补充令牌数
+    last_refill: float  # 上次补充的时间戳(monotonic)
 
     def _refill(self, now: float) -> None:
         """惰性补充: 根据距上次的时间差一次性补齐,不超过容量。"""
@@ -70,9 +72,7 @@ class TokenBucketRateLimiter:
         if isinstance(capacity, bool) or not isinstance(capacity, (int, float)):
             raise TypeError(f"capacity must be numeric, got {type(capacity).__name__}")
         if isinstance(refill_per_sec, bool) or not isinstance(refill_per_sec, (int, float)):
-            raise TypeError(
-                f"refill_per_sec must be numeric, got {type(refill_per_sec).__name__}"
-            )
+            raise TypeError(f"refill_per_sec must be numeric, got {type(refill_per_sec).__name__}")
         if capacity <= 0:
             raise ValueError(f"capacity must be positive, got {capacity}")
         if refill_per_sec <= 0:
@@ -134,6 +134,7 @@ class TokenBucketRateLimiter:
             # Phase 2.10: 记录限流触发指标
             try:
                 from fnixagent.core.observability.metrics import record_rate_limit_triggered
+
                 record_rate_limit_triggered(limiter_type="llm")
             except Exception:
                 pass
@@ -143,9 +144,7 @@ class TokenBucketRateLimiter:
         """acquire 的语义别名,显式表达"非阻塞尝试"。"""
         return self.acquire(key, tokens)
 
-    def wait_and_acquire(
-        self, key: str, tokens: float = 1.0, timeout: float = 30.0
-    ) -> bool:
+    def wait_and_acquire(self, key: str, tokens: float = 1.0, timeout: float = 30.0) -> bool:
         """阻塞等待直到获取令牌或超时。
 
         采用短轮询 + 自适应间隔:根据令牌缺口与补充速率估算等待时长,

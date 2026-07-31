@@ -17,6 +17,7 @@ URL 规范化(借鉴 zhua):
   - dont_filter 标志: 重试场景可跳过去重
   - logging 记录关键事件,不引入 loguru
 """
+
 from __future__ import annotations
 
 import json
@@ -25,7 +26,7 @@ import re
 import threading
 from collections import OrderedDict
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 from urllib.parse import (
     parse_qsl,
     urlencode,
@@ -36,9 +37,9 @@ from urllib.parse import (
 logger = logging.getLogger(__name__)
 
 # P1-06: Rust PyO3 扩展探测(可选加速,不可用时回退到下方纯 Python 实现)
-# 不直接 import Rust 模块,通过 probe 统一探测,避免本模块对扩展的硬依赖。
+# S1.2.8: probe.py 已合并到 rust_ext/__init__.py，直接 import 包根。
 try:
-    from fnixagent.core.rust_ext.probe import try_rust_fnv64a as _try_rust_fnv64a
+    from fnixagent.core.rust_ext import try_rust_fnv64a as _try_rust_fnv64a
 except ImportError:  # pragma: no cover - 探测模块自身不应失败,兜底防御
     _try_rust_fnv64a = None  # type: ignore[assignment]
 
@@ -220,7 +221,7 @@ class Simhash:
         result = 0
         for i in range(64):
             if v[i] > 0:
-                result |= (1 << i)
+                result |= 1 << i
         return result
 
     @staticmethod
@@ -247,6 +248,7 @@ class Simhash:
 # 请求指纹
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class RequestFingerprint:
     """请求指纹。
@@ -260,6 +262,7 @@ class RequestFingerprint:
         target: URL 或工具名。
         arguments: 参数字典(可为空)。
     """
+
     method: str
     target: str
     arguments: dict[str, Any] = field(default_factory=dict)
@@ -292,10 +295,7 @@ class RequestFingerprint:
 
     def _fingerprint_string(self) -> str:
         """组装用于精确哈希的字符串。"""
-        return (
-            f"{self.method.upper()}|{self._normalized_target()}|"
-            f"{self._canonical_payload()}"
-        )
+        return f"{self.method.upper()}|{self._normalized_target()}|{self._canonical_payload()}"
 
     def fingerprint(self) -> int:
         """计算 FNV-64a 精确指纹。
@@ -341,6 +341,7 @@ class RequestFingerprint:
 # 请求去重器
 # ---------------------------------------------------------------------------
 
+
 class RequestDeduplicator:
     """请求去重器。
 
@@ -377,25 +378,17 @@ class RequestDeduplicator:
             ValueError: 参数非法(threshold < 0 或 max_fingerprints <= 0)。
         """
         if not isinstance(enable_simhash, bool):
-            raise TypeError(
-                f"enable_simhash must be bool, got {type(enable_simhash).__name__}"
-            )
+            raise TypeError(f"enable_simhash must be bool, got {type(enable_simhash).__name__}")
         if isinstance(simhash_threshold, bool) or not isinstance(simhash_threshold, int):
             raise TypeError(
                 f"simhash_threshold must be int, got {type(simhash_threshold).__name__}"
             )
         if isinstance(max_fingerprints, bool) or not isinstance(max_fingerprints, int):
-            raise TypeError(
-                f"max_fingerprints must be int, got {type(max_fingerprints).__name__}"
-            )
+            raise TypeError(f"max_fingerprints must be int, got {type(max_fingerprints).__name__}")
         if simhash_threshold < 0:
-            raise ValueError(
-                f"simhash_threshold must be >= 0, got {simhash_threshold}"
-            )
+            raise ValueError(f"simhash_threshold must be >= 0, got {simhash_threshold}")
         if max_fingerprints <= 0:
-            raise ValueError(
-                f"max_fingerprints must be positive, got {max_fingerprints}"
-            )
+            raise ValueError(f"max_fingerprints must be positive, got {max_fingerprints}")
 
         self._enable_simhash = enable_simhash
         self._simhash_threshold = simhash_threshold
@@ -420,9 +413,7 @@ class RequestDeduplicator:
             self._fingerprints.popitem(last=False)
             self._total_evicted += 1
 
-    def _is_duplicate_locked(
-        self, fp: int, content_hash: int
-    ) -> tuple[bool, str]:
+    def _is_duplicate_locked(self, fp: int, content_hash: int) -> tuple[bool, str]:
         """在持锁状态下检查重复(不写入)。
 
         Returns:
@@ -554,7 +545,9 @@ class RequestDeduplicator:
                     self._total_near_duplicates += 1
                 logger.debug(
                     "请求被去重: method=%s target=%s kind=%s",
-                    method, target, kind,
+                    method,
+                    target,
+                    kind,
                 )
                 return False
             # 新请求: 记录
@@ -613,7 +606,7 @@ class RequestDeduplicator:
 # 模块级单例
 # ---------------------------------------------------------------------------
 
-_deduplicator_singleton: Optional[RequestDeduplicator] = None
+_deduplicator_singleton: RequestDeduplicator | None = None
 _singleton_lock = threading.Lock()
 
 

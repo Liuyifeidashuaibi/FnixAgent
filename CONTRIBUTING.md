@@ -53,15 +53,24 @@ powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | ie
 
 ```bash
 git clone https://github.com/Liuyifeidashuaibi/FnixAgent.git
-cd fnixagent
+cd FnixAgent
 
-# 创建虚拟环境并安装依赖(含开发依赖)
-uv sync --extra dev
+# 推荐：一键安装脚本
+# Windows: powershell -ExecutionPolicy Bypass -File install.ps1
+# macOS/Linux: chmod +x install.sh && ./install.sh
 
-# 或使用 pip(兼容方式)
-python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-pip install -e ".[dev]"
+# 或手动：
+cp .env.example .env
+pip install -r requirements.txt && pip install -e ".[dev,security]"
+pnpm install
+```
+
+### 磁盘清理
+
+开发时若 C 盘空间不足：
+
+```bash
+pnpm clean:cache
 ```
 
 ### 3. 安装 pre-commit 钩子

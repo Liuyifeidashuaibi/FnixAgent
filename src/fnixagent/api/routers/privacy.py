@@ -15,11 +15,11 @@ API 路由 - 用户隐私中心(Phase 3.2 / 2.12)。
   - 30 天后由后台清理任务硬删除
   - 所有响应中的 PII 已脱敏(手机号/邮箱/身份证)
 """
+
 from __future__ import annotations
 
 import json
 from datetime import datetime
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import Response
@@ -46,17 +46,20 @@ _DEFAULT_RETENTION_DAYS = 30
 
 def _audit_privacy(
     action: str,
-    user_id: Optional[int],
+    user_id: int | None,
     detail: dict,
     http_request: Request,
 ) -> None:
     """写入隐私操作的审计日志(失败不影响主流程)。"""
     try:
         from fnixagent.core.audit import AuditLogger
+
         ua = http_request.headers.get("user-agent", "")
         forwarded = http_request.headers.get("x-forwarded-for", "")
-        ip = forwarded.split(",")[0].strip() if forwarded else (
-            http_request.client.host if http_request.client else ""
+        ip = (
+            forwarded.split(",")[0].strip()
+            if forwarded
+            else (http_request.client.host if http_request.client else "")
         )
         AuditLogger().log(
             action=action,
@@ -150,7 +153,7 @@ async def export_personal_data(
     )
 
     # 收集数据
-    user_store = get_user_store()
+    get_user_store()
     apikey_store = get_apikey_store()
     document_store = get_document_store()
     task_store = get_task_store()
@@ -188,14 +191,11 @@ async def export_personal_data(
     # 审计日志(本用户最近 100 条)
     audit_data: list[dict] = []
     try:
-        from fnixagent.core.audit import AuditLogger
         from fnixagent.services.storage_audit import get_audit_store
+
         store = get_audit_store()
         all_logs = store.list_all(limit=10000)
-        user_logs = [
-            log.to_dict() for log in all_logs
-            if log.user_id == user_id
-        ][:100]
+        user_logs = [log.to_dict() for log in all_logs if log.user_id == user_id][:100]
         audit_data = user_logs
     except Exception:
         pass
@@ -275,16 +275,18 @@ async def request_account_deletion(
         detail={
             "username": user.username,
             "retention_days": retention_days,
-            "hard_delete_at": (datetime.utcnow().replace(microsecond=0).isoformat()
-                               if retention_days == 0 else None),
+            "hard_delete_at": (
+                datetime.utcnow().replace(microsecond=0).isoformat()
+                if retention_days == 0
+                else None
+            ),
         },
         http_request=http_request,
     )
 
     return BaseResponse(
         success=True,
-        message=f"账号注销请求已提交,将在 {retention_days} 天后永久删除。"
-                f"在此期间可登录撤销注销。",
+        message=f"账号注销请求已提交,将在 {retention_days} 天后永久删除。在此期间可登录撤销注销。",
         data={
             "deleted_at": datetime.utcnow().isoformat(),
             "retention_days": retention_days,

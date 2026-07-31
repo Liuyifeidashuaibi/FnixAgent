@@ -14,4 +14,5 @@ fnixagent Core Engine
 - 向量检索 (Embedding / 混合检索)
 - 调度中枢 (生命周期编排)
 """
+
 __version__ = "1.0.0"

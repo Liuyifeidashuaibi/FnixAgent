@@ -25,9 +25,10 @@ State 承载飞轮 ① 感知-执行阶段的全部运行时状态:
     - final_answer:     最终答案
     - error:            错误信息
 """
+
 from __future__ import annotations
 
-from typing import Annotated, Any, Optional, TypedDict
+from typing import Annotated, Any, TypedDict
 
 from fnixagent.graph.reducers import (
     add_int,
@@ -60,6 +61,7 @@ class GraphState(TypedDict, total=False):
       merge_dict:    字典合并(后者覆盖前者)
       merge_trace:   深合并(list 追加 + dict 合并)
     """
+
     # 对话与意图
     messages: Annotated[list[dict[str, Any]], add_messages]
     user_input: Annotated[str, last_value]
@@ -85,7 +87,7 @@ class GraphState(TypedDict, total=False):
     # 控制流
     should_continue: Annotated[bool, last_value]
     final_answer: Annotated[str, last_value]
-    error: Annotated[Optional[str], last_value]
+    error: Annotated[str | None, last_value]
 
 
 def create_initial_state(user_input: str) -> GraphState:
@@ -102,9 +104,7 @@ def create_initial_state(user_input: str) -> GraphState:
     """
     # 输入校验: user_input 必须为字符串(允许空串, 兼容测试场景)
     if not isinstance(user_input, str):
-        raise TypeError(
-            f"user_input 必须为 str, 收到 {type(user_input).__name__}"
-        )
+        raise TypeError(f"user_input 必须为 str, 收到 {type(user_input).__name__}")
     return GraphState(
         messages=[{"role": "user", "content": user_input}],
         user_input=user_input,
@@ -131,4 +131,3 @@ def create_initial_state(user_input: str) -> GraphState:
 # AgentState 同名)。保留 AgentState = GraphState 别名,使现有 import 不破坏;
 # 新代码应使用 GraphState。
 AgentState = GraphState
-

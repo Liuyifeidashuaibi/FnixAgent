@@ -1,4 +1,4 @@
-﻿"""
+"""
 知识拓扑图 (KTG) Schema 校验单元测试。
 
 测试模块: fnixagent.core.topology.schema
@@ -9,6 +9,7 @@
     - is_valid_node_type_for_layer()
     - get_layer_for_node_type()
 """
+
 import pytest
 
 from fnixagent.core.exceptions import (
@@ -24,10 +25,10 @@ from fnixagent.core.types import (
     TopologyNode,
 )
 
-
 # ---------------------------------------------------------------------------
 # 固定映射常量
 # ---------------------------------------------------------------------------
+
 
 class TestNodeLayerMappings:
     """测试节点类型与层级的固定映射。"""
@@ -90,6 +91,7 @@ class TestFixedWeightEdges:
 # ---------------------------------------------------------------------------
 # validate_node
 # ---------------------------------------------------------------------------
+
 
 class TestValidateNode:
     """测试 validate_node() 函数。"""
@@ -227,6 +229,7 @@ class TestValidateNode:
 # ---------------------------------------------------------------------------
 # validate_edge
 # ---------------------------------------------------------------------------
+
 
 class TestValidateEdge:
     """测试 validate_edge() 函数。"""
@@ -430,6 +433,7 @@ class TestValidateEdge:
 # is_valid_node_type_for_layer
 # ---------------------------------------------------------------------------
 
+
 class TestIsValidNodeTypeForLayer:
     """测试 is_valid_node_type_for_layer() 函数。"""
 
@@ -439,7 +443,9 @@ class TestIsValidNodeTypeForLayer:
 
     def test_concept_in_l2(self):
         """CONCEPT 在 L2 应返回 True。"""
-        assert schema.is_valid_node_type_for_layer(NodeType.CONCEPT, TopologyLayer.L2_CONCEPT) is True
+        assert (
+            schema.is_valid_node_type_for_layer(NodeType.CONCEPT, TopologyLayer.L2_CONCEPT) is True
+        )
 
     def test_rule_in_l3(self):
         """RULE 在 L3 应返回 True。"""
@@ -447,11 +453,15 @@ class TestIsValidNodeTypeForLayer:
 
     def test_constraint_in_l3(self):
         """CONSTRAINT 在 L3 应返回 True。"""
-        assert schema.is_valid_node_type_for_layer(NodeType.CONSTRAINT, TopologyLayer.L3_RULE) is True
+        assert (
+            schema.is_valid_node_type_for_layer(NodeType.CONSTRAINT, TopologyLayer.L3_RULE) is True
+        )
 
     def test_inference_in_l3(self):
         """INFERENCE 在 L3 应返回 True。"""
-        assert schema.is_valid_node_type_for_layer(NodeType.INFERENCE, TopologyLayer.L3_RULE) is True
+        assert (
+            schema.is_valid_node_type_for_layer(NodeType.INFERENCE, TopologyLayer.L3_RULE) is True
+        )
 
     def test_fact_in_l4(self):
         """FACT 在 L4 应返回 True。"""
@@ -473,6 +483,7 @@ class TestIsValidNodeTypeForLayer:
 # ---------------------------------------------------------------------------
 # get_layer_for_node_type
 # ---------------------------------------------------------------------------
+
 
 class TestGetLayerForNodeType:
     """测试 get_layer_for_node_type() 函数。"""

@@ -29,17 +29,19 @@ Note:
     - ZhuaConfig   对接 zhua-crawler 系统(/v1/* 接口,端口 8000)
   Agent 可同时使用两套工具(crawler_* 与 zhua_*)。
 """
+
 from __future__ import annotations
 
 import dataclasses
 import logging
 import os
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 # 尝试导入 yaml(与 core/role_loader.py / config.py 一致的降级模式)
 try:
     import yaml  # type: ignore
+
     _HAS_YAML = True
 except ImportError:  # pragma: no cover
     _HAS_YAML = False
@@ -78,11 +80,11 @@ class ZhuaConfig:
     """
 
     base_url: str = "http://localhost:8000"
-    token: Optional[str] = None
-    operator_token: Optional[str] = None
+    token: str | None = None
+    operator_token: str | None = None
     timeout: float = 60.0
     max_retries: int = 3
-    user_agent: Optional[str] = None
+    user_agent: str | None = None
 
     def __post_init__(self) -> None:
         """构造后字段范围校验。"""
@@ -91,17 +93,12 @@ class ZhuaConfig:
         if not isinstance(self.timeout, (int, float)) or self.timeout <= 0:
             raise ValueError(f"ZhuaConfig.timeout 必须 > 0, 实为 {self.timeout}")
         if not isinstance(self.max_retries, int) or self.max_retries < 0:
-            raise ValueError(
-                f"ZhuaConfig.max_retries 必须 >= 0, 实为 {self.max_retries}"
-            )
+            raise ValueError(f"ZhuaConfig.max_retries 必须 >= 0, 实为 {self.max_retries}")
         # token / operator_token 允许 None 或非空 str
         for fname in ("token", "operator_token", "user_agent"):
             val = getattr(self, fname)
             if val is not None and not isinstance(val, str):
-                raise TypeError(
-                    f"ZhuaConfig.{fname} 必须为 str 或 None, "
-                    f"实为 {type(val).__name__}"
-                )
+                raise TypeError(f"ZhuaConfig.{fname} 必须为 str 或 None, 实为 {type(val).__name__}")
 
     def to_client_kwargs(self) -> dict[str, Any]:
         """转换为 ZhuaClient 构造参数(过滤 None 值)。
@@ -203,17 +200,13 @@ def _yaml_to_dict(path: str) -> dict[str, Any]:
         ValueError: YAML 顶层不是 mapping
     """
     if not _HAS_YAML:
-        raise ImportError(
-            "yaml 未安装,无法加载 YAML 配置(请安装 PyYAML 或 yaml 包)"
-        )
-    with open(path, "r", encoding="utf-8") as f:
+        raise ImportError("yaml 未安装,无法加载 YAML 配置(请安装 PyYAML 或 yaml 包)")
+    with open(path, encoding="utf-8") as f:
         data = yaml.safe_load(f)  # type: ignore
     if data is None:
         return {}
     if not isinstance(data, dict):
-        raise ValueError(
-            f"YAML 配置必须是 mapping, 实为 {type(data).__name__}: {path}"
-        )
+        raise ValueError(f"YAML 配置必须是 mapping, 实为 {type(data).__name__}: {path}")
 
     # 严格只读 zhua: 嵌套段(避免顶层 CrawlerConfig 字段污染)
     zhua_section = data.get("zhua")
@@ -291,10 +284,11 @@ def load_zhua_config(**overrides: Any) -> ZhuaConfig:
         # __file__ = .../src/fnixagent/business/crawler/zhua_config.py
         # 上溯 5 级 dirname 到项目根 fnixagent/
         default_yaml = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.dirname(
-                os.path.dirname(os.path.dirname(__file__))
-            ))),
-            "config", "crawler.yaml",
+            os.path.dirname(
+                os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+            ),
+            "config",
+            "crawler.yaml",
         )
         if os.path.exists(default_yaml):
             try:

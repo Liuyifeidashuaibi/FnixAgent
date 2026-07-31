@@ -17,12 +17,13 @@ LDAP/AD 域集成(Phase 2.2)。
 
 依赖:ldap3>=2.9
 """
+
 from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from fnixagent.services.storage import get_user_store
 
@@ -58,28 +59,29 @@ class LDAPNotInstalledError(LDAPError):
 @dataclass
 class LDAPConfig:
     """LDAP 服务器配置(与 storage_ldap.LDAPConfigDTO 对应)。"""
+
     id: int
     name: str
-    server_url: str                      # ldap://host:389 或 ldaps://host:636
-    bind_dn: str                         # 服务账号 DN(用于搜索用户)
-    bind_password: str                   # 服务账号密码
-    user_search_base: str                # 用户搜索基准 DN
+    server_url: str  # ldap://host:389 或 ldaps://host:636
+    bind_dn: str  # 服务账号 DN(用于搜索用户)
+    bind_password: str  # 服务账号密码
+    user_search_base: str  # 用户搜索基准 DN
     user_filter: str = "(objectClass=person)"  # 用户过滤器
-    group_search_base: str = ""          # 组搜索基准 DN(可选)
+    group_search_base: str = ""  # 组搜索基准 DN(可选)
     group_filter: str = "(objectClass=group)"  # 组过滤器
     username_attribute: str = "sAMAccountName"  # AD 默认;OpenLDAP 可为 uid
     email_attribute: str = "mail"
     display_name_attribute: str = "displayName"
-    use_ssl: bool = False                # ldaps://
-    use_tls: bool = True                 # STARTTLS
+    use_ssl: bool = False  # ldaps://
+    use_tls: bool = True  # STARTTLS
     is_active: bool = True
     sync_interval_hours: int = 24
-    last_sync_at: Optional[datetime] = None
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    last_sync_at: datetime | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
     @classmethod
-    def from_dict(cls, d: dict) -> "LDAPConfig":
+    def from_dict(cls, d: dict) -> LDAPConfig:
         return cls(
             id=d["id"],
             name=d["name"],
@@ -106,6 +108,7 @@ class LDAPConfig:
 @dataclass
 class LDAPUser:
     """LDAP 用户查询结果。"""
+
     dn: str
     username: str
     email: str
@@ -137,11 +140,10 @@ class LDAPClient:
         """延迟导入 ldap3,未安装时抛 LDAPNotInstalledError。"""
         try:
             import ldap3
+
             return ldap3
         except ImportError as e:
-            raise LDAPNotInstalledError(
-                "ldap3 库未安装,请运行 pip install ldap3"
-            ) from e
+            raise LDAPNotInstalledError("ldap3 库未安装,请运行 pip install ldap3") from e
 
     def _build_server(self):
         """构建 ldap3 Server 对象。"""
@@ -162,7 +164,9 @@ class LDAPClient:
             server,
             user=username,
             password=password,
-            auto_bind=ldap3.AUTO_BIND_TLS_BEFORE_BIND if self.config.use_tls else ldap3.AUTO_BIND_NO_TLS,
+            auto_bind=ldap3.AUTO_BIND_TLS_BEFORE_BIND
+            if self.config.use_tls
+            else ldap3.AUTO_BIND_NO_TLS,
             read_only=True,
         )
         if not conn.bind():
@@ -187,7 +191,7 @@ class LDAPClient:
             logger.warning("LDAP 连接测试异常: %s", e)
             return False
 
-    def authenticate(self, username: str, password: str) -> Optional[LDAPUser]:
+    def authenticate(self, username: str, password: str) -> LDAPUser | None:
         """用用户凭据绑定 LDAP,成功则返回 LDAPUser。
 
         流程:
@@ -212,8 +216,12 @@ class LDAPClient:
             admin_conn.search(
                 search_base=cfg.user_search_base,
                 search_filter=search_filter,
-                attributes=[cfg.username_attribute, cfg.email_attribute,
-                            cfg.display_name_attribute, "dn"],
+                attributes=[
+                    cfg.username_attribute,
+                    cfg.email_attribute,
+                    cfg.display_name_attribute,
+                    "dn",
+                ],
             )
 
             if not admin_conn.entries:
@@ -222,7 +230,11 @@ class LDAPClient:
             entry = admin_conn.entries[0]
             user_dn = entry.entry_dn
             email = str(entry[cfg.email_attribute].value) if cfg.email_attribute in entry else ""
-            display_name = str(entry[cfg.display_name_attribute].value) if cfg.display_name_attribute in entry else username
+            display_name = (
+                str(entry[cfg.display_name_attribute].value)
+                if cfg.display_name_attribute in entry
+                else username
+            )
         finally:
             admin_conn.unbind()
 
@@ -248,20 +260,35 @@ class LDAPClient:
             conn.search(
                 search_base=cfg.user_search_base,
                 search_filter=cfg.user_filter,
-                attributes=[cfg.username_attribute, cfg.email_attribute,
-                            cfg.display_name_attribute],
+                attributes=[
+                    cfg.username_attribute,
+                    cfg.email_attribute,
+                    cfg.display_name_attribute,
+                ],
             )
             result = []
             for entry in conn.entries:
-                username = str(entry[cfg.username_attribute].value) if cfg.username_attribute in entry else ""
-                email = str(entry[cfg.email_attribute].value) if cfg.email_attribute in entry else ""
-                display_name = str(entry[cfg.display_name_attribute].value) if cfg.display_name_attribute in entry else username
-                result.append(LDAPUser(
-                    dn=entry.entry_dn,
-                    username=username,
-                    email=email,
-                    display_name=display_name,
-                ))
+                username = (
+                    str(entry[cfg.username_attribute].value)
+                    if cfg.username_attribute in entry
+                    else ""
+                )
+                email = (
+                    str(entry[cfg.email_attribute].value) if cfg.email_attribute in entry else ""
+                )
+                display_name = (
+                    str(entry[cfg.display_name_attribute].value)
+                    if cfg.display_name_attribute in entry
+                    else username
+                )
+                result.append(
+                    LDAPUser(
+                        dn=entry.entry_dn,
+                        username=username,
+                        email=email,
+                        display_name=display_name,
+                    )
+                )
             return result
         finally:
             conn.unbind()
@@ -289,7 +316,10 @@ class LDAPClient:
                 # 创建新用户(随机密码,LDAP 用户不需要本地密码)
                 import secrets
                 import string
-                random_pw = "".join(secrets.choice(string.ascii_letters + string.digits) for _ in range(32))
+
+                random_pw = "".join(
+                    secrets.choice(string.ascii_letters + string.digits) for _ in range(32)
+                )
                 user, err = store.create(
                     username=lu.username or lu.email.split("@")[0],
                     email=lu.email,
@@ -298,12 +328,15 @@ class LDAPClient:
                 )
                 if user:
                     # 打上 LDAP 来源标记
-                    store.update_profile(user.id, {
-                        **(user.profile or {}),
-                        "source": "ldap",
-                        "ldap_dn": lu.dn,
-                        "display_name": lu.display_name,
-                    })
+                    store.update_profile(
+                        user.id,
+                        {
+                            **(user.profile or {}),
+                            "source": "ldap",
+                            "ldap_dn": lu.dn,
+                            "display_name": lu.display_name,
+                        },
+                    )
                     created += 1
                 else:
                     logger.warning("LDAP 用户同步创建失败: %s (%s)", lu.email, err)
@@ -317,12 +350,15 @@ class LDAPClient:
                     or profile.get("display_name") != lu.display_name
                 )
                 if needs_update:
-                    store.update_profile(local.id, {
-                        **profile,
-                        "source": "ldap",
-                        "ldap_dn": lu.dn,
-                        "display_name": lu.display_name,
-                    })
+                    store.update_profile(
+                        local.id,
+                        {
+                            **profile,
+                            "source": "ldap",
+                            "ldap_dn": lu.dn,
+                            "display_name": lu.display_name,
+                        },
+                    )
                     updated += 1
                 else:
                     skipped += 1
@@ -347,19 +383,25 @@ class LDAPClient:
                 # 更新 DN 标记
                 profile = local.profile or {}
                 if profile.get("ldap_dn") != ldap_user.dn:
-                    store.update_profile(local.id, {
-                        **profile,
-                        "source": "ldap",
-                        "ldap_dn": ldap_user.dn,
-                        "display_name": ldap_user.display_name,
-                    })
+                    store.update_profile(
+                        local.id,
+                        {
+                            **profile,
+                            "source": "ldap",
+                            "ldap_dn": ldap_user.dn,
+                            "display_name": ldap_user.display_name,
+                        },
+                    )
                 return local
 
         # 不存在 → 创建
         import secrets
         import string
+
         random_pw = "".join(secrets.choice(string.ascii_letters + string.digits) for _ in range(32))
-        username = ldap_user.username or (ldap_user.email.split("@")[0] if ldap_user.email else f"ldap_{secrets.token_hex(4)}")
+        username = ldap_user.username or (
+            ldap_user.email.split("@")[0] if ldap_user.email else f"ldap_{secrets.token_hex(4)}"
+        )
         user, err = store.create(
             username=username,
             email=ldap_user.email,
@@ -367,9 +409,12 @@ class LDAPClient:
             role="user",
         )
         if user:
-            store.update_profile(user.id, {
-                "source": "ldap",
-                "ldap_dn": ldap_user.dn,
-                "display_name": ldap_user.display_name,
-            })
+            store.update_profile(
+                user.id,
+                {
+                    "source": "ldap",
+                    "ldap_dn": ldap_user.dn,
+                    "display_name": ldap_user.display_name,
+                },
+            )
         return user

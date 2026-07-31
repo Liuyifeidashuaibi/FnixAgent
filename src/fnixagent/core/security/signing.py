@@ -21,6 +21,7 @@
   - 私钥用 AES-256 加密存储(密码从环境变量 OA_SIGNING_KEY_PASSWORD 读取)
   - 与 JWT 密钥分离,独立 KMS 管理(本模块用本地 keystore)
 """
+
 from __future__ import annotations
 
 import base64
@@ -30,8 +31,7 @@ import json
 import os
 import zipfile
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 # 可选依赖:cryptography(RSA 签名)
 try:
@@ -39,8 +39,8 @@ try:
     from cryptography.hazmat.primitives import hashes, serialization
     from cryptography.hazmat.primitives.asymmetric import padding as rsa_padding
     from cryptography.hazmat.primitives.asymmetric import rsa
-    from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
     from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+    from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
     _HAS_CRYPTO = True
 except ImportError:  # pragma: no cover
@@ -56,10 +56,10 @@ _SIGNATURE_ZIP_PATH = "docProps/custom.xml"
 # custom.xml 模板(OOXML 规范)
 _CUSTOM_XML_TEMPLATE = (
     '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
-    '<Properties '
+    "<Properties "
     'xmlns="http://schemas.openxmlformats.org/officeDocument/2006/custom-properties" '
     'xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">'
-    '{properties}</Properties>'
+    "{properties}</Properties>"
 )
 # 单个 property 模板
 _PROPERTY_TEMPLATE = (
@@ -91,6 +91,7 @@ class SignatureInfo:
     签名时间(ISO 8601)、签名者、密钥 ID、算法("RSA-2048-SHA256" /
     "SHA256-checksum")、文件 SHA256、base64 签名。
     """
+
     signed_at: str
     signed_by: str
     key_id: str
@@ -106,10 +107,11 @@ class VerifyResult:
     valid/signed 标记签名有效性与是否存在签名;
     signed_at/signed_by 在有签名时填充;reason 为判定原因。
     """
+
     valid: bool
     signed: bool
-    signed_at: Optional[str] = None
-    signed_by: Optional[str] = None
+    signed_at: str | None = None
+    signed_by: str | None = None
     reason: str = ""
 
 
@@ -127,7 +129,7 @@ class DocumentSigner:
 
     SUPPORTED_EXTS = ("docx", "xlsx", "pptx")
 
-    def __init__(self, keystore_path: Optional[str] = None):
+    def __init__(self, keystore_path: str | None = None):
         """初始化签名器。
 
         Args:
@@ -137,7 +139,7 @@ class DocumentSigner:
         # 当前激活的密钥 ID 与私钥/公钥对象
         self._active_key_id: str = "default"
         self._private_key = None  # cryptography 私钥对象
-        self._public_key = None   # cryptography 公钥对象
+        self._public_key = None  # cryptography 公钥对象
 
     # -- 公开 API ---------------------------------------------------------
 
@@ -170,7 +172,7 @@ class DocumentSigner:
 
             # 4. 构建 SignatureInfo
             sig_info = SignatureInfo(
-                signed_at=datetime.now(timezone.utc).isoformat(),
+                signed_at=datetime.now(UTC).isoformat(),
                 signed_by=signed_by,
                 key_id=self._active_key_id,
                 algorithm=algorithm,
@@ -195,7 +197,8 @@ class DocumentSigner:
         """
         if not self._is_supported(file_path):
             return VerifyResult(
-                valid=False, signed=False,
+                valid=False,
+                signed=False,
                 reason=f"不支持的文件格式(仅 {self.SUPPORTED_EXTS})",
             )
         try:
@@ -206,7 +209,8 @@ class DocumentSigner:
             sig_json = self._extract_signature(file_bytes)
             if not sig_json:
                 return VerifyResult(
-                    valid=False, signed=False,
+                    valid=False,
+                    signed=False,
                     reason="文件未包含签名",
                 )
 
@@ -218,10 +222,12 @@ class DocumentSigner:
                 file_hash=sig_json.get("file_hash", ""),
                 signature=sig_json.get("signature", ""),
             )
+
             # 复用构造函数(避免重复传 signed_at/signed_by)
             def _result(valid: bool, reason: str) -> VerifyResult:
                 return VerifyResult(
-                    valid=valid, signed=True,
+                    valid=valid,
+                    signed=True,
                     signed_at=sig_info.signed_at,
                     signed_by=sig_info.signed_by,
                     reason=reason,
@@ -244,7 +250,8 @@ class DocumentSigner:
             return _result(True, "签名验证通过")
         except Exception as e:
             return VerifyResult(
-                valid=False, signed=False,
+                valid=False,
+                signed=False,
                 reason=f"验签异常: {type(e).__name__}: {e}",
             )
 
@@ -314,10 +321,7 @@ class DocumentSigner:
         sha = hashlib.sha256()
         try:
             with zipfile.ZipFile(io.BytesIO(file_bytes), "r") as zf:
-                names = sorted(
-                    n for n in zf.namelist()
-                    if n != _SIGNATURE_ZIP_PATH
-                )
+                names = sorted(n for n in zf.namelist() if n != _SIGNATURE_ZIP_PATH)
                 for name in names:
                     # 写入条目名 + 内容,确保唯一性
                     sha.update(name.encode("utf-8"))
@@ -342,8 +346,7 @@ class DocumentSigner:
             sig_json = json.dumps(asdict(sig_info), ensure_ascii=False)
             # XML 转义
             sig_xml_escaped = (
-                sig_json
-                .replace("&", "&amp;")
+                sig_json.replace("&", "&amp;")
                 .replace("<", "&lt;")
                 .replace(">", "&gt;")
                 .replace('"', "&quot;")
@@ -376,7 +379,7 @@ class DocumentSigner:
         except Exception:
             return False
 
-    def _extract_signature(self, file_bytes: bytes) -> Optional[dict]:
+    def _extract_signature(self, file_bytes: bytes) -> dict | None:
         """从 ZIP 内 docProps/custom.xml 提取签名 JSON。"""
         try:
             with zipfile.ZipFile(io.BytesIO(file_bytes), "r") as zf:
@@ -385,9 +388,11 @@ class DocumentSigner:
                 xml_content = zf.read(_SIGNATURE_ZIP_PATH).decode("utf-8")
             # 简易提取:找 name="oa_signature" 的 property,取 <vt:lpwstr>...</vt:lpwstr> 内容
             import re
+
             m = re.search(
                 r'name="' + _SIGNATURE_FIELD + r'".*?<vt:lpwstr>(.*?)</vt:lpwstr>',
-                xml_content, re.DOTALL,
+                xml_content,
+                re.DOTALL,
             )
             if not m:
                 return None
@@ -415,8 +420,7 @@ class DocumentSigner:
         if self._private_key is not None:
             return True
         # 尝试加载已有密钥,失败则生成
-        return self._load_keypair(self._active_key_id) or \
-            self.generate_keypair(self._active_key_id)
+        return self._load_keypair(self._active_key_id) or self.generate_keypair(self._active_key_id)
 
     def _load_keypair(self, key_id: str) -> bool:
         """从 keystore 加载密钥对(私钥解密后注入)。"""
@@ -450,9 +454,7 @@ class DocumentSigner:
                 format=serialization.PrivateFormat.PKCS8,
                 encryption_algorithm=serialization.NoEncryption(),
             )
-            encrypted = self._encrypt_private_key(
-                private_pem, self._get_keystore_password()
-            )
+            encrypted = self._encrypt_private_key(private_pem, self._get_keystore_password())
             with open(os.path.join(self.keystore_path, f"{key_id}.private.pem"), "wb") as f:
                 f.write(encrypted)
             # 公钥:明文存储
@@ -505,9 +507,7 @@ class DocumentSigner:
             backend=default_backend(),
         )
         key = kdf.derive(password)
-        cipher = Cipher(
-            algorithms.AES(key), modes.GCM(iv, tag), backend=default_backend()
-        )
+        cipher = Cipher(algorithms.AES(key), modes.GCM(iv, tag), backend=default_backend())
         decryptor = cipher.decryptor()
         return decryptor.update(ciphertext) + decryptor.finalize()
 
@@ -519,9 +519,8 @@ class DocumentSigner:
             # 降级:用密码做 HMAC-SHA256 作为校验和
             password = self._get_keystore_password()
             import hmac
-            sig = hmac.new(
-                password, file_hash.encode("utf-8"), hashlib.sha256
-            ).hexdigest()
+
+            sig = hmac.new(password, file_hash.encode("utf-8"), hashlib.sha256).hexdigest()
             return sig, "SHA256-checksum"
 
         # RSA-2048 + SHA256 签名
@@ -559,9 +558,7 @@ class DocumentSigner:
     def _load_public_key(self, key_id: str) -> bool:
         """从 keystore 加载公钥(用于验签)。"""
         try:
-            pub_path = os.path.join(
-                self.keystore_path, f"{key_id}.public.pem"
-            )
+            pub_path = os.path.join(self.keystore_path, f"{key_id}.public.pem")
             if not os.path.exists(pub_path):
                 return False
             with open(pub_path, "rb") as f:

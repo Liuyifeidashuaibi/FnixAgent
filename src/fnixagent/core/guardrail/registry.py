@@ -24,6 +24,7 @@
   - security/guardrail.py 的 GuardrailPipeline 面向 LLM 调用粒度的输入/输出管道(细粒度)
   - 本模块面向 Agent 全链路的三层护栏(粗粒度,可插拔,含执行层)
 """
+
 from __future__ import annotations
 
 import abc
@@ -31,18 +32,18 @@ import logging
 import threading
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 __all__ = [
-    "GuardrailAction",
-    "GuardrailContext",
-    "GuardrailCheckResult",
     "BaseGuardrailGate",
-    "InputGuardrailGate",
-    "ExecutionGuardrailGate",
     "ExecutionGuardrail",
-    "OutputGuardrailGate",
+    "ExecutionGuardrailGate",
+    "GuardrailAction",
+    "GuardrailCheckResult",
+    "GuardrailContext",
     "GuardrailRegistry",
+    "InputGuardrailGate",
+    "OutputGuardrailGate",
     "get_guardrail_registry",
     "reset_guardrail_registry",
 ]
@@ -54,17 +55,20 @@ _logger = logging.getLogger(__name__)
 # 动作枚举
 # ---------------------------------------------------------------------------
 
+
 class GuardrailAction(str, Enum):
     """护栏执行结果动作。"""
-    PASS = "pass"       # 通过,继续执行
-    WARN = "warn"       # 警告,记录但继续
-    BLOCK = "block"     # 拦截,停止执行
-    MODIFY = "modify"   # 修改,使用修改后的数据继续
+
+    PASS = "pass"  # 通过,继续执行
+    WARN = "warn"  # 警告,记录但继续
+    BLOCK = "block"  # 拦截,停止执行
+    MODIFY = "modify"  # 修改,使用修改后的数据继续
 
 
 # ---------------------------------------------------------------------------
 # 上下文与结果
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class GuardrailContext:
@@ -80,9 +84,10 @@ class GuardrailContext:
         content: 文本内容(输入/输出方向,MODIFY 可更新)
         metadata: 额外元数据(如 confirmed 标记、用户角色等)
     """
-    user_id: Optional[str] = None
-    session_id: Optional[str] = None
-    tool_name: Optional[str] = None
+
+    user_id: str | None = None
+    session_id: str | None = None
+    tool_name: str | None = None
     tool_arguments: dict[str, Any] = field(default_factory=dict)
     content: str = ""
     metadata: dict[str, Any] = field(default_factory=dict)
@@ -101,6 +106,7 @@ class GuardrailCheckResult:
         risk_score: 风险评分 0~1(0=安全,1=高危)
         details: 额外详情
     """
+
     guardrail_name: str
     action: GuardrailAction = GuardrailAction.PASS
     message: str = ""
@@ -112,6 +118,7 @@ class GuardrailCheckResult:
 # ---------------------------------------------------------------------------
 # 护栏闸门基类
 # ---------------------------------------------------------------------------
+
 
 class BaseGuardrailGate(abc.ABC):
     """护栏闸门基类。
@@ -159,6 +166,7 @@ class InputGuardrailGate(BaseGuardrailGate):
 
     典型子类: 注入检测 / 敏感词检测 / 输入内容审核 / 越权检测
     """
+
     pass
 
 
@@ -167,6 +175,7 @@ class ExecutionGuardrailGate(BaseGuardrailGate):
 
     典型子类: 工具权限检查 / 参数校验 / 高危操作确认
     """
+
     pass
 
 
@@ -179,12 +188,14 @@ class OutputGuardrailGate(BaseGuardrailGate):
 
     典型子类: 输出格式校验 / 敏感信息检测 / 合规审核 / 脱敏
     """
+
     pass
 
 
 # ---------------------------------------------------------------------------
 # 三层护栏注册中心
 # ---------------------------------------------------------------------------
+
 
 class GuardrailRegistry:
     """三层护栏注册中心。
@@ -318,7 +329,7 @@ class GuardrailRegistry:
 
     # -- 查询 --------------------------------------------------------------
 
-    def list_guardrails(self, layer: Optional[str] = None) -> list[str]:
+    def list_guardrails(self, layer: str | None = None) -> list[str]:
         """列出护栏名称。
 
         Args:
@@ -360,9 +371,7 @@ class GuardrailRegistry:
 
     # -- 内部辅助 ----------------------------------------------------------
 
-    def _get_layer_list_locked(
-        self, guardrail: BaseGuardrailGate
-    ) -> list[BaseGuardrailGate]:
+    def _get_layer_list_locked(self, guardrail: BaseGuardrailGate) -> list[BaseGuardrailGate]:
         """根据护栏类型返回对应层列表(调用方需持锁)。"""
         if isinstance(guardrail, InputGuardrailGate):
             return self._input_guardrails  # type: ignore[return-value]
@@ -375,7 +384,7 @@ class GuardrailRegistry:
             "必须继承 InputGuardrailGate/ExecutionGuardrailGate/OutputGuardrailGate"
         )
 
-    def _find_locked(self, name: str) -> Optional[BaseGuardrailGate]:
+    def _find_locked(self, name: str) -> BaseGuardrailGate | None:
         """按名查找护栏(调用方需持锁)。"""
         for layer in (
             self._input_guardrails,
@@ -458,14 +467,10 @@ class GuardrailRegistry:
 
             # 处理动作
             if r.action == GuardrailAction.BLOCK:
-                _logger.warning(
-                    "[%s] 护栏 '%s' 拦截: %s", layer_name, g.name, r.message
-                )
+                _logger.warning("[%s] 护栏 '%s' 拦截: %s", layer_name, g.name, r.message)
                 break
             elif r.action == GuardrailAction.WARN:
-                _logger.warning(
-                    "[%s] 护栏 '%s' 警告: %s", layer_name, g.name, r.message
-                )
+                _logger.warning("[%s] 护栏 '%s' 警告: %s", layer_name, g.name, r.message)
             elif r.action == GuardrailAction.MODIFY:
                 self._apply_modify(ctx, r)
                 _logger.info("[%s] 护栏 '%s' 修改数据", layer_name, g.name)
@@ -490,7 +495,7 @@ class GuardrailRegistry:
 # 模块级单例
 # ---------------------------------------------------------------------------
 
-_registry_singleton: Optional[GuardrailRegistry] = None
+_registry_singleton: GuardrailRegistry | None = None
 _singleton_lock = threading.Lock()
 
 

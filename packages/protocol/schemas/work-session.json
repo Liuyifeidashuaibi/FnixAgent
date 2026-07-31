@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Fnix WorkSession",
+  "type": "object",
+  "required": ["id", "user_id", "workspace", "title", "status", "mode"],
+  "properties": {
+    "id": { "type": "string" },
+    "user_id": { "type": "string" },
+    "workspace": { "type": "string" },
+    "title": { "type": "string" },
+    "description": { "type": "string" },
+    "status": { "enum": ["pending", "running", "completed", "failed"] },
+    "mode": { "enum": ["work", "code"] },
+    "trace_id": { "type": "string" },
+    "result": { "type": "string" },
+    "artifacts": { "type": "array" },
+    "mission": { "type": "object" },
+    "created_at": { "type": "string" },
+    "updated_at": { "type": "string" }
+  }
+}

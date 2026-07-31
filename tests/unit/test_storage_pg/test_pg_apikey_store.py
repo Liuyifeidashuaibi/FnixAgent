@@ -1,4 +1,4 @@
-﻿"""
+"""
 PgApiKeyStore 单元测试。
 
 验证:
@@ -7,6 +7,7 @@ PgApiKeyStore 单元测试。
   - list_by_user
   - 数据持久化
 """
+
 from __future__ import annotations
 
 from fnixagent.services.storage_pg import PgApiKeyStore, PgUserStore

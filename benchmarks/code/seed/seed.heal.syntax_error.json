@@ -1,0 +1,22 @@
+{
+  "id": "seed.heal.syntax_error",
+  "title": "Fix syntax error then tests",
+  "prompt": "broken.py has a syntax error and fails to import. Fix syntax so test_broken.py passes.",
+  "capability": ["heal", "bugfix"],
+  "difficulty": 2,
+  "language": "python",
+  "tags": ["seed", "smoke"],
+  "timeout_s": 180,
+  "setup": {
+    "files": {
+      "broken.py": "def double(x)\n    return x * 2\n",
+      "test_broken.py": "from broken import double\n\n\ndef test_double():\n    assert double(3) == 6\n"
+    }
+  },
+  "checks": [
+    { "function": "compile_ok", "args": { "path": "broken.py" } },
+    { "function": "pytest_passes", "args": { "path": "test_broken.py" } },
+    { "function": "heal_rounds_lte", "args": { "max": 4 }, "required": false, "weight": 1 },
+    { "function": "no_stub_content", "args": {} }
+  ]
+}

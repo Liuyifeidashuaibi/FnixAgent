@@ -1,4 +1,4 @@
-﻿"""Phase 3.0 手机号验证码登录测试。
+"""Phase 3.0 手机号验证码登录测试。
 
 覆盖:
     1. POST /auth/sms/send-code
@@ -16,6 +16,9 @@
     3. 存储层
        - UserStore.get_by_phone(内存实现)
 """
+
+# 确保 src 在路径中
+import os
 import sys
 import time
 from unittest.mock import patch
@@ -24,16 +27,14 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-# 确保 src 在路径中
-import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", "src"))
 
 
 @pytest.fixture(autouse=True)
 def _reset_stores():
     """每个测试前后重置所有存储,确保隔离。"""
-    from fnixagent.services.storage_mfa import reset_all_mfa_stores
     from fnixagent.services.storage import reset_stores
+    from fnixagent.services.storage_mfa import reset_all_mfa_stores
 
     reset_all_mfa_stores()
     reset_stores()
@@ -46,6 +47,7 @@ def _reset_stores():
 def app():
     """构建只含 auth 路由的 FastAPI 应用。"""
     from fnixagent.api.routers import auth
+
     application = FastAPI()
     application.include_router(auth.router, prefix="/api/v1")
     return application
@@ -84,6 +86,7 @@ def _register_user_with_phone(client, username="smsuser", phone="13800138000"):
 
     # 2. 直接通过 store 设置 phone(避免依赖 profile 更新 API)
     from fnixagent.services.storage import get_user_store
+
     store = get_user_store()
     store.update_profile(user_data["id"], {"phone": phone})
     return user_data
@@ -312,9 +315,11 @@ class TestSmsLogin:
         code = _CAPTCHA["code"]
 
         # 手动将 challenge 的过期时间设为过去
-        from fnixagent.services.storage_mfa import get_otp_challenge_store
         import hashlib
-        phone_hash = int(hashlib.sha256("13800138004".encode()).hexdigest()[:8], 16)
+
+        from fnixagent.services.storage_mfa import get_otp_challenge_store
+
+        phone_hash = int(hashlib.sha256(b"13800138004").hexdigest()[:8], 16)
         store = get_otp_challenge_store()
         challenge = store.get_active_by_user(phone_hash, "sms_login")
         assert challenge is not None
@@ -360,12 +365,11 @@ class TestSmsLogin:
 
     def test_login_disabled_user(self, client):
         """被禁用账号 → 403。"""
-        user_data = _register_user_with_phone(
-            client, username="smsuser7", phone="13800138006"
-        )
+        user_data = _register_user_with_phone(client, username="smsuser7", phone="13800138006")
 
         # 禁用用户
         from fnixagent.services.storage import get_user_store
+
         store = get_user_store()
         store.set_user_disabled(user_data["id"], True)
 
@@ -412,6 +416,7 @@ class TestSmsLogin:
         # Token 中包含 device_fp(解码 JWT 验证)
         import base64
         import json as _json
+
         token = resp.json()["access_token"]
         payload_b64 = token.split(".")[1]
         # 补 padding
@@ -431,6 +436,7 @@ class TestUserStoreGetByPhone:
 
     def test_get_by_phone_found(self):
         from fnixagent.services.storage import get_user_store
+
         store = get_user_store()
         user, _ = store.create("phoneuser1", "phone1@e.com", "pass", "user")
         store.update_profile(user.id, {"phone": "13600136000"})
@@ -441,11 +447,13 @@ class TestUserStoreGetByPhone:
 
     def test_get_by_phone_not_found(self):
         from fnixagent.services.storage import get_user_store
+
         store = get_user_store()
         assert store.get_by_phone("19999999999") is None
 
     def test_get_by_phone_empty_input(self):
         from fnixagent.services.storage import get_user_store
+
         store = get_user_store()
         assert store.get_by_phone("") is None
         assert store.get_by_phone(None) is None  # type: ignore[arg-type]
@@ -453,6 +461,7 @@ class TestUserStoreGetByPhone:
     def test_get_by_phone_no_phone_in_profile(self):
         """用户未设置 phone 时不应被找到。"""
         from fnixagent.services.storage import get_user_store
+
         store = get_user_store()
         store.create("nophoneuser", "np@e.com", "pass", "user")
         assert store.get_by_phone("13800138000") is None
@@ -460,6 +469,7 @@ class TestUserStoreGetByPhone:
     def test_get_by_phone_multiple_users(self):
         """多个用户,通过 phone 精确匹配目标用户。"""
         from fnixagent.services.storage import get_user_store
+
         store = get_user_store()
         u1, _ = store.create("multi1", "m1@e.com", "pass", "user")
         u2, _ = store.create("multi2", "m2@e.com", "pass", "user")

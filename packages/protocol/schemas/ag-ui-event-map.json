@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Fnix Work NDJSON to AG-UI mapping",
+  "version": "1.0.0",
+  "mappings": [
+    { "fnix_chunk_type": "mission", "ag_ui": "CUSTOM", "note": "MissionSchema card" },
+    { "fnix_chunk_type": "evolution", "ag_ui": "CUSTOM", "note": "KTG/STP/MFP badge" },
+    { "fnix_chunk_type": "pipeline", "ag_ui": "STEP_STARTED", "note": "9-step progress" },
+    { "fnix_chunk_type": "thought", "ag_ui": "TEXT_MESSAGE_CONTENT", "note": "reasoning stream" },
+    { "fnix_chunk_type": "action", "ag_ui": "TOOL_CALL_START", "note": "tool invocation" },
+    { "fnix_chunk_type": "observation", "ag_ui": "TOOL_CALL_RESULT", "note": "tool output" },
+    { "fnix_chunk_type": "artifact", "ag_ui": "CUSTOM", "note": "deliverable card" },
+    { "fnix_chunk_type": "text", "ag_ui": "TEXT_MESSAGE_CONTENT", "note": "final text" },
+    { "fnix_chunk_type": "done", "ag_ui": "RUN_FINISHED", "note": "run complete" },
+    { "fnix_chunk_type": "error", "ag_ui": "RUN_ERROR", "note": "failure" }
+  ]
+}

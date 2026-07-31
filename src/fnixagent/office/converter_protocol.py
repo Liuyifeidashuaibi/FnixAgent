@@ -20,19 +20,20 @@ ConverterRegistry 支持注册/查找/派发,并提供 fallback 降级机制
   - markitdown/src/markitdown/converters/_base.py(DocumentConverter Protocol)
   - markitdown 的 ConverterRegistry 派发机制
 """
+
 from __future__ import annotations
 
 import os
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Optional, Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 from fnixagent.office.markdown import MarkdownRenderer
 from fnixagent.office.parser import (
     Element,
-    Header,
     Footer,
+    Header,
     Image,
     ListItem,
     NarrativeText,
@@ -42,7 +43,6 @@ from fnixagent.office.parser import (
     Title,
 )
 
-
 # ---------------------------------------------------------------------------
 # 三层质量梯度
 # ---------------------------------------------------------------------------
@@ -51,12 +51,12 @@ from fnixagent.office.parser import (
 class ConverterLayer(Enum):
     """转换器质量层(数值越大质量越高,但成本/延迟越高)。"""
 
-    L1_LOCAL = "local"   # 本地解析
-    L2_LLM = "llm"       # LLM 增强
-    L3_CLOUD = "cloud"   # 云端
+    L1_LOCAL = "local"  # 本地解析
+    L2_LLM = "llm"  # LLM 增强
+    L3_CLOUD = "cloud"  # 云端
 
     @classmethod
-    def ordered_high_to_low(cls) -> list["ConverterLayer"]:
+    def ordered_high_to_low(cls) -> list[ConverterLayer]:
         """从高到低排序(用于 fallback 降级)。"""
         return [cls.L3_CLOUD, cls.L2_LLM, cls.L1_LOCAL]
 
@@ -81,7 +81,7 @@ class DocumentConverterResult:
     """
 
     markdown: str = ""
-    title: Optional[str] = None
+    title: str | None = None
     text_content: str = ""
     elements: list = field(default_factory=list)
     metadata: dict = field(default_factory=dict)
@@ -155,7 +155,7 @@ class ConverterRegistry:
     def register(
         self,
         converter: DocumentConverter,
-        name: Optional[str] = None,
+        name: str | None = None,
     ) -> None:
         """注册转换器(同名覆盖)。
 
@@ -190,8 +190,8 @@ class ConverterRegistry:
     def find(
         self,
         file_path: str,
-        layer: Optional[ConverterLayer] = None,
-    ) -> Optional[DocumentConverter]:
+        layer: ConverterLayer | None = None,
+    ) -> DocumentConverter | None:
         """查找能处理该文件的转换器。
 
         Args:
@@ -215,7 +215,7 @@ class ConverterRegistry:
     def convert(
         self,
         file_path: str,
-        layer: Optional[ConverterLayer] = None,
+        layer: ConverterLayer | None = None,
         **kwargs: Any,
     ) -> DocumentConverterResult:
         """转换文件(指定层或最佳匹配)。
@@ -252,7 +252,7 @@ class ConverterRegistry:
             DocumentConverterResult(成功时含 markdown/elements;
             全部失败时 metadata.error 记录各层错误)
         """
-        last_error: Optional[str] = None
+        last_error: str | None = None
         for target_layer in ConverterLayer.ordered_high_to_low():
             converter = self.find(file_path, layer=target_layer)
             if converter is None:
@@ -260,10 +260,7 @@ class ConverterRegistry:
             try:
                 return converter.convert(file_path, **kwargs)
             except Exception as e:
-                last_error = (
-                    f"[{target_layer.value}] "
-                    f"{converter.__class__.__name__}: {e}"
-                )
+                last_error = f"[{target_layer.value}] {converter.__class__.__name__}: {e}"
                 continue
         # 全部失败:返回空结果 + 错误信息
         return DocumentConverterResult(
@@ -343,11 +340,7 @@ class _BaseL1Converter:
         if title is None:
             title = (output.get("metadata") or {}).get("title") or None
         # 纯文本(无 Markdown 标记)
-        text_content = "\n".join(
-            getattr(e, "text", "")
-            for e in elements
-            if getattr(e, "text", "")
-        )
+        text_content = "\n".join(getattr(e, "text", "") for e in elements if getattr(e, "text", ""))
         return DocumentConverterResult(
             markdown=markdown,
             title=title,
@@ -385,7 +378,7 @@ class _BaseL1Converter:
         return elements
 
     @staticmethod
-    def _extract_title(elements: list) -> Optional[str]:
+    def _extract_title(elements: list) -> str | None:
         """从元素列表提取第一个 Title 作为文档标题。"""
         for el in elements:
             if isinstance(el, Title) and el.text.strip():

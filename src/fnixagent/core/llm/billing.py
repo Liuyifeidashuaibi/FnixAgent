@@ -8,24 +8,25 @@ LLM Token 计费统计。
 
 线程安全: defaultdict + threading.Lock。
 """
+
 from __future__ import annotations
 
 import threading
 import time
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Optional
 
 from fnixagent.core.types import TokenUsage
-
 
 # ---------------------------------------------------------------------------
 # 计费记录
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class BillingRecord:
     """单次计费记录。"""
+
     user_id: str
     model: str
     usage: TokenUsage
@@ -43,7 +44,7 @@ DEFAULT_PRICE_TABLE: dict[str, tuple[float, float]] = {
     "qwen2.5-7b": (0.001, 0.002),
     "gpt-4o": (0.0175, 0.07),
     "gpt-4o-mini": (0.00015, 0.0006),
-    "default": (0.01, 0.03),   # 未知模型的兜底价格
+    "default": (0.01, 0.03),  # 未知模型的兜底价格
 }
 
 
@@ -125,8 +126,9 @@ class BillingMeter:
             float: 费用(保留 6 位小数)。
         """
         in_price, out_price = self.get_price(model)
-        cost = (usage.prompt_tokens / 1000.0) * in_price \
-             + (usage.completion_tokens / 1000.0) * out_price
+        cost = (usage.prompt_tokens / 1000.0) * in_price + (
+            usage.completion_tokens / 1000.0
+        ) * out_price
         return round(cost, 6)
 
     # -- 记录 --------------------------------------------------------------
@@ -171,7 +173,7 @@ class BillingMeter:
             self._records.append(record)
             # 淘汰超限记录
             if len(self._records) > self._max_records:
-                self._records = self._records[-self._max_records:]
+                self._records = self._records[-self._max_records :]
             # 更新预聚合
             stats = self._user_stats[user_id][model]
             stats[0] += usage.prompt_tokens
@@ -240,9 +242,7 @@ class BillingMeter:
         """快捷查询总费用(等价于 get_usage(user_id=...)['total_cost'])。"""
         return self.get_usage(user_id=user_id)["total_cost"]
 
-    def get_records(
-        self, user_id: str | None = None, limit: int = 100
-    ) -> list[BillingRecord]:
+    def get_records(self, user_id: str | None = None, limit: int = 100) -> list[BillingRecord]:
         """获取原始记录列表(返回最近 limit 条,顺序为时间正序)。
 
         Args:
@@ -250,10 +250,7 @@ class BillingMeter:
             limit: 返回最近多少条,必须为正。
         """
         with self._lock:
-            filtered = [
-                r for r in self._records
-                if user_id is None or r.user_id == user_id
-            ]
+            filtered = [r for r in self._records if user_id is None or r.user_id == user_id]
             return filtered[-limit:]
 
     def reset(self) -> None:

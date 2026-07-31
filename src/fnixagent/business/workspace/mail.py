@@ -15,6 +15,7 @@
   - Provider 调用包裹 try-except,捕获 smtplib/imaplib/网络 IO 异常,
     统一转为 ConnectorResult(success=False, error=...)
 """
+
 from __future__ import annotations
 
 import abc
@@ -22,16 +23,13 @@ import html
 import logging
 import re
 from dataclasses import dataclass
-from typing import Optional
 
 from fnixagent.business.workspace.base import (
     BaseProvider,
-    ConnectorConfig,
     ConnectorResult,
     StubProvider,
     WorkspaceConnector,
 )
-
 
 _logger = logging.getLogger(__name__)
 
@@ -57,7 +55,7 @@ def _validate_email(addr: str) -> bool:
     return _EMAIL_RE.match(addr) is not None
 
 
-def _validate_addrs(addrs: list[str]) -> Optional[str]:
+def _validate_addrs(addrs: list[str]) -> str | None:
     """校验收件人列表,返回首个非法地址(全合法返回 None)。"""
     for a in addrs:
         if not _validate_email(a):
@@ -65,7 +63,7 @@ def _validate_addrs(addrs: list[str]) -> Optional[str]:
     return None
 
 
-def _mask_addrs(addrs: Optional[list[str]]) -> list[str]:
+def _mask_addrs(addrs: list[str] | None) -> list[str]:
     """收件人列表脱敏(仅保留首字符 + 域名),用于日志。"""
     if not addrs:
         return []
@@ -79,7 +77,7 @@ def _mask_addrs(addrs: Optional[list[str]]) -> list[str]:
     return masked
 
 
-def _check_attachments(attachments: Optional[list[dict]]) -> Optional[str]:
+def _check_attachments(attachments: list[dict] | None) -> str | None:
     """校验附件大小限制。
 
     支持两种附件表示:
@@ -90,6 +88,7 @@ def _check_attachments(attachments: Optional[list[dict]]) -> Optional[str]:
     if not attachments:
         return None
     import os
+
     for att in attachments:
         path = att.get("path")
         if path and os.path.exists(path):
@@ -117,6 +116,7 @@ def _check_attachments(attachments: Optional[list[dict]]) -> Optional[str]:
 @dataclass
 class Email:
     """邮件数据结构。"""
+
     message_id: str = ""
     subject: str = ""
     from_addr: str = ""
@@ -164,12 +164,11 @@ class MailProvider(BaseProvider):
         to: list[str],
         subject: str,
         body: str,
-        cc: Optional[list[str]] = None,
-        bcc: Optional[list[str]] = None,
-        attachments: Optional[list[dict]] = None,
+        cc: list[str] | None = None,
+        bcc: list[str] | None = None,
+        attachments: list[dict] | None = None,
         html: bool = False,
-    ) -> ConnectorResult:
-        ...
+    ) -> ConnectorResult: ...
 
     @abc.abstractmethod
     def list(
@@ -177,13 +176,11 @@ class MailProvider(BaseProvider):
         folder: str = "INBOX",
         limit: int = 20,
         unread_only: bool = False,
-        since: Optional[str] = None,
-    ) -> ConnectorResult:
-        ...
+        since: str | None = None,
+    ) -> ConnectorResult: ...
 
     @abc.abstractmethod
-    def get(self, message_id: str) -> ConnectorResult:
-        ...
+    def get(self, message_id: str) -> ConnectorResult: ...
 
     @abc.abstractmethod
     def reply(
@@ -191,9 +188,8 @@ class MailProvider(BaseProvider):
         message_id: str,
         body: str,
         reply_all: bool = False,
-        attachments: Optional[list[dict]] = None,
-    ) -> ConnectorResult:
-        ...
+        attachments: list[dict] | None = None,
+    ) -> ConnectorResult: ...
 
     @abc.abstractmethod
     def search(
@@ -201,8 +197,7 @@ class MailProvider(BaseProvider):
         query: str,
         folder: str = "INBOX",
         limit: int = 20,
-    ) -> ConnectorResult:
-        ...
+    ) -> ConnectorResult: ...
 
 
 # ---------------------------------------------------------------------------
@@ -221,9 +216,9 @@ class StubMailProvider(StubProvider, MailProvider):
         to: list[str],
         subject: str,
         body: str,
-        cc: Optional[list[str]] = None,
-        bcc: Optional[list[str]] = None,
-        attachments: Optional[list[dict]] = None,
+        cc: list[str] | None = None,
+        bcc: list[str] | None = None,
+        attachments: list[dict] | None = None,
         html: bool = False,
     ) -> ConnectorResult:
         return self._stub_result(
@@ -236,7 +231,7 @@ class StubMailProvider(StubProvider, MailProvider):
         folder: str = "INBOX",
         limit: int = 20,
         unread_only: bool = False,
-        since: Optional[str] = None,
+        since: str | None = None,
     ) -> ConnectorResult:
         # 空结果统一 data=[]
         return self._stub_result(data=[], folder=folder, limit=limit)
@@ -257,7 +252,7 @@ class StubMailProvider(StubProvider, MailProvider):
         message_id: str,
         body: str,
         reply_all: bool = False,
-        attachments: Optional[list[dict]] = None,
+        attachments: list[dict] | None = None,
     ) -> ConnectorResult:
         return self._stub_result(
             data={"in_reply_to": message_id, "sent": True},
@@ -300,9 +295,9 @@ class MailConnector(WorkspaceConnector):
         to: list[str],
         subject: str,
         body: str,
-        cc: Optional[list[str]] = None,
-        bcc: Optional[list[str]] = None,
-        attachments: Optional[list[dict]] = None,
+        cc: list[str] | None = None,
+        bcc: list[str] | None = None,
+        attachments: list[dict] | None = None,
         html: bool = False,
     ) -> ConnectorResult:
         """发送邮件。
@@ -343,7 +338,7 @@ class MailConnector(WorkspaceConnector):
             return ConnectorResult(
                 success=False,
                 error=f"attachment {oversized!r} exceeds limit "
-                      f"({MAX_ATTACHMENT_BYTES // 1024 // 1024}MB)",
+                f"({MAX_ATTACHMENT_BYTES // 1024 // 1024}MB)",
             )
 
         err = self._ensure_connected()
@@ -357,15 +352,23 @@ class MailConnector(WorkspaceConnector):
         # 日志脱敏:不打印完整收件人列表
         _logger.info(
             "mail.send to=%s cc=%s subject_len=%d attachments=%d",
-            _mask_addrs(to), _mask_addrs(cc), len(safe_subject), len(attachments or []),
+            _mask_addrs(to),
+            _mask_addrs(cc),
+            len(safe_subject),
+            len(attachments or []),
         )
 
         assert self._active_provider is not None
         try:
             # 捕获 SMTP/IMAP/网络 IO 异常
             return self._active_provider.send(
-                to=to, subject=safe_subject, body=safe_body, cc=cc, bcc=bcc,
-                attachments=attachments, html=html,
+                to=to,
+                subject=safe_subject,
+                body=safe_body,
+                cc=cc,
+                bcc=bcc,
+                attachments=attachments,
+                html=html,
             )
         except Exception as e:
             # 不打印 token/密码;仅异常类型与消息
@@ -380,7 +383,7 @@ class MailConnector(WorkspaceConnector):
         folder: str = "INBOX",
         limit: int = 20,
         unread_only: bool = False,
-        since: Optional[str] = None,
+        since: str | None = None,
     ) -> ConnectorResult:
         """列出邮件(分页加载,避免全量加载)。
 
@@ -405,7 +408,10 @@ class MailConnector(WorkspaceConnector):
         try:
             # 捕获 IMAP 异常
             return self._active_provider.list(
-                folder=folder, limit=safe_limit, unread_only=unread_only, since=since,
+                folder=folder,
+                limit=safe_limit,
+                unread_only=unread_only,
+                since=since,
             )
         except Exception as e:
             _logger.exception("mail.list failed: %s: %s", type(e).__name__, e)
@@ -443,7 +449,7 @@ class MailConnector(WorkspaceConnector):
         message_id: str,
         body: str,
         reply_all: bool = False,
-        attachments: Optional[list[dict]] = None,
+        attachments: list[dict] | None = None,
     ) -> ConnectorResult:
         """回复邮件。
 
@@ -466,7 +472,7 @@ class MailConnector(WorkspaceConnector):
             return ConnectorResult(
                 success=False,
                 error=f"attachment {oversized!r} exceeds limit "
-                      f"({MAX_ATTACHMENT_BYTES // 1024 // 1024}MB)",
+                f"({MAX_ATTACHMENT_BYTES // 1024 // 1024}MB)",
             )
 
         err = self._ensure_connected()
@@ -477,8 +483,10 @@ class MailConnector(WorkspaceConnector):
         assert self._active_provider is not None
         try:
             return self._active_provider.reply(
-                message_id=message_id, body=safe_body,
-                reply_all=reply_all, attachments=attachments,
+                message_id=message_id,
+                body=safe_body,
+                reply_all=reply_all,
+                attachments=attachments,
             )
         except Exception as e:
             _logger.exception("mail.reply failed: %s: %s", type(e).__name__, e)
@@ -513,7 +521,9 @@ class MailConnector(WorkspaceConnector):
         assert self._active_provider is not None
         try:
             return self._active_provider.search(
-                query=query, folder=folder, limit=safe_limit,
+                query=query,
+                folder=folder,
+                limit=safe_limit,
             )
         except Exception as e:
             _logger.exception("mail.search failed: %s: %s", type(e).__name__, e)

@@ -2,9 +2,9 @@
 ∞ Evolution Guard — 安全认知层 (KnowRL + Misevolution 启发)
 
 设计参考:
-  - Misevolution (上海AI Lab + 上交大 + 普林斯顿): 
+  - Misevolution (上海AI Lab + 上交大 + 普林斯顿):
     自进化Agent的"错误进化"风险 — 能力退化、错误积累、目标漂移
-  - KnowRL (ACL 2026): 
+  - KnowRL (ACL 2026):
     知识增强RL, 模型认知边界自感知, 事实监督融入推理
   - Hermes Agent: Honcho 辩证用户建模
 
@@ -40,10 +40,9 @@ import logging
 import math
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -52,50 +51,57 @@ logger = logging.getLogger(__name__)
 # 安全等级和信号
 # ============================================================
 
+
 class GuardLevel(str, Enum):
     """安全等级"""
-    SAFE = "safe"                    # 安全
-    WARNING = "warning"              # 警告
-    DEGRADING = "degrading"          # 退化中
-    CRITICAL = "critical"            # 严重
-    ROLLBACK_REQUIRED = "rollback"   # 需要回滚
+
+    SAFE = "safe"  # 安全
+    WARNING = "warning"  # 警告
+    DEGRADING = "degrading"  # 退化中
+    CRITICAL = "critical"  # 严重
+    ROLLBACK_REQUIRED = "rollback"  # 需要回滚
 
 
 class DegradationType(str, Enum):
     """退化类型"""
-    PERFORMANCE_DROP = "performance_drop"       # 性能下降
-    ERROR_RATE_INCREASE = "error_rate_increase" # 错误率上升
-    QUALITY_DECLINE = "quality_decline"         # 质量下降
-    SCOPE_REDUCTION = "scope_reduction"         # 能力范围缩小
-    HALLUCINATION_INCREASE = "hallucination_increase" # 幻觉增加
-    KNOWLEDGE_DECAY = "knowledge_decay"         # 知识衰减
-    GOAL_DRIFT = "goal_drift"                   # 目标漂移
-    CIRCULAR_EVOLUTION = "circular_evolution"    # 循环进化 (来回折腾)
+
+    PERFORMANCE_DROP = "performance_drop"  # 性能下降
+    ERROR_RATE_INCREASE = "error_rate_increase"  # 错误率上升
+    QUALITY_DECLINE = "quality_decline"  # 质量下降
+    SCOPE_REDUCTION = "scope_reduction"  # 能力范围缩小
+    HALLUCINATION_INCREASE = "hallucination_increase"  # 幻觉增加
+    KNOWLEDGE_DECAY = "knowledge_decay"  # 知识衰减
+    GOAL_DRIFT = "goal_drift"  # 目标漂移
+    CIRCULAR_EVOLUTION = "circular_evolution"  # 循环进化 (来回折腾)
 
 
 # ============================================================
 # 基准快照
 # ============================================================
 
+
 @dataclass
 class BenchmarkSnapshot:
     """系统能力基准快照"""
+
     snapshot_id: str
-    version: str                     # 系统版本号
+    version: str  # 系统版本号
     created_at: str
     # 核心能力指标
-    metrics: dict = field(default_factory=lambda: {
-        "response_quality": 0.0,     # 响应质量
-        "task_completion_rate": 0.0, # 任务完成率
-        "error_rate": 0.0,           # 错误率
-        "avg_latency_ms": 0.0,       # 平均延迟
-        "token_efficiency": 0.0,     # Token 效率
-        "tool_call_success_rate": 0.0, # 工具调用成功率
-        "hallucination_rate": 0.0,   # 幻觉率
-        "knowledge_boundary_accuracy": 0.0, # 知识边界准确度
-        "skill_reuse_rate": 0.0,     # 技能复用率
-        "user_satisfaction": 0.0,    # 用户满意度
-    })
+    metrics: dict = field(
+        default_factory=lambda: {
+            "response_quality": 0.0,  # 响应质量
+            "task_completion_rate": 0.0,  # 任务完成率
+            "error_rate": 0.0,  # 错误率
+            "avg_latency_ms": 0.0,  # 平均延迟
+            "token_efficiency": 0.0,  # Token 效率
+            "tool_call_success_rate": 0.0,  # 工具调用成功率
+            "hallucination_rate": 0.0,  # 幻觉率
+            "knowledge_boundary_accuracy": 0.0,  # 知识边界准确度
+            "skill_reuse_rate": 0.0,  # 技能复用率
+            "user_satisfaction": 0.0,  # 用户满意度
+        }
+    )
     # 退化信号
     degradation_signals: list[dict] = field(default_factory=list)
     guard_level: str = GuardLevel.SAFE
@@ -104,6 +110,7 @@ class BenchmarkSnapshot:
 # ============================================================
 # 认知边界感知 (KnowRL 启发)
 # ============================================================
+
 
 class BoundaryAwareness:
     """
@@ -117,10 +124,12 @@ class BoundaryAwareness:
 
     def __init__(self):
         self._known_boundaries: dict[str, float] = {}  # 领域 -> 置信度
-        self._unknown_areas: set[str] = set()          # 已知盲区
-        self._overconfidence_events: list[dict] = []   # 过度自信事件
+        self._unknown_areas: set[str] = set()  # 已知盲区
+        self._overconfidence_events: list[dict] = []  # 过度自信事件
 
-    def assess_boundary(self, domain: str, claimed_confidence: float, actual_correctness: float) -> dict:
+    def assess_boundary(
+        self, domain: str, claimed_confidence: float, actual_correctness: float
+    ) -> dict:
         """
         评估认知边界
 
@@ -145,11 +154,13 @@ class BoundaryAwareness:
 
         if result["is_overconfident"]:
             result["suggestion"] = f"系统在 {domain} 领域过度自信, 应降低置信度声明"
-            self._overconfidence_events.append({
-                "domain": domain,
-                "error": calibration_error,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-            })
+            self._overconfidence_events.append(
+                {
+                    "domain": domain,
+                    "error": calibration_error,
+                    "timestamp": datetime.now(UTC).isoformat(),
+                }
+            )
         elif result["is_underconfident"]:
             result["suggestion"] = f"系统在 {domain} 领域能力被低估, 可提升置信度"
         else:
@@ -187,9 +198,23 @@ class BoundaryAwareness:
     def _extract_topic(self, query: str) -> str:
         """从查询中提取主题关键词"""
         # 简单规则提取
-        keywords = ["agent", "llm", "rl", "reinforcement", "prompt", "memory",
-                     "knowledge", "graph", "rag", "embedding", "transformer",
-                     "attention", "fine-tuning", "alignment", "safety"]
+        keywords = [
+            "agent",
+            "llm",
+            "rl",
+            "reinforcement",
+            "prompt",
+            "memory",
+            "knowledge",
+            "graph",
+            "rag",
+            "embedding",
+            "transformer",
+            "attention",
+            "fine-tuning",
+            "alignment",
+            "safety",
+        ]
         query_lower = query.lower()
         for kw in keywords:
             if kw in query_lower:
@@ -210,13 +235,16 @@ class BoundaryAwareness:
         if not self._known_boundaries:
             return 1.0
         # 校准误差越小越好
-        avg_error = sum(abs(1.0 - v) for v in self._known_boundaries.values()) / len(self._known_boundaries)
+        avg_error = sum(abs(1.0 - v) for v in self._known_boundaries.values()) / len(
+            self._known_boundaries
+        )
         return max(0.0, 1.0 - avg_error)
 
 
 # ============================================================
 # 退化检测器 (Misevolution 启发)
 # ============================================================
+
 
 class DegradationDetector:
     """
@@ -228,16 +256,16 @@ class DegradationDetector:
       - 需要持续监控进化方向
     """
 
-    def __init__(self, baseline: Optional[BenchmarkSnapshot] = None):
+    def __init__(self, baseline: BenchmarkSnapshot | None = None):
         self.baseline = baseline
         self._history: list[BenchmarkSnapshot] = []
         self._degradation_events: list[dict] = []
         # 退化阈值
         self.thresholds = {
-            "performance_drop": 0.10,       # 性能下降 10%
-            "error_rate_increase": 0.05,    # 错误率上升 5%
-            "quality_decline": 0.15,        # 质量下降 15%
-            "hallucination_increase": 0.10, # 幻觉增加 10%
+            "performance_drop": 0.10,  # 性能下降 10%
+            "error_rate_increase": 0.05,  # 错误率上升 5%
+            "quality_decline": 0.15,  # 质量下降 15%
+            "hallucination_increase": 0.10,  # 幻觉增加 10%
         }
 
     def set_baseline(self, snapshot: BenchmarkSnapshot):
@@ -273,7 +301,7 @@ class DegradationDetector:
             DegradationType.ERROR_RATE_INCREASE: (
                 "error_rate",
                 self.thresholds["error_rate_increase"],
-                1,   # 上升方向
+                1,  # 上升方向
             ),
             DegradationType.QUALITY_DECLINE: (
                 "response_quality",
@@ -298,14 +326,16 @@ class DegradationDetector:
 
             # 判断是否退化
             if direction * change > threshold:
-                signals.append({
-                    "type": deg_type,
-                    "metric": metric_key,
-                    "baseline": baseline_val,
-                    "current": current_val,
-                    "change_pct": change * 100,
-                    "threshold_pct": threshold * 100,
-                })
+                signals.append(
+                    {
+                        "type": deg_type,
+                        "metric": metric_key,
+                        "baseline": baseline_val,
+                        "current": current_val,
+                        "change_pct": change * 100,
+                        "threshold_pct": threshold * 100,
+                    }
+                )
 
         # 确定安全等级
         guard_level = GuardLevel.SAFE
@@ -320,12 +350,14 @@ class DegradationDetector:
         snapshot.degradation_signals = signals
 
         if signals:
-            self._degradation_events.append({
-                "snapshot_id": snapshot.snapshot_id,
-                "signals": signals,
-                "level": guard_level,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-            })
+            self._degradation_events.append(
+                {
+                    "snapshot_id": snapshot.snapshot_id,
+                    "signals": signals,
+                    "level": guard_level,
+                    "timestamp": datetime.now(UTC).isoformat(),
+                }
+            )
             logger.warning(f"检测到退化信号: {len(signals)} 个, 等级: {guard_level}")
 
         return {
@@ -412,6 +444,7 @@ class DegradationDetector:
 # 沙盒验证器
 # ============================================================
 
+
 class SandboxValidator:
     """
     沙盒验证器 — 升级前隔离验证
@@ -445,7 +478,6 @@ class SandboxValidator:
         Returns:
             验证结果
         """
-        import hashlib
 
         validation_id = hashlib.md5(
             json.dumps(upgrade_proposal, sort_keys=True).encode()
@@ -460,7 +492,7 @@ class SandboxValidator:
             "failures": [],
             "performance_impact": {},
             "recommendation": "",
-            "validated_at": datetime.now(timezone.utc).isoformat(),
+            "validated_at": datetime.now(UTC).isoformat(),
         }
 
         for i, test in enumerate(test_cases):
@@ -473,22 +505,26 @@ class SandboxValidator:
                 else:
                     results["passed"] = False
                     results["failed_tests"] += 1
-                    results["failures"].append({
-                        "test_id": i,
-                        "test_name": test.get("name", f"test_{i}"),
-                        "error": test_result.get("error", "Unknown"),
-                        "expected": test.get("expected", ""),
-                        "actual": test_result.get("actual", ""),
-                    })
+                    results["failures"].append(
+                        {
+                            "test_id": i,
+                            "test_name": test.get("name", f"test_{i}"),
+                            "error": test_result.get("error", "Unknown"),
+                            "expected": test.get("expected", ""),
+                            "actual": test_result.get("actual", ""),
+                        }
+                    )
 
             except Exception as e:
                 results["passed"] = False
                 results["failed_tests"] += 1
-                results["failures"].append({
-                    "test_id": i,
-                    "test_name": test.get("name", f"test_{i}"),
-                    "error": str(e),
-                })
+                results["failures"].append(
+                    {
+                        "test_id": i,
+                        "test_name": test.get("name", f"test_{i}"),
+                        "error": str(e),
+                    }
+                )
 
         # 生成建议
         if results["passed"]:
@@ -504,7 +540,7 @@ class SandboxValidator:
     async def _run_test(self, test: dict, upgrade: dict, timeout: int) -> dict:
         """执行单个测试"""
         # 简化实现: 检查升级方案是否包含测试要求的变更
-        test_name = test.get("name", "")
+        test.get("name", "")
         expected = test.get("expected", "")
 
         # 基本检查: 升级方案是否为非空
@@ -517,6 +553,7 @@ class SandboxValidator:
 # ============================================================
 # 回滚管理器
 # ============================================================
+
 
 class RollbackManager:
     """
@@ -547,11 +584,12 @@ class RollbackManager:
     def _save_snapshots(self):
         """持久化快照"""
         snap_file = self.state_dir / "snapshots.json"
-        snap_file.write_text(json.dumps(self._snapshots, ensure_ascii=False, indent=2), encoding="utf-8")
+        snap_file.write_text(
+            json.dumps(self._snapshots, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
 
     def create_snapshot(self, version: str, state: dict) -> str:
         """创建快照"""
-        import hashlib
 
         snap_id = hashlib.md5(f"{version}_{time.time()}".encode()).hexdigest()[:12]
 
@@ -559,7 +597,7 @@ class RollbackManager:
             "snapshot_id": snap_id,
             "version": version,
             "state": state,
-            "created_at": datetime.now(timezone.utc).isoformat(),
+            "created_at": datetime.now(UTC).isoformat(),
         }
         self._save_snapshots()
 
@@ -569,13 +607,13 @@ class RollbackManager:
                 self._snapshots.items(),
                 key=lambda x: x[1].get("created_at", ""),
             )
-            for old_id, _ in sorted_snaps[:len(self._snapshots) - 20]:
+            for old_id, _ in sorted_snaps[: len(self._snapshots) - 20]:
                 del self._snapshots[old_id]
 
         logger.info(f"创建快照: {snap_id} (版本: {version})")
         return snap_id
 
-    def rollback(self, snapshot_id: Optional[str] = None) -> Optional[dict]:
+    def rollback(self, snapshot_id: str | None = None) -> dict | None:
         """
         回滚到指定快照
 
@@ -602,17 +640,19 @@ class RollbackManager:
 
         state = self._snapshots[snapshot_id]["state"]
 
-        self._rollback_history.append({
-            "snapshot_id": snapshot_id,
-            "version": self._snapshots[snapshot_id]["version"],
-            "rolled_back_at": datetime.now(timezone.utc).isoformat(),
-            "reason": "自动回滚: 检测到退化",
-        })
+        self._rollback_history.append(
+            {
+                "snapshot_id": snapshot_id,
+                "version": self._snapshots[snapshot_id]["version"],
+                "rolled_back_at": datetime.now(UTC).isoformat(),
+                "reason": "自动回滚: 检测到退化",
+            }
+        )
 
         logger.warning(f"执行回滚到快照: {snapshot_id}")
         return state
 
-    def get_latest_snapshot(self) -> Optional[dict]:
+    def get_latest_snapshot(self) -> dict | None:
         """获取最新快照"""
         if not self._snapshots:
             return None
@@ -626,6 +666,7 @@ class RollbackManager:
 # ============================================================
 # 进化守卫总控
 # ============================================================
+
 
 class EvolutionGuard:
     """
@@ -683,7 +724,8 @@ class EvolutionGuard:
             "guard_level": check_result["guard_level"],
             "signals": check_result["signals"],
             "requires_rollback": check_result["guard_level"] == GuardLevel.ROLLBACK_REQUIRED,
-            "requires_attention": check_result["guard_level"] in (GuardLevel.WARNING, GuardLevel.CRITICAL),
+            "requires_attention": check_result["guard_level"]
+            in (GuardLevel.WARNING, GuardLevel.CRITICAL),
             "message": check_result["message"],
         }
 
@@ -715,5 +757,3 @@ class EvolutionGuard:
             return "fair"
         else:
             return "healthy"
-
-

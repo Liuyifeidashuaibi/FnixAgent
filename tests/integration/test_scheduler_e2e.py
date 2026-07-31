@@ -1,4 +1,4 @@
-﻿"""
+"""
 集成测试 - 端到端 Agent 调度流程。
 
 验证 services.build_scheduler() 构建的完整调度器能否:
@@ -7,8 +7,10 @@
   3. 处理用户请求(使用 MockLLMProvider)
   4. 返回 AgentResponse
 """
+
 import os
 import sys
+
 import pytest
 
 # 确保无 API Key 时使用 MockLLMProvider
@@ -19,13 +21,22 @@ os.environ.pop("QWEN_API_KEY", None)
 # 确保 src 在路径中
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
+from fnixagent.core.orchestrator.scheduler import AgentResponse, AgentScheduler
 from fnixagent.services import build_scheduler, reset_scheduler
-from fnixagent.core.orchestrator.scheduler import AgentScheduler, AgentResponse
 
 
 @pytest.fixture
-def scheduler():
-    """构建测试用调度器(每次测试重建)。"""
+def scheduler(monkeypatch):
+    """构建测试用调度器(每次测试重建)。
+
+    防止加载 .env 文件污染测试环境(避免注册真实 LLM provider)。
+    """
+    try:
+        import dotenv
+
+        monkeypatch.setattr(dotenv, "load_dotenv", lambda *a, **kw: None)
+    except ImportError:
+        pass
     reset_scheduler()
     s = build_scheduler()
     yield s
@@ -115,6 +126,7 @@ class TestSchedulerSession:
 
         # 先保存一些记忆
         from fnixagent.core.types import Message, MessageRole
+
         ctx.memory_manager.save(
             session_id="s1",
             message=Message(role=MessageRole.USER, content="test"),
@@ -135,8 +147,8 @@ class TestArxivParser:
         """空 XML 应返回空列表。"""
         from fnixagent.business.search.arxiv import parse_arxiv_response
 
-        xml = '''<?xml version="1.0" encoding="UTF-8"?>
-        <feed xmlns="http://www.w3.org/2005/Atom"></feed>'''
+        xml = """<?xml version="1.0" encoding="UTF-8"?>
+        <feed xmlns="http://www.w3.org/2005/Atom"></feed>"""
         papers = parse_arxiv_response(xml)
         assert papers == []
 
@@ -144,7 +156,7 @@ class TestArxivParser:
         """解析单篇论文。"""
         from fnixagent.business.search.arxiv import parse_arxiv_response
 
-        xml = '''<?xml version="1.0" encoding="UTF-8"?>
+        xml = """<?xml version="1.0" encoding="UTF-8"?>
         <feed xmlns="http://www.w3.org/2005/Atom">
           <entry>
             <id>http://arxiv.org/abs/2301.00001v1</id>
@@ -155,7 +167,7 @@ class TestArxivParser:
             <published>2023-01-15T00:00:00Z</published>
             <link href="http://arxiv.org/pdf/2301.00001v1" title="pdf" type="application/pdf"/>
           </entry>
-        </feed>'''
+        </feed>"""
 
         papers = parse_arxiv_response(xml)
         assert len(papers) == 1
@@ -172,7 +184,7 @@ class TestArxivParser:
         """解析多篇论文。"""
         from fnixagent.business.search.arxiv import parse_arxiv_response
 
-        xml = '''<?xml version="1.0" encoding="UTF-8"?>
+        xml = """<?xml version="1.0" encoding="UTF-8"?>
         <feed xmlns="http://www.w3.org/2005/Atom">
           <entry>
             <id>http://arxiv.org/abs/2301.00001v1</id>
@@ -184,7 +196,7 @@ class TestArxivParser:
             <title>Paper Two</title>
             <summary>Abstract two</summary>
           </entry>
-        </feed>'''
+        </feed>"""
 
         papers = parse_arxiv_response(xml)
         assert len(papers) == 2

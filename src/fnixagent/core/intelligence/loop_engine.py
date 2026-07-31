@@ -31,11 +31,11 @@ import asyncio
 import json
 import logging
 import traceback
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional, Callable, Awaitable
 
 logger = logging.getLogger(__name__)
 
@@ -44,51 +44,57 @@ logger = logging.getLogger(__name__)
 # Loop 基础模型
 # ============================================================
 
+
 class LoopPhase(str, Enum):
     """Loop 执行阶段"""
-    TRIGGERED = "triggered"      # 已触发
-    PLANNING = "planning"        # 规划中
-    EXECUTING = "executing"      # 执行中
-    EVALUATING = "evaluating"    # 评估中
-    LEARNING = "learning"        # 经验沉淀中
-    COMPLETED = "completed"      # 已完成
-    FAILED = "failed"            # 失败
-    RETRYING = "retrying"        # 重试中
-    ABORTED = "aborted"          # 已中止
+
+    TRIGGERED = "triggered"  # 已触发
+    PLANNING = "planning"  # 规划中
+    EXECUTING = "executing"  # 执行中
+    EVALUATING = "evaluating"  # 评估中
+    LEARNING = "learning"  # 经验沉淀中
+    COMPLETED = "completed"  # 已完成
+    FAILED = "failed"  # 失败
+    RETRYING = "retrying"  # 重试中
+    ABORTED = "aborted"  # 已中止
 
 
 class LoopPriority(str, Enum):
     """Loop 优先级"""
-    CRITICAL = "critical"    # 关键 (系统升级、安全修复)
-    HIGH = "high"            # 高 (核心能力提升)
-    MEDIUM = "medium"        # 中 (功能增强)
-    LOW = "low"              # 低 (探索性改进)
+
+    CRITICAL = "critical"  # 关键 (系统升级、安全修复)
+    HIGH = "high"  # 高 (核心能力提升)
+    MEDIUM = "medium"  # 中 (功能增强)
+    LOW = "low"  # 低 (探索性改进)
 
 
 class LoopOutcome(str, Enum):
     """Loop 结果"""
-    SUCCESS = "success"              # 成功
-    PARTIAL_SUCCESS = "partial"      # 部分成功
-    FAILURE = "failure"              # 失败
-    DEGRADATION = "degradation"      # 退化 (越改越差)
-    NO_CHANGE = "no_change"          # 无变化
-    NEEDS_HUMAN = "needs_human"      # 需要人工介入
+
+    SUCCESS = "success"  # 成功
+    PARTIAL_SUCCESS = "partial"  # 部分成功
+    FAILURE = "failure"  # 失败
+    DEGRADATION = "degradation"  # 退化 (越改越差)
+    NO_CHANGE = "no_change"  # 无变化
+    NEEDS_HUMAN = "needs_human"  # 需要人工介入
 
 
 @dataclass
 class LoopTrigger:
     """Loop 触发条件"""
+
     trigger_id: str
-    trigger_type: str              # schedule / event / insight / nudge / manual
-    condition: str                 # 触发条件描述
-    source: str = ""               # 触发来源
+    trigger_type: str  # schedule / event / insight / nudge / manual
+    condition: str  # 触发条件描述
+    source: str = ""  # 触发来源
     params: dict = field(default_factory=dict)
-    fired_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    fired_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
 
 @dataclass
 class LoopStep:
     """Loop 执行步骤"""
+
     step_id: str
     description: str
     tool_name: str = ""
@@ -96,49 +102,52 @@ class LoopStep:
     expected_output: str = ""
     actual_output: str = ""
     duration_ms: float = 0
-    status: str = "pending"        # pending / running / success / failed
+    status: str = "pending"  # pending / running / success / failed
     error: str = ""
 
 
 @dataclass
 class LoopPlan:
     """Loop 执行计划"""
+
     plan_id: str
     loop_id: str
-    goal: str                      # 目标描述
+    goal: str  # 目标描述
     steps: list[LoopStep] = field(default_factory=list)
     success_criteria: list[str] = field(default_factory=list)
-    fallback_strategy: str = ""    # 失败回退策略
+    fallback_strategy: str = ""  # 失败回退策略
     max_retries: int = 3
     timeout_seconds: int = 600
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
 
 @dataclass
 class LoopExperience:
     """Loop 经验沉淀"""
+
     experience_id: str
     loop_id: str
-    lesson: str                    # 核心教训
+    lesson: str  # 核心教训
     what_worked: list[str] = field(default_factory=list)
     what_failed: list[str] = field(default_factory=list)
-    root_cause: str = ""           # 根因分析
+    root_cause: str = ""  # 根因分析
     should_retry: bool = False
     retry_strategy: str = ""
-    skill_created: bool = False    # 是否生成了新技能
+    skill_created: bool = False  # 是否生成了新技能
     skill_id: str = ""
     tags: list[str] = field(default_factory=list)
-    recorded_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    recorded_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
 
 @dataclass
 class LoopResult:
     """Loop 执行结果"""
+
     loop_id: str
     outcome: LoopOutcome
     phase: LoopPhase
-    plan: Optional[LoopPlan] = None
-    experience: Optional[LoopExperience] = None
+    plan: LoopPlan | None = None
+    experience: LoopExperience | None = None
     metrics: dict = field(default_factory=dict)  # 量化指标
     artifacts: list[str] = field(default_factory=list)  # 产出物路径
     started_at: str = ""
@@ -151,27 +160,30 @@ class LoopResult:
 # Loop 定义
 # ============================================================
 
+
 @dataclass
 class Loop:
     """一个自主进化循环"""
+
     loop_id: str
     name: str
     description: str
-    category: str                  # intelligence / skill / prompt / memory / security
+    category: str  # intelligence / skill / prompt / memory / security
     priority: LoopPriority
     trigger: LoopTrigger
-    plan: Optional[LoopPlan] = None
-    result: Optional[LoopResult] = None
+    plan: LoopPlan | None = None
+    result: LoopResult | None = None
     phase: LoopPhase = LoopPhase.TRIGGERED
     retry_count: int = 0
     max_retries: int = 3
-    parent_loop_id: str = ""       # 父 Loop (if nested)
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    parent_loop_id: str = ""  # 父 Loop (if nested)
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
 
 # ============================================================
 # Loop 执行器
 # ============================================================
+
 
 class LoopExecutor:
     """
@@ -203,27 +215,30 @@ class LoopExecutor:
     def _save_experiences(self):
         """持久化经验"""
         exp_file = self.experience_dir / "experiences.json"
-        data = {eid: {
-            "experience_id": exp.experience_id,
-            "loop_id": exp.loop_id,
-            "lesson": exp.lesson,
-            "what_worked": exp.what_worked,
-            "what_failed": exp.what_failed,
-            "root_cause": exp.root_cause,
-            "should_retry": exp.should_retry,
-            "retry_strategy": exp.retry_strategy,
-            "skill_created": exp.skill_created,
-            "skill_id": exp.skill_id,
-            "tags": exp.tags,
-            "recorded_at": exp.recorded_at,
-        } for eid, exp in self._experiences.items()}
+        data = {
+            eid: {
+                "experience_id": exp.experience_id,
+                "loop_id": exp.loop_id,
+                "lesson": exp.lesson,
+                "what_worked": exp.what_worked,
+                "what_failed": exp.what_failed,
+                "root_cause": exp.root_cause,
+                "should_retry": exp.should_retry,
+                "retry_strategy": exp.retry_strategy,
+                "skill_created": exp.skill_created,
+                "skill_id": exp.skill_id,
+                "tags": exp.tags,
+                "recorded_at": exp.recorded_at,
+            }
+            for eid, exp in self._experiences.items()
+        }
         exp_file.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
 
     async def execute_loop(
         self,
         loop: Loop,
         execute_fn: Callable[[LoopPlan], Awaitable[LoopResult]],
-        plan_fn: Optional[Callable[[Loop], Awaitable[LoopPlan]]] = None,
+        plan_fn: Callable[[Loop], Awaitable[LoopPlan]] | None = None,
     ) -> LoopResult:
         """
         执行一个完整的 Loop
@@ -235,7 +250,7 @@ class LoopExecutor:
         """
         loop.phase = LoopPhase.PLANNING
         self._active_loops[loop.loop_id] = loop
-        started_at = datetime.now(timezone.utc)
+        started_at = datetime.now(UTC)
 
         try:
             # Phase 1: 规划
@@ -271,7 +286,9 @@ class LoopExecutor:
                 logger.info(f"Loop {loop.loop_id} 重试 {loop.retry_count}/{loop.max_retries}")
                 return await self.execute_loop(loop, execute_fn, plan_fn)
 
-            loop.phase = LoopPhase.COMPLETED if result.outcome == LoopOutcome.SUCCESS else LoopPhase.FAILED
+            loop.phase = (
+                LoopPhase.COMPLETED if result.outcome == LoopOutcome.SUCCESS else LoopPhase.FAILED
+            )
             loop.result = result
 
         except Exception as e:
@@ -285,8 +302,8 @@ class LoopExecutor:
             logger.error(f"Loop {loop.loop_id} 执行异常: {e}\n{traceback.format_exc()}")
 
         result.started_at = started_at.isoformat()
-        result.completed_at = datetime.now(timezone.utc).isoformat()
-        result.duration_ms = (datetime.now(timezone.utc) - started_at).total_seconds() * 1000
+        result.completed_at = datetime.now(UTC).isoformat()
+        result.duration_ms = (datetime.now(UTC) - started_at).total_seconds() * 1000
 
         self._completed_loops.append(result)
         self._active_loops.pop(loop.loop_id, None)
@@ -385,6 +402,7 @@ class LoopExecutor:
 # Loop 调度器
 # ============================================================
 
+
 class LoopScheduler:
     """
     Loop 调度器 — 管理多 Loop 的并行执行和优先级
@@ -415,7 +433,7 @@ class LoopScheduler:
     async def run_all(
         self,
         execute_fn: Callable[[LoopPlan], Awaitable[LoopResult]],
-        plan_fn: Optional[Callable[[Loop], Awaitable[LoopPlan]]] = None,
+        plan_fn: Callable[[Loop], Awaitable[LoopPlan]] | None = None,
     ) -> list[LoopResult]:
         """
         并行执行所有已注册的 Loop
@@ -438,8 +456,7 @@ class LoopScheduler:
                     results.append(result)
                     # 清理完成的任务
                     self._running_loops = {
-                        k: v for k, v in self._running_loops.items()
-                        if not v.done()
+                        k: v for k, v in self._running_loops.items() if not v.done()
                     }
                 continue
 
@@ -448,9 +465,7 @@ class LoopScheduler:
             self._pending_loops = self._pending_loops[available:]
 
             for loop in batch:
-                task = asyncio.create_task(
-                    self.executor.execute_loop(loop, execute_fn, plan_fn)
-                )
+                task = asyncio.create_task(self.executor.execute_loop(loop, execute_fn, plan_fn))
                 self._running_loops[loop.loop_id] = task
 
         # 等待所有剩余任务完成
@@ -469,6 +484,7 @@ class LoopScheduler:
 # Nudge Engine — 自主推动机制
 # ============================================================
 
+
 class NudgeEngine:
     """
     Nudge Engine — 自主知识持久化推动
@@ -483,9 +499,9 @@ class NudgeEngine:
     def __init__(self, executor: LoopExecutor):
         self.executor = executor
         self._nudge_thresholds = {
-            "new_skill_opportunity": 3,     # 3次成功类似操作 → 生成技能
-            "error_pattern": 2,             # 2次相同错误 → 生成警告
-            "knowledge_gap": 1,             # 检测到知识缺口 → 立即学习
+            "new_skill_opportunity": 3,  # 3次成功类似操作 → 生成技能
+            "error_pattern": 2,  # 2次相同错误 → 生成警告
+            "knowledge_gap": 1,  # 检测到知识缺口 → 立即学习
         }
 
     def should_nudge(self, event_type: str, occurrence_count: int) -> bool:
@@ -493,7 +509,7 @@ class NudgeEngine:
         threshold = self._nudge_thresholds.get(event_type, 5)
         return occurrence_count >= threshold
 
-    async def create_nudge_loop(self, event_type: str, context: dict) -> Optional[Loop]:
+    async def create_nudge_loop(self, event_type: str, context: dict) -> Loop | None:
         """根据事件类型创建推动 Loop"""
         import hashlib
 
@@ -518,7 +534,7 @@ class NudgeEngine:
             return Loop(
                 loop_id=loop_id,
                 name=f"错误模式分析: {context.get('error_type', 'Unknown')}",
-                description=f"分析重复出现的错误模式并生成修复方案",
+                description="分析重复出现的错误模式并生成修复方案",
                 category="intelligence",
                 priority=LoopPriority.CRITICAL,
                 trigger=LoopTrigger(
@@ -550,6 +566,7 @@ class NudgeEngine:
 # ============================================================
 # Loop 注册中心
 # ============================================================
+
 
 class LoopRegistry:
     """
@@ -633,7 +650,7 @@ class LoopRegistry:
     }
 
     @classmethod
-    def create_system_loop(cls, loop_key: str) -> Optional[Loop]:
+    def create_system_loop(cls, loop_key: str) -> Loop | None:
         """创建系统预定义 Loop"""
         import hashlib
 

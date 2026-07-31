@@ -19,11 +19,11 @@
   - AgentRunner 在每步 LLM 调用后累加 usage
   - 超限时 Runner 提前终止并返回部分结果
 """
+
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any, Optional
-
+from dataclasses import dataclass
+from typing import Any
 
 # ---------------------------------------------------------------------------
 # 异常
@@ -51,9 +51,7 @@ class UsageExceededError(Exception):
         self.limit_type = limit_type
         self.limit = limit
         self.actual = actual
-        super().__init__(
-            f"Usage limit exceeded: {limit_type} limit={limit}, actual={actual}"
-        )
+        super().__init__(f"Usage limit exceeded: {limit_type} limit={limit}, actual={actual}")
 
 
 # ---------------------------------------------------------------------------
@@ -108,7 +106,7 @@ class Usage:
             self.total_tokens = expected_min
 
     # -- 累加 ---------------------------------------------------------------
-    def add(self, other: "Usage") -> "Usage":
+    def add(self, other: Usage) -> Usage:
         """累加(不可变,返回新实例)。
 
         大数相加保护:Python int 为任意精度不会溢出,但 cost(float)
@@ -135,7 +133,7 @@ class Usage:
             cost=round(self.cost + other.cost, 6),
         )
 
-    def add_inplace(self, other: "Usage") -> "Usage":
+    def add_inplace(self, other: Usage) -> Usage:
         """原地累加(可变,修改 self 并返回)。
 
         线程安全说明:本方法非原子操作,多线程并发累加同一 Usage 实例
@@ -177,7 +175,7 @@ class Usage:
         cls,
         token_usage: Any,
         cost: float = 0.0,
-    ) -> "Usage":
+    ) -> Usage:
         """从 LLMResponse.usage(TokenUsage)构造 Usage。
 
         兼容 fnixagent.core.types.TokenUsage 的字段名:
@@ -194,19 +192,14 @@ class Usage:
         以维护不变量(部分 provider 的 total_tokens 不含 reasoning tokens)。
         """
         prompt_tokens = (
-            getattr(token_usage, "prompt_tokens", 0)
-            or getattr(token_usage, "input_tokens", 0)
-            or 0
+            getattr(token_usage, "prompt_tokens", 0) or getattr(token_usage, "input_tokens", 0) or 0
         )
         completion_tokens = (
             getattr(token_usage, "completion_tokens", 0)
             or getattr(token_usage, "output_tokens", 0)
             or 0
         )
-        total = (
-            getattr(token_usage, "total_tokens", 0)
-            or (prompt_tokens + completion_tokens)
-        )
+        total = getattr(token_usage, "total_tokens", 0) or (prompt_tokens + completion_tokens)
         # 非负校验(上游可能返回异常负值)
         prompt_tokens = max(0, int(prompt_tokens))
         completion_tokens = max(0, int(completion_tokens))
@@ -224,7 +217,7 @@ class Usage:
         )
 
     @classmethod
-    def empty(cls) -> "Usage":
+    def empty(cls) -> Usage:
         """创建空 Usage。"""
         return cls()
 
@@ -240,7 +233,7 @@ class Usage:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "Usage":
+    def from_dict(cls, data: dict) -> Usage:
         """从字典重建。
 
         负值会在 __post_init__ 中被截断为 0(防御性,防止持久化的脏数据污染)。
@@ -290,9 +283,9 @@ class UsageLimits:
         cost_limit:         最大成本(美元)
     """
 
-    request_limit: Optional[int] = None
-    total_tokens_limit: Optional[int] = None
-    cost_limit: Optional[float] = None
+    request_limit: int | None = None
+    total_tokens_limit: int | None = None
+    cost_limit: float | None = None
 
     def check(self, usage: Usage) -> None:
         """检查 usage 是否超限(超限抛 UsageExceededError)。
@@ -309,10 +302,7 @@ class UsageLimits:
                 limit=self.request_limit,
                 actual=usage.requests,
             )
-        if (
-            self.total_tokens_limit is not None
-            and usage.total_tokens > self.total_tokens_limit
-        ):
+        if self.total_tokens_limit is not None and usage.total_tokens > self.total_tokens_limit:
             raise UsageExceededError(
                 limit_type="total_tokens",
                 limit=self.total_tokens_limit,

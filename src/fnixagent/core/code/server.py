@@ -24,26 +24,28 @@ Usage:
     result = await server.mcp_call("code.read", {"file_path": "src/main.py"})
     tools = server.mcp_list_tools()
 """
+
 from __future__ import annotations
 
 import argparse
 import asyncio
 import json
 import sys
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Awaitable, Callable
+from typing import Any
 
+from fnixagent.core.code.agent import CodingAgent, CodingTask
+from fnixagent.core.code.context import ContextBuilder
+from fnixagent.core.code.diff import DiffEngine
 from fnixagent.core.code.indexer import CodeIndexer
 from fnixagent.core.code.tools import CodeTools
-from fnixagent.core.code.context import ContextBuilder
-from fnixagent.core.code.agent import CodingAgent, CodingTask
-from fnixagent.core.code.diff import DiffEngine
-
 
 # ============================================================================
 # CLI 命令描述
 # ============================================================================
+
 
 @dataclass
 class CLICommand:
@@ -54,6 +56,7 @@ class CLICommand:
         description: 命令简述 (用于 help 输出)。
         handler: 命令处理协程, 接收 argparse.Namespace, 返回退出码。
     """
+
     name: str
     description: str
     handler: Callable[..., Awaitable[int]]  # 返回退出码
@@ -62,6 +65,7 @@ class CLICommand:
 # ============================================================================
 # IDE 集成服务 (CLI + MCP Server)
 # ============================================================================
+
 
 class IDEServer:
     """IDE 集成服务 (CLI + MCP Server 接口)。
@@ -83,9 +87,9 @@ class IDEServer:
         """
         # 解析为绝对路径, 便于后续传递给 CodeTools / DiffEngine 等
         self._root: str = str(Path(project_root).resolve())
-        self._code_tools: CodeTools | None = None    # 延迟初始化
-        self._indexer: CodeIndexer | None = None     # 延迟初始化
-        self._agent: CodingAgent | None = None       # 延迟初始化
+        self._code_tools: CodeTools | None = None  # 延迟初始化
+        self._indexer: CodeIndexer | None = None  # 延迟初始化
+        self._agent: CodingAgent | None = None  # 延迟初始化
         self._commands: dict[str, CLICommand] = {}
         self._register_commands()
 
@@ -155,7 +159,7 @@ class IDEServer:
         # 调用对应处理器
         try:
             return await cmd.handler(ns)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             print(f"命令 '{name}' 执行失败: {type(exc).__name__}: {exc}")
             return 1
 
@@ -177,11 +181,14 @@ class IDEServer:
         # index: 索引项目代码
         p_index = sub.add_parser("index", help="索引项目代码")
         p_index.add_argument(
-            "path", nargs="?", default=".",
+            "path",
+            nargs="?",
+            default=".",
             help="待索引路径 (默认项目根)",
         )
         p_index.add_argument(
-            "--no-incremental", action="store_true",
+            "--no-incremental",
+            action="store_true",
             help="禁用增量索引",
         )
 
@@ -189,7 +196,9 @@ class IDEServer:
         p_search = sub.add_parser("search", help="语义搜索代码")
         p_search.add_argument("query", help="搜索查询 (自然语言或关键词)")
         p_search.add_argument(
-            "--top_k", type=int, default=10,
+            "--top_k",
+            type=int,
+            default=10,
             help="返回结果数上限 (默认 10)",
         )
 
@@ -197,11 +206,15 @@ class IDEServer:
         p_read = sub.add_parser("read", help="读取文件")
         p_read.add_argument("file", help="文件路径 (相对项目根)")
         p_read.add_argument(
-            "--start", type=int, default=0,
+            "--start",
+            type=int,
+            default=0,
             help="起始行 (1-indexed, 0=从头)",
         )
         p_read.add_argument(
-            "--end", type=int, default=0,
+            "--end",
+            type=int,
+            default=0,
             help="结束行 (exclusive, 0=到尾)",
         )
 
@@ -219,28 +232,33 @@ class IDEServer:
         # git: Git 命令 (透传剩余参数)
         p_git = sub.add_parser("git", help="执行 Git 命令 (沙箱)")
         p_git.add_argument(
-            "args", nargs=argparse.REMAINDER,
+            "args",
+            nargs=argparse.REMAINDER,
             help="Git 子命令及参数",
         )
 
         # test: 运行测试 (透传剩余参数)
         p_test = sub.add_parser("test", help="运行测试")
         p_test.add_argument(
-            "args", nargs=argparse.REMAINDER,
+            "args",
+            nargs=argparse.REMAINDER,
             help="pytest 参数 (省略 = 默认 -x --tb=short)",
         )
 
         # task: 编码任务
         p_task = sub.add_parser("task", help="执行编码任务")
         p_task.add_argument(
-            "description", nargs="+",
+            "description",
+            nargs="+",
             help="任务描述 (自然语言)",
         )
 
         # map: 仓库地图
         p_map = sub.add_parser("map", help="输出仓库地图")
         p_map.add_argument(
-            "--max-tokens", type=int, default=4096,
+            "--max-tokens",
+            type=int,
+            default=4096,
             help="仓库地图 token 上限 (默认 4096)",
         )
 
@@ -288,8 +306,9 @@ class IDEServer:
             from fnixagent.core.agent.backends.in_memory import (
                 InMemoryLLMBackend,
             )
+
             llm_backend = InMemoryLLMBackend()
-        except Exception:  # noqa: BLE001
+        except Exception:
             llm_backend = None
 
         # 创建 CodingAgent (编码智能体)
@@ -297,6 +316,7 @@ class IDEServer:
             code_tools=self._code_tools,
             context_builder=context_builder,
             llm_backend=llm_backend,
+            workspace=self._root,
         )
 
     async def _ensure_indexed(self) -> None:
@@ -331,9 +351,10 @@ class IDEServer:
 
         try:
             stats = await self._indexer.index_directory(
-                path, incremental=incremental,
+                path,
+                incremental=incremental,
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             print(f"索引失败: {type(exc).__name__}: {exc}")
             return 1
 
@@ -359,7 +380,7 @@ class IDEServer:
 
         try:
             slices = await self._indexer.search_code(query, top_k=top_k)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             print(f"搜索失败: {type(exc).__name__}: {exc}")
             return 1
 
@@ -497,9 +518,7 @@ class IDEServer:
 
         # description 为 nargs="+" 的列表, 合并为单个字符串
         desc_list = args.description
-        description = (
-            " ".join(desc_list) if isinstance(desc_list, list) else str(desc_list)
-        )
+        description = " ".join(desc_list) if isinstance(desc_list, list) else str(desc_list)
 
         # 构造编码任务
         task = CodingTask(description=description)
@@ -507,7 +526,7 @@ class IDEServer:
         # 执行任务 (Plan → Execute → Review)
         try:
             result = await self._agent.execute_task(task)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             print(f"任务执行失败: {type(exc).__name__}: {exc}")
             return 1
 
@@ -549,7 +568,7 @@ class IDEServer:
         max_tokens = getattr(args, "max_tokens", 4096)
         try:
             repo_map = self._indexer.get_repo_map(max_tokens=max_tokens)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             print(f"生成仓库地图失败: {type(exc).__name__}: {exc}")
             return 1
 
@@ -710,7 +729,7 @@ class IDEServer:
                     "error": f"未知工具: {tool}",
                 }
 
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             # 捕获所有异常, 返回统一错误格式
             return {
                 "success": False,
@@ -836,7 +855,7 @@ class IDEServer:
                         "args": {
                             "type": "array",
                             "items": {"type": "string"},
-                            "description": "Git 子命令及参数 (如 [\"status\", \"--short\"])",
+                            "description": 'Git 子命令及参数 (如 ["status", "--short"])',
                         },
                     },
                     "required": ["args"],
@@ -886,6 +905,7 @@ class IDEServer:
 # ============================================================================
 # CLI 入口
 # ============================================================================
+
 
 def main() -> int:
     """CLI 入口 (agentos-coding 命令)。

@@ -11,11 +11,11 @@ LDAP 定时同步任务(Phase 2.2)。
 停止方式:
     stop_ldap_sync_scheduler()  # 在应用关闭事件中调用
 """
+
 from __future__ import annotations
 
 import logging
 import threading
-import time
 from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
@@ -61,7 +61,10 @@ def _run_due_syncs() -> None:
             store.mark_synced(cfg.id)
             logger.info(
                 "LDAP 同步完成: %s - 创建 %d, 更新 %d, 跳过 %d",
-                cfg.name, stats["created"], stats["updated"], stats["skipped"],
+                cfg.name,
+                stats["created"],
+                stats["updated"],
+                stats["skipped"],
             )
         except LDAPNotInstalledError:
             logger.warning("ldap3 未安装,跳过 LDAP 同步")

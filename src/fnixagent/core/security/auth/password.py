@@ -15,25 +15,25 @@ Argon2id 是 OWASP 推荐的密码哈希算法(抗 GPU/ASIC 攻击)。
     verify_password 同时识别 pbkdf2_sha256$... 与 $argon2id$... 两种格式。
     检测到 PBKDF2 哈希时按旧算法校验,通过后调用 needs_rehash 提示需升级。
 """
+
 from __future__ import annotations
 
 import hashlib
 import secrets
-from typing import Literal
 
 # argon2-cffi 在 Phase 0.2 已加入 requirements.txt
 try:
     from argon2 import PasswordHasher, Type
-    from argon2.exceptions import VerifyMismatchError, InvalidHashError
+    from argon2.exceptions import InvalidHashError, VerifyMismatchError
 
     _HAS_ARGON2 = True
     _argon2_hasher = PasswordHasher(
         time_cost=3,
-        memory_cost=65536,        # 64 MB
+        memory_cost=65536,  # 64 MB
         parallelism=1,
         hash_len=32,
         salt_len=16,
-        type=Type.ID,             # Argon2id(混合版,推荐)
+        type=Type.ID,  # Argon2id(混合版,推荐)
     )
 except ImportError:  # pragma: no cover
     _HAS_ARGON2 = False
@@ -78,9 +78,7 @@ def _pbkdf2_hash(password: str, salt: str | None = None) -> str:
     iterations = 100000
     if salt is None:
         salt = secrets.token_hex(16)
-    dk = hashlib.pbkdf2_hmac(
-        "sha256", password.encode("utf-8"), salt.encode("utf-8"), iterations
-    )
+    dk = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt.encode("utf-8"), iterations)
     return f"pbkdf2_sha256${iterations}${salt}${dk.hex()}"
 
 

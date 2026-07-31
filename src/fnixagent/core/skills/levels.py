@@ -11,9 +11,10 @@
     2. BASIC/REASONING 级技能只读 KTG
     3. 调度时按权限级别决定是否需要用户确认
 """
+
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 from fnixagent.core.exceptions import SkillPermissionDeniedError
 from fnixagent.core.types import SkillLevel
@@ -169,7 +170,5 @@ class SkillPermissionPolicy:
             "confirm": [lv.value for lv in self._confirm],
             "forbidden": [lv.value for lv in self._forbidden],
             "authorized_skills": list(self._authorized_skills),
-            "ktg_write": {
-                lv.value: KTG_WRITE_PERMISSION[lv] for lv in SkillLevel
-            },
+            "ktg_write": {lv.value: KTG_WRITE_PERMISSION[lv] for lv in SkillLevel},
         }

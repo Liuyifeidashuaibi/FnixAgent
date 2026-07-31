@@ -20,6 +20,7 @@
     STALE_USE_COUNT         = 5      且 use_count 低于此值才降权
     STALE_PENALTY_FACTOR    = 0.95   stale 节点权重衰减因子
 """
+
 from __future__ import annotations
 
 import time
@@ -50,6 +51,7 @@ STALE_PENALTY_FACTOR: float = 0.95
 # ---------------------------------------------------------------------------
 # 权重操作(纯函数,不修改原对象,返回新值)
 # ---------------------------------------------------------------------------
+
 
 def clamp_weight(weight: float) -> float:
     """将权重钳制到 [MIN_WEIGHT, MAX_WEIGHT] 范围内。"""
@@ -89,6 +91,7 @@ def apply_failure_penalty(weight: float) -> float:
 # ---------------------------------------------------------------------------
 # 节点权重操作(返回修改后的节点,原节点不变)
 # ---------------------------------------------------------------------------
+
 
 def node_on_hit(node: TopologyNode) -> TopologyNode:
     """节点被推理路径命中时的权重更新。
@@ -141,6 +144,7 @@ def node_on_skill_failure(node: TopologyNode) -> TopologyNode:
 # ---------------------------------------------------------------------------
 # 边权重操作
 # ---------------------------------------------------------------------------
+
 
 def edge_on_path_hit(edge: TopologyEdge) -> TopologyEdge:
     """边被推理路径命中时的权重强化。"""

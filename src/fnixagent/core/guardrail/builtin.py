@@ -15,6 +15,7 @@
   - 工具权限级别判定不直接依赖 ToolPermission 枚举,通过字符串比较兼容
     枚举值(str Enum)与纯字符串两种形式,避免与 core.types 强耦合。
 """
+
 from __future__ import annotations
 
 import re
@@ -29,17 +30,18 @@ from fnixagent.core.guardrail.registry import (
 )
 
 __all__ = [
-    "ToolPermissionGuardrail",
-    "ToolParameterGuardrail",
     "HighRiskOperationGuardrail",
     "OutputFormatGuardrail",
     "SensitiveOutputGuardrail",
+    "ToolParameterGuardrail",
+    "ToolPermissionGuardrail",
 ]
 
 
 # ---------------------------------------------------------------------------
 # 执行层护栏
 # ---------------------------------------------------------------------------
+
 
 class ToolPermissionGuardrail(ExecutionGuardrailGate):
     """工具权限检查护栏。
@@ -58,9 +60,7 @@ class ToolPermissionGuardrail(ExecutionGuardrailGate):
 
     def check(self, ctx: GuardrailContext) -> GuardrailCheckResult:
         if not ctx.tool_name:
-            return GuardrailCheckResult(
-                guardrail_name=self.name, action=GuardrailAction.PASS
-            )
+            return GuardrailCheckResult(guardrail_name=self.name, action=GuardrailAction.PASS)
 
         permission_level: Any = None
         if self._tool_registry is not None:
@@ -128,25 +128,25 @@ class ToolParameterGuardrail(ExecutionGuardrailGate):
 
     # SQL 注入特征(大小写不敏感)
     _SQL_INJECTION_PATTERNS: list[re.Pattern[str]] = [
-        re.compile(r"(?i)\b(OR|AND)\b\s+\d+\s*=\s*\d+\b"),        # OR 1=1
-        re.compile(r"(?i)\bUNION\s+(ALL\s+)?SELECT\b"),            # UNION SELECT
-        re.compile(r"(?i)\bDROP\s+TABLE\b"),                       # DROP TABLE
-        re.compile(r"(?i)\bINSERT\s+INTO\b"),                      # INSERT INTO
-        re.compile(r"(?i)\bDELETE\s+FROM\b"),                      # DELETE FROM
-        re.compile(r"(?i)\bUPDATE\s+\w+\s+SET\b"),                 # UPDATE x SET
-        re.compile(r"(?i)\bTRUNCATE\s+TABLE\b"),                   # TRUNCATE TABLE
+        re.compile(r"(?i)\b(OR|AND)\b\s+\d+\s*=\s*\d+\b"),  # OR 1=1
+        re.compile(r"(?i)\bUNION\s+(ALL\s+)?SELECT\b"),  # UNION SELECT
+        re.compile(r"(?i)\bDROP\s+TABLE\b"),  # DROP TABLE
+        re.compile(r"(?i)\bINSERT\s+INTO\b"),  # INSERT INTO
+        re.compile(r"(?i)\bDELETE\s+FROM\b"),  # DELETE FROM
+        re.compile(r"(?i)\bUPDATE\s+\w+\s+SET\b"),  # UPDATE x SET
+        re.compile(r"(?i)\bTRUNCATE\s+TABLE\b"),  # TRUNCATE TABLE
         re.compile(r"(?i);\s*(DROP|DELETE|UPDATE|INSERT|SELECT|TRUNCATE)\b"),
-        re.compile(r"/\*.*?\*/"),                                   # /* 注释 */
-        re.compile(r"(?i)\bEXEC(UTE)?\s*\("),                      # EXEC(
-        re.compile(r"(?i)\bxp_cmdshell\b"),                         # xp_cmdshell
+        re.compile(r"/\*.*?\*/"),  # /* 注释 */
+        re.compile(r"(?i)\bEXEC(UTE)?\s*\("),  # EXEC(
+        re.compile(r"(?i)\bxp_cmdshell\b"),  # xp_cmdshell
     ]
 
     # Shell 注入特征(命令替换 / 危险命令链接)
     _SHELL_INJECTION_PATTERNS: list[re.Pattern[str]] = [
-        re.compile(r"\$\([^)]*\)"),           # $(command)
-        re.compile(r"`[^`]*`"),               # `command`
-        re.compile(r"&&\s*\w"),               # && cmd
-        re.compile(r"\|\|\s*\w"),             # || cmd
+        re.compile(r"\$\([^)]*\)"),  # $(command)
+        re.compile(r"`[^`]*`"),  # `command`
+        re.compile(r"&&\s*\w"),  # && cmd
+        re.compile(r"\|\|\s*\w"),  # || cmd
         re.compile(r"(?i);\s*(rm|del|format|shutdown|exec|eval|system|cmd|powershell)\b"),
         re.compile(r"(?i)\b(rm|del|format|shutdown)\s+-[rf]\b"),
     ]
@@ -160,9 +160,7 @@ class ToolParameterGuardrail(ExecutionGuardrailGate):
     def check(self, ctx: GuardrailContext) -> GuardrailCheckResult:
         args = ctx.tool_arguments
         if not args:
-            return GuardrailCheckResult(
-                guardrail_name=self.name, action=GuardrailAction.PASS
-            )
+            return GuardrailCheckResult(guardrail_name=self.name, action=GuardrailAction.PASS)
 
         issues: list[str] = []
 
@@ -184,9 +182,7 @@ class ToolParameterGuardrail(ExecutionGuardrailGate):
             if not isinstance(value, str):
                 continue
             if len(value) > self._MAX_PARAM_LENGTH:
-                issues.append(
-                    f"参数 {key} 长度超限({len(value)} > {self._MAX_PARAM_LENGTH})"
-                )
+                issues.append(f"参数 {key} 长度超限({len(value)} > {self._MAX_PARAM_LENGTH})")
             sql_hit = self._match_first(self._SQL_INJECTION_PATTERNS, value)
             if sql_hit is not None:
                 issues.append(f"参数 {key} 疑似 SQL 注入: {sql_hit.pattern}")
@@ -202,12 +198,10 @@ class ToolParameterGuardrail(ExecutionGuardrailGate):
                 risk_score=0.8,
                 details={"issues": issues, "tool_name": ctx.tool_name or ""},
             )
-        return GuardrailCheckResult(
-            guardrail_name=self.name, action=GuardrailAction.PASS
-        )
+        return GuardrailCheckResult(guardrail_name=self.name, action=GuardrailAction.PASS)
 
     @staticmethod
-    def _match_first(patterns: list[re.Pattern[str]], text: str) -> "re.Pattern[str] | None":
+    def _match_first(patterns: list[re.Pattern[str]], text: str) -> re.Pattern[str] | None:
         for p in patterns:
             if p.search(text):
                 return p
@@ -234,9 +228,7 @@ class HighRiskOperationGuardrail(ExecutionGuardrailGate):
 
     def check(self, ctx: GuardrailContext) -> GuardrailCheckResult:
         if not ctx.tool_name:
-            return GuardrailCheckResult(
-                guardrail_name=self.name, action=GuardrailAction.PASS
-            )
+            return GuardrailCheckResult(guardrail_name=self.name, action=GuardrailAction.PASS)
         if ctx.tool_name in self.HIGH_RISK_TOOLS:
             if ctx.metadata.get("confirmed") is not True:
                 return GuardrailCheckResult(
@@ -260,6 +252,7 @@ class HighRiskOperationGuardrail(ExecutionGuardrailGate):
 # 输出层护栏
 # ---------------------------------------------------------------------------
 
+
 class OutputFormatGuardrail(OutputGuardrailGate):
     """输出格式校验护栏。
 
@@ -272,7 +265,12 @@ class OutputFormatGuardrail(OutputGuardrailGate):
     _MIN_LENGTH = 1
     _MAX_LENGTH = 100_000
     _ERROR_MARKERS: tuple[str, ...] = (
-        "ERROR", "FAILED", "Exception", "Traceback", "异常", "出错",
+        "ERROR",
+        "FAILED",
+        "Exception",
+        "Traceback",
+        "异常",
+        "出错",
     )
     _PLACEHOLDER_PATTERN = re.compile(r"\{[a-zA-Z_][a-zA-Z0-9_]*\}")
 
@@ -287,22 +285,16 @@ class OutputFormatGuardrail(OutputGuardrailGate):
             issues.append("输出内容为空")
         else:
             if len(content) < self._MIN_LENGTH:
-                issues.append(
-                    f"输出长度过短({len(content)} < {self._MIN_LENGTH})"
-                )
+                issues.append(f"输出长度过短({len(content)} < {self._MIN_LENGTH})")
             elif len(content) > self._MAX_LENGTH:
-                issues.append(
-                    f"输出长度超限({len(content)} > {self._MAX_LENGTH}),建议截断"
-                )
+                issues.append(f"输出长度超限({len(content)} > {self._MAX_LENGTH}),建议截断")
             for marker in self._ERROR_MARKERS:
                 if marker in content:
                     issues.append(f"输出包含错误标记: {marker}")
                     break
             placeholders = self._PLACEHOLDER_PATTERN.findall(content)
             if placeholders:
-                issues.append(
-                    f"输出包含未处理的占位符: {placeholders[:5]}"
-                )
+                issues.append(f"输出包含未处理的占位符: {placeholders[:5]}")
 
         if issues:
             return GuardrailCheckResult(
@@ -312,9 +304,7 @@ class OutputFormatGuardrail(OutputGuardrailGate):
                 risk_score=0.3,
                 details={"issues": issues},
             )
-        return GuardrailCheckResult(
-            guardrail_name=self.name, action=GuardrailAction.PASS
-        )
+        return GuardrailCheckResult(guardrail_name=self.name, action=GuardrailAction.PASS)
 
 
 class SensitiveOutputGuardrail(OutputGuardrailGate):
@@ -334,9 +324,7 @@ class SensitiveOutputGuardrail(OutputGuardrailGate):
 
     def check(self, ctx: GuardrailContext) -> GuardrailCheckResult:
         if self._detector is None or not ctx.content:
-            return GuardrailCheckResult(
-                guardrail_name=self.name, action=GuardrailAction.PASS
-            )
+            return GuardrailCheckResult(guardrail_name=self.name, action=GuardrailAction.PASS)
         try:
             hits = self._detector.detect(ctx.content)
         except Exception:
@@ -346,9 +334,7 @@ class SensitiveOutputGuardrail(OutputGuardrailGate):
                 message="敏感词检测器调用失败,跳过",
             )
         if not hits:
-            return GuardrailCheckResult(
-                guardrail_name=self.name, action=GuardrailAction.PASS
-            )
+            return GuardrailCheckResult(guardrail_name=self.name, action=GuardrailAction.PASS)
         words = [w for w, _, _ in hits]
         return GuardrailCheckResult(
             guardrail_name=self.name,

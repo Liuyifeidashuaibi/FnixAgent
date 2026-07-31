@@ -8,24 +8,25 @@
 
 全部纯 Python 标准库实现,零第三方依赖。
 """
+
 from fnixagent.core.retrieval.embedder import (
     BaseEmbedder,
     HashingEmbedder,
-)
-from fnixagent.core.retrieval.vectorstore import (
-    BaseVectorStore,
-    InMemoryVectorStore,
 )
 from fnixagent.core.retrieval.hybrid import (
     BM25Retriever,
     HybridRetriever,
 )
+from fnixagent.core.retrieval.vectorstore import (
+    BaseVectorStore,
+    InMemoryVectorStore,
+)
 
 __all__ = [
-    "BaseEmbedder",
-    "HashingEmbedder",
-    "BaseVectorStore",
-    "InMemoryVectorStore",
     "BM25Retriever",
+    "BaseEmbedder",
+    "BaseVectorStore",
+    "HashingEmbedder",
     "HybridRetriever",
+    "InMemoryVectorStore",
 ]

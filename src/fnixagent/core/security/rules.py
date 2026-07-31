@@ -24,6 +24,7 @@ detection 语法:
   - watchdog 为可选依赖,缺失时手动 reload
   - 不修改 office/base.py 与其他现有源文件
 """
+
 from __future__ import annotations
 
 import logging
@@ -31,7 +32,6 @@ import os
 import threading
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +39,7 @@ logger = logging.getLogger(__name__)
 try:
     from watchdog.events import FileSystemEventHandler  # type: ignore[import-not-found]
     from watchdog.observers import Observer  # type: ignore[import-not-found]
+
     _WATCHDOG_AVAILABLE: bool = True
 except ImportError:
     _WATCHDOG_AVAILABLE = False
@@ -51,10 +52,11 @@ except ImportError:
 # ---------------------------------------------------------------------------
 
 
-def _audit_rule_match(rule: "SigmaRule", event: dict) -> None:
+def _audit_rule_match(rule: SigmaRule, event: dict) -> None:
     """将规则命中写入审计日志(异常吞掉)。"""
     try:
         from fnixagent.core.audit import AuditLogger
+
         AuditLogger().log(
             action="rule.match",
             detail={
@@ -76,7 +78,13 @@ def _audit_rule_match(rule: "SigmaRule", event: dict) -> None:
 
 # 支持的字段修饰符
 _FIELD_MODIFIERS: tuple[str, ...] = (
-    "contains", "startswith", "endswith", "gte", "lte", "gt", "lt",
+    "contains",
+    "startswith",
+    "endswith",
+    "gte",
+    "lte",
+    "gt",
+    "lt",
 )
 
 
@@ -96,6 +104,7 @@ class SigmaRule:
         mitre:           MITRE ATT&CK 战术/技术 ID 列表
         falsepositives:  误报场景列表
     """
+
     title: str
     id: str
     status: str = "experimental"
@@ -287,6 +296,7 @@ class RuleMatch:
         matched_at: 命中时间(ISO 字符串)
         mitre:      MITRE ATT&CK 标签
     """
+
     rule: SigmaRule
     event: dict
     matched_at: str = ""
@@ -301,7 +311,7 @@ class RuleMatch:
 class _RuleFileHandler(FileSystemEventHandler):  # type: ignore[misc]
     """watchdog 文件变更处理器(触发 reload)。"""
 
-    def __init__(self, engine: "RuleEngine") -> None:
+    def __init__(self, engine: RuleEngine) -> None:
         self._engine = engine
 
     def on_modified(self, event) -> None:  # type: ignore[override]
@@ -337,7 +347,7 @@ class RuleEngine:
         self._rules: list[SigmaRule] = []
         self._rules_by_id: dict[str, SigmaRule] = {}
         self._lock = threading.Lock()
-        self._observer: Optional[object] = None
+        self._observer: object | None = None
 
     # -- 公开接口 ----------------------------------------------------------
 
@@ -363,7 +373,7 @@ class RuleEngine:
                     continue
                 fpath = os.path.join(self._rules_dir, fname)
                 try:
-                    with open(fpath, "r", encoding="utf-8") as f:
+                    with open(fpath, encoding="utf-8") as f:
                         data = yaml.safe_load(f)
                     if not isinstance(data, dict):
                         continue
@@ -416,9 +426,7 @@ class RuleEngine:
             logger.warning("[rules] 匹配异常: %s", exc)
             return []
 
-    def match_batch(
-        self, events: list[dict]
-    ) -> dict[int, list[RuleMatch]]:
+    def match_batch(self, events: list[dict]) -> dict[int, list[RuleMatch]]:
         """批量匹配事件。
 
         Args:
@@ -505,7 +513,7 @@ class RuleEngine:
     # -- 内部:规则解析 ---------------------------------------------------
 
     @staticmethod
-    def _parse_rule(data: dict) -> Optional[SigmaRule]:
+    def _parse_rule(data: dict) -> SigmaRule | None:
         """从 YAML 字典解析 SigmaRule。"""
         try:
             title = data.get("title", "")
@@ -543,7 +551,7 @@ class RuleEngine:
 # ---------------------------------------------------------------------------
 
 
-_engine_instance: Optional[RuleEngine] = None
+_engine_instance: RuleEngine | None = None
 _engine_lock = threading.Lock()
 
 

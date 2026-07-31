@@ -1,9 +1,10 @@
-﻿"""
+"""
 API 路由单元测试公共夹具。
 
 为 auth/documents/tasks 路由构建独立的 FastAPI 应用,
 不依赖 AgentScheduler(这些路由只使用 services.storage)。
 """
+
 import os
 import sys
 

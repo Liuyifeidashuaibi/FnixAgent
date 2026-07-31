@@ -28,15 +28,13 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
-import json
 import logging
 import re
-import time
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import httpx
 import yaml
@@ -48,27 +46,30 @@ logger = logging.getLogger(__name__)
 # 信息源类型定义 (30+ 源)
 # ============================================================
 
+
 class SourceCategory(str, Enum):
     """信息源大类"""
-    GITHUB = "github"              # GitHub 仓库 + Trending
-    ARXIV = "arxiv"                # arXiv 预印本
+
+    GITHUB = "github"  # GitHub 仓库 + Trending
+    ARXIV = "arxiv"  # arXiv 预印本
     SEMANTIC_SCHOLAR = "semantic_scholar"  # Semantic Scholar 语义检索
-    TAVILY = "tavily"              # Tavily AI 搜索
-    TECH_BLOG = "tech_blog"        # 大厂技术博客
-    RSS_FEED = "rss_feed"          # RSS 订阅源
-    NEWSLETTER = "newsletter"      # AI 周刊/日报
-    HACKER_NEWS = "hacker_news"    # Hacker News
-    REDDIT = "reddit"              # Reddit 社区
-    CONFERENCE = "conference"      # 学术会议
-    PROTOCOL = "protocol"          # 协议标准
-    HUGGINGFACE = "huggingface"    # Hugging Face 模型/数据集
-    YOUTUBE = "youtube"            # 技术演讲/视频
-    TWITTER = "twitter"            # 关键研究者动态
+    TAVILY = "tavily"  # Tavily AI 搜索
+    TECH_BLOG = "tech_blog"  # 大厂技术博客
+    RSS_FEED = "rss_feed"  # RSS 订阅源
+    NEWSLETTER = "newsletter"  # AI 周刊/日报
+    HACKER_NEWS = "hacker_news"  # Hacker News
+    REDDIT = "reddit"  # Reddit 社区
+    CONFERENCE = "conference"  # 学术会议
+    PROTOCOL = "protocol"  # 协议标准
+    HUGGINGFACE = "huggingface"  # Hugging Face 模型/数据集
+    YOUTUBE = "youtube"  # 技术演讲/视频
+    TWITTER = "twitter"  # 关键研究者动态
 
 
 @dataclass
 class SourceItem:
     """单条信息源原始数据"""
+
     source_id: str
     title: str
     url: str
@@ -88,6 +89,7 @@ class SourceItem:
 # GitHub 深度采集器
 # ============================================================
 
+
 class GitHubDeepCollector:
     """GitHub 深度采集: API + Trending + Release Notes"""
 
@@ -99,41 +101,40 @@ class GitHubDeepCollector:
         self.headers = {
             "Accept": "application/vnd.github+json",
             "Authorization": f"Bearer {token}" if token else "",
-            "User-Agent": "FnixAgent/1.0"
+            "User-Agent": "FnixAgent/1.0",
         }
 
     async def search_repos(self, query: str, per_page: int = 20) -> list[SourceItem]:
         """搜索 GitHub 仓库"""
         url = f"{self.BASE_URL}/search/repositories"
-        params = {
-            "q": query,
-            "sort": "stars",
-            "order": "desc",
-            "per_page": per_page
-        }
+        params = {"q": query, "sort": "stars", "order": "desc", "per_page": per_page}
         try:
             resp = await self.client.get(url, headers=self.headers, params=params, timeout=15)
             resp.raise_for_status()
             data = resp.json()
             items = []
             for repo in data.get("items", []):
-                items.append(SourceItem(
-                    source_id=f"gh_{repo['id']}",
-                    title=repo["full_name"],
-                    url=repo["html_url"],
-                    source_type=SourceCategory.GITHUB,
-                    raw_text=repo.get("description", ""),
-                    summary=repo.get("description", ""),
-                    star_count=repo.get("stargazers_count", 0),
-                    published_at=repo.get("updated_at", ""),
-                    tags=repo.get("topics", []),
-                    metadata={
-                        "language": repo.get("language", ""),
-                        "forks": repo.get("forks_count", 0),
-                        "open_issues": repo.get("open_issues_count", 0),
-                        "license": repo.get("license", {}).get("spdx_id", "") if repo.get("license") else ""
-                    }
-                ))
+                items.append(
+                    SourceItem(
+                        source_id=f"gh_{repo['id']}",
+                        title=repo["full_name"],
+                        url=repo["html_url"],
+                        source_type=SourceCategory.GITHUB,
+                        raw_text=repo.get("description", ""),
+                        summary=repo.get("description", ""),
+                        star_count=repo.get("stargazers_count", 0),
+                        published_at=repo.get("updated_at", ""),
+                        tags=repo.get("topics", []),
+                        metadata={
+                            "language": repo.get("language", ""),
+                            "forks": repo.get("forks_count", 0),
+                            "open_issues": repo.get("open_issues_count", 0),
+                            "license": repo.get("license", {}).get("spdx_id", "")
+                            if repo.get("license")
+                            else "",
+                        },
+                    )
+                )
             return items
         except Exception as e:
             logger.warning(f"GitHub search failed: {e}")
@@ -148,22 +149,26 @@ class GitHubDeepCollector:
             releases = resp.json()
             items = []
             for rel in releases:
-                items.append(SourceItem(
-                    source_id=f"gh_rel_{rel['id']}",
-                    title=f"[{owner}/{repo}] {rel.get('name', rel['tag_name'])}",
-                    url=rel.get("html_url", ""),
-                    source_type=SourceCategory.GITHUB,
-                    raw_text=rel.get("body", ""),
-                    published_at=rel.get("published_at", ""),
-                    tags=[owner, repo],
-                    metadata={"tag": rel["tag_name"]}
-                ))
+                items.append(
+                    SourceItem(
+                        source_id=f"gh_rel_{rel['id']}",
+                        title=f"[{owner}/{repo}] {rel.get('name', rel['tag_name'])}",
+                        url=rel.get("html_url", ""),
+                        source_type=SourceCategory.GITHUB,
+                        raw_text=rel.get("body", ""),
+                        published_at=rel.get("published_at", ""),
+                        tags=[owner, repo],
+                        metadata={"tag": rel["tag_name"]},
+                    )
+                )
             return items
         except Exception as e:
             logger.warning(f"GitHub releases {owner}/{repo} failed: {e}")
             return []
 
-    async def get_trending(self, language: str = "python", since: str = "daily") -> list[SourceItem]:
+    async def get_trending(
+        self, language: str = "python", since: str = "daily"
+    ) -> list[SourceItem]:
         """获取 GitHub Trending"""
         url = f"{self.TRENDING_URL}/{language}?since={since}"
         try:
@@ -175,14 +180,16 @@ class GitHubDeepCollector:
             matches = re.findall(repo_pattern, html)
             for owner_rel, owner_name, repo_name in matches:
                 full_name = f"{owner_name.strip()}/{repo_name.strip()}"
-                items.append(SourceItem(
-                    source_id=f"gh_trend_{full_name.replace('/', '_')}",
-                    title=full_name,
-                    url=f"https://github.com/{full_name}",
-                    source_type=SourceCategory.GITHUB,
-                    raw_text="",
-                    tags=["trending", since, language]
-                ))
+                items.append(
+                    SourceItem(
+                        source_id=f"gh_trend_{full_name.replace('/', '_')}",
+                        title=full_name,
+                        url=f"https://github.com/{full_name}",
+                        source_type=SourceCategory.GITHUB,
+                        raw_text="",
+                        tags=["trending", since, language],
+                    )
+                )
             return items
         except Exception as e:
             logger.warning(f"GitHub trending failed: {e}")
@@ -192,6 +199,7 @@ class GitHubDeepCollector:
 # ============================================================
 # Semantic Scholar API 采集器
 # ============================================================
+
 
 class SemanticScholarCollector:
     """Semantic Scholar API: 语义级论文检索 + 引用图谱 + 推荐"""
@@ -224,7 +232,7 @@ class SemanticScholarCollector:
             "limit": limit,
             "fields": "title,url,abstract,authors,year,citationCount,publicationTypes,externalIds,tldr",
             "year": year,
-            "fieldsOfStudy": "Computer Science"
+            "fieldsOfStudy": "Computer Science",
         }
         headers = {"x-api-key": self.api_key} if self.api_key else {}
         try:
@@ -234,22 +242,26 @@ class SemanticScholarCollector:
             items = []
             for paper in data.get("data", []):
                 tldr = paper.get("tldr", {})
-                items.append(SourceItem(
-                    source_id=f"s2_{paper.get('paperId', '')}",
-                    title=paper.get("title", ""),
-                    url=paper.get("url", ""),
-                    source_type=SourceCategory.SEMANTIC_SCHOLAR,
-                    raw_text=paper.get("abstract", ""),
-                    summary=tldr.get("text", paper.get("abstract", "")[:300]) if tldr else paper.get("abstract", "")[:300],
-                    authors=[a.get("name", "") for a in paper.get("authors", [])],
-                    published_at=str(paper.get("year", "")),
-                    citation_count=paper.get("citationCount", 0),
-                    metadata={
-                        "paper_id": paper.get("paperId", ""),
-                        "external_ids": paper.get("externalIds", {}),
-                        "publication_types": paper.get("publicationTypes", []),
-                    }
-                ))
+                items.append(
+                    SourceItem(
+                        source_id=f"s2_{paper.get('paperId', '')}",
+                        title=paper.get("title", ""),
+                        url=paper.get("url", ""),
+                        source_type=SourceCategory.SEMANTIC_SCHOLAR,
+                        raw_text=paper.get("abstract", ""),
+                        summary=tldr.get("text", paper.get("abstract", "")[:300])
+                        if tldr
+                        else paper.get("abstract", "")[:300],
+                        authors=[a.get("name", "") for a in paper.get("authors", [])],
+                        published_at=str(paper.get("year", "")),
+                        citation_count=paper.get("citationCount", 0),
+                        metadata={
+                            "paper_id": paper.get("paperId", ""),
+                            "external_ids": paper.get("externalIds", {}),
+                            "publication_types": paper.get("publicationTypes", []),
+                        },
+                    )
+                )
             return items
         except Exception as e:
             logger.warning(f"Semantic Scholar search failed: {e}")
@@ -266,22 +278,26 @@ class SemanticScholarCollector:
             data = resp.json()
             items = []
             for rec in data.get("recommendedPapers", []):
-                items.append(SourceItem(
-                    source_id=f"s2_rec_{rec.get('paperId', '')}",
-                    title=rec.get("title", ""),
-                    url=rec.get("url", ""),
-                    source_type=SourceCategory.SEMANTIC_SCHOLAR,
-                    raw_text=rec.get("abstract", ""),
-                    authors=[a.get("name", "") for a in rec.get("authors", [])],
-                    citation_count=rec.get("citationCount", 0),
-                    metadata={"seed_paper": paper_id}
-                ))
+                items.append(
+                    SourceItem(
+                        source_id=f"s2_rec_{rec.get('paperId', '')}",
+                        title=rec.get("title", ""),
+                        url=rec.get("url", ""),
+                        source_type=SourceCategory.SEMANTIC_SCHOLAR,
+                        raw_text=rec.get("abstract", ""),
+                        authors=[a.get("name", "") for a in rec.get("authors", [])],
+                        citation_count=rec.get("citationCount", 0),
+                        metadata={"seed_paper": paper_id},
+                    )
+                )
             return items
         except Exception as e:
             logger.warning(f"Recommendations failed: {e}")
             return []
 
-    async def batch_search(self, queries: list[str] | None = None, limit: int = 10) -> list[SourceItem]:
+    async def batch_search(
+        self, queries: list[str] | None = None, limit: int = 10
+    ) -> list[SourceItem]:
         """批量搜索多个 AI Agent 相关查询"""
         queries = queries or self.AI_AGENT_QUERIES
         tasks = [self.search_papers(q, limit) for q in queries]
@@ -305,6 +321,7 @@ class SemanticScholarCollector:
 # ============================================================
 # arXiv API 采集器 (增强版)
 # ============================================================
+
 
 class ArxivEnhancedCollector:
     """arXiv 增强采集: API + 语义扩展 + 自动分类"""
@@ -346,6 +363,7 @@ class ArxivEnhancedCollector:
 
     def _parse_xml(self, xml_text: str) -> list[SourceItem]:
         from xml.etree import ElementTree as ET
+
         root = ET.fromstring(xml_text)
         ns = {"atom": "http://www.w3.org/2005/Atom", "arxiv": "http://arxiv.org/schemas/atom"}
         items = []
@@ -361,24 +379,27 @@ class ArxivEnhancedCollector:
             summary_text = summary.text.strip() if summary is not None and summary.text else ""
             link_text = link.text.strip() if link is not None and link.text else ""
 
-            items.append(SourceItem(
-                source_id=f"arxiv_{link_text.split('/')[-1]}",
-                title=title_text,
-                url=link_text,
-                source_type=SourceCategory.ARXIV,
-                raw_text=summary_text,
-                summary=summary_text[:500],
-                authors=[a.text.strip() for a in authors if a.text],
-                published_at=published.text if published is not None else "",
-                tags=[cat.get("term", "") for cat in cats],
-                metadata={"categories": [cat.get("term", "") for cat in cats]}
-            ))
+            items.append(
+                SourceItem(
+                    source_id=f"arxiv_{link_text.split('/')[-1]}",
+                    title=title_text,
+                    url=link_text,
+                    source_type=SourceCategory.ARXIV,
+                    raw_text=summary_text,
+                    summary=summary_text[:500],
+                    authors=[a.text.strip() for a in authors if a.text],
+                    published_at=published.text if published is not None else "",
+                    tags=[cat.get("term", "") for cat in cats],
+                    metadata={"categories": [cat.get("term", "") for cat in cats]},
+                )
+            )
         return items
 
 
 # ============================================================
 # RSS + 技术博客采集器
 # ============================================================
+
 
 class RSSFeedCollector:
     """RSS 订阅源采集 + 大厂技术博客"""
@@ -424,6 +445,7 @@ class RSSFeedCollector:
 
     def _parse_rss(self, xml_text: str, source_name: str) -> list[SourceItem]:
         from xml.etree import ElementTree as ET
+
         # 尝试 RSS 2.0
         try:
             root = ET.fromstring(xml_text)
@@ -434,16 +456,20 @@ class RSSFeedCollector:
                 link = item.find("link")
                 desc = item.find("description")
                 pub_date = item.find("pubDate")
-                items.append(SourceItem(
-                    source_id=f"rss_{hashlib.md5((link.text or '').encode()).hexdigest()[:12]}",
-                    title=title.text if title is not None and title.text else "",
-                    url=link.text if link is not None and link.text else "",
-                    source_type=SourceCategory.RSS_FEED,
-                    raw_text=desc.text if desc is not None and desc.text else "",
-                    published_at=pub_date.text if pub_date is not None and pub_date.text else "",
-                    tags=[source_name],
-                    metadata={"source": source_name}
-                ))
+                items.append(
+                    SourceItem(
+                        source_id=f"rss_{hashlib.md5((link.text or '').encode()).hexdigest()[:12]}",
+                        title=title.text if title is not None and title.text else "",
+                        url=link.text if link is not None and link.text else "",
+                        source_type=SourceCategory.RSS_FEED,
+                        raw_text=desc.text if desc is not None and desc.text else "",
+                        published_at=pub_date.text
+                        if pub_date is not None and pub_date.text
+                        else "",
+                        tags=[source_name],
+                        metadata={"source": source_name},
+                    )
+                )
             return items
         except ET.ParseError:
             return []
@@ -452,6 +478,7 @@ class RSSFeedCollector:
 # ============================================================
 # ∞ 统一采集引擎
 # ============================================================
+
 
 class ContinuousCollector:
     """
@@ -465,7 +492,7 @@ class ContinuousCollector:
             Path(__file__).parent.parent.parent.parent / "config" / "intelligence_sources.yaml"
         )
         self.config = self._load_config()
-        self._client: Optional[httpx.AsyncClient] = None
+        self._client: httpx.AsyncClient | None = None
         self.github_token = self.config.get("secrets", {}).get("github_token", "")
         self.s2_api_key = self.config.get("secrets", {}).get("semantic_scholar_api_key", "")
 
@@ -476,8 +503,7 @@ class ContinuousCollector:
     async def _get_client(self) -> httpx.AsyncClient:
         if self._client is None or self._client.is_closed:
             self._client = httpx.AsyncClient(
-                headers={"User-Agent": "FnixAgent-Intelligence/2.0"},
-                timeout=30.0
+                headers={"User-Agent": "FnixAgent-Intelligence/2.0"}, timeout=30.0
             )
         return self._client
 
@@ -564,7 +590,7 @@ class ContinuousCollector:
             errors.append(str(e))
 
         return {
-            "collected_at": datetime.now(timezone.utc).isoformat(),
+            "collected_at": datetime.now(UTC).isoformat(),
             "frequency": frequency,
             "total_items": len(all_items),
             "errors": errors,
@@ -581,10 +607,10 @@ class ContinuousCollector:
                     "star_count": item.star_count,
                     "relevance_score": item.relevance_score,
                     "tags": item.tags,
-                    "metadata": item.metadata
+                    "metadata": item.metadata,
                 }
                 for item in all_items
-            ]
+            ],
         }
 
     def _deduplicate(self, items: list[SourceItem]) -> list[SourceItem]:

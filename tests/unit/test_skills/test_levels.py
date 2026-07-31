@@ -1,4 +1,4 @@
-﻿"""
+"""
 技能权限策略 (SkillPermissionPolicy) 单元测试。
 
 测试模块: fnixagent.core.skills.levels.SkillPermissionPolicy
@@ -11,6 +11,7 @@
     - set_auto_invoke / set_confirm / set_forbidden
     - describe
 """
+
 import pytest
 
 from fnixagent.core.exceptions import SkillPermissionDeniedError
@@ -19,29 +20,28 @@ from fnixagent.core.skills.levels import (
     CONFIRM_LEVELS,
     FORBIDDEN_LEVELS,
     KTG_WRITE_PERMISSION,
-    SkillPermissionPolicy,
 )
 from fnixagent.core.types import SkillLevel
-
 
 # ---------------------------------------------------------------------------
 # 常量校验
 # ---------------------------------------------------------------------------
+
 
 class TestConstants:
     """测试权限策略固化常量。"""
 
     def test_auto_invoke_levels(self):
         """默认仅 BASIC 级别可自动调用。"""
-        assert AUTO_INVOKE_LEVELS == frozenset({SkillLevel.BASIC})
+        assert frozenset({SkillLevel.BASIC}) == AUTO_INVOKE_LEVELS
 
     def test_confirm_levels(self):
         """默认仅 REASONING 级别需确认。"""
-        assert CONFIRM_LEVELS == frozenset({SkillLevel.REASONING})
+        assert frozenset({SkillLevel.REASONING}) == CONFIRM_LEVELS
 
     def test_forbidden_levels(self):
         """默认仅 META 级别禁用。"""
-        assert FORBIDDEN_LEVELS == frozenset({SkillLevel.META})
+        assert frozenset({SkillLevel.META}) == FORBIDDEN_LEVELS
 
     def test_ktg_write_permission(self):
         """仅 META 级技能可写入 KTG。"""
@@ -55,6 +55,7 @@ class TestConstants:
 # ---------------------------------------------------------------------------
 # 级别判定
 # ---------------------------------------------------------------------------
+
 
 class TestLevelChecks:
     """测试 can_auto_invoke / needs_confirmation / is_forbidden / can_write_ktg。"""
@@ -88,6 +89,7 @@ class TestLevelChecks:
 # check_invoke_permission
 # ---------------------------------------------------------------------------
 
+
 class TestCheckInvokePermission:
     """测试 check_invoke_permission() 方法。"""
 
@@ -109,18 +111,14 @@ class TestCheckInvokePermission:
 
     def test_meta_forbidden(self, permission_policy):
         """META 级技能应返回 (False, "forbidden")。"""
-        allowed, reason = permission_policy.check_invoke_permission(
-            "meta_skill", SkillLevel.META
-        )
+        allowed, reason = permission_policy.check_invoke_permission("meta_skill", SkillLevel.META)
         assert allowed is False
         assert reason == "forbidden"
 
     def test_authorized_overrides_forbidden(self, permission_policy):
         """显式授权的技能应返回 (True, "authorized"),即使原本禁用。"""
         permission_policy.authorize("meta_skill")
-        allowed, reason = permission_policy.check_invoke_permission(
-            "meta_skill", SkillLevel.META
-        )
+        allowed, reason = permission_policy.check_invoke_permission("meta_skill", SkillLevel.META)
         assert allowed is True
         assert reason == "authorized"
 
@@ -138,42 +136,36 @@ class TestCheckInvokePermission:
 # check_ktg_write_permission
 # ---------------------------------------------------------------------------
 
+
 class TestCheckKtgWritePermission:
     """测试 check_ktg_write_permission() 方法。"""
 
     def test_basic_denied(self, permission_policy):
         """BASIC 级技能无 KTG 写入权限,应抛 SkillPermissionDeniedError。"""
         with pytest.raises(SkillPermissionDeniedError, match="无 KTG 写入权限"):
-            permission_policy.check_ktg_write_permission(
-                "search_skill", SkillLevel.BASIC
-            )
+            permission_policy.check_ktg_write_permission("search_skill", SkillLevel.BASIC)
 
     def test_reasoning_denied(self, permission_policy):
         """REASONING 级技能无 KTG 写入权限,应抛异常。"""
         with pytest.raises(SkillPermissionDeniedError):
-            permission_policy.check_ktg_write_permission(
-                "convert_skill", SkillLevel.REASONING
-            )
+            permission_policy.check_ktg_write_permission("convert_skill", SkillLevel.REASONING)
 
     def test_meta_allowed(self, permission_policy):
         """META 级技能有 KTG 写入权限,不应抛异常。"""
         # 不应抛异常
-        permission_policy.check_ktg_write_permission(
-            "meta_skill", SkillLevel.META
-        )
+        permission_policy.check_ktg_write_permission("meta_skill", SkillLevel.META)
 
     def test_authorized_overrides_ktg_write(self, permission_policy):
         """显式授权的 BASIC 级技能也可写入 KTG。"""
         permission_policy.authorize("search_skill")
         # 不应抛异常
-        permission_policy.check_ktg_write_permission(
-            "search_skill", SkillLevel.BASIC
-        )
+        permission_policy.check_ktg_write_permission("search_skill", SkillLevel.BASIC)
 
 
 # ---------------------------------------------------------------------------
 # 动态授权
 # ---------------------------------------------------------------------------
+
 
 class TestAuthorizeRevoke:
     """测试 authorize() / revoke() / is_authorized()。"""
@@ -205,6 +197,7 @@ class TestAuthorizeRevoke:
 # 策略配置
 # ---------------------------------------------------------------------------
 
+
 class TestPolicyConfig:
     """测试 set_auto_invoke / set_confirm / set_forbidden。"""
 
@@ -231,6 +224,7 @@ class TestPolicyConfig:
 # describe
 # ---------------------------------------------------------------------------
 
+
 class TestDescribe:
     """测试 describe() 方法。"""
 
@@ -246,9 +240,7 @@ class TestDescribe:
         assert desc["confirm"] == ["reasoning"]
         assert desc["forbidden"] == ["meta"]
         assert desc["authorized_skills"] == []
-        assert desc["ktg_write"] == {
-            "basic": False, "reasoning": False, "meta": True
-        }
+        assert desc["ktg_write"] == {"basic": False, "reasoning": False, "meta": True}
 
     def test_describe_with_authorization(self, permission_policy):
         """授权后描述应包含已授权技能名。"""

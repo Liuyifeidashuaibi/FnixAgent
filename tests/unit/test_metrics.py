@@ -1,4 +1,4 @@
-﻿"""
+"""
 FnixAgent Prometheus 指标模块测试 — Phase 2.10
 
 覆盖:
@@ -11,40 +11,40 @@ FnixAgent Prometheus 指标模块测试 — Phase 2.10
   7. setup_metrics 集成(/metrics 端点)
   8. PROMETHEUS_ENABLED 环境变量控制
 """
+
 from __future__ import annotations
 
-import os
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import patch, MagicMock
-from prometheus_client import REGISTRY, generate_latest
+from prometheus_client import generate_latest
 
 from fnixagent.core.observability.metrics import (
     _init_metrics,
     _normalize_path,
-    setup_metrics,
     is_enabled,
-    record_login,
-    record_user_active,
-    record_user_registration,
+    record_audit_log,
     record_chat_message,
     record_document_operation,
-    record_task_created,
-    record_langgraph_node,
     record_flywheel_trigger,
-    update_topology_stats,
-    record_tool_execution,
-    record_tool_error,
+    record_injection_blocked,
+    record_langgraph_node,
+    record_llm_call,
+    record_llm_error,
+    record_llm_tokens,
+    record_login,
+    record_mfa_challenge,
     record_permission_denied,
     record_rate_limit_triggered,
-    record_injection_blocked,
     record_sensitive_hit,
-    record_mfa_challenge,
-    record_audit_log,
-    record_llm_call,
-    record_llm_tokens,
-    record_llm_error,
+    record_task_created,
+    record_tool_error,
+    record_tool_execution,
+    record_user_active,
+    record_user_registration,
+    setup_metrics,
+    update_topology_stats,
 )
-
 
 # ============================================================================
 # Fixtures
@@ -116,7 +116,9 @@ class TestNormalizePath:
         assert _normalize_path("/api/v1/auth/sso/saml/github") == "/api/v1/auth/sso/saml/:provider"
 
     def test_dynamic_oauth_path_normalized(self):
-        assert _normalize_path("/api/v1/auth/sso/oauth/google") == "/api/v1/auth/sso/oauth/:provider"
+        assert (
+            _normalize_path("/api/v1/auth/sso/oauth/google") == "/api/v1/auth/sso/oauth/:provider"
+        )
 
     def test_root_path_unchanged(self):
         assert _normalize_path("/") == "/"
@@ -176,12 +178,18 @@ class TestApplicationMetrics:
     def test_record_langgraph_node(self):
         record_langgraph_node(node_name="planner", duration_seconds=0.5, success=True)
         latest = generate_latest().decode("utf-8")
-        assert 'fnixagent_langgraph_node_executions_total{node_name="planner",status="success"}' in latest
+        assert (
+            'fnixagent_langgraph_node_executions_total{node_name="planner",status="success"}'
+            in latest
+        )
 
     def test_record_langgraph_node_failure(self):
         record_langgraph_node(node_name="executor", duration_seconds=1.2, success=False)
         latest = generate_latest().decode("utf-8")
-        assert 'fnixagent_langgraph_node_executions_total{node_name="executor",status="error"}' in latest
+        assert (
+            'fnixagent_langgraph_node_executions_total{node_name="executor",status="error"}'
+            in latest
+        )
 
     def test_record_flywheel_trigger(self):
         record_flywheel_trigger(stage="perception")
@@ -204,7 +212,9 @@ class TestApplicationMetrics:
         record_tool_error(tool_name="pdf_gen", error_type="TimeoutError")
         latest = generate_latest().decode("utf-8")
         # Prometheus 按字母序输出 label(error_type 在 tool_name 之前)
-        assert 'fnixagent_tool_errors_total{error_type="TimeoutError",tool_name="pdf_gen"}' in latest
+        assert (
+            'fnixagent_tool_errors_total{error_type="TimeoutError",tool_name="pdf_gen"}' in latest
+        )
 
     def test_record_llm_call(self):
         record_llm_call(provider="openai", model="gpt-4", duration_seconds=3.2)
@@ -219,8 +229,14 @@ class TestApplicationMetrics:
             completion_tokens=200,
         )
         latest = generate_latest().decode("utf-8")
-        assert 'fnixagent_llm_tokens_used_total{model="deepseek-chat",provider="deepseek",type="prompt"}' in latest
-        assert 'fnixagent_llm_tokens_used_total{model="deepseek-chat",provider="deepseek",type="completion"}' in latest
+        assert (
+            'fnixagent_llm_tokens_used_total{model="deepseek-chat",provider="deepseek",type="prompt"}'
+            in latest
+        )
+        assert (
+            'fnixagent_llm_tokens_used_total{model="deepseek-chat",provider="deepseek",type="completion"}'
+            in latest
+        )
 
     def test_record_llm_error(self):
         record_llm_error(provider="qwen", error_type="RateLimitError")
@@ -237,7 +253,10 @@ class TestSecurityMetrics:
     def test_record_permission_denied(self):
         record_permission_denied(permission="user:read", endpoint="/api/v1/users")
         latest = generate_latest().decode("utf-8")
-        assert 'fnixagent_permission_denied_total{endpoint="/api/v1/users",permission="user:read"}' in latest
+        assert (
+            'fnixagent_permission_denied_total{endpoint="/api/v1/users",permission="user:read"}'
+            in latest
+        )
 
     def test_record_rate_limit_triggered(self):
         record_rate_limit_triggered(limiter_type="llm")
@@ -276,10 +295,14 @@ class TestSecurityMetrics:
 
 
 class TestSetupMetrics:
-    def test_setup_metrics_adds_endpoint(self):
+    def test_setup_metrics_adds_endpoint(self, monkeypatch):
         """验证 setup_metrics 在 FastAPI 上挂载 /metrics 端点。"""
         from fastapi import FastAPI
         from fastapi.testclient import TestClient
+
+        # core/profile.py 在导入时可能将 PROMETHEUS_ENABLED 设为 false,
+        # 这里强制开启,保证本测试不受全局环境影响。
+        monkeypatch.setenv("PROMETHEUS_ENABLED", "true")
 
         app = FastAPI()
         setup_metrics(app)
@@ -289,25 +312,30 @@ class TestSetupMetrics:
         assert response.status_code == 200
         assert "fnixagent_http_requests_total" in response.text
 
-    def test_setup_metrics_disabled_when_env_false(self):
+    def test_setup_metrics_disabled_when_env_false(self, monkeypatch):
         """PROMETHEUS_ENABLED=false 时不挂载 /metrics。"""
         from fastapi import FastAPI
         from fastapi.testclient import TestClient
 
         app = FastAPI()
 
-        with patch.dict(os.environ, {"PROMETHEUS_ENABLED": "false"}):
-            setup_metrics(app)
+        # 使用 monkeypatch 而非 patch.dict,避免 Windows 上还原超长环境变量
+        # 抛 ValueError: environment variable longer than 32767 的问题。
+        monkeypatch.setenv("PROMETHEUS_ENABLED", "false")
+        setup_metrics(app)
 
         client = TestClient(app)
         response = client.get("/metrics")
         # 未挂载 /metrics,应返回 404
         assert response.status_code == 404
 
-    def test_http_middleware_records_requests(self):
+    def test_http_middleware_records_requests(self, monkeypatch):
         """HTTP 中间件应自动记录请求指标。"""
         from fastapi import FastAPI
         from fastapi.testclient import TestClient
+
+        # 自包含:强制开启,避免被 core/profile.py 的全局 setdefault(false) 污染
+        monkeypatch.setenv("PROMETHEUS_ENABLED", "true")
 
         app = FastAPI()
 
@@ -328,10 +356,12 @@ class TestSetupMetrics:
         assert 'path="/test"' in metrics_response.text
         assert 'status="200"' in metrics_response.text
 
-    def test_http_middleware_records_404(self):
+    def test_http_middleware_records_404(self, monkeypatch):
         """404 请求也应被记录。"""
         from fastapi import FastAPI
         from fastapi.testclient import TestClient
+
+        monkeypatch.setenv("PROMETHEUS_ENABLED", "true")
 
         app = FastAPI()
         setup_metrics(app)
@@ -342,10 +372,12 @@ class TestSetupMetrics:
         metrics_response = client.get("/metrics")
         assert 'status="404"' in metrics_response.text
 
-    def test_http_middleware_records_500(self):
+    def test_http_middleware_records_500(self, monkeypatch):
         """500 错误请求也应被记录。"""
         from fastapi import FastAPI
         from fastapi.testclient import TestClient
+
+        monkeypatch.setenv("PROMETHEUS_ENABLED", "true")
 
         app = FastAPI()
 
@@ -357,6 +389,7 @@ class TestSetupMetrics:
         @app.exception_handler(Exception)
         async def handler(request, exc):
             from fastapi.responses import JSONResponse
+
             return JSONResponse(status_code=500, content={"error": "internal"})
 
         setup_metrics(app)
@@ -377,9 +410,11 @@ class TestEdgeCases:
     def test_record_functions_safe_when_metrics_not_initialized(self):
         """指标未初始化时,record 函数应安全跳过(不抛异常)。"""
         # 通过 mock 使所有指标为 None
-        with patch("fnixagent.core.observability.metrics.HTTP_REQUESTS_TOTAL", None), \
-             patch("fnixagent.core.observability.metrics.LOGIN_ATTEMPTS_TOTAL", None), \
-             patch("fnixagent.core.observability.metrics.CHAT_MESSAGES_TOTAL", None):
+        with (
+            patch("fnixagent.core.observability.metrics.HTTP_REQUESTS_TOTAL", None),
+            patch("fnixagent.core.observability.metrics.LOGIN_ATTEMPTS_TOTAL", None),
+            patch("fnixagent.core.observability.metrics.CHAT_MESSAGES_TOTAL", None),
+        ):
             # 这些调用不应抛异常
             record_login(success=True)
             record_chat_message()
@@ -398,7 +433,11 @@ class TestEdgeCases:
 
         latest = generate_latest().decode("utf-8")
         # 应该看到计数 >= 3(可能包含其他测试的调用)
-        lines = [l for l in latest.split("\n") if 'fnixagent_login_attempts_total{method="password",result="success"}' in l]
+        lines = [
+            l
+            for l in latest.split("\n")
+            if 'fnixagent_login_attempts_total{method="password",result="success"}' in l
+        ]
         assert len(lines) == 1
         value = float(lines[0].split()[-1])
         assert value >= 3

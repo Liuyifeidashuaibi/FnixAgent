@@ -18,11 +18,11 @@
   4. 发现问题后调用 WordExpert 修复
   5. 重复直到检查通过
 """
+
 from __future__ import annotations
 
 import os
 import tempfile
-from typing import Any, Optional
 
 from fnixagent.office.base import BaseExpert, ExpertResult
 
@@ -42,9 +42,9 @@ class DocumentInspector(BaseExpert):
     def render(
         self,
         document_path: str,
-        output_dir: Optional[str] = None,
+        output_dir: str | None = None,
         *,
-        pages: Optional[list[int]] = None,
+        pages: list[int] | None = None,
         dpi: int = 150,
         max_pages: int = 20,
     ) -> ExpertResult:
@@ -120,9 +120,7 @@ class DocumentInspector(BaseExpert):
             for page_idx in target_pages:
                 page = doc[page_idx]
                 pix = page.get_pixmap(matrix=mat)
-                img_path = os.path.join(
-                    output_dir, f"page_{page_idx + 1:03d}.png"
-                )
+                img_path = os.path.join(output_dir, f"page_{page_idx + 1:03d}.png")
                 pix.save(img_path)
                 images.append(img_path)
 
@@ -145,7 +143,7 @@ class DocumentInspector(BaseExpert):
         self,
         document_path: str,
         *,
-        checks: Optional[list[str]] = None,
+        checks: list[str] | None = None,
     ) -> ExpertResult:
         """检查文档格式与内容是否符合预期。
 
@@ -175,8 +173,13 @@ class DocumentInspector(BaseExpert):
             return self._failure(err)
 
         all_checks = [
-            "page_count", "word_count", "fonts", "images",
-            "tables", "headings", "page_numbers",
+            "page_count",
+            "word_count",
+            "fonts",
+            "images",
+            "tables",
+            "headings",
+            "page_numbers",
         ]
         target_checks = checks or all_checks
         results: dict[str, dict] = {}
@@ -184,7 +187,6 @@ class DocumentInspector(BaseExpert):
         try:
             self._require_lib("docx")
             from docx import Document
-            from docx.oxml.ns import qn
 
             doc = Document(document_path)
 
@@ -323,11 +325,11 @@ class DocumentInspector(BaseExpert):
                     has_page = True
             sectPr = sec._sectPr
             pgNumType = sectPr.find(qn("w:pgNumType"))
-            start = pgNumType.get(qn("w:start")) if pgNumType is not None else None
+            pgNumType.get(qn("w:start")) if pgNumType is not None else None
             if i == 0 and has_page:
-                issues.append(f"section 0 (cover) should not have page numbers")
+                issues.append("section 0 (cover) should not have page numbers")
             if i == len(doc.sections) - 1 and not has_page:
-                issues.append(f"last section (body) should have page numbers")
+                issues.append("last section (body) should have page numbers")
         return {
             "passed": len(issues) == 0,
             "detail": "; ".join(issues) if issues else "page_numbers OK",

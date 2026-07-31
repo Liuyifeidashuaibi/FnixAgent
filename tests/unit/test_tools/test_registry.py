@@ -1,4 +1,4 @@
-﻿"""
+"""
 单元测试 - Tool Registry 测试。
 
 测试真实接口:
@@ -9,12 +9,12 @@
   - registry.unregister(name)
   - registry.count
 """
+
 import pytest
 
 from fnixagent.core.exceptions import ToolNotFoundError
 from fnixagent.core.tools.protocol import ToolMetadata
 from fnixagent.core.tools.registry import ToolRegistry
-from fnixagent.core.types import ToolPermission
 
 
 def test_registry_init():

@@ -1,0 +1,46 @@
+{
+  "id": "gen.multi.pkg_zeta_1.v701",
+  "title": "package pkg_zeta_1",
+  "prompt": "Create package `pkg_zeta_1` with `__init__.py` exporting `run()` and `pkg_zeta_1/core.py` implementing `run()` returning 'pkg_zeta_1-ok'.",
+  "capability": [
+    "multi_file",
+    "write"
+  ],
+  "difficulty": 3,
+  "language": "python",
+  "tags": [
+    "generated",
+    "multi_file"
+  ],
+  "timeout_s": 180,
+  "setup": {
+    "files": {
+      "README.md": "# pkg_zeta_1\n"
+    }
+  },
+  "checks": [
+    {
+      "function": "file_exists",
+      "args": {
+        "path": "pkg_zeta_1/__init__.py"
+      }
+    },
+    {
+      "function": "file_exists",
+      "args": {
+        "path": "pkg_zeta_1/core.py"
+      }
+    },
+    {
+      "function": "stdout_equals",
+      "args": {
+        "command": [
+          "python",
+          "-c",
+          "from pkg_zeta_1 import run; print(run())"
+        ],
+        "expected": "pkg_zeta_1-ok"
+      }
+    }
+  ]
+}

@@ -12,12 +12,12 @@
   - 大文件流式处理(由底层 pandoc/libreoffice 处理,本层仅校验大小)
   - 转换函数表(dict O(1) 查找)而非 if-elif 链
 """
+
 import logging
 import os
-from typing import Callable, Optional
+from collections.abc import Callable
 
 from fnixagent.core.tools.protocol import ToolMetadata
-
 
 _logger = logging.getLogger(__name__)
 
@@ -42,7 +42,7 @@ def convert_document(
     file_path: str,
     source_format: str,
     target_format: str,
-    output_path: Optional[str] = None,
+    output_path: str | None = None,
 ) -> dict:
     """
     文档格式转换。
@@ -67,13 +67,13 @@ def convert_document(
         return {
             "success": False,
             "error": f"unsupported source_format {source_format!r}, "
-                     f"must be one of {sorted(_VALID_FORMATS)}",
+            f"must be one of {sorted(_VALID_FORMATS)}",
         }
     if target_format not in _VALID_FORMATS:
         return {
             "success": False,
             "error": f"unsupported target_format {target_format!r}, "
-                     f"must be one of {sorted(_VALID_FORMATS)}",
+            f"must be one of {sorted(_VALID_FORMATS)}",
         }
     if source_format == target_format:
         return {
@@ -96,7 +96,7 @@ def convert_document(
         return {
             "success": False,
             "error": f"input file size ({file_size} bytes) exceeds limit "
-                     f"({MAX_INPUT_FILE_BYTES // 1024 // 1024}MB)",
+            f"({MAX_INPUT_FILE_BYTES // 1024 // 1024}MB)",
             "file_path": file_path,
         }
     if file_size == 0:
@@ -182,6 +182,7 @@ def convert_pdf_to_docx(pdf_path: str, docx_path: str) -> dict:
         "target_format": "docx",
         "engine": "stub",
     }
+
 
 # ---------------------------------------------------------------------------
 # 工具元数据

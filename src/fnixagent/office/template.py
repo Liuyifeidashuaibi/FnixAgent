@@ -22,6 +22,7 @@
   - 输出路径扩展名校验,避免误覆盖
   - 变量替换未命中时填空串,不抛错
 """
+
 from __future__ import annotations
 
 import html as html_lib
@@ -29,10 +30,9 @@ import os
 import re
 import time
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 from fnixagent.office.base import BaseExpert, ExpertError, ExpertResult
-
 
 # ---------------------------------------------------------------------------
 # 模板元数据
@@ -145,7 +145,7 @@ class TemplateManager(BaseExpert):
         """
         return self._success(list(self._templates.values()))
 
-    def get(self, name: str) -> Optional[TemplateInfo]:
+    def get(self, name: str) -> TemplateInfo | None:
         """获取模板信息(内部使用)。"""
         return self._templates.get(name)
 
@@ -156,7 +156,7 @@ class TemplateManager(BaseExpert):
     def preview(
         self,
         name: str,
-        sample_values: Optional[dict[str, Any]] = None,
+        sample_values: dict[str, Any] | None = None,
     ) -> ExpertResult:
         """预览模板(用示例值填充变量,返回填充后文本)。
 
@@ -214,8 +214,7 @@ class TemplateManager(BaseExpert):
         out_ext = os.path.splitext(output_path)[1].lstrip(".").lower()
         if out_ext != info.file_type:
             return self._failure(
-                f"output type mismatch: template is .{info.file_type} "
-                f"but output is .{out_ext}"
+                f"output type mismatch: template is .{info.file_type} but output is .{out_ext}"
             )
         if not values:
             values = {}
@@ -236,7 +235,7 @@ class TemplateManager(BaseExpert):
             else:
                 # 文本类(txt/html/htm/md/csv)
                 return self._apply_text(info.path, output_path, values)
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"apply IO failed: {e}")
         except Exception as e:
             return self._failure(f"apply failed: {e}")
@@ -280,9 +279,9 @@ class TemplateManager(BaseExpert):
         ext = os.path.splitext(path)[1].lstrip(".").lower()
         if ext in ("txt", "html", "htm", "md", "csv"):
             try:
-                with open(path, "r", encoding="utf-8", errors="ignore") as f:
+                with open(path, encoding="utf-8", errors="ignore") as f:
                     return f.read()
-            except (PermissionError, IOError):
+            except (OSError, PermissionError):
                 return ""
         elif ext == "docx":
             try:
@@ -355,6 +354,7 @@ class TemplateManager(BaseExpert):
         Returns:
             渲染后的文本
         """
+
         def _to_str(v: Any) -> str:
             s = "" if v is None else str(v)
             return html_lib.escape(s) if escape_html else s
@@ -398,7 +398,7 @@ class TemplateManager(BaseExpert):
             if val is None:
                 # default 修饰符
                 if modifier and modifier.startswith("default="):
-                    return modifier[len("default="):]
+                    return modifier[len("default=") :]
                 return ""
             return _to_str(val)
 
@@ -409,27 +409,23 @@ class TemplateManager(BaseExpert):
     # 应用到具体文件类型
     # ------------------------------------------------------------------
 
-    def _apply_text(
-        self, src: str, out: str, values: dict[str, Any]
-    ) -> ExpertResult:
+    def _apply_text(self, src: str, out: str, values: dict[str, Any]) -> ExpertResult:
         # HTML 模板需对变量值转义防注入
         ext = os.path.splitext(src)[1].lstrip(".").lower()
         escape = ext in ("html", "htm")
         try:
-            with open(src, "r", encoding="utf-8", errors="ignore") as f:
+            with open(src, encoding="utf-8", errors="ignore") as f:
                 text = f.read()
             rendered = self._render_text(text, values, escape_html=escape)
             with open(out, "w", encoding="utf-8") as f:
                 f.write(rendered)
             return self._success(out, mode="text")
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"_apply_text IO failed: {e}")
         except Exception as e:
             return self._failure(f"_apply_text failed: {e}")
 
-    def _apply_docx(
-        self, src: str, out: str, values: dict[str, Any]
-    ) -> ExpertResult:
+    def _apply_docx(self, src: str, out: str, values: dict[str, Any]) -> ExpertResult:
         try:
             self._require_lib("docx")
             from docx import Document
@@ -477,14 +473,12 @@ class TemplateManager(BaseExpert):
                                 para.text = new_text
             doc.save(out)
             return self._success(out, mode="docx")
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"_apply_docx IO failed: {e}")
         except Exception as e:
             return self._failure(f"_apply_docx failed: {e}")
 
-    def _apply_xlsx(
-        self, src: str, out: str, values: dict[str, Any]
-    ) -> ExpertResult:
+    def _apply_xlsx(self, src: str, out: str, values: dict[str, Any]) -> ExpertResult:
         try:
             self._require_lib("openpyxl")
             from openpyxl import load_workbook
@@ -500,7 +494,7 @@ class TemplateManager(BaseExpert):
                             cell.value = self._render_text(cell.value, values)
             wb.save(out)
             return self._success(out, mode="xlsx")
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"_apply_xlsx IO failed: {e}")
         except Exception as e:
             return self._failure(f"_apply_xlsx failed: {e}")
@@ -512,9 +506,7 @@ class TemplateManager(BaseExpert):
                 except Exception:
                     pass
 
-    def _apply_pptx(
-        self, src: str, out: str, values: dict[str, Any]
-    ) -> ExpertResult:
+    def _apply_pptx(self, src: str, out: str, values: dict[str, Any]) -> ExpertResult:
         try:
             self._require_lib("pptx")
             from pptx import Presentation
@@ -536,7 +528,7 @@ class TemplateManager(BaseExpert):
                                     r.text = ""
             prs.save(out)
             return self._success(out, mode="pptx")
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"_apply_pptx IO failed: {e}")
         except Exception as e:
             return self._failure(f"_apply_pptx failed: {e}")

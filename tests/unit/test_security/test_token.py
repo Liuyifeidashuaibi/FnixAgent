@@ -1,4 +1,4 @@
-﻿"""
+"""
 token 模块单元测试(验收标准 ③ 双 Token 刷新流程测试 - 单元层)。
 
 覆盖:
@@ -13,6 +13,7 @@ token 模块单元测试(验收标准 ③ 双 Token 刷新流程测试 - 单元�
     - decode_token_unsafe 不校验签名
     - Access Token 默认 TTL 2h,Refresh Token 默认 TTL 7d
 """
+
 import time
 
 import pytest
@@ -31,10 +32,10 @@ from fnixagent.core.security.auth.token import (
     verify_token,
 )
 
-
 # ---------------------------------------------------------------------------
 # Token 创建
 # ---------------------------------------------------------------------------
+
 
 class TestTokenCreation:
     """Token 创建与字段。"""
@@ -101,6 +102,7 @@ class TestTokenCreation:
 # ---------------------------------------------------------------------------
 # TokenPair 双 Token
 # ---------------------------------------------------------------------------
+
 
 class TestTokenPair:
     """双 Token 配对创建。"""
@@ -170,6 +172,7 @@ class TestTokenPair:
 # Token 校验
 # ---------------------------------------------------------------------------
 
+
 class TestTokenVerification:
     """verify_token 校验逻辑。"""
 
@@ -211,11 +214,10 @@ class TestTokenVerification:
         parts = token.split(".")
         # 篡改 payload:把 user_id 从 1 改成 99
         import json
+
         payload = json.loads(_b64url_decode(parts[1]))
         payload["user_id"] = 99
-        tampered_payload_b64 = _b64url_encode(
-            json.dumps(payload, separators=(",", ":")).encode()
-        )
+        tampered_payload_b64 = _b64url_encode(json.dumps(payload, separators=(",", ":")).encode())
         tampered = parts[0] + "." + tampered_payload_b64 + "." + parts[2]
         with pytest.raises(ValueError, match="签名无效"):
             verify_token(tampered)
@@ -231,9 +233,9 @@ class TestTokenVerification:
         """过期 Token 被拒绝。"""
         # 创建一个已经过期的 Token:把 TTL 设为负数
         # 通过直接构造过期 payload
-        import json
-        import hmac
         import hashlib
+        import hmac
+        import json
 
         header = {"alg": JWT_ALGORITHM, "typ": "JWT"}
         now = int(time.time())
@@ -250,7 +252,7 @@ class TestTokenVerification:
         payload_b64 = _b64url_encode(json.dumps(payload, separators=(",", ":")).encode())
         signing_input = f"{header_b64}.{payload_b64}"
         sig = hmac.new(
-            "fnixagent-dev-secret-change-me".encode(),
+            b"fnixagent-dev-secret-change-me",
             signing_input.encode(),
             hashlib.sha256,
         ).digest()
@@ -263,6 +265,7 @@ class TestTokenVerification:
     def test_verify_token_rejects_wrong_algorithm(self):
         """非 HS256 算法的 Token 被拒绝(签名校验先于算法校验,故报签名无效)。"""
         import json
+
         header = {"alg": "none", "typ": "JWT"}
         payload = {"user_id": 1, "token_type": "access"}
         header_b64 = _b64url_encode(json.dumps(header).encode())
@@ -276,6 +279,7 @@ class TestTokenVerification:
 # ---------------------------------------------------------------------------
 # decode_token_unsafe(不校验签名)
 # ---------------------------------------------------------------------------
+
 
 class TestDecodeUnsafe:
     """decode_token_unsafe 仅解码,不校验签名。"""
@@ -294,6 +298,7 @@ class TestDecodeUnsafe:
     def test_decode_unsafe_does_not_verify_signature(self):
         """decode_token_unsafe 不校验签名(可解码任意 payload)。"""
         import json
+
         header = {"alg": "HS256", "typ": "JWT"}
         payload = {"user_id": 999, "fake": True}
         header_b64 = _b64url_encode(json.dumps(header).encode())

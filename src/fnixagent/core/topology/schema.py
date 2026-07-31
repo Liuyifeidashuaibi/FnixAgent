@@ -12,6 +12,7 @@
     2. 边的源/目标节点必须存在,且不违反层级约束(CONTAINS 只能相邻层)
     3. MUTEX 边权重恒 -1.0,CONTAINS 边权重恒 1.0
 """
+
 from __future__ import annotations
 
 from fnixagent.core.exceptions import (
@@ -82,9 +83,7 @@ def validate_node(node: TopologyNode) -> None:
     """
     expected_layer = NODE_TYPE_LAYER_MAP.get(node.node_type)
     if expected_layer is None:
-        raise TopologyValidationError(
-            f"未知节点类型: {node.node_type}(仅允许 6 种固定类型)"
-        )
+        raise TopologyValidationError(f"未知节点类型: {node.node_type}(仅允许 6 种固定类型)")
     if node.layer != expected_layer:
         raise TopologyValidationError(
             f"节点类型 {node.node_type.value} 必须属于 {expected_layer.value},"
@@ -118,16 +117,14 @@ def validate_edge(
         expected = FIXED_WEIGHT_EDGES[edge.edge_type]
         if abs(edge.weight - expected) > 1e-9:
             raise TopologyValidationError(
-                f"边类型 {edge.edge_type.value} 权重必须为 {expected},"
-                f"实际为 {edge.weight}"
+                f"边类型 {edge.edge_type.value} 权重必须为 {expected},实际为 {edge.weight}"
             )
     else:
         # 可变权重边: 必须在 [0, 1] 范围内
         lo, hi = VARIABLE_WEIGHT_RANGE
         if edge.weight < lo or edge.weight > hi:
             raise TopologyValidationError(
-                f"边类型 {edge.edge_type.value} 权重必须在 [{lo}, {hi}] 范围内,"
-                f"实际为 {edge.weight}"
+                f"边类型 {edge.edge_type.value} 权重必须在 [{lo}, {hi}] 范围内,实际为 {edge.weight}"
             )
 
     # CONTAINS 边: 只允许相邻层
@@ -140,9 +137,7 @@ def validate_edge(
             )
 
 
-def is_valid_node_type_for_layer(
-    node_type: NodeType, layer: TopologyLayer
-) -> bool:
+def is_valid_node_type_for_layer(node_type: NodeType, layer: TopologyLayer) -> bool:
     """快速判断节点类型是否属于指定层级。"""
     return node_type in LAYER_NODE_TYPES.get(layer, frozenset())
 

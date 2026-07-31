@@ -9,16 +9,14 @@ LDAP 配置存储层(Phase 2.2)。
     - 同一时间可有多个 LDAP 配置,但只有 is_active=True 的生效
     - last_sync_at 用于定时同步调度判断
 """
+
 from __future__ import annotations
 
-import os
 import threading
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional
 
 from fnixagent.core.security.auth.ldap import LDAPConfig
-
 
 # ---------------------------------------------------------------------------
 # DTO
@@ -28,6 +26,7 @@ from fnixagent.core.security.auth.ldap import LDAPConfig
 @dataclass
 class LDAPConfigDTO:
     """LDAP 配置数据传输对象。"""
+
     id: int
     name: str
     server_url: str
@@ -44,9 +43,9 @@ class LDAPConfigDTO:
     use_tls: bool = True
     is_active: bool = True
     sync_interval_hours: int = 24
-    last_sync_at: Optional[datetime] = None
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    last_sync_at: datetime | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
     def to_dict(self, include_password: bool = False) -> dict:
         d = {
@@ -117,11 +116,11 @@ class InMemoryLDAPConfigStore:
                 result = [c for c in result if c.is_active]
             return sorted(result, key=lambda x: (x.is_active, -x.id), reverse=True)
 
-    def get_config(self, config_id: int) -> Optional[LDAPConfigDTO]:
+    def get_config(self, config_id: int) -> LDAPConfigDTO | None:
         with self._lock:
             return self._configs.get(config_id)
 
-    def get_active_config(self) -> Optional[LDAPConfigDTO]:
+    def get_active_config(self) -> LDAPConfigDTO | None:
         """获取当前生效的 LDAP 配置(第一个 is_active=True)。"""
         with self._lock:
             for c in self._configs.values():
@@ -129,15 +128,26 @@ class InMemoryLDAPConfigStore:
                     return c
             return None
 
-    def create_config(self, name: str, server_url: str, bind_dn: str,
-                      bind_password: str, user_search_base: str, **kwargs) -> LDAPConfigDTO:
+    def create_config(
+        self,
+        name: str,
+        server_url: str,
+        bind_dn: str,
+        bind_password: str,
+        user_search_base: str,
+        **kwargs,
+    ) -> LDAPConfigDTO:
         with self._lock:
             cid = self._next_id
             self._next_id += 1
             now = datetime.utcnow()
             cfg = LDAPConfigDTO(
-                id=cid, name=name, server_url=server_url, bind_dn=bind_dn,
-                bind_password=bind_password, user_search_base=user_search_base,
+                id=cid,
+                name=name,
+                server_url=server_url,
+                bind_dn=bind_dn,
+                bind_password=bind_password,
+                user_search_base=user_search_base,
                 user_filter=kwargs.get("user_filter", "(objectClass=person)"),
                 group_search_base=kwargs.get("group_search_base", ""),
                 group_filter=kwargs.get("group_filter", "(objectClass=group)"),
@@ -148,21 +158,34 @@ class InMemoryLDAPConfigStore:
                 use_tls=kwargs.get("use_tls", True),
                 is_active=kwargs.get("is_active", True),
                 sync_interval_hours=kwargs.get("sync_interval_hours", 24),
-                created_at=now, updated_at=now,
+                created_at=now,
+                updated_at=now,
             )
             self._configs[cid] = cfg
             return cfg
 
-    def update_config(self, config_id: int, **kwargs) -> Optional[LDAPConfigDTO]:
+    def update_config(self, config_id: int, **kwargs) -> LDAPConfigDTO | None:
         with self._lock:
             cfg = self._configs.get(config_id)
             if not cfg:
                 return None
-            for k in ("name", "server_url", "bind_dn", "bind_password",
-                      "user_search_base", "user_filter", "group_search_base",
-                      "group_filter", "username_attribute", "email_attribute",
-                      "display_name_attribute", "use_ssl", "use_tls",
-                      "is_active", "sync_interval_hours"):
+            for k in (
+                "name",
+                "server_url",
+                "bind_dn",
+                "bind_password",
+                "user_search_base",
+                "user_filter",
+                "group_search_base",
+                "group_filter",
+                "username_attribute",
+                "email_attribute",
+                "display_name_attribute",
+                "use_ssl",
+                "use_tls",
+                "is_active",
+                "sync_interval_hours",
+            ):
                 if k in kwargs and kwargs[k] is not None:
                     setattr(cfg, k, kwargs[k])
             cfg.updated_at = datetime.utcnow()
@@ -196,10 +219,12 @@ class PgLDAPConfigStore:
     """
 
     def __init__(self):
-        from fnixagent.services.storage_postgres import get_db_adapter
-        from fnixagent.models.db.models import Setting
-        from sqlalchemy import select, delete
         import json
+
+        from sqlalchemy import delete, select
+
+        from fnixagent.models.db.models import Setting
+        from fnixagent.services.storage_postgres import get_db_adapter
 
         self._get_db = get_db_adapter
         self._Setting = Setting
@@ -212,9 +237,7 @@ class PgLDAPConfigStore:
 
     def _load_all(self) -> list[LDAPConfigDTO]:
         with self._get_db().session() as s:
-            stmt = self._select(self._Setting).where(
-                self._Setting.key.like("ldap_config:%")
-            )
+            stmt = self._select(self._Setting).where(self._Setting.key.like("ldap_config:%"))
             rows = s.execute(stmt).scalars().all()
             result = []
             for r in rows:
@@ -227,8 +250,11 @@ class PgLDAPConfigStore:
 
     def _dict_to_dto(self, d: dict) -> LDAPConfigDTO:
         return LDAPConfigDTO(
-            id=d["id"], name=d["name"], server_url=d["server_url"],
-            bind_dn=d["bind_dn"], bind_password=d.get("bind_password", ""),
+            id=d["id"],
+            name=d["name"],
+            server_url=d["server_url"],
+            bind_dn=d["bind_dn"],
+            bind_password=d.get("bind_password", ""),
             user_search_base=d["user_search_base"],
             user_filter=d.get("user_filter", "(objectClass=person)"),
             group_search_base=d.get("group_search_base", ""),
@@ -236,10 +262,13 @@ class PgLDAPConfigStore:
             username_attribute=d.get("username_attribute", "sAMAccountName"),
             email_attribute=d.get("email_attribute", "mail"),
             display_name_attribute=d.get("display_name_attribute", "displayName"),
-            use_ssl=d.get("use_ssl", False), use_tls=d.get("use_tls", True),
+            use_ssl=d.get("use_ssl", False),
+            use_tls=d.get("use_tls", True),
             is_active=d.get("is_active", True),
             sync_interval_hours=d.get("sync_interval_hours", 24),
-            last_sync_at=datetime.fromisoformat(d["last_sync_at"]) if d.get("last_sync_at") else None,
+            last_sync_at=datetime.fromisoformat(d["last_sync_at"])
+            if d.get("last_sync_at")
+            else None,
             created_at=datetime.fromisoformat(d["created_at"]) if d.get("created_at") else None,
             updated_at=datetime.fromisoformat(d["updated_at"]) if d.get("updated_at") else None,
         )
@@ -250,7 +279,7 @@ class PgLDAPConfigStore:
             result = [c for c in result if c.is_active]
         return sorted(result, key=lambda x: (x.is_active, -x.id), reverse=True)
 
-    def get_config(self, config_id: int) -> Optional[LDAPConfigDTO]:
+    def get_config(self, config_id: int) -> LDAPConfigDTO | None:
         with self._get_db().session() as s:
             r = s.get(self._Setting, self._key(config_id))
             if not r:
@@ -260,22 +289,33 @@ class PgLDAPConfigStore:
             except Exception:
                 return None
 
-    def get_active_config(self) -> Optional[LDAPConfigDTO]:
+    def get_active_config(self) -> LDAPConfigDTO | None:
         all_configs = self._load_all()
         for c in all_configs:
             if c.is_active:
                 return c
         return None
 
-    def create_config(self, name: str, server_url: str, bind_dn: str,
-                      bind_password: str, user_search_base: str, **kwargs) -> LDAPConfigDTO:
+    def create_config(
+        self,
+        name: str,
+        server_url: str,
+        bind_dn: str,
+        bind_password: str,
+        user_search_base: str,
+        **kwargs,
+    ) -> LDAPConfigDTO:
         # 生成新 ID:取现有最大 ID + 1
         all_configs = self._load_all()
         new_id = max([c.id for c in all_configs], default=0) + 1
         now = datetime.utcnow()
         cfg = LDAPConfigDTO(
-            id=new_id, name=name, server_url=server_url, bind_dn=bind_dn,
-            bind_password=bind_password, user_search_base=user_search_base,
+            id=new_id,
+            name=name,
+            server_url=server_url,
+            bind_dn=bind_dn,
+            bind_password=bind_password,
+            user_search_base=user_search_base,
             user_filter=kwargs.get("user_filter", "(objectClass=person)"),
             group_search_base=kwargs.get("group_search_base", ""),
             group_filter=kwargs.get("group_filter", "(objectClass=group)"),
@@ -286,7 +326,8 @@ class PgLDAPConfigStore:
             use_tls=kwargs.get("use_tls", True),
             is_active=kwargs.get("is_active", True),
             sync_interval_hours=kwargs.get("sync_interval_hours", 24),
-            created_at=now, updated_at=now,
+            created_at=now,
+            updated_at=now,
         )
         with self._get_db().session() as s:
             setting = self._Setting(
@@ -297,15 +338,27 @@ class PgLDAPConfigStore:
             s.flush()
         return cfg
 
-    def update_config(self, config_id: int, **kwargs) -> Optional[LDAPConfigDTO]:
+    def update_config(self, config_id: int, **kwargs) -> LDAPConfigDTO | None:
         cfg = self.get_config(config_id)
         if not cfg:
             return None
-        for k in ("name", "server_url", "bind_dn", "bind_password",
-                  "user_search_base", "user_filter", "group_search_base",
-                  "group_filter", "username_attribute", "email_attribute",
-                  "display_name_attribute", "use_ssl", "use_tls",
-                  "is_active", "sync_interval_hours"):
+        for k in (
+            "name",
+            "server_url",
+            "bind_dn",
+            "bind_password",
+            "user_search_base",
+            "user_filter",
+            "group_search_base",
+            "group_filter",
+            "username_attribute",
+            "email_attribute",
+            "display_name_attribute",
+            "use_ssl",
+            "use_tls",
+            "is_active",
+            "sync_interval_hours",
+        ):
             if k in kwargs and kwargs[k] is not None:
                 setattr(cfg, k, kwargs[k])
         cfg.updated_at = datetime.utcnow()
@@ -341,7 +394,7 @@ class PgLDAPConfigStore:
 # ---------------------------------------------------------------------------
 
 
-_ldap_config_store: Optional[object] = None
+_ldap_config_store: object | None = None
 _ldap_config_store_lock = threading.Lock()
 
 

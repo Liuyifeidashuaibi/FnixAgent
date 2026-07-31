@@ -1,0 +1,2 @@
+# Extra deps for desktop release packaging (CI + prepare:release)
+pyinstaller>=6.0

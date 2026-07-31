@@ -6,11 +6,10 @@
     3. GET  /audit/verify      — 校验哈希链完整性
     4. GET  /audit/actions     — 列出所有审计动作类型
 """
+
 from __future__ import annotations
 
-from typing import Optional
-
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import PlainTextResponse
 
 from fnixagent.api.schemas.models import BaseResponse
@@ -24,6 +23,7 @@ _AUDIT_PERM = "system:audit_log"
 
 def _get_logger():
     from fnixagent.core.audit import AuditLogger
+
     return AuditLogger()
 
 
@@ -42,19 +42,22 @@ def _get_ip_ua(http_request: Request) -> tuple[str, str]:
 async def list_audit_logs(
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
-    user_id: Optional[int] = Query(None, description="按用户 ID 筛选"),
-    action: Optional[str] = Query(None, description="按操作类型筛选"),
-    start: Optional[str] = Query(None, description="起始时间 ISO 8601"),
-    end: Optional[str] = Query(None, description="结束时间 ISO 8601"),
-    ip_address: Optional[str] = Query(None, description="按 IP 筛选"),
+    user_id: int | None = Query(None, description="按用户 ID 筛选"),
+    action: str | None = Query(None, description="按操作类型筛选"),
+    start: str | None = Query(None, description="起始时间 ISO 8601"),
+    end: str | None = Query(None, description="结束时间 ISO 8601"),
+    ip_address: str | None = Query(None, description="按 IP 筛选"),
     _perm: dict = Depends(require_permission(_AUDIT_PERM)),
 ):
     """查询审计日志(按时间/用户/操作类型/IP 筛选)。"""
     logger = _get_logger()
     logs, total = logger.list(
-        limit=limit, offset=offset,
-        user_id=user_id, action=action,
-        start=start, end=end,
+        limit=limit,
+        offset=offset,
+        user_id=user_id,
+        action=action,
+        start=start,
+        end=end,
         ip_address=ip_address,
     )
     return BaseResponse(
@@ -72,10 +75,10 @@ async def list_audit_logs(
 async def export_audit_logs(
     http_request: Request,
     format: str = Query("json", pattern="^(json|csv)$"),
-    user_id: Optional[int] = Query(None),
-    action: Optional[str] = Query(None),
-    start: Optional[str] = Query(None),
-    end: Optional[str] = Query(None),
+    user_id: int | None = Query(None),
+    action: str | None = Query(None),
+    start: str | None = Query(None),
+    end: str | None = Query(None),
     limit: int = Query(10000, ge=1, le=50000),
     _perm: dict = Depends(require_permission(_AUDIT_PERM)),
 ):
@@ -89,13 +92,20 @@ async def export_audit_logs(
 
     # 记录导出操作本身
     from fnixagent.core.audit import AUDIT_DATA_EXPORT
+
     logger.log(
         action=AUDIT_DATA_EXPORT,
         user_id=_perm.get("user_id"),
-        detail={"format": format, "filters": {
-            "user_id": user_id, "action": action,
-            "start": start, "end": end, "limit": limit,
-        }},
+        detail={
+            "format": format,
+            "filters": {
+                "user_id": user_id,
+                "action": action,
+                "start": start,
+                "end": end,
+                "limit": limit,
+            },
+        },
         ip_address=ip,
         user_agent=ua,
     )
@@ -135,8 +145,9 @@ async def verify_audit_chain(
         data={
             "is_valid": is_valid,
             "broken_at_id": broken_id,
-            "message": "哈希链完整,无篡改" if is_valid
-                       else f"哈希链在 ID={broken_id} 处断裂,可能被篡改",
+            "message": "哈希链完整,无篡改"
+            if is_valid
+            else f"哈希链在 ID={broken_id} 处断裂,可能被篡改",
         },
     )
 
@@ -147,6 +158,7 @@ async def list_audit_actions(
 ):
     """列出所有审计动作类型(用于前端筛选下拉框)。"""
     from fnixagent.core.audit import ALL_AUDIT_ACTIONS
+
     return BaseResponse(
         success=True,
         data={"items": list(ALL_AUDIT_ACTIONS)},

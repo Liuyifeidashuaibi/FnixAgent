@@ -15,23 +15,24 @@ P0-04 借鉴 kaoyan-ai-platform 的 reflection/manager.py 设计。
   (旧版 passed/score/reason)为不同类。如需旧版请显式从
   fnixagent.core.types 导入。
 """
+
 from fnixagent.core.reflection.base import (
     ReflectionConfig,
     ReflectionIssue,
     ReflectionResult,
 )
-from fnixagent.core.reflection.validator import (
-    ResultValidator,
-    ValidationResult,
+from fnixagent.core.reflection.manager import (
+    ReflectionManager,
+    get_reflection_manager,
+    reset_reflection_manager,
 )
 from fnixagent.core.reflection.replanner import (
     Replanner,
     ReplanResult,
 )
-from fnixagent.core.reflection.manager import (
-    ReflectionManager,
-    get_reflection_manager,
-    reset_reflection_manager,
+from fnixagent.core.reflection.validator import (
+    ResultValidator,
+    ValidationResult,
 )
 
 __all__ = [

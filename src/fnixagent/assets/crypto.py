@@ -18,6 +18,7 @@
     - 文件加密使用二进制模式,避免编码污染
     - 降级模式仅用于无 cryptography 的环境,生产环境必须安装
 """
+
 from __future__ import annotations
 
 import os
@@ -37,10 +38,10 @@ except ImportError:  # pragma: no cover - 降级路径,测试环境通常有 cry
 
 
 # 加密参数
-_SALT_LEN: int = 16          # PBKDF2 salt 长度(字节)
-_NONCE_LEN: int = 12         # AES-GCM nonce 长度(字节)
-_KEY_LEN: int = 32           # AES-256 密钥长度(字节)
-_ITERATIONS: int = 100_000   # PBKDF2 迭代次数
+_SALT_LEN: int = 16  # PBKDF2 salt 长度(字节)
+_NONCE_LEN: int = 12  # AES-GCM nonce 长度(字节)
+_KEY_LEN: int = 32  # AES-256 密钥长度(字节)
+_ITERATIONS: int = 100_000  # PBKDF2 迭代次数
 
 
 class AssetEncryptor:
@@ -122,13 +123,13 @@ class AssetEncryptor:
         if not _CRYPTO_AVAILABLE:
             # 降级:剥离前缀返回原文
             if data.startswith(b"PLAIN:"):
-                return data[len(b"PLAIN:"):]
+                return data[len(b"PLAIN:") :]
             return data
         if len(data) < _SALT_LEN + _NONCE_LEN:
             raise ValueError("密文长度不足,数据可能已损坏")
         salt = data[:_SALT_LEN]
-        nonce = data[_SALT_LEN:_SALT_LEN + _NONCE_LEN]
-        ciphertext = data[_SALT_LEN + _NONCE_LEN:]
+        nonce = data[_SALT_LEN : _SALT_LEN + _NONCE_LEN]
+        ciphertext = data[_SALT_LEN + _NONCE_LEN :]
         key = self._derive_key(salt)
         aesgcm = AESGCM(key)
         try:

@@ -1,4 +1,4 @@
-﻿"""
+"""
 PgDocumentStore 单元测试。
 
 验证:
@@ -9,6 +9,7 @@ PgDocumentStore 单元测试。
   - delete(软删除)
   - 数据持久化
 """
+
 from __future__ import annotations
 
 import os

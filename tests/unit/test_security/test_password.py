@@ -1,4 +1,4 @@
-﻿"""
+"""
 password 模块单元测试(验收标准 ① 单元测试覆盖 Argon2id 哈希/校验)。
 
 覆盖:
@@ -12,6 +12,7 @@ password 模块单元测试(验收标准 ① 单元测试覆盖 Argon2id 哈希/
     - needs_rehash 检测旧哈希需升级
     - 空哈希 / 未知格式拒绝
 """
+
 import pytest
 
 from fnixagent.core.security.auth.password import (
@@ -25,7 +26,6 @@ from fnixagent.core.security.auth.password import (
     verify_password,
 )
 
-
 # ---------------------------------------------------------------------------
 # 前置条件:argon2-cffi 必须可用(Phase 0.2 已加入 requirements)
 # ---------------------------------------------------------------------------
@@ -36,6 +36,7 @@ _SKIP_REASON = "argon2-cffi 不可用,跳过 Argon2id 真实哈希测试"
 # ---------------------------------------------------------------------------
 # Argon2id 哈希格式
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.skipif(not is_argon2_available(), reason=_SKIP_REASON)
 class TestArgon2HashFormat:
@@ -81,6 +82,7 @@ class TestArgon2HashFormat:
 # Argon2id 校验
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.skipif(not is_argon2_available(), reason=_SKIP_REASON)
 class TestArgon2Verify:
     """Argon2id 校验逻辑。"""
@@ -120,6 +122,7 @@ class TestArgon2Verify:
 # PBKDF2 向后兼容
 # ---------------------------------------------------------------------------
 
+
 class TestPbkdf2BackwardCompat:
     """PBKDF2 旧哈希向后兼容(不依赖 argon2-cffi)。"""
 
@@ -158,6 +161,7 @@ class TestPbkdf2BackwardCompat:
 # ---------------------------------------------------------------------------
 # 统一入口(自动识别哈希格式)
 # ---------------------------------------------------------------------------
+
 
 class TestUnifiedEntry:
     """hash_password / verify_password 统一入口。"""
@@ -199,6 +203,7 @@ class TestUnifiedEntry:
 # ---------------------------------------------------------------------------
 # needs_rehash 升级检测
 # ---------------------------------------------------------------------------
+
 
 class TestNeedsRehash:
     """needs_rehash 检测哈希是否需要升级到 Argon2id。"""

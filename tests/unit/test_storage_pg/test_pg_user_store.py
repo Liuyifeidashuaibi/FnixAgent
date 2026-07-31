@@ -1,4 +1,4 @@
-﻿"""
+"""
 PgUserStore 单元测试。
 
 验证:
@@ -9,14 +9,11 @@ PgUserStore 单元测试。
   - quota 累加
   - 数据持久化(新 adapter 读取已有数据)
 """
+
 from __future__ import annotations
 
-import time
-
-import pytest
-
+from fnixagent.services.storage import MAX_LOGIN_ATTEMPTS
 from fnixagent.services.storage_pg import PgUserStore
-from fnixagent.services.storage import MAX_LOGIN_ATTEMPTS, LOGIN_LOCKOUT_SECONDS
 
 
 class TestPgUserStoreCreate:

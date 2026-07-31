@@ -34,56 +34,59 @@ P2/P3 安全模块(文件保留,暂不导出,后续按需启用):
   - IdentityBroker:  SPIFFE 风格工作负载身份(x509-SVID + JWT 降级 + 自动旋转)
   - LeaseManager:    密钥租约 + Cubbyhole(单次 token + 绑定 task_id + 惰性清理)
 """
-from fnixagent.core.security.sensitive import SensitiveDetector
-from fnixagent.core.security.injection import InjectionGuard, InjectionCheckResult
-from fnixagent.core.security.moderation import ContentModerator, ModerationResult
-from fnixagent.core.security.desensitize import Desensitizer
-from fnixagent.core.security.engine import (
-    SecurityEngine,
-    SecurityCheckResult,
-)
-# P0 安全模块
-from fnixagent.core.security.sandbox import (
-    SandboxConfig,
-    SandboxResult,
-    SandboxExecutor,
-    SandboxLevel,
-)
+
 from fnixagent.core.security.auditor import (
     AuditRecord,
     AuditReport,
     ToolAuditor,
 )
+from fnixagent.core.security.desensitize import Desensitizer
+from fnixagent.core.security.engine import (
+    SecurityCheckResult,
+    SecurityEngine,
+)
 from fnixagent.core.security.impact import (
-    Snapshot,
     ImpactRecord,
     ImpactTracker,
+    Snapshot,
 )
-from fnixagent.core.security.secrets import (
-    SecretSource,
-    SecretValue,
-    SecretManager,
+from fnixagent.core.security.injection import InjectionCheckResult, InjectionGuard
+
+# P1 安全模块
+from fnixagent.core.security.judge import (
+    JudgeConfig,
+    JudgeVerdict,
+    LLMJudge,
 )
 from fnixagent.core.security.kdf import (
     DerivedKey,
     KDFManager,
 )
-# P1 安全模块
-from fnixagent.core.security.judge import (
-    JudgeVerdict,
-    JudgeConfig,
-    LLMJudge,
+from fnixagent.core.security.moderation import ContentModerator, ModerationResult
+
+# P0 安全模块
+from fnixagent.core.security.sandbox import (
+    SandboxConfig,
+    SandboxExecutor,
+    SandboxLevel,
+    SandboxResult,
 )
-from fnixagent.core.security.whitelist import (
-    ToolGrant,
-    WhitelistDecision,
-    ToolWhitelist,
-    DEFAULT_TASK_TOOLS,
+from fnixagent.core.security.secrets import (
+    SecretManager,
+    SecretSource,
+    SecretValue,
 )
+from fnixagent.core.security.sensitive import SensitiveDetector
 from fnixagent.core.security.signing import (
+    DocumentSigner,
     SignatureInfo,
     VerifyResult,
-    DocumentSigner,
+)
+from fnixagent.core.security.whitelist import (
+    DEFAULT_TASK_TOOLS,
+    ToolGrant,
+    ToolWhitelist,
+    WhitelistDecision,
 )
 
 # P2/P3 安全模块(文件保留,按需取消注释启用)

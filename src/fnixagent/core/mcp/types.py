@@ -12,13 +12,14 @@
   - 与本地 ToolMetadata 可互转(由 registry.to_tool_metadata 完成)
   - 异步友好(所有 IO 字段为纯数据,无 IO 资源)
 """
+
 from __future__ import annotations
 
 import re
 import uuid
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -38,7 +39,7 @@ class MCPTransport(str, Enum):
     """MCP 传输协议。"""
 
     STDIO = "stdio"  # 子进程 stdin/stdout(JSON-RPC over stdio)
-    SSE = "sse"      # Server-Sent Events(HTTP + SSE 长连接)
+    SSE = "sse"  # Server-Sent Events(HTTP + SSE 长连接)
     WEBSOCKET = "websocket"  # WebSocket(未来扩展)
 
 
@@ -89,7 +90,8 @@ class MCPToolDef(BaseModel):
             "function": {
                 "name": self.name,
                 "description": self.description,
-                "parameters": self.input_schema or {
+                "parameters": self.input_schema
+                or {
                     "type": "object",
                     "properties": {},
                 },
@@ -122,8 +124,8 @@ class MCPResponse(BaseModel):
     request_id: str = Field(..., description="对应 MCPRequest.request_id")
     success: bool = Field(..., description="调用是否成功")
     result: Any = Field(None, description="成功时的返回结果")
-    error: Optional[str] = Field(None, description="失败时的错误信息")
-    error_code: Optional[int] = Field(None, description="错误码(JSON-RPC)")
+    error: str | None = Field(None, description="失败时的错误信息")
+    error_code: int | None = Field(None, description="错误码(JSON-RPC)")
     latency_ms: float = Field(0.0, description="调用耗时毫秒")
     server_id: str = Field("")
     tool_name: str = ""
@@ -148,16 +150,16 @@ class MCPServerInfo(BaseModel):
     description: str = ""
     transport: MCPTransport = MCPTransport.STDIO
     # 连接配置(用于 reconnect)
-    command: Optional[str] = None       # STDIO:启动命令
+    command: str | None = None  # STDIO:启动命令
     args: list[str] = Field(default_factory=list)  # STDIO:命令参数
     env: dict[str, str] = Field(default_factory=dict)  # STDIO:环境变量
-    url: Optional[str] = None           # SSE/WebSocket:服务器 URL
+    url: str | None = None  # SSE/WebSocket:服务器 URL
     headers: dict[str, str] = Field(default_factory=dict)  # SSE:HTTP 头
     # 身份认证(SSE 模式下携带 Bearer Token,由 client 注入到请求头)
-    auth_token: Optional[str] = None
+    auth_token: str | None = None
     # 运行时状态
     status: MCPServerStatus = MCPServerStatus.DISCONNECTED
-    last_connected_at: Optional[datetime] = None
+    last_connected_at: datetime | None = None
     last_error: str = ""
 
     def validate_url(self) -> None:
@@ -169,13 +171,10 @@ class MCPServerInfo(BaseModel):
         if self.transport == MCPTransport.STDIO:
             return  # STDIO 不需要 URL
         if not self.url:
-            raise ValueError(
-                f"MCP transport '{self.transport.value}' requires 'url'"
-            )
+            raise ValueError(f"MCP transport '{self.transport.value}' requires 'url'")
         if not _URL_SCHEME_PATTERN.match(self.url):
             raise ValueError(
-                f"Invalid MCP server URL '{self.url}': "
-                "must be http(s):// or ws(s):// scheme"
+                f"Invalid MCP server URL '{self.url}': must be http(s):// or ws(s):// scheme"
             )
 
 
@@ -228,7 +227,7 @@ class JSONRPCResponse(BaseModel):
     jsonrpc: str = "2.0"
     id: str = ""
     result: Any = None
-    error: Optional[dict[str, Any]] = None
+    error: dict[str, Any] | None = None
 
 
 class JSONRPCError(BaseModel):

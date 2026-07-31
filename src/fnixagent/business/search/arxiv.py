@@ -16,14 +16,12 @@
   - 搜索结果限制 top_k,避免一次性返回过多
   - 跨源去重使用 dict O(1) 查找
 """
+
 import logging
 import re
 import xml.etree.ElementTree as ET
-from typing import Optional
-from urllib.parse import quote  # noqa: F401  保留供外部使用
 
 from fnixagent.core.tools.protocol import ToolMetadata
-
 
 _logger = logging.getLogger(__name__)
 
@@ -47,7 +45,7 @@ _ARXIV_NS = {"atom": "http://www.w3.org/2005/Atom"}
 def search_arxiv(
     query: str,
     max_results: int = 10,
-    category: Optional[str] = None,
+    category: str | None = None,
 ) -> dict:
     """
     搜索 arXiv 论文。
@@ -206,9 +204,7 @@ def parse_arxiv_response(xml_text: str) -> list[dict]:
 
             # 分类 (arXiv 分类标签)
             categories: list[str] = []
-            for category_elem in entry.findall(
-                "{http://arxiv.org/schemas/atom}primary_category"
-            ):
+            for category_elem in entry.findall("{http://arxiv.org/schemas/atom}primary_category"):
                 term = category_elem.get("term")
                 if term:
                     categories.append(term)
@@ -237,7 +233,7 @@ def parse_arxiv_response(xml_text: str) -> list[dict]:
 def search_semantic_scholar(
     query: str,
     max_results: int = 10,
-    year_range: Optional[str] = None,
+    year_range: str | None = None,
 ) -> dict:
     """
     搜索 Semantic Scholar 论文。
@@ -284,16 +280,18 @@ def search_semantic_scholar(
         # 标准化字段
         normalized = []
         for p in papers:
-            normalized.append({
-                "id": str(p.get("paperId", "")),
-                "title": p.get("title", ""),
-                "authors": [a.get("name", "") for a in p.get("authors", [])],
-                "abstract": p.get("abstract", ""),
-                "year": p.get("year"),
-                "url": p.get("url", ""),
-                "venue": p.get("venue", ""),
-                "citation_count": p.get("citationCount", 0),
-            })
+            normalized.append(
+                {
+                    "id": str(p.get("paperId", "")),
+                    "title": p.get("title", ""),
+                    "authors": [a.get("name", "") for a in p.get("authors", [])],
+                    "abstract": p.get("abstract", ""),
+                    "year": p.get("year"),
+                    "url": p.get("url", ""),
+                    "venue": p.get("venue", ""),
+                    "citation_count": p.get("citationCount", 0),
+                }
+            )
 
         return {
             "success": True,
@@ -378,7 +376,7 @@ def deduplicate_papers(papers: list[dict]) -> list[dict]:
         去重后的论文列表
     """
     seen_titles: dict[str, int] = {}  # normalized_title -> index
-    seen_ids: dict[str, int] = {}     # paper_id -> index
+    seen_ids: dict[str, int] = {}  # paper_id -> index
     result: list[dict] = []
 
     for paper in papers:
@@ -387,7 +385,7 @@ def deduplicate_papers(papers: list[dict]) -> list[dict]:
         norm_title = _normalize_title(title)
 
         # 检查是否重复(dict O(1) 查找)
-        dup_idx: Optional[int] = None
+        dup_idx: int | None = None
         if norm_title and norm_title in seen_titles:
             dup_idx = seen_titles[norm_title]
         elif paper_id and paper_id in seen_ids:
@@ -442,7 +440,7 @@ def sort_papers(papers: list[dict], by: str = "relevance") -> list[dict]:
 
 def search_paper(
     query: str,
-    sources: Optional[list[str]] = None,
+    sources: list[str] | None = None,
     max_results: int = 10,
 ) -> dict:
     """
@@ -486,19 +484,23 @@ def search_paper(
         elif source == "semantic_scholar":
             res = search_semantic_scholar(query, safe_max)
         else:
-            source_status.append({
-                "source": source,
-                "success": False,
-                "error": f"未知数据源: {source}",
-            })
+            source_status.append(
+                {
+                    "source": source,
+                    "success": False,
+                    "error": f"未知数据源: {source}",
+                }
+            )
             continue
 
-        source_status.append({
-            "source": source,
-            "success": res.get("success", False),
-            "count": res.get("count", 0),
-            "error": res.get("error", ""),
-        })
+        source_status.append(
+            {
+                "source": source,
+                "success": res.get("success", False),
+                "count": res.get("count", 0),
+                "error": res.get("error", ""),
+            }
+        )
 
         if res.get("success"):
             all_results.extend(res.get("results", []))
@@ -548,7 +550,6 @@ TOOL_METADATA = {
             },
         },
     ),
-
     "search_semantic_scholar": ToolMetadata(
         name="search_semantic_scholar",
         description="搜索 Semantic Scholar 学术论文库(全学科覆盖)",
@@ -563,7 +564,6 @@ TOOL_METADATA = {
             "required": ["query"],
         },
     ),
-
     "search_paper": ToolMetadata(
         name="search_paper",
         description="多源论文检索(聚合 arXiv + Semantic Scholar,自动去重)",

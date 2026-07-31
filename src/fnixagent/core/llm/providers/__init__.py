@@ -1,4 +1,5 @@
 """LLM Provider 适配器。"""
+
 from fnixagent.core.llm.providers.openai import (
     GLMProvider,
     MockLLMProvider,
@@ -8,6 +9,9 @@ from fnixagent.core.llm.providers.openai import (
 )
 
 __all__ = [
-    "GLMProvider", "MockLLMProvider", "OpenAICompatibleProvider",
-    "OpenAIProvider", "QwenProvider",
+    "GLMProvider",
+    "MockLLMProvider",
+    "OpenAICompatibleProvider",
+    "OpenAIProvider",
+    "QwenProvider",
 ]

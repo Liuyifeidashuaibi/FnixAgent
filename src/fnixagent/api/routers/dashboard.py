@@ -11,12 +11,12 @@ API 路由 - 后台控制面板 Dashboard(Phase 4.4)。
 
 所有接口要求 admin 角色。
 """
+
 from __future__ import annotations
 
 import os
 import time
 from datetime import datetime, timedelta
-from typing import Optional
 
 from fastapi import APIRouter, Depends, Query
 
@@ -36,17 +36,20 @@ _APP_START_TIME = time.time()
 
 def _get_user_store():
     from fnixagent.services.storage import get_user_store
+
     return get_user_store()
 
 
 def _get_audit_store():
     from fnixagent.services.storage_audit import get_audit_store
+
     return get_audit_store()
 
 
 def _get_moderation_service():
     try:
         from fnixagent.services.moderation import get_moderation_service
+
         return get_moderation_service()
     except Exception:
         return None
@@ -77,10 +80,7 @@ async def get_overview(_admin: dict = Depends(require_admin)):
     pending_deletion = sum(1 for u in all_users if u.profile.get("deleted_at"))
     now = datetime.utcnow()
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    today_new = sum(
-        1 for u in all_users
-        if u.created_at and u.created_at >= today_start
-    )
+    today_new = sum(1 for u in all_users if u.created_at and u.created_at >= today_start)
 
     # 审计统计(近 24h)
     since = now - timedelta(hours=24)
@@ -150,14 +150,13 @@ async def get_user_stats(_admin: dict = Depends(require_admin)):
     for i in range(6, -1, -1):
         day_start = (now - timedelta(days=i)).replace(hour=0, minute=0, second=0, microsecond=0)
         day_end = day_start + timedelta(days=1)
-        count = sum(
-            1 for u in all_users
-            if u.created_at and day_start <= u.created_at < day_end
+        count = sum(1 for u in all_users if u.created_at and day_start <= u.created_at < day_end)
+        daily_new.append(
+            {
+                "date": day_start.strftime("%Y-%m-%d"),
+                "new_users": count,
+            }
         )
-        daily_new.append({
-            "date": day_start.strftime("%Y-%m-%d"),
-            "new_users": count,
-        })
 
     return BaseResponse(
         success=True,
@@ -199,9 +198,7 @@ async def get_audit_stats(
             "window_hours": hours,
             "total_events": total or len(logs),
             "action_distribution": action_counts,
-            "top_active_users": [
-                {"user_id": uid, "count": cnt} for uid, cnt in top_users
-            ],
+            "top_active_users": [{"user_id": uid, "count": cnt} for uid, cnt in top_users],
         },
     )
 
@@ -241,8 +238,12 @@ async def update_moderation_config(
         return BaseResponse(success=False, error="审核服务未安装")
 
     allowed_keys = {
-        "enabled", "input_enabled", "output_enabled",
-        "auto_sanitize", "block_high_risk_only", "high_risk_threshold",
+        "enabled",
+        "input_enabled",
+        "output_enabled",
+        "auto_sanitize",
+        "block_high_risk_only",
+        "high_risk_threshold",
     }
     updates = {k: v for k, v in body.items() if k in allowed_keys}
     mod_svc.update_config(**updates)
@@ -308,8 +309,7 @@ async def get_trends(
         # 当日新增用户
         all_users, _ = user_store.list_users(limit=10000)
         new_users = sum(
-            1 for u in all_users
-            if u.created_at and day_start <= u.created_at < day_end
+            1 for u in all_users if u.created_at and day_start <= u.created_at < day_end
         )
 
         # 当日审计量
@@ -319,11 +319,13 @@ async def get_trends(
             limit=10000,
         )
 
-        daily_data.append({
-            "date": day_start.strftime("%Y-%m-%d"),
-            "new_users": new_users,
-            "audit_events": audit_count or len(audit_logs),
-        })
+        daily_data.append(
+            {
+                "date": day_start.strftime("%Y-%m-%d"),
+                "new_users": new_users,
+                "audit_events": audit_count or len(audit_logs),
+            }
+        )
 
     return BaseResponse(
         success=True,

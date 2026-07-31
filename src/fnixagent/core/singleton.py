@@ -38,7 +38,8 @@ from __future__ import annotations
 
 import logging
 import threading
-from typing import Any, Callable, Generic, Optional, TypeVar
+from collections.abc import Callable
+from typing import Any, Generic, TypeVar
 
 T = TypeVar("T")
 
@@ -70,7 +71,7 @@ class SingletonHolder(Generic[T]):
             factory: 创建单例实例的工厂函数(首次调用时执行)
         """
         self._factory = factory
-        self._instance: Optional[T] = None
+        self._instance: T | None = None
         self._lock = threading.Lock()
 
     @property
@@ -108,7 +109,7 @@ class SingletonHolder(Generic[T]):
         with self._lock:
             self._instance = None
 
-    def get_or_none(self) -> Optional[T]:
+    def get_or_none(self) -> T | None:
         """获取单例,未初始化返回 None(不触发创建)。"""
         return self._instance
 
@@ -116,6 +117,7 @@ class SingletonHolder(Generic[T]):
 # ---------------------------------------------------------------------------
 # 便捷装饰器: 将类转换为单例
 # ---------------------------------------------------------------------------
+
 
 def singleton_class(cls: type[T]) -> type[T]:
     """类装饰器: 为类添加线程安全的单例访问。
@@ -162,6 +164,7 @@ def singleton_class(cls: type[T]) -> type[T]:
 # 全局单例注册表(调试/监控用)
 # ---------------------------------------------------------------------------
 
+
 class SingletonRegistry:
     """全局单例注册表。
 
@@ -172,10 +175,10 @@ class SingletonRegistry:
     """
 
     def __init__(self) -> None:
-        self._holders: dict[str, "SingletonHolder[Any]"] = {}
+        self._holders: dict[str, SingletonHolder[Any]] = {}
         self._lock = threading.Lock()
 
-    def register(self, name: str, holder: "SingletonHolder[Any]") -> None:
+    def register(self, name: str, holder: SingletonHolder[Any]) -> None:
         """注册单例持有器。
 
         若 name 已存在则覆盖旧持有器并记录告警。
@@ -217,11 +220,7 @@ class SingletonRegistry:
             已初始化(is_initialized 为 True)的单例名称列表(按字母序排序)。
         """
         with self._lock:
-            return sorted(
-                name
-                for name, holder in self._holders.items()
-                if holder.is_initialized
-            )
+            return sorted(name for name, holder in self._holders.items() if holder.is_initialized)
 
     def reset_all(self) -> int:
         """重置所有已注册的单例(仅测试用)。
@@ -256,9 +255,7 @@ class SingletonRegistry:
         with self._lock:
             names = sorted(self._holders.keys())
             initialized_names = sorted(
-                name
-                for name, holder in self._holders.items()
-                if holder.is_initialized
+                name for name, holder in self._holders.items() if holder.is_initialized
             )
         return {
             "total": len(names),

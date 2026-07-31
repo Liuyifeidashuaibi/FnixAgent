@@ -21,14 +21,16 @@
   3. 多版本共存:同一技能在同一作用域仅保留一个版本(install 时若已安装则报错;upgrade 切换版本)
   4. 持久化:本实现为内存版;生产环境可由子类重写 _load/_persist 接入 DB
 """
+
 from __future__ import annotations
 
 import threading
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Optional
+from typing import Any
 
 from fnixagent.core.skills.market import (
     SkillMarket,
@@ -42,10 +44,18 @@ from fnixagent.core.tools.protocol import ToolFunc, ToolMetadata
 
 # 沙箱禁用模块(技能安装时不允许访问文件系统/子进程/网络底层)
 # 检测机制:扫描 loader 返回的工具函数 __globals__,若包含以下模块则拒绝注册
-_SANDBOX_FORBIDDEN_MODULES: frozenset[str] = frozenset({
-    "os", "pathlib", "subprocess", "shutil", "sys",
-    "socket", "ctypes", "multiprocessing",
-})
+_SANDBOX_FORBIDDEN_MODULES: frozenset[str] = frozenset(
+    {
+        "os",
+        "pathlib",
+        "subprocess",
+        "shutil",
+        "sys",
+        "socket",
+        "ctypes",
+        "multiprocessing",
+    }
+)
 
 
 # ---------------------------------------------------------------------------
@@ -57,14 +67,14 @@ class InstallScope(str, Enum):
     """安装作用域。"""
 
     PROJECT = "project"  # 项目级:项目内所有成员可用
-    TENANT = "tenant"    # 租户级:租户内所有项目可用
-    USER = "user"        # 用户级:仅本人可用
+    TENANT = "tenant"  # 租户级:租户内所有项目可用
+    USER = "user"  # 用户级:仅本人可用
 
 
 class InstallStatus(str, Enum):
     """安装状态。"""
 
-    ACTIVE = "active"      # 已安装且启用
+    ACTIVE = "active"  # 已安装且启用
     DISABLED = "disabled"  # 已安装但禁用(ToolMetadata.enabled=False)
 
 
@@ -85,8 +95,8 @@ class SkillInstallation:
     skill_name: str = ""
     version: str = ""
     scope: InstallScope = InstallScope.USER
-    scope_id: str = ""           # project_id / tenant_id / user_id(对应 scope)
-    installed_by: str = ""       # 安装者用户 ID
+    scope_id: str = ""  # project_id / tenant_id / user_id(对应 scope)
+    installed_by: str = ""  # 安装者用户 ID
     installed_at: datetime = field(default_factory=datetime.utcnow)
     status: InstallStatus = InstallStatus.ACTIVE
     # 已注册的工具名列表(卸载时按此 unregister)
@@ -156,7 +166,7 @@ class SkillInstaller:
         self,
         market: SkillMarket,
         tool_registry: Any,  # 避免硬依赖 ToolRegistry(鸭子类型)
-        tool_loader: Optional[ToolLoader] = None,
+        tool_loader: ToolLoader | None = None,
     ) -> None:
         """
         Args:
@@ -166,7 +176,7 @@ class SkillInstaller:
         """
         self._market = market
         self._registry = tool_registry
-        self._loader: Optional[ToolLoader] = tool_loader
+        self._loader: ToolLoader | None = tool_loader
         self._installations: dict[str, SkillInstallation] = {}  # id → installation
         # 索引:(scope, scope_id, skill_name) → installation_id(确保同作用域不重复)
         self._scope_index: dict[tuple[str, str, str], str] = {}
@@ -176,16 +186,14 @@ class SkillInstaller:
     # loader 设置
     # ------------------------------------------------------------------
 
-    def set_tool_loader(self, loader: ToolLoader) -> "SkillInstaller":
+    def set_tool_loader(self, loader: ToolLoader) -> SkillInstaller:
         """设置工具加载器(链式调用)。"""
         self._loader = loader
         return self
 
     def _ensure_loader(self) -> ToolLoader:
         if self._loader is None:
-            raise ToolLoaderError(
-                "tool_loader not set; call set_tool_loader() first"
-            )
+            raise ToolLoaderError("tool_loader not set; call set_tool_loader() first")
         return self._loader
 
     # ------------------------------------------------------------------
@@ -198,8 +206,8 @@ class SkillInstaller:
         scope: InstallScope = InstallScope.USER,
         scope_id: str = "",
         installed_by: str = "",
-        version: Optional[str] = None,
-        config: Optional[dict[str, Any]] = None,
+        version: str | None = None,
+        config: dict[str, Any] | None = None,
     ) -> SkillInstallation:
         """安装技能到指定作用域。
 
@@ -254,14 +262,10 @@ class SkillInstaller:
             try:
                 loaded = loader(entry, skill_version)
             except Exception as e:
-                raise ToolLoaderError(
-                    f"tool_loader failed for skill '{entry.name}': {e}"
-                ) from e
+                raise ToolLoaderError(f"tool_loader failed for skill '{entry.name}': {e}") from e
 
             if not loaded:
-                raise ToolLoaderError(
-                    f"tool_loader returned empty for skill '{entry.name}'"
-                )
+                raise ToolLoaderError(f"tool_loader returned empty for skill '{entry.name}'")
 
             # 5. 逐个注册到 ToolRegistry(失败自动回滚)
             #    注册前进行沙箱校验:禁止工具函数访问文件系统/子进程等危险模块
@@ -275,9 +279,7 @@ class SkillInstaller:
                     else:
                         # loader 只返回 func,用默认元数据
                         func = item
-                        metadata = self._make_default_metadata(
-                            entry, skill_version, tool_name
-                        )
+                        metadata = self._make_default_metadata(entry, skill_version, tool_name)
                     # 沙箱校验:扫描函数 __globals__,拒绝访问禁用模块
                     self._check_sandbox(tool_name, func)
                     self._registry.register(metadata, func)
@@ -323,9 +325,7 @@ class SkillInstaller:
         with self._lock:
             installation = self._installations.get(installation_id)
             if installation is None:
-                raise SkillNotInstalledError(
-                    f"Installation '{installation_id}' not found"
-                )
+                raise SkillNotInstalledError(f"Installation '{installation_id}' not found")
             # 逐个注销工具(忽略错误,确保流程完成)
             for tool_name in installation.installed_tool_names:
                 try:
@@ -399,7 +399,7 @@ class SkillInstaller:
     def upgrade(
         self,
         installation_id: str,
-        target_version: Optional[str] = None,
+        target_version: str | None = None,
     ) -> SkillInstallation:
         """升级到指定版本(target_version=None 表示 latest_version)。
 
@@ -436,10 +436,10 @@ class SkillInstaller:
 
     def list_installations(
         self,
-        scope: Optional[InstallScope] = None,
-        scope_id: Optional[str] = None,
-        skill_name: Optional[str] = None,
-        status: Optional[InstallStatus] = None,
+        scope: InstallScope | None = None,
+        scope_id: str | None = None,
+        skill_name: str | None = None,
+        status: InstallStatus | None = None,
     ) -> list[SkillInstallation]:
         """列出安装记录(支持过滤)。"""
         with self._lock:
@@ -455,7 +455,7 @@ class SkillInstaller:
             results.sort(key=lambda i: i.installed_at, reverse=True)
             return results
 
-    def get_installation(self, installation_id: str) -> Optional[SkillInstallation]:
+    def get_installation(self, installation_id: str) -> SkillInstallation | None:
         """按 ID 获取安装记录。"""
         with self._lock:
             return self._installations.get(installation_id)
@@ -474,15 +474,12 @@ class SkillInstaller:
     def find_installations(
         self,
         skill_name: str,
-        scope: Optional[InstallScope] = None,
-        scope_id: Optional[str] = None,
+        scope: InstallScope | None = None,
+        scope_id: str | None = None,
     ) -> list[SkillInstallation]:
         """按技能名查找所有安装记录(支持 scope 过滤)。"""
         with self._lock:
-            results = [
-                i for i in self._installations.values()
-                if i.skill_name == skill_name
-            ]
+            results = [i for i in self._installations.values() if i.skill_name == skill_name]
             if scope is not None:
                 results = [i for i in results if i.scope == scope]
             if scope_id is not None:
@@ -506,9 +503,7 @@ class SkillInstaller:
                 "total": len(installs),
                 "by_scope": by_scope,
                 "by_status": by_status,
-                "active": sum(
-                    1 for i in installs if i.status == InstallStatus.ACTIVE
-                ),
+                "active": sum(1 for i in installs if i.status == InstallStatus.ACTIVE),
             }
 
     # ------------------------------------------------------------------
@@ -518,9 +513,7 @@ class SkillInstaller:
     def _get_installation_or_raise(self, installation_id: str) -> SkillInstallation:
         installation = self._installations.get(installation_id)
         if installation is None:
-            raise SkillNotInstalledError(
-                f"Installation '{installation_id}' not found"
-            )
+            raise SkillNotInstalledError(f"Installation '{installation_id}' not found")
         return installation
 
     def _validate_config(

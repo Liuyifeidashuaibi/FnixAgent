@@ -15,10 +15,10 @@ Sandbox - 沙箱隔离 (Sandbox Isolation)
   - Docker/gVisor/Firecracker 执行器需部署对应运行时
   - 生产环境建议 gVisor 或 Firecracker
 """
+
 from __future__ import annotations
 
 import asyncio
-import subprocess
 import time
 from dataclasses import dataclass, field
 from typing import Any, Protocol, runtime_checkable
@@ -29,6 +29,7 @@ from fnixagent.core.agent.types import SandboxLevel, utcnow_iso
 @dataclass
 class SandboxConfig:
     """沙箱配置 (类比 cgroup limits)。"""
+
     level: SandboxLevel = SandboxLevel.NONE
     timeout_sec: float = 30.0
     memory_limit_mb: int = 512
@@ -48,6 +49,7 @@ class SandboxConfig:
 @dataclass
 class SandboxResult:
     """沙箱执行结果。"""
+
     success: bool
     exit_code: int
     stdout: str = ""
@@ -73,6 +75,7 @@ class SandboxResult:
 @runtime_checkable
 class SandboxExecutor(Protocol):
     """沙箱执行器协议。"""
+
     async def execute(self, command: str, config: SandboxConfig) -> SandboxResult: ...
 
 
@@ -104,18 +107,21 @@ class InlineExecutor:
                     stderr=stderr_b.decode("utf-8", errors="replace"),
                     duration_sec=duration,
                 )
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 proc.kill()
                 await proc.wait()
                 return SandboxResult(
-                    success=False, exit_code=-1,
+                    success=False,
+                    exit_code=-1,
                     stderr=f"超时 ({config.timeout_sec}s)",
                     duration_sec=time.monotonic() - start,
                     timed_out=True,
                 )
         except Exception as e:
             return SandboxResult(
-                success=False, exit_code=-1, error=str(e),
+                success=False,
+                exit_code=-1,
+                error=str(e),
                 duration_sec=time.monotonic() - start,
             )
 
@@ -133,11 +139,17 @@ class DockerExecutor:
     async def execute(self, command: str, config: SandboxConfig) -> SandboxResult:
         start = time.monotonic()
         args = [
-            self._docker, "run", "--rm",
-            "--memory", f"{config.memory_limit_mb}m",
-            "--cpus", str(config.cpu_limit),
-            "--network", "none" if not config.network_enabled else "bridge",
-            "--workdir", config.workdir,
+            self._docker,
+            "run",
+            "--rm",
+            "--memory",
+            f"{config.memory_limit_mb}m",
+            "--cpus",
+            str(config.cpu_limit),
+            "--network",
+            "none" if not config.network_enabled else "bridge",
+            "--workdir",
+            config.workdir,
         ]
         if config.filesystem_readonly:
             args.append("--read-only")
@@ -162,24 +174,28 @@ class DockerExecutor:
                     stderr=stderr_b.decode("utf-8", errors="replace"),
                     duration_sec=duration,
                 )
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 proc.kill()
                 await proc.wait()
                 return SandboxResult(
-                    success=False, exit_code=-1,
+                    success=False,
+                    exit_code=-1,
                     stderr=f"超时 ({config.timeout_sec}s)",
                     duration_sec=time.monotonic() - start,
                     timed_out=True,
                 )
         except FileNotFoundError:
             return SandboxResult(
-                success=False, exit_code=-1,
+                success=False,
+                exit_code=-1,
                 error="Docker 未安装或不可用",
                 duration_sec=time.monotonic() - start,
             )
         except Exception as e:
             return SandboxResult(
-                success=False, exit_code=-1, error=str(e),
+                success=False,
+                exit_code=-1,
+                error=str(e),
                 duration_sec=time.monotonic() - start,
             )
 
@@ -196,12 +212,19 @@ class GVisorExecutor(DockerExecutor):
         # 调用父类但使用 gVisor runtime
         start = time.monotonic()
         args = [
-            self._docker, "run", "--rm",
-            "--runtime", config.gvisor_runtime,
-            "--memory", f"{config.memory_limit_mb}m",
-            "--cpus", str(config.cpu_limit),
-            "--network", "none" if not config.network_enabled else "bridge",
-            "--workdir", config.workdir,
+            self._docker,
+            "run",
+            "--rm",
+            "--runtime",
+            config.gvisor_runtime,
+            "--memory",
+            f"{config.memory_limit_mb}m",
+            "--cpus",
+            str(config.cpu_limit),
+            "--network",
+            "none" if not config.network_enabled else "bridge",
+            "--workdir",
+            config.workdir,
         ]
         if config.filesystem_readonly:
             args.append("--read-only")
@@ -226,24 +249,28 @@ class GVisorExecutor(DockerExecutor):
                     stderr=stderr_b.decode("utf-8", errors="replace"),
                     duration_sec=duration,
                 )
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 proc.kill()
                 await proc.wait()
                 return SandboxResult(
-                    success=False, exit_code=-1,
+                    success=False,
+                    exit_code=-1,
                     stderr=f"超时 ({config.timeout_sec}s)",
                     duration_sec=time.monotonic() - start,
                     timed_out=True,
                 )
         except FileNotFoundError:
             return SandboxResult(
-                success=False, exit_code=-1,
+                success=False,
+                exit_code=-1,
                 error="Docker 或 gVisor (runsc) 未安装",
                 duration_sec=time.monotonic() - start,
             )
         except Exception as e:
             return SandboxResult(
-                success=False, exit_code=-1, error=str(e),
+                success=False,
+                exit_code=-1,
+                error=str(e),
                 duration_sec=time.monotonic() - start,
             )
 
@@ -262,7 +289,8 @@ class FirecrackerExecutor:
         # Firecracker 集成较复杂, 需要准备 VM 配置和 rootfs
         # 此处提供接口骨架, 实际部署时需补充 VM 生命周期管理
         return SandboxResult(
-            success=False, exit_code=-1,
+            success=False,
+            exit_code=-1,
             error="FirecrackerExecutor 需要补充 VM 生命周期管理 (rootfs/kernel/socket)",
         )
 
@@ -300,14 +328,14 @@ class SandboxManager:
         """为指定级别设置自定义执行器。"""
         self._executors[level] = executor
 
-    async def execute(self, command: str,
-                      config: SandboxConfig | None = None) -> SandboxResult:
+    async def execute(self, command: str, config: SandboxConfig | None = None) -> SandboxResult:
         """执行命令。"""
         cfg = config or self._default_config
         executor = self._executors.get(cfg.level)
         if executor is None:
             return SandboxResult(
-                success=False, exit_code=-1,
+                success=False,
+                exit_code=-1,
                 error=f"未注册 {cfg.level.value} 执行器",
             )
         self._stats["total_executions"] += 1
@@ -325,7 +353,12 @@ class SandboxManager:
 
 
 __all__ = [
-    "SandboxConfig", "SandboxResult", "SandboxExecutor",
-    "InlineExecutor", "DockerExecutor", "GVisorExecutor", "FirecrackerExecutor",
+    "DockerExecutor",
+    "FirecrackerExecutor",
+    "GVisorExecutor",
+    "InlineExecutor",
+    "SandboxConfig",
+    "SandboxExecutor",
     "SandboxManager",
+    "SandboxResult",
 ]

@@ -11,18 +11,17 @@ RBAC 存储层(Phase 2.1)。
     - 角色变更后自动调用 invalidate_user_permission_cache / invalidate_all_permission_cache
     - 内置角色(is_builtin=True)不可删除,防止误操作破坏系统
 """
+
 from __future__ import annotations
 
 import os
 import threading
 from datetime import datetime
-from typing import Any, Optional
 
 from fnixagent.core.security.rbac import (
     invalidate_all_permission_cache,
     invalidate_user_permission_cache,
 )
-
 
 # ---------------------------------------------------------------------------
 # 数据传输对象(DTO)
@@ -40,9 +39,9 @@ class RoleDTO:
         is_builtin: bool = False,
         is_active: bool = True,
         sort_order: int = 0,
-        permission_codes: Optional[list[str]] = None,
-        created_at: Optional[datetime] = None,
-        updated_at: Optional[datetime] = None,
+        permission_codes: list[str] | None = None,
+        created_at: datetime | None = None,
+        updated_at: datetime | None = None,
     ):
         self.id = id
         self.tenant_id = tenant_id
@@ -82,7 +81,7 @@ class PermissionDTO:
         action: str,
         description: str = "",
         is_builtin: bool = True,
-        created_at: Optional[datetime] = None,
+        created_at: datetime | None = None,
     ):
         self.id = id
         self.code = code
@@ -113,14 +112,14 @@ class DepartmentDTO:
         tenant_id: int,
         code: str,
         name: str,
-        parent_id: Optional[int] = None,
-        manager_id: Optional[int] = None,
+        parent_id: int | None = None,
+        manager_id: int | None = None,
         sort_order: int = 0,
         description: str = "",
         is_active: bool = True,
-        created_at: Optional[datetime] = None,
-        updated_at: Optional[datetime] = None,
-        children: Optional[list] = None,
+        created_at: datetime | None = None,
+        updated_at: datetime | None = None,
+        children: list | None = None,
     ):
         self.id = id
         self.tenant_id = tenant_id
@@ -163,8 +162,8 @@ class PositionDTO:
         description: str = "",
         is_active: bool = True,
         sort_order: int = 0,
-        created_at: Optional[datetime] = None,
-        updated_at: Optional[datetime] = None,
+        created_at: datetime | None = None,
+        updated_at: datetime | None = None,
     ):
         self.id = id
         self.tenant_id = tenant_id
@@ -201,7 +200,8 @@ class PgRbacStore:
     """PostgreSQL 持久化 RBAC 存储。"""
 
     def __init__(self):
-        from fnixagent.services.storage_postgres import get_db_adapter
+        from sqlalchemy import delete, insert, select
+
         from fnixagent.models.db.models import (
             Department,
             Permission,
@@ -210,7 +210,7 @@ class PgRbacStore:
             role_permissions,
             user_roles,
         )
-        from sqlalchemy import select, delete, insert
+        from fnixagent.services.storage_postgres import get_db_adapter
 
         self._get_db = get_db_adapter
         self._Department = Department
@@ -227,27 +227,42 @@ class PgRbacStore:
     # 权限
     # =======================================================================
 
-    def list_permissions(self, resource: Optional[str] = None) -> list[PermissionDTO]:
+    def list_permissions(self, resource: str | None = None) -> list[PermissionDTO]:
         with self._get_db().session() as s:
-            stmt = self._select(self._Permission).order_by(self._Permission.resource, self._Permission.code)
+            stmt = self._select(self._Permission).order_by(
+                self._Permission.resource, self._Permission.code
+            )
             if resource:
                 stmt = stmt.where(self._Permission.resource == resource)
             rows = s.execute(stmt).scalars().all()
-            return [PermissionDTO(
-                id=r.id, code=r.code, name=r.name, resource=r.resource,
-                action=r.action, description=r.description or "",
-                is_builtin=r.is_builtin, created_at=r.created_at,
-            ) for r in rows]
+            return [
+                PermissionDTO(
+                    id=r.id,
+                    code=r.code,
+                    name=r.name,
+                    resource=r.resource,
+                    action=r.action,
+                    description=r.description or "",
+                    is_builtin=r.is_builtin,
+                    created_at=r.created_at,
+                )
+                for r in rows
+            ]
 
-    def get_permission(self, perm_id: int) -> Optional[PermissionDTO]:
+    def get_permission(self, perm_id: int) -> PermissionDTO | None:
         with self._get_db().session() as s:
             r = s.get(self._Permission, perm_id)
             if not r:
                 return None
             return PermissionDTO(
-                id=r.id, code=r.code, name=r.name, resource=r.resource,
-                action=r.action, description=r.description or "",
-                is_builtin=r.is_builtin, created_at=r.created_at,
+                id=r.id,
+                code=r.code,
+                name=r.name,
+                resource=r.resource,
+                action=r.action,
+                description=r.description or "",
+                is_builtin=r.is_builtin,
+                created_at=r.created_at,
             )
 
     # =======================================================================
@@ -256,79 +271,132 @@ class PgRbacStore:
 
     def list_roles(self, include_permissions: bool = True) -> list[RoleDTO]:
         with self._get_db().session() as s:
-            rows = s.execute(
-                self._select(self._Role).order_by(self._Role.sort_order, self._Role.id)
-            ).scalars().all()
+            rows = (
+                s.execute(self._select(self._Role).order_by(self._Role.sort_order, self._Role.id))
+                .scalars()
+                .all()
+            )
             result = []
             for r in rows:
                 dto = RoleDTO(
-                    id=r.id, tenant_id=r.tenant_id, code=r.code, name=r.name,
-                    description=r.description or "", is_builtin=r.is_builtin,
-                    is_active=r.is_active, sort_order=r.sort_order,
-                    created_at=r.created_at, updated_at=r.updated_at,
+                    id=r.id,
+                    tenant_id=r.tenant_id,
+                    code=r.code,
+                    name=r.name,
+                    description=r.description or "",
+                    is_builtin=r.is_builtin,
+                    is_active=r.is_active,
+                    sort_order=r.sort_order,
+                    created_at=r.created_at,
+                    updated_at=r.updated_at,
                 )
                 if include_permissions:
                     # 查询角色权限码
                     stmt = (
                         self._select(self._Permission.code)
-                        .join(self._role_permissions, self._role_permissions.c.permission_id == self._Permission.id)
+                        .join(
+                            self._role_permissions,
+                            self._role_permissions.c.permission_id == self._Permission.id,
+                        )
                         .where(self._role_permissions.c.role_id == r.id)
                     )
                     dto.permission_codes = [row[0] for row in s.execute(stmt)]
                 result.append(dto)
             return result
 
-    def get_role(self, role_id: int) -> Optional[RoleDTO]:
+    def get_role(self, role_id: int) -> RoleDTO | None:
         with self._get_db().session() as s:
             r = s.get(self._Role, role_id)
             if not r:
                 return None
             dto = RoleDTO(
-                id=r.id, tenant_id=r.tenant_id, code=r.code, name=r.name,
-                description=r.description or "", is_builtin=r.is_builtin,
-                is_active=r.is_active, sort_order=r.sort_order,
-                created_at=r.created_at, updated_at=r.updated_at,
+                id=r.id,
+                tenant_id=r.tenant_id,
+                code=r.code,
+                name=r.name,
+                description=r.description or "",
+                is_builtin=r.is_builtin,
+                is_active=r.is_active,
+                sort_order=r.sort_order,
+                created_at=r.created_at,
+                updated_at=r.updated_at,
             )
             stmt = (
                 self._select(self._Permission.code)
-                .join(self._role_permissions, self._role_permissions.c.permission_id == self._Permission.id)
+                .join(
+                    self._role_permissions,
+                    self._role_permissions.c.permission_id == self._Permission.id,
+                )
                 .where(self._role_permissions.c.role_id == r.id)
             )
             dto.permission_codes = [row[0] for row in s.execute(stmt)]
             return dto
 
-    def create_role(self, code: str, name: str, description: str = "",
-                    permission_codes: Optional[list[str]] = None,
-                    sort_order: int = 0, tenant_id: int = 1) -> RoleDTO:
+    def create_role(
+        self,
+        code: str,
+        name: str,
+        description: str = "",
+        permission_codes: list[str] | None = None,
+        sort_order: int = 0,
+        tenant_id: int = 1,
+    ) -> RoleDTO:
         with self._get_db().session() as s:
             role = self._Role(
-                tenant_id=tenant_id, code=code, name=name, description=description,
-                is_builtin=False, is_active=True, sort_order=sort_order,
+                tenant_id=tenant_id,
+                code=code,
+                name=name,
+                description=description,
+                is_builtin=False,
+                is_active=True,
+                sort_order=sort_order,
             )
             s.add(role)
             s.flush()  # 获取 id
 
             # 分配权限
             if permission_codes:
-                perms = s.execute(
-                    self._select(self._Permission).where(self._Permission.code.in_(permission_codes))
-                ).scalars().all()
+                perms = (
+                    s.execute(
+                        self._select(self._Permission).where(
+                            self._Permission.code.in_(permission_codes)
+                        )
+                    )
+                    .scalars()
+                    .all()
+                )
                 for p in perms:
-                    s.execute(self._insert(self._role_permissions).values(role_id=role.id, permission_id=p.id))
+                    s.execute(
+                        self._insert(self._role_permissions).values(
+                            role_id=role.id, permission_id=p.id
+                        )
+                    )
 
             s.flush()
             dto = RoleDTO(
-                id=role.id, tenant_id=role.tenant_id, code=role.code, name=role.name,
-                description=role.description or "", is_builtin=False, is_active=True,
-                sort_order=role.sort_order, permission_codes=permission_codes or [],
-                created_at=role.created_at, updated_at=role.updated_at,
+                id=role.id,
+                tenant_id=role.tenant_id,
+                code=role.code,
+                name=role.name,
+                description=role.description or "",
+                is_builtin=False,
+                is_active=True,
+                sort_order=role.sort_order,
+                permission_codes=permission_codes or [],
+                created_at=role.created_at,
+                updated_at=role.updated_at,
             )
             # 新角色不影响现有用户缓存(尚未分配给任何人)
             return dto
 
-    def update_role(self, role_id: int, name: Optional[str] = None,
-                    description: Optional[str] = None, is_active: Optional[bool] = None,
-                    sort_order: Optional[int] = None) -> Optional[RoleDTO]:
+    def update_role(
+        self,
+        role_id: int,
+        name: str | None = None,
+        description: str | None = None,
+        is_active: bool | None = None,
+        sort_order: int | None = None,
+    ) -> RoleDTO | None:
         with self._get_db().session() as s:
             r = s.get(self._Role, role_id)
             if not r:
@@ -359,21 +427,35 @@ class PgRbacStore:
             invalidate_all_permission_cache()
             return True
 
-    def set_role_permissions(self, role_id: int, permission_codes: list[str]) -> Optional[RoleDTO]:
+    def set_role_permissions(self, role_id: int, permission_codes: list[str]) -> RoleDTO | None:
         """全量替换角色的权限集合。"""
         with self._get_db().session() as s:
             r = s.get(self._Role, role_id)
             if not r:
                 return None
             # 清空旧权限
-            s.execute(self._delete(self._role_permissions).where(self._role_permissions.c.role_id == role_id))
+            s.execute(
+                self._delete(self._role_permissions).where(
+                    self._role_permissions.c.role_id == role_id
+                )
+            )
             # 写入新权限
             if permission_codes:
-                perms = s.execute(
-                    self._select(self._Permission).where(self._Permission.code.in_(permission_codes))
-                ).scalars().all()
+                perms = (
+                    s.execute(
+                        self._select(self._Permission).where(
+                            self._Permission.code.in_(permission_codes)
+                        )
+                    )
+                    .scalars()
+                    .all()
+                )
                 for p in perms:
-                    s.execute(self._insert(self._role_permissions).values(role_id=role_id, permission_id=p.id))
+                    s.execute(
+                        self._insert(self._role_permissions).values(
+                            role_id=role_id, permission_id=p.id
+                        )
+                    )
             s.flush()
             invalidate_all_permission_cache()
             return self.get_role(role_id)
@@ -382,7 +464,9 @@ class PgRbacStore:
     # 用户-角色分配
     # =======================================================================
 
-    def assign_role_to_user(self, user_id: int, role_id: int, granted_by: Optional[int] = None) -> bool:
+    def assign_role_to_user(
+        self, user_id: int, role_id: int, granted_by: int | None = None
+    ) -> bool:
         with self._get_db().session() as s:
             # 幂等:已存在则跳过
             exists = s.execute(
@@ -393,46 +477,71 @@ class PgRbacStore:
             ).first()
             if exists:
                 return True
-            s.execute(self._insert(self._user_roles).values(
-                user_id=user_id, role_id=role_id, granted_by=granted_by,
-            ))
+            s.execute(
+                self._insert(self._user_roles).values(
+                    user_id=user_id,
+                    role_id=role_id,
+                    granted_by=granted_by,
+                )
+            )
             s.flush()
             invalidate_user_permission_cache(user_id)
             return True
 
     def revoke_role_from_user(self, user_id: int, role_id: int) -> bool:
         with self._get_db().session() as s:
-            result = s.execute(self._delete(self._user_roles).where(
-                self._user_roles.c.user_id == user_id,
-                self._user_roles.c.role_id == role_id,
-            ))
+            result = s.execute(
+                self._delete(self._user_roles).where(
+                    self._user_roles.c.user_id == user_id,
+                    self._user_roles.c.role_id == role_id,
+                )
+            )
             s.flush()
             invalidate_user_permission_cache(user_id)
             return result.rowcount > 0
 
     def get_user_roles(self, user_id: int) -> list[RoleDTO]:
         with self._get_db().session() as s:
-            rows = s.execute(
-                self._select(self._Role)
-                .join(self._user_roles, self._user_roles.c.role_id == self._Role.id)
-                .where(self._user_roles.c.user_id == user_id)
-                .order_by(self._Role.sort_order)
-            ).scalars().all()
-            return [RoleDTO(
-                id=r.id, tenant_id=r.tenant_id, code=r.code, name=r.name,
-                description=r.description or "", is_builtin=r.is_builtin,
-                is_active=r.is_active, sort_order=r.sort_order,
-                created_at=r.created_at, updated_at=r.updated_at,
-            ) for r in rows]
+            rows = (
+                s.execute(
+                    self._select(self._Role)
+                    .join(self._user_roles, self._user_roles.c.role_id == self._Role.id)
+                    .where(self._user_roles.c.user_id == user_id)
+                    .order_by(self._Role.sort_order)
+                )
+                .scalars()
+                .all()
+            )
+            return [
+                RoleDTO(
+                    id=r.id,
+                    tenant_id=r.tenant_id,
+                    code=r.code,
+                    name=r.name,
+                    description=r.description or "",
+                    is_builtin=r.is_builtin,
+                    is_active=r.is_active,
+                    sort_order=r.sort_order,
+                    created_at=r.created_at,
+                    updated_at=r.updated_at,
+                )
+                for r in rows
+            ]
 
-    def set_user_roles(self, user_id: int, role_ids: list[int], granted_by: Optional[int] = None) -> None:
+    def set_user_roles(
+        self, user_id: int, role_ids: list[int], granted_by: int | None = None
+    ) -> None:
         """全量替换用户的角色集合。"""
         with self._get_db().session() as s:
             s.execute(self._delete(self._user_roles).where(self._user_roles.c.user_id == user_id))
             for rid in role_ids:
-                s.execute(self._insert(self._user_roles).values(
-                    user_id=user_id, role_id=rid, granted_by=granted_by,
-                ))
+                s.execute(
+                    self._insert(self._user_roles).values(
+                        user_id=user_id,
+                        role_id=rid,
+                        granted_by=granted_by,
+                    )
+                )
             s.flush()
             invalidate_user_permission_cache(user_id)
 
@@ -443,9 +552,15 @@ class PgRbacStore:
     def list_departments(self) -> list[DepartmentDTO]:
         """返回扁平列表(前端可自行构建树,或调用 get_department_tree)。"""
         with self._get_db().session() as s:
-            rows = s.execute(
-                self._select(self._Department).order_by(self._Department.sort_order, self._Department.id)
-            ).scalars().all()
+            rows = (
+                s.execute(
+                    self._select(self._Department).order_by(
+                        self._Department.sort_order, self._Department.id
+                    )
+                )
+                .scalars()
+                .all()
+            )
             return [self._dept_to_dto(r) for r in rows]
 
     def get_department_tree(self) -> list[DepartmentDTO]:
@@ -462,29 +577,54 @@ class PgRbacStore:
 
     def _dept_to_dto(self, r) -> DepartmentDTO:
         return DepartmentDTO(
-            id=r.id, tenant_id=r.tenant_id, code=r.code, name=r.name,
-            parent_id=r.parent_id, manager_id=r.manager_id,
-            sort_order=r.sort_order, description=r.description or "",
-            is_active=r.is_active, created_at=r.created_at, updated_at=r.updated_at,
+            id=r.id,
+            tenant_id=r.tenant_id,
+            code=r.code,
+            name=r.name,
+            parent_id=r.parent_id,
+            manager_id=r.manager_id,
+            sort_order=r.sort_order,
+            description=r.description or "",
+            is_active=r.is_active,
+            created_at=r.created_at,
+            updated_at=r.updated_at,
         )
 
-    def create_department(self, code: str, name: str, parent_id: Optional[int] = None,
-                          manager_id: Optional[int] = None, description: str = "",
-                          sort_order: int = 0, tenant_id: int = 1) -> DepartmentDTO:
+    def create_department(
+        self,
+        code: str,
+        name: str,
+        parent_id: int | None = None,
+        manager_id: int | None = None,
+        description: str = "",
+        sort_order: int = 0,
+        tenant_id: int = 1,
+    ) -> DepartmentDTO:
         with self._get_db().session() as s:
             dept = self._Department(
-                tenant_id=tenant_id, code=code, name=name, parent_id=parent_id,
-                manager_id=manager_id, description=description, sort_order=sort_order,
+                tenant_id=tenant_id,
+                code=code,
+                name=name,
+                parent_id=parent_id,
+                manager_id=manager_id,
+                description=description,
+                sort_order=sort_order,
                 is_active=True,
             )
             s.add(dept)
             s.flush()
             return self._dept_to_dto(dept)
 
-    def update_department(self, dept_id: int, name: Optional[str] = None,
-                          parent_id: Optional[int] = None, manager_id: Optional[int] = None,
-                          description: Optional[str] = None, is_active: Optional[bool] = None,
-                          sort_order: Optional[int] = None) -> Optional[DepartmentDTO]:
+    def update_department(
+        self,
+        dept_id: int,
+        name: str | None = None,
+        parent_id: int | None = None,
+        manager_id: int | None = None,
+        description: str | None = None,
+        is_active: bool | None = None,
+        sort_order: int | None = None,
+    ) -> DepartmentDTO | None:
         with self._get_db().session() as s:
             r = s.get(self._Department, dept_id)
             if not r:
@@ -523,34 +663,63 @@ class PgRbacStore:
 
     def list_positions(self) -> list[PositionDTO]:
         with self._get_db().session() as s:
-            rows = s.execute(
-                self._select(self._Position).order_by(self._Position.level.desc(), self._Position.sort_order)
-            ).scalars().all()
+            rows = (
+                s.execute(
+                    self._select(self._Position).order_by(
+                        self._Position.level.desc(), self._Position.sort_order
+                    )
+                )
+                .scalars()
+                .all()
+            )
             return [self._pos_to_dto(r) for r in rows]
 
     def _pos_to_dto(self, r) -> PositionDTO:
         return PositionDTO(
-            id=r.id, tenant_id=r.tenant_id, code=r.code, name=r.name, level=r.level,
-            description=r.description or "", is_active=r.is_active, sort_order=r.sort_order,
-            created_at=r.created_at, updated_at=r.updated_at,
+            id=r.id,
+            tenant_id=r.tenant_id,
+            code=r.code,
+            name=r.name,
+            level=r.level,
+            description=r.description or "",
+            is_active=r.is_active,
+            sort_order=r.sort_order,
+            created_at=r.created_at,
+            updated_at=r.updated_at,
         )
 
-    def create_position(self, code: str, name: str, level: int = 0,
-                        description: str = "", sort_order: int = 0,
-                        tenant_id: int = 1) -> PositionDTO:
+    def create_position(
+        self,
+        code: str,
+        name: str,
+        level: int = 0,
+        description: str = "",
+        sort_order: int = 0,
+        tenant_id: int = 1,
+    ) -> PositionDTO:
         with self._get_db().session() as s:
             pos = self._Position(
-                tenant_id=tenant_id, code=code, name=name, level=level,
-                description=description, sort_order=sort_order, is_active=True,
+                tenant_id=tenant_id,
+                code=code,
+                name=name,
+                level=level,
+                description=description,
+                sort_order=sort_order,
+                is_active=True,
             )
             s.add(pos)
             s.flush()
             return self._pos_to_dto(pos)
 
-    def update_position(self, pos_id: int, name: Optional[str] = None,
-                        level: Optional[int] = None, description: Optional[str] = None,
-                        is_active: Optional[bool] = None,
-                        sort_order: Optional[int] = None) -> Optional[PositionDTO]:
+    def update_position(
+        self,
+        pos_id: int,
+        name: str | None = None,
+        level: int | None = None,
+        description: str | None = None,
+        is_active: bool | None = None,
+        sort_order: int | None = None,
+    ) -> PositionDTO | None:
         with self._get_db().session() as s:
             r = s.get(self._Position, pos_id)
             if not r:
@@ -650,7 +819,11 @@ class InMemoryRbacStore:
         for code, name, resource, action in builtin_perms:
             pid = self._next()
             self._permissions[pid] = PermissionDTO(
-                id=pid, code=code, name=name, resource=resource, action=action,
+                id=pid,
+                code=code,
+                name=name,
+                resource=resource,
+                action=action,
                 is_builtin=True,
             )
 
@@ -664,8 +837,14 @@ class InMemoryRbacStore:
         for code, name, desc, order in role_defs:
             rid = self._next()
             self._roles[rid] = RoleDTO(
-                id=rid, tenant_id=1, code=code, name=name, description=desc,
-                is_builtin=True, is_active=True, sort_order=order,
+                id=rid,
+                tenant_id=1,
+                code=code,
+                name=name,
+                description=desc,
+                is_builtin=True,
+                is_active=True,
+                sort_order=order,
             )
             self._role_perms[rid] = set()
 
@@ -681,9 +860,18 @@ class InMemoryRbacStore:
             pid for pid, p in self._permissions.items() if p.code != "system:manage"
         }
         self._role_perms[user_id_role] = {
-            pid for pid, p in self._permissions.items()
-            if p.code in {"document:read", "document:upload", "chat:read", "chat:write",
-                          "chat:evolve", "task:read", "task:create"}
+            pid
+            for pid, p in self._permissions.items()
+            if p.code
+            in {
+                "document:read",
+                "document:upload",
+                "chat:read",
+                "chat:write",
+                "chat:evolve",
+                "task:read",
+                "task:create",
+            }
         }
         self._role_perms[visitor_id] = {
             pid for pid, p in self._permissions.items() if p.code.endswith(":read")
@@ -691,14 +879,18 @@ class InMemoryRbacStore:
 
     def _rebuild_role_permission_codes(self, role: RoleDTO) -> None:
         perm_ids = self._role_perms.get(role.id, set())
-        role.permission_codes = [self._permissions[pid].code for pid in perm_ids if pid in self._permissions]
+        role.permission_codes = [
+            self._permissions[pid].code for pid in perm_ids if pid in self._permissions
+        ]
 
     # 权限
-    def list_permissions(self, resource: Optional[str] = None) -> list[PermissionDTO]:
+    def list_permissions(self, resource: str | None = None) -> list[PermissionDTO]:
         with self._lock:
-            return [p for p in self._permissions.values() if resource is None or p.resource == resource]
+            return [
+                p for p in self._permissions.values() if resource is None or p.resource == resource
+            ]
 
-    def get_permission(self, perm_id: int) -> Optional[PermissionDTO]:
+    def get_permission(self, perm_id: int) -> PermissionDTO | None:
         return self._permissions.get(perm_id)
 
     # 角色
@@ -711,20 +903,32 @@ class InMemoryRbacStore:
                 result.append(r)
             return result
 
-    def get_role(self, role_id: int) -> Optional[RoleDTO]:
+    def get_role(self, role_id: int) -> RoleDTO | None:
         r = self._roles.get(role_id)
         if r:
             self._rebuild_role_permission_codes(r)
         return r
 
-    def create_role(self, code: str, name: str, description: str = "",
-                    permission_codes: Optional[list[str]] = None,
-                    sort_order: int = 0, tenant_id: int = 1) -> RoleDTO:
+    def create_role(
+        self,
+        code: str,
+        name: str,
+        description: str = "",
+        permission_codes: list[str] | None = None,
+        sort_order: int = 0,
+        tenant_id: int = 1,
+    ) -> RoleDTO:
         with self._lock:
             rid = self._next()
             role = RoleDTO(
-                id=rid, tenant_id=tenant_id, code=code, name=name, description=description,
-                is_builtin=False, is_active=True, sort_order=sort_order,
+                id=rid,
+                tenant_id=tenant_id,
+                code=code,
+                name=name,
+                description=description,
+                is_builtin=False,
+                is_active=True,
+                sort_order=sort_order,
                 permission_codes=permission_codes or [],
             )
             self._roles[rid] = role
@@ -735,7 +939,7 @@ class InMemoryRbacStore:
                         self._role_perms[rid].add(p.id)
             return role
 
-    def update_role(self, role_id: int, **kwargs) -> Optional[RoleDTO]:
+    def update_role(self, role_id: int, **kwargs) -> RoleDTO | None:
         with self._lock:
             r = self._roles.get(role_id)
             if not r:
@@ -761,7 +965,7 @@ class InMemoryRbacStore:
             invalidate_all_permission_cache()
             return True
 
-    def set_role_permissions(self, role_id: int, permission_codes: list[str]) -> Optional[RoleDTO]:
+    def set_role_permissions(self, role_id: int, permission_codes: list[str]) -> RoleDTO | None:
         with self._lock:
             r = self._roles.get(role_id)
             if not r:
@@ -774,7 +978,9 @@ class InMemoryRbacStore:
             return r
 
     # 用户-角色
-    def assign_role_to_user(self, user_id: int, role_id: int, granted_by: Optional[int] = None) -> bool:
+    def assign_role_to_user(
+        self, user_id: int, role_id: int, granted_by: int | None = None
+    ) -> bool:
         with self._lock:
             if role_id not in self._roles:
                 return False
@@ -796,7 +1002,9 @@ class InMemoryRbacStore:
             ids = self._user_roles.get(user_id, set())
             return [self._roles[i] for i in ids if i in self._roles]
 
-    def set_user_roles(self, user_id: int, role_ids: list[int], granted_by: Optional[int] = None) -> None:
+    def set_user_roles(
+        self, user_id: int, role_ids: list[int], granted_by: int | None = None
+    ) -> None:
         with self._lock:
             self._user_roles[user_id] = set(role_ids)
             invalidate_user_permission_cache(user_id)
@@ -817,20 +1025,33 @@ class InMemoryRbacStore:
                 by_id[d.parent_id].children.append(d)
         return roots
 
-    def create_department(self, code: str, name: str, parent_id: Optional[int] = None,
-                          manager_id: Optional[int] = None, description: str = "",
-                          sort_order: int = 0, tenant_id: int = 1) -> DepartmentDTO:
+    def create_department(
+        self,
+        code: str,
+        name: str,
+        parent_id: int | None = None,
+        manager_id: int | None = None,
+        description: str = "",
+        sort_order: int = 0,
+        tenant_id: int = 1,
+    ) -> DepartmentDTO:
         with self._lock:
             did = self._next()
             dept = DepartmentDTO(
-                id=did, tenant_id=tenant_id, code=code, name=name, parent_id=parent_id,
-                manager_id=manager_id, description=description, sort_order=sort_order,
+                id=did,
+                tenant_id=tenant_id,
+                code=code,
+                name=name,
+                parent_id=parent_id,
+                manager_id=manager_id,
+                description=description,
+                sort_order=sort_order,
                 is_active=True,
             )
             self._departments[did] = dept
             return dept
 
-    def update_department(self, dept_id: int, **kwargs) -> Optional[DepartmentDTO]:
+    def update_department(self, dept_id: int, **kwargs) -> DepartmentDTO | None:
         with self._lock:
             r = self._departments.get(dept_id)
             if not r:
@@ -859,19 +1080,31 @@ class InMemoryRbacStore:
         with self._lock:
             return sorted(self._positions.values(), key=lambda x: (-x.level, x.sort_order))
 
-    def create_position(self, code: str, name: str, level: int = 0,
-                        description: str = "", sort_order: int = 0,
-                        tenant_id: int = 1) -> PositionDTO:
+    def create_position(
+        self,
+        code: str,
+        name: str,
+        level: int = 0,
+        description: str = "",
+        sort_order: int = 0,
+        tenant_id: int = 1,
+    ) -> PositionDTO:
         with self._lock:
             pid = self._next()
             pos = PositionDTO(
-                id=pid, tenant_id=tenant_id, code=code, name=name, level=level,
-                description=description, sort_order=sort_order, is_active=True,
+                id=pid,
+                tenant_id=tenant_id,
+                code=code,
+                name=name,
+                level=level,
+                description=description,
+                sort_order=sort_order,
+                is_active=True,
             )
             self._positions[pid] = pos
             return pos
 
-    def update_position(self, pos_id: int, **kwargs) -> Optional[PositionDTO]:
+    def update_position(self, pos_id: int, **kwargs) -> PositionDTO | None:
         with self._lock:
             r = self._positions.get(pos_id)
             if not r:
@@ -895,7 +1128,7 @@ class InMemoryRbacStore:
 # ---------------------------------------------------------------------------
 
 
-_rbac_store: Optional[object] = None
+_rbac_store: object | None = None
 _rbac_store_lock = threading.Lock()
 
 

@@ -9,16 +9,17 @@
 兼容方案:现有 Message 保留,新增 Msg;通过 to_legacy_dict() 兼容 to_llm_dict() 格式;
 节点返回值可渐进迁移。
 """
+
 from __future__ import annotations
 
 import uuid
 from dataclasses import asdict, dataclass, field
-from typing import Any, Optional, Union
-
+from typing import Any, Union
 
 # ---------------------------------------------------------------------------
 # ContentBlock 基类 + 6 种 Block
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class ContentBlock:
@@ -27,6 +28,7 @@ class ContentBlock:
     所有内容块共享 block_type 与 block_id 字段,
     block_id 用于跨消息去重与追踪。
     """
+
     block_type: str = "text"
     block_id: str = field(default_factory=lambda: uuid.uuid4().hex[:12])
 
@@ -34,6 +36,7 @@ class ContentBlock:
 @dataclass
 class TextBlock(ContentBlock):
     """文本块(最常见,承载自然语言文本)。"""
+
     block_type: str = "text"
     text: str = ""
 
@@ -45,6 +48,7 @@ class ThinkingBlock(ContentBlock):
     与 TextBlock 分离,便于前端折叠展示思考过程,
     且不计入 LLM 上下文(避免思考链污染)。
     """
+
     block_type: str = "thinking"
     thought: str = ""
 
@@ -58,6 +62,7 @@ class HintBlock(ContentBlock):
       - human:  人工干预(如用户纠正)
       - tool:   工具反馈(如执行失败提示)
     """
+
     block_type: str = "hint"
     hint: str = ""
     source: str = "system"
@@ -69,6 +74,7 @@ class ToolCallBlock(ContentBlock):
 
     call_id 用于关联后续的 ToolResultBlock。
     """
+
     block_type: str = "tool_call"
     tool_name: str = ""
     arguments: dict[str, Any] = field(default_factory=dict)
@@ -82,10 +88,11 @@ class ToolResultBlock(ContentBlock):
     通过 call_id 与 ToolCallBlock 关联。
     error 非 None 表示执行失败。
     """
+
     block_type: str = "tool_result"
     call_id: str = ""
     output: Any = None
-    error: Optional[str] = None
+    error: str | None = None
     duration_ms: float = 0.0
 
 
@@ -96,6 +103,7 @@ class DataBlock(ContentBlock):
     data_type 标识数据种类,payload 承载结构化数据。
     用于多模态结果返回(如生成的图表、文档引用)。
     """
+
     block_type: str = "data"
     data_type: str = ""  # chart / table / file / image
     payload: dict[str, Any] = field(default_factory=dict)
@@ -116,6 +124,7 @@ Block = Union[
 # Msg 类(替代现有 Message)
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class Msg:
     """块化消息(借鉴 AgentScope Msg)。
@@ -130,16 +139,17 @@ class Msg:
       - cause_by:  触发此消息的 Action 名(用于 Watch 模式匹配)
       - sent_from: 发送方 Agent 名
     """
+
     id: str = field(default_factory=lambda: uuid.uuid4().hex[:16])
     role: str = "user"  # system / user / assistant / tool
     content: list[Block] = field(default_factory=list)
-    name: Optional[str] = None
+    name: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
-    token_count: Optional[int] = None
+    token_count: int | None = None
     # 路由字段(单 Agent 留空,P3 多 Agent 填写)
-    send_to: Optional[str] = None
-    cause_by: Optional[str] = None
-    sent_from: Optional[str] = None
+    send_to: str | None = None
+    cause_by: str | None = None
+    sent_from: str | None = None
 
     @property
     def text_content(self) -> str:
@@ -163,9 +173,7 @@ class Msg:
             ValueError: block_type 为空字符串
         """
         if not isinstance(block_type, str):
-            raise TypeError(
-                f"block_type must be str, got {type(block_type).__name__}"
-            )
+            raise TypeError(f"block_type must be str, got {type(block_type).__name__}")
         if not block_type:
             raise ValueError("block_type must not be empty")
         return [b for b in self.content if b.block_type == block_type]
@@ -216,6 +224,7 @@ def _block_to_dict(block: Block) -> dict[str, Any]:
 # 工厂函数(便捷构造)
 # ---------------------------------------------------------------------------
 
+
 def user_msg(text: str, **kwargs: Any) -> Msg:
     """构造用户文本消息。
 
@@ -234,7 +243,7 @@ def user_msg(text: str, **kwargs: Any) -> Msg:
     return Msg(role="user", content=[TextBlock(text=text)], **kwargs)
 
 
-def assistant_msg(text: str = "", blocks: Optional[list[Block]] = None, **kwargs: Any) -> Msg:
+def assistant_msg(text: str = "", blocks: list[Block] | None = None, **kwargs: Any) -> Msg:
     """构造助手消息(可传 blocks 或 text)。
 
     Args:
@@ -251,9 +260,7 @@ def assistant_msg(text: str = "", blocks: Optional[list[Block]] = None, **kwargs
     if not isinstance(text, str):
         raise TypeError(f"text must be str, got {type(text).__name__}")
     if blocks is not None and not isinstance(blocks, list):
-        raise TypeError(
-            f"blocks must be list or None, got {type(blocks).__name__}"
-        )
+        raise TypeError(f"blocks must be list or None, got {type(blocks).__name__}")
     if blocks is not None:
         content = blocks
     elif text:
@@ -281,7 +288,7 @@ def system_msg(text: str, **kwargs: Any) -> Msg:
     return Msg(role="system", content=[TextBlock(text=text)], **kwargs)
 
 
-def tool_msg(call_id: str, output: Any, error: Optional[str] = None, **kwargs: Any) -> Msg:
+def tool_msg(call_id: str, output: Any, error: str | None = None, **kwargs: Any) -> Msg:
     """构造工具结果消息(role=tool)。
 
     Args:
@@ -298,15 +305,13 @@ def tool_msg(call_id: str, output: Any, error: Optional[str] = None, **kwargs: A
         ValueError: call_id 为空字符串
     """
     if not isinstance(call_id, str):
-        raise TypeError(
-            f"call_id must be str, got {type(call_id).__name__}"
-        )
+        raise TypeError(f"call_id must be str, got {type(call_id).__name__}")
     if not call_id:
         raise ValueError("call_id must not be empty")
     return Msg(
         role="tool",
         content=[ToolResultBlock(call_id=call_id, output=output, error=error)],
-        **kwargs
+        **kwargs,
     )
 
 
@@ -332,7 +337,8 @@ def thinking_msg(thought: str, **kwargs: Any) -> Msg:
 # Reducer 语义(供 P0-1 AgentState.messages 字段使用)
 # ---------------------------------------------------------------------------
 
-def add_msgs(left: Optional[list[Msg]], right: list[Msg]) -> list[Msg]:
+
+def add_msgs(left: list[Msg] | None, right: list[Msg]) -> list[Msg]:
     """Msg 列表 Reducer:按 id 去重追加。
 
     LangGraph 的 Annotated[list[Msg], add_msgs] 会调用此函数合并状态更新。
@@ -352,9 +358,7 @@ def add_msgs(left: Optional[list[Msg]], right: list[Msg]) -> list[Msg]:
         # 容错:LangGraph 偶尔会传入 None,等价于无新增
         return list(left or [])
     if not isinstance(right, list):
-        raise TypeError(
-            f"right must be list[Msg], got {type(right).__name__}"
-        )
+        raise TypeError(f"right must be list[Msg], got {type(right).__name__}")
     merged = list(left or [])
     seen_ids = {m.id for m in merged}
     for msg in right:
@@ -364,7 +368,7 @@ def add_msgs(left: Optional[list[Msg]], right: list[Msg]) -> list[Msg]:
     return merged
 
 
-def add_dicts_by_key(left: Optional[list[dict]], right: list[dict], key: str = "id") -> list[dict]:
+def add_dicts_by_key(left: list[dict] | None, right: list[dict], key: str = "id") -> list[dict]:
     """dict 列表 Reducer:按指定 key 去重追加。
 
     供 tool_calls/tool_results 等 dict 列表字段使用。
@@ -383,9 +387,7 @@ def add_dicts_by_key(left: Optional[list[dict]], right: list[dict], key: str = "
     if right is None:
         return list(left or [])
     if not isinstance(right, list):
-        raise TypeError(
-            f"right must be list[dict], got {type(right).__name__}"
-        )
+        raise TypeError(f"right must be list[dict], got {type(right).__name__}")
     if not isinstance(key, str):
         raise TypeError(f"key must be str, got {type(key).__name__}")
     merged = list(left or [])

@@ -19,10 +19,10 @@
   GET  /api/v1/task/{task_id} 查询异步任务状态
   GET  /api/v1/health         健康检查
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Optional
 
 
 @dataclass
@@ -43,13 +43,13 @@ class FetchRequest:
 
     url: str
     method: str = "GET"
-    headers: Optional[dict[str, str]] = None
-    body: Optional[str] = None
+    headers: dict[str, str] | None = None
+    body: str | None = None
     timeout: float = 30.0
-    wait_for: Optional[str] = None
+    wait_for: str | None = None
     use_browser: bool = False
     extract_text: bool = False
-    max_chars: Optional[int] = None
+    max_chars: int | None = None
 
 
 @dataclass
@@ -73,10 +73,10 @@ class FetchResponse:
     final_url: str
     status_code: int
     html: str
-    text: Optional[str] = None
-    title: Optional[str] = None
+    text: str | None = None
+    title: str | None = None
     elapsed_ms: float = 0.0
-    error: Optional[str] = None
+    error: str | None = None
 
 
 @dataclass
@@ -94,12 +94,12 @@ class RenderRequest:
     """
 
     url: str
-    wait_for: Optional[str] = None
+    wait_for: str | None = None
     wait_until: str = "networkidle"
     timeout: float = 60.0
     screenshot: bool = False
-    execute_js: Optional[str] = None
-    block_resources: Optional[list[str]] = None
+    execute_js: str | None = None
+    block_resources: list[str] | None = None
 
 
 @dataclass
@@ -123,10 +123,10 @@ class RenderResponse:
     final_url: str
     title: str
     html: str
-    text: Optional[str] = None
-    screenshot: Optional[str] = None
+    text: str | None = None
+    screenshot: str | None = None
     elapsed_ms: float = 0.0
-    error: Optional[str] = None
+    error: str | None = None
 
 
 @dataclass
@@ -141,8 +141,8 @@ class ExtractRequest:
         extract_metadata:  是否提取元数据
     """
 
-    html: Optional[str] = None
-    url: Optional[str] = None
+    html: str | None = None
+    url: str | None = None
     extract_tables: bool = True
     extract_links: bool = True
     extract_metadata: bool = True
@@ -170,9 +170,9 @@ class ExtractResponse:
     tables: list[list[list[str]]] = field(default_factory=list)
     links: list[dict[str, str]] = field(default_factory=list)
     metadata: dict[str, str] = field(default_factory=dict)
-    language: Optional[str] = None
+    language: str | None = None
     word_count: int = 0
-    error: Optional[str] = None
+    error: str | None = None
 
 
 @dataclass
@@ -190,7 +190,7 @@ class SearchRequest:
     query: str
     num_results: int = 10
     language: str = "zh-CN"
-    time_range: Optional[str] = None
+    time_range: str | None = None
     safe_search: bool = True
 
 
@@ -208,7 +208,7 @@ class SearchResult:
     title: str
     url: str
     snippet: str
-    published_at: Optional[str] = None
+    published_at: str | None = None
 
 
 @dataclass
@@ -229,7 +229,7 @@ class SearchResponse:
     results: list[SearchResult] = field(default_factory=list)
     total: int = 0
     elapsed_ms: float = 0.0
-    error: Optional[str] = None
+    error: str | None = None
 
 
 @dataclass
@@ -245,9 +245,9 @@ class SummaryRequest:
         max_key_points:   最大要点数
     """
 
-    url: Optional[str] = None
-    html: Optional[str] = None
-    text: Optional[str] = None
+    url: str | None = None
+    html: str | None = None
+    text: str | None = None
     summary_style: str = "concise"
     summary_language: str = "zh-CN"
     max_key_points: int = 10
@@ -275,7 +275,7 @@ class SummaryResponse:
     keywords: list[str] = field(default_factory=list)
     language: str = "zh-CN"
     elapsed_ms: float = 0.0
-    error: Optional[str] = None
+    error: str | None = None
 
 
 @dataclass
@@ -290,7 +290,7 @@ class BatchRequest:
 
     urls: list[str]
     task_type: str = "fetch"
-    config: Optional[dict] = None
+    config: dict | None = None
 
 
 @dataclass
@@ -309,7 +309,7 @@ class BatchResponse:
     task_id: str
     total: int
     status: str
-    error: Optional[str] = None
+    error: str | None = None
 
 
 @dataclass
@@ -329,10 +329,10 @@ class TaskStatus:
     task_id: str
     status: str
     progress: float = 0.0
-    results: Optional[list[dict]] = None
-    error: Optional[str] = None
-    created_at: Optional[str] = None
-    completed_at: Optional[str] = None
+    results: list[dict] | None = None
+    error: str | None = None
+    created_at: str | None = None
+    completed_at: str | None = None
 
 
 @dataclass
@@ -347,6 +347,6 @@ class HealthStatus:
     """
 
     healthy: bool
-    version: Optional[str] = None
-    uptime_seconds: Optional[float] = None
+    version: str | None = None
+    uptime_seconds: float | None = None
     active_tasks: int = 0

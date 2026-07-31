@@ -19,12 +19,12 @@
   - score 强制 clamp 到 [0.0, 1.0](原实现直接 float() 不做边界检查)
   - 解析失败默认 passed=True + reason 标注(保持原行为,但显式标注)
 """
+
 from __future__ import annotations
 
 import json
 import re
 from dataclasses import dataclass, field
-from typing import Optional
 
 from fnixagent.core.exceptions import LLMError, ReasoningError
 from fnixagent.core.llm.router import LLMRouter
@@ -34,18 +34,18 @@ from fnixagent.core.types import (
     MessageRole,
     ReflectionResult,
     ToolExecutionStatus,
-    ToolResult,
 )
 
 
 @dataclass
 class ValidationResult:
     """校验结果。"""
+
     passed: bool
-    score: float                         # 0~1(已 clamp)
-    rule_checks: list[str] = field(default_factory=list)   # 规则层检查项
+    score: float  # 0~1(已 clamp)
+    rule_checks: list[str] = field(default_factory=list)  # 规则层检查项
     rule_failures: list[str] = field(default_factory=list)  # 规则层失败项
-    llm_reflection: Optional[ReflectionResult] = None       # LLM 层校验
+    llm_reflection: ReflectionResult | None = None  # LLM 层校验
     overall_reason: str = ""
 
 
@@ -61,7 +61,7 @@ class ResultValidator:
 
     def __init__(
         self,
-        llm: Optional[LLMRouter] = None,
+        llm: LLMRouter | None = None,
         llm_check_enabled: bool = True,
     ):
         self._llm = llm
@@ -91,14 +91,12 @@ class ResultValidator:
         rule_passed, rule_failures, rule_checks = self._rule_check(trace)
 
         # Layer 2: LLM 校验(仅当规则层通过或配置启用)
-        llm_reflection: Optional[ReflectionResult] = None
+        llm_reflection: ReflectionResult | None = None
         if self._llm_check_enabled and self._llm:
             llm_reflection = self._safe_llm_check(goal, trace)
 
         # 综合判定
-        passed = rule_passed and (
-            llm_reflection is None or llm_reflection.passed
-        )
+        passed = rule_passed and (llm_reflection is None or llm_reflection.passed)
         score = self._compute_score(rule_passed, llm_reflection)
 
         reason_parts: list[str] = []
@@ -118,9 +116,7 @@ class ResultValidator:
 
     # -- Layer 1: 规则校验 ------------------------------------------------
 
-    def _rule_check(
-        self, trace: ExecutionTrace
-    ) -> tuple[bool, list[str], list[str]]:
+    def _rule_check(self, trace: ExecutionTrace) -> tuple[bool, list[str], list[str]]:
         """确定性规则校验:
         - 所有工具调用是否成功
         - 返回值是否非空
@@ -136,11 +132,9 @@ class ResultValidator:
 
         all_success = True
         for i, result in enumerate(trace.tool_results):
-            checks.append(f"工具[{i+1}] {result.name}: {result.status.value}")
+            checks.append(f"工具[{i + 1}] {result.name}: {result.status.value}")
             if result.status == ToolExecutionStatus.FAILED:
-                failures.append(
-                    f"工具 {result.name} 执行失败: {result.error}"
-                )
+                failures.append(f"工具 {result.name} 执行失败: {result.error}")
                 all_success = False
             elif result.status == ToolExecutionStatus.TIMEOUT:
                 failures.append(f"工具 {result.name} 超时")
@@ -153,9 +147,7 @@ class ResultValidator:
 
     # -- Layer 2: LLM 校验 ------------------------------------------------
 
-    def _safe_llm_check(
-        self, goal: str, trace: ExecutionTrace
-    ) -> Optional[ReflectionResult]:
+    def _safe_llm_check(self, goal: str, trace: ExecutionTrace) -> ReflectionResult | None:
         """LLM 校验的异常安全包装。
 
         BUG 修复:原 _llm_check 裸调 self._llm.chat,provider 抛异常会
@@ -170,9 +162,7 @@ class ResultValidator:
             # 兜底:其他异常也降级,保证 validate 不中断
             return None
 
-    def _llm_check(
-        self, goal: str, trace: ExecutionTrace
-    ) -> ReflectionResult:
+    def _llm_check(self, goal: str, trace: ExecutionTrace) -> ReflectionResult:
         """调用 LLM 做语义校验。"""
         results_summary = self._summarize(trace)
 
@@ -192,6 +182,7 @@ class ResultValidator:
         )
 
         from fnixagent.core.llm.base import LLMRequest
+
         request = LLMRequest(
             messages=[system_msg, user_msg],
             temperature=0.3,  # 校验用低温度,提升确定性
@@ -199,15 +190,13 @@ class ResultValidator:
         response = self._llm.chat(request)
         if response is None or not getattr(response, "content", None):
             # LLM 返回空,降级为默认通过
-            return ReflectionResult(
-                passed=True, score=0.8, reason="LLM 返回空,默认通过"
-            )
+            return ReflectionResult(passed=True, score=0.8, reason="LLM 返回空,默认通过")
         return self._parse_reflection(response.content)
 
     @staticmethod
     def _compute_score(
         rule_passed: bool,
-        llm_reflection: Optional[ReflectionResult],
+        llm_reflection: ReflectionResult | None,
     ) -> float:
         """综合评分,clamp 到 [0.0, 1.0]。"""
         if llm_reflection:
@@ -233,7 +222,7 @@ class ResultValidator:
         for i, r in enumerate(trace.tool_results):
             status = r.status.value if r.status else "?"
             out = str(r.output)[:150] if r.output else "空"
-            parts.append(f"[{i+1}] {r.name}({status}): {out}")
+            parts.append(f"[{i + 1}] {r.name}({status}): {out}")
         return "\n".join(parts)
 
     def _parse_reflection(self, text: str) -> ReflectionResult:
@@ -245,25 +234,17 @@ class ResultValidator:
             但 reason 显式标注"解析失败"
         """
         if not text:
-            return ReflectionResult(
-                passed=True, score=0.8, reason="LLM 输出为空,默认通过"
-            )
+            return ReflectionResult(passed=True, score=0.8, reason="LLM 输出为空,默认通过")
         match = re.search(r"\{.*\}", text, re.DOTALL)
         if not match:
-            return ReflectionResult(
-                passed=True, score=0.8, reason="解析失败,默认通过"
-            )
+            return ReflectionResult(passed=True, score=0.8, reason="解析失败,默认通过")
         try:
             data = json.loads(match.group())
         except (json.JSONDecodeError, ValueError):
-            return ReflectionResult(
-                passed=True, score=0.8, reason="解析失败,默认通过"
-            )
+            return ReflectionResult(passed=True, score=0.8, reason="解析失败,默认通过")
 
         if not isinstance(data, dict):
-            return ReflectionResult(
-                passed=True, score=0.8, reason="解析结果非 dict,默认通过"
-            )
+            return ReflectionResult(passed=True, score=0.8, reason="解析结果非 dict,默认通过")
 
         try:
             return ReflectionResult(
@@ -275,9 +256,7 @@ class ResultValidator:
                 needs_replan=bool(data.get("needs_replan", False)),
             )
         except (TypeError, ValueError):
-            return ReflectionResult(
-                passed=True, score=0.8, reason="字段类型异常,默认通过"
-            )
+            return ReflectionResult(passed=True, score=0.8, reason="字段类型异常,默认通过")
 
     @staticmethod
     def _clamp_score(value: object) -> float:

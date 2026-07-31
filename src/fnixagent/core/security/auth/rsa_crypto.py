@@ -14,13 +14,11 @@ RSA-2048 密码传输加密(Phase 0.4)。
     - 开发环境:进程内生成,重启失效(用户需重新登录)
     - 生产环境:从环境变量 RSA_PRIVATE_KEY_PATH 加载持久化密钥
 """
+
 from __future__ import annotations
 
 import base64
-import os
-import threading
 from dataclasses import dataclass
-from typing import Optional
 
 # cryptography 在 Phase 0.2 已加入 requirements.txt
 try:
@@ -43,8 +41,8 @@ except ImportError:  # pragma: no cover
 class RSAKeyPair:
     """RSA-2048 密钥对(PEM 编码)。"""
 
-    private_pem: str            # PKCS#8 PEM(含头尾)
-    public_pem: str             # SubjectPublicKeyInfo PEM
+    private_pem: str  # PKCS#8 PEM(含头尾)
+    public_pem: str  # SubjectPublicKeyInfo PEM
     key_size: int = 2048
 
     def decrypt(self, ciphertext_b64: str) -> str:
@@ -103,10 +101,14 @@ def generate_keypair(key_size: int = 2048) -> RSAKeyPair:
         encryption_algorithm=serialization.NoEncryption(),
     ).decode("utf-8")
 
-    public_pem = private_key.public_key().public_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PublicFormat.SubjectPublicKeyInfo,
-    ).decode("utf-8")
+    public_pem = (
+        private_key.public_key()
+        .public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo,
+        )
+        .decode("utf-8")
+    )
 
     return RSAKeyPair(
         private_pem=private_pem,
@@ -129,10 +131,14 @@ def load_keypair_from_file(path: str) -> RSAKeyPair:
         backend=default_backend(),
     )
 
-    public_pem = private_key.public_key().public_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PublicFormat.SubjectPublicKeyInfo,
-    ).decode("utf-8")
+    public_pem = (
+        private_key.public_key()
+        .public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo,
+        )
+        .decode("utf-8")
+    )
 
     return RSAKeyPair(
         private_pem=private_pem,

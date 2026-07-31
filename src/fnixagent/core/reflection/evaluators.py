@@ -18,6 +18,7 @@ ReflectionManager 并行调用所有启用的评估器,加权计算总分。
   - 超时由 manager 的 asyncio.wait_for 控制,评估器自身不感知超时
   - 正则预编译为模块级常量,避免每次 evaluate 重新编译
 """
+
 from __future__ import annotations
 
 import abc
@@ -26,7 +27,6 @@ import re
 from typing import Any
 
 from fnixagent.core.reflection.base import ReflectionConfig
-
 
 # ---------------------------------------------------------------------------
 # 预编译正则(模块级常量,避免每次 evaluate 重新编译)
@@ -40,23 +40,18 @@ _PARAGRAPH_SPLIT_RE = re.compile(r"\n\s*\n")
 
 # 引用评估器
 _CITATION_MARK_RE = re.compile(r"\[\d+\]")
-_REFERENCE_SECTION_RE = re.compile(
-    r"参考文献|References|REFERENCES|Bibliography", re.IGNORECASE
-)
-_DOI_URL_RE = re.compile(
-    r"https?://\S+|doi:\s*\S+|10\.\d{4,}/\S+", re.IGNORECASE
-)
+_REFERENCE_SECTION_RE = re.compile(r"参考文献|References|REFERENCES|Bibliography", re.IGNORECASE)
+_DOI_URL_RE = re.compile(r"https?://\S+|doi:\s*\S+|10\.\d{4,}/\S+", re.IGNORECASE)
 
 # 格式评估器
-_PLACEHOLDER_RE = re.compile(
-    r"\{\{[^}]+\}\}|TODO|待填写|待补充|XXX|<placeholder>", re.IGNORECASE
-)
+_PLACEHOLDER_RE = re.compile(r"\{\{[^}]+\}\}|TODO|待填写|待补充|XXX|<placeholder>", re.IGNORECASE)
 _BLANK_LINES_RE = re.compile(r"\n\s*\n\s*\n")  # 连续 3+ 空行
 
 
 # ---------------------------------------------------------------------------
 # 抽象基类
 # ---------------------------------------------------------------------------
+
 
 class BaseEvaluator(abc.ABC):
     """评估器抽象基类。
@@ -109,6 +104,7 @@ class BaseEvaluator(abc.ABC):
 # 1. LengthEvaluator
 # ---------------------------------------------------------------------------
 
+
 class LengthEvaluator(BaseEvaluator):
     """长度评估器。
 
@@ -146,7 +142,7 @@ class LengthEvaluator(BaseEvaluator):
         else:
             # 默认分段评分规则
             if length < 50:
-                score = 0.1 + (length / 50.0) * 0.2          # 0.1~0.3
+                score = 0.1 + (length / 50.0) * 0.2  # 0.1~0.3
             elif length < 200:
                 score = 0.3 + ((length - 50) / 150.0) * 0.4  # 0.3~0.7
             else:
@@ -154,8 +150,7 @@ class LengthEvaluator(BaseEvaluator):
                 score = 0.7 + min((length - 200) / 300.0, 0.3)
 
         # 超过 max_length 扣分(防止冗余内容)
-        if isinstance(max_length, (int, float)) and max_length > 0 \
-                and length > max_length:
+        if isinstance(max_length, (int, float)) and max_length > 0 and length > max_length:
             overflow = (length - float(max_length)) / float(max_length)
             score -= min(overflow * 0.5, 0.3)
 
@@ -165,6 +160,7 @@ class LengthEvaluator(BaseEvaluator):
 # ---------------------------------------------------------------------------
 # 2. StructureEvaluator
 # ---------------------------------------------------------------------------
+
 
 class StructureEvaluator(BaseEvaluator):
     """结构评估器。
@@ -209,6 +205,7 @@ class StructureEvaluator(BaseEvaluator):
 # 3. KeywordEvaluator
 # ---------------------------------------------------------------------------
 
+
 class KeywordEvaluator(BaseEvaluator):
     """关键词覆盖评估器。
 
@@ -243,7 +240,8 @@ class KeywordEvaluator(BaseEvaluator):
             return 1.0
         content_lower = content.lower()
         hits = sum(
-            1 for kw in keywords
+            1
+            for kw in keywords
             if isinstance(kw, str) and kw.strip() and kw.lower() in content_lower
         )
         hit_rate = hits / total
@@ -253,6 +251,7 @@ class KeywordEvaluator(BaseEvaluator):
 # ---------------------------------------------------------------------------
 # 4. CitationEvaluator
 # ---------------------------------------------------------------------------
+
 
 class CitationEvaluator(BaseEvaluator):
     """引用完整性评估器。
@@ -291,6 +290,7 @@ class CitationEvaluator(BaseEvaluator):
 # 5. FormatEvaluator
 # ---------------------------------------------------------------------------
 
+
 class FormatEvaluator(BaseEvaluator):
     """格式规范评估器。
 
@@ -328,6 +328,7 @@ class FormatEvaluator(BaseEvaluator):
 # ---------------------------------------------------------------------------
 # 6. LLMEvaluator
 # ---------------------------------------------------------------------------
+
 
 class LLMEvaluator(BaseEvaluator):
     """LLM 综合评估器(可选,默认关闭)。
@@ -384,14 +385,13 @@ class LLMEvaluator(BaseEvaluator):
                 "1. 完整性: 是否完整回答了目标\n"
                 "2. 逻辑性: 论述是否连贯、逻辑是否合理\n"
                 "3. 准确性: 信息是否准确、有无明显错误\n\n"
-                "输出 JSON: {\"score\": 0.0~1.0, \"reason\": \"...\"}"
+                '输出 JSON: {"score": 0.0~1.0, "reason": "..."}'
             ),
         )
         user_msg = Message(
             role=MessageRole.USER,
             content=(
-                f"目标: {goal}\n\n"
-                f"待评估内容:\n{content[:2000]}"  # 截断防超长 prompt
+                f"目标: {goal}\n\n待评估内容:\n{content[:2000]}"  # 截断防超长 prompt
             ),
         )
         request = LLMRequest(

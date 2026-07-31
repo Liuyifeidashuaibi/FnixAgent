@@ -18,12 +18,13 @@ fnixagent Prometheus 指标模块 — Phase 2.10
   record_login(success=True, method="password")
   record_chat_message(mode="evolve")
 """
+
 from __future__ import annotations
 
 import os
 import threading
 import time
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from fastapi import FastAPI
@@ -31,15 +32,16 @@ if TYPE_CHECKING:
 
 try:
     from prometheus_client import (
+        CONTENT_TYPE_LATEST,  # noqa: F401
+        REGISTRY,
+        CollectorRegistry,
         Counter,
         Gauge,
         Histogram,
-        generate_latest,
-        CONTENT_TYPE_LATEST,
-        CollectorRegistry,
-        REGISTRY,
+        generate_latest,  # noqa: F401
     )
     from prometheus_client.exposition import make_asgi_app
+
     _PROMETHEUS_AVAILABLE = True
 except ImportError:
     _PROMETHEUS_AVAILABLE = False
@@ -50,7 +52,7 @@ except ImportError:
 # ============================================================================
 
 # 使用全局 REGISTRY(避免重复注册)
-_registry: "CollectorRegistry | None" = REGISTRY
+_registry: CollectorRegistry | None = REGISTRY
 
 # 初始化锁:保证 _init_metrics 在多线程下只执行一次(线程安全的单例初始化)
 _init_lock = threading.Lock()
@@ -322,7 +324,7 @@ def _init_metrics() -> None:
 # ============================================================================
 
 
-async def _http_middleware(request: "Request", call_next) -> Any:
+async def _http_middleware(request: Request, call_next) -> Any:
     """HTTP 请求指标中间件(异步)。
 
     自动记录请求 QPS / 延迟 / 状态码 / 在途数,异常时记 500。
@@ -377,7 +379,7 @@ def _normalize_path(path: str) -> str:
     return path
 
 
-def setup_metrics(app: "FastAPI") -> None:
+def setup_metrics(app: FastAPI) -> None:
     """在 FastAPI 应用中注册 Prometheus 指标。
 
     功能:
@@ -552,12 +554,12 @@ def record_llm_tokens(
         prompt_tokens = max(0, prompt_tokens)
         completion_tokens = max(0, completion_tokens)
     if LLM_TOKENS_USED_TOTAL is not None:
-        LLM_TOKENS_USED_TOTAL.labels(
-            provider=provider, model=model, type="prompt"
-        ).inc(prompt_tokens)
-        LLM_TOKENS_USED_TOTAL.labels(
-            provider=provider, model=model, type="completion"
-        ).inc(completion_tokens)
+        LLM_TOKENS_USED_TOTAL.labels(provider=provider, model=model, type="prompt").inc(
+            prompt_tokens
+        )
+        LLM_TOKENS_USED_TOTAL.labels(provider=provider, model=model, type="completion").inc(
+            completion_tokens
+        )
 
 
 def record_llm_error(provider: str, error_type: str) -> None:

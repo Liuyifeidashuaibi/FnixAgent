@@ -25,16 +25,17 @@ tripwire 语义(借鉴 OpenAI SDK):
   - SecurityEngine 新增 guardrail_pipeline 属性,委托 GuardrailPipeline
   - 现有 check_input/review_output 保留兼容,内部改为调用 pipeline
 """
+
 from __future__ import annotations
 
 import abc
 from dataclasses import dataclass, field
-from typing import Any, Optional
-
+from typing import Any
 
 # ---------------------------------------------------------------------------
 # 结果与异常
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class GuardrailResult:
@@ -49,6 +50,7 @@ class GuardrailResult:
         risk_score: 风险评分 0~1(0=安全,1=高危)
         details: 额外详情(命中词/违规类型等)
     """
+
     guardrail_name: str
     passed: bool = True
     tripwire_triggered: bool = False
@@ -70,6 +72,7 @@ class GuardrailPipelineResult:
         results: 各 Guardrail 的详细结果
         risk_score: 最大风险评分
     """
+
     passed: bool = True
     tripwire_triggered: bool = False
     blocked_reason: str = ""
@@ -86,14 +89,13 @@ class GuardrailTripwireError(Exception):
 
     def __init__(self, result: GuardrailResult) -> None:
         self.result = result
-        super().__init__(
-            f"Guardrail '{result.guardrail_name}' tripwire: {result.blocked_reason}"
-        )
+        super().__init__(f"Guardrail '{result.guardrail_name}' tripwire: {result.blocked_reason}")
 
 
 # ---------------------------------------------------------------------------
 # BaseGuardrail 抽象基类
 # ---------------------------------------------------------------------------
+
 
 class BaseGuardrail(abc.ABC):
     """Guardrail 抽象基类。
@@ -150,6 +152,7 @@ class InputGuardrail(BaseGuardrail):
 
     典型子类:注入检测 / 敏感词检测 / 输入内容审核
     """
+
     pass
 
 
@@ -158,12 +161,14 @@ class OutputGuardrail(BaseGuardrail):
 
     典型子类:输出内容审核 / PII 脱敏
     """
+
     pass
 
 
 # ---------------------------------------------------------------------------
 # 5 个适配类(包装现有 security 模块)
 # ---------------------------------------------------------------------------
+
 
 class InputInjectionGuardrail(InputGuardrail):
     """输入注入检测 Guardrail(包装 InjectionGuard)。"""
@@ -179,9 +184,9 @@ class InputInjectionGuardrail(InputGuardrail):
             passed=result.passed,
             tripwire_triggered=not result.passed and result.risk_score >= 0.7,
             blocked_reason=(
-                f"Prompt 注入风险(risk={result.risk_score}): "
-                f"{'; '.join(result.reasons)}"
-                if not result.passed else ""
+                f"Prompt 注入风险(risk={result.risk_score}): {'; '.join(result.reasons)}"
+                if not result.passed
+                else ""
             ),
             risk_score=result.risk_score,
             details={"reasons": result.reasons},
@@ -273,6 +278,7 @@ class OutputDesensitizeGuardrail(OutputGuardrail):
 # GuardrailPipeline 管道
 # ---------------------------------------------------------------------------
 
+
 class GuardrailPipeline:
     """Guardrail 管道:串行执行 + 短路。
 
@@ -301,18 +307,18 @@ class GuardrailPipeline:
 
     def __init__(
         self,
-        input_guardrails: Optional[list[InputGuardrail]] = None,
-        output_guardrails: Optional[list[OutputGuardrail]] = None,
+        input_guardrails: list[InputGuardrail] | None = None,
+        output_guardrails: list[OutputGuardrail] | None = None,
     ) -> None:
         self._input_guardrails: list[InputGuardrail] = list(input_guardrails or [])
         self._output_guardrails: list[OutputGuardrail] = list(output_guardrails or [])
 
-    def add_input(self, guardrail: InputGuardrail) -> "GuardrailPipeline":
+    def add_input(self, guardrail: InputGuardrail) -> GuardrailPipeline:
         """追加输入 Guardrail(返回 self,链式调用)。"""
         self._input_guardrails.append(guardrail)
         return self
 
-    def add_output(self, guardrail: OutputGuardrail) -> "GuardrailPipeline":
+    def add_output(self, guardrail: OutputGuardrail) -> GuardrailPipeline:
         """追加输出 Guardrail(返回 self,链式调用)。"""
         self._output_guardrails.append(guardrail)
         return self
@@ -406,6 +412,7 @@ class GuardrailPipeline:
 # ---------------------------------------------------------------------------
 # 便捷工厂:从现有 SecurityEngine 组件构建管道
 # ---------------------------------------------------------------------------
+
 
 def build_pipeline_from_engine(engine: Any) -> GuardrailPipeline:
     """从现有 SecurityEngine 组件构建 GuardrailPipeline。

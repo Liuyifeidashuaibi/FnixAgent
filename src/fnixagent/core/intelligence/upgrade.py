@@ -14,12 +14,11 @@ import json
 import logging
 import re
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
-from typing import Optional
 
-from .knowledge import KnowledgeItem, FlywheelKnowledgeBase
+from .knowledge import FlywheelKnowledgeBase, KnowledgeItem
 
 logger = logging.getLogger(__name__)
 
@@ -28,46 +27,50 @@ logger = logging.getLogger(__name__)
 # 数据模型
 # ============================================================
 
+
 class UpgradeType(str, Enum):
     """升级类型"""
-    PROMPT_OPTIMIZATION = "prompt_optimization"      # Prompt 优化
-    SKILL_ADDITION = "skill_addition"                # 新增技能
-    SKILL_IMPROVEMENT = "skill_improvement"          # 技能改进
-    MEMORY_ENHANCEMENT = "memory_enhancement"        # 记忆增强
-    REASONING_STRATEGY = "reasoning_strategy"        # 推理策略
-    TOOL_INTEGRATION = "tool_integration"            # 工具集成
-    ARCHITECTURE_UPGRADE = "architecture_upgrade"    # 架构升级
-    SECURITY_IMPROVEMENT = "security_improvement"    # 安全改进
-    PERFORMANCE_TUNING = "performance_tuning"        # 性能优化
-    PROTOCOL_UPDATE = "protocol_update"              # 协议更新
+
+    PROMPT_OPTIMIZATION = "prompt_optimization"  # Prompt 优化
+    SKILL_ADDITION = "skill_addition"  # 新增技能
+    SKILL_IMPROVEMENT = "skill_improvement"  # 技能改进
+    MEMORY_ENHANCEMENT = "memory_enhancement"  # 记忆增强
+    REASONING_STRATEGY = "reasoning_strategy"  # 推理策略
+    TOOL_INTEGRATION = "tool_integration"  # 工具集成
+    ARCHITECTURE_UPGRADE = "architecture_upgrade"  # 架构升级
+    SECURITY_IMPROVEMENT = "security_improvement"  # 安全改进
+    PERFORMANCE_TUNING = "performance_tuning"  # 性能优化
+    PROTOCOL_UPDATE = "protocol_update"  # 协议更新
 
 
 class UpgradeImpact(str, Enum):
     """升级影响等级"""
-    CRITICAL = "critical"   # 核心功能升级
-    HIGH = "high"           # 重要功能增强
-    MEDIUM = "medium"       # 一般改进
-    LOW = "low"             # 微调
-    COSMETIC = "cosmetic"   # 表面优化
+
+    CRITICAL = "critical"  # 核心功能升级
+    HIGH = "high"  # 重要功能增强
+    MEDIUM = "medium"  # 一般改进
+    LOW = "low"  # 微调
+    COSMETIC = "cosmetic"  # 表面优化
 
 
 @dataclass
 class UpgradeProposal:
     """升级建议"""
+
     proposal_id: str
     title: str
     upgrade_type: UpgradeType
     impact: UpgradeImpact
     description: str
     source_knowledge: list[str]  # 引用知识item_id
-    current_state: str           # 当前系统状态
-    target_state: str            # 目标状态
+    current_state: str  # 当前系统状态
+    target_state: str  # 目标状态
     implementation_steps: list[str]
-    code_changes: list[str]      # 需要修改的文件
-    estimated_effort: str        # 估计工作量
-    risk_level: str              # 风险等级
-    rollback_plan: str           # 回滚方案
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    code_changes: list[str]  # 需要修改的文件
+    estimated_effort: str  # 估计工作量
+    risk_level: str  # 风险等级
+    rollback_plan: str  # 回滚方案
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     status: str = "draft"  # draft/approved/implementing/implemented/rejected
 
 
@@ -75,13 +78,14 @@ class UpgradeProposal:
 # 升级引擎
 # ============================================================
 
+
 class UpgradeEngine:
     """升级引擎 — 分析差距，生成升级建议，追踪执行"""
 
     def __init__(
         self,
         kb: FlywheelKnowledgeBase,
-        proposals_dir: Optional[str] = None,
+        proposals_dir: str | None = None,
     ):
         self.kb = kb
         self.proposals_dir = proposals_dir or str(
@@ -93,7 +97,7 @@ class UpgradeEngine:
     def _load_proposals(self) -> dict[str, UpgradeProposal]:
         proposals: dict = {}
         for f in Path(self.proposals_dir).glob("proposal_*.json"):
-            with open(f, "r", encoding="utf-8") as fp:
+            with open(f, encoding="utf-8") as fp:
                 data = json.load(fp)
             proposals[data["proposal_id"]] = UpgradeProposal(**data)
         return proposals
@@ -101,7 +105,13 @@ class UpgradeEngine:
     def _save_proposal(self, proposal: UpgradeProposal):
         path = Path(self.proposals_dir) / f"proposal_{proposal.proposal_id}.json"
         with open(path, "w", encoding="utf-8") as f:
-            json.dump({k: v.value if isinstance(v, Enum) else v for k, v in proposal.__dict__.items()}, f, ensure_ascii=False, indent=2, default=str)
+            json.dump(
+                {k: v.value if isinstance(v, Enum) else v for k, v in proposal.__dict__.items()},
+                f,
+                ensure_ascii=False,
+                indent=2,
+                default=str,
+            )
         self._proposals[proposal.proposal_id] = proposal
 
     def analyze_gap(self, knowledge: KnowledgeItem) -> UpgradeProposal | None:
@@ -112,34 +122,64 @@ class UpgradeEngine:
         # 规则匹配
         rules = [
             # Prompt优化
-            (r"prompt|template|instruction|system message",
-             UpgradeType.PROMPT_OPTIMIZATION, UpgradeImpact.HIGH),
+            (
+                r"prompt|template|instruction|system message",
+                UpgradeType.PROMPT_OPTIMIZATION,
+                UpgradeImpact.HIGH,
+            ),
             # 技能系统
-            (r"skill|auto.?skill|skill.?factory|skill.?creation",
-             UpgradeType.SKILL_ADDITION, UpgradeImpact.CRITICAL),
-            (r"skill.?improve|skill.?enhance|skill.?refine",
-             UpgradeType.SKILL_IMPROVEMENT, UpgradeImpact.HIGH),
+            (
+                r"skill|auto.?skill|skill.?factory|skill.?creation",
+                UpgradeType.SKILL_ADDITION,
+                UpgradeImpact.CRITICAL,
+            ),
+            (
+                r"skill.?improve|skill.?enhance|skill.?refine",
+                UpgradeType.SKILL_IMPROVEMENT,
+                UpgradeImpact.HIGH,
+            ),
             # 记忆系统
-            (r"memory|context.?window|persistent.?memory|entity.?memory",
-             UpgradeType.MEMORY_ENHANCEMENT, UpgradeImpact.HIGH),
+            (
+                r"memory|context.?window|persistent.?memory|entity.?memory",
+                UpgradeType.MEMORY_ENHANCEMENT,
+                UpgradeImpact.HIGH,
+            ),
             # 推理
-            (r"reasoning|chain.?of.?thought|react|plan.?and.?execute",
-             UpgradeType.REASONING_STRATEGY, UpgradeImpact.HIGH),
+            (
+                r"reasoning|chain.?of.?thought|react|plan.?and.?execute",
+                UpgradeType.REASONING_STRATEGY,
+                UpgradeImpact.HIGH,
+            ),
             # 工具
-            (r"tool|executor|sandbox|function.?call",
-             UpgradeType.TOOL_INTEGRATION, UpgradeImpact.MEDIUM),
+            (
+                r"tool|executor|sandbox|function.?call",
+                UpgradeType.TOOL_INTEGRATION,
+                UpgradeImpact.MEDIUM,
+            ),
             # 协议
-            (r"a2a|agent.?to.?agent|mcp|model.?context.?protocol",
-             UpgradeType.PROTOCOL_UPDATE, UpgradeImpact.CRITICAL),
+            (
+                r"a2a|agent.?to.?agent|mcp|model.?context.?protocol",
+                UpgradeType.PROTOCOL_UPDATE,
+                UpgradeImpact.CRITICAL,
+            ),
             # 架构
-            (r"architecture|framework|orchestrat|multi.?agent",
-             UpgradeType.ARCHITECTURE_UPGRADE, UpgradeImpact.HIGH),
+            (
+                r"architecture|framework|orchestrat|multi.?agent",
+                UpgradeType.ARCHITECTURE_UPGRADE,
+                UpgradeImpact.HIGH,
+            ),
             # 安全
-            (r"security|guardrail|safety|sandbox|injection",
-             UpgradeType.SECURITY_IMPROVEMENT, UpgradeImpact.HIGH),
+            (
+                r"security|guardrail|safety|sandbox|injection",
+                UpgradeType.SECURITY_IMPROVEMENT,
+                UpgradeImpact.HIGH,
+            ),
             # 性能
-            (r"performance|latency|throughput|cache",
-             UpgradeType.PERFORMANCE_TUNING, UpgradeImpact.MEDIUM),
+            (
+                r"performance|latency|throughput|cache",
+                UpgradeType.PERFORMANCE_TUNING,
+                UpgradeImpact.MEDIUM,
+            ),
         ]
 
         for pattern, upgrade_type, impact in rules:
@@ -156,7 +196,7 @@ class UpgradeEngine:
         upgrade_type: UpgradeType,
         impact: UpgradeImpact,
     ) -> UpgradeProposal:
-        proposal_id = f"up_{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}_{knowledge.item_id[:8]}"
+        proposal_id = f"up_{datetime.now(UTC).strftime('%Y%m%d%H%M%S')}_{knowledge.item_id[:8]}"
         return UpgradeProposal(
             proposal_id=proposal_id,
             title=f"[{upgrade_type.value}] {knowledge.title[:80]}",
@@ -165,7 +205,9 @@ class UpgradeEngine:
             description=knowledge.summary[:500],
             source_knowledge=[knowledge.item_id],
             current_state="待评估",
-            target_state=knowledge.key_insights[0] if knowledge.key_insights else knowledge.summary[:200],
+            target_state=knowledge.key_insights[0]
+            if knowledge.key_insights
+            else knowledge.summary[:200],
             implementation_steps=[],
             code_changes=[],
             estimated_effort="待评估",
@@ -216,7 +258,7 @@ class UpgradeEngine:
                         collected_at=proposal.created_at,
                         tags=[],
                     ),
-                    implementation_notes=notes
+                    implementation_notes=notes,
                 )
 
     def get_statistics(self) -> dict:

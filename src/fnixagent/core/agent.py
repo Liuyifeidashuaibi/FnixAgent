@@ -1,4 +1,4 @@
-﻿"""Agent 基类(借鉴 AgentScope Agent + OpenAI SDK Agent)。
+"""Agent 基类(借鉴 AgentScope Agent + OpenAI SDK Agent)。
 
 设计哲学(AgentScope 核心):
   单 Agent 极致健壮 + 多 Agent 平滑扩展
@@ -22,11 +22,15 @@ Agent 是比 ReasoningEngine 更高层的抽象:
   - think 返回的消息不含 ToolCallBlock:已是最终答案,直接返回
   - 达到 max_iterations:进入 reflect(可能不完整)
 """
+
 from __future__ import annotations
 
 import abc
+from collections.abc import AsyncGenerator
 from dataclasses import dataclass, field
-from typing import Any, AsyncGenerator, Optional
+from typing import Any
+
+__version__ = "1.1.0"
 
 from fnixagent.core.messages import Msg
 
@@ -53,6 +57,7 @@ class AgentContext:
         max_iterations: ReAct 循环上限(必须 >= 1)
         extra:          扩展字段(供子类存放自定义状态)
     """
+
     goal: str = ""
     user_id: str = ""
     session_id: str = ""
@@ -65,13 +70,9 @@ class AgentContext:
     def __post_init__(self) -> None:
         # 校验 max_iterations 范围,防止配置错误导致循环不可执行或无上限
         if not isinstance(self.max_iterations, int):
-            raise TypeError(
-                f"max_iterations must be int, got {type(self.max_iterations).__name__}"
-            )
+            raise TypeError(f"max_iterations must be int, got {type(self.max_iterations).__name__}")
         if self.max_iterations < 1:
-            raise ValueError(
-                f"max_iterations must be >= 1, got {self.max_iterations}"
-            )
+            raise ValueError(f"max_iterations must be >= 1, got {self.max_iterations}")
 
     def add_message(self, msg: Msg) -> None:
         """追加消息到历史(便捷方法)。
@@ -148,7 +149,7 @@ class Agent(abc.ABC):
         ...
 
     @abc.abstractmethod
-    async def think(self, ctx: AgentContext) -> Optional[Msg]:
+    async def think(self, ctx: AgentContext) -> Msg | None:
         """思考阶段:LLM 推理,返回思考消息。
 
         返回值:
@@ -159,7 +160,7 @@ class Agent(abc.ABC):
         ...
 
     @abc.abstractmethod
-    async def act(self, ctx: AgentContext, thought: Msg) -> Optional[Msg]:
+    async def act(self, ctx: AgentContext, thought: Msg) -> Msg | None:
         """行动阶段:执行 thought 中的工具调用,返回工具结果消息。
 
         可返回 None 表示无结果(如工具被取消)。

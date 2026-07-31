@@ -20,10 +20,11 @@
   - MiddlewareChain 按注册顺序执行请求钩子,逆序执行响应钩子(洋葱模型)
   - 中间件可同步可异步(全部用 async def 定义,内部可同步实现)
 """
+
 from __future__ import annotations
 
 import abc
-from typing import Any, Optional
+from typing import Any
 
 from fnixagent.core.messages import Msg
 
@@ -63,7 +64,7 @@ class MiddlewareBase(abc.ABC):
         """
         return msg
 
-    async def on_error(self, error: Exception, ctx: Any) -> Optional[Exception]:
+    async def on_error(self, error: Exception, ctx: Any) -> Exception | None:
         """异常处理。
 
         返回值:
@@ -127,7 +128,7 @@ class MiddlewareChain:
         msg = await chain.run_response(msg, ctx)
     """
 
-    def __init__(self, middlewares: Optional[list[MiddlewareBase]] = None) -> None:
+    def __init__(self, middlewares: list[MiddlewareBase] | None = None) -> None:
         """初始化中间件链。
 
         Args:
@@ -139,19 +140,16 @@ class MiddlewareChain:
         if middlewares is None:
             self._middlewares: list[MiddlewareBase] = []
         elif not isinstance(middlewares, list):
-            raise TypeError(
-                f"middlewares must be list or None, got {type(middlewares).__name__}"
-            )
+            raise TypeError(f"middlewares must be list or None, got {type(middlewares).__name__}")
         else:
             for i, mw in enumerate(middlewares):
                 if not isinstance(mw, MiddlewareBase):
                     raise TypeError(
-                        f"middlewares[{i}] must be MiddlewareBase, "
-                        f"got {type(mw).__name__}"
+                        f"middlewares[{i}] must be MiddlewareBase, got {type(mw).__name__}"
                     )
             self._middlewares = list(middlewares)
 
-    def add(self, mw: MiddlewareBase) -> "MiddlewareChain":
+    def add(self, mw: MiddlewareBase) -> MiddlewareChain:
         """追加中间件(返回 self,支持链式调用)。
 
         Args:
@@ -164,9 +162,7 @@ class MiddlewareChain:
             TypeError: mw 不是 MiddlewareBase 实例
         """
         if not isinstance(mw, MiddlewareBase):
-            raise TypeError(
-                f"mw must be MiddlewareBase, got {type(mw).__name__}"
-            )
+            raise TypeError(f"mw must be MiddlewareBase, got {type(mw).__name__}")
         self._middlewares.append(mw)
         return self
 
@@ -205,7 +201,7 @@ class MiddlewareChain:
                 tool_name, args = await mw.on_tool_call(tool_name, args, ctx)
         return tool_name, args
 
-    async def run_error(self, error: Exception, ctx: Any) -> Optional[Exception]:
+    async def run_error(self, error: Exception, ctx: Any) -> Exception | None:
         """异常方向:顺序执行 on_error(任一返回 None 则吞掉异常)。"""
         for mw in self._middlewares:
             if mw.is_implemented["on_error"]:
@@ -219,6 +215,7 @@ class MiddlewareChain:
 # ---------------------------------------------------------------------------
 # 现有模块适配为中间件(P0-2 / P1-1 实现具体逻辑,此处为骨架)
 # ---------------------------------------------------------------------------
+
 
 class SecurityMiddleware(MiddlewareBase):
     """安全中间件(包装 SecurityEngine / GuardrailPipeline)。
@@ -234,19 +231,49 @@ class SecurityMiddleware(MiddlewareBase):
     async def on_request_end(self, msg: Msg, ctx: Any) -> Msg:
         """输入 Guardrail 校验。
 
-        TODO(P0-2): 调用 self._engine 的 GuardrailPipeline.run_input
-        tripwire 触发时抛 SecurityError 或返回拦截消息。
+        调用 SecurityEngine.run_input_guardrails 进行注入检测 + 敏感词 + 内容审核。
+        tripwire 触发时替换消息内容为拦截提示,并标记 metadata。
+        Guardrail 异常降级放行(不阻塞主流程)。
         """
-        # from fnixagent.core.security.guardrail import GuardrailPipeline
-        # msg = await self._engine.run_input_guardrails(msg, ctx)
+        if self._engine is None:
+            return msg
+        text = msg.text_content
+        if not text:
+            return msg
+        try:
+            result = self._engine.run_input_guardrails(text)
+            if result.tripwire_triggered:
+                from fnixagent.core.messages import TextBlock
+
+                msg.content = [TextBlock(text=f"[安全拦截] {result.blocked_reason}")]
+                msg.metadata["guardrail_blocked"] = True
+                msg.metadata["guardrail_risk_score"] = result.risk_score
+        except Exception:
+            # Guardrail 异常不应阻塞主流程(降级而非崩溃)
+            pass
         return msg
 
     async def on_response_start(self, msg: Msg, ctx: Any) -> Msg:
-        """输出 Guardrail 校验 + 脱敏。
+        """输出 Guardrail 校验 + PII 脱敏。
 
-        TODO(P0-2): 调用 self._engine 的 GuardrailPipeline.run_output
+        调用 SecurityEngine.run_output_guardrails 进行内容审核 + 脱敏。
+        sanitized_text 非空时替换消息文本。
         """
-        # msg = await self._engine.run_output_guardrails(msg, ctx)
+        if self._engine is None:
+            return msg
+        text = msg.text_content
+        if not text:
+            return msg
+        try:
+            result = self._engine.run_output_guardrails(text)
+            if result.sanitized_text and result.sanitized_text != text:
+                from fnixagent.core.messages import TextBlock
+
+                msg.content = [TextBlock(text=result.sanitized_text)]
+            if result.tripwire_triggered:
+                msg.metadata["guardrail_output_tripwire"] = True
+        except Exception:
+            pass
         return msg
 
 
@@ -263,10 +290,18 @@ class TracingMiddleware(MiddlewareBase):
 
     async def on_request_start(self, msg: Msg, ctx: Any) -> Msg:
         """开 Span。"""
-        # TODO(P1-1): ctx.span = self._tracer.start_span("agent_reply")
+        if self._tracer is not None:
+            try:
+                ctx.span = self._tracer.start_span("agent_reply")
+            except Exception:
+                pass
         return msg
 
     async def on_response_end(self, msg: Msg, ctx: Any) -> Msg:
         """关 Span。"""
-        # TODO(P1-1): ctx.span.end()
+        if self._tracer is not None and hasattr(ctx, "span") and ctx.span is not None:
+            try:
+                ctx.span.end()
+            except Exception:
+                pass
         return msg

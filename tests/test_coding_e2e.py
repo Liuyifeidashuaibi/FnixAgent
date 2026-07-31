@@ -1,8 +1,9 @@
-﻿"""
+"""
 FnixAgent Coding 包 — 端到端验证
 =====================================
 覆盖编码智能体全部模块功能。
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -12,11 +13,18 @@ import tempfile
 import traceback
 from pathlib import Path
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from fnixagent.core.coding import (
-    ChangeSet, ChangeSetBuilder, ChangeType, CodeIndexer, CodeTools,
-    ContextBuilder, DiffEngine, FileChange, IDEServer, SymbolKind,
+from fnixagent.core.code import (
+    ChangeSetBuilder,
+    CodeIndexer,
+    CodeTools,
+    ContextBuilder,
+    DiffEngine,
+    IDEServer,
+    SymbolKind,
 )
 
 
@@ -39,18 +47,34 @@ class T:
         print(f"\n=== {title} ===")
 
 
+@pytest.fixture
+def t() -> T:
+    """提供 Coding 验证运行器;测试结束后若有未通过项则断言失败。
+
+    原脚本以独立 ``main()`` 驱动,现转为 pytest 用例:每个 ``test_*`` 接收
+    ``t: T`` 参数,通过 ``t.check(...)`` 记录校验结果;本 fixture 在 teardown
+    阶段确保没有遗留未通过项,使用例在 CI 中真正起到门禁作用。
+    """
+    runner = T()
+    yield runner
+    assert runner.failed == 0, f"Coding e2e 存在 {runner.failed} 项未通过:\n" + "\n".join(
+        runner.errors
+    )
+
+
 # ============================================================================
 # 测试用例
 # ============================================================================
 
+
 async def test_imports(t: T):
     """1. 包导入完整性。"""
     t.section("1. 包导入完整性")
-    import fnixagent.core.coding as coding
+    import fnixagent.core.code as coding
+
     t.check("包可导入", True)
     t.check("__all__ 非空", len(coding.__all__) >= 15)
-    for name in ["CodeIndexer", "ContextBuilder", "DiffEngine",
-                 "CodeTools", "IDEServer"]:
+    for name in ["CodeIndexer", "ContextBuilder", "DiffEngine", "CodeTools", "IDEServer"]:
         t.check(f"导出 {name}", hasattr(coding, name))
 
 
@@ -61,7 +85,8 @@ async def test_code_indexer(t: T):
     with tempfile.TemporaryDirectory() as tmpdir:
         # 创建测试文件
         (Path(tmpdir) / "__init__.py").write_text("")
-        (Path(tmpdir) / "sample.py").write_text('''"""Sample module."""
+        (Path(tmpdir) / "sample.py").write_text(
+            '''"""Sample module."""
 
 
 class Calculator:
@@ -86,23 +111,22 @@ async def async_helper(x: int) -> str:
 def standalone_function():
     """独立函数。"""
     pass
-''', encoding="utf-8")
+''',
+            encoding="utf-8",
+        )
 
         indexer = CodeIndexer()
         stats = await indexer.index_directory(tmpdir)
 
         t.check("索引成功", stats.total_files >= 2)
-        t.check("索引符号数 > 0", stats.total_symbols > 0,
-                f"got {stats.total_symbols}")
+        t.check("索引符号数 > 0", stats.total_symbols > 0, f"got {stats.total_symbols}")
         t.check("索引切片数 > 0", stats.total_slices > 0)
-        t.check("无错误", len(stats.errors) == 0,
-                f"errors: {stats.errors}")
+        t.check("无错误", len(stats.errors) == 0, f"errors: {stats.errors}")
 
         # 符号查询
         sym = indexer.get_symbol_info("Calculator")
         t.check("get_symbol_info Calculator", sym is not None)
-        t.check("Calculator 是 CLASS",
-                sym is not None and sym.kind == SymbolKind.CLASS)
+        t.check("Calculator 是 CLASS", sym is not None and sym.kind == SymbolKind.CLASS)
 
         sym = indexer.get_symbol_info("add")
         t.check("get_symbol_info add", sym is not None)
@@ -133,9 +157,7 @@ def standalone_function():
 
         # 增量索引
         stats2 = await indexer.index_directory(tmpdir, incremental=True)
-        t.check("增量索引跳过未变更文件",
-                stats2.indexed_files == 0,
-                f"got {stats2.indexed_files}")
+        t.check("增量索引跳过未变更文件", stats2.indexed_files == 0, f"got {stats2.indexed_files}")
 
 
 async def test_diff_engine(t: T):
@@ -226,19 +248,22 @@ async def test_code_tools(t: T):
 
         # edit 多次匹配失败 ('hi' 在文件中出现 2 次)
         result = await tools.edit("test.py", "'hi'", "'yo'")
-        t.check("edit 多次匹配失败", not result.success,
-                f"expected failure, got success={result.success}")
+        t.check(
+            "edit 多次匹配失败",
+            not result.success,
+            f"expected failure, got success={result.success}",
+        )
 
         # 路径穿越防护 (read 内部捕获 ValueError 返回 err)
         result = await tools.read("../../../etc/passwd")
-        t.check("路径穿越拒绝", not result.success,
-                f"expected failure, got success={result.success}")
+        t.check(
+            "路径穿越拒绝", not result.success, f"expected failure, got success={result.success}"
+        )
 
         # git 白名单
         t.check("git status 安全", tools._is_safe_git_command(["status"]))
         t.check("git push 禁止", not tools._is_safe_git_command(["push"]))
-        t.check("git reset --hard 禁止",
-                not tools._is_safe_git_command(["reset", "--hard"]))
+        t.check("git reset --hard 禁止", not tools._is_safe_git_command(["reset", "--hard"]))
 
         # get_tools
         tool_list = tools.get_tools()
@@ -249,8 +274,7 @@ async def test_context_builder(t: T):
     """5. ContextBuilder 上下文组装。"""
     t.section("5. ContextBuilder 上下文组装")
     with tempfile.TemporaryDirectory() as tmpdir:
-        (Path(tmpdir) / "sample.py").write_text(
-            "def foo():\n    return 42\n", encoding="utf-8")
+        (Path(tmpdir) / "sample.py").write_text("def foo():\n    return 42\n", encoding="utf-8")
 
         indexer = CodeIndexer()
         await indexer.index_directory(tmpdir)
@@ -278,12 +302,12 @@ async def test_coding_agent(t: T):
         indexer = CodeIndexer()
         await indexer.index_directory(tmpdir)
         diff_engine = DiffEngine(project_root=tmpdir)
-        tools = CodeTools(project_root=tmpdir, diff_engine=diff_engine,
-                          code_indexer=indexer)
+        tools = CodeTools(project_root=tmpdir, diff_engine=diff_engine, code_indexer=indexer)
         ctx_builder = ContextBuilder(indexer, project_root=tmpdir)
         llm = InMemoryLLMBackend()
 
-        from fnixagent.core.coding.coding_agent import CodingAgent, CodingTask
+        from fnixagent.core.code.agent import CodingAgent
+
         agent = CodingAgent(tools, ctx_builder, llm)
 
         # 执行任务 (InMemoryLLM 返回模板, plan 解析会降级)
@@ -329,8 +353,10 @@ async def test_skills(t: T):
     """8. Skills 加载。"""
     t.section("8. Skills 加载")
     from fnixagent.core.agentos.shell import SkillRegistry
-    skills_dir = str(Path(__file__).parent.parent / "src" / "fnixagent" /
-                     "core" / "coding" / "skills")
+
+    skills_dir = str(
+        Path(__file__).parent.parent / "src" / "fnixagent" / "core" / "code" / "skills"
+    )
     registry = SkillRegistry()
     count = registry.load_from_directory(skills_dir)
     t.check("Skill 加载数 >= 3", count >= 3, f"got {count}")
@@ -345,9 +371,14 @@ async def test_agentos_integration(t: T):
     """9. AgentOS 集成 (ContextFS + syscall)。"""
     t.section("9. AgentOS 集成")
     from fnixagent.core.agentos import (
-        AgentKernel, AgentShell,
-        InMemoryLLMBackend, InMemoryMemoryBackend, InMemoryToolBackend,
-        InMemoryStorageBackend, InMemoryPolicyBackend, InMemoryAuditBackend,
+        AgentKernel,
+        AgentShell,
+        InMemoryAuditBackend,
+        InMemoryLLMBackend,
+        InMemoryMemoryBackend,
+        InMemoryPolicyBackend,
+        InMemoryStorageBackend,
+        InMemoryToolBackend,
     )
 
     kernel = AgentKernel(
@@ -364,7 +395,7 @@ async def test_agentos_integration(t: T):
 
     # 通过 AgentShell fs.write 写入代码
     r = await shell.execute(
-        'fs.write /project/main.py --content="def hello():\\n    return \'world\'"'
+        "fs.write /project/main.py --content=\"def hello():\\n    return 'world'\""
     )
     t.check("fs.write 代码文件", r.success)
 
@@ -378,6 +409,7 @@ async def test_agentos_integration(t: T):
 # ============================================================================
 # 主入口
 # ============================================================================
+
 
 async def main() -> int:
     print("=" * 70)

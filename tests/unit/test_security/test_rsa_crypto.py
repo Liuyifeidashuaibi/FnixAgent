@@ -1,4 +1,4 @@
-﻿"""
+"""
 rsa_crypto 模块单元测试(验收标准 ② RSA 加解密往返测试)。
 
 覆盖:
@@ -10,6 +10,7 @@ rsa_crypto 模块单元测试(验收标准 ② RSA 加解密往返测试)。
     - 密钥对从文件加载
     - rsa_decrypt_password 统一入口
 """
+
 import base64
 
 import pytest
@@ -22,7 +23,6 @@ from fnixagent.core.security.auth.rsa_crypto import (
     rsa_decrypt_password,
 )
 
-
 # ---------------------------------------------------------------------------
 # 前置条件:cryptography 必须可用
 # ---------------------------------------------------------------------------
@@ -33,6 +33,7 @@ _SKIP_REASON = "cryptography 库不可用,跳过 RSA 真实加解密测试"
 # ---------------------------------------------------------------------------
 # 客户端加密辅助函数(模拟前端行为)
 # ---------------------------------------------------------------------------
+
 
 def _client_encrypt(public_pem: str, plaintext: str) -> str:
     """模拟客户端用服务端公钥加密密码(OAEP+SHA256),返回 Base64 密文。"""
@@ -58,6 +59,7 @@ def _client_encrypt(public_pem: str, plaintext: str) -> str:
 # ---------------------------------------------------------------------------
 # 密钥对生成与格式
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.skipif(not is_rsa_available(), reason=_SKIP_REASON)
 class TestKeypairGeneration:
@@ -89,6 +91,7 @@ class TestKeypairGeneration:
 # ---------------------------------------------------------------------------
 # 加解密往返(验收标准 ②)
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.skipif(not is_rsa_available(), reason=_SKIP_REASON)
 class TestRsaRoundTrip:
@@ -136,6 +139,7 @@ class TestRsaRoundTrip:
 # 错误处理
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.skipif(not is_rsa_available(), reason=_SKIP_REASON)
 class TestRsaDecryptionErrors:
     """RSA 解密错误处理。"""
@@ -169,6 +173,7 @@ class TestRsaDecryptionErrors:
 # rsa_decrypt_password 统一入口
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.skipif(not is_rsa_available(), reason=_SKIP_REASON)
 class TestRsaDecryptPasswordEntry:
     """rsa_decrypt_password 统一入口。"""
@@ -193,6 +198,7 @@ class TestRsaDecryptPasswordEntry:
 # ---------------------------------------------------------------------------
 # 从文件加载密钥对
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.skipif(not is_rsa_available(), reason=_SKIP_REASON)
 class TestLoadKeypairFromFile:

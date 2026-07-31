@@ -53,14 +53,11 @@ import re
 import time
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional, Callable, Awaitable
-from urllib.parse import urlparse, quote_plus
 
 import httpx
-import yaml
 
 logger = logging.getLogger(__name__)
 
@@ -69,8 +66,10 @@ logger = logging.getLogger(__name__)
 # 信息源注册表 — 30+ 源完整定义
 # ============================================================
 
+
 class SourceTier(str, Enum):
     """信息源等级"""
+
     TIER_0 = "tier_0"  # 核心 (arXiv, GitHub, Semantic Scholar)
     TIER_1 = "tier_1"  # 重要 (Tavily, RSS, HuggingFace)
     TIER_2 = "tier_2"  # 补充 (Reddit, HN, Twitter)
@@ -79,27 +78,29 @@ class SourceTier(str, Enum):
 
 class CollectionMethod(str, Enum):
     """采集方式"""
-    API = "api"              # REST API 调用
-    RSS = "rss"              # RSS/Atom 订阅
+
+    API = "api"  # REST API 调用
+    RSS = "rss"  # RSS/Atom 订阅
     WEB_SCRAPING = "web_scraping"  # 网页抓取
-    MCP = "mcp"              # MCP 协议连接
-    WEBHOOK = "webhook"      # Webhook 推送
-    GRAPHQL = "graphql"      # GraphQL 查询
-    SDK = "sdk"              # 官方 SDK
+    MCP = "mcp"  # MCP 协议连接
+    WEBHOOK = "webhook"  # Webhook 推送
+    GRAPHQL = "graphql"  # GraphQL 查询
+    SDK = "sdk"  # 官方 SDK
 
 
 @dataclass
 class SourceConfig:
     """信息源配置"""
+
     source_id: str
     name: str
     tier: SourceTier
     method: CollectionMethod
     base_url: str
-    category: str              # academic / code / news / blog / social / search
-    api_key_env: str = ""      # 环境变量名
-    rate_limit_rpm: int = 60   # 每分钟请求限制
-    rate_limit_rph: int = 1000 # 每小时请求限制
+    category: str  # academic / code / news / blog / social / search
+    api_key_env: str = ""  # 环境变量名
+    rate_limit_rpm: int = 60  # 每分钟请求限制
+    rate_limit_rph: int = 1000  # 每小时请求限制
     retry_count: int = 3
     retry_delay_ms: int = 1000
     timeout_seconds: int = 30
@@ -129,15 +130,19 @@ SOURCES = {
         rate_limit_rpm=30,
         collection_frequency="daily",
         search_queries=[
-            'cat:cs.AI', 'cat:cs.CL', 'cat:cs.LG', 'cat:cs.MA', 'cat:cs.IR',
-            'all:agent AND all:autonomous',
-            'all:LLM AND all:reasoning',
-            'all:reinforcement learning AND all:language model',
-            'all:multi-agent AND all:coordination',
-            'all:prompt AND all:optimization',
-            'all:self-improving AND all:AI',
-            'all:memory AND all:augmented AND all:generation',
-            'all:tool AND all:use AND all:large language model',
+            "cat:cs.AI",
+            "cat:cs.CL",
+            "cat:cs.LG",
+            "cat:cs.MA",
+            "cat:cs.IR",
+            "all:agent AND all:autonomous",
+            "all:LLM AND all:reasoning",
+            "all:reinforcement learning AND all:language model",
+            "all:multi-agent AND all:coordination",
+            "all:prompt AND all:optimization",
+            "all:self-improving AND all:AI",
+            "all:memory AND all:augmented AND all:generation",
+            "all:tool AND all:use AND all:large language model",
         ],
     ),
     "semantic_scholar": SourceConfig(
@@ -170,7 +175,6 @@ SOURCES = {
         rate_limit_rpm=30,
         collection_frequency="weekly",
     ),
-
     # === 代码源 (Tier 0) ===
     "github": SourceConfig(
         source_id="github",
@@ -208,7 +212,6 @@ SOURCES = {
         collection_frequency="weekly",
         tags=["agent", "llm", "reasoning", "tool-use"],
     ),
-
     # === AI 搜索源 (Tier 1) ===
     "tavily": SourceConfig(
         source_id="tavily",
@@ -242,7 +245,6 @@ SOURCES = {
         rate_limit_rpm=20,
         collection_frequency="daily",
     ),
-
     # === RSS 新闻源 (Tier 1) ===
     "rss_feeds": SourceConfig(
         source_id="rss_feeds",
@@ -275,7 +277,6 @@ SOURCES = {
             "https://lobste.rs/t/ai.rss",
         ],
     ),
-
     # === 社区源 (Tier 2) ===
     "hacker_news": SourceConfig(
         source_id="hacker_news",
@@ -297,7 +298,6 @@ SOURCES = {
         rate_limit_rpm=30,
         collection_frequency="daily",
     ),
-
     # === 大厂博客 (Tier 1) ===
     "openai_blog": SourceConfig(
         source_id="openai_blog",
@@ -319,7 +319,6 @@ SOURCES = {
         rate_limit_rpm=10,
         collection_frequency="weekly",
     ),
-
     # === 会议源 (Tier 2) ===
     "iclr": SourceConfig(
         source_id="iclr",
@@ -367,18 +366,20 @@ SUPPLEMENTARY_SOURCES = [
 # 采集结果统一模型
 # ============================================================
 
+
 @dataclass
 class RawItem:
     """原始采集条目 (标准化前)"""
+
     item_id: str
     source_id: str
     title: str
     url: str
-    content: str                # 原始内容
+    content: str  # 原始内容
     content_type: str = "text"  # text / html / markdown / json
     authors: list[str] = field(default_factory=list)
     published_at: str = ""
-    collected_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    collected_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     metadata: dict = field(default_factory=dict)
     # 质量标记
     content_length: int = 0
@@ -389,14 +390,15 @@ class RawItem:
 @dataclass
 class NormalizedItem:
     """标准化后的条目 (LLM就绪)"""
+
     item_id: str
     source_id: str
     source_name: str
     title: str
     url: str
     # 标准化内容
-    summary: str                # 200字摘要
-    full_text: str              # 清洗后的完整文本 (Markdown)
+    summary: str  # 200字摘要
+    full_text: str  # 清洗后的完整文本 (Markdown)
     key_points: list[str] = field(default_factory=list)  # 关键要点
     # 元数据
     authors: list[str] = field(default_factory=list)
@@ -417,6 +419,7 @@ class NormalizedItem:
 @dataclass
 class CollectionBatch:
     """一次采集批次"""
+
     batch_id: str
     started_at: str
     completed_at: str = ""
@@ -439,6 +442,7 @@ class CollectionBatch:
 # Layer 1: 数据清洗与标准化
 # ============================================================
 
+
 class DataNormalizer:
     """
     数据清洗与标准化引擎
@@ -459,39 +463,74 @@ class DataNormalizer:
 
     # 噪声模式 (FireCrawl启发)
     NOISE_PATTERNS = [
-        r'<nav[^>]*>.*?</nav>',
-        r'<footer[^>]*>.*?</footer>',
-        r'<header[^>]*>.*?</header>',
-        r'<aside[^>]*>.*?</aside>',
-        r'<script[^>]*>.*?</script>',
-        r'<style[^>]*>.*?</style>',
-        r'<noscript[^>]*>.*?</noscript>',
-        r'cookie[^>]*banner',
-        r'cookie[^>]*notice',
-        r'accept[^>]*cookies',
-        r'privacy[^>]*policy',
-        r'terms[^>]*service',
-        r'subscribe[^>]*newsletter',
-        r'sign[^>]*up[^>]*form',
-        r'advertisement',
-        r'sponsored[^>]*content',
-        r'related[^>]*posts',
-        r'you[^>]*may[^>]*also[^>]*like',
+        r"<nav[^>]*>.*?</nav>",
+        r"<footer[^>]*>.*?</footer>",
+        r"<header[^>]*>.*?</header>",
+        r"<aside[^>]*>.*?</aside>",
+        r"<script[^>]*>.*?</script>",
+        r"<style[^>]*>.*?</style>",
+        r"<noscript[^>]*>.*?</noscript>",
+        r"cookie[^>]*banner",
+        r"cookie[^>]*notice",
+        r"accept[^>]*cookies",
+        r"privacy[^>]*policy",
+        r"terms[^>]*service",
+        r"subscribe[^>]*newsletter",
+        r"sign[^>]*up[^>]*form",
+        r"advertisement",
+        r"sponsored[^>]*content",
+        r"related[^>]*posts",
+        r"you[^>]*may[^>]*also[^>]*like",
     ]
 
     # 高价值关键词 (AI Agent相关)
     HIGH_VALUE_KEYWORDS = [
-        "agent", "autonomous", "self-improving", "self-evolving",
-        "multi-agent", "llm", "large language model", "reinforcement learning",
-        "tool use", "tool calling", "function calling", "MCP", "model context protocol",
-        "prompt engineering", "prompt optimization", "chain of thought",
-        "reasoning", "planning", "memory", "retrieval", "RAG",
-        "orchestration", "workflow", "agentic", "autonomous agent",
-        "OpenAI", "Anthropic", "Claude", "GPT", "DeepMind", "Gemini",
-        "LangChain", "LangGraph", "CrewAI", "AutoGen", "OpenClaw",
-        "knowledge graph", "vector database", "embedding",
-        "fine-tuning", "alignment", "RLHF", "constitutional AI",
-        "foundation model", "frontier model", "AGI",
+        "agent",
+        "autonomous",
+        "self-improving",
+        "self-evolving",
+        "multi-agent",
+        "llm",
+        "large language model",
+        "reinforcement learning",
+        "tool use",
+        "tool calling",
+        "function calling",
+        "MCP",
+        "model context protocol",
+        "prompt engineering",
+        "prompt optimization",
+        "chain of thought",
+        "reasoning",
+        "planning",
+        "memory",
+        "retrieval",
+        "RAG",
+        "orchestration",
+        "workflow",
+        "agentic",
+        "autonomous agent",
+        "OpenAI",
+        "Anthropic",
+        "Claude",
+        "GPT",
+        "DeepMind",
+        "Gemini",
+        "LangChain",
+        "LangGraph",
+        "CrewAI",
+        "AutoGen",
+        "OpenClaw",
+        "knowledge graph",
+        "vector database",
+        "embedding",
+        "fine-tuning",
+        "alignment",
+        "RLHF",
+        "constitutional AI",
+        "foundation model",
+        "frontier model",
+        "AGI",
     ]
 
     def __init__(self):
@@ -549,14 +588,14 @@ class DataNormalizer:
 
         # 移除噪声
         for pattern in self.NOISE_PATTERNS:
-            content = re.sub(pattern, '', content, flags=re.IGNORECASE | re.DOTALL)
+            content = re.sub(pattern, "", content, flags=re.IGNORECASE | re.DOTALL)
 
         # 移除HTML标签
-        content = re.sub(r'<[^>]+>', ' ', content)
+        content = re.sub(r"<[^>]+>", " ", content)
 
         # 移除多余空白
-        content = re.sub(r'\n{3,}', '\n\n', content)
-        content = re.sub(r' {2,}', ' ', content)
+        content = re.sub(r"\n{3,}", "\n\n", content)
+        content = re.sub(r" {2,}", " ", content)
 
         # 移除首尾空白
         content = content.strip()
@@ -567,7 +606,7 @@ class DataNormalizer:
         """提取摘要 — 前N个完整句子"""
         if not text:
             return ""
-        sentences = re.split(r'(?<=[.!?])\s+', text)
+        sentences = re.split(r"(?<=[.!?])\s+", text)
         summary = ""
         for s in sentences:
             if len(summary) + len(s) > max_length:
@@ -579,13 +618,15 @@ class DataNormalizer:
         """提取关键要点"""
         points = []
         # 找列表项
-        list_items = re.findall(r'(?:^|\n)[\s]*[-*•]\s*(.+?)(?=\n|$)', text)
+        list_items = re.findall(r"(?:^|\n)[\s]*[-*•]\s*(.+?)(?=\n|$)", text)
         if list_items:
             points = [item.strip()[:200] for item in list_items[:5]]
 
         # 找高价值关键词所在句子
         for kw in self.HIGH_VALUE_KEYWORDS[:20]:
-            for match in re.finditer(rf'[^.!?]*\b{re.escape(kw)}\b[^.!?]*[.!?]', text, re.IGNORECASE):
+            for match in re.finditer(
+                rf"[^.!?]*\b{re.escape(kw)}\b[^.!?]*[.!?]", text, re.IGNORECASE
+            ):
                 sentence = match.group().strip()
                 if len(sentence) > 30 and sentence not in points:
                     points.append(sentence[:200])
@@ -594,7 +635,7 @@ class DataNormalizer:
 
     def _compute_hash(self, text: str) -> str:
         """内容哈希"""
-        return hashlib.sha256(text.encode('utf-8')).hexdigest()[:16]
+        return hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
 
     def _detect_near_duplicate(self, text: str, content_hash: str) -> bool:
         """语义近似去重"""
@@ -648,11 +689,11 @@ class DataNormalizer:
             score += 0.1
 
         # 引用
-        if re.search(r'\[\d+\]', clean_text) or re.search(r'https?://', clean_text):
+        if re.search(r"\[\d+\]", clean_text) or re.search(r"https?://", clean_text):
             score += 0.1
 
         # 代码块
-        if '```' in raw.content or '<code>' in raw.content:
+        if "```" in raw.content or "<code>" in raw.content:
             score += 0.1
 
         return min(1.0, score)
@@ -661,6 +702,7 @@ class DataNormalizer:
 # ============================================================
 # Layer 2: 统一采集管道
 # ============================================================
+
 
 class UnifiedCollector:
     """
@@ -671,13 +713,15 @@ class UnifiedCollector:
 
     def __init__(
         self,
-        normalizer: Optional[DataNormalizer] = None,
-        config_path: Optional[str] = None,
+        normalizer: DataNormalizer | None = None,
+        config_path: str | None = None,
     ):
         self.normalizer = normalizer or DataNormalizer()
-        self._client: Optional[httpx.AsyncClient] = None
+        self._client: httpx.AsyncClient | None = None
         self._rate_limits: dict[str, dict] = {}
-        self._source_stats: dict[str, dict] = defaultdict(lambda: {"requests": 0, "errors": 0, "last_request": 0})
+        self._source_stats: dict[str, dict] = defaultdict(
+            lambda: {"requests": 0, "errors": 0, "last_request": 0}
+        )
 
     async def _get_client(self) -> httpx.AsyncClient:
         if self._client is None:
@@ -768,6 +812,7 @@ class UnifiedCollector:
 
                 # 解析 Atom XML
                 import xml.etree.ElementTree as ET
+
                 root = ET.fromstring(resp.text)
                 ns = {
                     "atom": "http://www.w3.org/2005/Atom",
@@ -780,24 +825,25 @@ class UnifiedCollector:
                     link = entry.find("atom:id", ns)
                     published = entry.find("atom:published", ns)
                     authors = [
-                        a.find("atom:name", ns).text
-                        for a in entry.findall("atom:author", ns)
+                        a.find("atom:name", ns).text for a in entry.findall("atom:author", ns)
                     ]
 
                     item_id = hashlib.md5(
                         (link.text if link is not None else "").encode()
                     ).hexdigest()[:12]
 
-                    items.append(RawItem(
-                        item_id=item_id,
-                        source_id=source.source_id,
-                        title=title.text.strip() if title is not None else "",
-                        url=link.text if link is not None else "",
-                        content=summary.text.strip() if summary is not None else "",
-                        authors=authors,
-                        published_at=published.text if published is not None else "",
-                        metadata={"query": query},
-                    ))
+                    items.append(
+                        RawItem(
+                            item_id=item_id,
+                            source_id=source.source_id,
+                            title=title.text.strip() if title is not None else "",
+                            url=link.text if link is not None else "",
+                            content=summary.text.strip() if summary is not None else "",
+                            authors=authors,
+                            published_at=published.text if published is not None else "",
+                            metadata={"query": query},
+                        )
+                    )
 
             except Exception as e:
                 logger.error(f"arXiv 采集失败 [{query}]: {e}")
@@ -824,19 +870,21 @@ class UnifiedCollector:
 
                 for paper in data.get("data", []):
                     item_id = paper.get("paperId", hashlib.md5(query.encode()).hexdigest()[:12])
-                    items.append(RawItem(
-                        item_id=item_id,
-                        source_id=source.source_id,
-                        title=paper.get("title", ""),
-                        url=paper.get("url", f"https://api.semanticscholar.org/{item_id}"),
-                        content=paper.get("abstract", ""),
-                        authors=[a.get("name", "") for a in paper.get("authors", [])],
-                        published_at=str(paper.get("year", "")),
-                        metadata={
-                            "citations": paper.get("citationCount", 0),
-                            "query": query,
-                        },
-                    ))
+                    items.append(
+                        RawItem(
+                            item_id=item_id,
+                            source_id=source.source_id,
+                            title=paper.get("title", ""),
+                            url=paper.get("url", f"https://api.semanticscholar.org/{item_id}"),
+                            content=paper.get("abstract", ""),
+                            authors=[a.get("name", "") for a in paper.get("authors", [])],
+                            published_at=str(paper.get("year", "")),
+                            metadata={
+                                "citations": paper.get("citationCount", 0),
+                                "query": query,
+                            },
+                        )
+                    )
 
             except Exception as e:
                 logger.error(f"Semantic Scholar 采集失败 [{query}]: {e}")
@@ -850,7 +898,7 @@ class UnifiedCollector:
         client = await self._get_client()
 
         headers = {"Accept": "application/vnd.github.v3+json"}
-        api_key = source.api_key_env and __import__('os').environ.get(source.api_key_env)
+        api_key = source.api_key_env and __import__("os").environ.get(source.api_key_env)
         if api_key:
             headers["Authorization"] = f"token {api_key}"
 
@@ -872,22 +920,24 @@ class UnifiedCollector:
 
                 for repo in data.get("items", []):
                     item_id = str(repo.get("id", ""))
-                    items.append(RawItem(
-                        item_id=item_id,
-                        source_id=source.source_id,
-                        title=repo.get("full_name", ""),
-                        url=repo.get("html_url", ""),
-                        content=repo.get("description", ""),
-                        authors=[repo.get("owner", {}).get("login", "")],
-                        published_at=repo.get("updated_at", ""),
-                        metadata={
-                            "stars": repo.get("stargazers_count", 0),
-                            "forks": repo.get("forks_count", 0),
-                            "language": repo.get("language", ""),
-                            "topics": repo.get("topics", []),
-                            "query": query,
-                        },
-                    ))
+                    items.append(
+                        RawItem(
+                            item_id=item_id,
+                            source_id=source.source_id,
+                            title=repo.get("full_name", ""),
+                            url=repo.get("html_url", ""),
+                            content=repo.get("description", ""),
+                            authors=[repo.get("owner", {}).get("login", "")],
+                            published_at=repo.get("updated_at", ""),
+                            metadata={
+                                "stars": repo.get("stargazers_count", 0),
+                                "forks": repo.get("forks_count", 0),
+                                "language": repo.get("language", ""),
+                                "topics": repo.get("topics", []),
+                                "query": query,
+                            },
+                        )
+                    )
 
             except Exception as e:
                 logger.error(f"GitHub 采集失败 [{query}]: {e}")
@@ -900,7 +950,7 @@ class UnifiedCollector:
         items = []
         client = await self._get_client()
 
-        api_key = source.api_key_env and __import__('os').environ.get(source.api_key_env)
+        api_key = source.api_key_env and __import__("os").environ.get(source.api_key_env)
         if not api_key:
             logger.warning("Tavily API key 未配置, 跳过")
             return items
@@ -925,18 +975,20 @@ class UnifiedCollector:
 
                 for result in data.get("results", []):
                     item_id = hashlib.md5(result.get("url", "").encode()).hexdigest()[:12]
-                    items.append(RawItem(
-                        item_id=item_id,
-                        source_id=source.source_id,
-                        title=result.get("title", ""),
-                        url=result.get("url", ""),
-                        content=result.get("content", ""),
-                        published_at="",
-                        metadata={
-                            "score": result.get("score", 0),
-                            "query": query,
-                        },
-                    ))
+                    items.append(
+                        RawItem(
+                            item_id=item_id,
+                            source_id=source.source_id,
+                            title=result.get("title", ""),
+                            url=result.get("url", ""),
+                            content=result.get("content", ""),
+                            published_at="",
+                            metadata={
+                                "score": result.get("score", 0),
+                                "query": query,
+                            },
+                        )
+                    )
 
             except Exception as e:
                 logger.error(f"Tavily 采集失败 [{query}]: {e}")
@@ -949,7 +1001,7 @@ class UnifiedCollector:
         items = []
         client = await self._get_client()
 
-        api_key = source.api_key_env and __import__('os').environ.get(source.api_key_env)
+        api_key = source.api_key_env and __import__("os").environ.get(source.api_key_env)
         if not api_key:
             return items
 
@@ -972,14 +1024,16 @@ class UnifiedCollector:
 
                 for result in data.get("web", {}).get("results", []):
                     item_id = hashlib.md5(result.get("url", "").encode()).hexdigest()[:12]
-                    items.append(RawItem(
-                        item_id=item_id,
-                        source_id=source.source_id,
-                        title=result.get("title", ""),
-                        url=result.get("url", ""),
-                        content=result.get("description", ""),
-                        metadata={"query": query},
-                    ))
+                    items.append(
+                        RawItem(
+                            item_id=item_id,
+                            source_id=source.source_id,
+                            title=result.get("title", ""),
+                            url=result.get("url", ""),
+                            content=result.get("description", ""),
+                            metadata={"query": query},
+                        )
+                    )
 
             except Exception as e:
                 logger.error(f"Brave 采集失败 [{query}]: {e}")
@@ -1008,18 +1062,22 @@ class UnifiedCollector:
                     story = story_resp.json()
 
                     if story and story.get("title"):
-                        items.append(RawItem(
-                            item_id=str(story.get("id", "")),
-                            source_id=source.source_id,
-                            title=story.get("title", ""),
-                            url=story.get("url", f"https://news.ycombinator.com/item?id={story.get('id')}"),
-                            content=story.get("text", ""),
-                            authors=[story.get("by", "")],
-                            metadata={
-                                "score": story.get("score", 0),
-                                "descendants": story.get("descendants", 0),
-                            },
-                        ))
+                        items.append(
+                            RawItem(
+                                item_id=str(story.get("id", "")),
+                                source_id=source.source_id,
+                                title=story.get("title", ""),
+                                url=story.get(
+                                    "url", f"https://news.ycombinator.com/item?id={story.get('id')}"
+                                ),
+                                content=story.get("text", ""),
+                                authors=[story.get("by", "")],
+                                metadata={
+                                    "score": story.get("score", 0),
+                                    "descendants": story.get("descendants", 0),
+                                },
+                            )
+                        )
                 except Exception:
                     continue
 
@@ -1045,20 +1103,22 @@ class UnifiedCollector:
 
                 for model in resp.json():
                     item_id = model.get("id", "")
-                    items.append(RawItem(
-                        item_id=item_id,
-                        source_id=source.source_id,
-                        title=item_id,
-                        url=f"https://huggingface.co/{item_id}",
-                        content=model.get("pipeline_tag", ""),
-                        authors=[model.get("author", "")],
-                        published_at=model.get("lastModified", ""),
-                        metadata={
-                            "downloads": model.get("downloads", 0),
-                            "likes": model.get("likes", 0),
-                            "tag": tag,
-                        },
-                    ))
+                    items.append(
+                        RawItem(
+                            item_id=item_id,
+                            source_id=source.source_id,
+                            title=item_id,
+                            url=f"https://huggingface.co/{item_id}",
+                            content=model.get("pipeline_tag", ""),
+                            authors=[model.get("author", "")],
+                            published_at=model.get("lastModified", ""),
+                            metadata={
+                                "downloads": model.get("downloads", 0),
+                                "likes": model.get("likes", 0),
+                                "tag": tag,
+                            },
+                        )
+                    )
             except Exception as e:
                 logger.error(f"HuggingFace 采集失败 [{tag}]: {e}")
 
@@ -1067,7 +1127,7 @@ class UnifiedCollector:
     async def _collect_openreview(self, source: SourceConfig) -> list[RawItem]:
         """OpenReview API 采集"""
         items = []
-        client = await self._get_client()
+        await self._get_client()
         # 简化实现
         return items
 
@@ -1093,6 +1153,7 @@ class UnifiedCollector:
                 resp.raise_for_status()
 
                 import xml.etree.ElementTree as ET
+
                 root = ET.fromstring(resp.text)
 
                 # 检测 RSS 还是 Atom
@@ -1110,15 +1171,17 @@ class UnifiedCollector:
                         url = link.get("href", "") if link is not None else ""
                         item_id = hashlib.md5(url.encode()).hexdigest()[:12]
 
-                        items.append(RawItem(
-                            item_id=item_id,
-                            source_id=source.source_id,
-                            title=title.text.strip() if title is not None else "",
-                            url=url,
-                            content=summary.text.strip() if summary is not None else "",
-                            published_at=updated.text if updated is not None else "",
-                            metadata={"feed_url": feed_url},
-                        ))
+                        items.append(
+                            RawItem(
+                                item_id=item_id,
+                                source_id=source.source_id,
+                                title=title.text.strip() if title is not None else "",
+                                url=url,
+                                content=summary.text.strip() if summary is not None else "",
+                                published_at=updated.text if updated is not None else "",
+                                metadata={"feed_url": feed_url},
+                            )
+                        )
                 else:
                     # RSS 2.0
                     for item in root.findall(".//item"):
@@ -1130,15 +1193,17 @@ class UnifiedCollector:
                         url = link.text.strip() if link is not None else ""
                         item_id = hashlib.md5(url.encode()).hexdigest()[:12]
 
-                        items.append(RawItem(
-                            item_id=item_id,
-                            source_id=source.source_id,
-                            title=title.text.strip() if title is not None else "",
-                            url=url,
-                            content=desc.text.strip() if desc is not None else "",
-                            published_at=pub_date.text if pub_date is not None else "",
-                            metadata={"feed_url": feed_url},
-                        ))
+                        items.append(
+                            RawItem(
+                                item_id=item_id,
+                                source_id=source.source_id,
+                                title=title.text.strip() if title is not None else "",
+                                url=url,
+                                content=desc.text.strip() if desc is not None else "",
+                                published_at=pub_date.text if pub_date is not None else "",
+                                metadata={"feed_url": feed_url},
+                            )
+                        )
 
             except Exception as e:
                 logger.error(f"RSS 采集失败 [{feed_url}]: {e}")
@@ -1173,15 +1238,17 @@ class UnifiedCollector:
             )
             if resp.status_code == 200 and resp.text.strip():
                 item_id = hashlib.md5(source.base_url.encode()).hexdigest()[:12]
-                items.append(RawItem(
-                    item_id=item_id,
-                    source_id=source.source_id,
-                    title=source.name,
-                    url=source.base_url,
-                    content=resp.text,
-                    content_type="markdown",
-                    metadata={"method": "jina_reader"},
-                ))
+                items.append(
+                    RawItem(
+                        item_id=item_id,
+                        source_id=source.source_id,
+                        title=source.name,
+                        url=source.base_url,
+                        content=resp.text,
+                        content_type="markdown",
+                        metadata={"method": "jina_reader"},
+                    )
+                )
                 return items
         except Exception:
             pass
@@ -1192,15 +1259,17 @@ class UnifiedCollector:
             resp.raise_for_status()
 
             item_id = hashlib.md5(source.base_url.encode()).hexdigest()[:12]
-            items.append(RawItem(
-                item_id=item_id,
-                source_id=source.source_id,
-                title=source.name,
-                url=source.base_url,
-                content=resp.text,
-                content_type="html",
-                metadata={"method": "direct"},
-            ))
+            items.append(
+                RawItem(
+                    item_id=item_id,
+                    source_id=source.source_id,
+                    title=source.name,
+                    url=source.base_url,
+                    content=resp.text,
+                    content_type="html",
+                    metadata={"method": "direct"},
+                )
+            )
         except Exception as e:
             logger.error(f"Web Scraping 失败 [{source.base_url}]: {e}")
             self._source_stats[source.source_id]["errors"] += 1
@@ -1227,8 +1296,8 @@ class UnifiedCollector:
 
     async def collect_all(
         self,
-        tier: Optional[SourceTier] = None,
-        category: Optional[str] = None,
+        tier: SourceTier | None = None,
+        category: str | None = None,
         max_concurrent: int = 10,
     ) -> CollectionBatch:
         """
@@ -1242,7 +1311,7 @@ class UnifiedCollector:
         batch_id = hashlib.md5(str(time.time()).encode()).hexdigest()[:12]
         batch = CollectionBatch(
             batch_id=batch_id,
-            started_at=datetime.now(timezone.utc).isoformat(),
+            started_at=datetime.now(UTC).isoformat(),
         )
 
         start_time = time.time()
@@ -1297,7 +1366,7 @@ class UnifiedCollector:
         batch.unique_items = len(normalized)
         batch.high_quality_items = sum(1 for n in normalized if n.is_high_quality)
         batch.total_duration_ms = (time.time() - start_time) * 1000
-        batch.completed_at = datetime.now(timezone.utc).isoformat()
+        batch.completed_at = datetime.now(UTC).isoformat()
 
         return batch
 
@@ -1306,23 +1375,26 @@ class UnifiedCollector:
 # Layer 3: 多Agent协同编排层 (FlowSearch 启发)
 # ============================================================
 
+
 class AgentRole(str, Enum):
     """Agent 角色"""
-    PAPER_AGENT = "paper_agent"        # 论文学术Agent
-    CODE_AGENT = "code_agent"          # 代码仓库Agent
-    NEWS_AGENT = "news_agent"          # 新闻媒体Agent
-    BLOG_AGENT = "blog_agent"          # 技术博客Agent
-    SOCIAL_AGENT = "social_agent"      # 社交媒体Agent
-    SYNTHESIS_AGENT = "synthesis_agent" # 综合合成Agent
+
+    PAPER_AGENT = "paper_agent"  # 论文学术Agent
+    CODE_AGENT = "code_agent"  # 代码仓库Agent
+    NEWS_AGENT = "news_agent"  # 新闻媒体Agent
+    BLOG_AGENT = "blog_agent"  # 技术博客Agent
+    SOCIAL_AGENT = "social_agent"  # 社交媒体Agent
+    SYNTHESIS_AGENT = "synthesis_agent"  # 综合合成Agent
 
 
 @dataclass
 class AgentTask:
     """Agent 任务"""
+
     task_id: str
     role: AgentRole
     sources: list[SourceConfig]
-    priority: int = 0           # 0=最高
+    priority: int = 0  # 0=最高
     dependencies: list[str] = field(default_factory=list)  # 依赖的 task_id
 
 
@@ -1494,8 +1566,7 @@ class MultiAgentOrchestrator:
             all_items.extend(items)
         all_items.sort(key=lambda x: (x.relevance_score, x.quality_score), reverse=True)
         report["top_findings"] = [
-            {"title": i.title, "url": i.url, "relevance": i.relevance_score}
-            for i in all_items[:20]
+            {"title": i.title, "url": i.url, "relevance": i.relevance_score} for i in all_items[:20]
         ]
 
         return report
@@ -1505,13 +1576,15 @@ class MultiAgentOrchestrator:
 # Layer 4: 智能调度中心
 # ============================================================
 
+
 class ScheduleFrequency(str, Enum):
     """调度频率"""
+
     REALTIME = "realtime"  # 实时 (事件驱动)
-    HOURLY = "hourly"      # 每小时
-    DAILY = "daily"        # 每日
-    WEEKLY = "weekly"      # 每周
-    MONTHLY = "monthly"    # 每月
+    HOURLY = "hourly"  # 每小时
+    DAILY = "daily"  # 每日
+    WEEKLY = "weekly"  # 每周
+    MONTHLY = "monthly"  # 每月
 
 
 class IntelligentScheduler:
@@ -1554,10 +1627,17 @@ class IntelligentScheduler:
         """保存调度状态"""
         state_file = Path("data/scheduler_state.json")
         state_file.parent.mkdir(parents=True, exist_ok=True)
-        state_file.write_text(json.dumps({
-            "last_collection": self._last_collection,
-            "source_activity": self._source_activity,
-        }, ensure_ascii=False, indent=2), encoding="utf-8")
+        state_file.write_text(
+            json.dumps(
+                {
+                    "last_collection": self._last_collection,
+                    "source_activity": self._source_activity,
+                },
+                ensure_ascii=False,
+                indent=2,
+            ),
+            encoding="utf-8",
+        )
 
     async def schedule_collection(
         self,
@@ -1575,13 +1655,17 @@ class IntelligentScheduler:
         active_sources = self._get_sources_for_frequency(frequency)
 
         # 按优先级排序
-        tier_order = {SourceTier.TIER_0: 0, SourceTier.TIER_1: 1,
-                      SourceTier.TIER_2: 2, SourceTier.TIER_3: 3}
+        tier_order = {
+            SourceTier.TIER_0: 0,
+            SourceTier.TIER_1: 1,
+            SourceTier.TIER_2: 2,
+            SourceTier.TIER_3: 3,
+        }
         active_sources.sort(key=lambda s: tier_order.get(s.tier, 99))
 
         batch = CollectionBatch(
             batch_id=f"sched_{frequency}_{int(time.time())}",
-            started_at=datetime.now(timezone.utc).isoformat(),
+            started_at=datetime.now(UTC).isoformat(),
         )
         batch.sources_queried = len(active_sources)
         start_time = time.time()
@@ -1626,15 +1710,17 @@ class IntelligentScheduler:
                 batch.sources_failed += 1
             all_normalized.extend(normalized)
             batch.by_source[source_id] += len(normalized)
-            self._last_collection[source_id] = datetime.now(timezone.utc).isoformat()
+            self._last_collection[source_id] = datetime.now(UTC).isoformat()
             # 更新活跃度
-            self._source_activity[source_id] = self._source_activity.get(source_id, 0.5) * 0.8 + len(normalized) * 0.2
+            self._source_activity[source_id] = (
+                self._source_activity.get(source_id, 0.5) * 0.8 + len(normalized) * 0.2
+            )
 
         batch.normalized_items = len(all_normalized)
         batch.unique_items = len(all_normalized)
         batch.high_quality_items = sum(1 for n in all_normalized if n.is_high_quality)
         batch.total_duration_ms = (time.time() - start_time) * 1000
-        batch.completed_at = datetime.now(timezone.utc).isoformat()
+        batch.completed_at = datetime.now(UTC).isoformat()
 
         self._save_state()
         return batch
@@ -1644,8 +1730,18 @@ class IntelligentScheduler:
         tier_sources = {
             ScheduleFrequency.HOURLY: [SourceTier.TIER_0, SourceTier.TIER_1],
             ScheduleFrequency.DAILY: [SourceTier.TIER_0, SourceTier.TIER_1, SourceTier.TIER_2],
-            ScheduleFrequency.WEEKLY: [SourceTier.TIER_0, SourceTier.TIER_1, SourceTier.TIER_2, SourceTier.TIER_3],
-            ScheduleFrequency.MONTHLY: [SourceTier.TIER_0, SourceTier.TIER_1, SourceTier.TIER_2, SourceTier.TIER_3],
+            ScheduleFrequency.WEEKLY: [
+                SourceTier.TIER_0,
+                SourceTier.TIER_1,
+                SourceTier.TIER_2,
+                SourceTier.TIER_3,
+            ],
+            ScheduleFrequency.MONTHLY: [
+                SourceTier.TIER_0,
+                SourceTier.TIER_1,
+                SourceTier.TIER_2,
+                SourceTier.TIER_3,
+            ],
         }
 
         target_tiers = tier_sources.get(frequency, [SourceTier.TIER_0, SourceTier.TIER_1])
@@ -1666,7 +1762,11 @@ class IntelligentScheduler:
                 "requests": stats["requests"],
                 "errors": stats["errors"],
                 "error_rate": error_rate,
-                "status": "healthy" if error_rate < 0.1 else "degraded" if error_rate < 0.3 else "unhealthy",
+                "status": "healthy"
+                if error_rate < 0.1
+                else "degraded"
+                if error_rate < 0.3
+                else "unhealthy",
                 "last_collected": self._last_collection.get(sid, "never"),
                 "activity_score": self._source_activity.get(sid, 0),
             }
@@ -1674,13 +1774,15 @@ class IntelligentScheduler:
 
 
 # ============================================================
-# CollectionPipeline 别名 (evolution_master 兼容)
+# CollectionPipeline 别名 (兼容外部代码引用)
 # ============================================================
+
 
 class CollectionPipeline(UnifiedCollector):
     """
-    CollectionPipeline — UnifiedCollector 的别名，兼容 EvolutionMaster。
+    CollectionPipeline — UnifiedCollector 的别名。
 
     集成采集管道、数据标准化、多Agent编排、智能调度于一体。
     """
+
     pass

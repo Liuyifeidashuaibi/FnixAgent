@@ -16,21 +16,19 @@
 异常捕获:
   - Provider 调用包裹 try-except,捕获厂商 API(飞书/语雀/Notion/Confluence)异常
 """
+
 from __future__ import annotations
 
 import abc
 import logging
 from dataclasses import dataclass
-from typing import Optional
 
 from fnixagent.business.workspace.base import (
     BaseProvider,
-    ConnectorConfig,
     ConnectorResult,
     StubProvider,
     WorkspaceConnector,
 )
-
 
 _logger = logging.getLogger(__name__)
 
@@ -57,6 +55,7 @@ _VALID_CONTENT_TYPES = {"markdown", "html", "wiki", "pdf"}
 @dataclass
 class KnowledgeBase:
     """知识库。"""
+
     base_id: str = ""
     name: str = ""
     description: str = ""
@@ -69,6 +68,7 @@ class KnowledgeBase:
 @dataclass
 class KnowledgeDoc:
     """知识库文档。"""
+
     doc_id: str = ""
     base_id: str = ""
     title: str = ""
@@ -88,6 +88,7 @@ class KnowledgeDoc:
 @dataclass
 class SearchResult:
     """知识库搜索结果。"""
+
     doc: KnowledgeDoc
     score: float = 0.0
     snippet: str = ""
@@ -117,19 +118,16 @@ class KnowledgeProvider(BaseProvider):
     def search(
         self,
         query: str,
-        base_ids: Optional[list[str]] = None,
+        base_ids: list[str] | None = None,
         limit: int = 10,
-        filters: Optional[dict] = None,
-    ) -> ConnectorResult:
-        ...
+        filters: dict | None = None,
+    ) -> ConnectorResult: ...
 
     @abc.abstractmethod
-    def list_bases(self, owner: Optional[str] = None) -> ConnectorResult:
-        ...
+    def list_bases(self, owner: str | None = None) -> ConnectorResult: ...
 
     @abc.abstractmethod
-    def get_doc(self, doc_id: str, base_id: Optional[str] = None) -> ConnectorResult:
-        ...
+    def get_doc(self, doc_id: str, base_id: str | None = None) -> ConnectorResult: ...
 
     @abc.abstractmethod
     def upload(
@@ -138,10 +136,9 @@ class KnowledgeProvider(BaseProvider):
         title: str,
         content: str,
         content_type: str = "markdown",
-        tags: Optional[list[str]] = None,
-        parent_doc_id: Optional[str] = None,
-    ) -> ConnectorResult:
-        ...
+        tags: list[str] | None = None,
+        parent_doc_id: str | None = None,
+    ) -> ConnectorResult: ...
 
 
 # ---------------------------------------------------------------------------
@@ -158,9 +155,9 @@ class StubKnowledgeProvider(StubProvider, KnowledgeProvider):
     def search(
         self,
         query: str,
-        base_ids: Optional[list[str]] = None,
+        base_ids: list[str] | None = None,
         limit: int = 10,
-        filters: Optional[dict] = None,
+        filters: dict | None = None,
     ) -> ConnectorResult:
         # 空结果统一 data=[]
         return self._stub_result(
@@ -170,11 +167,11 @@ class StubKnowledgeProvider(StubProvider, KnowledgeProvider):
             limit=limit,
         )
 
-    def list_bases(self, owner: Optional[str] = None) -> ConnectorResult:
+    def list_bases(self, owner: str | None = None) -> ConnectorResult:
         # 空结果统一 data=[]
         return self._stub_result(data=[], owner=owner)
 
-    def get_doc(self, doc_id: str, base_id: Optional[str] = None) -> ConnectorResult:
+    def get_doc(self, doc_id: str, base_id: str | None = None) -> ConnectorResult:
         return self._stub_result(
             data=KnowledgeDoc(
                 doc_id=doc_id,
@@ -191,8 +188,8 @@ class StubKnowledgeProvider(StubProvider, KnowledgeProvider):
         title: str,
         content: str,
         content_type: str = "markdown",
-        tags: Optional[list[str]] = None,
-        parent_doc_id: Optional[str] = None,
+        tags: list[str] | None = None,
+        parent_doc_id: str | None = None,
     ) -> ConnectorResult:
         return self._stub_result(
             data=KnowledgeDoc(
@@ -231,9 +228,9 @@ class KnowledgeConnector(WorkspaceConnector):
     def search(
         self,
         query: str,
-        base_ids: Optional[list[str]] = None,
+        base_ids: list[str] | None = None,
         limit: int = 10,
-        filters: Optional[dict] = None,
+        filters: dict | None = None,
     ) -> ConnectorResult:
         """搜索知识库。
 
@@ -250,7 +247,9 @@ class KnowledgeConnector(WorkspaceConnector):
         if not query or not query.strip():
             # 空查询直接返回空结果(BUG 修复:避免下游 NoneType 迭代)
             return ConnectorResult(
-                success=True, data=[], metadata={"empty_query": True},
+                success=True,
+                data=[],
+                metadata={"empty_query": True},
             )
         # top_k 限制
         safe_limit = max(1, min(limit, MAX_SEARCH_LIMIT))
@@ -261,7 +260,10 @@ class KnowledgeConnector(WorkspaceConnector):
         assert self._active_provider is not None
         try:
             return self._active_provider.search(
-                query=query, base_ids=base_ids, limit=safe_limit, filters=filters,
+                query=query,
+                base_ids=base_ids,
+                limit=safe_limit,
+                filters=filters,
             )
         except Exception as e:
             _logger.exception("knowledge.search failed: %s: %s", type(e).__name__, e)
@@ -270,7 +272,7 @@ class KnowledgeConnector(WorkspaceConnector):
                 error=f"knowledge search failed: {type(e).__name__}: {e}",
             )
 
-    def list_bases(self, owner: Optional[str] = None) -> ConnectorResult:
+    def list_bases(self, owner: str | None = None) -> ConnectorResult:
         """列出知识库。
 
         Args:
@@ -295,7 +297,7 @@ class KnowledgeConnector(WorkspaceConnector):
     def get_doc(
         self,
         doc_id: str,
-        base_id: Optional[str] = None,
+        base_id: str | None = None,
     ) -> ConnectorResult:
         """获取知识库文档详情。
 
@@ -327,8 +329,8 @@ class KnowledgeConnector(WorkspaceConnector):
         title: str,
         content: str,
         content_type: str = "markdown",
-        tags: Optional[list[str]] = None,
-        parent_doc_id: Optional[str] = None,
+        tags: list[str] | None = None,
+        parent_doc_id: str | None = None,
     ) -> ConnectorResult:
         """上传文档到知识库。
 
@@ -354,7 +356,7 @@ class KnowledgeConnector(WorkspaceConnector):
             return ConnectorResult(
                 success=False,
                 error=f"unsupported content_type {content_type!r}, "
-                      f"must be one of {sorted(_VALID_CONTENT_TYPES)}",
+                f"must be one of {sorted(_VALID_CONTENT_TYPES)}",
             )
         # 内容大小校验
         content_size = len(content.encode("utf-8")) if isinstance(content, str) else len(content)
@@ -362,7 +364,7 @@ class KnowledgeConnector(WorkspaceConnector):
             return ConnectorResult(
                 success=False,
                 error=f"content size ({content_size} bytes) exceeds limit "
-                      f"({MAX_UPLOAD_CONTENT_BYTES // 1024 // 1024}MB)",
+                f"({MAX_UPLOAD_CONTENT_BYTES // 1024 // 1024}MB)",
             )
 
         err = self._ensure_connected()
@@ -371,8 +373,12 @@ class KnowledgeConnector(WorkspaceConnector):
         assert self._active_provider is not None
         try:
             return self._active_provider.upload(
-                base_id=base_id, title=title, content=content,
-                content_type=content_type, tags=tags, parent_doc_id=parent_doc_id,
+                base_id=base_id,
+                title=title,
+                content=content,
+                content_type=content_type,
+                tags=tags,
+                parent_doc_id=parent_doc_id,
             )
         except Exception as e:
             _logger.exception("knowledge.upload failed: %s: %s", type(e).__name__, e)

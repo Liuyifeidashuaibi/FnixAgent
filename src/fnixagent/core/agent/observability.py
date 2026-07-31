@@ -9,12 +9,13 @@ Observability - 可观测性 (Observability)
   - 可插拔: 多个 sink (OTel collector / Langfuse / stdout)
   - 零依赖: 纯 Python 实现, 无需 opentelemetry-sdk
 """
+
 from __future__ import annotations
 
-import time
 from collections import defaultdict, deque
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any
 
 from fnixagent.core.agent.types import utcnow_iso
 
@@ -36,6 +37,7 @@ class Span:
         status: 状态 (ok/error)
         status_message: 状态消息
     """
+
     span_id: str = field(default_factory=lambda: format(id(object()), "016x"))
     trace_id: str = ""
     parent_span_id: str = ""
@@ -52,11 +54,13 @@ class Span:
         self.attributes[key] = value
 
     def add_event(self, name: str, attributes: dict[str, Any] | None = None) -> None:
-        self.events.append({
-            "name": name,
-            "timestamp": utcnow_iso(),
-            "attributes": attributes or {},
-        })
+        self.events.append(
+            {
+                "name": name,
+                "timestamp": utcnow_iso(),
+                "attributes": attributes or {},
+            }
+        )
 
     def end(self, status: str = "ok", message: str = "") -> None:
         self.end_time = utcnow_iso()
@@ -64,6 +68,7 @@ class Span:
         self.status_message = message
         # 计算 duration (近似)
         from datetime import datetime
+
         try:
             start = datetime.fromisoformat(self.start_time)
             end = datetime.fromisoformat(self.end_time)
@@ -133,12 +138,18 @@ class ObservabilityManager:
 
     # --- Span 管理 ---
 
-    def start_span(self, name: str, trace_id: str = "",
-                   parent_span_id: str = "",
-                   attributes: dict[str, Any] | None = None) -> Span:
+    def start_span(
+        self,
+        name: str,
+        trace_id: str = "",
+        parent_span_id: str = "",
+        attributes: dict[str, Any] | None = None,
+    ) -> Span:
         """开始 span。"""
         span = Span(
-            name=name, trace_id=trace_id, parent_span_id=parent_span_id,
+            name=name,
+            trace_id=trace_id,
+            parent_span_id=parent_span_id,
             attributes=attributes or {},
         )
         self._active_spans[span.span_id] = span
@@ -146,8 +157,7 @@ class ObservabilityManager:
         self._fire_hooks("span_start", span.to_dict())
         return span
 
-    def end_span(self, span_id: str, status: str = "ok",
-                 message: str = "") -> Span | None:
+    def end_span(self, span_id: str, status: str = "ok", message: str = "") -> Span | None:
         """结束 span。"""
         span = self._active_spans.pop(span_id, None)
         if span is None:
@@ -166,8 +176,9 @@ class ObservabilityManager:
 
     # --- Syscall 追踪 ---
 
-    def trace_syscall(self, syscall_name: str, args: dict[str, Any],
-                      caller_pid: str, trace_id: str = "") -> Span:
+    def trace_syscall(
+        self, syscall_name: str, args: dict[str, Any], caller_pid: str, trace_id: str = ""
+    ) -> Span:
         """创建 syscall 追踪 span。"""
         self._lock_calls[syscall_name] += 1
         span = self.start_span(
@@ -179,16 +190,26 @@ class ObservabilityManager:
                 "args": args,
             },
         )
-        self._fire_hooks("syscall", {
-            "syscall": syscall_name, "caller_pid": caller_pid,
-            "args": args, "trace_id": trace_id,
-        })
+        self._fire_hooks(
+            "syscall",
+            {
+                "syscall": syscall_name,
+                "caller_pid": caller_pid,
+                "args": args,
+                "trace_id": trace_id,
+            },
+        )
         return span
 
     # --- 审计日志 ---
 
-    def audit(self, action: str, detail: dict[str, Any] | None = None,
-              subject: str | None = None, trace_id: str = "") -> None:
+    def audit(
+        self,
+        action: str,
+        detail: dict[str, Any] | None = None,
+        subject: str | None = None,
+        trace_id: str = "",
+    ) -> None:
         """记录审计事件。"""
         entry = {
             "action": action,
@@ -200,11 +221,9 @@ class ObservabilityManager:
         self._audit_log.append(entry)
         self._fire_hooks("audit", entry)
 
-    def get_audit_log(self, limit: int = 100,
-                      action: str | None = None) -> list[dict[str, Any]]:
+    def get_audit_log(self, limit: int = 100, action: str | None = None) -> list[dict[str, Any]]:
         """查询审计日志, 返回最近 limit 条 (过滤后)。"""
-        filtered = [l for l in self._audit_log
-                    if not action or l.get("action") == action]
+        filtered = [l for l in self._audit_log if not action or l.get("action") == action]
         return filtered[-limit:] if limit < len(filtered) else filtered
 
     # --- 指标 ---
@@ -212,8 +231,7 @@ class ObservabilityManager:
     def increment(self, name: str, value: int = 1) -> None:
         """计数器递增。"""
         self._counters[name] += value
-        self._fire_hooks("metric", {"type": "counter", "name": name,
-                                     "value": self._counters[name]})
+        self._fire_hooks("metric", {"type": "counter", "name": name, "value": self._counters[name]})
 
     def observe(self, name: str, value: float) -> None:
         """直方图观测。"""
@@ -221,8 +239,7 @@ class ObservabilityManager:
         # 限制内存
         if len(self._histograms[name]) > 10000:
             self._histograms[name] = self._histograms[name][-5000:]
-        self._fire_hooks("metric", {"type": "histogram", "name": name,
-                                     "value": value})
+        self._fire_hooks("metric", {"type": "histogram", "name": name, "value": value})
 
     def get_counter(self, name: str) -> int:
         return self._counters.get(name, 0)

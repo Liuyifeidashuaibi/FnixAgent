@@ -16,8 +16,30 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- **E2E 环境隔离**：`test_scheduler_e2e` 与 `test_user_flows` fixture 增加 `dotenv.load_dotenv` monkeypatch，防止 `.env` 真实 API Key 污染测试环境（根因：`build_scheduler()` 内部调用 `load_dotenv` 覆盖 `monkeypatch.delenv`，导致 craft 等流式测试命中真实 LLM API 挂起）
+- **task_id 路径参数**：`/tasks/{task_id}` 路由从 `int` 改为 `str` 入参 + `_coerce_task_id` 强制转换，非数字 ID 返回 404（资源不存在）而非 422（参数校验错误），符合 REST 语义
+- **MockLLM 回退链路**：`llm_policy.resolve_llm_for_request` 在无服务端 Key 且无用户 Key 时放行（而非阻断），`build_work_agent_loop` 在请求级 LLM 未配置时回退到全局调度器 `LLMRouter`（含 MockLLMProvider），使离线/测试环境完整流程可运行
+- **5 个 F821 未定义名 bug**：`daao_router.py` 缺 `Any` 导入、`topology/store.py` 缺 `TopologyGraph` 导入、`tasks/editability.py` 缺 `ExpertError` 导入（3 处）
+- **ruff lint 从 5431 错误降至 0**：自动修复 3010 项，修复 5 个 F821 真实 bug + 15 个 F401 未用导入 + 21 个 F841 未用变量，调整配置消除中文标点/服务端/非加密哈希等误报，格式化 383 文件
+
+### Changed
+
+- **README 徽章修复**：将损坏的裸文本链接替换为 shields.io 标准徽章图片（CI/Release/License/Python/Tauri/Ruff）
+- **ruff 配置完善**：`pyproject.toml` 增加全局 ignore（消除中文字符标点、服务端绑定、非加密哈希等误报）+ 分模块 per-file-ignores（API/安全/MCP/业务工具）
+- **.gitignore 补全**：增加 `_debug_home/`、`_debug_ws/`、`debug_craft.py` 模式
+
 ### Added
 
+- **Standalone E2E**：`pnpm e2e:standalone` 自动 spawn fnix-local + agentd 并验收 Harness/Work API
+- **集成测试**：`tests/integration/test_standalone_harness.py`（Work/Code session 列表与持久化）
+- **Electron 退役说明**：`apps/desktop/DEPRECATED.md`；`pnpm dev:all` 默认转发 Tauri 三进程
+- **Tauri 2 Desktop v1.0 Beta 发布阶段**
+  - `apps/desktop-tauri`：Rust spawn agentd/fnix-local、OS Keychain、portable-pty 本地终端
+  - `pnpm verify:beta` / `pnpm prepare:release` / `pnpm dev:all:tauri`
+  - GitHub Actions：`release.yml` Tauri 三平台打包；CI `desktop-tauri` job
+  - 文档：`docs/BETA_RELEASE.md`、`docs/DESKTOP_TAURI.md`、`docs/QUICKSTART.md` 更新
 - **自进化飞轮系统 (Intelligence & Auto-Evolution)**: 新增 `core/intelligence/` 模块, 实现持续信息采集→知识提炼→升级闭环
   - 多源智能采集 (GitHub/arXiv/大厂博客/社区/协议/会议)
   - 知识提炼引擎 (相关性评分、分类排序、逐级过滤)
@@ -29,8 +51,14 @@
 
 ### Changed
 
+- **默认 Desktop 壳层**：`pnpm dev` / README 快速开始指向 Tauri 2；Electron 保留为 `dev:electron`
 - **requirements.txt**: 清理遗留的 flake8/black/mypy 依赖，工具链已迁移至 ruff+pyright
 - **.env.example**: 补充 DEEPSEEK_API_KEY 和 ES_PASSWORD，新增分组注释
+
+### Fixed
+
+- **cloud profile**：`apply_profile_defaults()` 不再在 cloud 模式下错误保留 `SERVICE_ENV=development`
+- **Windows 路径**：`verify-beta` 在 Node 安装于 `Program Files` 时不再因 shell 拆路径失败
 
 ### Security
 

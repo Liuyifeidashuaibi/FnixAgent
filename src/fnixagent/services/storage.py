@@ -10,6 +10,7 @@
   - 线程安全(threading.Lock),支持并发请求
   - 可选 DB 适配器注入:有 PostgreSQL 时切换到持久化存储
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -19,8 +20,7 @@ import threading
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Any, Optional
-
+from typing import Any
 
 # ---------------------------------------------------------------------------
 # 安全常量(防止 DoS / 暴力破解 / 资源滥用)
@@ -30,10 +30,22 @@ from typing import Any, Optional
 MAX_UPLOAD_SIZE_BYTES: int = 50 * 1024 * 1024
 
 # 允许的文件扩展名白名单(防止上传可执行文件/脚本)
-ALLOWED_FILE_EXTENSIONS: frozenset[str] = frozenset({
-    "pdf", "docx", "doc", "txt", "md", "csv", "xlsx",
-    "png", "jpg", "jpeg", "gif", "svg",
-})
+ALLOWED_FILE_EXTENSIONS: frozenset[str] = frozenset(
+    {
+        "pdf",
+        "docx",
+        "doc",
+        "txt",
+        "md",
+        "csv",
+        "xlsx",
+        "png",
+        "jpg",
+        "jpeg",
+        "gif",
+        "svg",
+    }
+)
 
 # 登录失败锁定:5 次失败后锁定 15 分钟(防止暴力破解)
 MAX_LOGIN_ATTEMPTS: int = 5
@@ -49,11 +61,10 @@ MAX_LIST_LIMIT: int = 200
 # 向后兼容(services/storage.py 内部调用 + 现有测试直接导入)。
 
 from fnixagent.core.security.auth.password import (
-    hash_password,                # 默认 Argon2id
-    verify_password,              # 自动识别 Argon2id / PBKDF2
-    needs_rehash,                 # 检测旧哈希是否需升级
+    hash_password,  # 默认 Argon2id
+    needs_rehash,  # 检测旧算法/PBKDF2 哈希，触发 rehash
+    verify_password,  # 自动识别 Argon2id / PBKDF2
 )
-
 
 # ---------------------------------------------------------------------------
 # 数据模型
@@ -63,6 +74,7 @@ from fnixagent.core.security.auth.password import (
 @dataclass
 class StoredUser:
     """用户记录。"""
+
     id: int
     username: str
     email: str
@@ -90,19 +102,21 @@ class StoredUser:
 @dataclass
 class StoredApiKey:
     """API Key 记录。"""
+
     id: int
     user_id: int
     api_key: str  # 明文只返回一次,数据库存哈希
     api_key_hash: str
     scopes: list = field(default_factory=lambda: ["chat"])
     created_at: datetime = field(default_factory=datetime.utcnow)
-    expires_at: Optional[datetime] = None
+    expires_at: datetime | None = None
     revoked: bool = False
 
 
 @dataclass
 class StoredDocument:
     """文档记录。"""
+
     id: int
     name: str
     doc_type: str
@@ -137,19 +151,21 @@ class StoredDocument:
 @dataclass
 class StoredTaskStep:
     """任务步骤。"""
+
     step_no: int
     description: str
     tool_name: str = ""
     status: str = "pending"  # pending/running/success/failed
-    started_at: Optional[datetime] = None
-    finished_at: Optional[datetime] = None
-    result: Optional[dict] = None
+    started_at: datetime | None = None
+    finished_at: datetime | None = None
+    result: dict | None = None
     error: str = ""
 
 
 @dataclass
 class StoredTask:
     """任务记录。"""
+
     id: int
     session_id: int
     user_id: int = 0
@@ -157,11 +173,11 @@ class StoredTask:
     reasoning_mode: str = "react"
     status: str = "pending"  # pending/running/succeeded/failed/cancelled
     steps: list = field(default_factory=list)  # list[StoredTaskStep]
-    result: Optional[dict] = None
+    result: dict | None = None
     error: str = ""
     created_at: datetime = field(default_factory=datetime.utcnow)
-    started_at: Optional[datetime] = None
-    finished_at: Optional[datetime] = None
+    started_at: datetime | None = None
+    finished_at: datetime | None = None
 
     def to_dict(self) -> dict:
         """转换为字典(不含步骤明细)。"""
@@ -195,7 +211,9 @@ class UserStore:
         # 登录失败追踪:username -> (失败次数, 首次失败时间戳, 锁定截止时间戳)
         self._login_attempts: dict[str, list] = {}
 
-    def create(self, username: str, email: str, password: str, role: str = "user") -> tuple[Optional[StoredUser], str]:
+    def create(
+        self, username: str, email: str, password: str, role: str = "user"
+    ) -> tuple[StoredUser | None, str]:
         """创建用户。返回 (user, error_msg)。"""
         with self._lock:
             if username in self._username_idx:
@@ -217,18 +235,18 @@ class UserStore:
                 self._email_idx[email] = uid
             return user, ""
 
-    def get_by_id(self, user_id: int) -> Optional[StoredUser]:
+    def get_by_id(self, user_id: int) -> StoredUser | None:
         """根据 ID 获取用户。"""
         with self._lock:
             return self._users.get(user_id)
 
-    def get_by_username(self, username: str) -> Optional[StoredUser]:
+    def get_by_username(self, username: str) -> StoredUser | None:
         """根据用户名获取用户。"""
         with self._lock:
             uid = self._username_idx.get(username)
             return self._users.get(uid) if uid else None
 
-    def get_by_email(self, email: str) -> Optional[StoredUser]:
+    def get_by_email(self, email: str) -> StoredUser | None:
         """根据邮箱获取用户(用于 LDAP 用户按邮箱映射)。"""
         if not email:
             return None
@@ -236,7 +254,7 @@ class UserStore:
             uid = self._email_idx.get(email)
             return self._users.get(uid) if uid else None
 
-    def get_by_phone(self, phone: str) -> Optional[StoredUser]:
+    def get_by_phone(self, phone: str) -> StoredUser | None:
         """根据手机号获取用户(用于手机号验证码登录)。
 
         手机号存储在 profile.phone 字段中。
@@ -249,7 +267,7 @@ class UserStore:
                     return user
             return None
 
-    def authenticate(self, username: str, password: str) -> Optional[StoredUser]:
+    def authenticate(self, username: str, password: str) -> StoredUser | None:
         """
         验证用户名+密码,返回用户或 None。
 
@@ -293,7 +311,7 @@ class UserStore:
                 if attempt[0] >= MAX_LOGIN_ATTEMPTS:
                     attempt[2] = now + LOGIN_LOCKOUT_SECONDS  # 设置锁定截止时间
 
-    def update_profile(self, user_id: int, profile: dict) -> Optional[StoredUser]:
+    def update_profile(self, user_id: int, profile: dict) -> StoredUser | None:
         """更新用户画像字段,返回更新后的用户或 None。"""
         with self._lock:
             user = self._users.get(user_id)
@@ -329,7 +347,7 @@ class UserStore:
             if user:
                 user.quota_used += tokens
 
-    def get_quota(self, user_id: int) -> Optional[dict]:
+    def get_quota(self, user_id: int) -> dict | None:
         """获取用户 Token 配额信息。"""
         with self._lock:
             user = self._users.get(user_id)
@@ -346,7 +364,7 @@ class UserStore:
         self,
         limit: int = 50,
         offset: int = 0,
-        search: Optional[str] = None,
+        search: str | None = None,
     ) -> tuple[list[StoredUser], int]:
         """列出用户(支持搜索 + 分页)。返回 (users, total)。"""
         with self._lock:
@@ -354,14 +372,13 @@ class UserStore:
             if search:
                 s = search.lower()
                 users = [
-                    u for u in users
-                    if s in u.username.lower() or s in (u.email or "").lower()
+                    u for u in users if s in u.username.lower() or s in (u.email or "").lower()
                 ]
             users.sort(key=lambda u: u.id, reverse=True)
             total = len(users)
             limit = max(1, min(200, limit))
             offset = max(0, offset)
-            return users[offset:offset + limit], total
+            return users[offset : offset + limit], total
 
     def set_user_disabled(self, user_id: int, disabled: bool) -> bool:
         """启用/禁用用户(禁用后该用户无法登录)。"""
@@ -405,6 +422,7 @@ class UserStore:
                 return False
             now = datetime.utcnow()
             from datetime import timedelta
+
             hard_delete_at = now + timedelta(days=retention_days)
             user.profile["deleted_at"] = now.isoformat()
             user.profile["hard_delete_at"] = hard_delete_at.isoformat()
@@ -452,12 +470,9 @@ class UserStore:
     def get_soft_deleted_users(self) -> list[StoredUser]:
         """获取所有已软删除的用户(供后台清理任务使用)。"""
         with self._lock:
-            return [
-                u for u in self._users.values()
-                if u.profile.get("deleted_at")
-            ]
+            return [u for u in self._users.values() if u.profile.get("deleted_at")]
 
-    def get_users_to_hard_delete(self, before: Optional[datetime] = None) -> list[StoredUser]:
+    def get_users_to_hard_delete(self, before: datetime | None = None) -> list[StoredUser]:
         """获取已过保留期、待硬删除的用户。
 
         Args:
@@ -522,7 +537,9 @@ class ApiKeyStore:
         self._next_id = 1
         self._lock = threading.RLock()
 
-    def create(self, user_id: int, scopes: Optional[list] = None, expires_days: int = 365) -> StoredApiKey:
+    def create(
+        self, user_id: int, scopes: list | None = None, expires_days: int = 365
+    ) -> StoredApiKey:
         """为用户创建 API Key。明文 key 只返回一次。"""
         with self._lock:
             kid = self._next_id
@@ -564,14 +581,15 @@ class ApiKeyStore:
 class DocumentStore:
     """文档存储(内存索引 + 本地文件落盘)。"""
 
-    def __init__(self, storage_dir: Optional[str] = None):
+    def __init__(self, storage_dir: str | None = None):
         self._docs: dict[int, StoredDocument] = {}
         self._next_id = 1
         self._lock = threading.RLock()
         # 本地文件存储目录
         self._storage_dir = storage_dir or os.path.join(
             os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))),
-            "data", "uploads"
+            "data",
+            "uploads",
         )
         os.makedirs(self._storage_dir, exist_ok=True)
 
@@ -585,10 +603,15 @@ class DocumentStore:
         ext = os.path.splitext(filename)[1].lower().lstrip(".")
         mapping = {
             "pdf": "pdf",
-            "docx": "docx", "doc": "docx",
-            "txt": "markdown", "md": "markdown",
-            "png": "chart", "jpg": "chart", "jpeg": "chart",
-            "csv": "table", "xlsx": "table",
+            "docx": "docx",
+            "doc": "docx",
+            "txt": "markdown",
+            "md": "markdown",
+            "png": "chart",
+            "jpg": "chart",
+            "jpeg": "chart",
+            "csv": "table",
+            "xlsx": "table",
         }
         return mapping.get(ext, "unknown")
 
@@ -598,9 +621,13 @@ class DocumentStore:
         mimes = {
             "pdf": "application/pdf",
             "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            "txt": "text/plain", "md": "text/markdown",
-            "png": "image/png", "jpg": "image/jpeg", "jpeg": "image/jpeg",
-            "csv": "text/csv", "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "txt": "text/plain",
+            "md": "text/markdown",
+            "png": "image/png",
+            "jpg": "image/jpeg",
+            "jpeg": "image/jpeg",
+            "csv": "text/csv",
+            "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         }
         return mimes.get(ext, "application/octet-stream")
 
@@ -609,7 +636,7 @@ class DocumentStore:
         filename: str,
         content: bytes,
         user_id: int = 0,
-        metadata: Optional[dict] = None,
+        metadata: dict | None = None,
     ) -> StoredDocument:
         """
         保存上传文件,返回文档记录。
@@ -621,15 +648,11 @@ class DocumentStore:
         """
         # 安全校验:文件大小
         if len(content) > MAX_UPLOAD_SIZE_BYTES:
-            raise ValueError(
-                f"文件大小 {len(content)} 字节超过上限 {MAX_UPLOAD_SIZE_BYTES} 字节"
-            )
+            raise ValueError(f"文件大小 {len(content)} 字节超过上限 {MAX_UPLOAD_SIZE_BYTES} 字节")
         # 安全校验:扩展名白名单
         ext = os.path.splitext(filename)[1].lower().lstrip(".")
         if ext not in ALLOWED_FILE_EXTENSIONS:
-            raise ValueError(
-                f"不支持的文件类型 '.{ext}',允许: {sorted(ALLOWED_FILE_EXTENSIONS)}"
-            )
+            raise ValueError(f"不支持的文件类型 '.{ext}',允许: {sorted(ALLOWED_FILE_EXTENSIONS)}")
         # 安全校验:文件名净化(防路径穿越攻击)
         safe_name = os.path.basename(filename).replace(os.sep, "_").replace("..", "_")
         if not safe_name or safe_name.startswith("."):
@@ -665,7 +688,7 @@ class DocumentStore:
         doc_type: str,
         content: bytes,
         user_id: int = 0,
-        metadata: Optional[dict] = None,
+        metadata: dict | None = None,
     ) -> StoredDocument:
         """Agent 生成的文档。"""
         with self._lock:
@@ -691,7 +714,7 @@ class DocumentStore:
             self._docs[did] = doc
             return doc
 
-    def get(self, doc_id: int) -> Optional[StoredDocument]:
+    def get(self, doc_id: int) -> StoredDocument | None:
         """根据 ID 获取未删除的文档。"""
         with self._lock:
             doc = self._docs.get(doc_id)
@@ -699,7 +722,7 @@ class DocumentStore:
                 return doc
             return None
 
-    def get_file_path(self, doc_id: int) -> Optional[str]:
+    def get_file_path(self, doc_id: int) -> str | None:
         """获取文档落盘文件的绝对路径,文件缺失返回 None。"""
         doc = self.get(doc_id)
         if not doc:
@@ -709,8 +732,8 @@ class DocumentStore:
 
     def list(
         self,
-        user_id: Optional[int] = None,
-        doc_type: Optional[str] = None,
+        user_id: int | None = None,
+        doc_type: str | None = None,
         limit: int = 50,
     ) -> list[StoredDocument]:
         # 限制最大返回条数,防止超大结果集耗尽内存
@@ -778,12 +801,12 @@ class TaskStore:
             self._tasks[tid] = task
             return task
 
-    def get(self, task_id: int) -> Optional[StoredTask]:
+    def get(self, task_id: int) -> StoredTask | None:
         """根据 ID 获取任务。"""
         with self._lock:
             return self._tasks.get(task_id)
 
-    def start(self, task_id: int) -> Optional[StoredTask]:
+    def start(self, task_id: int) -> StoredTask | None:
         """标记任务开始执行。"""
         with self._lock:
             task = self._tasks.get(task_id)
@@ -793,7 +816,9 @@ class TaskStore:
             task.started_at = datetime.utcnow()
             return task
 
-    def add_step(self, task_id: int, description: str, tool_name: str = "") -> Optional[StoredTaskStep]:
+    def add_step(
+        self, task_id: int, description: str, tool_name: str = ""
+    ) -> StoredTaskStep | None:
         """为任务追加一个步骤,返回新增步骤。"""
         with self._lock:
             task = self._tasks.get(task_id)
@@ -808,8 +833,9 @@ class TaskStore:
             task.steps.append(step)
             return step
 
-    def update_step(self, task_id: int, step_no: int, status: str,
-                    result: Optional[dict] = None, error: str = "") -> bool:
+    def update_step(
+        self, task_id: int, step_no: int, status: str, result: dict | None = None, error: str = ""
+    ) -> bool:
         """更新指定步骤的状态/结果,自动维护起止时间。"""
         with self._lock:
             task = self._tasks.get(task_id)
@@ -829,7 +855,7 @@ class TaskStore:
                     return True
             return False
 
-    def complete(self, task_id: int, result: Optional[dict] = None) -> Optional[StoredTask]:
+    def complete(self, task_id: int, result: dict | None = None) -> StoredTask | None:
         """标记任务成功完成。"""
         with self._lock:
             task = self._tasks.get(task_id)
@@ -841,7 +867,7 @@ class TaskStore:
                 task.result = result
             return task
 
-    def fail(self, task_id: int, error: str) -> Optional[StoredTask]:
+    def fail(self, task_id: int, error: str) -> StoredTask | None:
         """标记任务失败并记录错误信息。"""
         with self._lock:
             task = self._tasks.get(task_id)
@@ -852,7 +878,7 @@ class TaskStore:
             task.error = error
             return task
 
-    def cancel(self, task_id: int) -> Optional[StoredTask]:
+    def cancel(self, task_id: int) -> StoredTask | None:
         """取消任务(仅未完成的任务可取消),成功返回任务,否则 None。"""
         with self._lock:
             task = self._tasks.get(task_id)
@@ -865,7 +891,7 @@ class TaskStore:
             task.finished_at = datetime.utcnow()
             return task
 
-    def retry(self, task_id: int) -> Optional[StoredTask]:
+    def retry(self, task_id: int) -> StoredTask | None:
         """重置任务状态为 pending,允许重新执行。"""
         with self._lock:
             task = self._tasks.get(task_id)
@@ -885,8 +911,8 @@ class TaskStore:
 
     def list(
         self,
-        user_id: Optional[int] = None,
-        status: Optional[str] = None,
+        user_id: int | None = None,
+        status: str | None = None,
         limit: int = 50,
     ) -> list[StoredTask]:
         """查询任务列表,支持按用户/状态过滤,按创建时间倒序。"""
@@ -904,7 +930,7 @@ class TaskStore:
             results.sort(key=lambda t: t.created_at, reverse=True)
             return results[:limit]
 
-    def get_status(self, task_id: int) -> Optional[dict]:
+    def get_status(self, task_id: int) -> dict | None:
         """获取任务状态摘要(进度/当前步骤/总步骤数)。"""
         with self._lock:
             task = self._tasks.get(task_id)
@@ -936,11 +962,23 @@ class TaskStore:
 # 否则回退到内存 Store(开发/测试零依赖)。
 # 两种 Store 接口签名完全一致(适配器模式)。
 
-_user_store: Optional[Any] = None
-_apikey_store: Optional[Any] = None
-_document_store: Optional[Any] = None
-_task_store: Optional[Any] = None
+_user_store: Any | None = None
+_apikey_store: Any | None = None
+_document_store: Any | None = None
+_task_store: Any | None = None
 _store_lock = threading.Lock()
+
+
+def _use_standalone_json() -> bool:
+    """Standalone 模式且无 DATABASE_URL 时使用 JSON 文件持久化用户。"""
+    if os.getenv("DATABASE_URL"):
+        return False
+    try:
+        from fnixagent.core.profile import is_standalone
+
+        return is_standalone()
+    except ImportError:
+        return os.getenv("FNIXAGENT_PROFILE", "standalone").lower() == "standalone"
 
 
 def _use_pg() -> bool:
@@ -949,6 +987,7 @@ def _use_pg() -> bool:
         return False
     try:
         from fnixagent.services.storage_postgres import get_db_adapter  # noqa: F401
+
         return True
     except ImportError:
         return False
@@ -965,8 +1004,13 @@ def get_user_store() -> Any:
             if _user_store is None:
                 if _use_pg():
                     from fnixagent.services.storage_postgres import PgUserStore, get_db_adapter
+
                     db = get_db_adapter()
                     _user_store = PgUserStore(db)  # type: ignore[arg-type]
+                elif _use_standalone_json():
+                    from fnixagent.services.storage_standalone import get_standalone_user_store
+
+                    _user_store = get_standalone_user_store()
                 else:
                     _user_store = UserStore()
     return _user_store
@@ -980,6 +1024,7 @@ def get_apikey_store() -> Any:
             if _apikey_store is None:
                 if _use_pg():
                     from fnixagent.services.storage_postgres import PgApiKeyStore, get_db_adapter
+
                     db = get_db_adapter()
                     _apikey_store = PgApiKeyStore(db)  # type: ignore[arg-type]
                 else:
@@ -995,6 +1040,7 @@ def get_document_store() -> Any:
             if _document_store is None:
                 if _use_pg():
                     from fnixagent.services.storage_postgres import PgDocumentStore, get_db_adapter
+
                     db = get_db_adapter()
                     _document_store = PgDocumentStore(db)  # type: ignore[arg-type]
                 else:
@@ -1010,6 +1056,7 @@ def get_task_store() -> Any:
             if _task_store is None:
                 if _use_pg():
                     from fnixagent.services.storage_postgres import PgTaskStore, get_db_adapter
+
                     db = get_db_adapter()
                     _task_store = PgTaskStore(db)  # type: ignore[arg-type]
                 else:
@@ -1028,6 +1075,7 @@ def reset_stores() -> None:
     # 同步重置 Pg 适配器单例
     try:
         from fnixagent.services.storage_postgres import reset_db_adapter
+
         reset_db_adapter()
     except ImportError:
         pass

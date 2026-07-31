@@ -14,7 +14,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 
 class ZhuaError(Exception):
@@ -31,8 +31,8 @@ class ZhuaError(Exception):
         self,
         message: str,
         *,
-        status_code: Optional[int] = None,
-        request_id: Optional[str] = None,
+        status_code: int | None = None,
+        request_id: str | None = None,
         response: Any = None,
     ) -> None:
         super().__init__(message)
@@ -75,11 +75,11 @@ class ZhuaConnectionError(ZhuaError):
 
 
 __all__ = [
-    "ZhuaError",
     "ZhuaAuthError",
-    "ZhuaQuotaError",
+    "ZhuaConnectionError",
+    "ZhuaError",
     "ZhuaNotFoundError",
+    "ZhuaQuotaError",
     "ZhuaRequestError",
     "ZhuaServerError",
-    "ZhuaConnectionError",
 ]

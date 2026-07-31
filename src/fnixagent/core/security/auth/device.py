@@ -16,11 +16,11 @@
     - 服务端把 device_fp 写入 Access Token,校验时比对
     - IP 段使用 /24(避免移动网络切换 /24 时频繁失效)
 """
+
 from __future__ import annotations
 
 import hashlib
 import re
-from typing import Optional
 
 # ---------------------------------------------------------------------------
 # 常量
@@ -32,8 +32,8 @@ _UUID_PATTERN = re.compile(
 )
 
 # IP 段掩码长度
-_IPV4_PREFIX_LEN = 24       # /24(256 个 IP)
-_IPV6_PREFIX_LEN = 64       # /64
+_IPV4_PREFIX_LEN = 24  # /24(256 个 IP)
+_IPV6_PREFIX_LEN = 64  # /64
 
 
 # ---------------------------------------------------------------------------

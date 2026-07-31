@@ -1,4 +1,4 @@
-﻿"""
+"""
 auth 路由单元测试。
 
 覆盖:
@@ -11,9 +11,6 @@ auth 路由单元测试。
   - /apikey 创建/列表/吊销
   - JWT 签名校验/过期校验
 """
-import time
-
-import pytest
 
 
 class TestRegister:

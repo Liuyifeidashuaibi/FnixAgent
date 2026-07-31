@@ -17,14 +17,14 @@ Span 树形结构说明:
   - OpenAI Agents SDK: SpanData 分类型(agent/llm/tool/guardrail/handoff)
   - OpenTelemetry:     Span 的 started_at/ended_at/status/attributes 模型
 """
+
 from __future__ import annotations
 
 import re
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Optional
-
+from typing import Any
 
 # ---------------------------------------------------------------------------
 # 敏感信息脱敏
@@ -175,17 +175,17 @@ class Span:
 
     span_id: str
     trace_id: str
-    parent_id: Optional[str]
+    parent_id: str | None
     name: str
     started_at: float
-    ended_at: Optional[float] = None
+    ended_at: float | None = None
     status: str = SpanStatus.STARTED
-    data: Optional[SpanData] = None
-    error: Optional[str] = None
+    data: SpanData | None = None
+    error: str | None = None
     attributes: dict = field(default_factory=dict)
 
     @property
-    def duration_ms(self) -> Optional[float]:
+    def duration_ms(self) -> float | None:
         """Span 持续时间(毫秒),未结束时为 None。"""
         if self.ended_at is None:
             return None
@@ -239,6 +239,7 @@ def _get_pool_lock():
     global _SPAN_POOL_LOCK
     if _SPAN_POOL_LOCK is None:
         import threading
+
         _SPAN_POOL_LOCK = threading.Lock()
     return _SPAN_POOL_LOCK
 
@@ -266,9 +267,9 @@ class SpanImpl:
         self,
         name: str,
         trace_id: str,
-        data: Optional[SpanData] = None,
-        parent_id: Optional[str] = None,
-        on_end: Optional[Any] = None,  # Callable[[Span], None]
+        data: SpanData | None = None,
+        parent_id: str | None = None,
+        on_end: Any | None = None,  # Callable[[Span], None]
     ):
         # 参数校验:name / trace_id 必须非空(防止生成无效 Span)
         if not name or not name.strip():
@@ -280,14 +281,14 @@ class SpanImpl:
         self.parent_id = parent_id
         self.name = name
         self.started_at = time.time()
-        self.ended_at: Optional[float] = None
+        self.ended_at: float | None = None
         self.status = SpanStatus.STARTED
         self.data = data
-        self.error: Optional[str] = None
+        self.error: str | None = None
         self.attributes: dict = {}
         self._on_end = on_end
         self._ended = False
-        self._last_snapshot: Optional[Span] = None
+        self._last_snapshot: Span | None = None
 
     # -- 对象池(性能优化:减少高频创建/销毁的 GC 开销)----------------------
     @classmethod
@@ -295,17 +296,17 @@ class SpanImpl:
         cls,
         name: str,
         trace_id: str,
-        data: Optional[SpanData] = None,
-        parent_id: Optional[str] = None,
-        on_end: Optional[Any] = None,
-    ) -> "SpanImpl":
+        data: SpanData | None = None,
+        parent_id: str | None = None,
+        on_end: Any | None = None,
+    ) -> SpanImpl:
         """从对象池获取实例(池空则新建)。
 
         复用已 release 的实例,重置状态后返回。若池为空,创建新实例。
         适合高频创建短生命周期 Span 的场景。
         """
         pool_lock = _get_pool_lock()
-        instance: Optional["SpanImpl"] = None
+        instance: SpanImpl | None = None
         with pool_lock:
             if _SPAN_POOL:
                 instance = _SPAN_POOL.pop()
@@ -348,9 +349,9 @@ class SpanImpl:
         self,
         name: str,
         trace_id: str,
-        data: Optional[SpanData] = None,
-        parent_id: Optional[str] = None,
-        on_end: Optional[Any] = None,
+        data: SpanData | None = None,
+        parent_id: str | None = None,
+        on_end: Any | None = None,
     ) -> None:
         """重置实例状态以供复用(对象池场景)。"""
         if not name or not name.strip():
@@ -372,7 +373,7 @@ class SpanImpl:
         self._last_snapshot = None
 
     # -- 上下文管理器 -------------------------------------------------------
-    def __enter__(self) -> "SpanImpl":
+    def __enter__(self) -> SpanImpl:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:

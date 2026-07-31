@@ -23,21 +23,21 @@ Reciprocal Rank Fusion:
   k 为平滑常数(默认60),降低高排名的权重,使各路更均衡。
   最终按融合分数降序排列。
 """
+
 from __future__ import annotations
 
 import math
 from collections import Counter, defaultdict
-from typing import Optional
 
 from fnixagent.core.retrieval.embedder import BaseEmbedder
 from fnixagent.core.retrieval.vectorstore import BaseVectorStore
 from fnixagent.core.text import tokenize
 from fnixagent.core.types import MemoryItem
 
-
 # ---------------------------------------------------------------------------
 # BM25 关键词检索
 # ---------------------------------------------------------------------------
+
 
 class BM25Retriever:
     """
@@ -57,10 +57,10 @@ class BM25Retriever:
         self._b = b
         # 索引数据
         self._doc_ids: list[str] = []
-        self._doc_tokens: list[list[str]] = []      # 每篇文档的 token 列表
-        self._doc_lengths: list[int] = []            # 每篇文档长度
-        self._avgdl: float = 0.0                     # 平均文档长度
-        self._term_freqs: list[Counter] = []         # 每篇文档的词频
+        self._doc_tokens: list[list[str]] = []  # 每篇文档的 token 列表
+        self._doc_lengths: list[int] = []  # 每篇文档长度
+        self._avgdl: float = 0.0  # 平均文档长度
+        self._term_freqs: list[Counter] = []  # 每篇文档的词频
         self._df: dict[str, int] = defaultdict(int)  # 文档频率: 包含某词的文档数
         self._n_docs: int = 0
         self._idf_cache: dict[str, float] = {}
@@ -91,11 +91,7 @@ class BM25Retriever:
                 self._df[term] += 1
 
         self._n_docs = len(self._doc_ids)
-        self._avgdl = (
-            sum(self._doc_lengths) / self._n_docs
-            if self._n_docs > 0
-            else 0.0
-        )
+        self._avgdl = sum(self._doc_lengths) / self._n_docs if self._n_docs > 0 else 0.0
 
     def _idf(self, term: str) -> float:
         """
@@ -113,9 +109,7 @@ class BM25Retriever:
         self._idf_cache[term] = idf
         return idf
 
-    def search(
-        self, query: str, top_k: int = 5
-    ) -> list[tuple[str, float]]:
+    def search(self, query: str, top_k: int = 5) -> list[tuple[str, float]]:
         """
         用 BM25 公式对文档打分,返回 top-k [(doc_id, score)]。
 
@@ -141,16 +135,12 @@ class BM25Retriever:
                     # BM25 打分公式:
                     # score = IDF * (tf * (k1+1)) / (tf + k1*(1 - b + b*|d|/avgdl))
                     dl = self._doc_lengths[i]
-                    denom = tf + self._k1 * (
-                        1.0 - self._b + self._b * dl / max(self._avgdl, 1e-10)
-                    )
+                    denom = tf + self._k1 * (1.0 - self._b + self._b * dl / max(self._avgdl, 1e-10))
                     score = idf * (tf * (self._k1 + 1.0)) / denom
                     scores[i] += score
 
             # top-k 排序(仅取正分文档)
-            ranked = sorted(
-                enumerate(scores), key=lambda x: x[1], reverse=True
-            )[:top_k]
+            ranked = sorted(enumerate(scores), key=lambda x: x[1], reverse=True)[:top_k]
             return [(self._doc_ids[i], s) for i, s in ranked if s > 0]
         except Exception:
             # 关键词检索异常捕获:返回空结果,避免阻断混合检索流程
@@ -160,6 +150,7 @@ class BM25Retriever:
 # ---------------------------------------------------------------------------
 # 混合检索器
 # ---------------------------------------------------------------------------
+
 
 class HybridRetriever:
     """
@@ -259,18 +250,22 @@ class HybridRetriever:
         for doc_id, score in ranked:
             if doc_id in vec_map:
                 item = vec_map[doc_id]
-                results.append(MemoryItem(
-                    id=item.id,
-                    content=item.content,
-                    score=score,
-                    metadata=item.metadata,
-                ))
+                results.append(
+                    MemoryItem(
+                        id=item.id,
+                        content=item.content,
+                        score=score,
+                        metadata=item.metadata,
+                    )
+                )
             else:
                 # 来自 BM25 但不在向量结果中(需要从存储取内容)
-                results.append(MemoryItem(
-                    id=doc_id,
-                    content="",
-                    score=score,
-                    metadata={},
-                ))
+                results.append(
+                    MemoryItem(
+                        id=doc_id,
+                        content="",
+                        score=score,
+                        metadata={},
+                    )
+                )
         return results

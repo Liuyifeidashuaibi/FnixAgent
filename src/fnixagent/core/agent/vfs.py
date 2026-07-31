@@ -10,6 +10,7 @@ ContextFS - 上下文文件系统 (Context Filesystem)
   - 树结构 + StorageBackend 持久化 (可插拔)
   - LRU 缓存 (修复原版无 storage 时 eviction 丢数据 bug)
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -25,8 +26,17 @@ class ContextFSNode:
 
     使用 __slots__ 节省内存 (大量节点场景)。
     """
-    __slots__ = ("name", "is_dir", "content", "children", "metadata",
-                 "created_at", "modified_at", "loaded")
+
+    __slots__ = (
+        "children",
+        "content",
+        "created_at",
+        "is_dir",
+        "loaded",
+        "metadata",
+        "modified_at",
+        "name",
+    )
 
     def __init__(self, name: str, is_dir: bool = False):
         self.name = name
@@ -67,8 +77,7 @@ class ContextFS:
       - 有 storage: 超过 max_cache_size 时驱逐最久未访问, 内容已持久化可安全驱逐
     """
 
-    def __init__(self, storage: StorageBackend | None = None,
-                 max_cache_size: int = 100):
+    def __init__(self, storage: StorageBackend | None = None, max_cache_size: int = 100):
         self._storage = storage
         self._root = ContextFSNode("/", is_dir=True)
         self._root.loaded = True
@@ -126,7 +135,7 @@ class ContextFS:
                 return None
             if part not in current.children:
                 if create:
-                    is_last = (i == len(parts) - 1)
+                    is_last = i == len(parts) - 1
                     # 中间节点始终为目录; 末节点根据路径是否以 / 结尾判断
                     is_dir = (not is_last) or path.endswith("/")
                     current.children[part] = ContextFSNode(part, is_dir=is_dir)

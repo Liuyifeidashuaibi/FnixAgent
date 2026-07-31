@@ -38,6 +38,7 @@ Usage:
     # 智能撤销
     result = await agent.smart_undo()
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -47,10 +48,10 @@ from typing import Any
 
 from fnixagent.core.code.tools import CodeTools
 
-
 # ============================================================================
 # Git 操作结果
 # ============================================================================
+
 
 @dataclass
 class GitResult:
@@ -63,6 +64,7 @@ class GitResult:
         output: 成功时的输出数据 (类型随操作而异)
         error: 失败时的错误描述 (成功时为 None)
     """
+
     success: bool
     output: Any = None
     error: str | None = None
@@ -95,6 +97,7 @@ class GitResult:
 # ============================================================================
 # 自动化 Git 操作智能体
 # ============================================================================
+
 
 class GitAgent:
     """自动化 Git 操作智能体。
@@ -244,25 +247,23 @@ class GitAgent:
             return GitResult.err("无法获取当前分支名")
 
         # 获取 diff (三点语法: 当前分支自共同祖先以来的变更)
-        diff_result = await self._tools.git(
-            ["diff", f"{base_branch}...{current_branch}"]
-        )
+        diff_result = await self._tools.git(["diff", f"{base_branch}...{current_branch}"])
         if not diff_result.success:
             return GitResult.err(f"git diff 失败: {diff_result.error}")
         diff_text = diff_result.output.strip()
         if not diff_text:
-            return GitResult.err(
-                f"当前分支 {current_branch} 与 {base_branch} 无差异"
-            )
+            return GitResult.err(f"当前分支 {current_branch} 与 {base_branch} 无差异")
 
         # 通过 LLM 生成 PR 描述
         pr_desc = await self._generate_pr_description(base_branch, diff_text)
 
-        return GitResult.ok({
-            "description": pr_desc,
-            "base_branch": base_branch,
-            "current_branch": current_branch,
-        })
+        return GitResult.ok(
+            {
+                "description": pr_desc,
+                "base_branch": base_branch,
+                "current_branch": current_branch,
+            }
+        )
 
     # ========================================================================
     # 公共方法: summarize_changes
@@ -320,36 +321,35 @@ class GitAgent:
         # 执行软重置 (绕过 CodeTools 的 reset 禁令)
         try:
             proc = await asyncio.create_subprocess_exec(
-                "git", "reset", "--soft", "HEAD~1",
+                "git",
+                "reset",
+                "--soft",
+                "HEAD~1",
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
                 cwd=str(self._root),
             )
-            stdout_bytes, stderr_bytes = await asyncio.wait_for(
-                proc.communicate(), timeout=30
-            )
+            stdout_bytes, stderr_bytes = await asyncio.wait_for(proc.communicate(), timeout=30)
         except FileNotFoundError:
             return GitResult.err("git 命令未找到")
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return GitResult.err("git reset 超时 (30s)")
         except OSError as e:
             return GitResult.err(f"执行 git reset 失败: {e}")
 
-        stdout_text = (
-            stdout_bytes.decode("utf-8", errors="replace") if stdout_bytes else ""
-        )
-        stderr_text = (
-            stderr_bytes.decode("utf-8", errors="replace") if stderr_bytes else ""
-        )
+        stdout_text = stdout_bytes.decode("utf-8", errors="replace") if stdout_bytes else ""
+        stderr_text = stderr_bytes.decode("utf-8", errors="replace") if stderr_bytes else ""
 
         if proc.returncode != 0:
             detail = stderr_text.strip() or stdout_text.strip()
             return GitResult.err(f"git reset 失败 (退出码 {proc.returncode}): {detail}")
 
-        return GitResult.ok({
-            "undone_commit": last_commit,
-            "output": stdout_text.strip(),
-        })
+        return GitResult.ok(
+            {
+                "undone_commit": last_commit,
+                "output": stdout_text.strip(),
+            }
+        )
 
     # ========================================================================
     # 内部: LLM 生成方法
@@ -399,9 +399,7 @@ class GitAgent:
         except Exception:
             return "update"
 
-    async def _generate_pr_description(
-        self, base_branch: str, diff_text: str
-    ) -> str:
+    async def _generate_pr_description(self, base_branch: str, diff_text: str) -> str:
         """通过 LLM 生成 PR 描述。
 
         生成结构化 Markdown 描述, 包含变更概述、主要改动、测试说明。
@@ -414,10 +412,7 @@ class GitAgent:
             生成的 PR 描述 (Markdown 格式); LLM 不可用时返回基础模板。
         """
         if self._llm is None:
-            return (
-                f"## 合并到 {base_branch}\n\n"
-                "*(LLM 不可用, 未生成自动描述)*\n"
-            )
+            return f"## 合并到 {base_branch}\n\n*(LLM 不可用, 未生成自动描述)*\n"
 
         truncated = diff_text[:6000]
 
@@ -433,9 +428,7 @@ class GitAgent:
             {
                 "role": "user",
                 "content": (
-                    f"目标分支: {base_branch}\n\n"
-                    f"变更 diff:\n{truncated}\n\n"
-                    "请生成 PR 描述。"
+                    f"目标分支: {base_branch}\n\n变更 diff:\n{truncated}\n\n请生成 PR 描述。"
                 ),
             },
         ]
@@ -444,10 +437,7 @@ class GitAgent:
             response = await self._llm.complete({"messages": messages})
             return response.strip()
         except Exception:
-            return (
-                f"## 合并到 {base_branch}\n\n"
-                "*(LLM 调用失败, 未生成自动描述)*\n"
-            )
+            return f"## 合并到 {base_branch}\n\n*(LLM 调用失败, 未生成自动描述)*\n"
 
     async def _summarize_diff(self, diff_text: str) -> str:
         """通过 LLM 摘要 git diff 变更。
@@ -510,9 +500,7 @@ class GitAgent:
                     if path_b.startswith("b/"):
                         files.append(path_b[2:])
         if files:
-            return f"变更文件 ({len(files)}):\n" + "\n".join(
-                f"  - {f}" for f in files
-            )
+            return f"变更文件 ({len(files)}):\n" + "\n".join(f"  - {f}" for f in files)
         return "无变更摘要"
 
     async def _detect_base_branch(self) -> str:
@@ -541,4 +529,4 @@ class GitAgent:
         return ""
 
 
-__all__ = ["GitResult", "GitAgent"]
+__all__ = ["GitAgent", "GitResult"]

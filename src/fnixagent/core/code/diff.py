@@ -27,6 +27,7 @@ Usage:
     # 回滚
     await engine.rollback(cs.id)
 """
+
 from __future__ import annotations
 
 import difflib
@@ -39,19 +40,20 @@ from uuid import uuid4
 
 from fnixagent.core.agent.types import utcnow_iso
 
-
 # ============================================================================
 # 变更类型与数据结构
 # ============================================================================
+
 
 class ChangeType(Enum):
     """变更类型。
 
     对标 Git 的 add/modify/delete, 描述单个文件的操作语义。
     """
-    CREATE = "create"    # 创建新文件 (文件不能已存在)
-    MODIFY = "modify"    # 修改已有文件 (old_content 必须与磁盘匹配)
-    DELETE = "delete"    # 删除文件 (文件必须存在)
+
+    CREATE = "create"  # 创建新文件 (文件不能已存在)
+    MODIFY = "modify"  # 修改已有文件 (old_content 必须与磁盘匹配)
+    DELETE = "delete"  # 删除文件 (文件必须存在)
 
 
 @dataclass
@@ -64,10 +66,11 @@ class FileChange:
         old_content: MODIFY/DELETE 时为原内容, CREATE 时为 None
         new_content: CREATE/MODIFY 时为新内容, DELETE 时为 None
     """
+
     path: str
     change_type: ChangeType
-    old_content: str | None = None    # MODIFY/DELETE 时为原内容
-    new_content: str | None = None    # CREATE/MODIFY 时为新内容
+    old_content: str | None = None  # MODIFY/DELETE 时为原内容
+    new_content: str | None = None  # CREATE/MODIFY 时为新内容
 
     def to_diff(self) -> str:
         """生成 unified diff (使用 difflib.unified_diff)。
@@ -99,8 +102,10 @@ class FileChange:
             tofile = "/dev/null"
 
         diff_lines = difflib.unified_diff(
-            old_lines, new_lines,
-            fromfile=fromfile, tofile=tofile,
+            old_lines,
+            new_lines,
+            fromfile=fromfile,
+            tofile=tofile,
         )
         return "".join(diff_lines)
 
@@ -118,6 +123,7 @@ class ChangeSet:
         id: 变更集唯一标识 (12 位 hex)
         created_at: 创建时间 (UTC ISO 字符串)
     """
+
     changes: list[FileChange] = field(default_factory=list)
     message: str = ""
     id: str = field(default_factory=lambda: uuid4().hex[:12])
@@ -159,6 +165,7 @@ class ChangeSet:
 # 变更集构建器 (流式 API)
 # ============================================================================
 
+
 class ChangeSetBuilder:
     """变更集构建器 (流式 API)。
 
@@ -190,11 +197,13 @@ class ChangeSetBuilder:
         Returns:
             构建器自身 (用于链式调用)。
         """
-        self._changeset.add_change(FileChange(
-            path=path,
-            change_type=ChangeType.CREATE,
-            new_content=content,
-        ))
+        self._changeset.add_change(
+            FileChange(
+                path=path,
+                change_type=ChangeType.CREATE,
+                new_content=content,
+            )
+        )
         return self
 
     def modify_file(self, path: str, old: str, new: str) -> ChangeSetBuilder:
@@ -208,12 +217,14 @@ class ChangeSetBuilder:
         Returns:
             构建器自身 (用于链式调用)。
         """
-        self._changeset.add_change(FileChange(
-            path=path,
-            change_type=ChangeType.MODIFY,
-            old_content=old,
-            new_content=new,
-        ))
+        self._changeset.add_change(
+            FileChange(
+                path=path,
+                change_type=ChangeType.MODIFY,
+                old_content=old,
+                new_content=new,
+            )
+        )
         return self
 
     def delete_file(self, path: str, old: str) -> ChangeSetBuilder:
@@ -226,11 +237,13 @@ class ChangeSetBuilder:
         Returns:
             构建器自身 (用于链式调用)。
         """
-        self._changeset.add_change(FileChange(
-            path=path,
-            change_type=ChangeType.DELETE,
-            old_content=old,
-        ))
+        self._changeset.add_change(
+            FileChange(
+                path=path,
+                change_type=ChangeType.DELETE,
+                old_content=old,
+            )
+        )
         return self
 
     def build(self) -> ChangeSet:
@@ -246,6 +259,7 @@ class ChangeSetBuilder:
 # 应用结果
 # ============================================================================
 
+
 @dataclass
 class ApplyResult:
     """应用结果。
@@ -258,6 +272,7 @@ class ApplyResult:
         error: 失败原因描述 (成功时为 None)
         duration_sec: 应用耗时 (秒)
     """
+
     success: bool
     changeset_id: str
     applied_files: list[str] = field(default_factory=list)
@@ -269,6 +284,7 @@ class ApplyResult:
 # ============================================================================
 # 原子多文件编辑引擎
 # ============================================================================
+
 
 class DiffEngine:
     """原子多文件编辑引擎。
@@ -300,20 +316,29 @@ class DiffEngine:
     # ------------------------------------------------------------------------
 
     def _resolve(self, path: str) -> Path:
-        """将文件路径解析为绝对路径。
-
-        绝对路径直接使用, 相对路径基于 project_root 解析。
+        """将文件路径解析为绝对路径，并强制限制在 project_root 内。
 
         Args:
             path: 文件路径 (绝对或相对)。
 
         Returns:
             解析后的绝对 Path 对象。
+
+        Raises:
+            ValueError: 路径逃逸 project_root。
         """
-        p = Path(path)
-        if p.is_absolute():
-            return p
-        return self._root / p
+        root = self._root.resolve()
+        raw = (path or "").strip()
+        if not raw:
+            raise ValueError("path is empty")
+
+        p = Path(raw)
+        target = p.resolve() if p.is_absolute() else (root / p).resolve()
+        try:
+            target.relative_to(root)
+        except ValueError as exc:
+            raise ValueError(f"path escapes project root: {path}") from exc
+        return target
 
     # ------------------------------------------------------------------------
     # 原子应用
@@ -369,12 +394,16 @@ class DiffEngine:
         # 2. dry_run: 只预检查, 不写入
         if dry_run:
             duration = time.perf_counter() - start
-            return ApplyResult(
+            result = ApplyResult(
                 success=True,
                 changeset_id=changeset.id,
                 applied_files=[],
                 duration_sec=duration,
             )
+            # preview/dry_run 仍需登记历史, 否则下游 file_change 事件与
+            # Review 阶段取 diff 会拿不到变更集（preview 模式静默失效）。
+            self._history.append((changeset, result))
+            return result
 
         # 3. 逐个应用, 跟踪已应用的变更 (用于失败回滚)
         applied: list[FileChange] = []
@@ -489,16 +518,11 @@ class DiffEngine:
                 return f"文件不存在, 无法修改: {change.path}"
             disk_content = full.read_text(encoding="utf-8")
             disk_hash = hashlib.sha256(disk_content.encode("utf-8")).hexdigest()
-            old_hash = hashlib.sha256(
-                (change.old_content or "").encode("utf-8")
-            ).hexdigest()
+            old_hash = hashlib.sha256((change.old_content or "").encode("utf-8")).hexdigest()
             if disk_hash != old_hash:
                 # 内容不匹配, 说明被并发编辑
                 mtime = full.stat().st_mtime
-                return (
-                    f"文件内容已变更 (并发编辑冲突), "
-                    f"path={change.path}, mtime={mtime}"
-                )
+                return f"文件内容已变更 (并发编辑冲突), path={change.path}, mtime={mtime}"
 
         elif change.change_type == ChangeType.DELETE:
             # 删除: 文件必须存在
@@ -602,10 +626,10 @@ class DiffEngine:
 
 
 __all__ = [
-    "ChangeType",
-    "FileChange",
+    "ApplyResult",
     "ChangeSet",
     "ChangeSetBuilder",
-    "ApplyResult",
+    "ChangeType",
     "DiffEngine",
+    "FileChange",
 ]

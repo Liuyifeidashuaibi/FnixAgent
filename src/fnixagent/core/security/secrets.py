@@ -13,6 +13,7 @@
   - require() 失败抛 ValueError(调用方需感知)
   - 仅依赖标准库 + 可选 python-dotenv
 """
+
 from __future__ import annotations
 
 import json
@@ -21,7 +22,6 @@ import os
 import threading
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -44,10 +44,11 @@ class SecretSource:
         max_age_days: 最大年龄天数(0 表示不限制,默认 30)
         allow_dev_fallback: 是否允许开发环境 fallback(默认 False)
     """
+
     name: str
     env_var: str = ""
     required: bool = True
-    default: Optional[str] = None
+    default: str | None = None
     min_length: int = 16
     max_age_days: int = 30
     allow_dev_fallback: bool = False
@@ -65,12 +66,13 @@ class SecretValue:
         age_days: 已存在天数(None 表示未知)
         expires_at: 过期时间 ISO 字符串(None 表示不限制)
     """
+
     name: str
     value: str
-    source: str          # "env"/"file"/"vault"/"dev_fallback"
+    source: str  # "env"/"file"/"vault"/"dev_fallback"
     insecure: bool
-    age_days: Optional[int] = None
-    expires_at: Optional[str] = None
+    age_days: int | None = None
+    expires_at: str | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -94,7 +96,7 @@ class SecretManager:
     # 默认元数据文件路径(记录每个 secret 的首次创建时间)
     _META_FILE = ".secret_meta.json"
 
-    def __init__(self, sources: Optional[list[SecretSource]] = None) -> None:
+    def __init__(self, sources: list[SecretSource] | None = None) -> None:
         self._sources: dict[str, SecretSource] = {}
         self._lock = threading.Lock()
         self._meta: dict[str, dict] = self._load_meta()
@@ -113,8 +115,12 @@ class SecretManager:
         if src is None:
             # 未注册的 secret,按 default 行为处理
             return SecretValue(
-                name=name, value="", source="env",
-                insecure=True, age_days=None, expires_at=None,
+                name=name,
+                value="",
+                source="env",
+                insecure=True,
+                age_days=None,
+                expires_at=None,
             )
         # 1. 优先从环境变量读取
         env_var = src.env_var or name
@@ -122,7 +128,9 @@ class SecretManager:
         if val:
             self._touch_meta(name)
             return SecretValue(
-                name=name, value=val, source="env",
+                name=name,
+                value=val,
+                source="env",
                 insecure=False,
                 age_days=self._age_days(name),
                 expires_at=self._expires_at(src),
@@ -132,7 +140,9 @@ class SecretManager:
         if val:
             self._touch_meta(name)
             return SecretValue(
-                name=name, value=val, source="file",
+                name=name,
+                value=val,
+                source="file",
                 insecure=False,
                 age_days=self._age_days(name),
                 expires_at=self._expires_at(src),
@@ -140,8 +150,12 @@ class SecretManager:
         # 3. 默认值
         if src.default is not None:
             return SecretValue(
-                name=name, value=src.default, source="env",
-                insecure=False, age_days=None, expires_at=None,
+                name=name,
+                value=src.default,
+                source="env",
+                insecure=False,
+                age_days=None,
+                expires_at=None,
             )
         # 4. 开发 fallback
         if src.allow_dev_fallback:
@@ -151,13 +165,21 @@ class SecretManager:
                 name,
             )
             return SecretValue(
-                name=name, value=dev_val, source="dev_fallback",
-                insecure=True, age_days=0, expires_at=None,
+                name=name,
+                value=dev_val,
+                source="dev_fallback",
+                insecure=True,
+                age_days=0,
+                expires_at=None,
             )
         # 5. 全部失败:返回空值(insecure=True,调用方需检查)
         return SecretValue(
-            name=name, value="", source="env",
-            insecure=True, age_days=None, expires_at=None,
+            name=name,
+            value="",
+            source="env",
+            insecure=True,
+            age_days=None,
+            expires_at=None,
         )
 
     def require(self, name: str) -> str:
@@ -165,14 +187,10 @@ class SecretManager:
         src = self._sources.get(name)
         sv = self.get(name)
         if not sv.value:
-            raise ValueError(
-                f"必需的凭证 {name} 未配置(环境变量 {src.env_var or name})"
-            )
+            raise ValueError(f"必需的凭证 {name} 未配置(环境变量 {src.env_var or name})")
         min_len = src.min_length if src else 16
         if len(sv.value) < min_len:
-            raise ValueError(
-                f"凭证 {name} 长度 {len(sv.value)} < 最小要求 {min_len}"
-            )
+            raise ValueError(f"凭证 {name} 长度 {len(sv.value)} < 最小要求 {min_len}")
         if sv.insecure and src and src.required:
             # 必需 secret 仍走 dev_fallback,启动时应告警
             logger.warning(
@@ -283,10 +301,11 @@ class SecretManager:
     # -- 内部:.env 读取 --------------------------------------------------
 
     @staticmethod
-    def _read_from_dotenv(env_var: str) -> Optional[str]:
+    def _read_from_dotenv(env_var: str) -> str | None:
         """尝试用 python-dotenv 从 .env 文件读取(缺失则返回 None)。"""
         try:
             from dotenv import load_dotenv  # type: ignore[import-not-found]
+
             # 仅加载一次,不覆盖已存在的环境变量
             load_dotenv(override=False)
             return os.environ.get(env_var)
@@ -302,6 +321,7 @@ class SecretManager:
         """生成开发用固定 fallback key(基于 name 派生,可重现)。"""
         # 用 name + 固定盐派生 32 字节十六进制字符串
         import hashlib
+
         salt = b"fnixagent-dev-fallback-do-not-use-in-prod"
         h = hashlib.sha256(salt + name.encode("utf-8")).hexdigest()
         return h  # 64 字符,满足 min_length=32
@@ -312,7 +332,7 @@ class SecretManager:
         """加载 .secret_meta.json(不存在/损坏返回 {})。"""
         try:
             if os.path.exists(self._META_FILE):
-                with open(self._META_FILE, "r", encoding="utf-8") as f:
+                with open(self._META_FILE, encoding="utf-8") as f:
                     data = json.load(f)
                     if isinstance(data, dict):
                         return data
@@ -337,7 +357,7 @@ class SecretManager:
                 }
                 self._save_meta()
 
-    def _age_days(self, name: str) -> Optional[int]:
+    def _age_days(self, name: str) -> int | None:
         """计算 secret 已存在天数(未知返回 None)。"""
         meta = self._meta.get(name)
         if not meta or "created_at" not in meta:
@@ -349,7 +369,7 @@ class SecretManager:
             return None
 
     @staticmethod
-    def _expires_at(src: SecretSource) -> Optional[str]:
+    def _expires_at(src: SecretSource) -> str | None:
         """计算过期时间 ISO 字符串(不限制返回 None)。"""
         if src.max_age_days <= 0:
             return None
@@ -365,7 +385,7 @@ class SecretManager:
 # ---------------------------------------------------------------------------
 
 
-_manager_instance: Optional[SecretManager] = None
+_manager_instance: SecretManager | None = None
 _manager_lock = threading.Lock()
 
 

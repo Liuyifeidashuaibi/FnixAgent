@@ -1,4 +1,4 @@
-﻿"""
+"""
 飞轮 ② 知识固化环单元测试。
 
 测试模块: fnixagent.core.flywheel.stage2_knowledge
@@ -8,7 +8,6 @@
     - 增量写入拓扑(新节点/强化节点/新边)
     - 常量: JUNK_KEYWORDS, MIN_TOOL_CALLS_FOR_SOLIDIFICATION
 """
-import pytest
 
 from fnixagent.core.flywheel.stage2_knowledge import (
     JUNK_KEYWORDS,
@@ -100,12 +99,19 @@ class TestStage2RuleBasedExtraction:
     def test_no_causal_relations_for_single_tool(self, sample_graph):
         """单次工具调用不应产生因果关系。"""
         from fnixagent.core.types import ReasoningMode, TraceRecord
+
         trace = TraceRecord(
-            trace_id="t1", task_id="tk1", goal="测试",
-            mode=ReasoningMode.REACT, concept_path=["L2:concept1"],
+            trace_id="t1",
+            task_id="tk1",
+            goal="测试",
+            mode=ReasoningMode.REACT,
+            concept_path=["L2:concept1"],
             tool_calls=[{"name": "search_paper", "args": {"q": "x"}, "status": "success"}],
-            success=True, duration_ms=100.0, usage_tokens=10,
-            reflection_score=0.0, created_at=0.0,
+            success=True,
+            duration_ms=100.0,
+            usage_tokens=10,
+            reflection_score=0.0,
+            created_at=0.0,
         )
         fw = KnowledgeSolidificationFlywheel(sample_graph)
         extracted = fw._rule_based_extract(trace)
@@ -114,15 +120,22 @@ class TestStage2RuleBasedExtraction:
     def test_deduplicates_concepts(self, sample_graph):
         """重复调用的工具名应去重为单个概念。"""
         from fnixagent.core.types import ReasoningMode, TraceRecord
+
         trace = TraceRecord(
-            trace_id="t1", task_id="tk1", goal="测试",
-            mode=ReasoningMode.REACT, concept_path=[],
+            trace_id="t1",
+            task_id="tk1",
+            goal="测试",
+            mode=ReasoningMode.REACT,
+            concept_path=[],
             tool_calls=[
                 {"name": "search_paper", "args": {}, "status": "success"},
                 {"name": "search_paper", "args": {}, "status": "success"},
             ],
-            success=True, duration_ms=100.0, usage_tokens=10,
-            reflection_score=0.0, created_at=0.0,
+            success=True,
+            duration_ms=100.0,
+            usage_tokens=10,
+            reflection_score=0.0,
+            created_at=0.0,
         )
         fw = KnowledgeSolidificationFlywheel(sample_graph)
         extracted = fw._rule_based_extract(trace)
@@ -134,14 +147,14 @@ class TestStage2WriteToTopology:
 
     def test_adds_new_concept_nodes(self, sample_graph, sample_trace):
         """新概念应作为 L2 CONCEPT 节点写入。"""
-        initial_count = len(sample_graph.list_nodes(
-            layer=TopologyLayer.L2_CONCEPT, node_type=NodeType.CONCEPT
-        ))
+        initial_count = len(
+            sample_graph.list_nodes(layer=TopologyLayer.L2_CONCEPT, node_type=NodeType.CONCEPT)
+        )
         fw = KnowledgeSolidificationFlywheel(sample_graph)
         result = fw.process(sample_trace)
-        after_count = len(sample_graph.list_nodes(
-            layer=TopologyLayer.L2_CONCEPT, node_type=NodeType.CONCEPT
-        ))
+        after_count = len(
+            sample_graph.list_nodes(layer=TopologyLayer.L2_CONCEPT, node_type=NodeType.CONCEPT)
+        )
         assert result["new_nodes"] > 0
         assert after_count > initial_count
 
@@ -176,8 +189,12 @@ class TestStage2WriteToTopology:
         fw = KnowledgeSolidificationFlywheel(sample_graph)
         result = fw.process(sample_trace)
         expected_keys = {
-            "filtered", "filter_reason", "new_nodes", "new_edges",
-            "reinforced_nodes", "reinforced_edges",
+            "filtered",
+            "filter_reason",
+            "new_nodes",
+            "new_edges",
+            "reinforced_nodes",
+            "reinforced_edges",
         }
         assert expected_keys.issubset(set(result.keys()))
 
@@ -187,6 +204,7 @@ class TestStage2LLMExtraction:
 
     def test_llm_failure_falls_back_to_rules(self, sample_graph, sample_trace):
         """LLM 调用失败时应降级为规则式萃取。"""
+
         class FailingLLM:
             def chat(self, messages):
                 raise RuntimeError("LLM unavailable")

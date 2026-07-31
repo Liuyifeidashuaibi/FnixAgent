@@ -24,6 +24,7 @@ fnixagent 的首个落地场景,集成任务引擎全部模块,端到端处理�
   - PendingExporter(pending 清单)
   - HumanConfirmer(高风险确认)
 """
+
 from __future__ import annotations
 
 import os
@@ -31,17 +32,16 @@ import re
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 from fnixagent.office.base import BaseExpert, ExpertResult
-from fnixagent.office.format_spec import FormatSpec, FormatNormalizer
+from fnixagent.office.format_spec import FormatNormalizer
 from fnixagent.office.run_editor import EditOp, RunEditor
 from fnixagent.tasks.confirmer import HumanConfirmer, RiskLevel
 from fnixagent.tasks.dsl import TaskResult
 from fnixagent.tasks.pending_export import PendingExporter
 from fnixagent.tasks.resolver import AnswerResolver, GarbageDetector
 from fnixagent.tasks.validator import TaskValidator
-
 
 # ---------------------------------------------------------------------------
 # 数据结构
@@ -71,7 +71,7 @@ class QuestionInfo:
     stem: str = ""
     options: list[str] = field(default_factory=list)
     answer_raw: str = ""
-    answer_resolved: Optional[str] = None
+    answer_resolved: str | None = None
     has_paren: bool = False
     needs_manual: bool = False
     paragraph_idx: int = 0
@@ -102,7 +102,7 @@ class ProcessOptions:
     delete_options_for_judge: bool = True
     output_suffix: str = "_最终版"
     export_pending: bool = True
-    llm_router: Optional[Any] = None
+    llm_router: Any | None = None
     require_confirmation: bool = True
 
 
@@ -151,7 +151,7 @@ class QuestionBankScenario(BaseExpert):
     def name(self) -> str:
         return "question_bank"
 
-    def __init__(self, llm_router: Optional[Any] = None) -> None:
+    def __init__(self, llm_router: Any | None = None) -> None:
         """初始化各模块实例。
 
         Args:
@@ -172,8 +172,8 @@ class QuestionBankScenario(BaseExpert):
     def process(
         self,
         file_path: str,
-        options: Optional[ProcessOptions] = None,
-        output_path: Optional[str] = None,
+        options: ProcessOptions | None = None,
+        output_path: str | None = None,
     ) -> ExpertResult:
         """端到端处理单个题库文件。
 
@@ -195,9 +195,7 @@ class QuestionBankScenario(BaseExpert):
         task_id = str(uuid.uuid4())[:8]
 
         # 1. 路径校验
-        err = self._validate_path(
-            file_path, must_exist=True, allowed_exts=("docx",)
-        )
+        err = self._validate_path(file_path, must_exist=True, allowed_exts=("docx",))
         if err:
             return self._failure(err)
 
@@ -240,9 +238,7 @@ class QuestionBankScenario(BaseExpert):
 
         # 6. 执行编辑
         try:
-            edit_result = self._editor.edit_word(
-                file_path, ops, output_path=output_path
-            )
+            edit_result = self._editor.edit_word(file_path, ops, output_path=output_path)
             if not edit_result.success:
                 return self._failure(
                     f"编辑失败: {edit_result.error}",
@@ -256,16 +252,14 @@ class QuestionBankScenario(BaseExpert):
         if opts.normalize_format:
             try:
                 self._normalizer.normalize_word(output_path, output_path=output_path)
-            except Exception as e:
+            except Exception:
                 # 格式统一失败不中断,记录 warning
                 pass
 
         # 8. 验证
         try:
-            validation = self._validator.validate_question_bank(
-                file_path, output_path
-            )
-        except Exception as e:
+            validation = self._validator.validate_question_bank(file_path, output_path)
+        except Exception:
             validation = None
 
         # 9. 导出 pending 清单
@@ -288,12 +282,8 @@ class QuestionBankScenario(BaseExpert):
             pending_items=pending_items,
             stats={
                 "question_count": len(questions),
-                "resolved_count": sum(
-                    1 for q in questions if q.answer_resolved
-                ),
-                "needs_manual_count": sum(
-                    1 for q in questions if q.needs_manual
-                ),
+                "resolved_count": sum(1 for q in questions if q.answer_resolved),
+                "needs_manual_count": sum(1 for q in questions if q.needs_manual),
                 "edit_ops": len(ops),
                 "risk_level": risk.value,
             },
@@ -331,7 +321,7 @@ class QuestionBankScenario(BaseExpert):
         doc = docx.Document(file_path)
 
         questions: list[QuestionInfo] = []
-        current: Optional[QuestionInfo] = None
+        current: QuestionInfo | None = None
 
         for idx, para in enumerate(doc.paragraphs):
             text = para.text.strip()
@@ -444,16 +434,18 @@ class QuestionBankScenario(BaseExpert):
                 q.needs_manual = resolved.needs_manual
 
                 if q.needs_manual:
-                    pending_items.append({
-                        "task_id": task_id,
-                        "question_num": q.num,
-                        "stem": q.stem[:100],
-                        "options": q.options,
-                        "garbled_answer": q.answer_raw,
-                        "suggested_answer": resolved.answer,
-                        "confidence": resolved.confidence,
-                        "reason": f"答案来源: {resolved.source}",
-                    })
+                    pending_items.append(
+                        {
+                            "task_id": task_id,
+                            "question_num": q.num,
+                            "stem": q.stem[:100],
+                            "options": q.options,
+                            "garbled_answer": q.answer_raw,
+                            "suggested_answer": resolved.answer,
+                            "confidence": resolved.confidence,
+                            "reason": f"答案来源: {resolved.source}",
+                        }
+                    )
 
         return questions, pending_items
 
@@ -461,9 +453,7 @@ class QuestionBankScenario(BaseExpert):
     # 构造编辑操作
     # ------------------------------------------------------------------
 
-    def build_edit_ops(
-        self, questions: list[QuestionInfo], opts: ProcessOptions
-    ) -> list[EditOp]:
+    def build_edit_ops(self, questions: list[QuestionInfo], opts: ProcessOptions) -> list[EditOp]:
         """根据题目和选项构造编辑操作列表。
 
         Args:
@@ -483,21 +473,25 @@ class QuestionBankScenario(BaseExpert):
                 if q.qtype in ("单选题", "多选题", "其他题"):
                     # target 用题干前20字定位
                     target = q.stem[:20] if q.stem else f"题{q.num}"
-                    ops.append(EditOp(
-                        op_type="fill_blank",
-                        target=target,
-                        value=q.answer_resolved,
-                    ))
+                    ops.append(
+                        EditOp(
+                            op_type="fill_blank",
+                            target=target,
+                            value=q.answer_resolved,
+                        )
+                    )
 
             # 2. 删除题号(如 "11. ")
             if opts.delete_number:
                 num_target = f"{q.num}. "
                 if num_target not in seen_delete_targets:
                     seen_delete_targets.add(num_target)
-                    ops.append(EditOp(
-                        op_type="delete",
-                        target=num_target,
-                    ))
+                    ops.append(
+                        EditOp(
+                            op_type="delete",
+                            target=num_target,
+                        )
+                    )
 
             # 3. 删除答案行(非问答题)
             # 用"【答案】"前缀匹配:run 可能被分割,精确匹配会失败;
@@ -506,20 +500,24 @@ class QuestionBankScenario(BaseExpert):
             if opts.delete_answer_line and q.qtype != "问答题":
                 if q.answer_raw and "【答案】" not in seen_delete_targets:
                     seen_delete_targets.add("【答案】")
-                    ops.append(EditOp(
-                        op_type="delete",
-                        target="【答案】",
-                    ))
+                    ops.append(
+                        EditOp(
+                            op_type="delete",
+                            target="【答案】",
+                        )
+                    )
 
             # 4. 判断题(其他题)删选项
             if opts.delete_options_for_judge and q.qtype == "其他题":
                 for opt in q.options:
                     if opt not in seen_delete_targets:
                         seen_delete_targets.add(opt)
-                        ops.append(EditOp(
-                            op_type="delete",
-                            target=opt,
-                        ))
+                        ops.append(
+                            EditOp(
+                                op_type="delete",
+                                target=opt,
+                            )
+                        )
 
         return ops
 
@@ -550,9 +548,7 @@ class QuestionBankScenario(BaseExpert):
     # 内部工具
     # ------------------------------------------------------------------
 
-    def _assess_risk(
-        self, ops: list[EditOp], input_path: str, output_path: str
-    ) -> RiskLevel:
+    def _assess_risk(self, ops: list[EditOp], input_path: str, output_path: str) -> RiskLevel:
         """评估操作风险等级。
 
         Args:
@@ -578,7 +574,7 @@ class QuestionBankScenario(BaseExpert):
         return RiskLevel.LOW
 
     @staticmethod
-    def _extract_answer_letter(text: str) -> Optional[str]:
+    def _extract_answer_letter(text: str) -> str | None:
         """从答案文本提取字母(如 "（B）" → "B")。
 
         Args:

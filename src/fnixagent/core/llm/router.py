@@ -1,4 +1,4 @@
-﻿"""
+"""
 多模型路由器 (LLM Router)。
 
 职责:
@@ -21,6 +21,7 @@ P2-9 降级链示例(借鉴 open-fnix-agent 的 3 级降级):
   ])
   # chat() 调用时:主失败→降级1→降级2,逐级尝试,全部失败才抛异常
 """
+
 from __future__ import annotations
 
 import random
@@ -28,7 +29,6 @@ import threading
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional
 
 from fnixagent.core.config import LLMConfig
 from fnixagent.core.exceptions import (
@@ -47,23 +47,24 @@ from fnixagent.core.llm.capability import (
 )
 from fnixagent.core.llm.circuit import CircuitBreaker
 from fnixagent.core.llm.limiter import TokenBucketRateLimiter
-from fnixagent.core.types import LLMResponse, TokenUsage
-
+from fnixagent.core.types import LLMResponse
 
 # ---------------------------------------------------------------------------
 # 路由策略
 # ---------------------------------------------------------------------------
 
+
 class RouteStrategy(str, Enum):
-    ROUND_ROBIN = "round_robin"      # 轮询
-    WEIGHTED = "weighted"            # 加权
-    LEAST_LOAD = "least_load"        # 最少负载(最低平均延迟)
-    FAILOVER = "failover"            # 故障转移(主→备)
+    ROUND_ROBIN = "round_robin"  # 轮询
+    WEIGHTED = "weighted"  # 加权
+    LEAST_LOAD = "least_load"  # 最少负载(最低平均延迟)
+    FAILOVER = "failover"  # 故障转移(主→备)
 
 
 @dataclass
 class RouterStats:
     """单个 provider 的路由统计。"""
+
     provider_name: str
     total_calls: int = 0
     success_count: int = 0
@@ -97,12 +98,13 @@ class RouterStats:
 # Provider 注册项
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class _ProviderEntry:
     provider: BaseLLMProvider
     weight: float = 1.0
     circuit: CircuitBreaker = field(default_factory=CircuitBreaker)
-    stats: Optional[RouterStats] = field(default=None)  # 在 __post_init__ 初始化
+    stats: RouterStats | None = field(default=None)  # 在 __post_init__ 初始化
     # P2-8: 模型能力描述
     capabilities: ModelCapability = field(default_factory=ModelCapability)
 
@@ -114,6 +116,7 @@ class _ProviderEntry:
 # ---------------------------------------------------------------------------
 # 路由器
 # ---------------------------------------------------------------------------
+
 
 class LLMRouter:
     """
@@ -142,10 +145,14 @@ class LLMRouter:
             capacity=self._config.rate_capacity,
             refill_per_sec=self._config.rate_refill_per_sec,
         )
-        self._cache = ResponseCache(
-            max_size=self._config.cache_max_size,
-            ttl=self._config.cache_ttl,
-        ) if self._config.cache_enabled else None
+        self._cache = (
+            ResponseCache(
+                max_size=self._config.cache_max_size,
+                ttl=self._config.cache_ttl,
+            )
+            if self._config.cache_enabled
+            else None
+        )
         self._billing = BillingMeter() if self._config.billing_enabled else None
         # P0-2: 可选的 Guardrail 管道(通过 set_guardrail_pipeline 注入,避免分层依赖)
         self._guardrail_pipeline = None
@@ -167,7 +174,7 @@ class LLMRouter:
         self,
         provider: BaseLLMProvider,
         weight: float = 1.0,
-        capabilities: Optional[ModelCapability] = None,
+        capabilities: ModelCapability | None = None,
     ) -> None:
         """注册一个 provider。
 
@@ -181,9 +188,7 @@ class LLMRouter:
             ValueError: weight 非正数。
         """
         if not isinstance(provider, BaseLLMProvider):
-            raise TypeError(
-                f"provider must be BaseLLMProvider, got {type(provider).__name__}"
-            )
+            raise TypeError(f"provider must be BaseLLMProvider, got {type(provider).__name__}")
         if isinstance(weight, bool) or not isinstance(weight, (int, float)):
             raise TypeError(f"weight must be numeric, got {type(weight).__name__}")
         if weight <= 0:
@@ -196,7 +201,8 @@ class LLMRouter:
                 recovery_timeout=self._config.circuit_recovery_timeout,
                 success_threshold=self._config.circuit_success_threshold,
             ),
-            capabilities=capabilities or ModelCapability(
+            capabilities=capabilities
+            or ModelCapability(
                 model_name=provider.model_name,
                 flags=ModelCapabilityFlag.LOW_COST | ModelCapabilityFlag.STREAMING,
             ),
@@ -216,7 +222,7 @@ class LLMRouter:
 
     # -- 路由选择 ----------------------------------------------------------
 
-    def _select(self) -> Optional[_ProviderEntry]:
+    def _select(self) -> _ProviderEntry | None:
         """根据策略选择一个可用的 provider(无能力筛选,向后兼容)。"""
         with self._lock:
             available = [e for e in self._entries if e.circuit.allow_request()]
@@ -224,7 +230,7 @@ class LLMRouter:
                 return None
             return self._pick_by_strategy(available)
 
-    def _select_for(self, request: LLMRequest) -> Optional[_ProviderEntry]:
+    def _select_for(self, request: LLMRequest) -> _ProviderEntry | None:
         """P2-8: 根据 request 的能力需求筛选 provider,再按策略选择。
 
         筛选流程:
@@ -247,24 +253,22 @@ class LLMRouter:
                 return None
             # 按能力筛选
             if requirement is not None:
-                matched = [
-                    e for e in all_available
-                    if requirement.matches(e.capabilities)
-                ]
+                matched = [e for e in all_available if requirement.matches(e.capabilities)]
                 if matched:
                     # 在 matched 中按 capability score 排序,优先高分
                     if self._strategy == RouteStrategy.WEIGHTED:
                         # 加权随机,但 score 作为额外权重
                         weights = [
-                            e.weight * max(requirement.score(e.capabilities), 0.1)
-                            for e in matched
+                            e.weight * max(requirement.score(e.capabilities), 0.1) for e in matched
                         ]
                         return random.choices(matched, weights=weights, k=1)[0]
                     elif self._strategy == RouteStrategy.LEAST_LOAD:
                         # 最少负载 + 能力加分
                         return min(
                             matched,
-                            key=lambda e: e.stats.avg_latency_ms - requirement.score(e.capabilities) * 100,
+                            key=lambda e: (
+                                e.stats.avg_latency_ms - requirement.score(e.capabilities) * 100
+                            ),
                         )
                     else:
                         # ROUND_ROBIN / FAILOVER:仍按 strategy,但限定在 matched 内
@@ -272,7 +276,7 @@ class LLMRouter:
             # 回退:无 requirement 或无匹配时,按 strategy 选
             return self._pick_by_strategy(all_available)
 
-    def _build_requirement(self, request: LLMRequest) -> Optional[CapabilityRequirement]:
+    def _build_requirement(self, request: LLMRequest) -> CapabilityRequirement | None:
         """由 request 构造 CapabilityRequirement(无特殊需求返回 None)。"""
         if not request.think_mode and request.cost_preference == "auto":
             return None
@@ -286,7 +290,7 @@ class LLMRouter:
             req.preferred |= ModelCapabilityFlag.HIGH_QUALITY
         return req
 
-    def _pick_by_strategy(self, available: list[_ProviderEntry]) -> Optional[_ProviderEntry]:
+    def _pick_by_strategy(self, available: list[_ProviderEntry]) -> _ProviderEntry | None:
         """按 self._strategy 从 available 列表选一个(已持有 _lock)。"""
         if not available:
             return None
@@ -302,20 +306,19 @@ class LLMRouter:
             weights = [e.weight for e in available]
             return random.choices(available, weights=weights, k=1)[0]
 
-    def _select_fallback(self, exclude_name: str) -> Optional[_ProviderEntry]:
+    def _select_fallback(self, exclude_name: str) -> _ProviderEntry | None:
         """排除已失败的 provider,选下一个可用项。"""
         with self._lock:
             available = [
-                e for e in self._entries
+                e
+                for e in self._entries
                 if e.provider.name != exclude_name and e.circuit.allow_request()
             ]
             if not available:
                 return None
             return available[0]
 
-    def _select_fallback_excluding(
-        self, tried_names: set[str]
-    ) -> Optional[_ProviderEntry]:
+    def _select_fallback_excluding(self, tried_names: set[str]) -> _ProviderEntry | None:
         """P2-9: 排除多个已尝试的 provider,选下一个可用项(支持多级降级)。
 
         策略:
@@ -331,9 +334,9 @@ class LLMRouter:
         """
         with self._lock:
             available = [
-                e for e in self._entries
-                if e.provider.name not in tried_names
-                and e.circuit.allow_request()
+                e
+                for e in self._entries
+                if e.provider.name not in tried_names and e.circuit.allow_request()
             ]
             if not available:
                 return None
@@ -342,7 +345,7 @@ class LLMRouter:
     def set_fallback_chain(
         self,
         providers: list[BaseLLMProvider],
-        capabilities: Optional[list[Optional[ModelCapability]]] = None,
+        capabilities: list[ModelCapability | None] | None = None,
     ) -> None:
         """P2-9: 一键配置多级降级链(借鉴 open-fnix-agent 的 3 级降级)。
 
@@ -384,9 +387,7 @@ class LLMRouter:
         self._strategy = RouteStrategy.FAILOVER
         # frozen dataclass 不能直接改字段,通过 __dict__ 绕过(运行期配置覆盖)
         # 注:若 LLMConfig 未来支持 mutable,可改为 self._config = replace(...)
-        object.__setattr__(
-            self._config, "max_failovers", len(providers) - 1
-        )
+        object.__setattr__(self._config, "max_failovers", len(providers) - 1)
 
     # -- 主入口 ------------------------------------------------------------
 
@@ -412,9 +413,7 @@ class LLMRouter:
 
         # 1. 限流检查
         if not self._rate_limiter.acquire(user_key):
-            raise LLMRateLimitError(
-                f"rate limit exceeded for user '{user_key}'"
-            )
+            raise LLMRateLimitError(f"rate limit exceeded for user '{user_key}'")
 
         # P0-2: 输入 Guardrail(对最后一条用户消息校验)
         if self._guardrail_pipeline is not None:
@@ -430,6 +429,7 @@ class LLMRouter:
                 if not in_result.passed:
                     # tripwire 或软拦截:返回拦截响应(不调用 LLM)
                     from fnixagent.core.exceptions import GuardrailBlockedError
+
                     raise GuardrailBlockedError(
                         in_result.blocked_reason,
                         risk_score=in_result.risk_score,
@@ -450,8 +450,7 @@ class LLMRouter:
                 # stop/tools 需用可 JSON 序列化且确定性的表示(list/排序后的字符串)
                 stop=list(request.stop),
                 tools_sig=sorted(
-                    (t.get("name", "") if isinstance(t, dict) else str(t))
-                    for t in request.tools
+                    (t.get("name", "") if isinstance(t, dict) else str(t)) for t in request.tools
                 ),
                 think_mode=request.think_mode,
             )
@@ -467,7 +466,7 @@ class LLMRouter:
 
         # 记录本次调用已尝试过的 provider 名称,避免同一 provider 被重复尝试
         tried_names: set[str] = {entry.provider.name}
-        response: Optional[LLMResponse] = None
+        response: LLMResponse | None = None
         try:
             response = self._call_provider(entry, request)
         except (LLMError, LLMTimeoutError, LLMCircuitOpenError) as exc:
@@ -477,7 +476,7 @@ class LLMRouter:
             max_failovers = max(self._config.max_failovers, 0)
             fallback = self._select_fallback_excluding(tried_names)
             attempts = 0
-            last_exc: Optional[Exception] = exc
+            last_exc: Exception | None = exc
             while attempts < max_failovers and fallback is not None:
                 tried_names.add(fallback.provider.name)
                 attempts += 1
@@ -491,8 +490,10 @@ class LLMRouter:
                     fallback = self._select_fallback_excluding(tried_names)
             if response is None:
                 # 全部 fallback 都失败,抛出最后一个异常
-                raise last_exc if last_exc is not None else LLMError(
-                    "all providers failed in fallback chain"
+                raise (
+                    last_exc
+                    if last_exc is not None
+                    else LLMError("all providers failed in fallback chain")
                 )
 
         # 4. 写缓存(复用已计算的 cache_key)
@@ -506,6 +507,7 @@ class LLMRouter:
             )
             if not out_result.passed:
                 from fnixagent.core.exceptions import GuardrailBlockedError
+
                 raise GuardrailBlockedError(
                     out_result.blocked_reason,
                     risk_score=out_result.risk_score,
@@ -517,20 +519,20 @@ class LLMRouter:
 
         return response
 
-    def _call_provider(
-        self, entry: _ProviderEntry, request: LLMRequest
-    ) -> LLMResponse:
+    def _call_provider(self, entry: _ProviderEntry, request: LLMRequest) -> LLMResponse:
         """调用单个 provider,处理超时与计费。"""
         # P1-1: 若有 active trace,创建 LLMSpan(无 trace 时跳过,零开销)
         trace = None
         try:
             from fnixagent.core.observability.tracing import get_provider
+
             trace = get_provider().get_current_trace()
         except Exception:
             pass
 
         if trace is not None:
             from fnixagent.core.observability.tracing import LLMSpanData
+
             llm_span_data = LLMSpanData(
                 provider=entry.provider.name,
                 model=request.model or "",
@@ -540,15 +542,15 @@ class LLMRouter:
                 # 回填 token 信息到 Span
                 if hasattr(response, "usage") and response.usage:
                     llm_span_data.prompt_tokens = getattr(response.usage, "prompt_tokens", 0) or 0
-                    llm_span_data.completion_tokens = getattr(response.usage, "completion_tokens", 0) or 0
+                    llm_span_data.completion_tokens = (
+                        getattr(response.usage, "completion_tokens", 0) or 0
+                    )
                     llm_span_data.total_tokens = getattr(response.usage, "total_tokens", 0) or 0
                 llm_span_data.latency_ms = span.duration_ms or 0.0
                 return response
         return self._call_provider_inner(entry, request)
 
-    def _call_provider_inner(
-        self, entry: _ProviderEntry, request: LLMRequest
-    ) -> LLMResponse:
+    def _call_provider_inner(self, entry: _ProviderEntry, request: LLMRequest) -> LLMResponse:
         """实际调用 provider(被 _call_provider 包裹 Span)。"""
         t0 = time.monotonic()
         try:
@@ -557,6 +559,7 @@ class LLMRouter:
             # Phase 2.10: 记录 LLM 调用错误指标
             try:
                 from fnixagent.core.observability.metrics import record_llm_error
+
                 record_llm_error(provider=entry.provider.name, error_type=type(exc).__name__)
             except Exception:
                 pass
@@ -566,9 +569,12 @@ class LLMRouter:
         # Phase 2.10: 记录 LLM 调用指标
         try:
             from fnixagent.core.observability.metrics import record_llm_call, record_llm_tokens
+
             provider_name = entry.provider.name
             model_name = request.model or "default"
-            record_llm_call(provider=provider_name, model=model_name, duration_seconds=latency_ms / 1000)
+            record_llm_call(
+                provider=provider_name, model=model_name, duration_seconds=latency_ms / 1000
+            )
             if hasattr(response, "usage") and response.usage:
                 prompt_tokens = getattr(response.usage, "prompt_tokens", 0) or 0
                 completion_tokens = getattr(response.usage, "completion_tokens", 0) or 0
@@ -636,7 +642,7 @@ class LLMRouter:
         with self._lock:
             return [e.capabilities for e in self._entries]
 
-    def get_provider_capabilities(self, name: str) -> Optional[ModelCapability]:
+    def get_provider_capabilities(self, name: str) -> ModelCapability | None:
         """按 name 获取 provider 的能力描述(不存在返回 None)。"""
         with self._lock:
             for e in self._entries:
@@ -647,7 +653,7 @@ class LLMRouter:
     def has_capability(
         self,
         flag: ModelCapabilityFlag,
-        name: Optional[str] = None,
+        name: str | None = None,
     ) -> bool:
         """检查是否有任意 provider(name 指定时为该 provider)具备指定能力。"""
         with self._lock:
@@ -662,8 +668,4 @@ class LLMRouter:
     ) -> list[str]:
         """返回具备指定能力的 provider 名列表。"""
         with self._lock:
-            return [
-                e.provider.name
-                for e in self._entries
-                if e.capabilities.has(flag)
-            ]
+            return [e.provider.name for e in self._entries if e.capabilities.has(flag)]

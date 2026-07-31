@@ -16,6 +16,7 @@ OS 级隔离:
   - 子进程超时控制(默认 30s)
   - 所有操作记录审计日志(成功/失败/降级)
 """
+
 from __future__ import annotations
 
 import enum
@@ -26,8 +27,8 @@ import subprocess
 import sys
 import tempfile
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Callable, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -39,11 +40,12 @@ logger = logging.getLogger(__name__)
 
 def _audit_sandbox(
     action: str,
-    detail: Optional[dict] = None,
+    detail: dict | None = None,
 ) -> None:
     """将沙箱操作写入审计日志(异常吞掉)。"""
     try:
         from fnixagent.core.audit import AuditLogger
+
         AuditLogger().log(action=action, detail=detail or {})
     except Exception:
         pass
@@ -133,6 +135,7 @@ class SandboxConfig:
         cpu_limit_percent: CPU 百分比上限(Linux 用 cpuquota 换算)
         level: 分层档位(默认 ALLOW,详见 SandboxLevel)
     """
+
     workspace_root: str
     allowed_writable: list[str] = field(default_factory=list)
     allowed_readable: list[str] = field(default_factory=list)
@@ -156,13 +159,14 @@ class SandboxResult:
         duration_ms: 执行耗时(毫秒)
         error: 错误信息(超时/降级/异常时填写)
     """
+
     success: bool
     returncode: int
     stdout: str
     stderr: str
     sandboxed: bool
     duration_ms: float
-    error: Optional[str] = None
+    error: str | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -213,7 +217,7 @@ class SandboxExecutor:
     def execute(
         self,
         command: list[str],
-        cwd: Optional[str] = None,
+        cwd: str | None = None,
     ) -> SandboxResult:
         """执行命令,按平台选择真沙箱或降级路径。
 
@@ -226,8 +230,13 @@ class SandboxExecutor:
         """
         if not command:
             return SandboxResult(
-                success=False, returncode=-1, stdout="", stderr="",
-                sandboxed=False, duration_ms=0.0, error="空命令",
+                success=False,
+                returncode=-1,
+                stdout="",
+                stderr="",
+                sandboxed=False,
+                duration_ms=0.0,
+                error="空命令",
             )
         work_dir = cwd or self._config.workspace_root
         try:
@@ -238,30 +247,38 @@ class SandboxExecutor:
                 "[sandbox] 平台 %s 不支持真沙箱,降级到 subprocess.run",
                 sys.platform,
             )
-            _audit_sandbox("sandbox.degraded", detail={
-                "platform": sys.platform,
-                "command": command[0],
-            })
+            _audit_sandbox(
+                "sandbox.degraded",
+                detail={
+                    "platform": sys.platform,
+                    "command": command[0],
+                },
+            )
             return self._execute_fallback(command, work_dir)
         except Exception as exc:
             # 不外泄异常,返回失败结果
             logger.exception("[sandbox] 执行异常")
             return SandboxResult(
-                success=False, returncode=-1, stdout="", stderr="",
-                sandboxed=False, duration_ms=0.0,
+                success=False,
+                returncode=-1,
+                stdout="",
+                stderr="",
+                sandboxed=False,
+                duration_ms=0.0,
                 error=f"sandbox 执行异常: {exc}",
             )
 
     def execute_python(
         self,
         code: str,
-        cwd: Optional[str] = None,
+        cwd: str | None = None,
     ) -> SandboxResult:
         """执行 Python 代码(写入临时文件后调用解释器)。"""
         # 把代码写入 workspace_root 下的临时文件,确保可写
         os.makedirs(self._config.workspace_root, exist_ok=True)
         fd, tmp_path = tempfile.mkstemp(
-            prefix="_sandbox_", suffix=".py",
+            prefix="_sandbox_",
+            suffix=".py",
             dir=self._config.workspace_root,
         )
         try:
@@ -279,9 +296,9 @@ class SandboxExecutor:
     def execute_with_level(
         self,
         command: list[str],
-        level: Optional[SandboxLevel] = None,
-        confirm_callback: Optional[Callable[[], bool]] = None,
-        cwd: Optional[str] = None,
+        level: SandboxLevel | None = None,
+        confirm_callback: Callable[[], bool] | None = None,
+        cwd: str | None = None,
     ) -> SandboxResult:
         """按分层档位执行命令(参考 OpenAI Codex Sandbox 三层模型)。
 
@@ -319,13 +336,20 @@ class SandboxExecutor:
                 )
                 confirmed = False
             if not confirmed:
-                _audit_sandbox("sandbox.confirm_rejected", detail={
-                    "command": command[0] if command else "",
-                    "level": lvl.value,
-                })
+                _audit_sandbox(
+                    "sandbox.confirm_rejected",
+                    detail={
+                        "command": command[0] if command else "",
+                        "level": lvl.value,
+                    },
+                )
                 return SandboxResult(
-                    success=False, returncode=-1, stdout="", stderr="",
-                    sandboxed=False, duration_ms=0.0,
+                    success=False,
+                    returncode=-1,
+                    stdout="",
+                    stderr="",
+                    sandboxed=False,
+                    duration_ms=0.0,
                     error="CONFIRM 档位人工确认未通过(拒绝执行)",
                 )
             return self.execute(command, cwd=cwd)
@@ -333,9 +357,12 @@ class SandboxExecutor:
         if lvl == SandboxLevel.UNTRUSTED:
             # 尝试 MicroVM 强隔离
             if self._check_microvm_available():
-                _audit_sandbox("sandbox.microvm_used", detail={
-                    "command": command[0] if command else "",
-                })
+                _audit_sandbox(
+                    "sandbox.microvm_used",
+                    detail={
+                        "command": command[0] if command else "",
+                    },
+                )
                 # MicroVM 执行路径:此处简化为委托 execute(实际应启动 firecracker/libkrun)
                 # 真正的 MicroVM 集成需配置 VM 镜像、socket、资源限制等,此处保留接口
                 return self._execute_microvm(command, cwd)
@@ -343,18 +370,27 @@ class SandboxExecutor:
             logger.warning(
                 "[sandbox] MicroVM 不可用,UNTRUSTED 档位降级到 CONFIRM",
             )
-            _audit_sandbox("sandbox.microvm_unavailable", detail={
-                "command": command[0] if command else "",
-            })
+            _audit_sandbox(
+                "sandbox.microvm_unavailable",
+                detail={
+                    "command": command[0] if command else "",
+                },
+            )
             return self.execute_with_level(
-                command, level=SandboxLevel.CONFIRM,
-                confirm_callback=confirm_callback, cwd=cwd,
+                command,
+                level=SandboxLevel.CONFIRM,
+                confirm_callback=confirm_callback,
+                cwd=cwd,
             )
 
         # 未知档位,拒绝执行
         return SandboxResult(
-            success=False, returncode=-1, stdout="", stderr="",
-            sandboxed=False, duration_ms=0.0,
+            success=False,
+            returncode=-1,
+            stdout="",
+            stderr="",
+            sandboxed=False,
+            duration_ms=0.0,
             error=f"未知沙箱档位: {lvl}",
         )
 
@@ -381,7 +417,7 @@ class SandboxExecutor:
     def _execute_microvm(
         self,
         command: list[str],
-        cwd: Optional[str] = None,
+        cwd: str | None = None,
     ) -> SandboxResult:
         """MicroVM 强隔离执行(Firecracker/libkrun)。
 
@@ -393,10 +429,13 @@ class SandboxExecutor:
         )
         result = self.execute(command, cwd=cwd)
         # 标注使用了 microvm 占位(实际应启动独立 VM)
-        _audit_sandbox("sandbox.microvm_executed", detail={
-            "command": command[0] if command else "",
-            "returncode": result.returncode,
-        })
+        _audit_sandbox(
+            "sandbox.microvm_executed",
+            detail={
+                "command": command[0] if command else "",
+                "returncode": result.returncode,
+            },
+        )
         return result
 
     # -- 内部:真沙箱执行 ---------------------------------------------------
@@ -430,10 +469,7 @@ class SandboxExecutor:
             return self._execute_fallback(command, cwd)
 
         # 2. 设置扩展限制(内存 + KILL_ON_JOB_CLOSE)
-        limit_flags = (
-            _JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
-            | _JOB_OBJECT_LIMIT_PROCESS_MEMORY
-        )
+        limit_flags = _JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE | _JOB_OBJECT_LIMIT_PROCESS_MEMORY
         extended = _JOBOBJECT_EXTENDED_LIMIT_INFORMATION()
         extended.BasicLimitInformation.LimitFlags = limit_flags
         extended.ProcessMemoryLimit = self._config.memory_limit_mb * 1024 * 1024
@@ -453,7 +489,7 @@ class SandboxExecutor:
 
         t0 = time.monotonic()
         try:
-            proc = subprocess.Popen(  # noqa: S603 - 沙箱受控执行
+            proc = subprocess.Popen(
                 command,
                 cwd=cwd,
                 stdout=subprocess.PIPE,
@@ -466,8 +502,12 @@ class SandboxExecutor:
         except (OSError, FileNotFoundError) as exc:
             _KERNEL32.CloseHandle(job_handle)
             return SandboxResult(
-                success=False, returncode=-1, stdout="", stderr="",
-                sandboxed=True, duration_ms=0.0,
+                success=False,
+                returncode=-1,
+                stdout="",
+                stderr="",
+                sandboxed=True,
+                duration_ms=0.0,
                 error=f"启动子进程失败: {exc}",
             )
 
@@ -478,7 +518,7 @@ class SandboxExecutor:
             pass
 
         # 4.5 网络阻断:network_allowed=False 时通过 Firewall API 阻断出站
-        fw_rule_name: Optional[str] = None
+        fw_rule_name: str | None = None
         if not self._config.network_allowed:
             fw_rule_name = f"OA-Sandbox-Block-Net-{proc.pid}"
             if not self._block_network_windows(proc.pid, fw_rule_name):
@@ -491,22 +531,28 @@ class SandboxExecutor:
                     _KERNEL32.CloseHandle(job_handle)
                 except Exception:
                     pass
-                _audit_sandbox("sandbox.network_block_failed", detail={
-                    "pid": proc.pid, "command": command[0] if command else "",
-                })
+                _audit_sandbox(
+                    "sandbox.network_block_failed",
+                    detail={
+                        "pid": proc.pid,
+                        "command": command[0] if command else "",
+                    },
+                )
                 return SandboxResult(
-                    success=False, returncode=-1, stdout="", stderr="",
-                    sandboxed=True, duration_ms=(time.monotonic() - t0) * 1000,
+                    success=False,
+                    returncode=-1,
+                    stdout="",
+                    stderr="",
+                    sandboxed=True,
+                    duration_ms=(time.monotonic() - t0) * 1000,
                     error="network_allowed=False 但 Firewall API 不可用,fail-closed 拒绝执行",
                 )
 
         # 5. 等待完成或超时
         try:
-            stdout_b, stderr_b = proc.communicate(
-                timeout=self._config.timeout_seconds
-            )
+            stdout_b, stderr_b = proc.communicate(timeout=self._config.timeout_seconds)
             returncode = proc.returncode
-            error: Optional[str] = None
+            error: str | None = None
         except subprocess.TimeoutExpired:
             proc.kill()
             stdout_b, stderr_b = proc.communicate()
@@ -563,10 +609,11 @@ class SandboxExecutor:
             # 通过 COM 创建 INetFwPolicy2 实例
             # CLSID_NetFwPolicy2 = {E2B3C97F-6AE1-41AC-817A-F6F92166D7DD}
             # IID_INetFwPolicy2   = {98325047-C671-4174-8D81-DEFCD3F0319E}
-            import comtypes  # type: ignore[import-not-found]  # 可选依赖
+            import comtypes  # noqa: F401  # type: ignore[import-not-found]  # 可选依赖
 
             # 创建 Firewall 管理器
             from comtypes.client import CreateObject  # type: ignore[import-not-found]
+
             fw_policy = CreateObject("{E2B3C97F-6AE1-41AC-817A-F6F92166D7DD}")
 
             # 获取 FirewallRules 集合
@@ -585,9 +632,13 @@ class SandboxExecutor:
 
             # 添加规则到集合
             rules.Add(new_rule)
-            _audit_sandbox("sandbox.network_blocked", detail={
-                "pid": pid, "rule": rule_name,
-            })
+            _audit_sandbox(
+                "sandbox.network_blocked",
+                detail={
+                    "pid": pid,
+                    "rule": rule_name,
+                },
+            )
             return True
         except ImportError:
             # comtypes 不可用,降级方案:用 netsh 命令(按程序路径阻断)
@@ -612,11 +663,16 @@ class SandboxExecutor:
             return False
         try:
             # netsh 添加出站阻断规则(需要管理员权限)
-            result = subprocess.run(  # noqa: S603 - 受控执行
+            result = subprocess.run(
                 [
-                    "netsh", "advfirewall", "firewall", "add", "rule",
+                    "netsh",
+                    "advfirewall",
+                    "firewall",
+                    "add",
+                    "rule",
                     f"name={rule_name}",
-                    "dir=out", "action=block",
+                    "dir=out",
+                    "action=block",
                     "enable=yes",
                 ],
                 capture_output=True,
@@ -624,9 +680,13 @@ class SandboxExecutor:
                 check=False,
             )
             if result.returncode == 0:
-                _audit_sandbox("sandbox.network_blocked_netsh", detail={
-                    "pid": pid, "rule": rule_name,
-                })
+                _audit_sandbox(
+                    "sandbox.network_blocked_netsh",
+                    detail={
+                        "pid": pid,
+                        "rule": rule_name,
+                    },
+                )
                 return True
             logger.warning(
                 "[sandbox] netsh 阻断失败(returncode=%d): %s",
@@ -644,8 +704,8 @@ class SandboxExecutor:
             return
         try:
             # 优先用 COM API 删除
-            import comtypes  # type: ignore[import-not-found]  # noqa: F401
             from comtypes.client import CreateObject  # type: ignore[import-not-found]
+
             fw_policy = CreateObject("{E2B3C97F-6AE1-41AC-817A-F6F92166D7DD}")
             rules = fw_policy.Rules
             rules.Remove(rule_name)
@@ -654,9 +714,13 @@ class SandboxExecutor:
             pass
         # 降级:netsh 删除
         try:
-            subprocess.run(  # noqa: S603 - 受控执行
+            subprocess.run(
                 [
-                    "netsh", "advfirewall", "firewall", "delete", "rule",
+                    "netsh",
+                    "advfirewall",
+                    "firewall",
+                    "delete",
+                    "rule",
                     f"name={rule_name}",
                 ],
                 capture_output=True,
@@ -709,7 +773,7 @@ class SandboxExecutor:
 
         t0 = time.monotonic()
         try:
-            proc = subprocess.run(  # noqa: S603 - 受控执行
+            proc = subprocess.run(
                 argv,
                 capture_output=True,
                 timeout=self._config.timeout_seconds,
@@ -718,7 +782,7 @@ class SandboxExecutor:
             returncode = proc.returncode
             stdout = proc.stdout.decode("utf-8", errors="replace")
             stderr = proc.stderr.decode("utf-8", errors="replace")
-            error: Optional[str] = None
+            error: str | None = None
         except subprocess.TimeoutExpired as exc:
             returncode = -1
             stdout = exc.stdout.decode("utf-8", errors="replace") if exc.stdout else ""
@@ -726,8 +790,12 @@ class SandboxExecutor:
             error = f"子进程超时({self._config.timeout_seconds}s)"
         except (OSError, FileNotFoundError) as exc:
             return SandboxResult(
-                success=False, returncode=-1, stdout="", stderr="",
-                sandboxed=True, duration_ms=(time.monotonic() - t0) * 1000,
+                success=False,
+                returncode=-1,
+                stdout="",
+                stderr="",
+                sandboxed=True,
+                duration_ms=(time.monotonic() - t0) * 1000,
                 error=f"bwrap 启动失败: {exc}",
             )
 
@@ -796,7 +864,8 @@ class SandboxExecutor:
 
         # 写入临时 profile 文件
         fd, profile_path = tempfile.mkstemp(
-            prefix="_oa_sandbox_", suffix=".sb",
+            prefix="_oa_sandbox_",
+            suffix=".sb",
         )
         try:
             with os.fdopen(fd, "w", encoding="utf-8") as f:
@@ -804,14 +873,15 @@ class SandboxExecutor:
 
             argv = [
                 sandbox_exec,
-                "-p", profile_path,
+                "-p",
+                profile_path,
                 "--",
                 *command,
             ]
 
             t0 = time.monotonic()
             try:
-                proc = subprocess.run(  # noqa: S603 - 受控执行
+                proc = subprocess.run(
                     argv,
                     cwd=cwd or None,
                     capture_output=True,
@@ -821,7 +891,7 @@ class SandboxExecutor:
                 returncode = proc.returncode
                 stdout = proc.stdout.decode("utf-8", errors="replace")
                 stderr = proc.stderr.decode("utf-8", errors="replace")
-                error: Optional[str] = None
+                error: str | None = None
             except subprocess.TimeoutExpired as exc:
                 returncode = -1
                 stdout = exc.stdout.decode("utf-8", errors="replace") if exc.stdout else ""
@@ -829,8 +899,12 @@ class SandboxExecutor:
                 error = f"子进程超时({self._config.timeout_seconds}s)"
             except (OSError, FileNotFoundError) as exc:
                 return SandboxResult(
-                    success=False, returncode=-1, stdout="", stderr="",
-                    sandboxed=True, duration_ms=(time.monotonic() - t0) * 1000,
+                    success=False,
+                    returncode=-1,
+                    stdout="",
+                    stderr="",
+                    sandboxed=True,
+                    duration_ms=(time.monotonic() - t0) * 1000,
                     error=f"sandbox-exec 启动失败: {exc}",
                 )
 
@@ -859,7 +933,7 @@ class SandboxExecutor:
         """降级执行:subprocess.run + 超时控制,标记 sandboxed=False。"""
         t0 = time.monotonic()
         try:
-            proc = subprocess.run(  # noqa: S603 - 降级路径,由调用方负责安全
+            proc = subprocess.run(
                 command,
                 cwd=cwd or None,
                 capture_output=True,
@@ -869,7 +943,7 @@ class SandboxExecutor:
             returncode = proc.returncode
             stdout = proc.stdout.decode("utf-8", errors="replace")
             stderr = proc.stderr.decode("utf-8", errors="replace")
-            error: Optional[str] = None
+            error: str | None = None
         except subprocess.TimeoutExpired as exc:
             returncode = -1
             stdout = exc.stdout.decode("utf-8", errors="replace") if exc.stdout else ""
@@ -877,8 +951,12 @@ class SandboxExecutor:
             error = f"子进程超时({self._config.timeout_seconds}s)"
         except (OSError, FileNotFoundError) as exc:
             return SandboxResult(
-                success=False, returncode=-1, stdout="", stderr="",
-                sandboxed=False, duration_ms=(time.monotonic() - t0) * 1000,
+                success=False,
+                returncode=-1,
+                stdout="",
+                stderr="",
+                sandboxed=False,
+                duration_ms=(time.monotonic() - t0) * 1000,
                 error=f"启动失败: {exc}",
             )
 

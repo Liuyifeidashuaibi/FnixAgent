@@ -14,23 +14,16 @@
   - 复用 ContentModerator,但封装业务策略(配置、开关、统计)
   - 线程安全,适合多线程并发
 """
+
 from __future__ import annotations
 
 import threading
-import time
 from dataclasses import dataclass, field
-from typing import Optional
 
-from fnixagent.core.security.desensitize import Desensitizer
 from fnixagent.core.security.moderation import (
-    ALL_CATEGORIES,
-    CATEGORY_PII,
-    CATEGORY_SENSITIVE,
     ContentModerator,
     ModerationResult,
 )
-from fnixagent.core.security.sensitive import SensitiveDetector
-
 
 # ---------------------------------------------------------------------------
 # 服务配置
@@ -40,12 +33,13 @@ from fnixagent.core.security.sensitive import SensitiveDetector
 @dataclass
 class ModerationConfig:
     """审核服务配置。"""
-    enabled: bool = True                # 总开关
-    input_enabled: bool = True          # 输入审核开关
-    output_enabled: bool = True         # 输出审核开关
-    auto_sanitize: bool = True          # 自动脱敏开关
+
+    enabled: bool = True  # 总开关
+    input_enabled: bool = True  # 输入审核开关
+    output_enabled: bool = True  # 输出审核开关
+    auto_sanitize: bool = True  # 自动脱敏开关
     block_high_risk_only: bool = False  # 仅拦截高风险(risk_score >= 40)
-    high_risk_threshold: int = 40       # 高风险阈值
+    high_risk_threshold: int = 40  # 高风险阈值
 
 
 # ---------------------------------------------------------------------------
@@ -56,6 +50,7 @@ class ModerationConfig:
 @dataclass
 class ModerationStats:
     """审核服务统计(线程安全计数)。"""
+
     total_input: int = 0
     total_output: int = 0
     blocked_input: int = 0
@@ -102,8 +97,8 @@ class ModerationService:
 
     def __init__(
         self,
-        config: Optional[ModerationConfig] = None,
-        moderator: Optional[ContentModerator] = None,
+        config: ModerationConfig | None = None,
+        moderator: ContentModerator | None = None,
     ):
         self._config = config or ModerationConfig()
         self._moderator = moderator or ContentModerator()
@@ -128,8 +123,8 @@ class ModerationService:
     def moderate_input(
         self,
         text: str,
-        user_id: Optional[int] = None,
-        ip_address: Optional[str] = None,
+        user_id: int | None = None,
+        ip_address: str | None = None,
     ) -> ModerationResult:
         """用户输入审核。
 
@@ -158,8 +153,8 @@ class ModerationService:
     def moderate_output(
         self,
         text: str,
-        user_id: Optional[int] = None,
-        ip_address: Optional[str] = None,
+        user_id: int | None = None,
+        ip_address: str | None = None,
     ) -> ModerationResult:
         """LLM 输出审核。
 
@@ -218,9 +213,7 @@ class ModerationService:
             self._stats.total_duration_ms += result.duration_ms
 
             for cat in result.categories:
-                self._stats.category_counts[cat] = (
-                    self._stats.category_counts.get(cat, 0) + 1
-                )
+                self._stats.category_counts[cat] = self._stats.category_counts.get(cat, 0) + 1
 
     # -- 工具方法 ----------------------------------------------------------
 
@@ -243,7 +236,7 @@ class ModerationService:
 # ---------------------------------------------------------------------------
 
 
-_moderation_service: Optional[ModerationService] = None
+_moderation_service: ModerationService | None = None
 _service_lock = threading.Lock()
 
 

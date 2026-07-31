@@ -1,4 +1,4 @@
-﻿"""Phase 2.1 RBAC 权限控制测试。
+"""Phase 2.1 RBAC 权限控制测试。
 
 覆盖:
     1. 内置角色权限种子正确(super_admin/admin/user/visitor)
@@ -10,11 +10,11 @@
     7. require_permission 装饰器(403 拦截)
     8. 部门树 + 职位 CRUD
 """
+
 import pytest
 
 from fnixagent.core.security import rbac
 from fnixagent.services.storage_rbac import (
-    InMemoryRbacStore,
     get_rbac_store,
     reset_rbac_store,
 )
@@ -44,7 +44,9 @@ class TestBuiltinRoles:
         assert sa.is_active is True
         # super_admin 应拥有全部权限
         all_perms = store.list_permissions()
-        store._rebuild_role_permission_codes(sa) if hasattr(store, "_rebuild_role_permission_codes") else None
+        store._rebuild_role_permission_codes(sa) if hasattr(
+            store, "_rebuild_role_permission_codes"
+        ) else None
         assert len(sa.permission_codes) == len(all_perms)
 
     def test_admin_excludes_system_manage(self):
@@ -82,8 +84,14 @@ class TestBuiltinRoles:
         assert len(perms) == 37
         resources = {p.resource for p in perms}
         assert resources == {
-            "user", "role", "department", "position",
-            "document", "chat", "task", "system",
+            "user",
+            "role",
+            "department",
+            "position",
+            "document",
+            "chat",
+            "task",
+            "system",
         }
 
 
@@ -365,9 +373,9 @@ class TestRequirePermissionDecorator:
 
     @pytest.fixture
     def client(self):
-        from fastapi import FastAPI, Depends
+        from fastapi import Depends, FastAPI
         from fastapi.testclient import TestClient
-        from fnixagent.api.routers.auth import verify_jwt_token
+
         from fnixagent.core.security.rbac import require_permission
 
         app = FastAPI()
@@ -390,7 +398,9 @@ class TestRequirePermissionDecorator:
 
         # 创建普通用户
         store = get_user_store()
-        user, _ = store.create(username="perm_user", email="p@e.com", password="Pass1234", role="user")
+        user, _ = store.create(
+            username="perm_user", email="p@e.com", password="Pass1234", role="user"
+        )
 
         token = create_jwt_token(user_id=user.id, username=user.username)
         resp = client.get("/protected", headers={"Authorization": f"Bearer {token}"})

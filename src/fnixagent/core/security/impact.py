@@ -16,6 +16,7 @@
   - 可选依赖缺失时降级(只存哈希,不存段落/单元格)
   - 所有异常不外泄,失败时记录 warning 并返回 None / False
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -25,7 +26,6 @@ import os
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +47,7 @@ class Snapshot:
         paragraphs: docx 段落文本列表(若为 docx)
         cells: xlsx 单元格二维列表(若为 xlsx)
     """
+
     path: str
     sha256: str
     size: int
@@ -68,12 +69,13 @@ class ImpactRecord:
         after: 操作后快照(可能为 None,如删除文件)
         diff_summary: 差异摘要(新增X行/删除Y行/修改Z处)
     """
+
     operation_id: str
     timestamp: str
     tool_name: str
     target_path: str
-    before: Optional[Snapshot]
-    after: Optional[Snapshot]
+    before: Snapshot | None
+    after: Snapshot | None
     diff_summary: str = ""
 
 
@@ -138,7 +140,7 @@ class ImpactTracker:
         self,
         operation_id: str,
         path: str,
-    ) -> Optional[ImpactRecord]:
+    ) -> ImpactRecord | None:
         """操作后生成快照,计算 diff_summary 并返回 ImpactRecord。
 
         Args:
@@ -213,13 +215,13 @@ class ImpactTracker:
         )
         return records[:limit]
 
-    def get_record(self, operation_id: str) -> Optional[ImpactRecord]:
+    def get_record(self, operation_id: str) -> ImpactRecord | None:
         """按 ID 查询操作记录。"""
         return self._records.get(operation_id)
 
     # -- 内部:快照采集 ----------------------------------------------------
 
-    def _take_snapshot(self, path: str) -> Optional[Snapshot]:
+    def _take_snapshot(self, path: str) -> Snapshot | None:
         """采集文件快照(哈希 + 段落 + 单元格)。
 
         文件不存在/不可读时返回 None。
@@ -231,7 +233,8 @@ class ImpactTracker:
             if stat.st_size > self._MAX_SNAPSHOT_SIZE:
                 logger.warning(
                     "[impact] 文件过大(%d bytes),仅记录哈希: %s",
-                    stat.st_size, path,
+                    stat.st_size,
+                    path,
                 )
                 sha = self._sha256_file(path)
                 return Snapshot(
@@ -271,6 +274,7 @@ class ImpactTracker:
             return []
         try:
             from docx import Document  # type: ignore[import-not-found]
+
             doc = Document(path)
             return [p.text for p in doc.paragraphs]
         except Exception:
@@ -283,6 +287,7 @@ class ImpactTracker:
             return []
         try:
             from openpyxl import load_workbook  # type: ignore[import-not-found]
+
             wb = load_workbook(path, read_only=True, data_only=True)
             rows: list[list[str]] = []
             ws = wb.active
@@ -300,8 +305,8 @@ class ImpactTracker:
 
     def _compute_diff(
         self,
-        before: Optional[Snapshot],
-        after: Optional[Snapshot],
+        before: Snapshot | None,
+        after: Snapshot | None,
     ) -> str:
         """计算 before/after 快照差异摘要。"""
         # 文件被删除
@@ -335,9 +340,7 @@ class ImpactTracker:
         removed = len(before_set - after_set)
         # 修改 = before 与 after 中位置相同但内容不同的段落
         common = min(len(before), len(after))
-        modified = sum(
-            1 for i in range(common) if before[i] != after[i]
-        )
+        modified = sum(1 for i in range(common) if before[i] != after[i])
         return f"段落: 新增{added}/删除{removed}/修改{modified}"
 
     @staticmethod
@@ -371,6 +374,7 @@ class ImpactTracker:
         """将快照落盘(含 base64 编码的文件内容,供 rollback 使用)。"""
         try:
             import base64
+
             # 仅小文件保存完整内容(供回滚),大文件只存元信息
             content_b64 = ""
             if snapshot.size <= self._MAX_SNAPSHOT_SIZE:
@@ -397,13 +401,13 @@ class ImpactTracker:
         self,
         operation_id: str,
         phase: str,
-    ) -> Optional[Snapshot]:
+    ) -> Snapshot | None:
         """从磁盘加载快照(失败返回 None)。"""
         path = self._snapshot_path(operation_id, phase)
         if not os.path.exists(path):
             return None
         try:
-            with open(path, "r", encoding="utf-8") as f:
+            with open(path, encoding="utf-8") as f:
                 data = json.load(f)
             return Snapshot(
                 path=data.get("path", ""),
@@ -420,14 +424,15 @@ class ImpactTracker:
         self,
         operation_id: str,
         phase: str,
-    ) -> Optional[bytes]:
+    ) -> bytes | None:
         """从磁盘快照读取原始文件内容(base64 解码)。"""
         path = self._snapshot_path(operation_id, phase)
         if not os.path.exists(path):
             return None
         try:
             import base64
-            with open(path, "r", encoding="utf-8") as f:
+
+            with open(path, encoding="utf-8") as f:
                 data = json.load(f)
             content_b64 = data.get("content_base64", "")
             if not content_b64:
@@ -443,11 +448,12 @@ class ImpactTracker:
         operation_id: str,
         target_path: str,
         success: bool,
-        error: Optional[str] = None,
+        error: str | None = None,
     ) -> None:
         """将回滚操作写入审计日志(失败不影响主流程)。"""
         try:
             from fnixagent.core.audit import AuditLogger
+
             AuditLogger().log(
                 action="impact.rollback",
                 detail={

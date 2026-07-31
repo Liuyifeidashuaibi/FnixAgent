@@ -26,12 +26,12 @@ Channel + Version 模型说明:
     (MemoryCheckpointer 用 RLock,PostgresCheckpointer 用行锁/事务),
     否则并发节点执行会出现"丢失更新"竞态。
 """
+
 from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Any, Optional
-
+from typing import Any
 
 # 敏感字段名匹配模式(不区分大小写):序列化前据此脱敏
 _SENSITIVE_KEY_PATTERN = re.compile(
@@ -67,8 +67,7 @@ def _filter_sensitive(data: dict) -> dict:
             filtered[k] = _filter_sensitive(v)
         elif isinstance(v, list):
             filtered[k] = [
-                _filter_sensitive(item) if isinstance(item, dict) else item
-                for item in v
+                _filter_sensitive(item) if isinstance(item, dict) else item for item in v
             ]
         else:
             filtered[k] = v
@@ -93,7 +92,7 @@ class CheckpointMetadata:
     source: str = "loop"  # loop/input/update/interrupt
     step: int = -1
     writes: dict = field(default_factory=dict)
-    score: Optional[float] = None
+    score: float | None = None
 
     def to_dict(self) -> dict:
         """转为字典(用于持久化)。
@@ -109,7 +108,7 @@ class CheckpointMetadata:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "CheckpointMetadata":
+    def from_dict(cls, data: dict) -> CheckpointMetadata:
         return cls(
             source=data.get("source", "loop"),
             step=data.get("step", -1),
@@ -149,7 +148,7 @@ class Checkpoint:
         }
 
     @classmethod
-    def from_serializable(cls, data: dict) -> "Checkpoint":
+    def from_serializable(cls, data: dict) -> Checkpoint:
         """从序列化字典重建。"""
         return cls(
             channel_values=dict(data.get("channel_values", {})),
@@ -173,7 +172,7 @@ class CheckpointTuple:
     config: dict
     checkpoint: Checkpoint
     metadata: CheckpointMetadata
-    parent_config: Optional[dict] = None
+    parent_config: dict | None = None
 
     @property
     def thread_id(self) -> str:

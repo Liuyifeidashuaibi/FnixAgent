@@ -9,16 +9,14 @@
 
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
-from .collector import IntelligenceItem, IntelligenceCategory, Priority
+from .collector import IntelligenceItem
 
 logger = logging.getLogger(__name__)
 
@@ -27,8 +25,10 @@ logger = logging.getLogger(__name__)
 # 数据模型
 # ============================================================
 
+
 class KnowledgeItem(BaseModel):
     """单个知识条目"""
+
     item_id: str
     title: str
     url: str
@@ -43,12 +43,13 @@ class KnowledgeItem(BaseModel):
     tags: list[str]
     relevance_score: float = 0.0  # 对当前系统的相关性 (0-1)
     status: str = "pending"  # pending/accepted/implemented/rejected
-    implemented_at: Optional[str] = None
+    implemented_at: str | None = None
     implementation_notes: str = ""
 
 
 class KnowledgeDigest(BaseModel):
     """一次提炼结果汇总"""
+
     digest_id: str
     digest_at: str
     total_items: int
@@ -64,12 +65,13 @@ class KnowledgeDigest(BaseModel):
 # 知识提炼器
 # ============================================================
 
+
 class KnowledgeExtractor:
     """从收集的情报中提炼知识，分类整理，评分排序"""
 
     def __init__(
         self,
-        knowledge_dir: Optional[str] = None,
+        knowledge_dir: str | None = None,
         relevance_threshold: float = 0.5,
     ):
         self.knowledge_dir = knowledge_dir or str(
@@ -86,14 +88,28 @@ class KnowledgeExtractor:
 
         # 关键字权重
         high_weight_keywords = {
-            "self-improving": 0.8, "self-evolution": 0.8, "evolution": 0.7,
-            "continuous learning": 0.7, "skill learning": 0.6,
-            "agent architecture": 0.6, "framework": 0.5, "protocol": 0.6,
-            "memory system": 0.7, "reasoning": 0.5, "tool use": 0.5,
-            "multi-agent": 0.5, "prompt engineering": 0.4,
-            "openai agents sdk": 0.6, "langgraph": 0.4,
-            "openclaw": 0.6, "hermes agent": 0.6, "sage": 0.6,
-            "gepa": 0.7, "icml": 0.4, "iclr": 0.4, "neurips": 0.4,
+            "self-improving": 0.8,
+            "self-evolution": 0.8,
+            "evolution": 0.7,
+            "continuous learning": 0.7,
+            "skill learning": 0.6,
+            "agent architecture": 0.6,
+            "framework": 0.5,
+            "protocol": 0.6,
+            "memory system": 0.7,
+            "reasoning": 0.5,
+            "tool use": 0.5,
+            "multi-agent": 0.5,
+            "prompt engineering": 0.4,
+            "openai agents sdk": 0.6,
+            "langgraph": 0.4,
+            "openclaw": 0.6,
+            "hermes agent": 0.6,
+            "sage": 0.6,
+            "gepa": 0.7,
+            "icml": 0.4,
+            "iclr": 0.4,
+            "neurips": 0.4,
         }
 
         for kw, weight in high_weight_keywords.items():
@@ -127,7 +143,7 @@ class KnowledgeExtractor:
                     actionable=item_data.get("actionable", False),
                     upgrade_suggestion=item_data.get("upgrade_suggestion", ""),
                     source_name=item_data.get("source_name", ""),
-                    collected_at=item_data.get("collected_at", datetime.now(timezone.utc).isoformat()),
+                    collected_at=item_data.get("collected_at", datetime.now(UTC).isoformat()),
                     tags=item_data.get("tags", []),
                 )
                 item.relevance_score = self._calculate_relevance(item)
@@ -135,18 +151,23 @@ class KnowledgeExtractor:
 
         # 分类
         critical_items = [
-            k for k in knowledge_items
+            k
+            for k in knowledge_items
             if k.priority == "critical" and k.relevance_score >= self.relevance_threshold
         ]
         high_items = [
-            k for k in knowledge_items
-            if k.priority == "high" and k.relevance_score >= self.relevance_threshold
-                   and k not in critical_items
+            k
+            for k in knowledge_items
+            if k.priority == "high"
+            and k.relevance_score >= self.relevance_threshold
+            and k not in critical_items
         ]
         medium_items = [
-            k for k in knowledge_items
+            k
+            for k in knowledge_items
             if k.relevance_score >= self.relevance_threshold
-               and k not in critical_items and k not in high_items
+            and k not in critical_items
+            and k not in high_items
         ]
 
         # 生成摘要
@@ -154,8 +175,8 @@ class KnowledgeExtractor:
         summary = self._generate_digest_summary(critical_items, high_items, actionable)
 
         digest = KnowledgeDigest(
-            digest_id=datetime.now(timezone.utc).strftime("%Y%m%d_%H%M"),
-            digest_at=datetime.now(timezone.utc).isoformat(),
+            digest_id=datetime.now(UTC).strftime("%Y%m%d_%H%M"),
+            digest_at=datetime.now(UTC).isoformat(),
             total_items=len(knowledge_items),
             actionable_items=len(actionable),
             critical_items=critical_items,
@@ -216,16 +237,16 @@ class KnowledgeExtractor:
         logger.info(f"Knowledge digest saved to {output_path}")
         return str(output_path)
 
-    def load_latest_digest(self) -> Optional[KnowledgeDigest]:
+    def load_latest_digest(self) -> KnowledgeDigest | None:
         """加载最新的提炼结果"""
         digest_files = sorted(
             Path(self.knowledge_dir).glob("digest_*.json"),
             reverse=True,
-            key=lambda p: p.stat().st_mtime
+            key=lambda p: p.stat().st_mtime,
         )
         if not digest_files:
             return None
-        with open(digest_files[0], "r", encoding="utf-8") as f:
+        with open(digest_files[0], encoding="utf-8") as f:
             data = json.load(f)
         return KnowledgeDigest(**data)
 
@@ -234,10 +255,11 @@ class KnowledgeExtractor:
 # 飞轮知识库
 # ============================================================
 
+
 class FlywheelKnowledgeBase:
     """飞轮知识库 — 持久化存储提炼后的知识，供升级策略使用"""
 
-    def __init__(self, kb_path: Optional[str] = None):
+    def __init__(self, kb_path: str | None = None):
         self.kb_path = kb_path or str(
             Path(__file__).parent.parent.parent.parent / "assets" / "flywheel_kb"
         )
@@ -248,7 +270,7 @@ class FlywheelKnowledgeBase:
     def _load_index(self) -> dict:
         if not self._index_path.exists():
             return {}
-        with open(self._index_path, "r", encoding="utf-8") as f:
+        with open(self._index_path, encoding="utf-8") as f:
             return json.load(f)
 
     def _save_index(self):
@@ -258,7 +280,7 @@ class FlywheelKnowledgeBase:
     def add_knowledge(self, item: KnowledgeItem, implementation_notes: str = ""):
         """添加一条知识到知识库"""
         entry = item.model_dump()
-        entry["implemented_at"] = datetime.now(timezone.utc).isoformat()
+        entry["implemented_at"] = datetime.now(UTC).isoformat()
         entry["implementation_notes"] = implementation_notes
         entry["status"] = "implemented"
         self._index[item.item_id] = entry
@@ -275,8 +297,7 @@ class FlywheelKnowledgeBase:
         pending = [
             KnowledgeItem(**entry)
             for entry in self._index.values()
-            if entry["status"] == "pending"
-               and entry["priority"] in ["critical", "high"]
+            if entry["status"] == "pending" and entry["priority"] in ["critical", "high"]
         ]
         pending.sort(key=lambda x: -float(x.get("relevance_score", 0.0)))
         return pending[:limit]

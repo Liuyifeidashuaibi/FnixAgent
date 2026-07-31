@@ -16,12 +16,13 @@ OAuth2.0 单点登录客户端(Phase 2.3)。
 
 依赖:requests>=2.28
 """
+
 from __future__ import annotations
 
 import logging
 import secrets
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 from fnixagent.services.storage import get_user_store
 
@@ -61,6 +62,7 @@ class OAuthConfigError(OAuthError):
 @dataclass
 class OAuthProviderPreset:
     """OAuth provider 预设(端点 URL + 字段映射)。"""
+
     code: str
     name: str
     authorize_url: str
@@ -81,7 +83,7 @@ BUILTIN_PRESETS: dict[str, OAuthProviderPreset] = {
         userinfo_url="https://api.github.com/user",
         default_scopes=["read:user", "user:email"],
         field_mapping={
-            "id": "id",                # provider_user_id
+            "id": "id",  # provider_user_id
             "login": "username",
             "email": "email",
             "name": "display_name",
@@ -96,7 +98,7 @@ BUILTIN_PRESETS: dict[str, OAuthProviderPreset] = {
         userinfo_url="https://www.googleapis.com/oauth2/v3/userinfo",
         default_scopes=["openid", "email", "profile"],
         field_mapping={
-            "sub": "id",               # provider_user_id
+            "sub": "id",  # provider_user_id
             "email": "email",
             "name": "display_name",
             "picture": "avatar_url",
@@ -129,13 +131,14 @@ BUILTIN_PRESETS: dict[str, OAuthProviderPreset] = {
 @dataclass
 class OAuthConfig:
     """OAuth provider 配置(与 storage_sso.SSOConfigDTO 对应)。"""
+
     id: int
-    provider_type: str               # "oauth"
-    provider_code: str               # "github" / "google" / 自定义
-    name: str                        # 显示名
+    provider_type: str  # "oauth"
+    provider_code: str  # "github" / "google" / 自定义
+    name: str  # 显示名
     client_id: str
     client_secret: str
-    redirect_uri: str                # 回调地址
+    redirect_uri: str  # 回调地址
     scopes: list[str] = field(default_factory=list)
     # 通用 IdP 必填端点(provider_code 为 generic 时使用)
     authorize_url: str = ""
@@ -144,8 +147,8 @@ class OAuthConfig:
     # 字段映射覆盖(可选):provider 原始字段 → 标准字段
     field_mapping: dict[str, str] = field(default_factory=dict)
     is_active: bool = True
-    created_at: Optional[Any] = None
-    updated_at: Optional[Any] = None
+    created_at: Any | None = None
+    updated_at: Any | None = None
 
     def get_preset(self) -> OAuthProviderPreset:
         """获取内置 preset(若 provider_code 在 BUILTIN_PRESETS 中)。"""
@@ -173,8 +176,9 @@ class OAuthConfig:
 @dataclass
 class OAuthUserInfo:
     """OAuth 用户信息(标准化后)。"""
+
     provider_code: str
-    provider_user_id: str          # provider 端的唯一 ID(GitHub id / Google sub)
+    provider_user_id: str  # provider 端的唯一 ID(GitHub id / Google sub)
     username: str = ""
     email: str = ""
     display_name: str = ""
@@ -206,11 +210,10 @@ class OAuthClient:
         """延迟导入 requests。"""
         try:
             import requests
+
             return requests
         except ImportError as e:
-            raise OAuthNotInstalledError(
-                "requests 库未安装,请运行 pip install requests"
-            ) from e
+            raise OAuthNotInstalledError("requests 库未安装,请运行 pip install requests") from e
 
     @staticmethod
     def generate_state() -> str:
@@ -224,9 +227,7 @@ class OAuthClient:
         cfg = self.config
         authorize_url = cfg.get_authorize_url()
         if not authorize_url:
-            raise OAuthConfigError(
-                f"OAuth provider {cfg.provider_code} 缺少 authorize_url"
-            )
+            raise OAuthConfigError(f"OAuth provider {cfg.provider_code} 缺少 authorize_url")
 
         params = {
             "client_id": cfg.client_id,
@@ -244,11 +245,9 @@ class OAuthClient:
         new_query = urlencode(params)
         if existing_query:
             new_query = f"{existing_query}&{new_query}"
-        return urlunsplit((
-            parts.scheme, parts.netloc, parts.path, new_query, parts.fragment
-        ))
+        return urlunsplit((parts.scheme, parts.netloc, parts.path, new_query, parts.fragment))
 
-    def exchange_code(self, code: str, state: Optional[str] = None) -> dict:
+    def exchange_code(self, code: str, state: str | None = None) -> dict:
         """用授权码换取 access_token(POST 到 token 端点)。
 
         Returns:
@@ -259,9 +258,7 @@ class OAuthClient:
         cfg = self.config
         token_url = cfg.get_token_url()
         if not token_url:
-            raise OAuthConfigError(
-                f"OAuth provider {cfg.provider_code} 缺少 token_url"
-            )
+            raise OAuthConfigError(f"OAuth provider {cfg.provider_code} 缺少 token_url")
 
         data = {
             "client_id": cfg.client_id,
@@ -279,16 +276,12 @@ class OAuthClient:
             raise OAuthConnectionError(f"连接 token 端点失败: {e}") from e
 
         if resp.status_code != 200:
-            raise OAuthAuthenticationError(
-                f"token 端点返回 {resp.status_code}: {resp.text[:200]}"
-            )
+            raise OAuthAuthenticationError(f"token 端点返回 {resp.status_code}: {resp.text[:200]}")
 
         try:
             token_data = resp.json()
         except ValueError as e:
-            raise OAuthAuthenticationError(
-                f"token 响应非 JSON: {resp.text[:200]}"
-            ) from e
+            raise OAuthAuthenticationError(f"token 响应非 JSON: {resp.text[:200]}") from e
 
         if "access_token" not in token_data:
             err = token_data.get("error_description") or token_data.get("error")
@@ -303,9 +296,7 @@ class OAuthClient:
         cfg = self.config
         userinfo_url = cfg.get_userinfo_url()
         if not userinfo_url:
-            raise OAuthConfigError(
-                f"OAuth provider {cfg.provider_code} 缺少 userinfo_url"
-            )
+            raise OAuthConfigError(f"OAuth provider {cfg.provider_code} 缺少 userinfo_url")
 
         headers = {
             "Authorization": f"Bearer {access_token}",
@@ -325,9 +316,7 @@ class OAuthClient:
         try:
             return resp.json()
         except ValueError as e:
-            raise OAuthAuthenticationError(
-                f"userinfo 响应非 JSON: {resp.text[:200]}"
-            ) from e
+            raise OAuthAuthenticationError(f"userinfo 响应非 JSON: {resp.text[:200]}") from e
 
     def normalize_userinfo(self, raw: dict) -> OAuthUserInfo:
         """将 provider 原始用户信息标准化(按 field_mapping)。"""
@@ -363,7 +352,7 @@ class OAuthClient:
             raw=raw,
         )
 
-    def authenticate(self, code: str, state: Optional[str] = None) -> OAuthUserInfo:
+    def authenticate(self, code: str, state: str | None = None) -> OAuthUserInfo:
         """端到端认证:换 token + 拉用户信息 + 标准化。
 
         Returns:
@@ -402,13 +391,16 @@ class OAuthClient:
                     or profile.get("avatar_url") != oauth_user.avatar_url
                 )
                 if needs_update:
-                    user_store.update_profile(local_user.id, {
-                        **profile,
-                        "display_name": oauth_user.display_name,
-                        "avatar_url": oauth_user.avatar_url,
-                        "source": "oauth",
-                        "oauth_provider": oauth_user.provider_code,
-                    })
+                    user_store.update_profile(
+                        local_user.id,
+                        {
+                            **profile,
+                            "display_name": oauth_user.display_name,
+                            "avatar_url": oauth_user.avatar_url,
+                            "source": "oauth",
+                            "oauth_provider": oauth_user.provider_code,
+                        },
+                    )
                 return local_user
             else:
                 # 绑定存在但用户被删除 → 清理绑定,继续走创建流程
@@ -425,24 +417,25 @@ class OAuthClient:
                     provider_user_id=oauth_user.provider_user_id,
                 )
                 profile = local_user.profile or {}
-                user_store.update_profile(local_user.id, {
-                    **profile,
-                    "source": "oauth",
-                    "oauth_provider": oauth_user.provider_code,
-                    "display_name": oauth_user.display_name,
-                    "avatar_url": oauth_user.avatar_url,
-                })
+                user_store.update_profile(
+                    local_user.id,
+                    {
+                        **profile,
+                        "source": "oauth",
+                        "oauth_provider": oauth_user.provider_code,
+                        "display_name": oauth_user.display_name,
+                        "avatar_url": oauth_user.avatar_url,
+                    },
+                )
                 return local_user
 
         # 3. 创建新用户(随机密码,OAuth 用户不需要本地密码)
         import secrets as _sec
         import string as _str
-        random_pw = "".join(
-            _sec.choice(_str.ascii_letters + _str.digits) for _ in range(32)
-        )
+
+        random_pw = "".join(_sec.choice(_str.ascii_letters + _str.digits) for _ in range(32))
         username = oauth_user.username or (
-            oauth_user.email.split("@")[0] if oauth_user.email
-            else f"oauth_{_sec.token_hex(4)}"
+            oauth_user.email.split("@")[0] if oauth_user.email else f"oauth_{_sec.token_hex(4)}"
         )
         # 用户名冲突时附加随机后缀
         if user_store.get_by_username(username):
@@ -463,10 +456,13 @@ class OAuthClient:
             provider_code=oauth_user.provider_code,
             provider_user_id=oauth_user.provider_user_id,
         )
-        user_store.update_profile(local_user.id, {
-            "source": "oauth",
-            "oauth_provider": oauth_user.provider_code,
-            "display_name": oauth_user.display_name,
-            "avatar_url": oauth_user.avatar_url,
-        })
+        user_store.update_profile(
+            local_user.id,
+            {
+                "source": "oauth",
+                "oauth_provider": oauth_user.provider_code,
+                "display_name": oauth_user.display_name,
+                "avatar_url": oauth_user.avatar_url,
+            },
+        )
         return local_user

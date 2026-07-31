@@ -14,13 +14,14 @@ A2ABus - Agent 间通信 (Agent-to-Agent Communication)
   - reply 双投递: 只走 subscription, 不再 send 到 mailbox
   - 缺失 JSON-RPC 格式: 已补全
 """
+
 from __future__ import annotations
 
 import asyncio
-import json
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any
 
 from fnixagent.core.agent.types import utcnow_iso
 
@@ -44,6 +45,7 @@ class AgentCard:
         authentication: 认证信息 (如 {"type": "bearer", "token": "..."})
         metadata: 额外元数据
     """
+
     id: str
     name: str = ""
     description: str = ""
@@ -104,6 +106,7 @@ class A2AMessage:
         result: JSON-RPC result (仅 response 有)
         error: JSON-RPC error (仅 error 有, {"code": int, "message": str})
     """
+
     message_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     source: str = ""
     target: str = ""
@@ -137,26 +140,34 @@ class A2AMessage:
         return msg
 
     @classmethod
-    def from_jsonrpc(cls, msg: dict[str, Any], source: str = "",
-                     target: str = "") -> A2AMessage:
+    def from_jsonrpc(cls, msg: dict[str, Any], source: str = "", target: str = "") -> A2AMessage:
         """从 JSON-RPC 2.0 格式构造。"""
         message_id = msg.get("id", str(uuid.uuid4()))
         if "error" in msg:
             return cls(
-                message_id=message_id, source=source, target=target,
-                message_type="error", error=msg["error"],
+                message_id=message_id,
+                source=source,
+                target=target,
+                message_type="error",
+                error=msg["error"],
             )
         elif "result" in msg:
             return cls(
-                message_id=message_id, source=source, target=target,
-                message_type="response", result=msg["result"],
+                message_id=message_id,
+                source=source,
+                target=target,
+                message_type="response",
+                result=msg["result"],
                 content=msg["result"],
             )
         elif "method" in msg:
             mtype = "event" if "id" not in msg else "request"
             return cls(
-                message_id=message_id, source=source, target=target,
-                message_type=mtype, method=msg["method"],
+                message_id=message_id,
+                source=source,
+                target=target,
+                message_type=mtype,
+                method=msg["method"],
                 params=msg.get("params", {}),
                 content=msg.get("params", {}).get("content"),
             )
@@ -221,8 +232,9 @@ class A2ABus:
             self._registry.pop(agent_id, None)
             self._mailboxes.pop(agent_id, None)
 
-    async def discover(self, capability: str | None = None,
-                       skill: str | None = None) -> list[AgentCard]:
+    async def discover(
+        self, capability: str | None = None, skill: str | None = None
+    ) -> list[AgentCard]:
         """发现 Agent (类比服务发现)。
 
         Args:
@@ -257,10 +269,8 @@ class A2ABus:
         if agent_id not in self._mailboxes:
             raise ValueError(f"Agent {agent_id} 未注册")
         try:
-            return await asyncio.wait_for(
-                self._mailboxes[agent_id].get(), timeout=timeout
-            )
-        except asyncio.TimeoutError:
+            return await asyncio.wait_for(self._mailboxes[agent_id].get(), timeout=timeout)
+        except TimeoutError:
             raise TimeoutError(f"Agent {agent_id} 等待消息超时 ({timeout}s)")
 
     async def broadcast(self, message: A2AMessage, exclude: str | None = None) -> int:
@@ -294,8 +304,11 @@ class A2ABus:
         发送 request, 等待 response (通过 subscription 机制)。
         """
         request = A2AMessage(
-            source=source, target=target, message_type="request",
-            content=content, method=method,
+            source=source,
+            target=target,
+            message_type="request",
+            content=content,
+            method=method,
         )
         # 注册 future 等待回复
         future: asyncio.Future[A2AMessage] = asyncio.get_event_loop().create_future()
@@ -304,20 +317,23 @@ class A2ABus:
         await self.send(target, request)
         try:
             return await asyncio.wait_for(future, timeout=timeout)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return None
         finally:
             self._pending_requests.pop(request.message_id, None)
 
-    async def reply(self, original: A2AMessage, content: Any,
-                    message_type: str = "response") -> None:
+    async def reply(
+        self, original: A2AMessage, content: Any, message_type: str = "response"
+    ) -> None:
         """回复消息 (修复原版双投递 bug)。
 
         修复: 只通过 subscription (pending_requests) 投递, 不再 send 到 mailbox。
         """
         reply_msg = A2AMessage(
-            source=original.target, target=original.source,
-            message_type=message_type, content=content,
+            source=original.target,
+            target=original.source,
+            message_type=message_type,
+            content=content,
             reply_to=original.message_id,
             result=content if message_type == "response" else None,
         )
@@ -336,8 +352,11 @@ class A2ABus:
     ) -> dict[str, Any] | None:
         """任务委派 (类比 RPC 调用, 等待完整结果)。"""
         response = await self.request_response(
-            target=target, content=task, source=source,
-            timeout=timeout, method="delegate",
+            target=target,
+            content=task,
+            source=source,
+            timeout=timeout,
+            method="delegate",
         )
         if response is None:
             return None
@@ -350,13 +369,11 @@ class A2ABus:
 
     # --- 订阅/发布 ---
 
-    def subscribe(self, topic: str,
-                  callback: Callable[[A2AMessage], None]) -> None:
+    def subscribe(self, topic: str, callback: Callable[[A2AMessage], None]) -> None:
         """订阅主题 (类比 pub/sub)。"""
         self._subscriptions.setdefault(topic, []).append(callback)
 
-    def unsubscribe(self, topic: str,
-                    callback: Callable[[A2AMessage], None]) -> None:
+    def unsubscribe(self, topic: str, callback: Callable[[A2AMessage], None]) -> None:
         """取消订阅。"""
         if topic in self._subscriptions:
             try:
@@ -389,4 +406,4 @@ class A2ABus:
         }
 
 
-__all__ = ["A2ABus", "AgentCard", "A2AMessage"]
+__all__ = ["A2ABus", "A2AMessage", "AgentCard"]

@@ -12,10 +12,11 @@ MCP 工具 (统一端点):
 
 鉴权: 复用 verify_jwt_token (当前用户 JWT 校验)。
 """
+
 import contextlib
 import io
 import os
-from typing import Any, Optional
+from typing import Any
 
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, Field
@@ -34,7 +35,7 @@ _server: IDEServer | None = None
 _server_workspace: str | None = None
 
 
-def get_server(workspace: Optional[str] = None) -> IDEServer:
+def get_server(workspace: str | None = None) -> IDEServer:
     """懒加载 IDEServer 单例。
 
     首次调用, 或请求的 workspace 与当前实例不一致时创建新实例;
@@ -58,6 +59,7 @@ def get_server(workspace: Optional[str] = None) -> IDEServer:
 # 统一响应模型
 # ===========================================================================
 
+
 class CodingResponse(BaseModel):
     """编码接口统一响应。
 
@@ -69,64 +71,65 @@ class CodingResponse(BaseModel):
 
     success: bool
     result: Any = None
-    error: Optional[str] = None
+    error: str | None = None
 
 
 # ===========================================================================
 # 请求模型
 # ===========================================================================
 
+
 class IndexRequest(BaseModel):
-    workspace: Optional[str] = None
-    path: Optional[str] = None
+    workspace: str | None = None
+    path: str | None = None
     no_incremental: bool = False
 
 
 class SearchRequest(BaseModel):
-    workspace: Optional[str] = None
+    workspace: str | None = None
     query: str
     top_k: int = 10
 
 
 class ReadRequest(BaseModel):
-    workspace: Optional[str] = None
+    workspace: str | None = None
     file: str
     start: int = 0
     end: int = 0
 
 
 class WriteRequest(BaseModel):
-    workspace: Optional[str] = None
+    workspace: str | None = None
     file: str
     content: str
 
 
 class EditRequest(BaseModel):
-    workspace: Optional[str] = None
+    workspace: str | None = None
     file: str
     old: str
     new: str
 
 
 class GitRequest(BaseModel):
-    workspace: Optional[str] = None
+    workspace: str | None = None
     args: list[str] = Field(default_factory=list)
 
 
 class TestRequest(BaseModel):
-    workspace: Optional[str] = None
+    workspace: str | None = None
     args: list[str] = Field(default_factory=list)
 
 
 class TaskRequest(BaseModel):
-    workspace: Optional[str] = None
+    workspace: str | None = None
     description: str
     files: list[str] = Field(default_factory=list)
     constraints: list[str] = Field(default_factory=list)
 
 
 class McpCallRequest(BaseModel):
-    workspace: Optional[str] = None
+    workspace: str | None = None
     tool: str
     arguments: dict = Field(default_factory=dict)
 
@@ -134,6 +137,7 @@ class McpCallRequest(BaseModel):
 # ===========================================================================
 # CLI 包装辅助
 # ===========================================================================
+
 
 async def _run_cli(server: IDEServer, argv: list[str]) -> tuple[int, str]:
     """执行 CLI 命令并捕获 stdout 输出。
@@ -167,6 +171,7 @@ def _fail(output: Any, exit_code: int) -> CodingResponse:
 # ===========================================================================
 # CLI 命令路由 (10 个)
 # ===========================================================================
+
 
 @router.post("/index", response_model=CodingResponse)
 async def coding_index(
@@ -275,7 +280,7 @@ async def coding_task(
 @router.get("/map", response_model=CodingResponse)
 async def coding_map(
     max_tokens: int = Query(4096, ge=1, description="仓库地图 token 上限"),
-    workspace: Optional[str] = Query(None, description="工作区路径"),
+    workspace: str | None = Query(None, description="工作区路径"),
     _: dict = Depends(verify_jwt_token),
 ):
     """输出仓库地图 (RepoMap)。"""
@@ -287,7 +292,7 @@ async def coding_map(
 
 @router.get("/help", response_model=CodingResponse)
 async def coding_help(
-    workspace: Optional[str] = Query(None, description="工作区路径"),
+    workspace: str | None = Query(None, description="工作区路径"),
     _: dict = Depends(verify_jwt_token),
 ):
     """显示 CLI 帮助。"""
@@ -301,9 +306,10 @@ async def coding_help(
 # MCP 工具路由 (7 个工具, 统一端点)
 # ===========================================================================
 
+
 @router.get("/mcp/tools", response_model=CodingResponse)
 async def mcp_tools(
-    workspace: Optional[str] = Query(None, description="工作区路径"),
+    workspace: str | None = Query(None, description="工作区路径"),
     _: dict = Depends(verify_jwt_token),
 ):
     """列出 MCP 工具 schema (tools/list)。

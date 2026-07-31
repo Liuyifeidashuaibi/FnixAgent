@@ -14,17 +14,16 @@ LLM 驱动的知识合成引擎 — 将采集信息转化为可执行的升级�
 
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
 import re
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
-from .continuous_collector import SourceItem, SourceCategory
+from .continuous_collector import SourceCategory, SourceItem
 
 logger = logging.getLogger(__name__)
 
@@ -33,40 +32,44 @@ logger = logging.getLogger(__name__)
 # 提取结果模型
 # ============================================================
 
+
 class InsightType(str, Enum):
     """洞察类型"""
-    NEW_FRAMEWORK = "new_framework"           # 新框架/工具
-    NEW_TECHNIQUE = "new_technique"           # 新技术/算法
-    BEST_PRACTICE = "best_practice"           # 最佳实践
+
+    NEW_FRAMEWORK = "new_framework"  # 新框架/工具
+    NEW_TECHNIQUE = "new_technique"  # 新技术/算法
+    BEST_PRACTICE = "best_practice"  # 最佳实践
     ARCHITECTURE_PATTERN = "architecture_pattern"  # 架构模式
     RESEARCH_BREAKTHROUGH = "research_breakthrough"  # 研究突破
-    BENCHMARK_RESULT = "benchmark_result"     # 基准测试结果
-    PROTOCOL_UPDATE = "protocol_update"       # 协议更新
-    SECURITY_ADVISORY = "security_advisory"   # 安全公告
-    DEPRECATION = "deprecation"               # 废弃通知
-    COMMUNITY_TREND = "community_trend"       # 社区趋势
+    BENCHMARK_RESULT = "benchmark_result"  # 基准测试结果
+    PROTOCOL_UPDATE = "protocol_update"  # 协议更新
+    SECURITY_ADVISORY = "security_advisory"  # 安全公告
+    DEPRECATION = "deprecation"  # 废弃通知
+    COMMUNITY_TREND = "community_trend"  # 社区趋势
 
 
 @dataclass
 class ExtractedInsight:
     """LLM 提取的洞察"""
+
     insight_id: str
     insight_type: InsightType
     title: str
     description: str
-    source_items: list[str]    # 引用源 item_id
-    confidence: float          # 置信度 0-1
-    impact_on_fnixagent: str   # 对 FnixAgent 的影响
-    upgrade_priority: str      # critical/high/medium/low
-    suggested_action: str      # 建议行动
-    related_modules: list[str] # 受影响模块
-    code_snippet: str = ""     # 如有代码示例
-    extracted_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    source_items: list[str]  # 引用源 item_id
+    confidence: float  # 置信度 0-1
+    impact_on_fnixagent: str  # 对 FnixAgent 的影响
+    upgrade_priority: str  # critical/high/medium/low
+    suggested_action: str  # 建议行动
+    related_modules: list[str]  # 受影响模块
+    code_snippet: str = ""  # 如有代码示例
+    extracted_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
 
 @dataclass
 class SynthesisReport:
     """一次合成报告"""
+
     report_id: str
     generated_at: str
     total_sources: int
@@ -91,6 +94,7 @@ class SynthesisReport:
     def save_to_file(self, output_dir: str | None = None) -> str:
         """将报告保存到文件"""
         from pathlib import Path
+
         dir_path = Path(output_dir) if output_dir else Path("data/synthesis")
         dir_path.mkdir(parents=True, exist_ok=True)
 
@@ -114,11 +118,19 @@ class SynthesisReport:
                 for i in self.critical_insights
             ],
             "high_insights": [
-                {"insight_id": i.insight_id, "title": i.title, "upgrade_priority": i.upgrade_priority}
+                {
+                    "insight_id": i.insight_id,
+                    "title": i.title,
+                    "upgrade_priority": i.upgrade_priority,
+                }
                 for i in self.high_insights
             ],
             "medium_insights": [
-                {"insight_id": i.insight_id, "title": i.title, "upgrade_priority": i.upgrade_priority}
+                {
+                    "insight_id": i.insight_id,
+                    "title": i.title,
+                    "upgrade_priority": i.upgrade_priority,
+                }
                 for i in self.medium_insights
             ],
             "ktg_injections": self.ktg_injections,
@@ -131,30 +143,75 @@ class SynthesisReport:
 # 规则提取器 (无需LLM, 快速预筛选)
 # ============================================================
 
+
 class RuleBasedExtractor:
     """基于规则的快速预提取 — 在 LLM 之前过滤噪声"""
 
     # 高价值关键词 (出现即标记为高优先级)
     HIGH_VALUE_KEYWORDS = [
-        "self-improving", "self-evolving", "self-play", "self-correcting",
-        "autonomous agent", "agentic", "multi-agent", "agent orchestration",
-        "tool use", "function calling", "tool calling", "tool augmentation",
-        "memory system", "persistent memory", "long-term memory", "context window",
-        "reasoning", "chain-of-thought", "plan-and-execute", "react",
-        "skill learning", "skill creation", "skill library", "skill reuse",
-        "reinforcement learning", "rlhf", "dpo", "preference optimization",
-        "retrieval augmented", "rag", "vector database", "embedding",
-        "prompt engineering", "prompt optimization", "genetic algorithm",
-        "mcp", "model context protocol", "a2a", "agent-to-agent",
-        "sandbox", "code execution", "code interpreter",
-        "evaluation", "benchmark", "gaia", "swe-bench", "agentbench",
+        "self-improving",
+        "self-evolving",
+        "self-play",
+        "self-correcting",
+        "autonomous agent",
+        "agentic",
+        "multi-agent",
+        "agent orchestration",
+        "tool use",
+        "function calling",
+        "tool calling",
+        "tool augmentation",
+        "memory system",
+        "persistent memory",
+        "long-term memory",
+        "context window",
+        "reasoning",
+        "chain-of-thought",
+        "plan-and-execute",
+        "react",
+        "skill learning",
+        "skill creation",
+        "skill library",
+        "skill reuse",
+        "reinforcement learning",
+        "rlhf",
+        "dpo",
+        "preference optimization",
+        "retrieval augmented",
+        "rag",
+        "vector database",
+        "embedding",
+        "prompt engineering",
+        "prompt optimization",
+        "genetic algorithm",
+        "mcp",
+        "model context protocol",
+        "a2a",
+        "agent-to-agent",
+        "sandbox",
+        "code execution",
+        "code interpreter",
+        "evaluation",
+        "benchmark",
+        "gaia",
+        "swe-bench",
+        "agentbench",
     ]
 
     # 噪声模式 (低价值内容)
     NOISE_PATTERNS = [
-        r"tutorial", r"introduction to", r"getting started", r"hello world",
-        r"course", r"bootcamp", r"workshop", r"webinar",
-        r"sponsor", r"advertisement", r"promotion", r"discount",
+        r"tutorial",
+        r"introduction to",
+        r"getting started",
+        r"hello world",
+        r"course",
+        r"bootcamp",
+        r"workshop",
+        r"webinar",
+        r"sponsor",
+        r"advertisement",
+        r"promotion",
+        r"discount",
     ]
 
     def extract(self, items: list[SourceItem]) -> list[ExtractedInsight]:
@@ -181,18 +238,20 @@ class RuleBasedExtractor:
             # 影响评估
             impact, priority = self._assess_impact(item, matched_keywords)
 
-            insights.append(ExtractedInsight(
-                insight_id=f"ins_{item.source_id}",
-                insight_type=insight_type,
-                title=item.title[:120],
-                description=item.summary[:300],
-                source_items=[item.source_id],
-                confidence=confidence,
-                impact_on_fnixagent=impact,
-                upgrade_priority=priority,
-                suggested_action=self._suggest_action(item, insight_type),
-                related_modules=self._map_modules(item, matched_keywords),
-            ))
+            insights.append(
+                ExtractedInsight(
+                    insight_id=f"ins_{item.source_id}",
+                    insight_type=insight_type,
+                    title=item.title[:120],
+                    description=item.summary[:300],
+                    source_items=[item.source_id],
+                    confidence=confidence,
+                    impact_on_fnixagent=impact,
+                    upgrade_priority=priority,
+                    suggested_action=self._suggest_action(item, insight_type),
+                    related_modules=self._map_modules(item, matched_keywords),
+                )
+            )
 
         return insights
 
@@ -214,7 +273,10 @@ class RuleBasedExtractor:
         return InsightType.BEST_PRACTICE
 
     def _assess_impact(self, item: SourceItem, keywords: list[str]) -> tuple[str, str]:
-        if any(kw in keywords for kw in ["self-improving", "self-evolving", "skill learning", "skill creation"]):
+        if any(
+            kw in keywords
+            for kw in ["self-improving", "self-evolving", "skill learning", "skill creation"]
+        ):
             return "核心自进化能力直接相关，可显著提升飞轮效率", "critical"
         if any(kw in keywords for kw in ["multi-agent", "agent orchestration", "mcp", "a2a"]):
             return "多Agent协作能力相关，可扩展系统架构", "critical"
@@ -265,6 +327,7 @@ class RuleBasedExtractor:
 # ============================================================
 # LLM 增强合成器 (深度分析)
 # ============================================================
+
 
 class LLMSynthesizer:
     """LLM 驱动的深度合成 — 理解语义, 生成结构化升级方案"""
@@ -345,8 +408,8 @@ FnixAgent 是一个智能办公 Agent 平台，核心架构:
         ktg_injections = self._generate_ktg_injections(all_insights)
 
         return SynthesisReport(
-            report_id=datetime.now(timezone.utc).strftime("syn_%Y%m%d_%H%M"),
-            generated_at=datetime.now(timezone.utc).isoformat(),
+            report_id=datetime.now(UTC).strftime("syn_%Y%m%d_%H%M"),
+            generated_at=datetime.now(UTC).isoformat(),
             total_sources=len(items),
             total_insights=len(all_insights),
             critical_insights=critical,
@@ -371,24 +434,26 @@ FnixAgent 是一个智能办公 Agent 平台，核心架构:
         return "\n".join(lines)
 
     def _extract_json(self, text: str) -> str:
-        match = re.search(r'\{[\s\S]*\}', text)
+        match = re.search(r"\{[\s\S]*\}", text)
         return match.group(0) if match else "{}"
 
     def _parse_llm_insights(self, parsed: dict) -> list[ExtractedInsight]:
         insights = []
         for item in parsed.get("insights", []):
-            insights.append(ExtractedInsight(
-                insight_id=f"llm_{hash(item.get('title', ''))}",
-                insight_type=InsightType.BEST_PRACTICE,
-                title=item.get("title", "")[:120],
-                description=item.get("core_innovation", ""),
-                source_items=[],
-                confidence=0.8,
-                impact_on_fnixagent=item.get("impact_assessment", ""),
-                upgrade_priority=item.get("upgrade_priority", "medium"),
-                suggested_action=item.get("action_plan", ""),
-                related_modules=item.get("affected_modules", []),
-            ))
+            insights.append(
+                ExtractedInsight(
+                    insight_id=f"llm_{hash(item.get('title', ''))}",
+                    insight_type=InsightType.BEST_PRACTICE,
+                    title=item.get("title", "")[:120],
+                    description=item.get("core_innovation", ""),
+                    source_items=[],
+                    confidence=0.8,
+                    impact_on_fnixagent=item.get("impact_assessment", ""),
+                    upgrade_priority=item.get("upgrade_priority", "medium"),
+                    suggested_action=item.get("action_plan", ""),
+                    related_modules=item.get("affected_modules", []),
+                )
+            )
         return insights
 
     def _deduplicate_insights(self, insights: list[ExtractedInsight]) -> list[ExtractedInsight]:
@@ -401,7 +466,9 @@ FnixAgent 是一个智能办公 Agent 平台，核心架构:
                 unique.append(ins)
         return unique
 
-    def _generate_summary(self, all_insights: list[ExtractedInsight], critical: list[ExtractedInsight]) -> str:
+    def _generate_summary(
+        self, all_insights: list[ExtractedInsight], critical: list[ExtractedInsight]
+    ) -> str:
         lines = [
             f"本报告从 {len(all_insights)} 条情报中提取了关键洞察。",
             f"其中 {len(critical)} 条为关键优先级，建议立即关注。",
@@ -429,27 +496,32 @@ FnixAgent 是一个智能办公 Agent 平台，核心架构:
         for ins in insights[:10]:
             # L2 概念节点
             if ins.insight_type in (InsightType.NEW_FRAMEWORK, InsightType.NEW_TECHNIQUE):
-                injections.append({
-                    "level": "L2",
-                    "concept": ins.title[:80],
-                    "weight": 0.6 if ins.upgrade_priority == "critical" else 0.4,
-                    "source": "intelligence_synthesis",
-                    "related_skills": [],
-                })
+                injections.append(
+                    {
+                        "level": "L2",
+                        "concept": ins.title[:80],
+                        "weight": 0.6 if ins.upgrade_priority == "critical" else 0.4,
+                        "source": "intelligence_synthesis",
+                        "related_skills": [],
+                    }
+                )
             # L3 规则节点
             if ins.insight_type == InsightType.BEST_PRACTICE:
-                injections.append({
-                    "level": "L3",
-                    "rule": ins.description[:120],
-                    "weight": 0.5,
-                    "source": "intelligence_synthesis",
-                })
+                injections.append(
+                    {
+                        "level": "L3",
+                        "rule": ins.description[:120],
+                        "weight": 0.5,
+                        "source": "intelligence_synthesis",
+                    }
+                )
         return injections
 
 
 # ============================================================
 # 合成引擎入口
 # ============================================================
+
 
 class SynthesisEngine:
     """合成引擎 — 采集 → 提取 → 合成 → 注入 KTG"""
@@ -506,7 +578,11 @@ class SynthesisEngine:
                     for i in report.critical_insights
                 ],
                 "high_insights": [
-                    {"insight_id": i.insight_id, "title": i.title, "upgrade_priority": i.upgrade_priority}
+                    {
+                        "insight_id": i.insight_id,
+                        "title": i.title,
+                        "upgrade_priority": i.upgrade_priority,
+                    }
                     for i in report.high_insights
                 ],
                 "ktg_injections": report.ktg_injections,

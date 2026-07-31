@@ -52,11 +52,12 @@ import math
 import random
 import time
 from collections import defaultdict, deque
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional, Callable, Awaitable
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -65,24 +66,27 @@ logger = logging.getLogger(__name__)
 # 1. Token 优化器 (Prompt Caching + Semantic Caching + Context Pruning)
 # ============================================================
 
+
 class CacheStrategy(str, Enum):
     """缓存策略"""
-    EXACT = "exact"          # 精确匹配 (Prompt Caching)
-    SEMANTIC = "semantic"    # 语义匹配 (Semantic Caching)
-    HYBRID = "hybrid"        # 混合 (先精确再语义)
+
+    EXACT = "exact"  # 精确匹配 (Prompt Caching)
+    SEMANTIC = "semantic"  # 语义匹配 (Semantic Caching)
+    HYBRID = "hybrid"  # 混合 (先精确再语义)
 
 
 @dataclass
 class CacheEntry:
     """缓存条目"""
+
     key: str
     prompt_hash: str
     response: str
-    embedding: Optional[list[float]] = None
+    embedding: list[float] | None = None
     tokens_saved: int = 0
     hit_count: int = 0
-    last_accessed: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    last_accessed: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
 
 class TokenOptimizer:
@@ -122,8 +126,10 @@ class TokenOptimizer:
 
         # 统计
         self._stats = {
-            "exact_hits": 0, "exact_misses": 0,
-            "semantic_hits": 0, "semantic_misses": 0,
+            "exact_hits": 0,
+            "exact_misses": 0,
+            "semantic_hits": 0,
+            "semantic_misses": 0,
             "tokens_saved_total": 0,
             "api_calls_avoided": 0,
         }
@@ -141,7 +147,9 @@ class TokenOptimizer:
                     self._exact_cache[entry.prompt_hash] = entry
                 for entry_data in data.get("semantic", []):
                     self._semantic_cache.append(CacheEntry(**entry_data))
-                logger.info(f"加载缓存: exact={len(self._exact_cache)}, semantic={len(self._semantic_cache)}")
+                logger.info(
+                    f"加载缓存: exact={len(self._exact_cache)}, semantic={len(self._semantic_cache)}"
+                )
             except Exception as e:
                 logger.warning(f"缓存加载失败: {e}")
 
@@ -149,18 +157,32 @@ class TokenOptimizer:
         """持久化缓存"""
         cache_file = self.cache_dir / "token_cache.json"
         data = {
-            "exact": [{
-                "key": e.key, "prompt_hash": e.prompt_hash,
-                "response": e.response, "embedding": e.embedding,
-                "tokens_saved": e.tokens_saved, "hit_count": e.hit_count,
-                "last_accessed": e.last_accessed, "created_at": e.created_at,
-            } for e in self._exact_cache.values()],
-            "semantic": [{
-                "key": e.key, "prompt_hash": e.prompt_hash,
-                "response": e.response, "embedding": e.embedding,
-                "tokens_saved": e.tokens_saved, "hit_count": e.hit_count,
-                "last_accessed": e.last_accessed, "created_at": e.created_at,
-            } for e in self._semantic_cache],
+            "exact": [
+                {
+                    "key": e.key,
+                    "prompt_hash": e.prompt_hash,
+                    "response": e.response,
+                    "embedding": e.embedding,
+                    "tokens_saved": e.tokens_saved,
+                    "hit_count": e.hit_count,
+                    "last_accessed": e.last_accessed,
+                    "created_at": e.created_at,
+                }
+                for e in self._exact_cache.values()
+            ],
+            "semantic": [
+                {
+                    "key": e.key,
+                    "prompt_hash": e.prompt_hash,
+                    "response": e.response,
+                    "embedding": e.embedding,
+                    "tokens_saved": e.tokens_saved,
+                    "hit_count": e.hit_count,
+                    "last_accessed": e.last_accessed,
+                    "created_at": e.created_at,
+                }
+                for e in self._semantic_cache
+            ],
         }
         cache_file.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
 
@@ -172,8 +194,8 @@ class TokenOptimizer:
         self,
         prompt: str,
         strategy: CacheStrategy = CacheStrategy.HYBRID,
-        embed_fn: Optional[Callable[[str], Awaitable[list[float]]]] = None,
-    ) -> tuple[Optional[str], CacheStrategy]:
+        embed_fn: Callable[[str], Awaitable[list[float]]] | None = None,
+    ) -> tuple[str | None, CacheStrategy]:
         """
         获取缓存响应
 
@@ -192,7 +214,7 @@ class TokenOptimizer:
             if prompt_hash in self._exact_cache:
                 entry = self._exact_cache[prompt_hash]
                 entry.hit_count += 1
-                entry.last_accessed = datetime.now(timezone.utc).isoformat()
+                entry.last_accessed = datetime.now(UTC).isoformat()
                 self._stats["exact_hits"] += 1
                 self._stats["tokens_saved_total"] += entry.tokens_saved
                 self._stats["api_calls_avoided"] += 1
@@ -209,7 +231,7 @@ class TokenOptimizer:
 
                     if best_entry and best_score >= self.semantic_threshold:
                         best_entry.hit_count += 1
-                        best_entry.last_accessed = datetime.now(timezone.utc).isoformat()
+                        best_entry.last_accessed = datetime.now(UTC).isoformat()
                         self._stats["semantic_hits"] += 1
                         self._stats["tokens_saved_total"] += best_entry.tokens_saved
                         self._stats["api_calls_avoided"] += 1
@@ -225,7 +247,7 @@ class TokenOptimizer:
         prompt: str,
         response: str,
         tokens_saved: int = 0,
-        embedding: Optional[list[float]] = None,
+        embedding: list[float] | None = None,
     ):
         """缓存响应"""
         prompt_hash = self.compute_prompt_hash(prompt)
@@ -251,20 +273,20 @@ class TokenOptimizer:
                 self._exact_cache.values(),
                 key=lambda e: e.last_accessed,
             )
-            for old_entry in sorted_entries[:len(self._exact_cache) - self.max_cache_size]:
+            for old_entry in sorted_entries[: len(self._exact_cache) - self.max_cache_size]:
                 del self._exact_cache[old_entry.prompt_hash]
 
         if len(self._semantic_cache) > self.max_cache_size:
             self._semantic_cache = sorted(
                 self._semantic_cache,
                 key=lambda e: e.last_accessed,
-            )[len(self._semantic_cache) - self.max_cache_size:]
+            )[len(self._semantic_cache) - self.max_cache_size :]
 
         self._save_cache()
 
     def _find_best_semantic_match(
         self, query_embedding: list[float]
-    ) -> tuple[Optional[CacheEntry], float]:
+    ) -> tuple[CacheEntry | None, float]:
         """找到最佳语义匹配"""
         best_entry = None
         best_score = -1.0
@@ -368,10 +390,12 @@ class TokenOptimizer:
 # 2. 模型路由器 (Cost-aware Model Routing)
 # ============================================================
 
+
 class ModelTier(str, Enum):
     """模型层级"""
-    NANO = "nano"        # 极便宜 (DeepSeek, Qwen3.5本地)
-    FAST = "fast"        # 快 (GPT-5.4 Flash, Claude Haiku)
+
+    NANO = "nano"  # 极便宜 (DeepSeek, Qwen3.5本地)
+    FAST = "fast"  # 快 (GPT-5.4 Flash, Claude Haiku)
     BALANCED = "balanced"  # 均衡 (GPT-5.4, Claude Sonnet)
     FRONTIER = "frontier"  # 顶级 (GPT-5.6, Claude Opus)
 
@@ -379,28 +403,45 @@ class ModelTier(str, Enum):
 @dataclass
 class ModelConfig:
     """模型配置"""
+
     model_id: str
     tier: ModelTier
     provider: str
-    cost_per_1m_input: float   # 每百万输入token成本
+    cost_per_1m_input: float  # 每百万输入token成本
     cost_per_1m_output: float  # 每百万输出token成本
-    avg_latency_ms: float      # 平均延迟
-    max_tokens: int            # 最大上下文
-    quality_score: float       # 质量评分 (0-1)
-    is_local: bool = False     # 是否本地模型
+    avg_latency_ms: float  # 平均延迟
+    max_tokens: int  # 最大上下文
+    quality_score: float  # 质量评分 (0-1)
+    is_local: bool = False  # 是否本地模型
 
 
 # 2026年主流模型价格 (USD/1M tokens)
 MODEL_REGISTRY = {
-    "gpt-5.6-sol": ModelConfig("gpt-5.6-sol", ModelTier.FRONTIER, "openai", 2.50, 10.00, 800, 200000, 0.95),
+    "gpt-5.6-sol": ModelConfig(
+        "gpt-5.6-sol", ModelTier.FRONTIER, "openai", 2.50, 10.00, 800, 200000, 0.95
+    ),
     "gpt-5.4": ModelConfig("gpt-5.4", ModelTier.BALANCED, "openai", 1.25, 5.00, 600, 128000, 0.88),
-    "gpt-5.4-flash": ModelConfig("gpt-5.4-flash", ModelTier.FAST, "openai", 0.30, 1.20, 200, 128000, 0.75),
-    "claude-opus-4.6": ModelConfig("claude-opus-4.6", ModelTier.FRONTIER, "anthropic", 15.00, 75.00, 1500, 1000000, 0.96),
-    "claude-sonnet-4.6": ModelConfig("claude-sonnet-4.6", ModelTier.BALANCED, "anthropic", 3.00, 15.00, 900, 200000, 0.89),
-    "claude-haiku-4.5": ModelConfig("claude-haiku-4.5", ModelTier.FAST, "anthropic", 0.80, 4.00, 300, 200000, 0.72),
-    "deepseek-v3": ModelConfig("deepseek-v3", ModelTier.FAST, "deepseek", 0.27, 1.10, 500, 128000, 0.78),
-    "qwen3.5-local": ModelConfig("qwen3.5-local", ModelTier.NANO, "local", 0.0, 0.0, 150, 32768, 0.65, True),
-    "gemini-3.1-pro": ModelConfig("gemini-3.1-pro", ModelTier.BALANCED, "google", 1.25, 5.00, 700, 1000000, 0.86),
+    "gpt-5.4-flash": ModelConfig(
+        "gpt-5.4-flash", ModelTier.FAST, "openai", 0.30, 1.20, 200, 128000, 0.75
+    ),
+    "claude-opus-4.6": ModelConfig(
+        "claude-opus-4.6", ModelTier.FRONTIER, "anthropic", 15.00, 75.00, 1500, 1000000, 0.96
+    ),
+    "claude-sonnet-4.6": ModelConfig(
+        "claude-sonnet-4.6", ModelTier.BALANCED, "anthropic", 3.00, 15.00, 900, 200000, 0.89
+    ),
+    "claude-haiku-4.5": ModelConfig(
+        "claude-haiku-4.5", ModelTier.FAST, "anthropic", 0.80, 4.00, 300, 200000, 0.72
+    ),
+    "deepseek-v3": ModelConfig(
+        "deepseek-v3", ModelTier.FAST, "deepseek", 0.27, 1.10, 500, 128000, 0.78
+    ),
+    "qwen3.5-local": ModelConfig(
+        "qwen3.5-local", ModelTier.NANO, "local", 0.0, 0.0, 150, 32768, 0.65, True
+    ),
+    "gemini-3.1-pro": ModelConfig(
+        "gemini-3.1-pro", ModelTier.BALANCED, "google", 1.25, 5.00, 700, 1000000, 0.86
+    ),
 }
 
 
@@ -424,14 +465,14 @@ class ModelRouter:
     def __init__(
         self,
         budget_per_day: float = 10.0,
-        registry: Optional[dict[str, ModelConfig]] = None,
+        registry: dict[str, ModelConfig] | None = None,
     ):
         self.registry = registry or MODEL_REGISTRY
         self.budget_per_day = budget_per_day
         self._daily_spend: float = 0.0
         self._request_count: int = 0
         self._tier_usage: dict[str, int] = defaultdict(int)
-        self._last_reset: str = datetime.now(timezone.utc).isoformat()
+        self._last_reset: str = datetime.now(UTC).isoformat()
         self._cost_history: deque = deque(maxlen=1000)
 
     def route(
@@ -488,24 +529,26 @@ class ModelRouter:
 
         # 更新统计
         estimated_cost = (
-            estimated_input_tokens * best.cost_per_1m_input / 1_000_000 +
-            estimated_output_tokens * best.cost_per_1m_output / 1_000_000
+            estimated_input_tokens * best.cost_per_1m_input / 1_000_000
+            + estimated_output_tokens * best.cost_per_1m_output / 1_000_000
         )
         self._daily_spend += estimated_cost
         self._request_count += 1
         self._tier_usage[best.tier.value] += 1
-        self._cost_history.append({
-            "model": best.model_id,
-            "tier": best.tier.value,
-            "cost": estimated_cost,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-        })
+        self._cost_history.append(
+            {
+                "model": best.model_id,
+                "tier": best.tier.value,
+                "cost": estimated_cost,
+                "timestamp": datetime.now(UTC).isoformat(),
+            }
+        )
 
         return best.model_id
 
     def _check_budget_reset(self):
         """检查是否需要重置每日预算"""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         last = datetime.fromisoformat(self._last_reset)
         if (now - last).days >= 1:
             self._daily_spend = 0.0
@@ -523,9 +566,7 @@ class ModelRouter:
             "request_count": self._request_count,
             "tier_usage": dict(self._tier_usage),
             "estimated_savings_pct": round(savings, 1),
-            "avg_cost_per_request": round(
-                self._daily_spend / max(self._request_count, 1), 6
-            ),
+            "avg_cost_per_request": round(self._daily_spend / max(self._request_count, 1), 6),
         }
 
     def _estimate_savings(self) -> float:
@@ -549,6 +590,7 @@ class ModelRouter:
 # 3. 并行执行器 (LLMCompiler + DAG)
 # ============================================================
 
+
 class TaskStatus(str, Enum):
     PENDING = "pending"
     RUNNING = "running"
@@ -560,9 +602,10 @@ class TaskStatus(str, Enum):
 @dataclass
 class TaskNode:
     """DAG任务节点"""
+
     task_id: str
     name: str
-    func: Optional[Callable] = None
+    func: Callable | None = None
     args: tuple = ()
     kwargs: dict = field(default_factory=dict)
     dependencies: list[str] = field(default_factory=list)
@@ -610,7 +653,7 @@ class ParallelExecutor:
     def _detect_cycles(self, task_map: dict[str, TaskNode]):
         """检测循环依赖 (DFS)"""
         WHITE, GRAY, BLACK = 0, 1, 2
-        color = {tid: WHITE for tid in task_map}
+        color = dict.fromkeys(task_map, WHITE)
 
         def dfs(tid: str) -> bool:
             color[tid] = GRAY
@@ -673,6 +716,7 @@ class ParallelExecutor:
         logger.info(f"DAG执行: {len(tasks)} 任务, {len(waves)} 波次")
 
         for wave_idx, wave in enumerate(waves):
+
             async def execute_task(task: TaskNode):
                 async with semaphore:
                     task.status = TaskStatus.RUNNING
@@ -708,20 +752,20 @@ class ParallelExecutor:
 
         # 记录执行历史
         serial_time = sum(t.duration_ms for t in tasks)
-        parallel_time = sum(
-            max(t.duration_ms for t in wave) for wave in waves
-        )
+        parallel_time = sum(max(t.duration_ms for t in wave) for wave in waves)
         speedup = serial_time / max(parallel_time, 1)
 
-        self._execution_history.append({
-            "tasks": len(tasks),
-            "waves": len(waves),
-            "serial_time_ms": serial_time,
-            "parallel_time_ms": parallel_time,
-            "speedup": round(speedup, 2),
-            "failed": sum(1 for t in tasks if t.status == TaskStatus.FAILED),
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-        })
+        self._execution_history.append(
+            {
+                "tasks": len(tasks),
+                "waves": len(waves),
+                "serial_time_ms": serial_time,
+                "parallel_time_ms": parallel_time,
+                "speedup": round(speedup, 2),
+                "failed": sum(1 for t in tasks if t.status == TaskStatus.FAILED),
+                "timestamp": datetime.now(UTC).isoformat(),
+            }
+        )
 
         return results
 
@@ -744,10 +788,11 @@ class ParallelExecutor:
 # 4. 成本熔断器 (Circuit Breaker)
 # ============================================================
 
+
 class CircuitState(str, Enum):
-    CLOSED = "closed"          # 正常
-    OPEN = "open"              # 熔断
-    HALF_OPEN = "half_open"    # 半开 (试探)
+    CLOSED = "closed"  # 正常
+    OPEN = "open"  # 熔断
+    HALF_OPEN = "half_open"  # 半开 (试探)
 
 
 class CostCircuitBreaker:
@@ -778,10 +823,10 @@ class CostCircuitBreaker:
         self._request_spend: float = 0.0
         self._session_spend: float = 0.0
         self._daily_spend: float = 0.0
-        self._opened_at: Optional[float] = None
+        self._opened_at: float | None = None
         self._total_requests: int = 0
         self._blocked_requests: int = 0
-        self._last_reset: str = datetime.now(timezone.utc).isoformat()
+        self._last_reset: str = datetime.now(UTC).isoformat()
 
     def check(self, estimated_cost: float) -> bool:
         """
@@ -833,11 +878,13 @@ class CostCircuitBreaker:
         """触发熔断"""
         self._state = CircuitState.OPEN
         self._opened_at = time.time()
-        logger.warning(f"熔断器触发! 会话消费: {self._session_spend:.2f}, 日消费: {self._daily_spend:.2f}")
+        logger.warning(
+            f"熔断器触发! 会话消费: {self._session_spend:.2f}, 日消费: {self._daily_spend:.2f}"
+        )
 
     def _check_daily_reset(self):
         """每日重置"""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         last = datetime.fromisoformat(self._last_reset)
         if (now - last).days >= 1:
             self._daily_spend = 0.0
@@ -862,7 +909,10 @@ class CostCircuitBreaker:
             "total_requests": self._total_requests,
             "blocked_requests": self._blocked_requests,
             "block_rate_pct": round(
-                self._blocked_requests / max(self._total_requests + self._blocked_requests, 1) * 100, 1
+                self._blocked_requests
+                / max(self._total_requests + self._blocked_requests, 1)
+                * 100,
+                1,
             ),
         }
 
@@ -871,12 +921,14 @@ class CostCircuitBreaker:
 # 5. 错误恢复引擎
 # ============================================================
 
+
 class ErrorCategory(str, Enum):
     """错误分类"""
-    TRANSIENT = "transient"       # 瞬时 (网络超时, 速率限制)
-    PERMANENT = "permanent"       # 永久 (权限, 参数错误)
-    DEGRADATION = "degradation"   # 降级 (服务部分可用)
-    UNKNOWN = "unknown"           # 未知
+
+    TRANSIENT = "transient"  # 瞬时 (网络超时, 速率限制)
+    PERMANENT = "permanent"  # 永久 (权限, 参数错误)
+    DEGRADATION = "degradation"  # 降级 (服务部分可用)
+    UNKNOWN = "unknown"  # 未知
 
 
 class ErrorRecoveryEngine:
@@ -905,18 +957,37 @@ class ErrorRecoveryEngine:
     # 错误分类规则
     ERROR_PATTERNS = {
         ErrorCategory.TRANSIENT: [
-            "timeout", "timed out", "connection", "network",
-            "rate limit", "too many requests", "429",
-            "service unavailable", "503", "502", "504",
-            "temporarily", "try again",
+            "timeout",
+            "timed out",
+            "connection",
+            "network",
+            "rate limit",
+            "too many requests",
+            "429",
+            "service unavailable",
+            "503",
+            "502",
+            "504",
+            "temporarily",
+            "try again",
         ],
         ErrorCategory.PERMANENT: [
-            "unauthorized", "401", "403", "forbidden",
-            "not found", "404", "invalid", "bad request",
-            "permission", "access denied",
+            "unauthorized",
+            "401",
+            "403",
+            "forbidden",
+            "not found",
+            "404",
+            "invalid",
+            "bad request",
+            "permission",
+            "access denied",
         ],
         ErrorCategory.DEGRADATION: [
-            "partial", "degraded", "slow", "quota",
+            "partial",
+            "degraded",
+            "slow",
+            "quota",
         ],
     }
 
@@ -939,8 +1010,8 @@ class ErrorRecoveryEngine:
         self,
         error: Exception,
         attempt: int,
-        max_retries: Optional[int] = None,
-    ) -> tuple[bool, Optional[int], float]:
+        max_retries: int | None = None,
+    ) -> tuple[bool, int | None, float]:
         """
         判断是否应该重试
 
@@ -967,11 +1038,9 @@ class ErrorRecoveryEngine:
         delay = self._exponential_backoff(attempt, base=1.0, jitter=False)
         return attempt < max_r, max_r, delay
 
-    def _exponential_backoff(
-        self, attempt: int, base: float = 1.0, jitter: bool = True
-    ) -> float:
+    def _exponential_backoff(self, attempt: int, base: float = 1.0, jitter: bool = True) -> float:
         """指数退避 + 抖动"""
-        delay = base * (2 ** attempt)
+        delay = base * (2**attempt)
         if jitter:
             delay *= random.uniform(0.5, 1.5)
         return min(delay, 60.0)  # 最大60秒
@@ -981,7 +1050,7 @@ class ErrorRecoveryEngine:
         fn: Callable,
         *args,
         max_retries: int = 5,
-        fallback_fn: Optional[Callable] = None,
+        fallback_fn: Callable | None = None,
         **kwargs,
     ) -> Any:
         """
@@ -1006,12 +1075,14 @@ class ErrorRecoveryEngine:
 
                 if attempt > 0:
                     self._recovery_stats["recovered"] += 1
-                    self._error_history.append({
-                        "error": str(last_error),
-                        "attempts": attempt + 1,
-                        "recovered": True,
-                        "timestamp": datetime.now(timezone.utc).isoformat(),
-                    })
+                    self._error_history.append(
+                        {
+                            "error": str(last_error),
+                            "attempts": attempt + 1,
+                            "recovered": True,
+                            "timestamp": datetime.now(UTC).isoformat(),
+                        }
+                    )
 
                 return result
 
@@ -1025,19 +1096,20 @@ class ErrorRecoveryEngine:
                     break
 
                 logger.warning(
-                    f"重试 {attempt + 1}/{max_retries} ({category.value}): {e}, "
-                    f"等待 {delay:.1f}s"
+                    f"重试 {attempt + 1}/{max_retries} ({category.value}): {e}, 等待 {delay:.1f}s"
                 )
                 await asyncio.sleep(delay)
 
         # 所有重试失败
         self._recovery_stats["failed"] += 1
-        self._error_history.append({
-            "error": str(last_error),
-            "attempts": max_retries + 1,
-            "recovered": False,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-        })
+        self._error_history.append(
+            {
+                "error": str(last_error),
+                "attempts": max_retries + 1,
+                "recovered": False,
+                "timestamp": datetime.now(UTC).isoformat(),
+            }
+        )
 
         # 尝试降级
         if fallback_fn:
@@ -1058,9 +1130,7 @@ class ErrorRecoveryEngine:
             "total_errors": total,
             "recovered": self._recovery_stats["recovered"],
             "failed": self._recovery_stats["failed"],
-            "recovery_rate": round(
-                self._recovery_stats["recovered"] / max(total, 1) * 100, 1
-            ),
+            "recovery_rate": round(self._recovery_stats["recovered"] / max(total, 1) * 100, 1),
             "recent_errors": self._error_history[-10:],
         }
 
@@ -1069,9 +1139,11 @@ class ErrorRecoveryEngine:
 # 6. 性能监控器
 # ============================================================
 
+
 @dataclass
 class PerformanceSnapshot:
     """性能快照"""
+
     snapshot_id: str
     # 延迟
     avg_latency_ms: float = 0
@@ -1173,8 +1245,8 @@ class PerformanceMonitor:
             cache_hit_rate=0,
             error_rate=sum(errors) / n * 100,
             requests_per_minute=rpm,
-            window_start=datetime.now(timezone.utc).isoformat(),
-            window_end=datetime.now(timezone.utc).isoformat(),
+            window_start=datetime.now(UTC).isoformat(),
+            window_end=datetime.now(UTC).isoformat(),
         )
 
         self._snapshots.append(snap)
@@ -1197,42 +1269,50 @@ class PerformanceMonitor:
 
         # 延迟突增
         if current.p95_latency_ms > baseline.p95_latency_ms * 1.5:
-            bottlenecks.append({
-                "type": "latency_spike",
-                "severity": "high",
-                "current": f"{current.p95_latency_ms:.0f}ms",
-                "baseline": f"{baseline.p95_latency_ms:.0f}ms",
-                "suggestion": "检查模型路由是否正确, 考虑降级到Fast模型",
-            })
+            bottlenecks.append(
+                {
+                    "type": "latency_spike",
+                    "severity": "high",
+                    "current": f"{current.p95_latency_ms:.0f}ms",
+                    "baseline": f"{baseline.p95_latency_ms:.0f}ms",
+                    "suggestion": "检查模型路由是否正确, 考虑降级到Fast模型",
+                }
+            )
 
         # 成本飙升
         if current.avg_cost_per_request > baseline.avg_cost_per_request * 1.3:
-            bottlenecks.append({
-                "type": "cost_spike",
-                "severity": "medium",
-                "current": f"${current.avg_cost_per_request:.4f}",
-                "baseline": f"${baseline.avg_cost_per_request:.4f}",
-                "suggestion": "启用Prompt Caching, 增加Semantic Caching阈值",
-            })
+            bottlenecks.append(
+                {
+                    "type": "cost_spike",
+                    "severity": "medium",
+                    "current": f"${current.avg_cost_per_request:.4f}",
+                    "baseline": f"${baseline.avg_cost_per_request:.4f}",
+                    "suggestion": "启用Prompt Caching, 增加Semantic Caching阈值",
+                }
+            )
 
         # 错误率上升
         if current.error_rate > 5.0 and current.error_rate > baseline.error_rate * 2:
-            bottlenecks.append({
-                "type": "error_rate_increase",
-                "severity": "critical",
-                "current": f"{current.error_rate:.1f}%",
-                "baseline": f"{baseline.error_rate:.1f}%",
-                "suggestion": "检查API可用性, 启用故障转移, 增加重试次数",
-            })
+            bottlenecks.append(
+                {
+                    "type": "error_rate_increase",
+                    "severity": "critical",
+                    "current": f"{current.error_rate:.1f}%",
+                    "baseline": f"{baseline.error_rate:.1f}%",
+                    "suggestion": "检查API可用性, 启用故障转移, 增加重试次数",
+                }
+            )
 
         # 缓存命中率下降
         if current.cache_hit_rate < 0.3 and baseline.cache_hit_rate > 0.5:
-            bottlenecks.append({
-                "type": "cache_hit_drop",
-                "severity": "low",
-                "current": f"{current.cache_hit_rate:.1%}",
-                "suggestion": "降低语义缓存相似度阈值, 增加缓存大小",
-            })
+            bottlenecks.append(
+                {
+                    "type": "cache_hit_drop",
+                    "severity": "low",
+                    "current": f"{current.cache_hit_rate:.1%}",
+                    "suggestion": "降低语义缓存相似度阈值, 增加缓存大小",
+                }
+            )
 
         return bottlenecks
 
@@ -1276,6 +1356,7 @@ class PerformanceMonitor:
 # 7. Agent Harness 总控 (2026 范式)
 # ============================================================
 
+
 class AgentHarness:
     """
     Agent Harness 总控 — Agent 的底盘系统
@@ -1306,9 +1387,13 @@ class AgentHarness:
         self.model_router = ModelRouter(budget_per_day=budget_per_day)
         self.parallel_executor = ParallelExecutor()
         self.error_recovery = ErrorRecoveryEngine()
-        self.circuit_breaker = CostCircuitBreaker(
-            budget_per_day=budget_per_day,
-        ) if enable_circuit_breaker else None
+        self.circuit_breaker = (
+            CostCircuitBreaker(
+                budget_per_day=budget_per_day,
+            )
+            if enable_circuit_breaker
+            else None
+        )
         self.monitor = PerformanceMonitor() if enable_monitoring else None
 
         # 统计
@@ -1325,7 +1410,7 @@ class AgentHarness:
         priority: str = "normal",
         enable_cache: bool = True,
         enable_retry: bool = True,
-        embed_fn: Optional[Callable[[str], Awaitable[list[float]]]] = None,
+        embed_fn: Callable[[str], Awaitable[list[float]]] | None = None,
     ) -> dict:
         """
         执行优化后的Agent请求
@@ -1386,8 +1471,8 @@ class AgentHarness:
         model_config = self.model_router.registry.get(model_id)
         if model_config and self.circuit_breaker:
             est_cost = (
-                estimated_input * model_config.cost_per_1m_input / 1_000_000 +
-                estimated_output * model_config.cost_per_1m_output / 1_000_000
+                estimated_input * model_config.cost_per_1m_input / 1_000_000
+                + estimated_output * model_config.cost_per_1m_output / 1_000_000
             )
             if not self.circuit_breaker.check(est_cost):
                 # 降级到最便宜模型
@@ -1460,8 +1545,8 @@ class AgentHarness:
         if not model:
             return 0.0
         return (
-            input_tokens * model.cost_per_1m_input / 1_000_000 +
-            output_tokens * model.cost_per_1m_output / 1_000_000
+            input_tokens * model.cost_per_1m_input / 1_000_000
+            + output_tokens * model.cost_per_1m_output / 1_000_000
         )
 
     async def execute_parallel(
@@ -1526,34 +1611,42 @@ class AgentHarness:
 
         cost_report = self.model_router.get_cost_report()
         if cost_report["budget_usage_pct"] > 80:
-            issues.append({
-                "severity": "warning",
-                "component": "cost",
-                "message": f"预算使用率 {cost_report['budget_usage_pct']}%",
-            })
+            issues.append(
+                {
+                    "severity": "warning",
+                    "component": "cost",
+                    "message": f"预算使用率 {cost_report['budget_usage_pct']}%",
+                }
+            )
 
         if self.circuit_breaker and self.circuit_breaker.get_status()["state"] == "open":
-            issues.append({
-                "severity": "critical",
-                "component": "circuit_breaker",
-                "message": "成本熔断器已触发",
-            })
+            issues.append(
+                {
+                    "severity": "critical",
+                    "component": "circuit_breaker",
+                    "message": "成本熔断器已触发",
+                }
+            )
 
         token_stats = self.token_optimizer.get_stats()
         if token_stats["hit_rate_pct"] < 10 and self._total_requests > 50:
-            issues.append({
-                "severity": "info",
-                "component": "cache",
-                "message": f"缓存命中率低 ({token_stats['hit_rate_pct']}%)",
-            })
+            issues.append(
+                {
+                    "severity": "info",
+                    "component": "cache",
+                    "message": f"缓存命中率低 ({token_stats['hit_rate_pct']}%)",
+                }
+            )
 
         recovery = self.error_recovery.get_recovery_report()
         if recovery["recovery_rate"] < 50 and recovery["total_errors"] > 10:
-            issues.append({
-                "severity": "warning",
-                "component": "error_recovery",
-                "message": f"错误恢复率低 ({recovery['recovery_rate']}%)",
-            })
+            issues.append(
+                {
+                    "severity": "warning",
+                    "component": "error_recovery",
+                    "message": f"错误恢复率低 ({recovery['recovery_rate']}%)",
+                }
+            )
 
         return {
             "healthy": len([i for i in issues if i["severity"] == "critical"]) == 0,
@@ -1573,7 +1666,7 @@ class AgentHarness:
             "cost_saved": self._cost_saved,
             "token_stats": self.token_optimizer.get_stats(),
             "cost_report": self.model_router.get_cost_report(),
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
         (state_dir / "state.json").write_text(

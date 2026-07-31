@@ -14,12 +14,13 @@
     超出后淘汰最近未访问的 thread(基于 OrderedDict 的 LRU)。
     这两个上限防止异常场景下内存无限增长导致 OOM。
 """
+
 from __future__ import annotations
 
 import threading
 import uuid
 from collections import OrderedDict
-from typing import Iterator, Optional
+from collections.abc import Iterator
 
 from fnixagent.core.checkpoint.base import BaseCheckpointer
 from fnixagent.core.checkpoint.types import (
@@ -56,7 +57,7 @@ class MemoryCheckpointer(BaseCheckpointer):
             max_threads: 总 thread 数量上限(LRU 淘汰)
         """
         # OrderedDict 实现 thread 级 LRU:访问时 move_to_end,淘汰时 popitem(last=False)
-        self._storage: "OrderedDict[str, list[CheckpointTuple]]" = OrderedDict()
+        self._storage: OrderedDict[str, list[CheckpointTuple]] = OrderedDict()
         self._lock = threading.RLock()
         self._max_checkpoints_per_thread = max_checkpoints_per_thread
         self._max_threads = max_threads
@@ -115,7 +116,7 @@ class MemoryCheckpointer(BaseCheckpointer):
 
         return new_config
 
-    def get_tuple(self, config: dict) -> Optional[CheckpointTuple]:
+    def get_tuple(self, config: dict) -> CheckpointTuple | None:
         """获取检查点元组。
 
         checkpoint_id 为 None 时返回最新;否则返回指定 ID。
@@ -139,11 +140,11 @@ class MemoryCheckpointer(BaseCheckpointer):
 
     def list(
         self,
-        config: Optional[dict],
+        config: dict | None,
         *,
-        filter: Optional[dict] = None,
-        before: Optional[dict] = None,
-        limit: Optional[int] = None,
+        filter: dict | None = None,
+        before: dict | None = None,
+        limit: int | None = None,
     ) -> Iterator[CheckpointTuple]:
         """列出检查点历史(按时间倒序)。"""
         if config is None:

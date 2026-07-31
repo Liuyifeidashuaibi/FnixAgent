@@ -16,24 +16,24 @@
   - upsert 按 (entity_type, name) 主键去重,同一实体不会重复创建
   - merge=True 时合并属性而非覆盖,避免多次抽取丢失已有字段
 """
+
 from __future__ import annotations
 
 import threading
-from typing import Any, Optional
+from typing import Any
 
 from fnixagent.core.config import MemoryConfig
 from fnixagent.core.types import Entity
 
-
 # 允许的实体类型白名单(防止注入非法类型)
 _ALLOWED_ENTITY_TYPES = {
-    "user_profile",     # 用户画像
-    "paper",            # 论文
-    "project",          # 项目
-    "note",             # 笔记
-    "task",             # 任务
-    "document",         # 文档
-    "knowledge",        # 知识条目
+    "user_profile",  # 用户画像
+    "paper",  # 论文
+    "project",  # 项目
+    "note",  # 笔记
+    "task",  # 任务
+    "document",  # 文档
+    "knowledge",  # 知识条目
 }
 
 # 每种实体类型的允许字段白名单
@@ -68,7 +68,7 @@ class EntityMemory:
         保留新值中不存在的旧字段),避免多次抽取丢失已积累的属性。
     """
 
-    def __init__(self, config: Optional[MemoryConfig] = None) -> None:
+    def __init__(self, config: MemoryConfig | None = None) -> None:
         self._config = config or MemoryConfig()
         # (entity_type, name) -> Entity
         self._store: dict[tuple[str, str], Entity] = {}
@@ -80,17 +80,14 @@ class EntityMemory:
         violations: list[str] = []
         if entity.entity_type not in _ALLOWED_ENTITY_TYPES:
             violations.append(
-                f"未知实体类型: '{entity.entity_type}', "
-                f"允许: {_ALLOWED_ENTITY_TYPES}"
+                f"未知实体类型: '{entity.entity_type}', 允许: {_ALLOWED_ENTITY_TYPES}"
             )
             return violations
 
         allowed = _ALLOWED_FIELDS.get(entity.entity_type, set())
         for key in entity.attributes:
             if key not in allowed:
-                violations.append(
-                    f"实体 '{entity.entity_type}' 不允许字段: '{key}'"
-                )
+                violations.append(f"实体 '{entity.entity_type}' 不允许字段: '{key}'")
         return violations
 
     # -- CRUD --------------------------------------------------------------
@@ -121,9 +118,7 @@ class EntityMemory:
             key = (entity.entity_type, entity.name)
             # 容量限制:仅新实体计入计数,已有实体更新不触发
             if key not in self._store:
-                count = sum(
-                    1 for (t, _) in self._store if t == entity.entity_type
-                )
+                count = sum(1 for (t, _) in self._store if t == entity.entity_type)
                 if count >= self._config.entity_max_per_user:
                     return (
                         False,
@@ -145,9 +140,7 @@ class EntityMemory:
 
         return (True, [])
 
-    def get(
-        self, entity_type: str, name: str
-    ) -> Optional[Entity]:
+    def get(self, entity_type: str, name: str) -> Entity | None:
         """精确查询实体。"""
         with self._lock:
             return self._store.get((entity_type, name))
@@ -164,21 +157,18 @@ class EntityMemory:
     def list_by_type(self, entity_type: str) -> list[Entity]:
         """列出某类型的所有实体。"""
         with self._lock:
-            return [
-                e for (t, _), e in self._store.items() if t == entity_type
-            ]
+            return [e for (t, _), e in self._store.items() if t == entity_type]
 
-    def search_by_attribute(
-        self, entity_type: str, attr_key: str, attr_value: Any
-    ) -> list[Entity]:
+    def search_by_attribute(self, entity_type: str, attr_key: str, attr_value: Any) -> list[Entity]:
         """按属性值精确匹配查询。"""
         with self._lock:
             return [
-                e for (t, _), e in self._store.items()
+                e
+                for (t, _), e in self._store.items()
                 if t == entity_type and e.attributes.get(attr_key) == attr_value
             ]
 
-    def get_user_profile(self, user_id: str) -> Optional[Entity]:
+    def get_user_profile(self, user_id: str) -> Entity | None:
         """快捷获取用户画像。"""
         return self.get("user_profile", user_id)
 
@@ -194,7 +184,7 @@ class EntityMemory:
         """各类型实体数量。"""
         with self._lock:
             counts: dict[str, int] = {}
-            for (t, _) in self._store:
+            for t, _ in self._store:
                 counts[t] = counts.get(t, 0) + 1
             return counts
 

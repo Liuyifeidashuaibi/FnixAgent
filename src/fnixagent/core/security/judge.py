@@ -19,12 +19,11 @@ LLM 裁判注入检测器 (LLM Judge) - P1 安全模块。
   - 非严格模式:仅 high severity 威胁 → safe=False,中低危 → confirm
   - 所有异常不外泄,捕获后返回 safe=False + detail
 """
+
 from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Optional
-
 
 # ---------------------------------------------------------------------------
 # 模块级预编译正则(性能优化:避免每次 judge() 重复编译)
@@ -75,8 +74,8 @@ _COMPILED_FILE_WRITE: tuple[re.Pattern, ...] = tuple(
 )
 
 # 启发式阈值
-_REPEAT_THRESHOLD = 20      # 连续重复字符超过此长度视为可疑
-_NONPRINT_RATIO = 0.30      # 非可打印字符占比阈值
+_REPEAT_THRESHOLD = 20  # 连续重复字符超过此长度视为可疑
+_NONPRINT_RATIO = 0.30  # 非可打印字符占比阈值
 
 
 # ---------------------------------------------------------------------------
@@ -96,11 +95,12 @@ class JudgeVerdict:
         sanitized_output: sanitize 后的输出(仅 sanitize 模式产出)
         detail: 详细说明(命中模式 / 异常原因)
     """
+
     safe: bool
     confidence: float
     threats: list[str] = field(default_factory=list)
     recommendation: str = "allow"
-    sanitized_output: Optional[str] = None
+    sanitized_output: str | None = None
     detail: str = ""
 
 
@@ -114,6 +114,7 @@ class JudgeConfig:
         use_llm_judge: 是否用 LLM 二次审查(需注入 LLM 客户端,本模块默认 False)
         patterns_custom: 自定义正则列表(在 add_pattern 中动态追加)
     """
+
     enabled: bool = True
     strict_mode: bool = False
     use_llm_judge: bool = False
@@ -141,22 +142,20 @@ class LLMJudge:
       - add_pattern(pattern, category):   动态追加自定义检测模式
     """
 
-    def __init__(self, config: Optional[JudgeConfig] = None):
+    def __init__(self, config: JudgeConfig | None = None):
         self.config = config or JudgeConfig()
         # 自定义模式:按 category 分组存储 (category, compiled)
         self._custom_patterns: list[tuple[str, re.Pattern]] = []
         for pat in self.config.patterns_custom:
             try:
-                self._custom_patterns.append(
-                    ("custom", re.compile(pat, re.IGNORECASE))
-                )
+                self._custom_patterns.append(("custom", re.compile(pat, re.IGNORECASE)))
             except re.error:
                 # 非法正则忽略,不阻断初始化
                 pass
 
     # -- 核心入口:审查文本输出 -------------------------------------------
 
-    def judge(self, output: str, context: Optional[dict] = None) -> JudgeVerdict:
+    def judge(self, output: str, context: dict | None = None) -> JudgeVerdict:
         """审查 LLM 输出文本。
 
         多层检测:
@@ -224,7 +223,9 @@ class LLMJudge:
             # 综合评分
             high_count = severities.count(_SEVERITY_HIGH)
             medium_count = severities.count(_SEVERITY_MEDIUM)
-            confidence = min(1.0, 0.4 * (high_count + medium_count) + 0.2 * (1 if heuristic_hit else 0))
+            confidence = min(
+                1.0, 0.4 * (high_count + medium_count) + 0.2 * (1 if heuristic_hit else 0)
+            )
 
             # 判定 safe
             has_high = high_count > 0
@@ -297,14 +298,10 @@ class LLMJudge:
             detail_parts: list[str] = []
 
             # 1. 白名单检查
-            authorized = any(
-                fnmatch.fnmatch(tool_name, pat) for pat in allowed_tools
-            )
+            authorized = any(fnmatch.fnmatch(tool_name, pat) for pat in allowed_tools)
             if not authorized:
                 threats.append(f"unauthorized_tool: {tool_name}")
-                detail_parts.append(
-                    f"工具 {tool_name} 不在白名单 {allowed_tools}"
-                )
+                detail_parts.append(f"工具 {tool_name} 不在白名单 {allowed_tools}")
                 # 未授权工具直接 deny
                 return JudgeVerdict(
                     safe=False,
@@ -332,10 +329,7 @@ class LLMJudge:
             else:
                 safe = not has_high
 
-            recommendation = (
-                "allow" if safe and not threats
-                else ("confirm" if safe else "deny")
-            )
+            recommendation = "allow" if safe and not threats else ("confirm" if safe else "deny")
 
             return JudgeVerdict(
                 safe=safe,
@@ -381,9 +375,7 @@ class LLMJudge:
             for _, p in self._custom_patterns:
                 sanitized = p.sub("[REDACTED]", sanitized)
             # base64 大块
-            sanitized = re.sub(
-                r"[A-Za-z0-9+/]{80,}={0,2}", "[REDACTED]", sanitized
-            )
+            sanitized = re.sub(r"[A-Za-z0-9+/]{80,}={0,2}", "[REDACTED]", sanitized)
             return sanitized
         except Exception:
             # 异常时原样返回(不阻断主流程)
@@ -420,9 +412,7 @@ class LLMJudge:
 
         # 非可打印字符占比过高(疑似编码混淆)
         if len(output) > 0:
-            non_printable = sum(
-                1 for c in output if not c.isprintable() and c not in "\n\r\t"
-            )
+            non_printable = sum(1 for c in output if not c.isprintable() and c not in "\n\r\t")
             ratio = non_printable / len(output)
             if ratio > _NONPRINT_RATIO:
                 return f"heuristic_nonprint: 非可打印字符占比 {ratio:.0%}"

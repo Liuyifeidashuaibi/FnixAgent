@@ -8,10 +8,11 @@
 性能说明: 对 1024 维向量, 纯 Python 实现单次点积 < 50us 可接受;
 超大批量场景交由 embedder 层用 numpy 批处理。
 """
+
 from __future__ import annotations
 
 import math
-from typing import Sequence
+from collections.abc import Sequence
 
 # 向量类型: 任何浮点序列(list/tuple 等)
 Vector = Sequence[float]
@@ -26,6 +27,7 @@ _EPSILON = 1e-12
 # 输入校验工具
 # ===========================================================================
 
+
 def _check_nonempty(a: Sequence[float], name: str = "vector") -> None:
     """校验向量非空, 空向量抛 ValueError。"""
     if a is None or len(a) == 0:
@@ -35,14 +37,13 @@ def _check_nonempty(a: Sequence[float], name: str = "vector") -> None:
 def _check_same_dim(a: Sequence[float], b: Sequence[float]) -> None:
     """校验两向量维度一致, 不一致抛 ValueError(防御性编程, 避免静默截断)。"""
     if len(a) != len(b):
-        raise ValueError(
-            f"向量维度不一致: len(a)={len(a)} vs len(b)={len(b)}"
-        )
+        raise ValueError(f"向量维度不一致: len(a)={len(a)} vs len(b)={len(b)}")
 
 
 # ===========================================================================
 # 基础向量运算
 # ===========================================================================
+
 
 def dot(a: Vector, b: Vector) -> float:
     """点积: sum(a_i * b_i)。
@@ -179,11 +180,12 @@ def vector_subtract(a: Vector, b: Vector) -> list[float]:
 # 矩阵 / 批量运算
 # ===========================================================================
 
+
 def matmul(a: Matrix, b: Matrix) -> Matrix:
     """矩阵乘法 a(m×k) × b(k×n) = c(m×n)。"""
     if not a or not b:
         return []
-    n_cols_b = len(b[0])
+    len(b[0])
     # 转置 b 加速列访问(将列访问转为行访问)
     b_t = list(zip(*b))
     return [[sum(x * y for x, y in zip(row_a, col_b)) for col_b in b_t] for row_a in a]
@@ -231,6 +233,7 @@ def batch_cosine_similarity(query: Vector, matrix: Matrix) -> list[float]:
 # 统计与归约
 # ===========================================================================
 
+
 def mean(a: Vector) -> float:
     """算术平均值。空集合返回 0.0。"""
     return sum(a) / len(a) if a else 0.0
@@ -275,6 +278,7 @@ def zscore(a: Vector) -> list[float]:
 # ===========================================================================
 # Top-K 检索 (部分排序, 高性能核心算法)
 # ===========================================================================
+
 
 def top_k_indices(scores: Sequence[float], k: int) -> list[int]:
     """返回得分最高的 k 个索引(按得分降序)。
@@ -322,9 +326,7 @@ def top_k_indices(scores: Sequence[float], k: int) -> list[int]:
     return result
 
 
-def top_k_with_scores(
-    scores: Sequence[float], k: int
-) -> list[tuple[int, float]]:
+def top_k_with_scores(scores: Sequence[float], k: int) -> list[tuple[int, float]]:
     """返回 (index, score) 降序列表。
 
     边界:
@@ -338,6 +340,7 @@ def top_k_with_scores(
 # ===========================================================================
 # Softmax 与概率采样
 # ===========================================================================
+
 
 def softmax(a: Sequence[float], temperature: float = 1.0) -> list[float]:
     """数值稳定的 Softmax, temperature 越大越平滑。"""
@@ -371,6 +374,7 @@ def argmax(a: Sequence[float]) -> int:
 # 距离/相似度矩阵构建 (供聚类/去重使用)
 # ===========================================================================
 
+
 def pairwise_cosine_matrix(vectors: Matrix) -> Matrix:
     """计算向量集合两两余弦相似度方阵。
 
@@ -399,6 +403,7 @@ def pairwise_cosine_matrix(vectors: Matrix) -> Matrix:
 # 向量平均 (用于多路召回融合 / 句子聚合)
 # ===========================================================================
 
+
 def mean_pool(vectors: Sequence[Vector]) -> list[float]:
     """对一组等长向量取平均。
 
@@ -413,18 +418,14 @@ def mean_pool(vectors: Sequence[Vector]) -> list[float]:
     for v in vectors:
         # 维度一致性校验, 避免静默截断
         if len(v) != dim:
-            raise ValueError(
-                f"向量维度不一致: 期望 {dim}, 实际 {len(v)}"
-            )
+            raise ValueError(f"向量维度不一致: 期望 {dim}, 实际 {len(v)}")
         for i in range(dim):
             out[i] += v[i]
     n = len(vectors)
     return [x / n for x in out]
 
 
-def weighted_mean_pool(
-    vectors: Sequence[Vector], weights: Sequence[float]
-) -> list[float]:
+def weighted_mean_pool(vectors: Sequence[Vector], weights: Sequence[float]) -> list[float]:
     """加权平均池化。
 
     Raises:
@@ -433,9 +434,7 @@ def weighted_mean_pool(
     if not vectors:
         return []
     if len(weights) != len(vectors):
-        raise ValueError(
-            f"weights 数量({len(weights)}) != vectors 数量({len(vectors)})"
-        )
+        raise ValueError(f"weights 数量({len(weights)}) != vectors 数量({len(vectors)})")
     dim = len(vectors[0])
     total_w = sum(weights)
     # 权重全零 → 退化为均权平均
@@ -444,9 +443,7 @@ def weighted_mean_pool(
     out = [0.0] * dim
     for v, w in zip(vectors, weights):
         if len(v) != dim:
-            raise ValueError(
-                f"向量维度不一致: 期望 {dim}, 实际 {len(v)}"
-            )
+            raise ValueError(f"向量维度不一致: 期望 {dim}, 实际 {len(v)}")
         for i in range(dim):
             out[i] += v[i] * w
     return [x / total_w for x in out]
@@ -455,6 +452,7 @@ def weighted_mean_pool(
 # ===========================================================================
 # 常用数学工具
 # ===========================================================================
+
 
 def clamp(x: float, lo: float, hi: float) -> float:
     """限制在区间 [lo, hi]。"""

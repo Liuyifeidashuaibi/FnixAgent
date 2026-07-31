@@ -15,10 +15,11 @@ config 格式:{"thread_id": str, "checkpoint_id": Optional[str]}
   - thread_id 必填
   - checkpoint_id 可选(为 None 时表示最新检查点)
 """
+
 from __future__ import annotations
 
 import abc
-from typing import Any, Iterator, Optional
+from collections.abc import Iterator
 
 from fnixagent.core.checkpoint.types import (
     Checkpoint,
@@ -60,7 +61,7 @@ class BaseCheckpointer(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get_tuple(self, config: dict) -> Optional[CheckpointTuple]:
+    def get_tuple(self, config: dict) -> CheckpointTuple | None:
         """获取检查点元组。
 
         Args:
@@ -75,11 +76,11 @@ class BaseCheckpointer(abc.ABC):
     @abc.abstractmethod
     def list(
         self,
-        config: Optional[dict],
+        config: dict | None,
         *,
-        filter: Optional[dict] = None,
-        before: Optional[dict] = None,
-        limit: Optional[int] = None,
+        filter: dict | None = None,
+        before: dict | None = None,
+        limit: int | None = None,
     ) -> Iterator[CheckpointTuple]:
         """列出检查点历史。
 
@@ -96,14 +97,14 @@ class BaseCheckpointer(abc.ABC):
 
     # -- 派生方法(基于 get_tuple,子类通常无需覆盖)-------------------------
 
-    def get(self, config: dict) -> Optional[dict]:
+    def get(self, config: dict) -> dict | None:
         """获取检查点的 channel_values(快捷方式)。"""
         tuple = self.get_tuple(config)
         if tuple is None:
             return None
         return tuple.checkpoint.channel_values
 
-    def get_state(self, config: dict) -> Optional[dict]:
+    def get_state(self, config: dict) -> dict | None:
         """获取当前状态(channel_values)。等价于 get()。"""
         return self.get(config)
 
@@ -111,7 +112,7 @@ class BaseCheckpointer(abc.ABC):
         self,
         config: dict,
         values: dict,
-        metadata: Optional[dict] = None,
+        metadata: dict | None = None,
     ) -> dict:
         """增量更新状态(创建新检查点)。
 
@@ -142,12 +143,10 @@ class BaseCheckpointer(abc.ABC):
             # 创建全新检查点
             old_values: dict = {}
             old_versions: dict = {}
-            parent_config = None
             step = 0
         else:
             old_values = dict(tuple.checkpoint.channel_values)
             old_versions = dict(tuple.checkpoint.channel_versions)
-            parent_config = tuple.config
             step = tuple.metadata.step + 1
 
         # 合并新值(后者覆盖前者)
@@ -175,9 +174,7 @@ class BaseCheckpointer(abc.ABC):
             config={"thread_id": thread_id, "checkpoint_id": None},
             checkpoint=checkpoint,
             metadata=checkpoint.metadata,
-            new_versions={
-                k: new_versions[k] for k in values if k in new_versions
-            },
+            new_versions={k: new_versions[k] for k in values if k in new_versions},
         )
 
     # ------------------------------------------------------------------
@@ -194,27 +191,27 @@ class BaseCheckpointer(abc.ABC):
         """异步保存检查点(默认委托给同步)。"""
         return self.put(config, checkpoint, metadata, new_versions)
 
-    async def aget_tuple(self, config: dict) -> Optional[CheckpointTuple]:
+    async def aget_tuple(self, config: dict) -> CheckpointTuple | None:
         """异步获取检查点元组。"""
         return self.get_tuple(config)
 
     async def alist(
         self,
-        config: Optional[dict],
+        config: dict | None,
         *,
-        filter: Optional[dict] = None,
-        before: Optional[dict] = None,
-        limit: Optional[int] = None,
+        filter: dict | None = None,
+        before: dict | None = None,
+        limit: int | None = None,
     ):
         """异步列出检查点。"""
         for tuple in self.list(config, filter=filter, before=before, limit=limit):
             yield tuple
 
-    async def aget(self, config: dict) -> Optional[dict]:
+    async def aget(self, config: dict) -> dict | None:
         """异步获取 channel_values。"""
         return self.get(config)
 
-    async def aget_state(self, config: dict) -> Optional[dict]:
+    async def aget_state(self, config: dict) -> dict | None:
         """异步获取当前状态。"""
         return self.get_state(config)
 
@@ -222,7 +219,7 @@ class BaseCheckpointer(abc.ABC):
         self,
         config: dict,
         values: dict,
-        metadata: Optional[dict] = None,
+        metadata: dict | None = None,
     ) -> dict:
         """异步增量更新状态。"""
         return self.update_state(config, values, metadata)

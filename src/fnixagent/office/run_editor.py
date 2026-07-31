@@ -16,15 +16,15 @@
   - 删除段落:用 para._element.getparent().remove(para._element)
   - 所有操作失败不抛异常,记录到 failed_ops,继续后续操作
 """
+
 from __future__ import annotations
 
 import os
 import re
 from dataclasses import asdict, dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 from fnixagent.office.base import BaseExpert, ExpertError, ExpertResult
-
 
 # 全角/半角空白括号正则:匹配 () 或 (  ) 或 （） 或 （  ）
 _PAREN_BLANK_RE = re.compile(r"[（(]\s*[）)]")
@@ -101,7 +101,7 @@ class RunEditor(BaseExpert):
         self,
         path: str,
         ops: list[EditOp],
-        output_path: Optional[str] = None,
+        output_path: str | None = None,
     ) -> ExpertResult:
         """按扩展名派发到对应文档类型的编辑方法。
 
@@ -120,15 +120,13 @@ class RunEditor(BaseExpert):
             return self.edit_excel(path, ops, output_path)
         if ext == "pptx":
             return self.edit_ppt(path, ops, output_path)
-        return self._failure(
-            f"unsupported extension: .{ext}, allowed: docx/xlsx/pptx"
-        )
+        return self._failure(f"unsupported extension: .{ext}, allowed: docx/xlsx/pptx")
 
     def edit_word(
         self,
         path: str,
         ops: list[EditOp],
-        output_path: Optional[str] = None,
+        output_path: str | None = None,
     ) -> ExpertResult:
         """Word run 级编辑。
 
@@ -143,9 +141,7 @@ class RunEditor(BaseExpert):
         if not isinstance(ops, list) or not ops:
             return self._failure("ops must be a non-empty list")
 
-        err = self._validate_path(
-            path, must_exist=True, allowed_exts=("docx",)
-        )
+        err = self._validate_path(path, must_exist=True, allowed_exts=("docx",))
         if err:
             return self._failure(err)
         if output_path:
@@ -176,7 +172,7 @@ class RunEditor(BaseExpert):
             save_path = output_path or path
             doc.save(save_path)
             return self._success(save_path, report=asdict(report))
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"edit_word IO failed: {e}")
         except Exception as e:
             return self._failure(f"edit_word failed: {e}")
@@ -185,7 +181,7 @@ class RunEditor(BaseExpert):
         self,
         path: str,
         ops: list[EditOp],
-        output_path: Optional[str] = None,
+        output_path: str | None = None,
     ) -> ExpertResult:
         """Excel 单元格编辑。
 
@@ -203,9 +199,7 @@ class RunEditor(BaseExpert):
         if not isinstance(ops, list) or not ops:
             return self._failure("ops must be a non-empty list")
 
-        err = self._validate_path(
-            path, must_exist=True, allowed_exts=("xlsx",)
-        )
+        err = self._validate_path(path, must_exist=True, allowed_exts=("xlsx",))
         if err:
             return self._failure(err)
         if output_path:
@@ -229,7 +223,7 @@ class RunEditor(BaseExpert):
             save_path = output_path or path
             wb.save(save_path)
             return self._success(save_path, report=asdict(report))
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"edit_excel IO failed: {e}")
         except Exception as e:
             return self._failure(f"edit_excel failed: {e}")
@@ -238,7 +232,7 @@ class RunEditor(BaseExpert):
         self,
         path: str,
         ops: list[EditOp],
-        output_path: Optional[str] = None,
+        output_path: str | None = None,
     ) -> ExpertResult:
         """PPT 文本框编辑。
 
@@ -253,9 +247,7 @@ class RunEditor(BaseExpert):
         if not isinstance(ops, list) or not ops:
             return self._failure("ops must be a non-empty list")
 
-        err = self._validate_path(
-            path, must_exist=True, allowed_exts=("pptx",)
-        )
+        err = self._validate_path(path, must_exist=True, allowed_exts=("pptx",))
         if err:
             return self._failure(err)
         if output_path:
@@ -279,7 +271,7 @@ class RunEditor(BaseExpert):
             save_path = output_path or path
             prs.save(save_path)
             return self._success(save_path, report=asdict(report))
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"edit_ppt IO failed: {e}")
         except Exception as e:
             return self._failure(f"edit_ppt failed: {e}")
@@ -313,9 +305,7 @@ class RunEditor(BaseExpert):
                         target_para = para
                         break
                 if target_para is None:
-                    self._record_op(
-                        report, op, False, error="target paragraph not found"
-                    )
+                    self._record_op(report, op, False, error="target paragraph not found")
                     return
 
                 success = False
@@ -330,9 +320,7 @@ class RunEditor(BaseExpert):
                     target_para._element.addprevious(new_para._element)
                     success = True
                 else:  # after
-                    success = self._word_insert_after(
-                        doc, target_para, op.value
-                    )
+                    success = self._word_insert_after(doc, target_para, op.value)
                 self._record_op(report, op, success, position=op.position)
 
             elif op.op_type == "delete":
@@ -397,9 +385,7 @@ class RunEditor(BaseExpert):
                 replaced = True
         return replaced
 
-    def _word_fill_paren(
-        self, para: Any, blank_marker: str, value: str
-    ) -> bool:
+    def _word_fill_paren(self, para: Any, blank_marker: str, value: str) -> bool:
         """填入括号空白,如把"（ ）"变成"（B）"。
 
         用正则定位 全角/半角 空白括号,在对应 run 上替换。
@@ -419,9 +405,7 @@ class RunEditor(BaseExpert):
         filled = False
         for run in para.runs:
             if _PAREN_BLANK_RE.search(run.text):
-                run.text = _PAREN_BLANK_RE.sub(
-                    replacement, run.text, count=1
-                )
+                run.text = _PAREN_BLANK_RE.sub(replacement, run.text, count=1)
                 filled = True
                 break
         return filled
@@ -454,7 +438,7 @@ class RunEditor(BaseExpert):
         doc: Any,
         target_para: Any,
         text: str,
-        style: Optional[str] = None,
+        style: str | None = None,
     ) -> bool:
         """在目标段落后插入新段落。
 
@@ -492,9 +476,7 @@ class RunEditor(BaseExpert):
             if op.op_type == "replace":
                 if self._is_cell_ref(op.target):
                     ws = wb.active
-                    success = self._excel_set_cell(
-                        ws, op.target, op.value, op.preserve_format
-                    )
+                    success = self._excel_set_cell(ws, op.target, op.value, op.preserve_format)
                     self._record_op(report, op, success)
                 else:
                     # 在所有 sheet 中查找替换
@@ -507,18 +489,14 @@ class RunEditor(BaseExpert):
                                     and isinstance(cell.value, str)
                                     and op.target in cell.value
                                 ):
-                                    cell.value = cell.value.replace(
-                                        op.target, op.value
-                                    )
+                                    cell.value = cell.value.replace(op.target, op.value)
                                     count += 1
                     self._record_op(report, op, count > 0, count=count)
 
             elif op.op_type == "insert":
                 ws = wb.active
                 if self._is_cell_ref(op.target):
-                    success = self._excel_set_cell(
-                        ws, op.target, op.value, op.preserve_format
-                    )
+                    success = self._excel_set_cell(ws, op.target, op.value, op.preserve_format)
                     self._record_op(report, op, success)
                 else:
                     self._record_op(
@@ -547,9 +525,7 @@ class RunEditor(BaseExpert):
             elif op.op_type == "fill_blank":
                 ws = wb.active
                 if self._is_cell_ref(op.target):
-                    success = self._excel_set_cell(
-                        ws, op.target, op.value, op.preserve_format
-                    )
+                    success = self._excel_set_cell(ws, op.target, op.value, op.preserve_format)
                     self._record_op(report, op, success)
                 else:
                     self._record_op(
@@ -630,9 +606,7 @@ class RunEditor(BaseExpert):
                         for para in shape.text_frame.paragraphs:
                             for run in para.runs:
                                 if op.target in (run.text or ""):
-                                    run.text = run.text.replace(
-                                        op.target, op.value
-                                    )
+                                    run.text = run.text.replace(op.target, op.value)
                                     count += 1
                 self._record_op(report, op, count > 0, count=count)
 
@@ -668,9 +642,7 @@ class RunEditor(BaseExpert):
             elif op.op_type == "fill_blank":
                 count = 0
                 use_fullwidth = "（" in op.target or "）" in op.target
-                replacement = (
-                    f"（{op.value}）" if use_fullwidth else f"({op.value})"
-                )
+                replacement = f"（{op.value}）" if use_fullwidth else f"({op.value})"
                 for slide in prs.slides:
                     for shape in slide.shapes:
                         if not shape.has_text_frame:
@@ -678,9 +650,7 @@ class RunEditor(BaseExpert):
                         for para in shape.text_frame.paragraphs:
                             for run in para.runs:
                                 if _PAREN_BLANK_RE.search(run.text or ""):
-                                    run.text = _PAREN_BLANK_RE.sub(
-                                        replacement, run.text, count=1
-                                    )
+                                    run.text = _PAREN_BLANK_RE.sub(replacement, run.text, count=1)
                                     count += 1
                 self._record_op(report, op, count > 0, count=count)
 

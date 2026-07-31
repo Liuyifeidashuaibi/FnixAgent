@@ -14,6 +14,7 @@
   - 步骤数与结果数不一致(DAG 中途断链)→ 触发重规划
   - 重规划次数受 max_replans 限制,耗尽后返回当前 trace(不抛异常)
 """
+
 from __future__ import annotations
 
 import json
@@ -63,10 +64,12 @@ class PlanExecuteEngine(ReasoningEngine):
         trace.steps = list(plan.steps)
 
         if not plan.steps:
-            trace.steps.append(PlanStep(
-                step_no=1,
-                description="无法生成计划,直接回复",
-            ))
+            trace.steps.append(
+                PlanStep(
+                    step_no=1,
+                    description="无法生成计划,直接回复",
+                )
+            )
             return trace
 
         # ---- Phase 2 + Phase 3: 执行 + 校验(+ 重规划) -------------------
@@ -83,9 +86,7 @@ class PlanExecuteEngine(ReasoningEngine):
             # ---- 触发重规划 ------------------------------------------------
             replan_count += 1
             try:
-                plan = self._replan(
-                    ctx, plan, results, failed_step_nos, replan_count
-                )
+                plan = self._replan(ctx, plan, results, failed_step_nos, replan_count)
             except ReasoningError:
                 # 重规划 LLM 调用失败,返回当前 trace(不抛异常,保留已执行结果)
                 trace.iterations = len(plan.steps)
@@ -117,12 +118,11 @@ class PlanExecuteEngine(ReasoningEngine):
             role=MessageRole.SYSTEM,
             content=(
                 "你是一个任务规划器。将用户目标拆解为可执行的子任务计划。\n\n"
-                "可用工具:\n" +
-                "\n".join(
-                    f"- {t['function']['name']}: {t['function']['description']}"
-                    for t in tool_desc
-                ) +
-                "\n\n输出 JSON 格式:\n"
+                "可用工具:\n"
+                + "\n".join(
+                    f"- {t['function']['name']}: {t['function']['description']}" for t in tool_desc
+                )
+                + "\n\n输出 JSON 格式:\n"
                 '{"goal": "目标", "steps": [{"step_no": 1, '
                 '"description": "描述", "tool_name": "工具名", '
                 '"arguments": {}, "depends_on": []}]}\n'
@@ -174,19 +174,21 @@ class PlanExecuteEngine(ReasoningEngine):
         for s in data.get("steps", []) or []:
             if not isinstance(s, dict):
                 continue
-            steps.append(PlanStep(
-                step_no=int(s.get("step_no", len(steps) + 1)),
-                description=str(s.get("description", "")),
-                tool_name=s.get("tool_name"),
-                arguments=(
-                    dict(s.get("arguments", {}))
-                    if isinstance(s.get("arguments"), dict) else {}
-                ),
-                depends_on=(
-                    list(s.get("depends_on", []))
-                    if isinstance(s.get("depends_on"), list) else []
-                ),
-            ))
+            steps.append(
+                PlanStep(
+                    step_no=int(s.get("step_no", len(steps) + 1)),
+                    description=str(s.get("description", "")),
+                    tool_name=s.get("tool_name"),
+                    arguments=(
+                        dict(s.get("arguments", {})) if isinstance(s.get("arguments"), dict) else {}
+                    ),
+                    depends_on=(
+                        list(s.get("depends_on", []))
+                        if isinstance(s.get("depends_on"), list)
+                        else []
+                    ),
+                )
+            )
 
         if not steps:
             return self._fallback_plan(goal)
@@ -210,12 +212,14 @@ class PlanExecuteEngine(ReasoningEngine):
         # 构建 DAG 步骤数据(execute_dag 内部做拓扑排序与并行调度)
         dag_steps: list[dict[str, Any]] = []
         for s in plan.steps:
-            dag_steps.append({
-                "step_no": s.step_no,
-                "tool_name": s.tool_name or "",
-                "arguments": s.arguments,
-                "depends_on": s.depends_on,
-            })
+            dag_steps.append(
+                {
+                    "step_no": s.step_no,
+                    "tool_name": s.tool_name or "",
+                    "arguments": s.arguments,
+                    "depends_on": s.depends_on,
+                }
+            )
 
         results: list[ToolResult] = ctx.tool_executor.execute_dag(dag_steps)
 
@@ -249,16 +253,14 @@ class PlanExecuteEngine(ReasoningEngine):
         failed_step_nos: list[int] = []
         # 长度不一致:执行链路断裂,触发重规划
         if len(results) < len(plan.steps):
-            missing = plan.steps[len(results):]
+            missing = plan.steps[len(results) :]
             return True, [s.step_no for s in missing if s.tool_name]
 
         for step, result in zip(plan.steps, results):
             if not step.tool_name:
                 # 纯推理步骤,无工具调用,跳过校验
                 continue
-            if result.status in (
-                ToolExecutionStatus.FAILED, ToolExecutionStatus.TIMEOUT
-            ):
+            if result.status in (ToolExecutionStatus.FAILED, ToolExecutionStatus.TIMEOUT):
                 failed_step_nos.append(step.step_no)
 
         return (len(failed_step_nos) > 0), failed_step_nos
@@ -277,9 +279,7 @@ class PlanExecuteEngine(ReasoningEngine):
         也避免重复全量规划(只重生成失败步骤及其后续)。
         """
         # 汇总失败步骤的 error,供 LLM 针对性调整
-        failure_summary = self._summarize_failures(
-            original_plan, results, failed_step_nos
-        )
+        failure_summary = self._summarize_failures(original_plan, results, failed_step_nos)
 
         system_msg = Message(
             role=MessageRole.SYSTEM,
@@ -296,9 +296,7 @@ class PlanExecuteEngine(ReasoningEngine):
         user_msg = Message(
             role=MessageRole.USER,
             content=(
-                f"原始目标: {ctx.goal}\n"
-                f"失败步骤: {failed_step_nos}\n"
-                f"失败详情:\n{failure_summary}"
+                f"原始目标: {ctx.goal}\n失败步骤: {failed_step_nos}\n失败详情:\n{failure_summary}"
             ),
         )
 

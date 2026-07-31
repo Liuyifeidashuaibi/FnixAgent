@@ -1,4 +1,4 @@
-﻿"""
+"""
 飞轮闭环集成测试。
 
 验证 Day 7 核心交付:
@@ -10,6 +10,7 @@
 
 注: 使用 MockLLMProvider + 真实拓扑图,模拟最小可运行链路。
 """
+
 import os
 import sys
 
@@ -39,9 +40,9 @@ def components():
 
     使用临时 trace 目录避免污染工作区。
     """
-    tmp_dir = os.path.join(
-        os.path.dirname(__file__), "..", "..", ".tmp_trace_integration"
-    )
+    tmp_dir = os.path.join(os.path.dirname(__file__), "..", "..", ".tmp_trace_integration")
+    # 保存原值,测试结束后还原,避免环境变量泄漏到其它测试
+    prev_trace_dir = os.environ.get("FNIXAGENT_TRACE_DIR")
     os.environ["FNIXAGENT_TRACE_DIR"] = tmp_dir
 
     cfg = get_config()
@@ -55,6 +56,12 @@ def components():
 
     if os.path.exists(tmp_dir):
         shutil.rmtree(tmp_dir, ignore_errors=True)
+
+    # 还原环境变量
+    if prev_trace_dir is None:
+        os.environ.pop("FNIXAGENT_TRACE_DIR", None)
+    else:
+        os.environ["FNIXAGENT_TRACE_DIR"] = prev_trace_dir
 
 
 class TestGraphBuild:

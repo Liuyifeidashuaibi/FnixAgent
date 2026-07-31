@@ -17,11 +17,11 @@
   - 原 core/orchestrator/context.py 的 OrchestratorContext 仍保留,供现有 lifecycle.py 使用
   - P1-4 Runner 将切换到本模块的新 OrchestratorContext
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Optional
-
+from typing import Any
 
 # ---------------------------------------------------------------------------
 # 可持久化的 Agent 状态
@@ -55,7 +55,7 @@ class AgentState:
     goal: str = ""
     messages: list = field(default_factory=list)  # list[Msg]
     reasoning_mode: str = ""
-    execution_trace: Optional[dict] = None
+    execution_trace: dict | None = None
     final_response: str = ""
 
     # 安全拦截
@@ -72,7 +72,7 @@ class AgentState:
     # 记忆上下文(仅可序列化部分)
     short_term_history: list = field(default_factory=list)
     long_term_memories: list = field(default_factory=list)
-    user_profile: Optional[dict] = None
+    user_profile: dict | None = None
 
     def to_dict(self) -> dict:
         """转为字典(用于日志/调试/序列化)。
@@ -122,7 +122,7 @@ class AgentState:
         }
 
     @classmethod
-    def from_serializable(cls, data: dict) -> "AgentState":
+    def from_serializable(cls, data: dict) -> AgentState:
         """从 to_serializable 产出的字典重建 AgentState。
 
         Args:
@@ -135,9 +135,7 @@ class AgentState:
             TypeError: data 不是 dict
         """
         if not isinstance(data, dict):
-            raise TypeError(
-                f"data must be dict, got {type(data).__name__}"
-            )
+            raise TypeError(f"data must be dict, got {type(data).__name__}")
         return cls(
             goal=data.get("goal", ""),
             messages=list(data.get("messages", [])),
@@ -238,7 +236,7 @@ class OrchestratorContext:
     """
 
     state: AgentState = field(default_factory=AgentState)
-    engines: Optional[EngineRefs] = None
+    engines: EngineRefs | None = None
 
     # -- 便捷访问代理(向后兼容旧 ctx.xxx 写法)-------------------------------
     @property
@@ -327,7 +325,7 @@ class OrchestratorContext:
     def from_legacy(
         cls,
         legacy_ctx: Any,
-    ) -> "OrchestratorContext":
+    ) -> OrchestratorContext:
         """从旧版 OrchestratorContext(core/orchestrator/context.py)转换。
 
         用于 P1-4 Runner 兼容现有 lifecycle.py 创建的旧上下文。

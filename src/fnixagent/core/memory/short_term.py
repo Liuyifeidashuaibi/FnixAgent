@@ -19,11 +19,11 @@
   - 单条消息 token 超过 max_tokens 时保留该消息(避免记忆清空)
   - 仅 system 消息时不淘汰
 """
+
 from __future__ import annotations
 
 import threading
 import time
-from typing import Optional
 
 from fnixagent.core.text import estimate_tokens
 from fnixagent.core.types import Message, MessageRole
@@ -106,9 +106,7 @@ class ShortTermMemory:
             now = time.monotonic()
             self._messages = [m for m in messages if m is not None]
             self._access_times = [now] * len(self._messages)
-            self._total_tokens = sum(
-                estimate_tokens(m.content) + 4 for m in self._messages
-            )
+            self._total_tokens = sum(estimate_tokens(m.content) + 4 for m in self._messages)
             self._trim()
 
     # -- 读取 --------------------------------------------------------------
@@ -172,9 +170,7 @@ class ShortTermMemory:
         # Token 限制(使用增量计数器,无需全量重算)
         # 边界:至少保留 1 条非 system 消息(避免清空)
         while self._total_tokens > self._max_tokens:
-            non_system_count = sum(
-                1 for m in self._messages if m.role != MessageRole.SYSTEM
-            )
+            non_system_count = sum(1 for m in self._messages if m.role != MessageRole.SYSTEM)
             if non_system_count <= 1:
                 break  # 仅剩 1 条非 system,保留避免清空
             victim = self._find_lru_victim()
@@ -182,13 +178,13 @@ class ShortTermMemory:
                 break
             self._remove_at(victim)
 
-    def _find_lru_victim(self) -> Optional[int]:
+    def _find_lru_victim(self) -> int | None:
         """找到最久未访问的非 system 消息索引(LRU)。
 
         Returns:
             被淘汰消息的索引;无非 system 消息时返回 None
         """
-        victim_idx: Optional[int] = None
+        victim_idx: int | None = None
         victim_time: float = float("inf")
         for i, msg in enumerate(self._messages):
             if msg.role == MessageRole.SYSTEM:
@@ -223,9 +219,7 @@ class ShortTermMemory:
                     keep_times.append(now)
             self._messages = keep_msgs
             self._access_times = keep_times
-            self._total_tokens = sum(
-                estimate_tokens(m.content) + 4 for m in self._messages
-            )
+            self._total_tokens = sum(estimate_tokens(m.content) + 4 for m in self._messages)
 
     def clear_all(self) -> None:
         """完全清空。"""

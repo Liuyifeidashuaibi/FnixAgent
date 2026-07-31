@@ -5,10 +5,12 @@
 支持: 注册/注销/查询/按分类列出/生成 LLM 工具描述列表。
 线程安全: threading.RLock。
 """
+
 from __future__ import annotations
 
 import threading
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from typing import Any
 
 from fnixagent.core.exceptions import ToolNotFoundError
 from fnixagent.core.tools.protocol import RegisteredTool, ToolFunc, ToolMetadata
@@ -55,9 +57,7 @@ class ToolRegistry:
         if not callable(func):
             raise TypeError(f"func 必须可调用, 实为 {type(func).__name__}")
         with self._lock:
-            self._tools[metadata.name] = RegisteredTool(
-                metadata=metadata, func=func
-            )
+            self._tools[metadata.name] = RegisteredTool(metadata=metadata, func=func)
 
     def unregister(self, name: str) -> bool:
         """注销工具。
@@ -99,6 +99,7 @@ class ToolRegistry:
         Returns:
             装饰器函数
         """
+
         def decorator(func: ToolFunc) -> ToolFunc:
             meta = ToolMetadata(
                 name=name,
@@ -111,6 +112,7 @@ class ToolRegistry:
             )
             self.register(meta, func)
             return func
+
         return decorator
 
     # -- 查询 --------------------------------------------------------------
@@ -145,9 +147,7 @@ class ToolRegistry:
         with self._lock:
             return name in self._tools
 
-    def list_tools(
-        self, category: Optional[str] = None
-    ) -> list[ToolMetadata]:
+    def list_tools(self, category: str | None = None) -> list[ToolMetadata]:
         """列出所有(或指定分类的)工具元数据。
 
         Args:
@@ -164,7 +164,7 @@ class ToolRegistry:
 
     def list_for_llm(
         self,
-        permission_filter: Optional[ToolPermission] = None,
+        permission_filter: ToolPermission | None = None,
     ) -> list[dict]:
         """生成给 LLM function-calling 的工具描述列表。
 
@@ -223,11 +223,28 @@ class ToolRegistry:
         Raises:
             ToolNotFoundError: 工具未注册
         """
+        from fnixagent.core.tools.policy import get_tool_policy
+
+        args = dict(args or {})
+        decision = get_tool_policy().evaluate(tool_name, args)
+        if decision.cached_result is not None and decision.reason == "idempotent_cache_hit":
+            return decision.cached_result
+        if not decision.allowed:
+            return {
+                "success": False,
+                "error": decision.reason,
+                "risk": decision.risk.value,
+                "requires_approval": decision.requires_approval,
+                "idempotency_key": decision.idempotency_key,
+            }
+
         with self._lock:
             tool = self._tools.get(tool_name)
             if tool is None:
                 raise ToolNotFoundError(f"工具 '{tool_name}' 未注册")
-        return tool.func(args)
+        result = tool.func(args)
+        get_tool_policy().remember_success(decision.idempotency_key, result)
+        return result
 
     def get_tool_definitions(self) -> list[dict]:
         """获取 OpenAI tools API 兼容的工具定义列表 (AgenticLoop 兼容接口)。

@@ -1,4 +1,4 @@
-﻿"""
+"""
 飞轮 ① 感知-执行环单元测试。
 
 测试模块: fnixagent.core.flywheel.stage1_perception
@@ -7,9 +7,6 @@
     - PerceptionFlywheel.run_stream(): 流式执行
     - trace_to_dict() / trace_from_dict(): 序列化/反序列化
 """
-import time
-
-import pytest
 
 from fnixagent.core.flywheel.stage1_perception import (
     PerceptionFlywheel,
@@ -123,6 +120,7 @@ class TestPerceptionFlywheelRunStream:
     def test_run_stream_yields_events(self):
         """run_stream 应 yield 传入的事件。"""
         from tests.unit.test_flywheel.conftest import FakeGraph
+
         events = [{"node": "perceive", "data": 1}, {"node": "search", "data": 2}]
         graph = FakeGraph(events=events)
         fw = PerceptionFlywheel(graph)
@@ -132,6 +130,7 @@ class TestPerceptionFlywheelRunStream:
     def test_run_stream_empty_events(self):
         """无事件时应 yield 空迭代。"""
         from tests.unit.test_flywheel.conftest import FakeGraph
+
         graph = FakeGraph(events=[])
         fw = PerceptionFlywheel(graph)
         results = list(fw.run_stream("搜索论文"))
@@ -150,9 +149,17 @@ class TestTraceSerialization:
         """trace_to_dict 应包含全部字段。"""
         d = trace_to_dict(sample_trace)
         expected_keys = {
-            "trace_id", "task_id", "goal", "mode", "concept_path",
-            "tool_calls", "success", "duration_ms", "usage_tokens",
-            "reflection_score", "created_at",
+            "trace_id",
+            "task_id",
+            "goal",
+            "mode",
+            "concept_path",
+            "tool_calls",
+            "success",
+            "duration_ms",
+            "usage_tokens",
+            "reflection_score",
+            "created_at",
         }
         assert expected_keys.issubset(set(d.keys()))
 

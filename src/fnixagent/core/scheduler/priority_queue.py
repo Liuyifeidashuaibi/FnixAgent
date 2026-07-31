@@ -31,6 +31,7 @@ Redis 数据结构:
 依赖: 仅标准库(threading / heapq / json / logging / dataclasses / uuid / time /
 collections),Redis 客户端为可选注入(Any 类型,duck typing)。
 """
+
 from __future__ import annotations
 
 import heapq
@@ -41,7 +42,7 @@ import time
 import uuid
 from collections import deque
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +84,7 @@ class ScheduleItem:
     fingerprint: str = ""
     timeout_seconds: float = 300.0
 
-    def __lt__(self, other: "ScheduleItem") -> bool:
+    def __lt__(self, other: ScheduleItem) -> bool:
         """堆比较: priority 大的先出(用负值实现大顶堆)。
 
         heapq 是小顶堆,``__lt__`` 返回 ``self.priority > other.priority``
@@ -167,7 +168,7 @@ class PriorityTaskQueue:
     # 内部:Redis 序列化辅助
     # ------------------------------------------------------------------
 
-    def _serialize_item(self, item: ScheduleItem) -> Optional[str]:
+    def _serialize_item(self, item: ScheduleItem) -> str | None:
         """将 ScheduleItem 序列化为 JSON 字符串。
 
         Args:
@@ -204,7 +205,7 @@ class PriorityTaskQueue:
             return None
 
     @staticmethod
-    def _deserialize_item(data: str) -> Optional[ScheduleItem]:
+    def _deserialize_item(data: str) -> ScheduleItem | None:
         """从 JSON 字符串反序列化 ScheduleItem。
 
         Args:
@@ -305,11 +306,7 @@ class PriorityTaskQueue:
             True=成功入队;False=被去重过滤。
         """
         # 去重检查
-        if (
-            self._enable_dedup
-            and item.fingerprint
-            and not item.dont_filter
-        ):
+        if self._enable_dedup and item.fingerprint and not item.dont_filter:
             if item.fingerprint in self._fingerprints:
                 self._total_dedup_filtered += 1
                 return False
@@ -328,7 +325,7 @@ class PriorityTaskQueue:
         self._total_enqueued += 1
         return True
 
-    def _get_nowait_locked(self) -> Optional[ScheduleItem]:
+    def _get_nowait_locked(self) -> ScheduleItem | None:
         """非阻塞出队(调用者需持有 _cond 锁)。
 
         优先从 forefront 栈弹出,其次从堆弹出。
@@ -395,7 +392,7 @@ class PriorityTaskQueue:
     # 公共:出队
     # ------------------------------------------------------------------
 
-    def get(self, timeout: float = 0.0) -> Optional[ScheduleItem]:
+    def get(self, timeout: float = 0.0) -> ScheduleItem | None:
         """出队(线程安全,可阻塞)。
 
         Args:
@@ -427,7 +424,7 @@ class PriorityTaskQueue:
                     return None
                 self._cond.wait(timeout=remaining)
 
-    def peek(self) -> Optional[ScheduleItem]:
+    def peek(self) -> ScheduleItem | None:
         """查看队首(不出队,线程安全)。
 
         Returns:
@@ -618,9 +615,7 @@ class PriorityTaskQueue:
         for task_id_bytes in stale_task_ids:
             # redis-py 返回 bytes 或 str(取决于 decode_responses 配置)
             task_id = (
-                task_id_bytes.decode("utf-8")
-                if isinstance(task_id_bytes, bytes)
-                else task_id_bytes
+                task_id_bytes.decode("utf-8") if isinstance(task_id_bytes, bytes) else task_id_bytes
             )
             # 跳过已在内存中处理的(避免重复)
             if task_id in self._active:
@@ -644,11 +639,7 @@ class PriorityTaskQueue:
                     pass
                 continue
 
-            data_str = (
-                data.decode("utf-8")
-                if isinstance(data, bytes)
-                else data
-            )
+            data_str = data.decode("utf-8") if isinstance(data, bytes) else data
             item = self._deserialize_item(data_str)
             if item is None:
                 # 反序列化失败:清理避免脏数据残留
@@ -778,7 +769,7 @@ class PriorityTaskQueue:
 # 模块级单例
 # ============================================================================
 
-_default_queue: Optional[PriorityTaskQueue] = None
+_default_queue: PriorityTaskQueue | None = None
 _default_lock = threading.Lock()
 
 

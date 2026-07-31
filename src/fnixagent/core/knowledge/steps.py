@@ -14,15 +14,15 @@
   - 内部依赖可选(无 office.parser 时降级到纯文本分块)
   - 大文档分块采用流式处理,避免一次性加载全文
 """
+
 from __future__ import annotations
 
 import os
 import re
-from typing import Any, Optional
+from typing import Any
 
 from fnixagent.core.knowledge.pipeline import PipelineContext, PipelineStep
 from fnixagent.core.text import estimate_tokens, tokenize
-
 
 # ---------------------------------------------------------------------------
 # Step 1: OCRStep
@@ -68,21 +68,25 @@ class OCRStep(PipelineStep):
             import pytesseract  # type: ignore
             from PIL import Image  # type: ignore
         except ImportError as e:
-            ctx.errors.append({
-                "step": self.name,
-                "error": f"OCR deps missing: {e}. Install: pip install pytesseract pillow",
-                "fatal": False,
-            })
+            ctx.errors.append(
+                {
+                    "step": self.name,
+                    "error": f"OCR deps missing: {e}. Install: pip install pytesseract pillow",
+                    "fatal": False,
+                }
+            )
             return ctx
         try:
             img = Image.open(ctx.file_path)
             ctx.ocr_text = pytesseract.image_to_string(img, lang=self._lang)
         except Exception as e:
-            ctx.errors.append({
-                "step": self.name,
-                "error": f"OCR failed: {e}",
-                "fatal": False,
-            })
+            ctx.errors.append(
+                {
+                    "step": self.name,
+                    "error": f"OCR failed: {e}",
+                    "fatal": False,
+                }
+            )
         return ctx
 
 
@@ -116,64 +120,77 @@ class ParseStep(PipelineStep):
         # 优先使用 ParserExpert(可解析 Word/Excel/PDF 结构)
         try:
             from fnixagent.office.parser import ParserExpert
+
             expert = ParserExpert()
             result = expert.parse(ctx.file_path, extract_tables=True, extract_metadata=True)
             if result.success:
                 data = result.output
                 # 把 paragraphs 转为统一 block 结构
                 for p in data.get("paragraphs", []):
-                    ctx.parsed_blocks.append({
-                        "type": "paragraph",
-                        "text": p.get("text", ""),
-                        "metadata": {"style": p.get("style", "Normal")},
-                    })
+                    ctx.parsed_blocks.append(
+                        {
+                            "type": "paragraph",
+                            "text": p.get("text", ""),
+                            "metadata": {"style": p.get("style", "Normal")},
+                        }
+                    )
                 # 把 tables 也作为 block
                 for i, tbl in enumerate(data.get("tables", [])):
-                    ctx.parsed_blocks.append({
-                        "type": "table",
-                        "text": self._table_to_text(tbl),
-                        "metadata": {"table_index": i, "rows": len(tbl)},
-                    })
+                    ctx.parsed_blocks.append(
+                        {
+                            "type": "table",
+                            "text": self._table_to_text(tbl),
+                            "metadata": {"table_index": i, "rows": len(tbl)},
+                        }
+                    )
                 # 抽取的 metadata 直接放进 extracted_metadata
                 md = data.get("metadata", {})
                 if md:
                     ctx.extracted_metadata.update(md)
                 # 若 ParserExpert 没拿到文本,用 raw_text
                 if not ctx.parsed_blocks and data.get("raw_text"):
-                    ctx.parsed_blocks.append({
-                        "type": "paragraph",
-                        "text": data["raw_text"],
-                        "metadata": {"style": "Normal"},
-                    })
+                    ctx.parsed_blocks.append(
+                        {
+                            "type": "paragraph",
+                            "text": data["raw_text"],
+                            "metadata": {"style": "Normal"},
+                        }
+                    )
                 return ctx
         except Exception as e:
-            ctx.errors.append({
-                "step": self.name,
-                "error": f"ParserExpert failed: {e}, fallback to plain text",
-                "fatal": False,
-            })
+            ctx.errors.append(
+                {
+                    "step": self.name,
+                    "error": f"ParserExpert failed: {e}, fallback to plain text",
+                    "fatal": False,
+                }
+            )
 
         # 降级:流式纯文本读取(避免一次性加载大文件)
         try:
             parts: list[str] = []
-            with open(ctx.file_path, "r", encoding="utf-8", errors="ignore") as f:
+            with open(ctx.file_path, encoding="utf-8", errors="ignore") as f:
                 while True:
                     chunk = f.read(self._STREAM_CHUNK_SIZE)
                     if not chunk:
                         break
                     parts.append(chunk)
             text = "".join(parts)
-            ctx.parsed_blocks.append({
-                "type": "paragraph",
-                "text": text,
-                "metadata": {"style": "Normal", "fallback": True},
-            })
+            ctx.parsed_blocks.append(
+                {
+                    "type": "paragraph",
+                    "text": text,
+                    "metadata": {"style": "Normal", "fallback": True},
+                }
+            )
         except Exception as e:
-            ctx.errors.append({
-                "step": self.name,
-                "error": f"plain text fallback failed: {e}",
-                "fatal": True,
-            })
+            ctx.errors.append(
+                {
+                    "step": self.name,
+                    "error": f"plain text fallback failed: {e}",
+                    "fatal": True,
+                }
+            )
         return ctx
 
     @staticmethod
@@ -253,12 +270,14 @@ class ChunkStep(PipelineStep):
             sent_tokens = estimate_tokens(sent)
             # 当前 chunk 已满:产出并开启新 chunk(以 overlap 衔接)
             if current_tokens + sent_tokens > self._chunk_size and current_text:
-                ctx.chunks.append({
-                    "text": current_text.strip(),
-                    "index": chunk_index,
-                    "tokens": current_tokens,
-                    "metadata": {"strategy": self._strategy},
-                })
+                ctx.chunks.append(
+                    {
+                        "text": current_text.strip(),
+                        "index": chunk_index,
+                        "tokens": current_tokens,
+                        "metadata": {"strategy": self._strategy},
+                    }
+                )
                 chunk_index += 1
                 # 滑窗重叠:保留末尾 overlap_buffer 作为新 chunk 起点
                 overlap_text = " ".join(overlap_buffer)
@@ -271,19 +290,22 @@ class ChunkStep(PipelineStep):
                 current_tokens += sent_tokens
                 overlap_buffer.append(sent)
                 # 控制 overlap_buffer 不超过 chunk_overlap tokens(避免缓冲膨胀)
-                while overlap_buffer and sum(
-                    estimate_tokens(s) for s in overlap_buffer
-                ) > self._chunk_overlap:
+                while (
+                    overlap_buffer
+                    and sum(estimate_tokens(s) for s in overlap_buffer) > self._chunk_overlap
+                ):
                     overlap_buffer.pop(0)
 
         # 最后一个 chunk(避免遗漏尾部内容)
         if current_text.strip():
-            ctx.chunks.append({
-                "text": current_text.strip(),
-                "index": chunk_index,
-                "tokens": current_tokens,
-                "metadata": {"strategy": self._strategy},
-            })
+            ctx.chunks.append(
+                {
+                    "text": current_text.strip(),
+                    "index": chunk_index,
+                    "tokens": current_tokens,
+                    "metadata": {"strategy": self._strategy},
+                }
+            )
 
         return ctx
 
@@ -306,17 +328,17 @@ class ExtractStep(PipelineStep):
 
     # 内置字段抽取正则
     _FIELD_PATTERNS: dict[str, str] = {
-        "title": r"^#\s+(.+)$",                    # markdown 一级标题
+        "title": r"^#\s+(.+)$",  # markdown 一级标题
         "author": r"(?:作者|Author|By)[:：\s]*([^\s,，\n]+)",
         "date": r"(?:日期|Date|发布时间)[:：\s]*([\d\-/年月日]+)",
         "email": r"([\w\.\-]+@[\w\.\-]+)",
-        "phone": r"(1[3-9]\d{9})",                  # 简单手机号
+        "phone": r"(1[3-9]\d{9})",  # 简单手机号
         "doc_id": r"(?:文档编号|Doc ID|Document No)[:：\s]*([A-Za-z0-9\-]+)",
     }
 
     def __init__(
         self,
-        extract_fields: Optional[list[str]] = None,
+        extract_fields: list[str] | None = None,
         required: bool = False,
     ) -> None:
         self._fields = extract_fields or list(self._FIELD_PATTERNS.keys())
@@ -358,8 +380,24 @@ class ExtractStep(PipelineStep):
         tokens = tokenize(full_text)
         # 过滤短词与停用词(简化)
         stopwords = {
-            "的", "了", "和", "是", "在", "我", "有", "与", "为",
-            "a", "an", "the", "is", "are", "in", "on", "to", "of",
+            "的",
+            "了",
+            "和",
+            "是",
+            "在",
+            "我",
+            "有",
+            "与",
+            "为",
+            "a",
+            "an",
+            "the",
+            "is",
+            "are",
+            "in",
+            "on",
+            "to",
+            "of",
         }
         word_freq: dict[str, int] = {}
         seen_tokens: set[str] = set()  # 同一 token 仅计数一次去重
@@ -419,7 +457,12 @@ class PermissionStep(PipelineStep):
         # 敏感内容检测(简单关键词扫描)
         full_text = " ".join(blk.get("text", "") for blk in ctx.parsed_blocks)
         sensitive_keywords = {
-            "机密", "绝密", "内部", " confidential", "restricted", "private",
+            "机密",
+            "绝密",
+            "内部",
+            " confidential",
+            "restricted",
+            "private",
         }
         lower_text = full_text.lower()
         is_sensitive = any(kw.lower() in lower_text for kw in sensitive_keywords)
@@ -478,7 +521,7 @@ class EmbedStep(PipelineStep):
         self._embedder_name = embedder_name
         self._batch_size = batch_size
         self._dim = dim
-        self._embedder: Optional[Any] = None  # lazy init
+        self._embedder: Any | None = None  # lazy init
 
     @property
     def name(self) -> str:
@@ -504,6 +547,7 @@ class EmbedStep(PipelineStep):
                 pass
         # 降级到 HashingEmbedder(零依赖)
         from fnixagent.core.retrieval.embedder import HashingEmbedder
+
         self._embedder = HashingEmbedder(dim=self._dim)
         return self._embedder
 
@@ -514,27 +558,30 @@ class EmbedStep(PipelineStep):
         texts = [c["text"] for c in ctx.chunks]
         # 批量编码:减少 embedder 内部重复初始化开销
         for i in range(0, len(texts), self._batch_size):
-            batch = texts[i:i + self._batch_size]
+            batch = texts[i : i + self._batch_size]
             try:
                 vectors = embedder.embed_batch(batch)
             except Exception as e:
-                ctx.errors.append({
-                    "step": self.name,
-                    "error": f"embed batch {i} failed: {e}",
-                    "fatal": False,
-                })
+                ctx.errors.append(
+                    {
+                        "step": self.name,
+                        "error": f"embed batch {i} failed: {e}",
+                        "fatal": False,
+                    }
+                )
                 continue
             # 维度一致性校验:剔除维度异常的向量,避免入库后检索出错
             for vec in vectors:
                 if len(vec) != expected_dim:
-                    ctx.errors.append({
-                        "step": self.name,
-                        "error": (
-                            f"embedding dim mismatch: got {len(vec)}, "
-                            f"expected {expected_dim}"
-                        ),
-                        "fatal": False,
-                    })
+                    ctx.errors.append(
+                        {
+                            "step": self.name,
+                            "error": (
+                                f"embedding dim mismatch: got {len(vec)}, expected {expected_dim}"
+                            ),
+                            "fatal": False,
+                        }
+                    )
                     continue
                 ctx.embeddings.append(vec)
         # 把 embedding 维度信息写回 chunk metadata(便于下游对齐)

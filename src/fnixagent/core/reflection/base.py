@@ -9,6 +9,7 @@
 
 P0-04 新增,参考 kaoyan-ai-platform 的 reflection/manager.py 设计。
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -32,6 +33,7 @@ class ReflectionConfig:
         enable_format_eval: 启用格式评估器
         enable_llm_eval: 启用 LLM 评估器(默认关闭,成本高)
     """
+
     enabled: bool = True
     min_score_threshold: float = 0.7
     max_reflections: int = 2
@@ -56,8 +58,9 @@ class ReflectionIssue:
         suggestion: 修正建议(供 LLM 修正使用)
         score_impact: 分数影响(0~1,该问题对子分数的扣分量)
     """
+
     evaluator: str
-    severity: str              # critical / warning
+    severity: str  # critical / warning
     message: str
     suggestion: str
     score_impact: float
@@ -80,6 +83,7 @@ class ReflectionResult:
         should_reflect: 是否需要反思重做
         feedback_message: 反思反馈消息(供 LLM 修正使用)
     """
+
     score: float = 1.0
     sub_scores: dict[str, float] = field(default_factory=dict)
     issues: list[ReflectionIssue] = field(default_factory=list)
@@ -115,10 +119,12 @@ class ReflectionResult:
             impact = 0.0
         elif impact > 1.0:
             impact = 1.0
-        self.issues.append(ReflectionIssue(
-            evaluator=evaluator,
-            severity=severity,
-            message=message,
-            suggestion=suggestion,
-            score_impact=impact,
-        ))
+        self.issues.append(
+            ReflectionIssue(
+                evaluator=evaluator,
+                severity=severity,
+                message=message,
+                suggestion=suggestion,
+                score_impact=impact,
+            )
+        )

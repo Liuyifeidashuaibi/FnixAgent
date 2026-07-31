@@ -32,6 +32,7 @@ AgentShell - AgentOS 用户接口层 (User Interface Shell)
 
 零外部依赖: 仅 asyncio/json/sys/asyncio.inspect
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -47,20 +48,22 @@ from typing import Any
 
 from fnixagent.core.agent.kernel import AgentKernel, get_kernel
 from fnixagent.core.agent.syscall import (
-    SyscallRequest, SyscallType,
+    SyscallRequest,
+    SyscallType,
 )
 from fnixagent.core.agent.types import (
     AgentPriority,
 )
 
-
 # ============================================================================
 # Shell 命令结果
 # ============================================================================
 
+
 @dataclass
 class ShellResult:
     """Shell 命令执行结果。"""
+
     success: bool
     output: Any = None
     error: str | None = None
@@ -77,12 +80,17 @@ class ShellResult:
     def format(self, *, json_mode: bool = False) -> str:
         """格式化输出。"""
         if json_mode:
-            return json.dumps({
-                "success": self.success,
-                "output": self.output,
-                "error": self.error,
-                "duration_ms": round(self.duration_ms, 3),
-            }, ensure_ascii=False, default=str, indent=2)
+            return json.dumps(
+                {
+                    "success": self.success,
+                    "output": self.output,
+                    "error": self.error,
+                    "duration_ms": round(self.duration_ms, 3),
+                },
+                ensure_ascii=False,
+                default=str,
+                indent=2,
+            )
         if not self.success:
             return f"ERROR: {self.error}"
         if self.output is None:
@@ -96,6 +104,7 @@ class ShellResult:
 # Skill 抽象 (类比 shell 脚本)
 # ============================================================================
 
+
 @dataclass
 class Skill:
     """Skill 定义 (类比 shell 脚本 / callable)。
@@ -107,6 +116,7 @@ class Skill:
         capabilities: 该 Skill 需要的能力集
         source_path: Skill 源文件路径 (动态加载时记录)
     """
+
     name: str
     description: str = ""
     handler: Callable[..., Awaitable[Any]] | None = None
@@ -163,7 +173,7 @@ class SkillRegistry:
                 if skill is not None:
                     self.register(skill)
                     count += 1
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 print(f"[SkillLoader] 加载 {py_file.name} 失败: {e}", file=sys.stderr)
         return count
 
@@ -186,8 +196,10 @@ class SkillRegistry:
         if not inspect.iscoroutinefunction(handler):
             return None
         return Skill(
-            name=name, description=description,
-            handler=handler, capabilities=capabilities,
+            name=name,
+            description=description,
+            handler=handler,
+            capabilities=capabilities,
             source_path=str(file_path),
         )
 
@@ -195,6 +207,7 @@ class SkillRegistry:
 # ============================================================================
 # AgentShell 主类
 # ============================================================================
+
 
 class AgentShell:
     """AgentOS 用户接口层 (类比 Unix Shell)。
@@ -307,12 +320,13 @@ class AgentShell:
             return ShellResult.err(f"未知命令: {cmd} (输入 help 查看可用命令)")
 
         import time
+
         start = time.monotonic()
         try:
             result = await handler(args)
             result.duration_ms = (time.monotonic() - start) * 1000
             return result
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             return ShellResult.err(
                 f"命令执行异常: {type(e).__name__}: {e}",
                 duration_ms=(time.monotonic() - start) * 1000,
@@ -406,8 +420,10 @@ class AgentShell:
         parent_pid = args.get("parent") or None
         try:
             pid = await self._kernel.spawn(
-                name=name, parent_pid=parent_pid,
-                priority=priority, capabilities=capabilities,
+                name=name,
+                parent_pid=parent_pid,
+                priority=priority,
+                capabilities=capabilities,
             )
             return ShellResult.ok({"pid": pid, "name": name, "priority": int(priority)})
         except PermissionError as e:
@@ -456,18 +472,16 @@ class AgentShell:
         except ValueError:
             return ShellResult.err(f"未知 syscall: {syscall_name}")
         # 构造参数 (排除 _positional 和内置参数)
-        syscall_args = {
-            k: v for k, v in args.items()
-            if k != "_positional" and k != "pid"
-        }
+        syscall_args = {k: v for k, v in args.items() if k != "_positional" and k != "pid"}
         caller_pid = args.get("pid", self._shell_pid)
         req = SyscallRequest(
-            syscall=syscall, args=syscall_args, caller_pid=caller_pid,
+            syscall=syscall,
+            args=syscall_args,
+            caller_pid=caller_pid,
         )
         resp = await self._kernel.syscall(req)
         if not resp.success:
-            return ShellResult.err(resp.error or "syscall failed",
-                                   duration_ms=resp.duration_ms)
+            return ShellResult.err(resp.error or "syscall failed", duration_ms=resp.duration_ms)
         return ShellResult.ok(resp.result, duration_ms=resp.duration_ms)
 
     async def _cmd_llm(self, args: dict[str, Any]) -> ShellResult:
@@ -489,25 +503,25 @@ class AgentShell:
         )
         resp = await self._kernel.syscall(req)
         if not resp.success:
-            return ShellResult.err(resp.error or "LLM 调用失败",
-                                   duration_ms=resp.duration_ms)
+            return ShellResult.err(resp.error or "LLM 调用失败", duration_ms=resp.duration_ms)
         return ShellResult.ok(resp.result, duration_ms=resp.duration_ms)
 
     # ========================================================================
     # 文件系统命令
     # ========================================================================
 
-    async def _fs_syscall(self, syscall: SyscallType, args: dict[str, Any],
-                          caller_pid: str | None = None) -> ShellResult:
+    async def _fs_syscall(
+        self, syscall: SyscallType, args: dict[str, Any], caller_pid: str | None = None
+    ) -> ShellResult:
         """通用 FS syscall 调用。"""
         req = SyscallRequest(
-            syscall=syscall, args=args,
+            syscall=syscall,
+            args=args,
             caller_pid=caller_pid or self._shell_pid,
         )
         resp = await self._kernel.syscall(req)
         if not resp.success:
-            return ShellResult.err(resp.error or "fs 操作失败",
-                                   duration_ms=resp.duration_ms)
+            return ShellResult.err(resp.error or "fs 操作失败", duration_ms=resp.duration_ms)
         return ShellResult.ok(resp.result, duration_ms=resp.duration_ms)
 
     async def _cmd_fs_read(self, args: dict[str, Any]) -> ShellResult:
@@ -515,8 +529,7 @@ class AgentShell:
         positional = args.get("_positional", [])
         if not positional:
             return ShellResult.err("用法: fs.read <path>")
-        return await self._fs_syscall(SyscallType.FS_READ, {"path": positional[0]},
-                                       args.get("pid"))
+        return await self._fs_syscall(SyscallType.FS_READ, {"path": positional[0]}, args.get("pid"))
 
     async def _cmd_fs_write(self, args: dict[str, Any]) -> ShellResult:
         """fs.write <path> --content=<content> [--pid=<caller>]"""
@@ -525,47 +538,49 @@ class AgentShell:
             return ShellResult.err("用法: fs.write <path> --content=<content>")
         path = positional[0]
         content = args.get("content", "")
-        return await self._fs_syscall(SyscallType.FS_WRITE,
-                                       {"path": path, "content": content},
-                                       args.get("pid"))
+        return await self._fs_syscall(
+            SyscallType.FS_WRITE, {"path": path, "content": content}, args.get("pid")
+        )
 
     async def _cmd_fs_list(self, args: dict[str, Any]) -> ShellResult:
         """fs.list [path] [--pid=<caller>]"""
         positional = args.get("_positional", [])
         path = positional[0] if positional else "/"
-        return await self._fs_syscall(SyscallType.FS_LIST, {"path": path},
-                                       args.get("pid"))
+        return await self._fs_syscall(SyscallType.FS_LIST, {"path": path}, args.get("pid"))
 
     async def _cmd_fs_mkdir(self, args: dict[str, Any]) -> ShellResult:
         """fs.mkdir <path> [--pid=<caller>]"""
         positional = args.get("_positional", [])
         if not positional:
             return ShellResult.err("用法: fs.mkdir <path>")
-        return await self._fs_syscall(SyscallType.FS_MKDIR, {"path": positional[0]},
-                                       args.get("pid"))
+        return await self._fs_syscall(
+            SyscallType.FS_MKDIR, {"path": positional[0]}, args.get("pid")
+        )
 
     async def _cmd_fs_delete(self, args: dict[str, Any]) -> ShellResult:
         """fs.delete <path> [--pid=<caller>]"""
         positional = args.get("_positional", [])
         if not positional:
             return ShellResult.err("用法: fs.delete <path>")
-        return await self._fs_syscall(SyscallType.FS_DELETE, {"path": positional[0]},
-                                       args.get("pid"))
+        return await self._fs_syscall(
+            SyscallType.FS_DELETE, {"path": positional[0]}, args.get("pid")
+        )
 
     # ========================================================================
     # 记忆命令
     # ========================================================================
 
-    async def _mem_syscall(self, syscall: SyscallType, args: dict[str, Any],
-                           caller_pid: str | None = None) -> ShellResult:
+    async def _mem_syscall(
+        self, syscall: SyscallType, args: dict[str, Any], caller_pid: str | None = None
+    ) -> ShellResult:
         req = SyscallRequest(
-            syscall=syscall, args=args,
+            syscall=syscall,
+            args=args,
             caller_pid=caller_pid or self._shell_pid,
         )
         resp = await self._kernel.syscall(req)
         if not resp.success:
-            return ShellResult.err(resp.error or "mem 操作失败",
-                                   duration_ms=resp.duration_ms)
+            return ShellResult.err(resp.error or "mem 操作失败", duration_ms=resp.duration_ms)
         return ShellResult.ok(resp.result, duration_ms=resp.duration_ms)
 
     async def _cmd_mem_recall(self, args: dict[str, Any]) -> ShellResult:
@@ -577,9 +592,11 @@ class AgentShell:
         layers_str = args.get("layers", "working")
         layers = layers_str.split(",") if isinstance(layers_str, str) else layers_str
         top_k = int(args.get("top_k", 5))
-        return await self._mem_syscall(SyscallType.MEM_RECALL,
-                                        {"query": query, "layers": layers, "top_k": top_k},
-                                        args.get("pid"))
+        return await self._mem_syscall(
+            SyscallType.MEM_RECALL,
+            {"query": query, "layers": layers, "top_k": top_k},
+            args.get("pid"),
+        )
 
     async def _cmd_mem_store(self, args: dict[str, Any]) -> ShellResult:
         """mem.store --content=<content> [--layer=episodic] [--pid=<caller>]"""
@@ -587,9 +604,11 @@ class AgentShell:
         if content is None:
             return ShellResult.err("用法: mem.store --content=<content> [--layer=...]")
         layer = args.get("layer", "episodic")
-        return await self._mem_syscall(SyscallType.MEM_STORE,
-                                        {"content": content, "layer": layer, "metadata": {}},
-                                        args.get("pid"))
+        return await self._mem_syscall(
+            SyscallType.MEM_STORE,
+            {"content": content, "layer": layer, "metadata": {}},
+            args.get("pid"),
+        )
 
     async def _cmd_mem_search(self, args: dict[str, Any]) -> ShellResult:
         """mem.search <query> [--layer=episodic] [--top_k=5]"""
@@ -599,18 +618,20 @@ class AgentShell:
         query = " ".join(positional)
         layer = args.get("layer", "episodic")
         top_k = int(args.get("top_k", 5))
-        return await self._mem_syscall(SyscallType.MEM_SEARCH,
-                                        {"query": query, "layer": layer, "top_k": top_k},
-                                        args.get("pid"))
+        return await self._mem_syscall(
+            SyscallType.MEM_SEARCH,
+            {"query": query, "layer": layer, "top_k": top_k},
+            args.get("pid"),
+        )
 
     async def _cmd_mem_forget(self, args: dict[str, Any]) -> ShellResult:
         """mem.forget <memory_id> [--pid=<caller>]"""
         positional = args.get("_positional", [])
         if not positional:
             return ShellResult.err("用法: mem.forget <memory_id>")
-        return await self._mem_syscall(SyscallType.MEM_FORGET,
-                                        {"memory_id": positional[0]},
-                                        args.get("pid"))
+        return await self._mem_syscall(
+            SyscallType.MEM_FORGET, {"memory_id": positional[0]}, args.get("pid")
+        )
 
     # ========================================================================
     # 工具命令
@@ -619,13 +640,13 @@ class AgentShell:
     async def _cmd_tool_list(self, args: dict[str, Any]) -> ShellResult:
         """tool.list [--pid=<caller>]"""
         req = SyscallRequest(
-            syscall=SyscallType.TOOL_LIST, args={},
+            syscall=SyscallType.TOOL_LIST,
+            args={},
             caller_pid=args.get("pid", self._shell_pid),
         )
         resp = await self._kernel.syscall(req)
         if not resp.success:
-            return ShellResult.err(resp.error or "tool.list 失败",
-                                   duration_ms=resp.duration_ms)
+            return ShellResult.err(resp.error or "tool.list 失败", duration_ms=resp.duration_ms)
         return ShellResult.ok(resp.result, duration_ms=resp.duration_ms)
 
     async def _cmd_tool_invoke(self, args: dict[str, Any]) -> ShellResult:
@@ -646,8 +667,7 @@ class AgentShell:
         )
         resp = await self._kernel.syscall(req)
         if not resp.success:
-            return ShellResult.err(resp.error or "tool.invoke 失败",
-                                   duration_ms=resp.duration_ms)
+            return ShellResult.err(resp.error or "tool.invoke 失败", duration_ms=resp.duration_ms)
         return ShellResult.ok(resp.result, duration_ms=resp.duration_ms)
 
     # ========================================================================
@@ -668,9 +688,12 @@ class AgentShell:
             return ShellResult.err("用法: a2a.send --target=<pid> --content=<content>")
         msg_type = args.get("type", "event")
         from fnixagent.core.agent.messaging import A2AMessage
+
         msg = A2AMessage(
-            source=self._shell_pid, target=target,
-            message_type=msg_type, content=content,
+            source=self._shell_pid,
+            target=target,
+            message_type=msg_type,
+            content=content,
         )
         await self._kernel.a2a_bus.send(target, msg)
         return ShellResult.ok({"sent": True, "target": target})
@@ -681,9 +704,12 @@ class AgentShell:
         if content is None:
             return ShellResult.err("用法: a2a.broadcast --content=<content>")
         from fnixagent.core.agent.messaging import A2AMessage
+
         msg = A2AMessage(
-            source=self._shell_pid, target="*",
-            message_type="event", content=content,
+            source=self._shell_pid,
+            target="*",
+            message_type="event",
+            content=content,
         )
         count = await self._kernel.a2a_bus.broadcast(msg, exclude=self._shell_pid)
         return ShellResult.ok({"delivered": count})
@@ -695,14 +721,17 @@ class AgentShell:
     async def _cmd_skill_list(self, args: dict[str, Any]) -> ShellResult:
         """skill.list - 列出所有 Skill。"""
         skills = self.skills.list()
-        return ShellResult.ok([
-            {
-                "name": s.name, "description": s.description,
-                "capabilities": sorted(s.capabilities),
-                "source": s.source_path,
-            }
-            for s in skills
-        ])
+        return ShellResult.ok(
+            [
+                {
+                    "name": s.name,
+                    "description": s.description,
+                    "capabilities": sorted(s.capabilities),
+                    "source": s.source_path,
+                }
+                for s in skills
+            ]
+        )
 
     async def _cmd_skill_load(self, args: dict[str, Any]) -> ShellResult:
         """skill.load <dir> - 从目录加载 Skill。"""
@@ -724,13 +753,11 @@ class AgentShell:
         skill = self.skills.get(skill_name)
         if skill is None or skill.handler is None:
             return ShellResult.err(f"Skill 不存在: {skill_name}")
-        skill_args = {
-            k: v for k, v in args.items() if k != "_positional"
-        }
+        skill_args = {k: v for k, v in args.items() if k != "_positional"}
         try:
             result = await skill.handler(self._kernel, skill_args)
             return ShellResult.ok(result)
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             return ShellResult.err(f"Skill 执行失败: {type(e).__name__}: {e}")
 
     # ========================================================================
@@ -744,19 +771,33 @@ class AgentShell:
     async def _cmd_policy_add(self, args: dict[str, Any]) -> ShellResult:
         """policy.add --action=<pattern> --effect=<allow|deny> [--subject=*] [--priority=0]"""
         from fnixagent.core.agent.policy import PolicyRule
+
         action = args.get("action", "*")
         effect = args.get("effect", "allow")
         subject = args.get("subject", "*")
         priority = int(args.get("priority", 0))
         description = args.get("description", "")
         rule = PolicyRule(
-            action=action, subject=subject, effect=effect,
-            priority=priority, description=description,
+            action=action,
+            subject=subject,
+            effect=effect,
+            priority=priority,
+            description=description,
         )
         self._kernel.policy.add_rule(rule)
-        return ShellResult.ok({"added": True, "rule": rule.__dict__ if hasattr(rule, "__dict__") else {
-            "action": action, "subject": subject, "effect": effect, "priority": priority,
-        }})
+        return ShellResult.ok(
+            {
+                "added": True,
+                "rule": rule.__dict__
+                if hasattr(rule, "__dict__")
+                else {
+                    "action": action,
+                    "subject": subject,
+                    "effect": effect,
+                    "priority": priority,
+                },
+            }
+        )
 
     async def _cmd_guardrail_list(self, args: dict[str, Any]) -> ShellResult:
         """guardrail.list - 列出护栏。"""
@@ -780,21 +821,20 @@ class AgentShell:
             return ShellResult.err("用法: checkpoint <pid>")
         pid = positional[0]
         req = SyscallRequest(
-            syscall=SyscallType.CHECKPOINT, args={},
+            syscall=SyscallType.CHECKPOINT,
+            args={},
             caller_pid=pid,
         )
         resp = await self._kernel.syscall(req)
         if not resp.success:
-            return ShellResult.err(resp.error or "checkpoint 失败",
-                                   duration_ms=resp.duration_ms)
+            return ShellResult.err(resp.error or "checkpoint 失败", duration_ms=resp.duration_ms)
         return ShellResult.ok(resp.result, duration_ms=resp.duration_ms)
 
     async def _cmd_help(self, args: dict[str, Any]) -> ShellResult:
         """help - 显示所有命令。"""
-        return ShellResult.ok({
-            cmd: (handler.__doc__ or "").strip()
-            for cmd, handler in self._commands.items()
-        })
+        return ShellResult.ok(
+            {cmd: (handler.__doc__ or "").strip() for cmd, handler in self._commands.items()}
+        )
 
     # ========================================================================
     # 自然语言接口
@@ -834,8 +874,7 @@ class AgentShell:
         )
         resp = await self._kernel.syscall(req)
         if not resp.success:
-            return ShellResult.err(resp.error or "LLM 推理失败",
-                                   duration_ms=resp.duration_ms)
+            return ShellResult.err(resp.error or "LLM 推理失败", duration_ms=resp.duration_ms)
         return ShellResult.ok(resp.result, duration_ms=resp.duration_ms)
 
     def _build_default_system_prompt(self) -> str:
@@ -854,10 +893,14 @@ class AgentShell:
     # REPL (Read-Eval-Print Loop)
     # ========================================================================
 
-    async def repl(self, *, prompt: str = "agentos> ",
-                   json_mode: bool = False,
-                   input_stream=None,
-                   output_stream=None) -> None:
+    async def repl(
+        self,
+        *,
+        prompt: str = "agentos> ",
+        json_mode: bool = False,
+        input_stream=None,
+        output_stream=None,
+    ) -> None:
         """交互式 REPL 模式 (类比 python -i)。
 
         Args:
@@ -868,8 +911,7 @@ class AgentShell:
         """
         input_stream = input_stream or sys.stdin
         output_stream = output_stream or sys.stdout
-        print(f"fnixagent OS Shell (输入 help 查看命令, exit 退出)",
-              file=output_stream)
+        print("fnixagent OS Shell (输入 help 查看命令, exit 退出)", file=output_stream)
         while True:
             try:
                 line = await asyncio.to_thread(input_stream.readline)
@@ -893,6 +935,7 @@ class AgentShell:
 # 便捷构造函数
 # ============================================================================
 
+
 def create_shell(
     *,
     skills_dir: str | None = None,
@@ -913,9 +956,14 @@ def create_shell(
     """
     if in_memory:
         from fnixagent.core.agent.backends import (
-            InMemoryAuditBackend, InMemoryLLMBackend, InMemoryMemoryBackend,
-            InMemoryPolicyBackend, InMemoryStorageBackend, InMemoryToolBackend,
+            InMemoryAuditBackend,
+            InMemoryLLMBackend,
+            InMemoryMemoryBackend,
+            InMemoryPolicyBackend,
+            InMemoryStorageBackend,
+            InMemoryToolBackend,
         )
+
         kernel = AgentKernel(
             llm_backend=InMemoryLLMBackend(),
             memory_backend=InMemoryMemoryBackend(),
@@ -939,6 +987,9 @@ def create_shell(
 
 
 __all__ = [
-    "AgentShell", "ShellResult", "Skill", "SkillRegistry",
+    "AgentShell",
+    "ShellResult",
+    "Skill",
+    "SkillRegistry",
     "create_shell",
 ]

@@ -19,37 +19,19 @@
   - IMConnector:        send_message/send_card/create_group/list_groups
   - KnowledgeConnector: search/list_bases/get_doc/upload
 """
+
+from fnixagent.business.workspace.approval import (
+    ApprovalConnector,
+    ApprovalProvider,
+    ApprovalRequest,
+    StubApprovalProvider,
+)
 from fnixagent.business.workspace.base import (
     BaseProvider,
     ConnectorConfig,
     ConnectorResult,
     StubProvider,
     WorkspaceConnector,
-)
-from fnixagent.business.workspace.mail import (
-    Email,
-    MailConnector,
-    MailProvider,
-    StubMailProvider,
-)
-from fnixagent.business.workspace.schedule import (
-    CalendarEvent,
-    FreeBusySlot,
-    ScheduleConnector,
-    ScheduleProvider,
-    StubScheduleProvider,
-)
-from fnixagent.business.workspace.meeting import (
-    Meeting,
-    MeetingConnector,
-    MeetingProvider,
-    StubMeetingProvider,
-)
-from fnixagent.business.workspace.approval import (
-    ApprovalConnector,
-    ApprovalProvider,
-    ApprovalRequest,
-    StubApprovalProvider,
 )
 from fnixagent.business.workspace.im import (
     IMConnector,
@@ -65,6 +47,25 @@ from fnixagent.business.workspace.knowledge import (
     KnowledgeProvider,
     SearchResult,
     StubKnowledgeProvider,
+)
+from fnixagent.business.workspace.mail import (
+    Email,
+    MailConnector,
+    MailProvider,
+    StubMailProvider,
+)
+from fnixagent.business.workspace.meeting import (
+    Meeting,
+    MeetingConnector,
+    MeetingProvider,
+    StubMeetingProvider,
+)
+from fnixagent.business.workspace.schedule import (
+    CalendarEvent,
+    FreeBusySlot,
+    ScheduleConnector,
+    ScheduleProvider,
+    StubScheduleProvider,
 )
 
 __all__ = [

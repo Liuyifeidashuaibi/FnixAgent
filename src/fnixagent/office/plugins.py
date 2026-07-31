@@ -15,17 +15,18 @@
 线程安全:所有注册/发现操作加 threading.Lock。
 异常隔离:单个插件加载失败不影响其他插件。
 """
+
 from __future__ import annotations
 
 import threading
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable, Optional
+from typing import Any
 
 from fnixagent.office.converter_protocol import (
     ConverterRegistry,
     create_default_registry,
 )
-
 
 # ---------------------------------------------------------------------------
 # 插件元数据
@@ -162,9 +163,7 @@ class PluginManager:
                 return []
 
     @staticmethod
-    def _normalize_entry(
-        spec: Any, fallback_name: str
-    ) -> Optional[PluginEntry]:
+    def _normalize_entry(spec: Any, fallback_name: str) -> PluginEntry | None:
         """把 factory() 的返回值统一为 PluginEntry。
 
         支持三种返回形式:

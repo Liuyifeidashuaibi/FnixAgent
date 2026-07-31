@@ -23,10 +23,8 @@ from __future__ import annotations
 
 import asyncio
 import json
-import os
 import sys
 from pathlib import Path
-from typing import Any, Optional
 
 # ============================================================
 # MCP 协议常量
@@ -42,18 +40,22 @@ SERVER_VERSION = "1.0.0"
 # MCP Server 核心
 # ============================================================
 
+
 class MCPServerError(Exception):
     """MCP Server 基类异常"""
+
     pass
 
 
 class MCPServerAlreadyRunningError(MCPServerError):
     """MCP Server 已在运行"""
+
     pass
 
 
 class MCPToolNotExposedError(MCPServerError):
     """MCP 工具未暴露"""
+
     pass
 
 
@@ -90,16 +92,10 @@ class MCPServer:
                     "properties": {
                         "file_path": {
                             "type": "string",
-                            "description": "文件路径（绝对路径或相对于 workspace 的路径）"
+                            "description": "文件路径（绝对路径或相对于 workspace 的路径）",
                         },
-                        "offset": {
-                            "type": "integer",
-                            "description": "起始行号（1-based，默认 1）"
-                        },
-                        "limit": {
-                            "type": "integer",
-                            "description": "最大读取行数"
-                        },
+                        "offset": {"type": "integer", "description": "起始行号（1-based，默认 1）"},
+                        "limit": {"type": "integer", "description": "最大读取行数"},
                     },
                     "required": ["file_path"],
                 },
@@ -110,14 +106,8 @@ class MCPServer:
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "file_path": {
-                            "type": "string",
-                            "description": "文件路径"
-                        },
-                        "content": {
-                            "type": "string",
-                            "description": "文件内容"
-                        },
+                        "file_path": {"type": "string", "description": "文件路径"},
+                        "content": {"type": "string", "description": "文件内容"},
                     },
                     "required": ["file_path", "content"],
                 },
@@ -128,18 +118,9 @@ class MCPServer:
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "file_path": {
-                            "type": "string",
-                            "description": "文件路径"
-                        },
-                        "old_string": {
-                            "type": "string",
-                            "description": "要替换的字符串"
-                        },
-                        "new_string": {
-                            "type": "string",
-                            "description": "替换后的字符串"
-                        },
+                        "file_path": {"type": "string", "description": "文件路径"},
+                        "old_string": {"type": "string", "description": "要替换的字符串"},
+                        "new_string": {"type": "string", "description": "替换后的字符串"},
                         "replace_all": {
                             "type": "boolean",
                             "description": "是否替换所有匹配项（默认 false）",
@@ -155,10 +136,7 @@ class MCPServer:
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "pattern": {
-                            "type": "string",
-                            "description": "glob 模式"
-                        },
+                        "pattern": {"type": "string", "description": "glob 模式"},
                         "path": {
                             "type": "string",
                             "description": "搜索起始目录",
@@ -174,10 +152,7 @@ class MCPServer:
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "pattern": {
-                            "type": "string",
-                            "description": "正则表达式"
-                        },
+                        "pattern": {"type": "string", "description": "正则表达式"},
                         "path": {
                             "type": "string",
                             "description": "搜索目录",
@@ -217,14 +192,8 @@ class MCPServer:
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "command": {
-                            "type": "string",
-                            "description": "要执行的命令"
-                        },
-                        "cwd": {
-                            "type": "string",
-                            "description": "工作目录"
-                        },
+                        "command": {"type": "string", "description": "要执行的命令"},
+                        "cwd": {"type": "string", "description": "工作目录"},
                         "timeout": {
                             "type": "integer",
                             "description": "超时秒数",
@@ -240,10 +209,7 @@ class MCPServer:
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "query": {
-                            "type": "string",
-                            "description": "搜索查询"
-                        },
+                        "query": {"type": "string", "description": "搜索查询"},
                         "num": {
                             "type": "integer",
                             "description": "结果数量",
@@ -259,10 +225,7 @@ class MCPServer:
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "url": {
-                            "type": "string",
-                            "description": "网页 URL"
-                        },
+                        "url": {"type": "string", "description": "网页 URL"},
                     },
                     "required": ["url"],
                 },
@@ -273,10 +236,7 @@ class MCPServer:
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "prompt": {
-                            "type": "string",
-                            "description": "任务描述"
-                        },
+                        "prompt": {"type": "string", "description": "任务描述"},
                     },
                     "required": ["prompt"],
                 },
@@ -410,16 +370,20 @@ class MCPServer:
         elif tool_name == "ls":
             result = tools.ls(args.get("path", "."))
         elif tool_name == "run_command":
-            result = asyncio.run(tools.run_command(
-                args.get("command", ""),
-                args.get("cwd"),
-                args.get("timeout", 60),
-            ))
+            result = asyncio.run(
+                tools.run_command(
+                    args.get("command", ""),
+                    args.get("cwd"),
+                    args.get("timeout", 60),
+                )
+            )
         elif tool_name == "web_search":
-            result = asyncio.run(tools.web_search(
-                args.get("query", ""),
-                args.get("num", 5),
-            ))
+            result = asyncio.run(
+                tools.web_search(
+                    args.get("query", ""),
+                    args.get("num", 5),
+                )
+            )
         elif tool_name == "web_fetch":
             result = asyncio.run(tools.web_fetch(args.get("url", "")))
         elif tool_name == "ask_agent":
@@ -427,17 +391,17 @@ class MCPServer:
         else:
             return f"错误: 未知工具 {tool_name}"
 
-        if hasattr(result, 'to_llm_context'):
+        if hasattr(result, "to_llm_context"):
             return result.to_llm_context()
-        elif hasattr(result, 'content'):
+        elif hasattr(result, "content"):
             return result.content if result.success else f"错误: {result.error}"
         return str(result)
 
     def _handle_ask_agent(self, prompt: str) -> str:
         """通过 Agent 处理复杂任务"""
         try:
-            from fnixagent.core.agent.loop import create_agent_from_kernel
             from fnixagent.core.agent.kernel import get_kernel
+            from fnixagent.core.agent.loop import create_agent_from_kernel
 
             kernel = get_kernel()
             agent = create_agent_from_kernel(kernel, self.workspace_root)
@@ -476,6 +440,7 @@ class MCPServer:
 # ============================================================
 # stdio 传输
 # ============================================================
+
 
 class StdioTransport:
     """MCP stdio 传输 — 通过 stdin/stdout 通信"""
@@ -516,6 +481,7 @@ class StdioTransport:
 # HTTP/SSE 传输
 # ============================================================
 
+
 class HTTPTransport:
     """MCP HTTP 传输 — 通过 HTTP/SSE 提供远程调用"""
 
@@ -554,14 +520,16 @@ class HTTPTransport:
 # 入口
 # ============================================================
 
+
 def main():
     """MCP Server 入口 (命令行启动)"""
     import argparse
 
     parser = argparse.ArgumentParser(description="FnixAgent MCP Server")
     parser.add_argument("--workspace", "-w", default=".", help="工作区路径")
-    parser.add_argument("--transport", "-t", choices=["stdio", "http"], default="stdio",
-                        help="传输方式")
+    parser.add_argument(
+        "--transport", "-t", choices=["stdio", "http"], default="stdio", help="传输方式"
+    )
     parser.add_argument("--port", "-p", type=int, default=8000, help="HTTP 端口")
     args = parser.parse_args()
 
@@ -571,6 +539,7 @@ def main():
         transport = HTTPTransport(server)
         app = transport.get_app()
         import uvicorn
+
         uvicorn.run(app, host="0.0.0.0", port=args.port)
     else:
         transport = StdioTransport(server)

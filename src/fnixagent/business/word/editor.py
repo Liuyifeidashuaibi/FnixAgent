@@ -19,15 +19,13 @@ BUG 修复:
   - 表格数据越界:原 `table.rows[i].cells[j]` 在 data 行列超过 rows/cols 时抛 IndexError;
     改为先 clamp 再写入,跳过越界数据
 """
+
 import logging
 import os
-from typing import Optional
 
 from docx import Document
-from docx.shared import Inches, Pt  # noqa: F401  保留供外部模板使用
 
 from fnixagent.core.tools.protocol import ToolMetadata
-
 
 _logger = logging.getLogger(__name__)
 
@@ -52,31 +50,110 @@ _HEADING_LEVEL_MAX = 9
 # ---------------------------------------------------------------------------
 
 
-def _check_input_file(file_path: str) -> Optional[dict]:
+def _check_input_file(file_path: str) -> dict | None:
     """校验输入文件存在性与大小;返回错误 dict(无错误返回 None)。"""
     if not file_path:
         return {"success": False, "error": "file_path must not be empty"}
     if not os.path.exists(file_path):
-        return {"success": False, "error": f"input file not found: {file_path}",
-                "file_path": file_path}
+        return {
+            "success": False,
+            "error": f"input file not found: {file_path}",
+            "file_path": file_path,
+        }
     if not os.path.isfile(file_path):
-        return {"success": False, "error": f"input path is not a regular file: {file_path}",
-                "file_path": file_path}
+        return {
+            "success": False,
+            "error": f"input path is not a regular file: {file_path}",
+            "file_path": file_path,
+        }
     try:
         size = os.path.getsize(file_path)
     except OSError as e:
-        return {"success": False, "error": f"cannot stat input file: {e}",
-                "file_path": file_path}
+        return {"success": False, "error": f"cannot stat input file: {e}", "file_path": file_path}
     if size > MAX_INPUT_FILE_BYTES:
         return {
             "success": False,
             "error": f"input file size ({size} bytes) exceeds limit "
-                     f"({MAX_INPUT_FILE_BYTES // 1024 // 1024}MB)",
+            f"({MAX_INPUT_FILE_BYTES // 1024 // 1024}MB)",
             "file_path": file_path,
         }
     if size == 0:
         return {"success": False, "error": "input file is empty", "file_path": file_path}
     return None
+
+
+# ---------------------------------------------------------------------------
+# Word 读取工具 (P0 修复: 让 LLM 能读取已有 docx 内容, 用于总结/分析)
+# ---------------------------------------------------------------------------
+
+
+def read_docx(file_path: str) -> dict:
+    """读取 Word 文档文本内容。
+
+    提取段落文本 + 表格文本, 返回纯文本和结构化信息。
+    用于"总结这份 Word"/"分析这份 docx"等场景。
+
+    Args:
+        file_path: .docx 文件路径
+
+    Returns:
+        {success, text, paragraph_count, table_count} 或 {success, error}
+    """
+    err = _check_input_file(file_path)
+    if err is not None:
+        return err
+
+    try:
+        doc = Document(file_path)
+    except Exception as e:
+        _logger.exception("read_docx open failed: %s: %s", type(e).__name__, e)
+        return {
+            "success": False,
+            "error": f"无法打开 docx 文件 (可能不是有效 Word 格式): {type(e).__name__}: {e}",
+            "file_path": file_path,
+        }
+
+    try:
+        parts: list[str] = []
+        # 提取段落文本
+        para_count = 0
+        for para in doc.paragraphs:
+            text = (para.text or "").strip()
+            if text:
+                # 标记标题级别, 方便 LLM 理解结构
+                style_name = (para.style.name or "").lower() if para.style else ""
+                if "heading" in style_name or "title" in style_name:
+                    parts.append(f"## {text}")
+                else:
+                    parts.append(text)
+                para_count += 1
+
+        # 提取表格文本 (转 markdown 表格格式)
+        table_count = len(doc.tables)
+        for ti, table in enumerate(doc.tables, 1):
+            parts.append(f"\n[表格 {ti}]")
+            for row in table.rows:
+                cells = [cell.text.strip() for cell in row.cells]
+                parts.append("| " + " | ".join(cells) + " |")
+
+        full_text = "\n".join(parts)
+        # 截断防止超长文档塞爆 LLM 上下文
+        if len(full_text) > 8000:
+            full_text = full_text[:8000] + f"\n\n... [已截断, 原文共 {len(full_text)} 字符]"
+
+        return {
+            "success": True,
+            "text": full_text,
+            "paragraph_count": para_count,
+            "table_count": table_count,
+        }
+    except Exception as e:
+        _logger.exception("read_docx extract failed: %s: %s", type(e).__name__, e)
+        return {
+            "success": False,
+            "error": f"读取 docx 内容失败: {type(e).__name__}: {e}",
+            "file_path": file_path,
+        }
 
 
 # ---------------------------------------------------------------------------
@@ -86,8 +163,8 @@ def _check_input_file(file_path: str) -> Optional[dict]:
 
 def create_docx(
     content: str,
-    title: Optional[str] = None,
-    template: Optional[str] = None,
+    title: str | None = None,
+    template: str | None = None,
     output_path: str = "output.docx",
 ) -> dict:
     """
@@ -111,8 +188,7 @@ def create_docx(
     # 输出目录可写性校验
     out_dir = os.path.dirname(os.path.abspath(output_path))
     if not os.path.isdir(out_dir):
-        return {"success": False,
-                "error": f"output directory does not exist: {out_dir}"}
+        return {"success": False, "error": f"output directory does not exist: {out_dir}"}
 
     try:
         # 创建文档
@@ -189,7 +265,7 @@ def edit_docx(
         return {
             "success": False,
             "error": f"unsupported operation {operation!r}, "
-                     f"must be one of {sorted(_VALID_OPERATIONS)}",
+            f"must be one of {sorted(_VALID_OPERATIONS)}",
         }
     if not isinstance(params, dict):
         return {"success": False, "error": "params must be a dict"}
@@ -277,11 +353,13 @@ def edit_docx(
             text = params.get("text", "")
             level = params.get("level", 1)
             # 级别合法性校验
-            if not isinstance(level, int) or not (_HEADING_LEVEL_MIN <= level <= _HEADING_LEVEL_MAX):
+            if not isinstance(level, int) or not (
+                _HEADING_LEVEL_MIN <= level <= _HEADING_LEVEL_MAX
+            ):
                 return {
                     "success": False,
                     "error": f"level must be an integer in "
-                             f"[{_HEADING_LEVEL_MIN}, {_HEADING_LEVEL_MAX}], got {level!r}",
+                    f"[{_HEADING_LEVEL_MIN}, {_HEADING_LEVEL_MAX}], got {level!r}",
                     "file_path": file_path,
                 }
             if not text:
@@ -385,7 +463,6 @@ TOOL_METADATA = {
             "required": ["content"],
         },
     ),
-
     "edit_docx": ToolMetadata(
         name="edit_docx",
         description="编辑 Word 文档(添加文本/替换/插入表格)",
@@ -394,14 +471,15 @@ TOOL_METADATA = {
             "type": "object",
             "properties": {
                 "file_path": {"type": "string"},
-                "operation": {"type": "string",
-                              "enum": ["add_text", "replace", "insert_table", "add_heading"]},
+                "operation": {
+                    "type": "string",
+                    "enum": ["add_text", "replace", "insert_table", "add_heading"],
+                },
                 "params": {"type": "object"},
             },
             "required": ["file_path", "operation", "params"],
         },
     ),
-
     "format_docx": ToolMetadata(
         name="format_docx",
         description="应用 Word 格式样式",

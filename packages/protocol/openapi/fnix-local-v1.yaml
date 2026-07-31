@@ -1,0 +1,158 @@
+openapi: 3.1.0
+info:
+  title: fnix-local sidecar API
+  version: 1.0.0
+  description: |
+    Fnix 本地算力 sidecar 契约（Python MVP / Rust 实现共用）。
+    默认 base URL: http://127.0.0.1:8710
+
+servers:
+  - url: http://127.0.0.1:8710
+
+paths:
+  /health:
+    get:
+      summary: Sidecar health
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok, service, version, runtime]
+                properties:
+                  ok: { type: boolean }
+                  service: { type: string, example: fnix-local }
+                  version: { type: string }
+                  runtime: { type: string, enum: [python, rust] }
+
+  /v1/index:
+    post:
+      summary: Index workspace (PDG / symbols)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [workspace]
+              properties:
+                workspace: { type: string }
+                force: { type: boolean, default: false }
+                session_id: { type: string, nullable: true }
+      responses:
+        '200':
+          description: Indexed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IndexResponse'
+
+  /v1/context:
+    get:
+      summary: Get PDG digest and optional semantic hits
+      parameters:
+        - name: workspace
+          in: query
+          schema: { type: string }
+        - name: session_id
+          in: query
+          schema: { type: string }
+        - name: query
+          in: query
+          schema: { type: string }
+        - name: top_k
+          in: query
+          schema: { type: integer, default: 8 }
+      responses:
+        '200':
+          description: Context
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContextResponse'
+
+  /v1/run:
+    post:
+      summary: Run shell command in workspace
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [workspace, command]
+              properties:
+                workspace: { type: string }
+                command: { type: string }
+                cwd: { type: string, nullable: true }
+                timeout: { type: integer, default: 60 }
+      responses:
+        '200':
+          description: Command result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunResponse'
+
+  /v1/read:
+    get:
+      summary: Read file relative to workspace
+      parameters:
+        - name: workspace
+          in: query
+          required: true
+          schema: { type: string }
+        - name: path
+          in: query
+          required: true
+          schema: { type: string }
+        - name: offset
+          in: query
+          schema: { type: integer, default: 0, minimum: 0 }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1 }
+      responses:
+        '200':
+          description: File content
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadResponse'
+
+components:
+  schemas:
+    IndexResponse:
+      type: object
+      properties:
+        ok: { type: boolean }
+        session_id: { type: string }
+        workspace: { type: string }
+        stats: { type: object, additionalProperties: true }
+
+    ContextResponse:
+      type: object
+      properties:
+        ok: { type: boolean }
+        session_id: { type: string }
+        workspace: { type: string }
+        pdg_digest: { type: string }
+        symbols: { type: array, items: { type: object } }
+        vector_hits: { type: array, items: { type: object } }
+
+    RunResponse:
+      type: object
+      properties:
+        ok: { type: boolean }
+        stdout: { type: string }
+        stderr: { type: string }
+        exit_code: { type: integer }
+
+    ReadResponse:
+      type: object
+      properties:
+        ok: { type: boolean }
+        content: { type: string }
+        metadata: { type: object, additionalProperties: true }

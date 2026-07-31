@@ -1,4 +1,4 @@
-﻿"""
+"""
 资产包加载/保存测试。
 
 覆盖:
@@ -7,10 +7,9 @@
     - 版本信息: version / created_at 保留
     - 文件布局: 各资产文件按预期路径生成
 """
+
 import json
 import os
-
-import pytest
 
 from fnixagent.assets.bundle import (
     ASSETS_VERSION,
@@ -20,10 +19,10 @@ from fnixagent.assets.bundle import (
 )
 from fnixagent.core.types import SkillLevel
 
-
 # ---------------------------------------------------------------------------
 # 往返一致性
 # ---------------------------------------------------------------------------
+
 
 class TestRoundTrip:
     """save -> load 往返一致性。"""
@@ -85,6 +84,7 @@ class TestRoundTrip:
 # 缺失文件处理
 # ---------------------------------------------------------------------------
 
+
 class TestMissingFiles:
     """缺失文件应按空值兜底,不抛异常。"""
 
@@ -133,6 +133,7 @@ class TestMissingFiles:
 # 版本信息
 # ---------------------------------------------------------------------------
 
+
 class TestVersionInfo:
     """版本元信息测试。"""
 
@@ -141,7 +142,7 @@ class TestVersionInfo:
         save_assets(sample_bundle, tmp_bundle_dir)
         version_path = os.path.join(tmp_bundle_dir, "meta", "version.json")
         assert os.path.exists(version_path)
-        with open(version_path, "r", encoding="utf-8") as f:
+        with open(version_path, encoding="utf-8") as f:
             meta = json.load(f)
         assert meta["version"] == sample_bundle.version
         assert meta["created_at"] == sample_bundle.created_at
@@ -159,6 +160,7 @@ class TestVersionInfo:
 # ---------------------------------------------------------------------------
 # 文件布局
 # ---------------------------------------------------------------------------
+
 
 class TestFileLayout:
     """验证资产文件按预期路径生成。"""
@@ -182,7 +184,7 @@ class TestFileLayout:
         """JSONL 文件每行一条有效 JSON。"""
         save_assets(sample_bundle, tmp_bundle_dir)
         traces_path = os.path.join(tmp_bundle_dir, "traces", "traces.jsonl")
-        with open(traces_path, "r", encoding="utf-8") as f:
+        with open(traces_path, encoding="utf-8") as f:
             lines = [line.strip() for line in f if line.strip()]
         assert len(lines) == 2
         for line in lines:
@@ -193,7 +195,7 @@ class TestFileLayout:
         """JSON 文件使用 ensure_ascii=False(中文字符不转义)。"""
         save_assets(sample_bundle, tmp_bundle_dir)
         topo_path = os.path.join(tmp_bundle_dir, "topology", "snapshot.json")
-        with open(topo_path, "r", encoding="utf-8") as f:
+        with open(topo_path, encoding="utf-8") as f:
             raw = f.read()
         # 中文名称应直接出现在文件中,而非 \uXXXX 转义
         assert "撰写论文综述" in raw
@@ -202,6 +204,7 @@ class TestFileLayout:
 # ---------------------------------------------------------------------------
 # 技能记录枚举还原
 # ---------------------------------------------------------------------------
+
 
 class TestSkillRecordSerialization:
     """SkillRecord 枚举字段序列化/反序列化。"""

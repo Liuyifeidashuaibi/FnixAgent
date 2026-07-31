@@ -10,13 +10,11 @@
 
 彻底解决痛点: 普通 Agent 对话结束=知识清空;本 Agent 每次使用永久升级大脑结构。
 """
+
 from __future__ import annotations
 
-import time
-import uuid
-from typing import Any, Optional
+from typing import Any
 
-from fnixagent.core.topology import weights as weights_mod
 from fnixagent.core.topology.graph import TopologyGraph
 from fnixagent.core.types import (
     EdgeType,
@@ -26,10 +24,23 @@ from fnixagent.core.types import (
 )
 
 # 过滤规则: 剔除的临时话术关键词
-JUNK_KEYWORDS: frozenset[str] = frozenset({
-    "你好", "谢谢", "thanks", "hello", "hi", "ok", "好的", "再见",
-    "bye", "嗯", "哦", "哈", "嘿",
-})
+JUNK_KEYWORDS: frozenset[str] = frozenset(
+    {
+        "你好",
+        "谢谢",
+        "thanks",
+        "hello",
+        "hi",
+        "ok",
+        "好的",
+        "再见",
+        "bye",
+        "嗯",
+        "哦",
+        "哈",
+        "嘿",
+    }
+)
 
 # 最低工具调用数(低于此值视为无实质推理)
 MIN_TOOL_CALLS_FOR_SOLIDIFICATION: int = 1
@@ -158,6 +169,7 @@ class KnowledgeSolidificationFlywheel:
             # 调用 LLM(假设 router 有 chat 方法)
             response = self._llm.chat(messages=[{"role": "user", "content": prompt}])
             import json
+
             result = json.loads(response.content)
             return result
         except Exception:
@@ -183,32 +195,38 @@ class KnowledgeSolidificationFlywheel:
         for i, call in enumerate(trace.tool_calls):
             tool_name = call.get("name", f"tool_{i}")
             args = call.get("args", {})
-            status = call.get("status", "unknown")
+            call.get("status", "unknown")
 
             # 工具名 → 概念
             if tool_name not in seen_concepts:
-                concepts.append({
-                    "name": tool_name,
-                    "content": f"技能: {tool_name}",
-                })
+                concepts.append(
+                    {
+                        "name": tool_name,
+                        "content": f"技能: {tool_name}",
+                    }
+                )
                 seen_concepts.add(tool_name)
 
             # 工具参数 → 事实
             if args:
-                facts.append({
-                    "name": f"{tool_name}_params_{i}",
-                    "content": str(args),
-                    "source": tool_name,
-                })
+                facts.append(
+                    {
+                        "name": f"{tool_name}_params_{i}",
+                        "content": str(args),
+                        "source": tool_name,
+                    }
+                )
 
             # 工具调用顺序 → 因果关系
             if i > 0:
-                prev_tool = trace.tool_calls[i - 1].get("name", f"tool_{i-1}")
-                causal_relations.append({
-                    "from": prev_tool,
-                    "to": tool_name,
-                    "reason": f"{prev_tool} 后调用 {tool_name}",
-                })
+                prev_tool = trace.tool_calls[i - 1].get("name", f"tool_{i - 1}")
+                causal_relations.append(
+                    {
+                        "from": prev_tool,
+                        "to": tool_name,
+                        "reason": f"{prev_tool} 后调用 {tool_name}",
+                    }
+                )
 
         return {
             "concepts": concepts,
@@ -388,7 +406,7 @@ class KnowledgeSolidificationFlywheel:
         name: str,
         layer: TopologyLayer,
         node_type: NodeType,
-    ) -> Optional[Any]:
+    ) -> Any | None:
         """按名称查找节点(同层同类)。"""
         nodes = self._graph.list_nodes(layer=layer, node_type=node_type)
         for node in nodes:
@@ -401,7 +419,7 @@ class KnowledgeSolidificationFlywheel:
         source_id: str,
         target_id: str,
         edge_type: EdgeType,
-    ) -> Optional[Any]:
+    ) -> Any | None:
         """查找同源同目标同类型的边。"""
         out_edges = self._graph.get_out_edges(source_id, edge_type=edge_type)
         for edge in out_edges:

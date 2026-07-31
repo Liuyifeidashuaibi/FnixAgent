@@ -20,6 +20,7 @@
   - 所有异常不外泄,捕获后返回合理默认值
   - 与 audit/logger.py 并行存在,不修改原模块
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -29,9 +30,8 @@ import os
 import stat
 import sys
 import uuid
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Optional
+from dataclasses import dataclass
+from datetime import UTC, datetime
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +53,7 @@ class ChainEntry:
         entry_hash: entry_hash = sha256(prev_hash + content_hash + timestamp)
         content: 原始内容(仅内存,不落盘)
     """
+
     entry_id: int
     timestamp: str
     prev_hash: str
@@ -71,6 +72,7 @@ class MerkleProof:
         indices: 每层兄弟位置(0=左, 1=右)
         root: Merkle 根
     """
+
     leaf: str
     path: list[str]
     indices: list[int]
@@ -89,6 +91,7 @@ class ChainSnapshot:
         signature: base64 签名(SM2/RSA)
         signer_key_id: 签名密钥 ID
     """
+
     snapshot_id: str
     created_at: str
     entry_count: int
@@ -135,7 +138,7 @@ class AuditChain:
         """追加一条日志到链尾(WORM,只追加)。"""
         with self._lock:
             entry_id = self._last_entry_id + 1
-            timestamp = datetime.now(timezone.utc).isoformat()
+            timestamp = datetime.now(UTC).isoformat()
             content_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
             prev_hash = self._last_hash if self._last_hash else self.GENESIS_HASH
             entry_hash = self._compute_entry_hash(prev_hash, content_hash, timestamp)
@@ -151,13 +154,19 @@ class AuditChain:
             try:
                 self._unset_worm_protection()
                 with open(self._entries_file, "a", encoding="utf-8") as f:
-                    f.write(json.dumps({
-                        "entry_id": entry.entry_id,
-                        "timestamp": entry.timestamp,
-                        "prev_hash": entry.prev_hash,
-                        "content_hash": entry.content_hash,
-                        "entry_hash": entry.entry_hash,
-                    }, ensure_ascii=False) + "\n")
+                    f.write(
+                        json.dumps(
+                            {
+                                "entry_id": entry.entry_id,
+                                "timestamp": entry.timestamp,
+                                "prev_hash": entry.prev_hash,
+                                "content_hash": entry.content_hash,
+                                "entry_hash": entry.entry_hash,
+                            },
+                            ensure_ascii=False,
+                        )
+                        + "\n"
+                    )
                 self._apply_worm_protection()
             except Exception as exc:
                 logger.error("[audit_chain] 追加失败: %s", exc)
@@ -165,7 +174,7 @@ class AuditChain:
             self._last_hash = entry_hash
             return entry
 
-    def verify_chain(self) -> tuple[bool, Optional[int]]:
+    def verify_chain(self) -> tuple[bool, int | None]:
         """校验整条链,返回 (是否有效, 断裂点 entry_id)。
 
         从 entry 0 开始,重新计算每条 entry_hash,与存储的比对。
@@ -198,12 +207,10 @@ class AuditChain:
             return False
         if entry.prev_hash != prev.entry_hash:
             return False
-        expected = self._recompute_entry_hash(
-            entry.prev_hash, entry.content_hash, entry.timestamp
-        )
+        expected = self._recompute_entry_hash(entry.prev_hash, entry.content_hash, entry.timestamp)
         return entry.entry_hash == expected
 
-    def get_entry(self, entry_id: int) -> Optional[ChainEntry]:
+    def get_entry(self, entry_id: int) -> ChainEntry | None:
         """按 ID 查询单条(从磁盘读取)。"""
         entries = self._read_all_entries()
         if 0 <= entry_id < len(entries):
@@ -213,7 +220,7 @@ class AuditChain:
     def list_entries(self, start: int = 0, limit: int = 100) -> list[ChainEntry]:
         """分页列出条目(从 start 起,最多 limit 条)。"""
         entries = self._read_all_entries()
-        return entries[start:start + limit]
+        return entries[start : start + limit]
 
     # -- 公开接口:快照与 Merkle ------------------------------------------
 
@@ -223,7 +230,7 @@ class AuditChain:
         merkle_root = self._compute_merkle_root(entries)
         snapshot = ChainSnapshot(
             snapshot_id=uuid.uuid4().hex,
-            created_at=datetime.now(timezone.utc).isoformat(),
+            created_at=datetime.now(UTC).isoformat(),
             entry_count=len(entries),
             merkle_root=merkle_root,
             signature="",
@@ -237,14 +244,19 @@ class AuditChain:
         try:
             path = os.path.join(self._snapshots_dir, f"{snapshot.snapshot_id}.json")
             with open(path, "w", encoding="utf-8") as f:
-                json.dump({
-                    "snapshot_id": snapshot.snapshot_id,
-                    "created_at": snapshot.created_at,
-                    "entry_count": snapshot.entry_count,
-                    "merkle_root": snapshot.merkle_root,
-                    "signature": snapshot.signature,
-                    "signer_key_id": snapshot.signer_key_id,
-                }, f, ensure_ascii=False, indent=2)
+                json.dump(
+                    {
+                        "snapshot_id": snapshot.snapshot_id,
+                        "created_at": snapshot.created_at,
+                        "entry_count": snapshot.entry_count,
+                        "merkle_root": snapshot.merkle_root,
+                        "signature": snapshot.signature,
+                        "signer_key_id": snapshot.signer_key_id,
+                    },
+                    f,
+                    ensure_ascii=False,
+                    indent=2,
+                )
         except Exception as exc:
             logger.warning("[audit_chain] 快照持久化失败: %s", exc)
         return snapshot
@@ -255,16 +267,16 @@ class AuditChain:
             return False
         try:
             from fnixagent.core.security.signing import DocumentSigner
+
             signer = DocumentSigner()
             # DocumentSigner 验签针对文件,这里复用其 RSA 验签逻辑:
             # 重新计算 merkle_root 并用公钥校验签名
             entries = self._read_all_entries()
-            current_root = self._compute_merkle_root(entries[:snapshot.entry_count])
+            current_root = self._compute_merkle_root(entries[: snapshot.entry_count])
             if current_root != snapshot.merkle_root:
                 return False
             # 加载对应公钥验签(降级模式 signature 为 HMAC 校验和,直接比对)
-            return signer._load_public_key(snapshot.signer_key_id) or \
-                bool(snapshot.signature)
+            return signer._load_public_key(snapshot.signer_key_id) or bool(snapshot.signature)
         except Exception:
             # 降级:仅校验 merkle_root 一致
             return bool(snapshot.merkle_root)
@@ -278,16 +290,18 @@ class AuditChain:
                     continue
                 path = os.path.join(self._snapshots_dir, name)
                 try:
-                    with open(path, "r", encoding="utf-8") as f:
+                    with open(path, encoding="utf-8") as f:
                         data = json.load(f)
-                    snapshots.append(ChainSnapshot(
-                        snapshot_id=data.get("snapshot_id", ""),
-                        created_at=data.get("created_at", ""),
-                        entry_count=data.get("entry_count", 0),
-                        merkle_root=data.get("merkle_root", ""),
-                        signature=data.get("signature", ""),
-                        signer_key_id=data.get("signer_key_id", ""),
-                    ))
+                    snapshots.append(
+                        ChainSnapshot(
+                            snapshot_id=data.get("snapshot_id", ""),
+                            created_at=data.get("created_at", ""),
+                            entry_count=data.get("entry_count", 0),
+                            merkle_root=data.get("merkle_root", ""),
+                            signature=data.get("signature", ""),
+                            signer_key_id=data.get("signer_key_id", ""),
+                        )
+                    )
                 except Exception:
                     continue
         except Exception:
@@ -307,7 +321,9 @@ class AuditChain:
 
     @staticmethod
     def _recompute_entry_hash(
-        prev_hash: str, content_hash: str, timestamp: str,
+        prev_hash: str,
+        content_hash: str,
+        timestamp: str,
     ) -> str:
         """重新计算 entry_hash(与 _compute_entry_hash 算法一致)。"""
         raw = f"{prev_hash}{content_hash}{timestamp}"
@@ -342,7 +358,9 @@ class AuditChain:
         return tree
 
     def _get_merkle_proof(
-        self, leaf_index: int, tree: list[list[str]],
+        self,
+        leaf_index: int,
+        tree: list[list[str]],
     ) -> MerkleProof:
         """获取指定叶子的 Merkle 包含证明。"""
         if not tree or leaf_index < 0 or leaf_index >= len(tree[0]):
@@ -373,6 +391,7 @@ class AuditChain:
         """用 DocumentSigner 签名 merkle_root,返回 (base64 签名, key_id)。"""
         try:
             from fnixagent.core.security.signing import DocumentSigner
+
             signer = DocumentSigner()
             if not signer._ensure_key():
                 return "", ""
@@ -390,20 +409,22 @@ class AuditChain:
         if not os.path.exists(self._entries_file):
             return entries
         try:
-            with open(self._entries_file, "r", encoding="utf-8") as f:
+            with open(self._entries_file, encoding="utf-8") as f:
                 for line in f:
                     line = line.strip()
                     if not line:
                         continue
                     try:
                         d = json.loads(line)
-                        entries.append(ChainEntry(
-                            entry_id=d.get("entry_id", 0),
-                            timestamp=d.get("timestamp", ""),
-                            prev_hash=d.get("prev_hash", self.GENESIS_HASH),
-                            content_hash=d.get("content_hash", ""),
-                            entry_hash=d.get("entry_hash", ""),
-                        ))
+                        entries.append(
+                            ChainEntry(
+                                entry_id=d.get("entry_id", 0),
+                                timestamp=d.get("timestamp", ""),
+                                prev_hash=d.get("prev_hash", self.GENESIS_HASH),
+                                content_hash=d.get("content_hash", ""),
+                                entry_hash=d.get("entry_hash", ""),
+                            )
+                        )
                     except Exception:
                         continue
         except Exception as exc:
@@ -415,7 +436,7 @@ class AuditChain:
         if not os.path.exists(self._entries_file):
             return 0
         try:
-            with open(self._entries_file, "r", encoding="utf-8") as f:
+            with open(self._entries_file, encoding="utf-8") as f:
                 return sum(1 for line in f if line.strip())
         except Exception:
             return 0
@@ -439,9 +460,11 @@ class AuditChain:
         try:
             if sys.platform == "win32":
                 import subprocess
+
                 subprocess.run(
                     ["attrib", "+r", self._entries_file],
-                    capture_output=True, check=False,
+                    capture_output=True,
+                    check=False,
                 )
             else:
                 os.chmod(
@@ -458,9 +481,11 @@ class AuditChain:
         try:
             if sys.platform == "win32":
                 import subprocess
+
                 subprocess.run(
                     ["attrib", "-r", self._entries_file],
-                    capture_output=True, check=False,
+                    capture_output=True,
+                    check=False,
                 )
             else:
                 os.chmod(

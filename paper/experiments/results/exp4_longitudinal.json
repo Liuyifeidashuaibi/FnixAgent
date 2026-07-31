@@ -1,0 +1,221 @@
+{
+  "experiment": "exp4_longitudinal",
+  "paper_section": "Section 5.4 — Longitudinal Self-Evolution",
+  "random_seed": 42,
+  "tasks_per_day": 12,
+  "pattern_seeds": [
+    "实现一个 fibonacci 函数",
+    "编写 pytest 测试用例",
+    "修复语法错误",
+    "重构提取解析函数",
+    "创建 CLI 问候程序",
+    "实现计算器四则运算"
+  ],
+  "horizons": [
+    {
+      "horizon_days": 1,
+      "simulated_tasks": 12,
+      "evolution_runs": 1,
+      "initial": {
+        "total_nodes": 17,
+        "active_nodes": 17,
+        "deprecated_nodes": 0,
+        "stale_nodes": 0,
+        "avg_weight": 0.5,
+        "max_weight": 0.5,
+        "min_weight": 0.5,
+        "l3_rule_nodes": 6,
+        "solidified_patterns": 0,
+        "active_edges": 16
+      },
+      "final": {
+        "total_nodes": 18,
+        "active_nodes": 18,
+        "deprecated_nodes": 0,
+        "stale_nodes": 0,
+        "avg_weight": 0.5,
+        "max_weight": 0.5,
+        "min_weight": 0.5,
+        "l3_rule_nodes": 7,
+        "solidified_patterns": 1,
+        "active_edges": 16
+      },
+      "delta": {
+        "active_nodes": 1,
+        "avg_weight": 0.0,
+        "solidified_patterns": 1,
+        "stale_nodes": 0,
+        "deprecated_nodes": 0
+      },
+      "retrieval_hit_rate_percent": 33.33,
+      "avg_retrieval_latency_ms": 0.188,
+      "last_evolution_result": {
+        "analyzed_traces": 12,
+        "patterns_detected": 1,
+        "top_paths": 6,
+        "skill_combos": 1,
+        "weak_links_fixed": 0,
+        "skills_adjusted": 0,
+        "patterns_solidified": 1,
+        "decayed_nodes": 18,
+        "stale_nodes": 0,
+        "snapshot_created": false,
+        "rolled_back": false
+      }
+    },
+    {
+      "horizon_days": 7,
+      "simulated_tasks": 84,
+      "evolution_runs": 1,
+      "initial": {
+        "total_nodes": 17,
+        "active_nodes": 17,
+        "deprecated_nodes": 0,
+        "stale_nodes": 0,
+        "avg_weight": 0.5,
+        "max_weight": 0.5,
+        "min_weight": 0.5,
+        "l3_rule_nodes": 6,
+        "solidified_patterns": 0,
+        "active_edges": 16
+      },
+      "final": {
+        "total_nodes": 23,
+        "active_nodes": 23,
+        "deprecated_nodes": 0,
+        "stale_nodes": 0,
+        "avg_weight": 0.5,
+        "max_weight": 0.5,
+        "min_weight": 0.5,
+        "l3_rule_nodes": 12,
+        "solidified_patterns": 6,
+        "active_edges": 16
+      },
+      "delta": {
+        "active_nodes": 6,
+        "avg_weight": 0.0,
+        "solidified_patterns": 6,
+        "stale_nodes": 0,
+        "deprecated_nodes": 0
+      },
+      "retrieval_hit_rate_percent": 33.33,
+      "avg_retrieval_latency_ms": 0.022,
+      "last_evolution_result": {
+        "analyzed_traces": 84,
+        "patterns_detected": 6,
+        "top_paths": 6,
+        "skill_combos": 1,
+        "weak_links_fixed": 0,
+        "skills_adjusted": 0,
+        "patterns_solidified": 6,
+        "decayed_nodes": 23,
+        "stale_nodes": 0,
+        "snapshot_created": false,
+        "rolled_back": false
+      }
+    },
+    {
+      "horizon_days": 30,
+      "simulated_tasks": 360,
+      "evolution_runs": 4,
+      "initial": {
+        "total_nodes": 17,
+        "active_nodes": 17,
+        "deprecated_nodes": 0,
+        "stale_nodes": 0,
+        "avg_weight": 0.5,
+        "max_weight": 0.5,
+        "min_weight": 0.5,
+        "l3_rule_nodes": 6,
+        "solidified_patterns": 0,
+        "active_edges": 16
+      },
+      "final": {
+        "total_nodes": 23,
+        "active_nodes": 23,
+        "deprecated_nodes": 0,
+        "stale_nodes": 0,
+        "avg_weight": 0.5,
+        "max_weight": 0.5,
+        "min_weight": 0.5,
+        "l3_rule_nodes": 12,
+        "solidified_patterns": 6,
+        "active_edges": 16
+      },
+      "delta": {
+        "active_nodes": 6,
+        "avg_weight": 0.0,
+        "solidified_patterns": 6,
+        "stale_nodes": 0,
+        "deprecated_nodes": 0
+      },
+      "retrieval_hit_rate_percent": 33.33,
+      "avg_retrieval_latency_ms": 0.021,
+      "last_evolution_result": {
+        "analyzed_traces": 60,
+        "patterns_detected": 6,
+        "top_paths": 6,
+        "skill_combos": 1,
+        "weak_links_fixed": 0,
+        "skills_adjusted": 0,
+        "patterns_solidified": 0,
+        "decayed_nodes": 23,
+        "stale_nodes": 0,
+        "snapshot_created": false,
+        "rolled_back": false
+      }
+    },
+    {
+      "horizon_days": 90,
+      "simulated_tasks": 1080,
+      "evolution_runs": 11,
+      "initial": {
+        "total_nodes": 17,
+        "active_nodes": 17,
+        "deprecated_nodes": 0,
+        "stale_nodes": 0,
+        "avg_weight": 0.5,
+        "max_weight": 0.5,
+        "min_weight": 0.5,
+        "l3_rule_nodes": 6,
+        "solidified_patterns": 0,
+        "active_edges": 16
+      },
+      "final": {
+        "total_nodes": 23,
+        "active_nodes": 23,
+        "deprecated_nodes": 0,
+        "stale_nodes": 0,
+        "avg_weight": 0.5,
+        "max_weight": 0.5,
+        "min_weight": 0.5,
+        "l3_rule_nodes": 12,
+        "solidified_patterns": 6,
+        "active_edges": 16
+      },
+      "delta": {
+        "active_nodes": 6,
+        "avg_weight": 0.0,
+        "solidified_patterns": 6,
+        "stale_nodes": 0,
+        "deprecated_nodes": 0
+      },
+      "retrieval_hit_rate_percent": 33.33,
+      "avg_retrieval_latency_ms": 0.024,
+      "last_evolution_result": {
+        "analyzed_traces": 80,
+        "patterns_detected": 6,
+        "top_paths": 6,
+        "skill_combos": 1,
+        "weak_links_fixed": 0,
+        "skills_adjusted": 0,
+        "patterns_solidified": 0,
+        "decayed_nodes": 23,
+        "stale_nodes": 0,
+        "snapshot_created": false,
+        "rolled_back": false
+      }
+    }
+  ],
+  "generated_at": "2026-08-01T05:30:27"
+}

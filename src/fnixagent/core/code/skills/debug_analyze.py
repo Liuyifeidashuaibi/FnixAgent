@@ -3,6 +3,7 @@ Skill: 调试分析 (Debug Analysis)
 ==================================
 分析错误栈, 定位 bug 根因。
 """
+
 import re
 
 SKILL_NAME = "debug_analyze"
@@ -27,15 +28,15 @@ async def handler(kernel, args):
     frames: list[dict[str, str]] = []
 
     # Python traceback 格式: File "path", line N, in func
-    frame_pattern = re.compile(
-        r'File\s+"([^"]+)",\s+line\s+(\d+),\s+in\s+(\w+)'
-    )
+    frame_pattern = re.compile(r'File\s+"([^"]+)",\s+line\s+(\d+),\s+in\s+(\w+)')
     for match in frame_pattern.finditer(traceback_text):
-        frames.append({
-            "file": match.group(1),
-            "line": int(match.group(2)),
-            "function": match.group(3),
-        })
+        frames.append(
+            {
+                "file": match.group(1),
+                "line": int(match.group(2)),
+                "function": match.group(3),
+            }
+        )
 
     # 提取错误类型和消息 (最后一行)
     error_line = ""
@@ -56,6 +57,7 @@ async def handler(kernel, args):
     if frames:
         last_frame = frames[-1]
         from fnixagent.core.agent.syscall import SyscallRequest, SyscallType
+
         req = SyscallRequest(
             syscall=SyscallType.FS_READ,
             args={"path": f"/workspace/{last_frame['file']}"},
@@ -68,11 +70,13 @@ async def handler(kernel, args):
             start = max(0, line_num - 5)
             end = min(len(source_lines), line_num + 5)
             for i in range(start, end):
-                context.append({
-                    "line": i + 1,
-                    "content": source_lines[i] if i < len(source_lines) else "",
-                    "is_error_line": (i + 1 == line_num),
-                })
+                context.append(
+                    {
+                        "line": i + 1,
+                        "content": source_lines[i] if i < len(source_lines) else "",
+                        "is_error_line": (i + 1 == line_num),
+                    }
+                )
 
     # 生成分析建议
     suggestions: list[str] = []

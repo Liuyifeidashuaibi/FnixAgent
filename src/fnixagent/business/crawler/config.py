@@ -29,17 +29,19 @@ fnixagent 端不存储任何数据,配置仅含连接信息(地址/认证/超时
 可选依赖:
   - yaml:YAML 配置加载(缺失时 load_config_from_yaml 抛 ImportError)
 """
+
 from __future__ import annotations
 
 import dataclasses
 import logging
 import os
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 # 尝试导入 yaml(与 core/role_loader.py 一致的降级模式)
 try:
     import yaml  # type: ignore
+
     _HAS_YAML = True
 except ImportError:  # pragma: no cover
     _HAS_YAML = False
@@ -91,7 +93,7 @@ class CrawlerConfig:
     """
 
     base_url: str = "http://localhost:9100"
-    api_key: Optional[str] = None
+    api_key: str | None = None
     api_key_header: str = "Authorization"
     api_key_prefix: str = "Bearer"
     timeout: float = 60.0
@@ -111,21 +113,13 @@ class CrawlerConfig:
         if not isinstance(self.timeout, (int, float)) or self.timeout <= 0:
             raise ValueError(f"CrawlerConfig.timeout 必须 > 0, 实为 {self.timeout}")
         if not isinstance(self.connect_timeout, (int, float)) or self.connect_timeout <= 0:
-            raise ValueError(
-                f"CrawlerConfig.connect_timeout 必须 > 0, 实为 {self.connect_timeout}"
-            )
+            raise ValueError(f"CrawlerConfig.connect_timeout 必须 > 0, 实为 {self.connect_timeout}")
         if not isinstance(self.max_retries, int) or self.max_retries < 0:
-            raise ValueError(
-                f"CrawlerConfig.max_retries 必须 >= 0, 实为 {self.max_retries}"
-            )
+            raise ValueError(f"CrawlerConfig.max_retries 必须 >= 0, 实为 {self.max_retries}")
         if not isinstance(self.retry_backoff, (int, float)) or self.retry_backoff < 0:
-            raise ValueError(
-                f"CrawlerConfig.retry_backoff 必须 >= 0, 实为 {self.retry_backoff}"
-            )
+            raise ValueError(f"CrawlerConfig.retry_backoff 必须 >= 0, 实为 {self.retry_backoff}")
         if not isinstance(self.retry_max_delay, (int, float)) or self.retry_max_delay <= 0:
-            raise ValueError(
-                f"CrawlerConfig.retry_max_delay 必须 > 0, 实为 {self.retry_max_delay}"
-            )
+            raise ValueError(f"CrawlerConfig.retry_max_delay 必须 > 0, 实为 {self.retry_max_delay}")
         if not isinstance(self.max_response_size, int) or self.max_response_size <= 0:
             raise ValueError(
                 f"CrawlerConfig.max_response_size 必须为正整数, 实为 {self.max_response_size}"
@@ -190,9 +184,7 @@ def _env_to_dict() -> dict[str, Any]:
     raw = os.environ.get(_ENV_PREFIX + "RETRY_ON_STATUS")
     if raw is not None and raw.strip():
         try:
-            result["retry_on_status"] = tuple(
-                int(x.strip()) for x in raw.split(",") if x.strip()
-            )
+            result["retry_on_status"] = tuple(int(x.strip()) for x in raw.split(",") if x.strip())
         except ValueError as e:
             raise ValueError(
                 f"环境变量 {_ENV_PREFIX}RETRY_ON_STATUS='{raw}' 必须为逗号分隔的整数"
@@ -216,17 +208,13 @@ def _yaml_to_dict(path: str) -> dict[str, Any]:
         ValueError: YAML 顶层不是 mapping
     """
     if not _HAS_YAML:
-        raise ImportError(
-            "yaml 未安装,无法加载 YAML 配置(请安装 PyYAML 或 yaml 包)"
-        )
-    with open(path, "r", encoding="utf-8") as f:
+        raise ImportError("yaml 未安装,无法加载 YAML 配置(请安装 PyYAML 或 yaml 包)")
+    with open(path, encoding="utf-8") as f:
         data = yaml.safe_load(f)  # type: ignore
     if data is None:
         return {}
     if not isinstance(data, dict):
-        raise ValueError(
-            f"YAML 配置必须是 mapping, 实为 {type(data).__name__}: {path}"
-        )
+        raise ValueError(f"YAML 配置必须是 mapping, 实为 {type(data).__name__}: {path}")
     valid_fields = {f.name for f in dataclasses.fields(CrawlerConfig)}
     return {k: v for k, v in data.items() if k in valid_fields}
 

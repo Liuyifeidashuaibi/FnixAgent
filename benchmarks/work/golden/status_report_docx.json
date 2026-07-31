@@ -1,0 +1,7 @@
+{
+  "id": "status_report_docx",
+  "prompt": "用 create_docx 生成一份一页项目周报 Word：标题「项目周报」，含本周进展与风险两段。输出到 .fnix/artifacts/status_report/week.docx",
+  "work_mode": "craft",
+  "expect_glob": ".fnix/artifacts/status_report/**/*.docx",
+  "timeout_s": 180
+}

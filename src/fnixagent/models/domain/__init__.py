@@ -1,4 +1,5 @@
 """领域对象(与 ORM 解耦)。"""
+
 from fnixagent.models.domain.entities import (
     BillingRecord,
     Document,
@@ -13,6 +14,14 @@ from fnixagent.models.domain.entities import (
 )
 
 __all__ = [
-    "BillingRecord", "Document", "Entity", "Message", "Session",
-    "Task", "TaskStep", "Tenant", "ToolExecution", "User",
+    "BillingRecord",
+    "Document",
+    "Entity",
+    "Message",
+    "Session",
+    "Task",
+    "TaskStep",
+    "Tenant",
+    "ToolExecution",
+    "User",
 ]

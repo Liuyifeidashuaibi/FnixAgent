@@ -14,21 +14,19 @@
 双向正反馈:
     拓扑权重高 → 技能优先级高 → 被选中概率高 → 执行成功 → 拓扑权重更高
 """
+
 from __future__ import annotations
 
-import time
-from typing import Any, Optional
+from typing import Any
 
-from fnixagent.core.topology.graph import TopologyGraph
 from fnixagent.core.topology import weights as weights_mod
+from fnixagent.core.topology.graph import TopologyGraph
 from fnixagent.core.types import (
     NodeType,
-    SkillLevel,
-    TopologyLayer,
-    TopologyNode,
-    TopologyPath,
     ToolExecutionStatus,
     ToolResult,
+    TopologyLayer,
+    TopologyPath,
 )
 
 
@@ -59,8 +57,8 @@ class SkillFeedbackHandler:
     def on_skill_success(
         self,
         skill_name: str,
-        path: Optional[TopologyPath] = None,
-        concept_node_id: Optional[str] = None,
+        path: TopologyPath | None = None,
+        concept_node_id: str | None = None,
     ) -> dict[str, Any]:
         """技能执行成功 → 强化拓扑权重。
 
@@ -108,9 +106,9 @@ class SkillFeedbackHandler:
     def on_skill_failure(
         self,
         skill_name: str,
-        path: Optional[TopologyPath] = None,
-        concept_node_id: Optional[str] = None,
-        error: Optional[str] = None,
+        path: TopologyPath | None = None,
+        concept_node_id: str | None = None,
+        error: str | None = None,
     ) -> dict[str, Any]:
         """技能执行失败 → 惩罚拓扑权重。
 
@@ -169,7 +167,7 @@ class SkillFeedbackHandler:
         self,
         skill_name: str,
         result: ToolResult,
-        path: Optional[TopologyPath] = None,
+        path: TopologyPath | None = None,
     ) -> dict[str, Any]:
         """从 ToolResult 自动触发成功/失败反馈。
 
@@ -204,10 +202,7 @@ class SkillFeedbackHandler:
 
     def get_all_success_rates(self) -> dict[str, float]:
         """获取全部技能的成功率。"""
-        return {
-            name: self.get_success_rate(name)
-            for name in self._feedback_window
-        }
+        return {name: self.get_success_rate(name) for name in self._feedback_window}
 
     # -----------------------------------------------------------------------
     # 内部工具
@@ -216,7 +211,7 @@ class SkillFeedbackHandler:
     def _find_bound_concepts(
         self,
         skill_name: str,
-        concept_node_id: Optional[str] = None,
+        concept_node_id: str | None = None,
     ) -> list[str]:
         """查找技能绑定的概念节点 ID 列表。"""
         if concept_node_id is not None:

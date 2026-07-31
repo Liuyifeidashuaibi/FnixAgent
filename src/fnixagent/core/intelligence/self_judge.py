@@ -27,14 +27,11 @@
 from __future__ import annotations
 
 import hashlib
-import json
 import logging
-import math
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -43,18 +40,20 @@ logger = logging.getLogger(__name__)
 # 评估维度
 # ============================================================
 
+
 class EvaluateDimension(str, Enum):
     """评估维度 — 可随系统进化动态扩展"""
-    CORRECTNESS = "correctness"          # 正确性
-    COMPLETENESS = "completeness"        # 完整性
-    EFFICIENCY = "efficiency"            # 效率
-    SAFETY = "safety"                    # 安全性
-    INNOVATION = "innovation"            # 创新性
-    USABILITY = "usability"              # 可用性
-    ROBUSTNESS = "robustness"            # 鲁棒性
-    CONSISTENCY = "consistency"          # 一致性
-    ADAPTABILITY = "adaptability"        # 适应性
-    EXPLAINABILITY = "explainability"    # 可解释性
+
+    CORRECTNESS = "correctness"  # 正确性
+    COMPLETENESS = "completeness"  # 完整性
+    EFFICIENCY = "efficiency"  # 效率
+    SAFETY = "safety"  # 安全性
+    INNOVATION = "innovation"  # 创新性
+    USABILITY = "usability"  # 可用性
+    ROBUSTNESS = "robustness"  # 鲁棒性
+    CONSISTENCY = "consistency"  # 一致性
+    ADAPTABILITY = "adaptability"  # 适应性
+    EXPLAINABILITY = "explainability"  # 可解释性
 
 
 @dataclass
@@ -67,45 +66,48 @@ class EvolvingCriteria:
       - 阈值自动校准: 历史数据驱动阈值调整
       - 新维度发现: 检测到新的评估需求时自动添加
     """
+
     criteria_id: str
     dimension: EvaluateDimension
-    weight: float = 1.0                 # 权重 (动态调整)
-    threshold: float = 0.7              # 合格阈值
-    max_score: float = 1.0              # 满分
+    weight: float = 1.0  # 权重 (动态调整)
+    threshold: float = 0.7  # 合格阈值
+    max_score: float = 1.0  # 满分
     description: str = ""
     examples: list[str] = field(default_factory=list)
     # 进化追踪
     weight_history: list[dict] = field(default_factory=list)
     threshold_history: list[dict] = field(default_factory=list)
     evolution_count: int = 0
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    updated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+    updated_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
 
 @dataclass
 class JudgeVerdict:
     """审判结论"""
+
     verdict_id: str
-    subject: str                       # 被评估对象
+    subject: str  # 被评估对象
     scores: dict[str, float] = field(default_factory=dict)  # 各维度分数
     overall_score: float = 0.0
     passed: bool = False
     strengths: list[str] = field(default_factory=list)
     weaknesses: list[str] = field(default_factory=list)
     improvement_suggestions: list[str] = field(default_factory=list)
-    confidence: float = 0.0            # 审判置信度
+    confidence: float = 0.0  # 审判置信度
     compared_to_baseline: float = 0.0  # 与基线对比
     regression_detected: bool = False
     judge_version: str = ""
-    judged_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    judged_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     # v2.0 扩展字段
-    verdict: str = ""                  # accept / conditional_accept / reject
+    verdict: str = ""  # accept / conditional_accept / reject
     improvement_detected: bool = False
 
 
 # ============================================================
 # 多维度评分器
 # ============================================================
+
 
 class MultiDimensionScorer:
     """
@@ -139,7 +141,9 @@ class MultiDimensionScorer:
                 description=desc,
             )
 
-    def score(self, subject: dict, criteria: Optional[dict[str, EvolvingCriteria]] = None) -> JudgeVerdict:
+    def score(
+        self, subject: dict, criteria: dict[str, EvolvingCriteria] | None = None
+    ) -> JudgeVerdict:
         """
         多维度评分
 
@@ -195,13 +199,15 @@ class MultiDimensionScorer:
             if dim in self._criteria:
                 old_weight = self._criteria[dim].weight
                 self._criteria[dim].weight = weight
-                self._criteria[dim].weight_history.append({
-                    "from": old_weight,
-                    "to": weight,
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
-                })
+                self._criteria[dim].weight_history.append(
+                    {
+                        "from": old_weight,
+                        "to": weight,
+                        "timestamp": datetime.now(UTC).isoformat(),
+                    }
+                )
                 self._criteria[dim].evolution_count += 1
-                self._criteria[dim].updated_at = datetime.now(timezone.utc).isoformat()
+                self._criteria[dim].updated_at = datetime.now(UTC).isoformat()
 
     def add_criteria(self, dimension: EvaluateDimension, weight: float, description: str):
         """动态添加新评估维度"""
@@ -219,6 +225,7 @@ class MultiDimensionScorer:
 # 对比评判器
 # ============================================================
 
+
 class ComparativeJudge:
     """
     对比评判器 — 对两个版本进行对比评估
@@ -228,7 +235,7 @@ class ComparativeJudge:
 
     def __init__(self, scorer: MultiDimensionScorer):
         self.scorer = scorer
-        self._baseline_verdict: Optional[JudgeVerdict] = None
+        self._baseline_verdict: JudgeVerdict | None = None
 
     def set_baseline(self, verdict: JudgeVerdict):
         """设置基线判决"""
@@ -273,9 +280,7 @@ class ComparativeJudge:
             "recommendation": self._get_recommendation(overall_delta, improvements, regressions),
         }
 
-    def _get_recommendation(
-        self, delta: float, improvements: dict, regressions: dict
-    ) -> str:
+    def _get_recommendation(self, delta: float, improvements: dict, regressions: dict) -> str:
         """根据对比结果生成建议"""
         if delta > 0.05:
             return "建议采纳: 整体显著改进"
@@ -290,6 +295,7 @@ class ComparativeJudge:
 # ============================================================
 # 回归检测器
 # ============================================================
+
 
 class RegressionDetector:
     """
@@ -325,11 +331,13 @@ class RegressionDetector:
                     }
 
         if regressions:
-            self._regression_events.append({
-                "verdict_id": verdict.verdict_id,
-                "regressions": regressions,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-            })
+            self._regression_events.append(
+                {
+                    "verdict_id": verdict.verdict_id,
+                    "regressions": regressions,
+                    "timestamp": datetime.now(UTC).isoformat(),
+                }
+            )
             verdict.regression_detected = True
 
         return {
@@ -342,6 +350,7 @@ class RegressionDetector:
 # ============================================================
 # 标准进化器
 # ============================================================
+
 
 class CriteriaEvolver:
     """
@@ -389,12 +398,14 @@ class CriteriaEvolver:
                 if avg > crit.threshold + 0.1:
                     old_threshold = crit.threshold
                     crit.threshold = min(0.95, avg - 0.05)
-                    crit.threshold_history.append({
-                        "from": old_threshold,
-                        "to": crit.threshold,
-                        "reason": "系统能力提升, 自动提高标准",
-                        "timestamp": datetime.now(timezone.utc).isoformat(),
-                    })
+                    crit.threshold_history.append(
+                        {
+                            "from": old_threshold,
+                            "to": crit.threshold,
+                            "reason": "系统能力提升, 自动提高标准",
+                            "timestamp": datetime.now(UTC).isoformat(),
+                        }
+                    )
                     changes[dim_name] = {
                         "type": "threshold_up",
                         "from": old_threshold,
@@ -405,12 +416,14 @@ class CriteriaEvolver:
                 if avg < crit.threshold - 0.2:
                     old_threshold = crit.threshold
                     crit.threshold = max(0.5, avg + 0.05)
-                    crit.threshold_history.append({
-                        "from": old_threshold,
-                        "to": crit.threshold,
-                        "reason": "标准过严, 自动调整",
-                        "timestamp": datetime.now(timezone.utc).isoformat(),
-                    })
+                    crit.threshold_history.append(
+                        {
+                            "from": old_threshold,
+                            "to": crit.threshold,
+                            "reason": "标准过严, 自动调整",
+                            "timestamp": datetime.now(UTC).isoformat(),
+                        }
+                    )
                     changes[dim_name] = {
                         "type": "threshold_down",
                         "from": old_threshold,
@@ -418,10 +431,12 @@ class CriteriaEvolver:
                     }
 
         if changes:
-            self._evolution_log.append({
-                "changes": changes,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-            })
+            self._evolution_log.append(
+                {
+                    "changes": changes,
+                    "timestamp": datetime.now(UTC).isoformat(),
+                }
+            )
             logger.info(f"评估标准进化: {changes}")
 
         return changes
@@ -501,6 +516,7 @@ class CriteriaEvolver:
 # 自我审判总控
 # ============================================================
 
+
 class SelfJudge:
     """
     自我审判总控 — Agent-as-a-Judge 完整实现
@@ -560,7 +576,7 @@ class SelfJudge:
         baseline_verdict.judge_version = "baseline"
         self.comparative.set_baseline(baseline_verdict)
 
-    def compare_with_baseline(self, current_verdict: Optional[JudgeVerdict] = None) -> dict:
+    def compare_with_baseline(self, current_verdict: JudgeVerdict | None = None) -> dict:
         """与基线对比"""
         if current_verdict is None and self._verdicts:
             current_verdict = self._verdicts[-1]
@@ -588,7 +604,8 @@ class SelfJudge:
             "latest_verdict": self._verdicts[-1] if self._verdicts else None,
             "average_score": (
                 sum(v.overall_score for v in self._verdicts) / len(self._verdicts)
-                if self._verdicts else 0
+                if self._verdicts
+                else 0
             ),
             "criteria_report": self.evolver.get_evolution_report(),
             "regression_events": len(self.regression._regression_events),
@@ -631,7 +648,6 @@ class SelfJudge:
         Returns:
             JudgeVerdict 审判结论
         """
-        from datetime import datetime, timezone
 
         # 构建评估对象
         subject = {
@@ -648,7 +664,9 @@ class SelfJudge:
         # 根据进化结果调整分数
         successful = [e for e in after_evolutions if getattr(e, "success", False)]
         if successful:
-            subject["correctness"] = min(1.0, 0.7 + len(successful) / max(len(after_evolutions), 1) * 0.3)
+            subject["correctness"] = min(
+                1.0, 0.7 + len(successful) / max(len(after_evolutions), 1) * 0.3
+            )
             subject["innovation"] = min(1.0, 0.4 + len(successful) * 0.1)
 
             # token 节省加分

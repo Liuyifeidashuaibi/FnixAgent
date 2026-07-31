@@ -13,13 +13,11 @@ API 路由 - 任务管理接口。
   - 取消/重试任务
   - 列表查询
 """
-from typing import Optional
 
 from fastapi import APIRouter, HTTPException
 
 from fnixagent.api.schemas.models import (
     BaseResponse,
-    ErrorResponse,
     TaskCreate,
     TaskResponse,
     TaskStatus,
@@ -43,11 +41,24 @@ def _task_to_response(task) -> TaskResponse:
     )
 
 
-def _get_task_or_404(task_id: int):
-    """按 ID 取任务,失败抛 404。"""
-    task = get_task_store().get(task_id)
-    if not task:
+def _coerce_task_id(task_id) -> int:
+    """将路径参数 task_id 转换为 int,非法值抛 404(而非 Pydantic 默认 422)。
+
+    这样 /tasks/abc 返回 404(资源不存在),符合 REST 语义,
+    也避免前端因 422 误判为参数校验错误。
+    """
+    try:
+        return int(task_id)
+    except (TypeError, ValueError):
         raise HTTPException(status_code=404, detail=f"任务 {task_id} 不存在")
+
+
+def _get_task_or_404(task_id):
+    """按 ID 取任务,失败抛 404。接受 str/int 输入。"""
+    tid = _coerce_task_id(task_id)
+    task = get_task_store().get(tid)
+    if not task:
+        raise HTTPException(status_code=404, detail=f"任务 {tid} 不存在")
     return task
 
 
@@ -76,8 +87,8 @@ async def create_task_alt(request: TaskCreate):
 
 @router.get("/list")
 async def list_tasks(
-    user_id: Optional[int] = None,
-    status: Optional[str] = None,
+    user_id: int | None = None,
+    status: str | None = None,
     limit: int = 50,
 ):
     """查询任务列表(支持按用户/状态过滤)。"""
@@ -90,18 +101,19 @@ async def list_tasks(
 
 
 @router.get("/{task_id}", response_model=TaskResponse)
-async def get_task(task_id: int):
+async def get_task(task_id: str):
     """获取任务信息。"""
     return _task_to_response(_get_task_or_404(task_id))
 
 
 @router.get("/{task_id}/status", response_model=TaskStatus)
-async def get_task_status(task_id: int):
+async def get_task_status(task_id: str):
     """
     获取任务状态。
 
     返回: status / progress(0.0-1.0) / current_step / total_steps
     """
+    task_id = _coerce_task_id(task_id)
     _get_task_or_404(task_id)  # 确保 task 存在
     status_info = get_task_store().get_status(task_id)
     if not status_info:
@@ -110,8 +122,9 @@ async def get_task_status(task_id: int):
 
 
 @router.get("/{task_id}/steps")
-async def get_task_steps(task_id: int):
+async def get_task_steps(task_id: str):
     """获取任务执行步骤列表。"""
+    task_id = _coerce_task_id(task_id)
     task = _get_task_or_404(task_id)
     return [
         {
@@ -130,11 +143,12 @@ async def get_task_steps(task_id: int):
 
 @router.post("/{task_id}/steps")
 async def add_task_step(
-    task_id: int,
+    task_id: str,
     description: str,
     tool_name: str = "",
 ):
     """为任务添加一个执行步骤。"""
+    task_id = _coerce_task_id(task_id)
     _get_task_or_404(task_id)
     step = get_task_store().add_step(task_id, description, tool_name)
     if not step:
@@ -148,8 +162,9 @@ async def add_task_step(
 
 
 @router.post("/{task_id}/start", response_model=TaskResponse)
-async def start_task(task_id: int):
+async def start_task(task_id: str):
     """启动任务(标记为 running)。"""
+    task_id = _coerce_task_id(task_id)
     task = _get_task_or_404(task_id)
     if task.status not in ("pending",):
         raise HTTPException(
@@ -161,29 +176,32 @@ async def start_task(task_id: int):
 
 
 @router.post("/{task_id}/complete", response_model=TaskResponse)
-async def complete_task(task_id: int, result: Optional[dict] = None):
+async def complete_task(task_id: str, result: dict | None = None):
     """标记任务成功完成。"""
+    task_id = _coerce_task_id(task_id)
     _get_task_or_404(task_id)
     completed = get_task_store().complete(task_id, result=result)
     return _task_to_response(completed)
 
 
 @router.post("/{task_id}/fail", response_model=TaskResponse)
-async def fail_task(task_id: int, error: str):
+async def fail_task(task_id: str, error: str):
     """标记任务失败。"""
+    task_id = _coerce_task_id(task_id)
     _get_task_or_404(task_id)
     failed = get_task_store().fail(task_id, error=error)
     return _task_to_response(failed)
 
 
 @router.post("/{task_id}/cancel", response_model=BaseResponse)
-async def cancel_task(task_id: int):
+async def cancel_task(task_id: str):
     """
     取消任务。
 
     - 只能取消未完成的任务(pending/running)
     - 已完成的任务(succeeded/failed/cancelled)无法取消
     """
+    task_id = _coerce_task_id(task_id)
     _get_task_or_404(task_id)
     cancelled = get_task_store().cancel(task_id)
     if not cancelled:
@@ -195,13 +213,14 @@ async def cancel_task(task_id: int):
 
 
 @router.post("/{task_id}/retry", response_model=TaskResponse)
-async def retry_task(task_id: int):
+async def retry_task(task_id: str):
     """
     重试任务。
 
     - 重置任务状态为 pending,清空步骤状态
     - 后续可由调度器重新拉起执行
     """
+    task_id = _coerce_task_id(task_id)
     _get_task_or_404(task_id)
     retried = get_task_store().retry(task_id)
     return _task_to_response(retried)

@@ -7,11 +7,11 @@
 
 密钥对在首次访问时懒加载,后续全局复用(线程安全)。
 """
+
 from __future__ import annotations
 
 import os
 import threading
-from typing import Optional
 
 from fnixagent.core.security.auth.rsa_crypto import (
     RSAKeyPair,
@@ -19,13 +19,12 @@ from fnixagent.core.security.auth.rsa_crypto import (
     load_keypair_from_file,
 )
 
-
 # ---------------------------------------------------------------------------
 # 全局单例
 # ---------------------------------------------------------------------------
 
 
-_keypair_instance: Optional[RSAKeyPair] = None
+_keypair_instance: RSAKeyPair | None = None
 _keypair_lock = threading.Lock()
 
 

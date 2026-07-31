@@ -8,12 +8,11 @@
 
 存储格式: JSONL(纯文本,跨平台可迁移,不依赖任何框架)
 """
+
 from __future__ import annotations
 
 import json
 import os
-import time
-from typing import Optional
 
 from fnixagent.core.flywheel.perception import trace_from_dict, trace_to_dict
 from fnixagent.core.types import TraceRecord
@@ -48,7 +47,7 @@ class TraceStore:
             with open(self._file_path, "a", encoding="utf-8") as f:
                 f.write(json.dumps(record, ensure_ascii=False) + "\n")
         except OSError as e:
-            raise IOError(f"写入轨迹失败: {e}") from e
+            raise OSError(f"写入轨迹失败: {e}") from e
 
     def load_all(self) -> list[TraceRecord]:
         """加载全部轨迹。"""
@@ -56,7 +55,7 @@ class TraceStore:
             return []
         traces = []
         try:
-            with open(self._file_path, "r", encoding="utf-8") as f:
+            with open(self._file_path, encoding="utf-8") as f:
                 for line in f:
                     line = line.strip()
                     if not line:
@@ -83,10 +82,7 @@ class TraceStore:
     ) -> list[TraceRecord]:
         """按时间范围加载轨迹。"""
         all_traces = self.load_all()
-        return [
-            t for t in all_traces
-            if start_time <= t.created_at <= end_time
-        ]
+        return [t for t in all_traces if start_time <= t.created_at <= end_time]
 
     def load_by_success(self, success: bool = True) -> list[TraceRecord]:
         """按成功/失败状态加载轨迹。"""
@@ -145,5 +141,5 @@ class TraceStore:
             if os.path.exists(self._file_path):
                 os.remove(self._file_path)
         except OSError as e:
-            raise IOError(f"清空轨迹失败: {e}") from e
+            raise OSError(f"清空轨迹失败: {e}") from e
         return count

@@ -21,11 +21,13 @@
   - 字符串内的括号不参与计数(避免 "key": "}" 误判闭合)
   - process_with_retry 封装"LLM 调用 + 校验 + 重试"完整循环
 """
+
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable, Generic, Optional, TypeVar
+from typing import Generic, TypeVar
 
 from pydantic import BaseModel, ValidationError
 
@@ -35,6 +37,7 @@ T = TypeVar("T", bound=BaseModel)
 # ---------------------------------------------------------------------------
 # 异常
 # ---------------------------------------------------------------------------
+
 
 class OutputValidationError(Exception):
     """LLM 输出校验失败异常。
@@ -47,7 +50,7 @@ class OutputValidationError(Exception):
         message: str,
         *,
         raw_text: str = "",
-        validation_error: Optional[ValidationError] = None,
+        validation_error: ValidationError | None = None,
     ) -> None:
         self.raw_text = raw_text
         self.validation_error = validation_error
@@ -57,6 +60,7 @@ class OutputValidationError(Exception):
 # ---------------------------------------------------------------------------
 # OutputSchema
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class OutputSchema(Generic[T]):
@@ -68,6 +72,7 @@ class OutputSchema(Generic[T]):
         schema = OutputSchema(model_type=ToolCallDecision)
         result = schema.validate(llm_output_text)  # → ToolCallDecision 或抛异常
     """
+
     model_type: type[T]
 
     def validate(self, text: str) -> T:
@@ -118,7 +123,7 @@ class OutputSchema(Generic[T]):
                 validation_error=e,
             )
 
-    def safe_validate(self, text: str) -> Optional[T]:
+    def safe_validate(self, text: str) -> T | None:
         """安全校验(不抛异常,失败返回 None)。"""
         try:
             return self.validate(text)
@@ -126,7 +131,7 @@ class OutputSchema(Generic[T]):
             return None
 
     @staticmethod
-    def _extract_json(text: str) -> Optional[str]:
+    def _extract_json(text: str) -> str | None:
         """从 LLM 输出中提取 JSON 文本。
 
         处理以下情况:
@@ -194,7 +199,7 @@ class OutputSchema(Generic[T]):
                     elif c == close_ch:
                         depth -= 1
                         if depth == 0:
-                            return text[i:j + 1]
+                            return text[i : j + 1]
                 break
 
         return None
@@ -203,6 +208,7 @@ class OutputSchema(Generic[T]):
 # ---------------------------------------------------------------------------
 # OutputProcessor
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class OutputProcessor(Generic[T]):
@@ -235,6 +241,7 @@ class OutputProcessor(Generic[T]):
             max_retries=3,
         )
     """
+
     model_type: type[T]
 
     def process(self, text: str) -> T:
@@ -242,7 +249,7 @@ class OutputProcessor(Generic[T]):
         schema = OutputSchema(model_type=self.model_type)
         return schema.validate(text)
 
-    def safe_process(self, text: str) -> Optional[T]:
+    def safe_process(self, text: str) -> T | None:
         """安全处理(失败返回 None)。"""
         schema = OutputSchema(model_type=self.model_type)
         return schema.safe_validate(text)
@@ -276,7 +283,7 @@ class OutputProcessor(Generic[T]):
         llm_call: Callable[[str], str],
         initial_prompt: str,
         max_retries: int = 3,
-    ) -> Optional[T]:
+    ) -> T | None:
         """带重试的输出处理(封装"LLM 调用 + 校验 + 反馈"完整循环)。
 
         Args:
@@ -288,11 +295,9 @@ class OutputProcessor(Generic[T]):
             校验成功的 Model 实例;全部重试失败返回 None(降级)
         """
         if max_retries < 0:
-            raise ValueError(
-                f"max_retries 不能为负,实际: {max_retries}"
-            )
+            raise ValueError(f"max_retries 不能为负,实际: {max_retries}")
         prompt = initial_prompt
-        last_error: Optional[OutputValidationError] = None
+        last_error: OutputValidationError | None = None
         for attempt in range(max_retries + 1):
             try:
                 text = llm_call(prompt)
@@ -305,10 +310,7 @@ class OutputProcessor(Generic[T]):
                 last_error = e
                 # 把错误反馈追加到 prompt,供下一轮 LLM 修正
                 feedback = self.format_error_feedback(e)
-                prompt = (
-                    f"{initial_prompt}\n\n"
-                    f"上次输出有误(第 {attempt + 1} 次): {feedback}"
-                )
+                prompt = f"{initial_prompt}\n\n上次输出有误(第 {attempt + 1} 次): {feedback}"
         # 全部重试失败,降级返回 None(上层可记录 last_error 用于告警)
         _ = last_error  # 保留引用供未来扩展(如日志/告警)
         return None
@@ -318,11 +320,13 @@ class OutputProcessor(Generic[T]):
 # 便捷别名
 # ---------------------------------------------------------------------------
 
+
 class ObjectOutputProcessor(OutputProcessor[T]):
     """对象输出处理器(OutputProcessor 的语义化别名)。
 
     用于校验返回单个 Pydantic Model 对象的 LLM 输出。
     """
+
     pass
 
 
@@ -330,19 +334,23 @@ class ObjectOutputProcessor(OutputProcessor[T]):
 # 预定义处理器(对应 schemas.py 的 4 个 Model)
 # ---------------------------------------------------------------------------
 
+
 def tool_call_decision_processor() -> ObjectOutputProcessor:
     """ReAct 单步决策处理器。"""
     from fnixagent.core.reasoning.schemas import ToolCallDecision
+
     return ObjectOutputProcessor(model_type=ToolCallDecision)
 
 
 def plan_output_processor() -> ObjectOutputProcessor:
     """Plan&Execute 计划处理器。"""
     from fnixagent.core.reasoning.schemas import PlanOutput
+
     return ObjectOutputProcessor(model_type=PlanOutput)
 
 
 def final_answer_processor() -> ObjectOutputProcessor:
     """最终答案处理器。"""
     from fnixagent.core.reasoning.schemas import FinalAnswer
+
     return ObjectOutputProcessor(model_type=FinalAnswer)

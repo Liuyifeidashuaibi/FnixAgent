@@ -14,12 +14,11 @@ Token 预算控制:
   组装后若总 token 超预算, 从最早的 HISTORY 消息开始裁剪,
   保留 ROLE + TOOLS + 最近对话 + FORMAT。
 """
+
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional
 
 from fnixagent.core.text import estimate_message_tokens, estimate_tokens
 from fnixagent.core.types import MemoryItem, Message, MessageRole
@@ -27,6 +26,7 @@ from fnixagent.core.types import MemoryItem, Message, MessageRole
 
 class PromptLayer(str, Enum):
     """Prompt 分层。"""
+
     ROLE = "role"
     CONSTRAINT = "constraint"
     TOOLS = "tools"
@@ -64,18 +64,18 @@ class PromptBuilder:
 
     # -- 分层设置 ----------------------------------------------------------
 
-    def set_role(self, role_text: str) -> "PromptBuilder":
+    def set_role(self, role_text: str) -> PromptBuilder:
         """设置角色设定。"""
         self._layers[PromptLayer.ROLE] = role_text
         return self
 
-    def set_constraints(self, constraints: list[str]) -> "PromptBuilder":
+    def set_constraints(self, constraints: list[str]) -> PromptBuilder:
         """设置业务约束。"""
         text = "\n".join(f"- {c}" for c in constraints)
         self._layers[PromptLayer.CONSTRAINT] = text
         return self
 
-    def set_tools(self, tools: list[dict]) -> "PromptBuilder":
+    def set_tools(self, tools: list[dict]) -> PromptBuilder:
         """设置工具列表(来自 ToolMetadata.to_llm_description())。"""
         self._tools = tools
         lines = ["## 可用工具"]
@@ -96,7 +96,7 @@ class PromptBuilder:
         self._layers[PromptLayer.TOOLS] = "\n".join(lines)
         return self
 
-    def set_memory(self, memories: list[MemoryItem]) -> "PromptBuilder":
+    def set_memory(self, memories: list[MemoryItem]) -> PromptBuilder:
         """注入长期记忆片段。"""
         self._memories = memories
         if not memories:
@@ -107,22 +107,22 @@ class PromptBuilder:
         self._layers[PromptLayer.MEMORY] = "\n".join(lines)
         return self
 
-    def set_history(self, messages: list[Message]) -> "PromptBuilder":
+    def set_history(self, messages: list[Message]) -> PromptBuilder:
         """设置短期对话历史(已裁剪)。"""
         self._history = messages
         return self
 
-    def set_format(self, format_spec: str) -> "PromptBuilder":
+    def set_format(self, format_spec: str) -> PromptBuilder:
         """设置强制输出格式。"""
         self._layers[PromptLayer.FORMAT] = f"## 输出格式\n{format_spec}"
         return self
 
-    def set_reflection(self, template: str) -> "PromptBuilder":
+    def set_reflection(self, template: str) -> PromptBuilder:
         """设置反思模板。"""
         self._layers[PromptLayer.REFLECTION] = template
         return self
 
-    def set_variable(self, name: str, value: str) -> "PromptBuilder":
+    def set_variable(self, name: str, value: str) -> PromptBuilder:
         """设置模板变量(用于 {{name}} 替换)。"""
         self._variables[name] = value
         return self
@@ -131,9 +131,11 @@ class PromptBuilder:
 
     def _replace_vars(self, text: str) -> str:
         """替换 {{variable}} 占位符。"""
+
         def _replacer(m: re.Match) -> str:
             var = m.group(1)
             return self._variables.get(var, m.group(0))
+
         return self._VAR_RE.sub(_replacer, text)
 
     def _assemble_system(self) -> str:

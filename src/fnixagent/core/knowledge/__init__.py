@@ -20,6 +20,7 @@
     ctx = pipeline.run(ctx)
     # ctx.chunks / ctx.embeddings / ctx.extracted_metadata 可用
 """
+
 from fnixagent.core.knowledge.pipeline import (
     KnowledgePipeline,
     PipelineContext,

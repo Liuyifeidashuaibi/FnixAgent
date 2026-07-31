@@ -3,7 +3,7 @@
 # 服务基础配置
 server:
   host: "0.0.0.0"
-  port: 8000
+  port: 8003
   debug: false
   workers: 4
 

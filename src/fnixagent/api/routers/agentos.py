@@ -14,6 +14,7 @@ API 路由 - AgentOS Shell HTTP 接口。
               避免 fs.write / llm 等含特殊字符内容时的引号问题
   - router 前缀: /agentos (由主流程在 main.py 注册时挂到 /api/v1 下)
 """
+
 from __future__ import annotations
 
 import json
@@ -26,13 +27,13 @@ from pydantic import BaseModel
 from fnixagent.api.routers.auth import verify_jwt_token
 from fnixagent.core.agent.shell import AgentShell, ShellResult, create_shell
 
-
 router = APIRouter(prefix="/agentos", tags=["agentos"])
 
 
 # ============================================================================
 # 统一响应模型
 # ============================================================================
+
 
 class AgentOSResponse(BaseModel):
     """AgentOS 命令统一响应 (对齐 ShellResult)。"""
@@ -46,6 +47,7 @@ class AgentOSResponse(BaseModel):
 # ============================================================================
 # 请求体模型
 # ============================================================================
+
 
 class SpawnRequest(BaseModel):
     name: str
@@ -206,14 +208,14 @@ def _to_response(result: ShellResult, start: float) -> AgentOSResponse:
 async def _dispatch(cmd: str, args: dict[str, Any]) -> AgentOSResponse:
     """直接调用 shell 命令处理器 (绕过命令行解析, 避免引号/换行问题)。"""
     shell = await get_shell()
-    handler = shell._commands.get(cmd)  # noqa: SLF001
+    handler = shell._commands.get(cmd)
     if handler is None:
         return AgentOSResponse(success=False, error=f"未知命令: {cmd}", duration_ms=0)
     start = time.monotonic()
     try:
         result = await handler(args)
         return _to_response(result, start)
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         return AgentOSResponse(
             success=False,
             error=f"命令执行异常: {type(e).__name__}: {e}",
@@ -225,6 +227,7 @@ async def _dispatch(cmd: str, args: dict[str, Any]) -> AgentOSResponse:
 # 内核生命周期
 # ============================================================================
 
+
 @router.post("/boot", response_model=AgentOSResponse)
 async def boot(_payload: dict = Depends(verify_jwt_token)):
     """启动内核。"""
@@ -233,7 +236,7 @@ async def boot(_payload: dict = Depends(verify_jwt_token)):
         _shell = await _new_shell()
     return AgentOSResponse(
         success=True,
-        output={"booted": True, "shell_pid": _shell._shell_pid},  # noqa: SLF001
+        output={"booted": True, "shell_pid": _shell._shell_pid},
         duration_ms=0,
     )
 
@@ -253,6 +256,7 @@ async def shutdown(_payload: dict = Depends(verify_jwt_token)):
 # ============================================================================
 # 进程管理
 # ============================================================================
+
 
 @router.post("/spawn", response_model=AgentOSResponse)
 async def spawn(req: SpawnRequest, _payload: dict = Depends(verify_jwt_token)):
@@ -292,6 +296,7 @@ async def info(pid: str, _payload: dict = Depends(verify_jwt_token)):
 # Syscall / LLM
 # ============================================================================
 
+
 @router.post("/exec", response_model=AgentOSResponse)
 async def exec_syscall(req: ExecRequest, _payload: dict = Depends(verify_jwt_token)):
     """执行 syscall。"""
@@ -318,6 +323,7 @@ async def llm(req: LlmRequest, _payload: dict = Depends(verify_jwt_token)):
 # 文件系统
 # ============================================================================
 
+
 @router.post("/fs/read", response_model=AgentOSResponse)
 async def fs_read(req: FsReadRequest, _payload: dict = Depends(verify_jwt_token)):
     """读取文件。"""
@@ -327,9 +333,7 @@ async def fs_read(req: FsReadRequest, _payload: dict = Depends(verify_jwt_token)
 @router.post("/fs/write", response_model=AgentOSResponse)
 async def fs_write(req: FsWriteRequest, _payload: dict = Depends(verify_jwt_token)):
     """写入文件。"""
-    return await _dispatch(
-        "fs.write", {"_positional": [req.path], "content": req.content}
-    )
+    return await _dispatch("fs.write", {"_positional": [req.path], "content": req.content})
 
 
 @router.post("/fs/list", response_model=AgentOSResponse)
@@ -356,6 +360,7 @@ async def fs_delete(req: FsDeleteRequest, _payload: dict = Depends(verify_jwt_to
 # ============================================================================
 # 记忆
 # ============================================================================
+
 
 @router.post("/mem/recall", response_model=AgentOSResponse)
 async def mem_recall(req: MemRecallRequest, _payload: dict = Depends(verify_jwt_token)):
@@ -398,6 +403,7 @@ async def mem_forget(req: MemForgetRequest, _payload: dict = Depends(verify_jwt_
 # 工具
 # ============================================================================
 
+
 @router.get("/tool/list", response_model=AgentOSResponse)
 async def tool_list(
     pid: str | None = Query(None, description="调用方 PID"),
@@ -411,9 +417,7 @@ async def tool_list(
 
 
 @router.post("/tool/invoke", response_model=AgentOSResponse)
-async def tool_invoke(
-    req: ToolInvokeRequest, _payload: dict = Depends(verify_jwt_token)
-):
+async def tool_invoke(req: ToolInvokeRequest, _payload: dict = Depends(verify_jwt_token)):
     """调用工具。"""
     args: dict[str, Any] = {"_positional": [req.tool_name]}
     if req.args is not None:
@@ -425,10 +429,9 @@ async def tool_invoke(
 # A2A 通信
 # ============================================================================
 
+
 @router.post("/a2a/discover", response_model=AgentOSResponse)
-async def a2a_discover(
-    req: A2aDiscoverRequest, _payload: dict = Depends(verify_jwt_token)
-):
+async def a2a_discover(req: A2aDiscoverRequest, _payload: dict = Depends(verify_jwt_token)):
     """发现 Agent。"""
     args: dict[str, Any] = {}
     if req.capability is not None:
@@ -446,9 +449,7 @@ async def a2a_send(req: A2aSendRequest, _payload: dict = Depends(verify_jwt_toke
 
 
 @router.post("/a2a/broadcast", response_model=AgentOSResponse)
-async def a2a_broadcast(
-    req: A2aBroadcastRequest, _payload: dict = Depends(verify_jwt_token)
-):
+async def a2a_broadcast(req: A2aBroadcastRequest, _payload: dict = Depends(verify_jwt_token)):
     """广播 A2A 消息。"""
     return await _dispatch("a2a.broadcast", {"content": req.content})
 
@@ -456,6 +457,7 @@ async def a2a_broadcast(
 # ============================================================================
 # Skill
 # ============================================================================
+
 
 @router.get("/skill/list", response_model=AgentOSResponse)
 async def skill_list(_payload: dict = Depends(verify_jwt_token)):
@@ -481,6 +483,7 @@ async def skill_run(req: SkillRunRequest, _payload: dict = Depends(verify_jwt_to
 # ============================================================================
 # 策略 / 护栏 / 审计 / 统计
 # ============================================================================
+
 
 @router.get("/policy/list", response_model=AgentOSResponse)
 async def policy_list(_payload: dict = Depends(verify_jwt_token)):
@@ -527,9 +530,7 @@ async def stats(_payload: dict = Depends(verify_jwt_token)):
 
 
 @router.post("/checkpoint", response_model=AgentOSResponse)
-async def checkpoint(
-    req: CheckpointRequest, _payload: dict = Depends(verify_jwt_token)
-):
+async def checkpoint(req: CheckpointRequest, _payload: dict = Depends(verify_jwt_token)):
     """保存进程检查点。"""
     return await _dispatch("checkpoint", {"_positional": [req.pid]})
 
@@ -537,6 +538,7 @@ async def checkpoint(
 # ============================================================================
 # 自然语言接口
 # ============================================================================
+
 
 @router.post("/natural", response_model=AgentOSResponse)
 async def natural(req: NaturalRequest, _payload: dict = Depends(verify_jwt_token)):
@@ -546,7 +548,7 @@ async def natural(req: NaturalRequest, _payload: dict = Depends(verify_jwt_token
     try:
         result = await shell.natural_language(req.text)
         return _to_response(result, start)
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         return AgentOSResponse(
             success=False,
             error=f"自然语言处理异常: {type(e).__name__}: {e}",
@@ -557,6 +559,7 @@ async def natural(req: NaturalRequest, _payload: dict = Depends(verify_jwt_token
 # ============================================================================
 # 帮助
 # ============================================================================
+
 
 @router.get("/help", response_model=AgentOSResponse)
 async def help_(_payload: dict = Depends(verify_jwt_token)):

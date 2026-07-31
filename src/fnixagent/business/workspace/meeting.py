@@ -14,21 +14,19 @@
   - Provider 调用包裹 try-except,捕获厂商 API(Zoom/Teams/飞书/钉钉/腾讯)异常,
     统一转为 ConnectorResult(success=False, error=...)
 """
+
 from __future__ import annotations
 
 import abc
 import logging
 from dataclasses import dataclass
-from typing import Optional
 
 from fnixagent.business.workspace.base import (
     BaseProvider,
-    ConnectorConfig,
     ConnectorResult,
     StubProvider,
     WorkspaceConnector,
 )
-
 
 _logger = logging.getLogger(__name__)
 
@@ -41,9 +39,10 @@ _logger = logging.getLogger(__name__)
 @dataclass
 class Meeting:
     """会议对象。"""
+
     meeting_id: str = ""
     topic: str = ""
-    start_time: str = ""          # ISO 8601
+    start_time: str = ""  # ISO 8601
     duration_minutes: int = 60
     host: str = ""
     participants: list[str] = None  # type: ignore
@@ -51,7 +50,7 @@ class Meeting:
     host_url: str = ""
     password: str = ""
     settings: dict = None  # type: ignore
-    status: str = "scheduled"      # scheduled / started / ended / cancelled
+    status: str = "scheduled"  # scheduled / started / ended / cancelled
 
     def __post_init__(self) -> None:
         if self.participants is None:
@@ -81,32 +80,28 @@ class MeetingProvider(BaseProvider):
         topic: str,
         start_time: str,
         duration_minutes: int = 60,
-        participants: Optional[list[str]] = None,
+        participants: list[str] | None = None,
         password: str = "",
-        settings: Optional[dict] = None,
-    ) -> ConnectorResult:
-        ...
+        settings: dict | None = None,
+    ) -> ConnectorResult: ...
 
     @abc.abstractmethod
     def list(
         self,
-        start: Optional[str] = None,
-        end: Optional[str] = None,
+        start: str | None = None,
+        end: str | None = None,
         limit: int = 20,
-    ) -> ConnectorResult:
-        ...
+    ) -> ConnectorResult: ...
 
     @abc.abstractmethod
-    def get_link(self, meeting_id: str) -> ConnectorResult:
-        ...
+    def get_link(self, meeting_id: str) -> ConnectorResult: ...
 
     @abc.abstractmethod
     def get_transcript(
         self,
         meeting_id: str,
         format: str = "text",
-    ) -> ConnectorResult:
-        ...
+    ) -> ConnectorResult: ...
 
 
 # ---------------------------------------------------------------------------
@@ -125,9 +120,9 @@ class StubMeetingProvider(StubProvider, MeetingProvider):
         topic: str,
         start_time: str,
         duration_minutes: int = 60,
-        participants: Optional[list[str]] = None,
+        participants: list[str] | None = None,
         password: str = "",
-        settings: Optional[dict] = None,
+        settings: dict | None = None,
     ) -> ConnectorResult:
         return self._stub_result(
             data=Meeting(
@@ -144,8 +139,8 @@ class StubMeetingProvider(StubProvider, MeetingProvider):
 
     def list(
         self,
-        start: Optional[str] = None,
-        end: Optional[str] = None,
+        start: str | None = None,
+        end: str | None = None,
         limit: int = 20,
     ) -> ConnectorResult:
         # 空结果统一 data=[]
@@ -153,8 +148,10 @@ class StubMeetingProvider(StubProvider, MeetingProvider):
 
     def get_link(self, meeting_id: str) -> ConnectorResult:
         return self._stub_result(
-            data={"join_url": f"https://stub.example.com/join/{meeting_id}",
-                  "host_url": f"https://stub.example.com/host/{meeting_id}"},
+            data={
+                "join_url": f"https://stub.example.com/join/{meeting_id}",
+                "host_url": f"https://stub.example.com/host/{meeting_id}",
+            },
         )
 
     def get_transcript(
@@ -204,9 +201,9 @@ class MeetingConnector(WorkspaceConnector):
         topic: str,
         start_time: str,
         duration_minutes: int = 60,
-        participants: Optional[list[str]] = None,
+        participants: list[str] | None = None,
         password: str = "",
-        settings: Optional[dict] = None,
+        settings: dict | None = None,
     ) -> ConnectorResult:
         """创建会议。
 
@@ -245,8 +242,12 @@ class MeetingConnector(WorkspaceConnector):
         assert self._active_provider is not None
         try:
             return self._active_provider.create(
-                topic=topic, start_time=start_time, duration_minutes=duration_minutes,
-                participants=participants, password=password, settings=settings,
+                topic=topic,
+                start_time=start_time,
+                duration_minutes=duration_minutes,
+                participants=participants,
+                password=password,
+                settings=settings,
             )
         except Exception as e:
             # 捕获 Zoom/Teams/飞书/钉钉/腾讯会议 API 异常
@@ -258,8 +259,8 @@ class MeetingConnector(WorkspaceConnector):
 
     def list(
         self,
-        start: Optional[str] = None,
-        end: Optional[str] = None,
+        start: str | None = None,
+        end: str | None = None,
         limit: int = 20,
     ) -> ConnectorResult:
         """列出会议。
@@ -337,7 +338,7 @@ class MeetingConnector(WorkspaceConnector):
             return ConnectorResult(
                 success=False,
                 error=f"unsupported transcript format {format!r}, "
-                      f"must be one of {sorted(_TRANSCRIPT_FORMATS)}",
+                f"must be one of {sorted(_TRANSCRIPT_FORMATS)}",
             )
         err = self._ensure_connected()
         if err:
@@ -345,7 +346,8 @@ class MeetingConnector(WorkspaceConnector):
         assert self._active_provider is not None
         try:
             return self._active_provider.get_transcript(
-                meeting_id=meeting_id, format=format,
+                meeting_id=meeting_id,
+                format=format,
             )
         except Exception as e:
             _logger.exception("meeting.get_transcript failed: %s: %s", type(e).__name__, e)

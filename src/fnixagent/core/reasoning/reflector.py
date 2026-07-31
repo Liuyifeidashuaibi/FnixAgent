@@ -20,11 +20,11 @@
   本引擎的 _evaluate 适用于"执行轨迹校验",进阶反思系统适用于
   "生成内容质量评估",二者可叠加使用。
 """
+
 from __future__ import annotations
 
 import json
 import re
-from typing import Optional
 
 from fnixagent.core.exceptions import (
     MaxIterationsExceededError,
@@ -56,7 +56,7 @@ class SelfReflectEngine(ReasoningEngine):
     # 最大重规划次数(防止 LLM 与反思之间无限循环)
     DEFAULT_MAX_REPLANS: int = 2
 
-    def __init__(self, inner_engine: Optional[ReActEngine] = None) -> None:
+    def __init__(self, inner_engine: ReActEngine | None = None) -> None:
         """初始化 Self-Reflect 引擎。
 
         Args:
@@ -110,9 +110,7 @@ class SelfReflectEngine(ReasoningEngine):
                 raise
             except ReasoningError as exc:
                 # inner 出现非迭代异常,不再继续反思,透传
-                raise ReflectionFailedError(
-                    f"内部执行异常,终止反思: {exc}"
-                ) from exc
+                raise ReflectionFailedError(f"内部执行异常,终止反思: {exc}") from exc
 
             # 合并轨迹(并发安全:不修改 inner_trace,只读访问)
             trace.steps.extend(inner_trace.steps)
@@ -139,9 +137,7 @@ class SelfReflectEngine(ReasoningEngine):
                 return trace
 
             if replan_count >= max_replans:
-                raise ReflectionFailedError(
-                    f"反思校验未通过,已达最大重规划次数 {max_replans}"
-                )
+                raise ReflectionFailedError(f"反思校验未通过,已达最大重规划次数 {max_replans}")
 
             replan_count += 1
             # 根据反思建议调整目标(若 suggestion 为空,仅追加 reason)
@@ -154,9 +150,7 @@ class SelfReflectEngine(ReasoningEngine):
                 )
             else:
                 current_goal = (
-                    f"{ctx.goal}\n\n"
-                    f"上次执行问题: {reflection.reason}\n"
-                    f"请重新执行并改进。"
+                    f"{ctx.goal}\n\n上次执行问题: {reflection.reason}\n请重新执行并改进。"
                 )
 
     # -- Phase 2: Evaluate ------------------------------------------------
@@ -188,10 +182,7 @@ class SelfReflectEngine(ReasoningEngine):
         )
         user_msg = Message(
             role=MessageRole.USER,
-            content=(
-                f"目标: {goal}\n\n"
-                f"执行结果:\n{results_summary}"
-            ),
+            content=(f"目标: {goal}\n\n执行结果:\n{results_summary}"),
         )
 
         raw = self._call_llm(ctx, [system_msg, user_msg])
@@ -206,9 +197,7 @@ class SelfReflectEngine(ReasoningEngine):
             status = result.status.value if result.status else "unknown"
             output_str = str(result.output)[:200] if result.output else ""
             error = f" (错误: {result.error})" if result.error else ""
-            parts.append(
-                f"[{i+1}] {result.name} ({status}): {output_str}{error}"
-            )
+            parts.append(f"[{i + 1}] {result.name} ({status}): {output_str}{error}")
         return "\n".join(parts)
 
     def _parse_reflection(self, raw: str) -> ReflectionResult:

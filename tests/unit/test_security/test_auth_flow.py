@@ -1,4 +1,4 @@
-﻿"""
+"""
 端到端鉴权流程测试(覆盖验收标准 ③④⑤⑥)。
 
 通过 FastAPI TestClient 模拟完整客户端链路:
@@ -9,6 +9,7 @@
 
 测试用例独立于 tests/unit/test_api/test_auth.py,聚焦 Phase 0.4 新增的安全流程。
 """
+
 import base64
 import os
 import sys
@@ -18,22 +19,22 @@ import time
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", "src"))
 
 import pytest
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding as rsa_padding
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
 
 from fnixagent.api.routers import auth as auth_router
-from fnixagent.core.security.auth.keystore import reset_server_keypair
 from fnixagent.core.security.auth.blacklist import reset_blacklist
+from fnixagent.core.security.auth.keystore import reset_server_keypair
 from fnixagent.core.security.auth.rsa_crypto import is_rsa_available
 from fnixagent.services.storage import reset_stores
-
 
 # ---------------------------------------------------------------------------
 # 公共夹具
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def app():
@@ -91,6 +92,7 @@ def _register_user(client, username="alice", password="Secret123!"):
 # ---------------------------------------------------------------------------
 # 验收标准 ⑥:全链路加密密码登录
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.skipif(not is_rsa_available(), reason="cryptography 不可用")
 class TestEncryptedLoginFlow:
@@ -165,6 +167,7 @@ class TestEncryptedLoginFlow:
 # 验收标准 ③:双 Token 刷新流程
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.skipif(not is_rsa_available(), reason="cryptography 不可用")
 class TestRefreshTokenFlow:
     """双 Token 刷新流程。"""
@@ -235,6 +238,7 @@ class TestRefreshTokenFlow:
         """Refresh Token 中 user_id 对应用户不存在 → 401。"""
         # 直接构造一个 Refresh Token(用户不存在)
         from fnixagent.core.security.auth.token import create_refresh_token
+
         refresh = create_refresh_token(user_id=99999, username="ghost", role="user")
         r = client.post("/api/v1/auth/refresh", json={"refresh_token": refresh})
         assert r.status_code == 401
@@ -244,6 +248,7 @@ class TestRefreshTokenFlow:
 # ---------------------------------------------------------------------------
 # 验收标准 ④:设备指纹不匹配时拒绝 Refresh
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.skipif(not is_rsa_available(), reason="cryptography 不可用")
 class TestDeviceFingerprintOnRefresh:
@@ -348,6 +353,7 @@ class TestDeviceFingerprintOnRefresh:
 # 验收标准 ⑤:登出后 Access Token 在 1s 内失效
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.skipif(not is_rsa_available(), reason="cryptography 不可用")
 class TestLogoutInvalidatesToken:
     """登出后 Access Token 立即失效。"""
@@ -429,6 +435,7 @@ class TestLogoutInvalidatesToken:
 # 验收标准:自动哈希升级(PBKDF2 → Argon2id)
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.skipif(not is_rsa_available(), reason="cryptography 不可用")
 class TestAutoHashUpgrade:
     """登录成功后自动把 PBKDF2 哈希升级为 Argon2id。"""
@@ -436,19 +443,22 @@ class TestAutoHashUpgrade:
     def test_pbkdf2_user_upgraded_on_login(self, client):
         """老用户(PBKDF2 哈希)登录后,哈希自动升级为 Argon2id。"""
         from fnixagent.core.security.auth.password import (
-            is_argon2_available,
             _pbkdf2_hash,
+            is_argon2_available,
         )
+
         if not is_argon2_available():
             pytest.skip("argon2-cffi 不可用")
 
         # 直接用 PBKDF2 哈希创建一个"老用户"
         from fnixagent.services.storage import get_user_store
+
         store = get_user_store()
         with store._lock:
             uid = store._next_id
             store._next_id += 1
             from fnixagent.services.storage import StoredUser
+
             user = StoredUser(
                 id=uid,
                 username="legacy_user",
@@ -469,8 +479,9 @@ class TestAutoHashUpgrade:
 
         # 验证哈希已升级为 Argon2id
         updated_user = store.get_by_username("legacy_user")
-        assert updated_user.password_hash.startswith("$argon2id$"), \
+        assert updated_user.password_hash.startswith("$argon2id$"), (
             "老用户登录后哈希应升级为 Argon2id"
+        )
 
     def test_argon2_user_not_rehashed_on_login(self, client):
         """新用户(Argon2id 哈希)登录不会触发重新哈希。"""

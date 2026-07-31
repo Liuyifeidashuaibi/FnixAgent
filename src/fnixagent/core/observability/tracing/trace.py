@@ -20,12 +20,13 @@ Span 树形结构:
   - SpanImpl.__exit__ 自动 end()(产出 Span 快照)并 pop scope
   - Trace 收集所有 Span 快照,结束时一次性交给 trace exporter
 """
+
 from __future__ import annotations
 
 import threading
 import time
-import uuid
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from typing import Any
 
 from fnixagent.core.observability.tracing.scope import TracingScope
 from fnixagent.core.observability.tracing.span import (
@@ -54,14 +55,14 @@ class TraceImpl:
         self,
         trace_id: str,
         name: str,
-        attributes: Optional[dict] = None,
-        on_span_end: Optional[Callable[[Span], None]] = None,
-        on_trace_end: Optional[Callable[["TraceImpl"], None]] = None,
+        attributes: dict | None = None,
+        on_span_end: Callable[[Span], None] | None = None,
+        on_trace_end: Callable[[TraceImpl], None] | None = None,
     ):
         self.trace_id = trace_id
         self.name = name
         self.started_at = time.time()
-        self.ended_at: Optional[float] = None
+        self.ended_at: float | None = None
         self.status = SpanStatus.STARTED
         self.attributes: dict = dict(attributes or {})
         # _spans 收集所有已 end 的 Span 快照;加锁保护并发 append
@@ -76,7 +77,7 @@ class TraceImpl:
     def start_span(
         self,
         name: str,
-        data: Optional[SpanData] = None,
+        data: SpanData | None = None,
         **attributes: Any,
     ) -> SpanImpl:
         """创建并启动一个子 Span。
@@ -143,7 +144,7 @@ class TraceImpl:
         return span
 
     # -- Trace 结束 ---------------------------------------------------------
-    def end(self, status: str = SpanStatus.COMPLETED, error: Optional[str] = None) -> None:
+    def end(self, status: str = SpanStatus.COMPLETED, error: str | None = None) -> None:
         """结束整个 Trace。
 
         幂等:多次调用只生效一次。结束后清理 Span 引用帮助 GC。
@@ -180,7 +181,7 @@ class TraceImpl:
             self._spans.clear()
 
     # -- 上下文管理器 -------------------------------------------------------
-    def __enter__(self) -> "TraceImpl":
+    def __enter__(self) -> TraceImpl:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
@@ -206,11 +207,7 @@ class TraceImpl:
             "name": self.name,
             "started_at": self.started_at,
             "ended_at": self.ended_at,
-            "duration_ms": (
-                (self.ended_at - self.started_at) * 1000
-                if self.ended_at
-                else None
-            ),
+            "duration_ms": ((self.ended_at - self.started_at) * 1000 if self.ended_at else None),
             "status": self.status,
             "attributes": dict(self.attributes),
             "span_count": len(spans_copy),

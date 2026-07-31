@@ -18,17 +18,16 @@ Embedding 模型封装。
   - 结果缓存:相同文本直接命中缓存,避免重复哈希
   - 批量化:embed_batch 逐条调用 embed,但缓存可减少跨批次重复计算
 """
+
 from __future__ import annotations
 
 import abc
 import hashlib
 import struct
 from collections import OrderedDict
-from typing import Sequence
 
 from fnixagent.core.mathops import (
     batch_cosine_similarity,
-    cosine_similarity,
     l2_normalize,
     top_k_with_scores,
 )
@@ -175,6 +174,7 @@ class HashingEmbedder(BaseEmbedder):
 # ---------------------------------------------------------------------------
 # 检索便捷函数
 # ---------------------------------------------------------------------------
+
 
 def retrieve(
     query_vector: Vector,

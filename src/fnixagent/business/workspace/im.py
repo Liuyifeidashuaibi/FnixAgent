@@ -12,21 +12,19 @@
   - Provider 调用包裹 try-except,捕获厂商 API(飞书 lark-oapi / 企微 / 钉钉)异常,
     统一转为 ConnectorResult(success=False, error=...)
 """
+
 from __future__ import annotations
 
 import abc
 import logging
 from dataclasses import dataclass
-from typing import Optional
 
 from fnixagent.business.workspace.base import (
     BaseProvider,
-    ConnectorConfig,
     ConnectorResult,
     StubProvider,
     WorkspaceConnector,
 )
-
 
 _logger = logging.getLogger(__name__)
 
@@ -39,13 +37,14 @@ _logger = logging.getLogger(__name__)
 @dataclass
 class IMMessage:
     """IM 消息。"""
+
     msg_id: str = ""
-    msg_type: str = "text"         # text / card / image / file / share_chat
-    chat_id: str = ""              # 群聊 ID(群消息)
-    user_id: str = ""              # 接收人 ID(单聊消息)
+    msg_type: str = "text"  # text / card / image / file / share_chat
+    chat_id: str = ""  # 群聊 ID(群消息)
+    user_id: str = ""  # 接收人 ID(单聊消息)
     sender: str = ""
-    content: str = ""              # text 类型的内容
-    card: Optional[dict] = None    # card 类型的内容
+    content: str = ""  # text 类型的内容
+    card: dict | None = None  # card 类型的内容
     timestamp: str = ""
     mention_list: list[str] = None  # type: ignore
 
@@ -57,13 +56,14 @@ class IMMessage:
 @dataclass
 class IMGroup:
     """IM 群组。"""
+
     chat_id: str = ""
     name: str = ""
     description: str = ""
     owner: str = ""
     members: list[dict] = None  # type: ignore  # [{user_id, name, role}]
-    chat_mode: str = "group"       # group / p2p
-    chat_type: str = "private"     # private / public
+    chat_mode: str = "group"  # group / p2p
+    chat_type: str = "private"  # private / public
 
     def __post_init__(self) -> None:
         if self.members is None:
@@ -89,21 +89,19 @@ class IMProvider(BaseProvider):
     def send_message(
         self,
         content: str,
-        chat_id: Optional[str] = None,
-        user_id: Optional[str] = None,
+        chat_id: str | None = None,
+        user_id: str | None = None,
         msg_type: str = "text",
-        mention_list: Optional[list[str]] = None,
-    ) -> ConnectorResult:
-        ...
+        mention_list: list[str] | None = None,
+    ) -> ConnectorResult: ...
 
     @abc.abstractmethod
     def send_card(
         self,
         card: dict,
-        chat_id: Optional[str] = None,
-        user_id: Optional[str] = None,
-    ) -> ConnectorResult:
-        ...
+        chat_id: str | None = None,
+        user_id: str | None = None,
+    ) -> ConnectorResult: ...
 
     @abc.abstractmethod
     def create_group(
@@ -112,12 +110,10 @@ class IMProvider(BaseProvider):
         owner: str,
         members: list[str],
         description: str = "",
-    ) -> ConnectorResult:
-        ...
+    ) -> ConnectorResult: ...
 
     @abc.abstractmethod
-    def list_groups(self, limit: int = 50) -> ConnectorResult:
-        ...
+    def list_groups(self, limit: int = 50) -> ConnectorResult: ...
 
 
 # ---------------------------------------------------------------------------
@@ -134,10 +130,10 @@ class StubIMProvider(StubProvider, IMProvider):
     def send_message(
         self,
         content: str,
-        chat_id: Optional[str] = None,
-        user_id: Optional[str] = None,
+        chat_id: str | None = None,
+        user_id: str | None = None,
         msg_type: str = "text",
-        mention_list: Optional[list[str]] = None,
+        mention_list: list[str] | None = None,
     ) -> ConnectorResult:
         return self._stub_result(
             data=IMMessage(
@@ -154,8 +150,8 @@ class StubIMProvider(StubProvider, IMProvider):
     def send_card(
         self,
         card: dict,
-        chat_id: Optional[str] = None,
-        user_id: Optional[str] = None,
+        chat_id: str | None = None,
+        user_id: str | None = None,
     ) -> ConnectorResult:
         return self._stub_result(
             data=IMMessage(
@@ -215,10 +211,10 @@ class IMConnector(WorkspaceConnector):
     def send_message(
         self,
         content: str,
-        chat_id: Optional[str] = None,
-        user_id: Optional[str] = None,
+        chat_id: str | None = None,
+        user_id: str | None = None,
         msg_type: str = "text",
-        mention_list: Optional[list[str]] = None,
+        mention_list: list[str] | None = None,
     ) -> ConnectorResult:
         """发送文本消息。
 
@@ -250,8 +246,11 @@ class IMConnector(WorkspaceConnector):
         try:
             # 捕获飞书/企微/钉钉 API 异常
             return self._active_provider.send_message(
-                content=content, chat_id=chat_id, user_id=user_id,
-                msg_type=msg_type, mention_list=mention_list,
+                content=content,
+                chat_id=chat_id,
+                user_id=user_id,
+                msg_type=msg_type,
+                mention_list=mention_list,
             )
         except Exception as e:
             _logger.exception("im.send_message failed: %s: %s", type(e).__name__, e)
@@ -263,8 +262,8 @@ class IMConnector(WorkspaceConnector):
     def send_card(
         self,
         card: dict,
-        chat_id: Optional[str] = None,
-        user_id: Optional[str] = None,
+        chat_id: str | None = None,
+        user_id: str | None = None,
     ) -> ConnectorResult:
         """发送卡片消息(交互式卡片)。
 
@@ -290,7 +289,9 @@ class IMConnector(WorkspaceConnector):
         assert self._active_provider is not None
         try:
             return self._active_provider.send_card(
-                card=card, chat_id=chat_id, user_id=user_id,
+                card=card,
+                chat_id=chat_id,
+                user_id=user_id,
             )
         except Exception as e:
             _logger.exception("im.send_card failed: %s: %s", type(e).__name__, e)
@@ -324,7 +325,8 @@ class IMConnector(WorkspaceConnector):
             return ConnectorResult(success=False, error="owner must not be empty")
         if not members:
             return ConnectorResult(
-                success=False, error="members list must not be empty",
+                success=False,
+                error="members list must not be empty",
             )
 
         err = self._ensure_connected()
@@ -333,7 +335,10 @@ class IMConnector(WorkspaceConnector):
         assert self._active_provider is not None
         try:
             return self._active_provider.create_group(
-                name=name, owner=owner, members=members, description=description,
+                name=name,
+                owner=owner,
+                members=members,
+                description=description,
             )
         except Exception as e:
             _logger.exception("im.create_group failed: %s: %s", type(e).__name__, e)

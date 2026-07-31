@@ -14,12 +14,24 @@
     - 密码哈希向后兼容 PBKDF2(老用户首次登录后自动升级到 Argon2id)
     - 接口签名稳定,不破坏现有 API 路由
 """
+
+from fnixagent.core.security.auth.blacklist import (
+    TokenBlacklist,
+    get_blacklist,
+)
+from fnixagent.core.security.auth.device import (
+    compute_device_fingerprint,
+    verify_device_fingerprint,
+)
+from fnixagent.core.security.auth.keystore import (
+    get_server_keypair,
+)
 from fnixagent.core.security.auth.password import (
     argon2_hash_password,
     argon2_verify_password,
-    hash_password,           # 兼容入口(默认 Argon2id)
-    verify_password,         # 兼容入口(自动识别 Argon2id / PBKDF2)
-    needs_rehash,            # 检测旧哈希是否需升级
+    hash_password,  # 兼容入口(默认 Argon2id)
+    needs_rehash,  # 检测旧哈希是否需升级
+    verify_password,  # 兼容入口(自动识别 Argon2id / PBKDF2)
 )
 from fnixagent.core.security.auth.rsa_crypto import (
     RSAKeyPair,
@@ -27,22 +39,11 @@ from fnixagent.core.security.auth.rsa_crypto import (
 )
 from fnixagent.core.security.auth.token import (
     TokenPair,
-    create_token_pair,
     create_access_token,
     create_refresh_token,
-    verify_token,
+    create_token_pair,
     decode_token_unsafe,
-)
-from fnixagent.core.security.auth.device import (
-    compute_device_fingerprint,
-    verify_device_fingerprint,
-)
-from fnixagent.core.security.auth.blacklist import (
-    TokenBlacklist,
-    get_blacklist,
-)
-from fnixagent.core.security.auth.keystore import (
-    get_server_keypair,
+    verify_token,
 )
 
 __all__ = [

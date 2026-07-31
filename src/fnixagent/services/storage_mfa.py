@@ -14,13 +14,13 @@ MFA 存储层(Phase 2.4)。
     - OTP challenge 5 分钟自动过期(consume 或 expire)
     - 强制策略:管理员配置某些角色必须开 MFA(如 admin / finance)
 """
+
 from __future__ import annotations
 
 import threading
 import time
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional
 
 from fnixagent.core.security.auth.mfa import (
     FACTOR_EMAIL,
@@ -33,7 +33,6 @@ from fnixagent.core.security.auth.mfa import (
     OTPClient,
 )
 
-
 # ---------------------------------------------------------------------------
 # 因子 DTO
 # ---------------------------------------------------------------------------
@@ -42,15 +41,16 @@ from fnixagent.core.security.auth.mfa import (
 @dataclass
 class MFAFactorDTO:
     """用户已绑定的 MFA 因子。"""
+
     id: int
     user_id: int
-    factor_type: str               # "totp" / "sms" / "email"
-    secret: str = ""               # TOTP Base32 secret(敏感)
-    phone: str = ""                # SMS 手机号
-    email: str = ""                # EMAIL 邮箱
+    factor_type: str  # "totp" / "sms" / "email"
+    secret: str = ""  # TOTP Base32 secret(敏感)
+    phone: str = ""  # SMS 手机号
+    email: str = ""  # EMAIL 邮箱
     enabled: bool = True
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
     def to_dict(self, include_secret: bool = False) -> dict:
         d = {
@@ -74,12 +74,13 @@ class MFAFactorDTO:
 @dataclass
 class RecoveryCodeDTO:
     """备用恢复码记录。"""
+
     id: int
     user_id: int
-    code_hash: str                 # SHA256
+    code_hash: str  # SHA256
     used: bool = False
-    used_at: Optional[datetime] = None
-    created_at: Optional[datetime] = None
+    used_at: datetime | None = None
+    created_at: datetime | None = None
 
     def to_dict(self) -> dict:
         return {
@@ -94,12 +95,13 @@ class RecoveryCodeDTO:
 @dataclass
 class MFAEnforcementDTO:
     """MFA 强制策略(按角色)。"""
+
     id: int
     role: str
-    factor_type: str               # "totp" / "any"
+    factor_type: str  # "totp" / "any"
     enabled: bool = True
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
     def to_dict(self) -> dict:
         return {
@@ -132,38 +134,34 @@ class InMemoryMFAFactorStore:
                 result = [f for f in result if f.enabled]
             return sorted(result, key=lambda x: x.id)
 
-    def get(self, factor_id: int) -> Optional[MFAFactorDTO]:
+    def get(self, factor_id: int) -> MFAFactorDTO | None:
         with self._lock:
             return self._factors.get(factor_id)
 
-    def get_totp(self, user_id: int) -> Optional[MFAFactorDTO]:
+    def get_totp(self, user_id: int) -> MFAFactorDTO | None:
         with self._lock:
             for f in self._factors.values():
-                if (f.user_id == user_id and f.factor_type == FACTOR_TOTP
-                        and f.enabled):
+                if f.user_id == user_id and f.factor_type == FACTOR_TOTP and f.enabled:
                     return f
             return None
 
-    def get_sms(self, user_id: int) -> Optional[MFAFactorDTO]:
+    def get_sms(self, user_id: int) -> MFAFactorDTO | None:
         with self._lock:
             for f in self._factors.values():
-                if (f.user_id == user_id and f.factor_type == FACTOR_SMS
-                        and f.enabled):
+                if f.user_id == user_id and f.factor_type == FACTOR_SMS and f.enabled:
                     return f
             return None
 
-    def get_email(self, user_id: int) -> Optional[MFAFactorDTO]:
+    def get_email(self, user_id: int) -> MFAFactorDTO | None:
         with self._lock:
             for f in self._factors.values():
-                if (f.user_id == user_id and f.factor_type == FACTOR_EMAIL
-                        and f.enabled):
+                if f.user_id == user_id and f.factor_type == FACTOR_EMAIL and f.enabled:
                     return f
             return None
 
     def has_enabled_factor(self, user_id: int) -> bool:
         with self._lock:
-            return any(f.user_id == user_id and f.enabled
-                       for f in self._factors.values())
+            return any(f.user_id == user_id and f.enabled for f in self._factors.values())
 
     def create(self, user_id: int, factor_type: str, **kwargs) -> MFAFactorDTO:
         with self._lock:
@@ -171,17 +169,20 @@ class InMemoryMFAFactorStore:
             self._next_id += 1
             now = datetime.utcnow()
             factor = MFAFactorDTO(
-                id=fid, user_id=user_id, factor_type=factor_type,
+                id=fid,
+                user_id=user_id,
+                factor_type=factor_type,
                 secret=kwargs.get("secret", ""),
                 phone=kwargs.get("phone", ""),
                 email=kwargs.get("email", ""),
                 enabled=kwargs.get("enabled", True),
-                created_at=now, updated_at=now,
+                created_at=now,
+                updated_at=now,
             )
             self._factors[fid] = factor
             return factor
 
-    def update(self, factor_id: int, **kwargs) -> Optional[MFAFactorDTO]:
+    def update(self, factor_id: int, **kwargs) -> MFAFactorDTO | None:
         with self._lock:
             factor = self._factors.get(factor_id)
             if not factor:
@@ -229,8 +230,7 @@ class InMemoryRecoveryCodeStore:
 
     def count_unused(self, user_id: int) -> int:
         with self._lock:
-            return sum(1 for c in self._codes.values()
-                       if c.user_id == user_id and not c.used)
+            return sum(1 for c in self._codes.values() if c.user_id == user_id and not c.used)
 
     def create(self, user_id: int, code_hash: str) -> RecoveryCodeDTO:
         with self._lock:
@@ -238,17 +238,19 @@ class InMemoryRecoveryCodeStore:
             self._next_id += 1
             now = datetime.utcnow()
             code = RecoveryCodeDTO(
-                id=cid, user_id=user_id, code_hash=code_hash,
-                used=False, created_at=now,
+                id=cid,
+                user_id=user_id,
+                code_hash=code_hash,
+                used=False,
+                created_at=now,
             )
             self._codes[cid] = code
             return code
 
-    def find_unused_by_hash(self, user_id: int, code_hash: str) -> Optional[RecoveryCodeDTO]:
+    def find_unused_by_hash(self, user_id: int, code_hash: str) -> RecoveryCodeDTO | None:
         with self._lock:
             for c in self._codes.values():
-                if (c.user_id == user_id and not c.used
-                        and c.code_hash == code_hash):
+                if c.user_id == user_id and not c.used and c.code_hash == code_hash:
                     return c
             return None
 
@@ -281,9 +283,16 @@ class InMemoryOTPChallengeStore:
         self._lock = threading.Lock()
         self._challenges: dict[str, OTPChallenge] = {}
 
-    def create(self, user_id: int, factor_type: str, target: str,
-               code_hash: str, ttl: int = OTP_TTL_SECONDS) -> OTPChallenge:
+    def create(
+        self,
+        user_id: int,
+        factor_type: str,
+        target: str,
+        code_hash: str,
+        ttl: int = OTP_TTL_SECONDS,
+    ) -> OTPChallenge:
         import secrets as _secrets
+
         with self._lock:
             challenge_id = _secrets.token_urlsafe(16)
             now = time.time()
@@ -301,7 +310,7 @@ class InMemoryOTPChallengeStore:
             self._challenges[challenge_id] = challenge
             return challenge
 
-    def get(self, challenge_id: str) -> Optional[OTPChallenge]:
+    def get(self, challenge_id: str) -> OTPChallenge | None:
         with self._lock:
             c = self._challenges.get(challenge_id)
             if c is None:
@@ -318,12 +327,16 @@ class InMemoryOTPChallengeStore:
                 created_at=c.created_at,
             )
 
-    def get_active_by_user(self, user_id: int, factor_type: str) -> Optional[OTPChallenge]:
+    def get_active_by_user(self, user_id: int, factor_type: str) -> OTPChallenge | None:
         with self._lock:
             now = time.time()
             for c in self._challenges.values():
-                if (c.user_id == user_id and c.factor_type == factor_type
-                        and not c.consumed and c.expires_at > now):
+                if (
+                    c.user_id == user_id
+                    and c.factor_type == factor_type
+                    and not c.consumed
+                    and c.expires_at > now
+                ):
                     return c
             return None
 
@@ -336,13 +349,16 @@ class InMemoryOTPChallengeStore:
         with self._lock:
             now = time.time()
             for c in self._challenges.values():
-                if (c.user_id == user_id and c.factor_type == factor_type
-                        and not c.consumed
-                        and (now - c.created_at) < OTP_RESEND_COOLDOWN_SECONDS):
+                if (
+                    c.user_id == user_id
+                    and c.factor_type == factor_type
+                    and not c.consumed
+                    and (now - c.created_at) < OTP_RESEND_COOLDOWN_SECONDS
+                ):
                     return False
             return True
 
-    def increment_attempts(self, challenge_id: str) -> Optional[OTPChallenge]:
+    def increment_attempts(self, challenge_id: str) -> OTPChallenge | None:
         with self._lock:
             c = self._challenges.get(challenge_id)
             if c is None:
@@ -363,8 +379,7 @@ class InMemoryOTPChallengeStore:
     def cleanup_expired(self) -> int:
         with self._lock:
             now = time.time()
-            expired = [cid for cid, c in self._challenges.items()
-                       if c.expires_at <= now]
+            expired = [cid for cid, c in self._challenges.items() if c.expires_at <= now]
             for cid in expired:
                 del self._challenges[cid]
             return len(expired)
@@ -392,15 +407,14 @@ class InMemoryMFAEnforcementStore:
         with self._lock:
             return [e for e in self._enforcements.values() if e.enabled]
 
-    def get_by_role(self, role: str) -> Optional[MFAEnforcementDTO]:
+    def get_by_role(self, role: str) -> MFAEnforcementDTO | None:
         with self._lock:
             eid = self._role_idx.get(role)
             if eid is None:
                 return None
             return self._enforcements.get(eid)
 
-    def upsert(self, role: str, factor_type: str,
-               enabled: bool = True) -> MFAEnforcementDTO:
+    def upsert(self, role: str, factor_type: str, enabled: bool = True) -> MFAEnforcementDTO:
         with self._lock:
             existing_id = self._role_idx.get(role)
             now = datetime.utcnow()
@@ -413,8 +427,12 @@ class InMemoryMFAEnforcementStore:
             eid = self._next_id
             self._next_id += 1
             e = MFAEnforcementDTO(
-                id=eid, role=role, factor_type=factor_type,
-                enabled=enabled, created_at=now, updated_at=now,
+                id=eid,
+                role=role,
+                factor_type=factor_type,
+                enabled=enabled,
+                created_at=now,
+                updated_at=now,
             )
             self._enforcements[eid] = e
             self._role_idx[role] = eid
@@ -450,16 +468,16 @@ class InMemoryMFAEnforcementStore:
 # ---------------------------------------------------------------------------
 
 
-_mfa_factor_store: Optional[InMemoryMFAFactorStore] = None
+_mfa_factor_store: InMemoryMFAFactorStore | None = None
 _mfa_factor_store_lock = threading.Lock()
 
-_recovery_code_store: Optional[InMemoryRecoveryCodeStore] = None
+_recovery_code_store: InMemoryRecoveryCodeStore | None = None
 _recovery_code_store_lock = threading.Lock()
 
-_otp_challenge_store: Optional[InMemoryOTPChallengeStore] = None
+_otp_challenge_store: InMemoryOTPChallengeStore | None = None
 _otp_challenge_store_lock = threading.Lock()
 
-_mfa_enforcement_store: Optional[InMemoryMFAEnforcementStore] = None
+_mfa_enforcement_store: InMemoryMFAEnforcementStore | None = None
 _mfa_enforcement_store_lock = threading.Lock()
 
 

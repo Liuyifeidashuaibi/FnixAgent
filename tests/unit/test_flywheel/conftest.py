@@ -1,4 +1,4 @@
-﻿"""
+"""
 飞轮模块单元测试公共夹具。
 
 提供以下 fixtures:
@@ -15,10 +15,10 @@
     - fake_graph:          模拟编译后的 LangGraph(供飞轮①测试)
     - fake_snapshot_manager: 模拟快照管理器
 """
+
 import os
 import sys
 import time
-import uuid
 
 # 确保 src 在路径中
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", "src"))
@@ -36,15 +36,15 @@ from fnixagent.core.types import (
     EdgeType,
     NodeType,
     ReasoningMode,
+    ToolPermission,
     TopologyLayer,
     TraceRecord,
-    ToolPermission,
 )
-
 
 # ---------------------------------------------------------------------------
 # 拓扑图(包含 L1→L2→L3→L4 完整层级 + 额外节点)
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def sample_graph() -> TopologyGraph:
@@ -106,18 +106,15 @@ def sample_graph() -> TopologyGraph:
     graph.add_edge("L1:goal1", "L2:concept1", EdgeType.CONTAINS, edge_id="e1")
     graph.add_edge("L2:concept1", "L3:rule1", EdgeType.CONTAINS, edge_id="e2")
     graph.add_edge("L3:rule1", "L4:fact1", EdgeType.CONTAINS, edge_id="e3")
-    graph.add_edge(
-        "L2:concept1", "L3:rule1", EdgeType.DEPENDS_ON, weight=0.6, edge_id="e4"
-    )
-    graph.add_edge(
-        "L3:rule1", "L4:fact1", EdgeType.DEPENDS_ON, weight=0.7, edge_id="e5"
-    )
+    graph.add_edge("L2:concept1", "L3:rule1", EdgeType.DEPENDS_ON, weight=0.6, edge_id="e4")
+    graph.add_edge("L3:rule1", "L4:fact1", EdgeType.DEPENDS_ON, weight=0.7, edge_id="e5")
     return graph
 
 
 # ---------------------------------------------------------------------------
 # TraceRecord fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def sample_trace() -> TraceRecord:
@@ -200,6 +197,7 @@ def no_tool_trace() -> TraceRecord:
 # 拓扑搜索 / 工具注册 / 调度器
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def mock_search(sample_graph) -> TopologySearch:
     """返回基于 sample_graph 的 TopologySearch 实例。"""
@@ -256,6 +254,7 @@ def mock_scheduler(mock_registry, mock_binding_protocol) -> SkillScheduler:
 # TraceStore(基于 tmp_path,每个测试独立隔离)
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def trace_store(tmp_path) -> TraceStore:
     """返回基于 tmp_path 的 TraceStore 实例。"""
@@ -265,6 +264,7 @@ def trace_store(tmp_path) -> TraceStore:
 # ---------------------------------------------------------------------------
 # 模拟编译后的 LangGraph(供飞轮①测试)
 # ---------------------------------------------------------------------------
+
 
 class FakeGraph:
     """模拟编译后的 LangGraph,记录 invoke/stream 调用。"""
@@ -299,9 +299,7 @@ def fake_graph():
                 "trace_id": "trace-001",
                 "task_id": "task-001",
                 "success": True,
-                "tool_calls": [
-                    {"name": "search_paper", "args": {}, "status": "success"}
-                ],
+                "tool_calls": [{"name": "search_paper", "args": {}, "status": "success"}],
             },
             "concept_path": ["L2:concept1"],
             "error": None,
@@ -318,6 +316,7 @@ def fake_graph_failure():
 # ---------------------------------------------------------------------------
 # 模拟快照管理器(供飞轮④测试)
 # ---------------------------------------------------------------------------
+
 
 class FakeSnapshotManager:
     """模拟快照管理器。"""

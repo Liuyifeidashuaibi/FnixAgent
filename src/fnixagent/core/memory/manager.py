@@ -13,9 +13,10 @@
   - 短期记忆/长期记忆/实体记忆各自持有锁,内部保证线程安全
   - MemoryManager 自身无状态,跨子模块组合调用安全
 """
+
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 from fnixagent.core.config import MemoryConfig
 from fnixagent.core.memory.entity import EntityMemory
@@ -46,8 +47,8 @@ class MemoryManager:
 
     def __init__(
         self,
-        embedder: Optional[BaseEmbedder] = None,
-        config: Optional[MemoryConfig] = None,
+        embedder: BaseEmbedder | None = None,
+        config: MemoryConfig | None = None,
     ) -> None:
         self._config = config or MemoryConfig()
         self._embedder = embedder or HashingEmbedder()
@@ -103,9 +104,7 @@ class MemoryManager:
         # 短期记忆:无需 user_id,直接追加
         self._short.add(message)
 
-        if persist_long_term and message.role in (
-            MessageRole.USER, MessageRole.ASSISTANT
-        ):
+        if persist_long_term and message.role in (MessageRole.USER, MessageRole.ASSISTANT):
             content = f"[{message.role.value}] {message.content}"
             # user_id 为空时用 session_id 兜底(避免匿名写入污染全局)
             owner = user_id or session_id or "anonymous"
@@ -163,9 +162,7 @@ class MemoryManager:
 
     # -- 检索 --------------------------------------------------------------
 
-    def search(
-        self, user_id: str, query: str, top_k: int = 5
-    ) -> list[MemoryItem]:
+    def search(self, user_id: str, query: str, top_k: int = 5) -> list[MemoryItem]:
         """统一语义检索(长期向量记忆)。
 
         Args:
@@ -186,11 +183,11 @@ class MemoryManager:
         """更新实体记忆。"""
         return self._entity.upsert(entity)
 
-    def get_entity(self, entity_type: str, name: str) -> Optional[Entity]:
+    def get_entity(self, entity_type: str, name: str) -> Entity | None:
         """查询实体。"""
         return self._entity.get(entity_type, name)
 
-    def get_user_profile(self, user_id: str) -> Optional[Entity]:
+    def get_user_profile(self, user_id: str) -> Entity | None:
         """快捷获取用户画像。
 
         Args:

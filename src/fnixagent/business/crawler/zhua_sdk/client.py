@@ -29,8 +29,9 @@ from __future__ import annotations
 import asyncio
 import json
 import time
+from collections.abc import AsyncIterator, Iterator
 from types import TracebackType
-from typing import Any, AsyncIterator, Iterator, Optional, Type
+from typing import Any
 
 import httpx
 
@@ -85,18 +86,18 @@ class ZhuaClient:
     def __init__(
         self,
         base_url: str = "http://localhost:8000",
-        token: Optional[str] = None,
-        operator_token: Optional[str] = None,
+        token: str | None = None,
+        operator_token: str | None = None,
         timeout: float = 60.0,
         max_retries: int = _MAX_RETRIES,
-        headers: Optional[dict[str, str]] = None,
+        headers: dict[str, str] | None = None,
     ) -> None:
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
         self.max_retries = max_retries
         self.operator_token = operator_token
         # 内部缓存的 JWT
-        self._token: Optional[str] = token
+        self._token: str | None = token
         # [P1] token 过期管理：临近过期(>80% TTL)时自动刷新
         self._token_issued_at: float = 0.0
         self._token_ttl: float = 3600.0
@@ -109,34 +110,34 @@ class ZhuaClient:
             self._default_headers.update(headers)
 
         # 同步 / 异步客户端(惰性创建)
-        self._sync_client: Optional[httpx.Client] = None
-        self._async_client: Optional[httpx.AsyncClient] = None
+        self._sync_client: httpx.Client | None = None
+        self._async_client: httpx.AsyncClient | None = None
 
     # ------------------------------------------------------------------ #
     # 上下文管理器(同步)
     # ------------------------------------------------------------------ #
-    def __enter__(self) -> "ZhuaClient":
+    def __enter__(self) -> ZhuaClient:
         return self
 
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc: Optional[BaseException],
-        tb: Optional[TracebackType],
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        tb: TracebackType | None,
     ) -> None:
         self.close()
 
     # ------------------------------------------------------------------ #
     # 上下文管理器(异步)
     # ------------------------------------------------------------------ #
-    async def __aenter__(self) -> "ZhuaClient":
+    async def __aenter__(self) -> ZhuaClient:
         return self
 
     async def __aexit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc: Optional[BaseException],
-        tb: Optional[TracebackType],
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        tb: TracebackType | None,
     ) -> None:
         await self.aclose()
 
@@ -148,7 +149,7 @@ class ZhuaClient:
         if self._sync_client is not None:
             try:
                 self._sync_client.close()
-            except Exception:  # noqa: BLE001
+            except Exception:
                 pass
             self._sync_client = None
 
@@ -157,7 +158,7 @@ class ZhuaClient:
         if self._async_client is not None:
             try:
                 await self._async_client.aclose()
-            except Exception:  # noqa: BLE001
+            except Exception:
                 pass
             self._async_client = None
 
@@ -278,7 +279,7 @@ class ZhuaClient:
     def extract(
         self,
         url: str,
-        schema: Optional[dict[str, Any]] = None,
+        schema: dict[str, Any] | None = None,
         **kwargs: Any,
     ) -> dict[str, Any]:
         """LLM 提取(POST /v1/extract)"""
@@ -347,7 +348,7 @@ class ZhuaClient:
                     except (json.JSONDecodeError, TypeError):
                         continue
                     yield event
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             raise ZhuaConnectionError(f"WS 连接异常: {e}") from e
 
     # ------------------------------------------------------------------ #
@@ -361,7 +362,7 @@ class ZhuaClient:
     async def async_extract(
         self,
         url: str,
-        schema: Optional[dict[str, Any]] = None,
+        schema: dict[str, Any] | None = None,
         **kwargs: Any,
     ) -> dict[str, Any]:
         """LLM 提取(异步)"""
@@ -425,7 +426,7 @@ class ZhuaClient:
                     except (json.JSONDecodeError, TypeError):
                         continue
                     yield event
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             raise ZhuaConnectionError(f"WS 连接异常: {e}") from e
 
     # ------------------------------------------------------------------ #
@@ -434,7 +435,7 @@ class ZhuaClient:
     def _request_sync(self, method: str, path: str, **kwargs: Any) -> dict[str, Any]:
         """同步请求(带 5xx 重试)"""
         client = self._get_sync_client()
-        last_exc: Optional[ZhuaError] = None
+        last_exc: ZhuaError | None = None
         for attempt in range(self.max_retries + 1):
             # 每次重试都刷新鉴权头(token 可能过期)
             headers = kwargs.pop("headers", None) or {}
@@ -476,7 +477,7 @@ class ZhuaClient:
     async def _request_async(self, method: str, path: str, **kwargs: Any) -> dict[str, Any]:
         """异步请求(带 5xx 重试)"""
         client = await self._get_async_client()
-        last_exc: Optional[ZhuaError] = None
+        last_exc: ZhuaError | None = None
         for attempt in range(self.max_retries + 1):
             headers = kwargs.pop("headers", None) or {}
             headers.update(await self._auth_headers_async())
@@ -516,9 +517,9 @@ class ZhuaClient:
         """构造 WebSocket URL(http(s) -> ws(s))"""
         base = self.base_url
         if base.startswith("https://"):
-            ws_base = "wss://" + base[len("https://"):]
+            ws_base = "wss://" + base[len("https://") :]
         elif base.startswith("http://"):
-            ws_base = "ws://" + base[len("http://"):]
+            ws_base = "ws://" + base[len("http://") :]
         else:
             ws_base = base
         return f"{ws_base}/v1/stream/{task_id}"
@@ -553,7 +554,7 @@ def _build_scrape_payload(url: str, kwargs: dict[str, Any]) -> dict[str, Any]:
     return payload
 
 
-def _build_error(message: str, resp: httpx.Response, request_id: Optional[str]) -> ZhuaError:
+def _build_error(message: str, resp: httpx.Response, request_id: str | None) -> ZhuaError:
     """按 HTTP 状态码构造对应的异常"""
     status = resp.status_code
     if status in (401, 403):

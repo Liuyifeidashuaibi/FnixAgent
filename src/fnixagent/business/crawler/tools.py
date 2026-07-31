@@ -20,15 +20,16 @@
   - cost_score: 0.5(网络调用,中等成本)
   - timeout_ms: 60000
 """
+
 from __future__ import annotations
 
 import dataclasses
 import logging
 import threading
-from typing import Any, Optional
+from typing import Any
 
 from fnixagent.business.crawler.client import CrawlerClient, CrawlerError
-from fnixagent.business.crawler.config import CrawlerConfig, load_config
+from fnixagent.business.crawler.config import load_config
 from fnixagent.business.crawler.schema import (
     BatchRequest,
     ExtractRequest,
@@ -42,7 +43,7 @@ from fnixagent.core.tools.protocol import ToolLayer, ToolMetadata, ToolPermissio
 _logger = logging.getLogger(__name__)
 
 # 全局单例 CrawlerClient(首次调用时从配置创建)
-_global_client: Optional[CrawlerClient] = None
+_global_client: CrawlerClient | None = None
 _global_client_lock = threading.Lock()
 
 
@@ -63,7 +64,7 @@ def _get_client() -> CrawlerClient:
     return _global_client  # type: ignore[return-value]
 
 
-def _set_global_client(client: Optional[CrawlerClient]) -> None:
+def _set_global_client(client: CrawlerClient | None) -> None:
     """设置全局单例 client(register_crawler_tools 传入时调用)。"""
     global _global_client
     with _global_client_lock:
@@ -118,7 +119,7 @@ def _tool_fetch(
 
 def _tool_render(
     url: str,
-    wait_for: Optional[str] = None,
+    wait_for: str | None = None,
     screenshot: bool = False,
 ) -> dict:
     """crawler_render 工具实现。
@@ -133,9 +134,7 @@ def _tool_render(
     """
     try:
         client = _get_client()
-        resp = client.render(
-            RenderRequest(url=url, wait_for=wait_for, screenshot=screenshot)
-        )
+        resp = client.render(RenderRequest(url=url, wait_for=wait_for, screenshot=screenshot))
         return _to_dict(resp)
     except CrawlerError as e:
         _logger.warning("crawler_render failed: %s", e)
@@ -146,8 +145,8 @@ def _tool_render(
 
 
 def _tool_extract(
-    url: Optional[str] = None,
-    html: Optional[str] = None,
+    url: str | None = None,
+    html: str | None = None,
 ) -> dict:
     """crawler_extract 工具实现。
 
@@ -182,9 +181,7 @@ def _tool_search(query: str, num_results: int = 10) -> dict:
     """
     try:
         client = _get_client()
-        resp = client.search(
-            SearchRequest(query=query, num_results=num_results)
-        )
+        resp = client.search(SearchRequest(query=query, num_results=num_results))
         return _to_dict(resp)
     except CrawlerError as e:
         _logger.warning("crawler_search failed: %s", e)
@@ -200,8 +197,8 @@ def _tool_search(query: str, num_results: int = 10) -> dict:
 
 
 def _tool_summary(
-    url: Optional[str] = None,
-    text: Optional[str] = None,
+    url: str | None = None,
+    text: str | None = None,
     style: str = "concise",
 ) -> dict:
     """crawler_summary 工具实现。
@@ -216,9 +213,7 @@ def _tool_summary(
     """
     try:
         client = _get_client()
-        resp = client.summary(
-            SummaryRequest(url=url, text=text, summary_style=style)
-        )
+        resp = client.summary(SummaryRequest(url=url, text=text, summary_style=style))
         return _to_dict(resp)
     except CrawlerError as e:
         _logger.warning("crawler_summary failed: %s", e)
@@ -240,9 +235,7 @@ def _tool_batch(urls: list[str], task_type: str = "fetch") -> dict:
     """
     try:
         client = _get_client()
-        resp = client.submit_batch(
-            BatchRequest(urls=urls, task_type=task_type)
-        )
+        resp = client.submit_batch(BatchRequest(urls=urls, task_type=task_type))
         return _to_dict(resp)
     except CrawlerError as e:
         _logger.warning("crawler_batch failed: %s", e)
@@ -419,7 +412,7 @@ TOOL_FUNCS: dict[str, Any] = {
 
 def register_crawler_tools(
     registry: Any,
-    client: Optional[CrawlerClient] = None,
+    client: CrawlerClient | None = None,
 ) -> None:
     """注册爬虫工具到 ToolRegistry。
 

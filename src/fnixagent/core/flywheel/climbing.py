@@ -17,18 +17,18 @@
         - freshness < 0.3 且 use_count < 5: weight × 0.95
         - 连续 30 天未命中: 标记 stale=True(不删除,仅降权)
 """
+
 from __future__ import annotations
 
 import time
 from collections import Counter
-from typing import Any, Optional
+from typing import Any
 
-from fnixagent.core.exceptions import EvolutionRollbackError, SnapshotError
+from fnixagent.core.exceptions import EvolutionRollbackError
 from fnixagent.core.flywheel.trace import TraceStore
 from fnixagent.core.topology import weights as weights_mod
 from fnixagent.core.topology.graph import TopologyGraph
 from fnixagent.core.types import (
-    EdgeType,
     EvolutionSnapshot,
     FlywheelStage,
     NodeType,
@@ -60,7 +60,7 @@ class HillClimbingFlywheel:
     def __init__(
         self,
         graph: TopologyGraph,
-        trace_store: Optional[TraceStore] = None,
+        trace_store: TraceStore | None = None,
         snapshot_manager: Any = None,
         evolution_interval: int = DEFAULT_EVOLUTION_INTERVAL,
     ) -> None:
@@ -84,7 +84,7 @@ class HillClimbingFlywheel:
         self._task_count += 1
         return self._task_count >= self._evolution_interval
 
-    def run(self, traces: Optional[list[TraceRecord]] = None) -> dict:
+    def run(self, traces: list[TraceRecord] | None = None) -> dict:
         """执行爬坡进化。
 
         Returns:
@@ -168,10 +168,12 @@ class HillClimbingFlywheel:
                 stage=FlywheelStage.HILL_CLIMBING,
                 node_count=self._graph.stats()["active_nodes"],
                 edge_count=self._graph.stats()["active_edges"],
-                skill_count=len(self._graph.list_nodes(
-                    layer=TopologyLayer.L2_CONCEPT,
-                    node_type=NodeType.CONCEPT,
-                )),
+                skill_count=len(
+                    self._graph.list_nodes(
+                        layer=TopologyLayer.L2_CONCEPT,
+                        node_type=NodeType.CONCEPT,
+                    )
+                ),
                 avg_success_rate=post_stats["success_rate"],
                 avg_token_efficiency=post_stats["token_efficiency"],
                 payload=self._graph.snapshot(),
@@ -218,14 +220,15 @@ class HillClimbingFlywheel:
             if count >= PATTERN_FREQUENCY_THRESHOLD:
                 # 找一个完整的目标作为代表
                 representative = next(t for t in traces if t.goal[:20] == sig)
-                patterns.append({
-                    "signature": sig,
-                    "count": count,
-                    "representative_goal": representative.goal,
-                    "success_rate": sum(
-                        1 for t in traces if t.goal[:20] == sig and t.success
-                    ) / count,
-                })
+                patterns.append(
+                    {
+                        "signature": sig,
+                        "count": count,
+                        "representative_goal": representative.goal,
+                        "success_rate": sum(1 for t in traces if t.goal[:20] == sig and t.success)
+                        / count,
+                    }
+                )
         return patterns
 
     def _find_top_paths(self) -> list[dict]:
@@ -245,13 +248,15 @@ class HillClimbingFlywheel:
                     continue
                 try:
                     target = self._graph.get_node(edge.target_id)
-                    top_paths.append({
-                        "concept": concept.name,
-                        "concept_weight": concept.weight,
-                        "edge_type": edge.edge_type.value,
-                        "edge_weight": edge.weight,
-                        "target": target.name,
-                    })
+                    top_paths.append(
+                        {
+                            "concept": concept.name,
+                            "concept_weight": concept.weight,
+                            "edge_type": edge.edge_type.value,
+                            "edge_weight": edge.weight,
+                            "target": target.name,
+                        }
+                    )
                 except Exception:
                     continue
         return top_paths
@@ -271,10 +276,12 @@ class HillClimbingFlywheel:
         combos = []
         for combo, count in combo_counter.most_common():
             if count >= SKILL_COMBO_THRESHOLD:
-                combos.append({
-                    "skills": list(combo),
-                    "count": count,
-                })
+                combos.append(
+                    {
+                        "skills": list(combo),
+                        "count": count,
+                    }
+                )
         return combos
 
     # -----------------------------------------------------------------------
@@ -379,7 +386,7 @@ class HillClimbingFlywheel:
         decayed = 0
         stale = 0
         current_time = time.time()
-        thirty_days_seconds = 30 * 24 * 3600
+        30 * 24 * 3600
 
         for node in self._graph.list_nodes(include_deprecated=False):
             # freshness 衰减
@@ -432,7 +439,7 @@ class HillClimbingFlywheel:
             return True
         return False
 
-    def _rollback(self, snapshot_name: Optional[str]) -> None:
+    def _rollback(self, snapshot_name: str | None) -> None:
         """回滚到指定快照。"""
         if snapshot_name is None or self._snapshot_manager is None:
             return
@@ -451,7 +458,7 @@ class HillClimbingFlywheel:
         name: str,
         layer: TopologyLayer,
         node_type: NodeType,
-    ) -> Optional[Any]:
+    ) -> Any | None:
         """按名称查找节点。"""
         nodes = self._graph.list_nodes(layer=layer, node_type=node_type)
         for node in nodes:

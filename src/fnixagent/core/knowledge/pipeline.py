@@ -15,6 +15,7 @@
   - 上传文件大小限制(可通过 options.max_file_bytes 配置)
   - 并行执行通过 _lock 保护步骤列表的读写
 """
+
 from __future__ import annotations
 
 import abc
@@ -23,15 +24,13 @@ import os
 import threading
 import time
 from dataclasses import dataclass, field
-from typing import Any, Optional
-
-from fnixagent.core.text import estimate_tokens, tokenize
+from typing import Any
 
 # 默认上传文件大小上限(50MB),防止大文件耗尽内存
 DEFAULT_MAX_FILE_BYTES: int = 50 * 1024 * 1024
 
 
-def _validate_file_path(file_path: str, base_dir: Optional[str] = None) -> str:
+def _validate_file_path(file_path: str, base_dir: str | None = None) -> str:
     """校验文件路径安全性:非空 + 禁止路径穿越 + 可选基目录限制。
 
     Args:
@@ -55,9 +54,7 @@ def _validate_file_path(file_path: str, base_dir: Optional[str] = None) -> str:
     if base_dir is not None:
         base_abs = os.path.abspath(base_dir)
         if not abs_path.startswith(base_abs + os.sep) and abs_path != base_abs:
-            raise ValueError(
-                f"路径越出基目录 {base_dir}: {file_path}"
-            )
+            raise ValueError(f"路径越出基目录 {base_dir}: {file_path}")
     return abs_path
 
 
@@ -75,24 +72,26 @@ class PipelineContext:
     tenant_id: str = ""
     file_path: str = ""
     mime_type: str = ""
-    file_ext: str = ""              # 扩展名(小写无点)
+    file_ext: str = ""  # 扩展名(小写无点)
 
     # 各步输出(累积)
     ocr_text: str = ""
     parsed_blocks: list[dict] = field(default_factory=list)  # [{type, text, metadata}]
-    chunks: list[dict] = field(default_factory=list)         # [{text, index, tokens, metadata}]
+    chunks: list[dict] = field(default_factory=list)  # [{text, index, tokens, metadata}]
     extracted_metadata: dict[str, Any] = field(default_factory=dict)
     permission_tags: dict[str, Any] = field(default_factory=dict)
     embeddings: list[list[float]] = field(default_factory=list)
 
     # 执行追踪
-    errors: list[dict] = field(default_factory=list)         # [{step, error, fatal}]
-    step_results: dict[str, dict] = field(default_factory=dict)  # {step_name: {duration_ms, skipped, ...}}
+    errors: list[dict] = field(default_factory=list)  # [{step, error, fatal}]
+    step_results: dict[str, dict] = field(
+        default_factory=dict
+    )  # {step_name: {duration_ms, skipped, ...}}
 
     # 透传配置(步骤可读取)
     options: dict[str, Any] = field(default_factory=dict)
 
-    def validate_file_path(self, base_dir: Optional[str] = None) -> str:
+    def validate_file_path(self, base_dir: str | None = None) -> str:
         """校验 self.file_path 的安全性(非空 + 禁路径穿越)。
 
         Args:
@@ -106,7 +105,7 @@ class PipelineContext:
         """
         return _validate_file_path(self.file_path, base_dir=base_dir)
 
-    def check_file_size(self, max_bytes: Optional[int] = None) -> int:
+    def check_file_size(self, max_bytes: int | None = None) -> int:
         """检查 file_path 指向文件的大小是否超限。
 
         Args:
@@ -120,16 +119,12 @@ class PipelineContext:
             FileNotFoundError: 文件不存在
         """
         if max_bytes is None:
-            max_bytes = int(
-                self.options.get("max_file_bytes", DEFAULT_MAX_FILE_BYTES)
-            )
+            max_bytes = int(self.options.get("max_file_bytes", DEFAULT_MAX_FILE_BYTES))
         if not self.file_path or not os.path.exists(self.file_path):
             raise FileNotFoundError(f"文件不存在: {self.file_path}")
         size = os.path.getsize(self.file_path)
         if size > max_bytes:
-            raise ValueError(
-                f"文件大小 {size} 字节超过上限 {max_bytes} 字节: {self.file_path}"
-            )
+            raise ValueError(f"文件大小 {size} 字节超过上限 {max_bytes} 字节: {self.file_path}")
         return size
 
 
@@ -174,7 +169,7 @@ class KnowledgePipeline:
     支持 add/remove/replace 步骤,支持同步/异步执行。
     """
 
-    def __init__(self, steps: Optional[list[PipelineStep]] = None) -> None:
+    def __init__(self, steps: list[PipelineStep] | None = None) -> None:
         if steps is None:
             # 延迟导入,避免循环依赖
             from fnixagent.core.knowledge.steps import (
@@ -185,6 +180,7 @@ class KnowledgePipeline:
                 ParseStep,
                 PermissionStep,
             )
+
             steps = [
                 OCRStep(),
                 ParseStep(),
@@ -200,7 +196,7 @@ class KnowledgePipeline:
     # 步骤管理
     # ------------------------------------------------------------------
 
-    def add_step(self, step: PipelineStep, after: Optional[str] = None) -> None:
+    def add_step(self, step: PipelineStep, after: str | None = None) -> None:
         """添加步骤。after=None 追加到末尾;after=step_name 插入到指定步骤后。"""
         with self._lock:
             if after is None:
@@ -211,7 +207,7 @@ class KnowledgePipeline:
                     raise ValueError(f"step '{after}' not found")
                 self._steps.insert(idx + 1, step)
 
-    def remove_step(self, name: str) -> Optional[PipelineStep]:
+    def remove_step(self, name: str) -> PipelineStep | None:
         """移除步骤。"""
         with self._lock:
             for i, s in enumerate(self._steps):
@@ -219,7 +215,7 @@ class KnowledgePipeline:
                     return self._steps.pop(i)
             return None
 
-    def replace_step(self, name: str, new_step: PipelineStep) -> Optional[PipelineStep]:
+    def replace_step(self, name: str, new_step: PipelineStep) -> PipelineStep | None:
         """替换步骤。"""
         with self._lock:
             idx = self._find_step_index(name)
@@ -253,7 +249,7 @@ class KnowledgePipeline:
             ],
         }
 
-    def _find_step_index(self, name: str) -> Optional[int]:
+    def _find_step_index(self, name: str) -> int | None:
         for i, s in enumerate(self._steps):
             if s.name == name:
                 return i
@@ -281,11 +277,13 @@ class KnowledgePipeline:
                 ctx.validate_file_path()
                 ctx.check_file_size()
             except (ValueError, FileNotFoundError) as e:
-                ctx.errors.append({
-                    "step": "_validate",
-                    "error": str(e),
-                    "fatal": True,
-                })
+                ctx.errors.append(
+                    {
+                        "step": "_validate",
+                        "error": str(e),
+                        "fatal": True,
+                    }
+                )
                 ctx.step_results["_validate"] = {
                     "skipped": False,
                     "duration_ms": 0.0,
@@ -320,11 +318,13 @@ class KnowledgePipeline:
                     "error": str(e),
                 }
                 # 记录错误:required=True 标记为 fatal
-                ctx.errors.append({
-                    "step": step_name,
-                    "error": str(e),
-                    "fatal": step.required,
-                })
+                ctx.errors.append(
+                    {
+                        "step": step_name,
+                        "error": str(e),
+                        "fatal": step.required,
+                    }
+                )
                 if step.required:
                     # 必需步骤失败:阻断整条流水线
                     break
@@ -342,11 +342,13 @@ class KnowledgePipeline:
                 ctx.validate_file_path()
                 ctx.check_file_size()
             except (ValueError, FileNotFoundError) as e:
-                ctx.errors.append({
-                    "step": "_validate",
-                    "error": str(e),
-                    "fatal": True,
-                })
+                ctx.errors.append(
+                    {
+                        "step": "_validate",
+                        "error": str(e),
+                        "fatal": True,
+                    }
+                )
                 ctx.step_results["_validate"] = {
                     "skipped": False,
                     "duration_ms": 0.0,
@@ -383,11 +385,13 @@ class KnowledgePipeline:
                     "duration_ms": duration_ms,
                     "error": str(e),
                 }
-                ctx.errors.append({
-                    "step": step_name,
-                    "error": str(e),
-                    "fatal": step.required,
-                })
+                ctx.errors.append(
+                    {
+                        "step": step_name,
+                        "error": str(e),
+                        "fatal": step.required,
+                    }
+                )
                 if step.required:
                     break
         return ctx

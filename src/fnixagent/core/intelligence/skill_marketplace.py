@@ -38,10 +38,10 @@ import json
 import logging
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional, List, Dict
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -50,45 +50,48 @@ logger = logging.getLogger(__name__)
 # 技能相关枚举
 # ============================================================
 
+
 class SkillStatus(str, Enum):
-    DRAFT = "draft"           # 草稿
+    DRAFT = "draft"  # 草稿
     VALIDATING = "validating"  # 验证中
-    VALIDATED = "validated"    # 已验证
-    PUBLISHED = "published"    # 已发布
+    VALIDATED = "validated"  # 已验证
+    PUBLISHED = "published"  # 已发布
     DEPRECATED = "deprecated"  # 已废弃
-    FAILED = "failed"          # 验证失败
+    FAILED = "failed"  # 验证失败
 
 
 class SkillCategory(str, Enum):
-    CODING = "coding"               # 代码编写
-    RESEARCH = "research"             # 研究分析
-    DATA = "data"                     # 数据处理
-    COMMUNICATION = "communication"   # 沟通交流
-    AUTOMATION = "automation"         # 自动化
-    REASONING = "reasoning"           # 逻辑推理
-    CREATIVE = "creative"             # 创意生成
-    SECURITY = "security"             # 安全审计
-    OPTIMIZATION = "optimization"     # 性能优化
-    SYSTEM = "system"                 # 系统操作
+    CODING = "coding"  # 代码编写
+    RESEARCH = "research"  # 研究分析
+    DATA = "data"  # 数据处理
+    COMMUNICATION = "communication"  # 沟通交流
+    AUTOMATION = "automation"  # 自动化
+    REASONING = "reasoning"  # 逻辑推理
+    CREATIVE = "creative"  # 创意生成
+    SECURITY = "security"  # 安全审计
+    OPTIMIZATION = "optimization"  # 性能优化
+    SYSTEM = "system"  # 系统操作
 
 
 # ============================================================
 # 技能基因 (Evolver GEP)
 # ============================================================
 
+
 @dataclass
 class SkillGene:
     """技能基因 — 技能的最小可进化单元"""
-    gene_id: str
-    gene_type: str          # prompt / tool / memory / safety / logic
-    content: str            # 基因内容 (prompt文本、工具名、逻辑片段)
-    version: int = 1
-    mutations: List[str] = field(default_factory=list)  # 变异历史
-    performance_score: float = 0.5
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    parent_gene_id: Optional[str] = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    gene_id: str
+    gene_type: str  # prompt / tool / memory / safety / logic
+    content: str  # 基因内容 (prompt文本、工具名、逻辑片段)
+    version: int = 1
+    mutations: list[str] = field(default_factory=list)  # 变异历史
+    performance_score: float = 0.5
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+    parent_gene_id: str | None = None
+
+    def to_dict(self) -> dict[str, Any]:
         return {
             "gene_id": self.gene_id,
             "gene_type": self.gene_type,
@@ -101,7 +104,7 @@ class SkillGene:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "SkillGene":
+    def from_dict(cls, data: dict[str, Any]) -> SkillGene:
         return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
 
 
@@ -109,9 +112,11 @@ class SkillGene:
 # 技能定义
 # ============================================================
 
+
 @dataclass
 class Skill:
     """一个技能 — 完整的可复用能力单元"""
+
     skill_id: str
     name: str
     description: str
@@ -119,32 +124,32 @@ class Skill:
     status: SkillStatus = SkillStatus.DRAFT
 
     # 基因序列 (Evolver GEP)
-    genes: List[SkillGene] = field(default_factory=list)
+    genes: list[SkillGene] = field(default_factory=list)
 
     # 版本
     version: str = "1.0.0"
-    version_history: List[Dict[str, str]] = field(default_factory=list)
+    version_history: list[dict[str, str]] = field(default_factory=list)
 
     # 元数据
     author: str = "fnixagent"
-    tags: List[str] = field(default_factory=list)
-    dependencies: List[str] = field(default_factory=list)  # 依赖的其他技能ID
-    required_tools: List[str] = field(default_factory=list)  # 需要的工具
-    estimated_tokens: int = 0     # 预估token消耗
-    token_savings: int = 0        # 相比无技能时的token节省
+    tags: list[str] = field(default_factory=list)
+    dependencies: list[str] = field(default_factory=list)  # 依赖的其他技能ID
+    required_tools: list[str] = field(default_factory=list)  # 需要的工具
+    estimated_tokens: int = 0  # 预估token消耗
+    token_savings: int = 0  # 相比无技能时的token节省
 
     # 统计
     usage_count: int = 0
     success_rate: float = 0.0
     avg_rating: float = 0.0
-    benchmark_scores: Dict[str, float] = field(default_factory=dict)
+    benchmark_scores: dict[str, float] = field(default_factory=dict)
 
     # 审计 (Evolver GEP)
-    audit_trail: List[str] = field(default_factory=list)  # 审计轨迹
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    updated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    audit_trail: list[str] = field(default_factory=list)  # 审计轨迹
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+    updated_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "skill_id": self.skill_id,
             "name": self.name,
@@ -170,7 +175,7 @@ class Skill:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Skill":
+    def from_dict(cls, data: dict[str, Any]) -> Skill:
         data["category"] = SkillCategory(data["category"])
         data["status"] = SkillStatus(data["status"])
         data["genes"] = [SkillGene.from_dict(g) for g in data.get("genes", [])]
@@ -180,6 +185,7 @@ class Skill:
 # ============================================================
 # 技能市场
 # ============================================================
+
 
 class SkillMarketplace:
     """
@@ -198,11 +204,11 @@ class SkillMarketplace:
         self.storage_dir.mkdir(parents=True, exist_ok=True)
 
         # 技能注册表
-        self._skills: Dict[str, Skill] = {}
+        self._skills: dict[str, Skill] = {}
 
         # 索引
-        self._category_index: Dict[str, List[str]] = {}
-        self._tag_index: Dict[str, List[str]] = {}
+        self._category_index: dict[str, list[str]] = {}
+        self._tag_index: dict[str, list[str]] = {}
 
         # 加载
         self._load_all()
@@ -219,7 +225,7 @@ class SkillMarketplace:
         logger.info(f"注册技能: {skill.name} ({skill.skill_id}) v{skill.version}")
         return skill
 
-    def get(self, skill_id: str) -> Optional[Skill]:
+    def get(self, skill_id: str) -> Skill | None:
         return self._skills.get(skill_id)
 
     def delete(self, skill_id: str) -> bool:
@@ -240,7 +246,7 @@ class SkillMarketplace:
         execution_trace: str,
         success: bool,
         token_saved: int = 0,
-    ) -> Optional[Skill]:
+    ) -> Skill | None:
         """
         从成功任务中自动检测可复用模式并创建技能
 
@@ -257,7 +263,7 @@ class SkillMarketplace:
         if skill_id in self._skills:
             existing = self._skills[skill_id]
             existing.usage_count += 1
-            existing.updated_at = datetime.now(timezone.utc).isoformat()
+            existing.updated_at = datetime.now(UTC).isoformat()
             self._save(existing)
             return existing
 
@@ -283,7 +289,7 @@ class SkillMarketplace:
                     content=execution_trace[:500],
                 ),
             ],
-            audit_trail=[f"Auto-created from task execution at {datetime.now(timezone.utc).isoformat()}"],
+            audit_trail=[f"Auto-created from task execution at {datetime.now(UTC).isoformat()}"],
         )
 
         self.register(skill)
@@ -291,9 +297,9 @@ class SkillMarketplace:
 
     def crystallize_from_memories(
         self,
-        memory_entries: List[Any],
+        memory_entries: list[Any],
         task_name: str,
-    ) -> Optional[Skill]:
+    ) -> Skill | None:
         """
         GenericAgent式技能结晶: 从多条执行记忆中提取技能
 
@@ -322,7 +328,9 @@ class SkillMarketplace:
                     content=common_patterns,
                 ),
             ],
-            audit_trail=[f"Crystallized from {len(memory_entries)} memories at {datetime.now(timezone.utc).isoformat()}"],
+            audit_trail=[
+                f"Crystallized from {len(memory_entries)} memories at {datetime.now(UTC).isoformat()}"
+            ],
         )
 
         self.register(skill)
@@ -375,7 +383,7 @@ class SkillMarketplace:
 
         # 3. 通过验证
         skill.status = SkillStatus.VALIDATED
-        skill.audit_trail.append(f"验证通过 at {datetime.now(timezone.utc).isoformat()}")
+        skill.audit_trail.append(f"验证通过 at {datetime.now(UTC).isoformat()}")
         self._save(skill)
         return True, "验证通过"
 
@@ -383,7 +391,7 @@ class SkillMarketplace:
     # 技能版本控制
     # ============================================================
 
-    def bump_version(self, skill_id: str, bump_type: str = "patch") -> Optional[Skill]:
+    def bump_version(self, skill_id: str, bump_type: str = "patch") -> Skill | None:
         """
         语义化版本升级
         patch: 1.0.0 → 1.0.1 (修复)
@@ -406,14 +414,16 @@ class SkillMarketplace:
             parts[2] = str(int(parts[2]) + 1)
 
         new_version = ".".join(parts)
-        skill.version_history.append({
-            "from": skill.version,
-            "to": new_version,
-            "type": bump_type,
-            "at": datetime.now(timezone.utc).isoformat(),
-        })
+        skill.version_history.append(
+            {
+                "from": skill.version,
+                "to": new_version,
+                "type": bump_type,
+                "at": datetime.now(UTC).isoformat(),
+            }
+        )
         skill.version = new_version
-        skill.updated_at = datetime.now(timezone.utc).isoformat()
+        skill.updated_at = datetime.now(UTC).isoformat()
         skill.audit_trail.append(f"版本升级: {skill.version_history[-1]['from']} → {new_version}")
         self._save(skill)
         return skill
@@ -428,7 +438,7 @@ class SkillMarketplace:
         gene_id: str,
         new_content: str,
         performance_improvement: float = 0.0,
-    ) -> Optional[Skill]:
+    ) -> Skill | None:
         """
         进化技能基因 (GEPA遗传帕累托进化)
 
@@ -443,7 +453,9 @@ class SkillMarketplace:
                 old_content = gene.content
                 gene.content = new_content
                 gene.version += 1
-                gene.mutations.append(f"v{gene.version}: {old_content[:30]}... → {new_content[:30]}...")
+                gene.mutations.append(
+                    f"v{gene.version}: {old_content[:30]}... → {new_content[:30]}..."
+                )
                 gene.performance_score += performance_improvement
                 gene.performance_score = max(0.0, min(1.0, gene.performance_score))
 
@@ -474,7 +486,7 @@ class SkillMarketplace:
             return False, msg
 
         skill.status = SkillStatus.PUBLISHED
-        skill.audit_trail.append(f"已发布 at {datetime.now(timezone.utc).isoformat()}")
+        skill.audit_trail.append(f"已发布 at {datetime.now(UTC).isoformat()}")
         self._save(skill)
         return True, "发布成功"
 
@@ -488,15 +500,21 @@ class SkillMarketplace:
         self._save(skill)
         return True
 
-    def search(self, query: str = "", category: Optional[SkillCategory] = None,
-               tags: Optional[List[str]] = None, top_k: int = 20) -> List[Skill]:
+    def search(
+        self,
+        query: str = "",
+        category: SkillCategory | None = None,
+        tags: list[str] | None = None,
+        top_k: int = 20,
+    ) -> list[Skill]:
         """搜索技能市场"""
         candidates = list(self._skills.values())
 
         if query:
             query_lower = query.lower()
             candidates = [
-                s for s in candidates
+                s
+                for s in candidates
                 if query_lower in s.name.lower() or query_lower in s.description.lower()
             ]
 
@@ -510,16 +528,16 @@ class SkillMarketplace:
         candidates.sort(key=lambda s: (s.avg_rating, s.usage_count), reverse=True)
         return candidates[:top_k]
 
-    def get_top_skills(self, top_k: int = 10) -> List[Skill]:
+    def get_top_skills(self, top_k: int = 10) -> list[Skill]:
         """获取最受欢迎的技能"""
         skills = sorted(
             self._skills.values(),
             key=lambda s: (s.usage_count * s.success_rate, s.avg_rating),
-            reverse=True
+            reverse=True,
         )
         return skills[:top_k]
 
-    def get_category_stats(self) -> Dict[str, int]:
+    def get_category_stats(self) -> dict[str, int]:
         """获取各分类技能数量"""
         stats = {}
         for cat in SkillCategory:
@@ -531,7 +549,7 @@ class SkillMarketplace:
     # 统计
     # ============================================================
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         return {
             "total_skills": len(self._skills),
             "by_status": {
@@ -573,18 +591,30 @@ class SkillMarketplace:
             return SkillCategory.OPTIMIZATION
         return SkillCategory.AUTOMATION
 
-    def _extract_tags(self, task_description: str) -> List[str]:
+    def _extract_tags(self, task_description: str) -> list[str]:
         """提取标签"""
         words = task_description.lower().split()
-        keywords = ["agent", "ai", "llm", "code", "data", "api", "research",
-                     "security", "optimize", "automate", "reasoning", "memory"]
+        keywords = [
+            "agent",
+            "ai",
+            "llm",
+            "code",
+            "data",
+            "api",
+            "research",
+            "security",
+            "optimize",
+            "automate",
+            "reasoning",
+            "memory",
+        ]
         return list(set(w for w in words if w in keywords))[:5]
 
-    def _extract_common_patterns(self, memories: List[Any]) -> str:
+    def _extract_common_patterns(self, memories: list[Any]) -> str:
         """从记忆中提取共性模式"""
         contents = []
         for mem in memories:
-            if hasattr(mem, 'content'):
+            if hasattr(mem, "content"):
                 contents.append(mem.content)
             elif isinstance(mem, str):
                 contents.append(mem)
@@ -606,21 +636,20 @@ class SkillMarketplace:
         else:
             if skill.category.value in self._category_index:
                 self._category_index[skill.category.value] = [
-                    sid for sid in self._category_index[skill.category.value]
+                    sid
+                    for sid in self._category_index[skill.category.value]
                     if sid != skill.skill_id
                 ]
             for tag in skill.tags:
                 if tag in self._tag_index:
                     self._tag_index[tag] = [
-                        sid for sid in self._tag_index[tag]
-                        if sid != skill.skill_id
+                        sid for sid in self._tag_index[tag] if sid != skill.skill_id
                     ]
 
     def _save(self, skill: Skill):
         file_path = self.storage_dir / f"{skill.skill_id}.json"
         file_path.write_text(
-            json.dumps(skill.to_dict(), ensure_ascii=False, indent=2),
-            encoding="utf-8"
+            json.dumps(skill.to_dict(), ensure_ascii=False, indent=2), encoding="utf-8"
         )
 
     def _load_all(self):
@@ -639,6 +668,7 @@ class SkillMarketplace:
 # ============================================================
 # 技能进化工厂
 # ============================================================
+
 
 class SkillEvolutionFactory:
     """技能进化工厂 — 系统预装核心技能"""
@@ -695,7 +725,7 @@ class SkillEvolutionFactory:
     ]
 
     @classmethod
-    def create_system_skills(cls, marketplace: SkillMarketplace) -> List[Skill]:
+    def create_system_skills(cls, marketplace: SkillMarketplace) -> list[Skill]:
         """创建系统预装技能"""
         created = []
         for skill_def in cls.SYSTEM_SKILLS:

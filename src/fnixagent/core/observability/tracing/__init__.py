@@ -28,23 +28,28 @@ Span 类型层级:
         ├── GuardrailSpan
         └── HandoffSpan
 """
+
 from fnixagent.core.observability.tracing.provider import (
     TracingProvider,
     get_provider,
-    set_provider,
     reset_provider,
+    set_provider,
 )
-from fnixagent.core.observability.tracing.scope import TracingScope, get_current_span, get_current_span_id
+from fnixagent.core.observability.tracing.scope import (
+    TracingScope,
+    get_current_span,
+    get_current_span_id,
+)
 from fnixagent.core.observability.tracing.span import (
-    SpanStatus,
-    SpanData,
     AgentSpanData,
-    LLMSpanData,
-    ToolSpanData,
     GuardrailSpanData,
     HandoffSpanData,
+    LLMSpanData,
     Span,
+    SpanData,
     SpanImpl,
+    SpanStatus,
+    ToolSpanData,
 )
 from fnixagent.core.observability.tracing.trace import TraceImpl
 

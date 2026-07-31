@@ -1,4 +1,4 @@
-﻿"""Phase 2.5 全量审计日志测试。
+"""Phase 2.5 全量审计日志测试。
 
 覆盖:
     1. 哈希链计算与校验(完整性 / 篡改检测)
@@ -8,8 +8,8 @@
     5. API 端点(/audit/logs /audit/export /audit/verify /audit/actions)
     6. 敏感操作埋点(login success/failed、MFA、权限拒绝)
 """
+
 import json
-from unittest.mock import patch
 
 import pytest
 from fastapi import FastAPI
@@ -19,10 +19,10 @@ from fastapi.testclient import TestClient
 @pytest.fixture(autouse=True)
 def _reset_stores():
     """每个测试前后重置审计存储,确保隔离。"""
-    from fnixagent.services.storage_audit import reset_audit_store
-    from fnixagent.services.storage import reset_stores
-    from fnixagent.services.storage_rbac import reset_rbac_store
     from fnixagent.core.security import rbac
+    from fnixagent.services.storage import reset_stores
+    from fnixagent.services.storage_audit import reset_audit_store
+    from fnixagent.services.storage_rbac import reset_rbac_store
 
     reset_audit_store()
     reset_stores()
@@ -45,8 +45,12 @@ class TestHashChain:
         """相同输入应产生相同哈希。"""
         from fnixagent.core.audit.logger import _compute_entry_hash
 
-        h1 = _compute_entry_hash("0" * 64, "login.success", 1, "{}", "2026-01-01T00:00:00", "127.0.0.1")
-        h2 = _compute_entry_hash("0" * 64, "login.success", 1, "{}", "2026-01-01T00:00:00", "127.0.0.1")
+        h1 = _compute_entry_hash(
+            "0" * 64, "login.success", 1, "{}", "2026-01-01T00:00:00", "127.0.0.1"
+        )
+        h2 = _compute_entry_hash(
+            "0" * 64, "login.success", 1, "{}", "2026-01-01T00:00:00", "127.0.0.1"
+        )
         assert h1 == h2
         assert len(h1) == 64
 
@@ -54,13 +58,27 @@ class TestHashChain:
         """任一字段变化应导致哈希变化。"""
         from fnixagent.core.audit.logger import _compute_entry_hash
 
-        base = _compute_entry_hash("0" * 64, "login.success", 1, "{}", "2026-01-01T00:00:00", "127.0.0.1")
-        assert base != _compute_entry_hash("1" * 64, "login.success", 1, "{}", "2026-01-01T00:00:00", "127.0.0.1")
-        assert base != _compute_entry_hash("0" * 64, "login.failed", 1, "{}", "2026-01-01T00:00:00", "127.0.0.1")
-        assert base != _compute_entry_hash("0" * 64, "login.success", 2, "{}", "2026-01-01T00:00:00", "127.0.0.1")
-        assert base != _compute_entry_hash("0" * 64, "login.success", 1, '{"a":1}', "2026-01-01T00:00:00", "127.0.0.1")
-        assert base != _compute_entry_hash("0" * 64, "login.success", 1, "{}", "2026-01-02T00:00:00", "127.0.0.1")
-        assert base != _compute_entry_hash("0" * 64, "login.success", 1, "{}", "2026-01-01T00:00:00", "192.168.1.1")
+        base = _compute_entry_hash(
+            "0" * 64, "login.success", 1, "{}", "2026-01-01T00:00:00", "127.0.0.1"
+        )
+        assert base != _compute_entry_hash(
+            "1" * 64, "login.success", 1, "{}", "2026-01-01T00:00:00", "127.0.0.1"
+        )
+        assert base != _compute_entry_hash(
+            "0" * 64, "login.failed", 1, "{}", "2026-01-01T00:00:00", "127.0.0.1"
+        )
+        assert base != _compute_entry_hash(
+            "0" * 64, "login.success", 2, "{}", "2026-01-01T00:00:00", "127.0.0.1"
+        )
+        assert base != _compute_entry_hash(
+            "0" * 64, "login.success", 1, '{"a":1}', "2026-01-01T00:00:00", "127.0.0.1"
+        )
+        assert base != _compute_entry_hash(
+            "0" * 64, "login.success", 1, "{}", "2026-01-02T00:00:00", "127.0.0.1"
+        )
+        assert base != _compute_entry_hash(
+            "0" * 64, "login.success", 1, "{}", "2026-01-01T00:00:00", "192.168.1.1"
+        )
 
     def test_verify_hash_chain_empty_list(self):
         """空列表应通过校验。"""
@@ -72,19 +90,26 @@ class TestHashChain:
 
     def test_verify_hash_chain_single_entry(self):
         """单条记录(prev_hash=genesis)应通过。"""
-        from fnixagent.core.audit import verify_hash_chain, AuditLogDTO
-        from fnixagent.core.audit.logger import _GENESIS_HASH, _compute_entry_hash
         from datetime import datetime
+
+        from fnixagent.core.audit import AuditLogDTO, verify_hash_chain
+        from fnixagent.core.audit.logger import _GENESIS_HASH, _compute_entry_hash
 
         now = datetime.utcnow()
         detail = {"username": "alice"}
         detail_json = json.dumps(detail, sort_keys=True, ensure_ascii=False)
-        entry_hash = _compute_entry_hash(_GENESIS_HASH, "login.success", 1, detail_json, now.isoformat(), "127.0.0.1")
+        entry_hash = _compute_entry_hash(
+            _GENESIS_HASH, "login.success", 1, detail_json, now.isoformat(), "127.0.0.1"
+        )
 
         log = AuditLogDTO(
-            id=1, user_id=1, action="login.success",
-            detail=detail, ip_address="127.0.0.1",
-            prev_hash=_GENESIS_HASH, entry_hash=entry_hash,
+            id=1,
+            user_id=1,
+            action="login.success",
+            detail=detail,
+            ip_address="127.0.0.1",
+            prev_hash=_GENESIS_HASH,
+            entry_hash=entry_hash,
             created_at=now,
         )
         is_valid, broken_id = verify_hash_chain([log])
@@ -241,7 +266,9 @@ class TestInMemoryAuditStore:
         # 空存储返回空字符串
         assert store.get_last_hash() == ""
 
-        entry = store.create(action="login.success", user_id=1, prev_hash="0" * 64, entry_hash="abc123")
+        entry = store.create(
+            action="login.success", user_id=1, prev_hash="0" * 64, entry_hash="abc123"
+        )
         assert entry.id == 1
         assert store.get_last_hash() == "abc123"
 
@@ -274,8 +301,9 @@ class TestInMemoryAuditStore:
         assert total == 2
 
     def test_query_with_time_range(self):
-        from fnixagent.services.storage_audit import InMemoryAuditStore
         from datetime import datetime, timedelta
+
+        from fnixagent.services.storage_audit import InMemoryAuditStore
 
         store = InMemoryAuditStore()
         now = datetime.utcnow()
@@ -407,8 +435,10 @@ class TestAuditAPIEndpoints:
 
         store = get_user_store()
         user, _ = store.create(
-            username="audit_admin", email="auditadmin@e.com",
-            password="Pass1234", role="super_admin",
+            username="audit_admin",
+            email="auditadmin@e.com",
+            password="Pass1234",
+            role="super_admin",
         )
         return create_jwt_token(user_id=user.id, username=user.username), user.id
 
@@ -420,8 +450,10 @@ class TestAuditAPIEndpoints:
 
         store = get_user_store()
         user, _ = store.create(
-            username="audit_user", email="audituser@e.com",
-            password="Pass1234", role="user",
+            username="audit_user",
+            email="audituser@e.com",
+            password="Pass1234",
+            role="user",
         )
         return create_jwt_token(user_id=user.id, username=user.username), user.id
 
@@ -429,7 +461,7 @@ class TestAuditAPIEndpoints:
         return {"Authorization": f"Bearer {token}"}
 
     def _write_some_logs(self):
-        from fnixagent.core.audit import AuditLogger, AUDIT_LOGIN_SUCCESS, AUDIT_LOGOUT
+        from fnixagent.core.audit import AUDIT_LOGIN_SUCCESS, AUDIT_LOGOUT, AuditLogger
 
         logger = AuditLogger()
         logger.log(action=AUDIT_LOGIN_SUCCESS, user_id=1, detail={"u": "alice"})
@@ -564,14 +596,18 @@ class TestAuditInstrumentation:
         store = get_user_store()
         store.create(username="audit_login", email="al@e.com", password="Pass1234", role="user")
 
-        resp = client.post("/api/v1/auth/login", json={
-            "username": "audit_login",
-            "password": "Pass1234",
-        })
+        resp = client.post(
+            "/api/v1/auth/login",
+            json={
+                "username": "audit_login",
+                "password": "Pass1234",
+            },
+        )
         assert resp.status_code == 200
 
         # 检查审计日志
-        from fnixagent.core.audit import AuditLogger, AUDIT_LOGIN_SUCCESS
+        from fnixagent.core.audit import AUDIT_LOGIN_SUCCESS, AuditLogger
+
         logger = AuditLogger()
         logs, total = logger.list(action=AUDIT_LOGIN_SUCCESS)
         assert total >= 1
@@ -584,13 +620,17 @@ class TestAuditInstrumentation:
         store = get_user_store()
         store.create(username="audit_fail", email="af@e.com", password="Pass1234", role="user")
 
-        resp = client.post("/api/v1/auth/login", json={
-            "username": "audit_fail",
-            "password": "WrongPassword",
-        })
+        resp = client.post(
+            "/api/v1/auth/login",
+            json={
+                "username": "audit_fail",
+                "password": "WrongPassword",
+            },
+        )
         assert resp.status_code == 401
 
-        from fnixagent.core.audit import AuditLogger, AUDIT_LOGIN_FAILED
+        from fnixagent.core.audit import AUDIT_LOGIN_FAILED, AuditLogger
+
         logger = AuditLogger()
         logs, total = logger.list(action=AUDIT_LOGIN_FAILED)
         assert total >= 1
@@ -598,17 +638,20 @@ class TestAuditInstrumentation:
 
     def test_logout_writes_audit(self, client):
         """登出应写入 logout 审计日志。"""
-        from fnixagent.services.storage import get_user_store
         from fnixagent.api.routers.auth import create_jwt_token
+        from fnixagent.services.storage import get_user_store
 
         store = get_user_store()
-        user, _ = store.create(username="audit_logout", email="alo@e.com", password="Pass1234", role="user")
+        user, _ = store.create(
+            username="audit_logout", email="alo@e.com", password="Pass1234", role="user"
+        )
         token = create_jwt_token(user_id=user.id, username=user.username)
 
         resp = client.post("/api/v1/auth/logout", headers={"Authorization": f"Bearer {token}"})
         assert resp.status_code == 200
 
-        from fnixagent.core.audit import AuditLogger, AUDIT_LOGOUT
+        from fnixagent.core.audit import AUDIT_LOGOUT, AuditLogger
+
         logger = AuditLogger()
         logs, total = logger.list(action=AUDIT_LOGOUT)
         assert total >= 1
@@ -616,13 +659,16 @@ class TestAuditInstrumentation:
     def test_permission_denied_writes_audit(self):
         """权限拒绝时应写入 permission.denied 审计日志。"""
         from fastapi import Depends
+
         from fnixagent.api.routers.auth import create_jwt_token
-        from fnixagent.services.storage import get_user_store
         from fnixagent.core.security import rbac
+        from fnixagent.services.storage import get_user_store
 
         # 创建普通用户(无 system:manage 权限)
         store = get_user_store()
-        user, _ = store.create(username="perm_user", email="pu@e.com", password="Pass1234", role="user")
+        user, _ = store.create(
+            username="perm_user", email="pu@e.com", password="Pass1234", role="user"
+        )
         token = create_jwt_token(user_id=user.id, username=user.username)
 
         app = FastAPI()
@@ -635,7 +681,8 @@ class TestAuditInstrumentation:
         resp = client.get("/api/v1/protected", headers={"Authorization": f"Bearer {token}"})
         assert resp.status_code == 403
 
-        from fnixagent.core.audit import AuditLogger, AUDIT_PERMISSION_DENIED
+        from fnixagent.core.audit import AUDIT_PERMISSION_DENIED, AuditLogger
+
         logger = AuditLogger()
         logs, total = logger.list(action=AUDIT_PERMISSION_DENIED)
         assert total >= 1
@@ -648,18 +695,32 @@ class TestAuditInstrumentation:
         assert len(ALL_AUDIT_ACTIONS) == 26
         # 关键动作都在
         expected = {
-            "login.success", "login.failed", "logout",
-            "sso.login", "ldap.login",
-            "mfa.enable", "mfa.disable", "mfa.challenge",
-            "mfa.verify_failed", "mfa.factor_force_disabled",
+            "login.success",
+            "login.failed",
+            "logout",
+            "sso.login",
+            "ldap.login",
+            "mfa.enable",
+            "mfa.disable",
+            "mfa.challenge",
+            "mfa.verify_failed",
+            "mfa.factor_force_disabled",
             "permission.denied",
-            "user.disable", "user.enable", "user.role_change",
+            "user.disable",
+            "user.enable",
+            "user.role_change",
             "user.password_reset",
-            "config.update", "sensitive.hit", "injection.blocked",
-            "data.export", "data.delete",
+            "config.update",
+            "sensitive.hit",
+            "injection.blocked",
+            "data.export",
+            "data.delete",
             # Phase 3.2 新增
-            "privacy.export", "account.delete_request",
-            "account.delete_cancel", "account.hard_deleted",
-            "moderation.input_blocked", "moderation.output_blocked",
+            "privacy.export",
+            "account.delete_request",
+            "account.delete_cancel",
+            "account.hard_deleted",
+            "moderation.input_blocked",
+            "moderation.output_blocked",
         }
         assert set(ALL_AUDIT_ACTIONS) == expected

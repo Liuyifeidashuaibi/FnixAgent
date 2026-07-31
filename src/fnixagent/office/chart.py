@@ -20,16 +20,15 @@
   - 静态图片文件(.png/.jpg/.svg)
   - 或 base64 编码字符串(用于内嵌报告)
 """
+
 from __future__ import annotations
 
 import base64
 import io
-import os
 from functools import lru_cache
-from typing import Any, Optional
+from typing import Any
 
 from fnixagent.office.base import BaseExpert, ExpertError, ExpertResult
-
 
 # 支持的图表类型
 _CHART_TYPES = {"bar", "line", "pie", "scatter", "area", "radar", "heatmap", "histogram"}
@@ -58,7 +57,7 @@ class ChartExpert(BaseExpert):
         self,
         chart_type: str,
         data: dict[str, Any],
-        output_path: Optional[str] = None,
+        output_path: str | None = None,
         title: str = "",
         xlabel: str = "",
         ylabel: str = "",
@@ -108,6 +107,7 @@ class ChartExpert(BaseExpert):
         try:
             self._require_lib("matplotlib")
             import matplotlib
+
             # 强制 Agg 后端(无 GUI,线程安全,适合服务端)
             matplotlib.use("Agg")
             import matplotlib.pyplot as plt
@@ -175,7 +175,7 @@ class ChartExpert(BaseExpert):
                 fig.savefig(buf, format="png", bbox_inches="tight", dpi=dpi)
                 b64 = base64.b64encode(buf.getvalue()).decode("ascii")
                 return self._success(f"data:image/png;base64,{b64}", chart_type=ct)
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"create_chart IO failed: {e}")
         except Exception as e:
             return self._failure(f"create_chart failed: {e}")
@@ -197,7 +197,7 @@ class ChartExpert(BaseExpert):
         chart_type: str,
         x_column: str,
         y_columns: list[str],
-        output_path: Optional[str] = None,
+        output_path: str | None = None,
         title: str = "",
         **options: Any,
     ) -> ExpertResult:
@@ -225,9 +225,10 @@ class ChartExpert(BaseExpert):
             return self._failure("y_columns is empty")
 
         import csv
+
         try:
             # utf-8-sig 兼容 Excel 导出的 BOM
-            with open(csv_path, "r", encoding="utf-8-sig") as f:
+            with open(csv_path, encoding="utf-8-sig") as f:
                 reader = csv.DictReader(f)
                 rows = list(reader)
             if not rows:
@@ -246,7 +247,7 @@ class ChartExpert(BaseExpert):
             return self.create_chart(
                 chart_type, data, output_path=output_path, title=title, **options
             )
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"create_from_csv IO failed: {e}")
         except Exception as e:
             return self._failure(f"create_from_csv failed: {e}")
@@ -265,6 +266,7 @@ class ChartExpert(BaseExpert):
 
     def _draw_bar(self, ax, data: dict, **options: Any) -> None:
         import numpy as np
+
         categories = data.get("categories", [])
         series = data.get("series", {})
         if not series:
@@ -279,19 +281,26 @@ class ChartExpert(BaseExpert):
 
     def _draw_line(self, ax, data: dict, **options: Any) -> None:
         import numpy as np
+
         categories = data.get("categories", [])
         series = data.get("series", {})
         x = np.arange(len(categories)) if categories else None
         for name, values in series.items():
             xs = x if x is not None else range(len(values))
-            ax.plot(xs, values, marker=options.get("marker", "o"), label=name,
-                    linestyle=options.get("linestyle", "-"))
+            ax.plot(
+                xs,
+                values,
+                marker=options.get("marker", "o"),
+                label=name,
+                linestyle=options.get("linestyle", "-"),
+            )
         if categories:
             ax.set_xticks(range(len(categories)))
             ax.set_xticklabels(categories, rotation=options.get("x_rotation", 0))
 
     def _draw_area(self, ax, data: dict, **options: Any) -> None:
         import numpy as np
+
         categories = data.get("categories", [])
         series = data.get("series", {})
         x = np.arange(len(categories)) if categories else None
@@ -308,7 +317,9 @@ class ChartExpert(BaseExpert):
         if not labels or not values:
             return
         ax.pie(
-            values, labels=labels, autopct=options.get("autopct", "%1.1f%%"),
+            values,
+            labels=labels,
+            autopct=options.get("autopct", "%1.1f%%"),
             startangle=options.get("startangle", 90),
             colors=options.get("colors"),
         )
@@ -317,14 +328,15 @@ class ChartExpert(BaseExpert):
     def _draw_scatter(self, ax, data: dict, **options: Any) -> None:
         if "series" in data:
             for name, sdata in data["series"].items():
-                ax.scatter(sdata.get("x", []), sdata.get("y", []), label=name,
-                           s=options.get("s", 30))
+                ax.scatter(
+                    sdata.get("x", []), sdata.get("y", []), label=name, s=options.get("s", 30)
+                )
         else:
-            ax.scatter(data.get("x", []), data.get("y", []),
-                       s=options.get("s", 30))
+            ax.scatter(data.get("x", []), data.get("y", []), s=options.get("s", 30))
 
     def _draw_radar(self, fig, ax, data: dict, **options: Any) -> None:
         import numpy as np
+
         # radar 需要 polar projection
         ax.remove()
         ax = fig.add_subplot(111, projection="polar")
@@ -344,6 +356,7 @@ class ChartExpert(BaseExpert):
 
     def _draw_heatmap(self, ax, data: dict, **options: Any) -> None:
         import numpy as np
+
         matrix = np.array(data.get("matrix", []))
         if matrix.size == 0:
             return
@@ -362,16 +375,25 @@ class ChartExpert(BaseExpert):
         if options.get("annotate", True):
             for i in range(matrix.shape[0]):
                 for j in range(matrix.shape[1]):
-                    ax.text(j, i, str(matrix[i, j]),
-                            ha="center", va="center",
-                            color="white" if matrix[i, j] > matrix.mean() else "black")
+                    ax.text(
+                        j,
+                        i,
+                        str(matrix[i, j]),
+                        ha="center",
+                        va="center",
+                        color="white" if matrix[i, j] > matrix.mean() else "black",
+                    )
 
     def _draw_histogram(self, ax, data: dict, **options: Any) -> None:
         values = data.get("values", [])
         bins = data.get("bins", options.get("bins", 20))
-        ax.hist(values, bins=bins, alpha=options.get("alpha", 0.7),
-                color=options.get("color", "steelblue"),
-                edgecolor=options.get("edgecolor", "black"))
+        ax.hist(
+            values,
+            bins=bins,
+            alpha=options.get("alpha", 0.7),
+            color=options.get("color", "steelblue"),
+            edgecolor=options.get("edgecolor", "black"),
+        )
 
     # ------------------------------------------------------------------
     # 中文字体
@@ -389,7 +411,7 @@ class ChartExpert(BaseExpert):
 
     @staticmethod
     @lru_cache(maxsize=1)
-    def _find_chinese_font() -> Optional[str]:
+    def _find_chinese_font() -> str | None:
         """扫描 matplotlib 字体列表,返回首个可用的中文字体名(缓存)。"""
         try:
             import matplotlib

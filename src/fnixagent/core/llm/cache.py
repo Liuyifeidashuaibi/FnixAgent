@@ -10,6 +10,7 @@
   - TTL 过期: 每条记录存入时间戳, get 时惰性检查
   - 线程安全: 所有操作加锁
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -17,7 +18,6 @@ import json
 import threading
 import time
 from collections import OrderedDict
-from typing import Optional
 
 from fnixagent.core.types import LLMResponse
 
@@ -63,9 +63,7 @@ class ResponseCache:
     # -- 键生成 ------------------------------------------------------------
 
     @staticmethod
-    def make_key(
-        messages: list[dict], model: str, temperature: float, **extra
-    ) -> str:
+    def make_key(messages: list[dict], model: str, temperature: float, **extra) -> str:
         """根据消息内容与参数生成缓存键。
 
         相同输入必然产生相同键,实现精确缓存。extra 中的可变结构需可 JSON 序列化
@@ -92,7 +90,7 @@ class ResponseCache:
 
     # -- 读写 --------------------------------------------------------------
 
-    def get(self, key: str) -> Optional[LLMResponse]:
+    def get(self, key: str) -> LLMResponse | None:
         """查找缓存。命中且未过期则返回(标记 cached=True),否则返回 None。
 
         Args:

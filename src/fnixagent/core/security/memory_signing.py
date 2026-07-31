@@ -19,6 +19,7 @@
   - JSON 格式,signature 字段防篡改
   - 反序列化后自动验签
 """
+
 from __future__ import annotations
 
 import base64
@@ -27,9 +28,8 @@ import logging
 import threading
 import time
 from collections import defaultdict, deque
-from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
-from typing import Optional
+from dataclasses import asdict, dataclass
+from datetime import UTC, datetime
 
 from fnixagent.core.security.crypto_provider import (
     CryptoProvider,
@@ -44,10 +44,11 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 
-def _audit_memory(action: str, detail: Optional[dict] = None) -> None:
+def _audit_memory(action: str, detail: dict | None = None) -> None:
     """将记忆完整性事件写入审计日志。"""
     try:
         from fnixagent.core.audit import AuditLogger
+
         AuditLogger().log(action=action, detail=detail or {})
     except Exception:
         pass
@@ -69,11 +70,12 @@ class SignedMemory:
         signed_at: 签名时间(ISO 8601)
         signer: 签名者标识(user_id / agent_id)
     """
+
     content: str
     metadata: dict
-    signature: str       # base64 HMAC
-    signed_at: str       # ISO 时间戳
-    signer: str          # 签名者(user_id/agent_id)
+    signature: str  # base64 HMAC
+    signed_at: str  # ISO 时间戳
+    signer: str  # 签名者(user_id/agent_id)
 
 
 @dataclass
@@ -84,6 +86,7 @@ class MemorySignerConfig:
         rate_limit_per_minute: 每分钟写入速率限制(默认 30)
         rate_limit_burst: 突发限制(每秒最大次数,默认 5)
     """
+
     rate_limit_per_minute: int = 30
     rate_limit_burst: int = 5
 
@@ -116,8 +119,8 @@ class MemorySigner:
 
     def __init__(
         self,
-        config: Optional[MemorySignerConfig] = None,
-        crypto_provider: Optional[CryptoProvider] = None,
+        config: MemorySignerConfig | None = None,
+        crypto_provider: CryptoProvider | None = None,
     ) -> None:
         self.config = config or MemorySignerConfig()
         self._crypto = crypto_provider or get_crypto_provider()
@@ -133,7 +136,7 @@ class MemorySigner:
         self,
         content: str,
         signer: str,
-        metadata: Optional[dict] = None,
+        metadata: dict | None = None,
     ) -> SignedMemory:
         """对记忆内容签名。
 
@@ -146,7 +149,7 @@ class MemorySigner:
             SignedMemory(含签名)
         """
         metadata = metadata or {}
-        signed_at = datetime.now(timezone.utc).isoformat()
+        signed_at = datetime.now(UTC).isoformat()
         # 构建待签名消息:content + metadata + signer + signed_at
         message = self._build_message(content, metadata, signer, signed_at)
         signature = self._compute_hmac(message)
@@ -176,23 +179,31 @@ class MemorySigner:
             expected_sig = self._compute_hmac(message)
             # 常量时间比较,防止时序攻击
             import hmac as _hmac
+
             if not _hmac.compare_digest(expected_sig, signed.signature):
-                _audit_memory("memory.integrity_violation", detail={
-                    "signer": signed.signer,
-                    "signed_at": signed.signed_at,
-                    "reason": "signature_mismatch",
-                })
+                _audit_memory(
+                    "memory.integrity_violation",
+                    detail={
+                        "signer": signed.signer,
+                        "signed_at": signed.signed_at,
+                        "reason": "signature_mismatch",
+                    },
+                )
                 logger.warning(
                     "[memory] 记忆验签失败(signer=%s, signed_at=%s)",
-                    signed.signer, signed.signed_at,
+                    signed.signer,
+                    signed.signed_at,
                 )
                 return False
             return True
         except Exception as exc:
-            _audit_memory("memory.integrity_violation", detail={
-                "signer": signed.signer,
-                "reason": f"verify_error:{type(exc).__name__}",
-            })
+            _audit_memory(
+                "memory.integrity_violation",
+                detail={
+                    "signer": signed.signer,
+                    "reason": f"verify_error:{type(exc).__name__}",
+                },
+            )
             logger.error("[memory] 验签异常: %s", exc)
             return False
 
@@ -216,20 +227,26 @@ class MemorySigner:
                 bucket.popleft()
             # 检查每分钟限制
             if len(bucket) >= self.config.rate_limit_per_minute:
-                _audit_memory("memory.rate_limited", detail={
-                    "signer": signer,
-                    "limit": "per_minute",
-                    "count": len(bucket),
-                })
+                _audit_memory(
+                    "memory.rate_limited",
+                    detail={
+                        "signer": signer,
+                        "limit": "per_minute",
+                        "count": len(bucket),
+                    },
+                )
                 return False
             # 检查突发限制(1 秒内)
             burst_count = sum(1 for t in bucket if t > now - 1)
             if burst_count >= self.config.rate_limit_burst:
-                _audit_memory("memory.rate_limited", detail={
-                    "signer": signer,
-                    "limit": "burst",
-                    "count": burst_count,
-                })
+                _audit_memory(
+                    "memory.rate_limited",
+                    detail={
+                        "signer": signer,
+                        "limit": "burst",
+                        "count": burst_count,
+                    },
+                )
                 return False
             # 记录本次写入
             bucket.append(now)
@@ -307,24 +324,23 @@ class MemorySigner:
         """
         try:
             from fnixagent.core.security.kdf import get_kdf_manager
+
             mgr = get_kdf_manager()
             dk = mgr.derive(context=self._KDF_CONTEXT, length=self._KEY_LENGTH)
             return dk.key
         except Exception as exc:
-            logger.warning(
-                "[memory] 从 KDFManager 派生密钥失败,降级到环境变量: %s", exc
-            )
-            import os
+            logger.warning("[memory] 从 KDFManager 派生密钥失败,降级到环境变量: %s", exc)
             import hashlib
+            import os
+
             env_key = os.getenv("OA_MEMORY_SIGNING_KEY", "")
             if env_key:
                 return hashlib.sha256(env_key.encode("utf-8")).digest()
             # 生成临时密钥(开发环境)
             import secrets
+
             tmp_key = secrets.token_bytes(self._KEY_LENGTH)
-            logger.warning(
-                "[memory] OA_MEMORY_SIGNING_KEY 未配置,生成临时密钥(重启后失效)"
-            )
+            logger.warning("[memory] OA_MEMORY_SIGNING_KEY 未配置,生成临时密钥(重启后失效)")
             return tmp_key
 
 
@@ -333,12 +349,12 @@ class MemorySigner:
 # ---------------------------------------------------------------------------
 
 
-_signer_instance: Optional[MemorySigner] = None
+_signer_instance: MemorySigner | None = None
 _signer_lock = threading.Lock()
 
 
 def get_memory_signer(
-    config: Optional[MemorySignerConfig] = None,
+    config: MemorySignerConfig | None = None,
 ) -> MemorySigner:
     """获取全局 MemorySigner 单例。"""
     global _signer_instance

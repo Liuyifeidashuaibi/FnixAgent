@@ -16,6 +16,7 @@
   - subprocess 超时/CalledProcessError 单独捕获,给出可读错误
   - 临时 HTML 文件用 tempfile.NamedTemporaryFile + finally 清理
 """
+
 from __future__ import annotations
 
 import contextlib
@@ -23,10 +24,9 @@ import os
 import shutil
 import subprocess
 import tempfile
-from typing import Any, Optional
+from typing import Any
 
 from fnixagent.office.base import BaseExpert, ExpertError, ExpertResult
-
 
 # 支持的转换对(直接由 Python 库处理)
 _DIRECT_CONVERSIONS: dict[tuple[str, str], str] = {
@@ -42,12 +42,23 @@ _DIRECT_CONVERSIONS: dict[tuple[str, str], str] = {
 
 # LibreOffice 兜底的转换对
 _LIBREOFFICE_CONVERSIONS = {
-    ("docx", "pdf"), ("docx", "html"), ("docx", "txt"),
-    ("xlsx", "pdf"), ("xlsx", "html"), ("xlsx", "csv"),
-    ("pptx", "pdf"), ("pptx", "html"), ("pptx", "png"),
-    ("doc", "pdf"), ("doc", "docx"), ("xls", "xlsx"),
-    ("ppt", "pptx"), ("ppt", "pdf"),
-    ("odt", "docx"), ("ods", "xlsx"), ("odp", "pptx"),
+    ("docx", "pdf"),
+    ("docx", "html"),
+    ("docx", "txt"),
+    ("xlsx", "pdf"),
+    ("xlsx", "html"),
+    ("xlsx", "csv"),
+    ("pptx", "pdf"),
+    ("pptx", "html"),
+    ("pptx", "png"),
+    ("doc", "pdf"),
+    ("doc", "docx"),
+    ("xls", "xlsx"),
+    ("ppt", "pptx"),
+    ("ppt", "pdf"),
+    ("odt", "docx"),
+    ("ods", "xlsx"),
+    ("odp", "pptx"),
 }
 
 
@@ -74,7 +85,7 @@ class ConverterExpert(BaseExpert):
         self,
         source_path: str,
         output_path: str,
-        target_format: Optional[str] = None,
+        target_format: str | None = None,
         **options: Any,
     ) -> ExpertResult:
         """单文件格式转换。
@@ -111,15 +122,13 @@ class ConverterExpert(BaseExpert):
         if src_ext == tgt_ext:
             try:
                 shutil.copy2(source_path, output_path)
-            except (PermissionError, IOError) as e:
+            except (OSError, PermissionError) as e:
                 return self._failure(f"copy IO failed: {e}")
             return self._success(output_path, mode="copy")
 
         # 3. 原生 Word COM 转换(docx→pdf,色彩保真度最高)
         #    仅 Windows + 已安装 MS Word 时可用,降级到 LibreOffice
-        if (src_ext, tgt_ext) == ("docx", "pdf") and options.get(
-            "prefer_word", True
-        ):
+        if (src_ext, tgt_ext) == ("docx", "pdf") and options.get("prefer_word", True):
             result = self._convert_via_word_com(source_path, output_path)
             if result.success:
                 return result
@@ -160,13 +169,15 @@ class ConverterExpert(BaseExpert):
             return self._failure("target_format must be a non-empty string")
         try:
             os.makedirs(output_dir, exist_ok=True)
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"create output_dir failed: {e}")
         tgt = target_format.lower().lstrip(".")
         success_list: list[str] = []
         failed_list: list[dict] = []
         for idx, src in enumerate(source_paths):
-            base = os.path.splitext(os.path.basename(src))[0] if keep_filename else f"file_{idx+1}"
+            base = (
+                os.path.splitext(os.path.basename(src))[0] if keep_filename else f"file_{idx + 1}"
+            )
             out = os.path.join(output_dir, f"{base}.{tgt}")
             r = self.convert(src, out, target_format=tgt)
             if r.success:
@@ -203,6 +214,7 @@ class ConverterExpert(BaseExpert):
         try:
             self._require_lib("openpyxl")
             import csv
+
             from openpyxl import load_workbook
         except ExpertError as e:
             return self._failure(str(e))
@@ -218,7 +230,7 @@ class ConverterExpert(BaseExpert):
             return self._success(out, mode="excel_to_csv")
         except KeyError as e:
             return self._failure(f"sheet not found: {e}")
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"excel_to_csv IO failed: {e}")
         except Exception as e:
             return self._failure(f"excel_to_csv failed: {e}")
@@ -239,6 +251,7 @@ class ConverterExpert(BaseExpert):
         try:
             self._require_lib("openpyxl")
             import csv
+
             from openpyxl import Workbook
         except ExpertError as e:
             return self._failure(str(e))
@@ -248,13 +261,13 @@ class ConverterExpert(BaseExpert):
             ws = wb.active
             ws.title = opts.get("sheet_name", "Sheet1")
             # utf-8-sig 兼容 Excel 导出的 CSV
-            with open(src, "r", encoding=opts.get("encoding", "utf-8-sig")) as f:
+            with open(src, encoding=opts.get("encoding", "utf-8-sig")) as f:
                 reader = csv.reader(f)
                 for row in reader:
                     ws.append(row)
             wb.save(out)
             return self._success(out, mode="csv_to_excel")
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"csv_to_excel IO failed: {e}")
         except Exception as e:
             return self._failure(f"csv_to_excel failed: {e}")
@@ -274,15 +287,16 @@ class ConverterExpert(BaseExpert):
             return self._failure(err)
         import csv
         import json
+
         try:
-            with open(src, "r", encoding=opts.get("encoding", "utf-8-sig")) as f:
+            with open(src, encoding=opts.get("encoding", "utf-8-sig")) as f:
                 reader = csv.DictReader(f)
                 rows = list(reader)
             with open(out, "w", encoding="utf-8") as f:
                 # ensure_ascii=False 保留中文可读
                 json.dump(rows, f, ensure_ascii=False, indent=2)
             return self._success(out, mode="csv_to_json", rows=len(rows))
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"csv_to_json IO failed: {e}")
         except Exception as e:
             return self._failure(f"csv_to_json failed: {e}")
@@ -296,8 +310,9 @@ class ConverterExpert(BaseExpert):
             return self._failure(err)
         import csv
         import json
+
         try:
-            with open(src, "r", encoding="utf-8") as f:
+            with open(src, encoding="utf-8") as f:
                 data = json.load(f)
             if not isinstance(data, list) or not data:
                 return self._failure("json_to_csv requires a non-empty list of objects")
@@ -307,7 +322,7 @@ class ConverterExpert(BaseExpert):
                 w.writeheader()
                 w.writerows(data)
             return self._success(out, mode="json_to_csv", rows=len(data))
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"json_to_csv IO failed: {e}")
         except Exception as e:
             return self._failure(f"json_to_csv failed: {e}")
@@ -322,12 +337,13 @@ class ConverterExpert(BaseExpert):
         try:
             self._require_lib("openpyxl")
             import json
+
             from openpyxl import Workbook
         except ExpertError as e:
             return self._failure(str(e))
         wb = None
         try:
-            with open(src, "r", encoding="utf-8") as f:
+            with open(src, encoding="utf-8") as f:
                 data = json.load(f)
             if not isinstance(data, list) or not data:
                 return self._failure("json_to_excel requires a non-empty list of objects")
@@ -339,7 +355,7 @@ class ConverterExpert(BaseExpert):
                 ws.append([row.get(h) for h in headers])
             wb.save(out)
             return self._success(out, mode="json_to_excel", rows=len(data))
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"json_to_excel IO failed: {e}")
         except Exception as e:
             return self._failure(f"json_to_excel failed: {e}")
@@ -360,7 +376,7 @@ class ConverterExpert(BaseExpert):
         try:
             self._require_lib("pdfkit")
             import pdfkit
-        except ExpertError as e:
+        except ExpertError:
             # 退到 LibreOffice
             return self._convert_via_libreoffice(src, out, "pdf")
         try:
@@ -368,7 +384,7 @@ class ConverterExpert(BaseExpert):
             options.update(opts.get("pdfkit_options", {}))
             pdfkit.from_file(src, out, options=options)
             return self._success(out, mode="html_to_pdf")
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"html_to_pdf IO failed: {e}")
         except Exception as e:
             return self._failure(f"html_to_pdf failed: {e}")
@@ -386,7 +402,7 @@ class ConverterExpert(BaseExpert):
         except ExpertError as e:
             return self._failure(str(e))
         try:
-            with open(src, "r", encoding="utf-8") as f:
+            with open(src, encoding="utf-8") as f:
                 md_text = f.read()
             extensions = opts.get("extensions", ["tables", "fenced_code", "toc"])
             html_body = markdown.markdown(md_text, extensions=extensions)
@@ -405,7 +421,7 @@ class ConverterExpert(BaseExpert):
             with open(out, "w", encoding="utf-8") as f:
                 f.write(full_html)
             return self._success(out, mode="md_to_html")
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"md_to_html IO failed: {e}")
         except Exception as e:
             return self._failure(f"md_to_html failed: {e}")
@@ -464,8 +480,8 @@ class ConverterExpert(BaseExpert):
             ExpertResult(output=out, mode="word_com")
         """
         try:
-            import win32com.client
             import pythoncom
+            import win32com.client
         except ImportError:
             return self._failure("pywin32 not available, cannot use Word COM")
 
@@ -503,9 +519,7 @@ class ConverterExpert(BaseExpert):
     # LibreOffice 兜底
     # ------------------------------------------------------------------
 
-    def _convert_via_libreoffice(
-        self, src: str, out: str, target_format: str
-    ) -> ExpertResult:
+    def _convert_via_libreoffice(self, src: str, out: str, target_format: str) -> ExpertResult:
         soffice = shutil.which("soffice") or shutil.which("libreoffice")
         if not soffice:
             # Windows 常见路径
@@ -526,9 +540,10 @@ class ConverterExpert(BaseExpert):
             out_dir = os.path.dirname(os.path.abspath(out))
             os.makedirs(out_dir, exist_ok=True)
             subprocess.run(
-                [soffice, "--headless", "--convert-to", target_format,
-                 "--outdir", out_dir, src],
-                check=True, capture_output=True, timeout=180,
+                [soffice, "--headless", "--convert-to", target_format, "--outdir", out_dir, src],
+                check=True,
+                capture_output=True,
+                timeout=180,
             )
             # LibreOffice 输出文件名 = 源文件名 + .target_format
             expected = os.path.join(
@@ -548,7 +563,7 @@ class ConverterExpert(BaseExpert):
             return self._failure(f"LibreOffice conversion failed: {stderr_msg}")
         except subprocess.TimeoutExpired:
             return self._failure("LibreOffice conversion timeout (180s)")
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"LibreOffice conversion IO failed: {e}")
         except Exception as e:
             return self._failure(f"LibreOffice conversion failed: {e}")

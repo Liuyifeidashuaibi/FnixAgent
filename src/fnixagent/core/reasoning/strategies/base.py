@@ -19,16 +19,16 @@ StrategyContext 是 ReasoningContext 的"调度视图":
   现统一在 _build_reasoning_context 中以 ctx 副本构造 ReasoningContext,
   StrategyContext 本身保持不可变(只读)。
 """
+
 from __future__ import annotations
 
 import abc
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from fnixagent.core.exceptions import ReasoningError
 from fnixagent.core.types import ExecutionTrace
-
 
 # ---------------------------------------------------------------------------
 # 策略类型枚举
@@ -38,10 +38,10 @@ from fnixagent.core.types import ExecutionTrace
 class StrategyType(str, Enum):
     """策略类型(用于注册与查找)。"""
 
-    FAST = "fast"                    # 快速(单步 ReAct,非思考)
-    CHEAP = "cheap"                  # 低成本(便宜模型,少工具)
-    PRECISE = "precise"              # 精确(Plan&Execute + Self-Reflect + 思考)
-    COMPLIANCE = "compliance"        # 合规(强审计 + 人工确认)
+    FAST = "fast"  # 快速(单步 ReAct,非思考)
+    CHEAP = "cheap"  # 低成本(便宜模型,少工具)
+    PRECISE = "precise"  # 精确(Plan&Execute + Self-Reflect + 思考)
+    COMPLIANCE = "compliance"  # 合规(强审计 + 人工确认)
 
 
 # ---------------------------------------------------------------------------
@@ -65,9 +65,9 @@ class StrategyContext:
     """
 
     goal: str = ""
-    llm: Any = None                            # LLMRouter
-    tool_registry: Any = None                  # ToolRegistry
-    tool_executor: Any = None                  # ToolExecutor
+    llm: Any = None  # LLMRouter
+    tool_registry: Any = None  # ToolRegistry
+    tool_executor: Any = None  # ToolExecutor
     history: list = field(default_factory=list)
     max_iterations: int = 10
     # 用户与租户
@@ -77,12 +77,12 @@ class StrategyContext:
     trace_id: str = ""
     tenant_id: str = ""
     # 调度参数
-    sensitivity: str = "low"                   # low / medium / high(影响 Compliance 判定)
-    user_preference: Optional[str] = None      # 用户显式偏好(fast/cheap/precise/compliance)
-    available_tools: int = 0                   # 可用工具数(影响 is_applicable)
+    sensitivity: str = "low"  # low / medium / high(影响 Compliance 判定)
+    user_preference: str | None = None  # 用户显式偏好(fast/cheap/precise/compliance)
+    available_tools: int = 0  # 可用工具数(影响 is_applicable)
     # 限流与计费(P1-5 集成)
-    usage: Any = None                          # Usage(累积用量)
-    usage_limits: Any = None                   # UsageLimits
+    usage: Any = None  # Usage(累积用量)
+    usage_limits: Any = None  # UsageLimits
     # 元数据
     extra: dict[str, Any] = field(default_factory=dict)
 
@@ -162,8 +162,8 @@ class BaseStrategy(abc.ABC):
         ctx: StrategyContext,
         mode: Any,
         *,
-        max_iterations_override: Optional[int] = None,
-        extra_overrides: Optional[dict[str, Any]] = None,
+        max_iterations_override: int | None = None,
+        extra_overrides: dict[str, Any] | None = None,
     ) -> Any:
         """把 StrategyContext 转换为 ReasoningContext(子类共用)。
 
@@ -183,9 +183,7 @@ class BaseStrategy(abc.ABC):
         from fnixagent.core.reasoning.base import ReasoningContext
 
         max_iter = (
-            max_iterations_override
-            if max_iterations_override is not None
-            else ctx.max_iterations
+            max_iterations_override if max_iterations_override is not None else ctx.max_iterations
         )
         # 合并 extra:原 ctx.extra 保留,额外字段叠加(不修改原 dict)
         merged_extra: dict[str, Any] = dict(ctx.extra)

@@ -25,6 +25,7 @@
   - httpx.Client 内置线程安全(连接池加锁)
   - urllib 降级时每次新建连接(无共享状态)
 """
+
 from __future__ import annotations
 
 import dataclasses
@@ -34,7 +35,7 @@ import random
 import ssl
 import threading
 import time
-from typing import Any, Optional
+from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 
@@ -59,6 +60,7 @@ from fnixagent.business.crawler.schema import (
 # 尝试导入 httpx(与 business/web/fetcher.py 一致的降级模式)
 try:
     import httpx
+
     _HAS_HTTPX = True
 except ImportError:  # pragma: no cover
     _HAS_HTTPX = False
@@ -86,8 +88,8 @@ class CrawlerError(Exception):
     def __init__(
         self,
         message: str,
-        status_code: Optional[int] = None,
-        endpoint: Optional[str] = None,
+        status_code: int | None = None,
+        endpoint: str | None = None,
     ) -> None:
         super().__init__(message)
         self.status_code = status_code
@@ -103,7 +105,7 @@ class _RetryableError(Exception):
         status_code: HTTP 状态码(网络错误时为 None)
     """
 
-    def __init__(self, message: str, status_code: Optional[int] = None) -> None:
+    def __init__(self, message: str, status_code: int | None = None) -> None:
         super().__init__(message)
         self.status_code = status_code
 
@@ -129,7 +131,7 @@ class CrawlerClient:
         config: 客户端配置
     """
 
-    def __init__(self, config: Optional[CrawlerConfig] = None) -> None:
+    def __init__(self, config: CrawlerConfig | None = None) -> None:
         """初始化。
 
         Args:
@@ -191,7 +193,9 @@ class CrawlerClient:
         Raises:
             CrawlerError: html 与 url 均为空 / 4xx / 重试耗尽
         """
-        if not (request.html and request.html.strip()) and not (request.url and request.url.strip()):
+        if not (request.html and request.html.strip()) and not (
+            request.url and request.url.strip()
+        ):
             raise CrawlerError(
                 "ExtractRequest.html 与 ExtractRequest.url 至少一个非空",
                 endpoint="/api/v1/extract",
@@ -228,10 +232,7 @@ class CrawlerClient:
         Raises:
             CrawlerError: 输入全空 / 4xx / 重试耗尽
         """
-        if not any(
-            v and str(v).strip()
-            for v in (request.url, request.html, request.text)
-        ):
+        if not any(v and str(v).strip() for v in (request.url, request.html, request.text)):
             raise CrawlerError(
                 "SummaryRequest.url/html/text 至少一个非空", endpoint="/api/v1/summary"
             )
@@ -345,7 +346,7 @@ class CrawlerClient:
     # 上下文管理器
     # ------------------------------------------------------------------
 
-    def __enter__(self) -> "CrawlerClient":
+    def __enter__(self) -> CrawlerClient:
         return self
 
     def __exit__(self, *exc: Any) -> None:
@@ -359,8 +360,8 @@ class CrawlerClient:
         self,
         method: str,
         endpoint: str,
-        json_body: Optional[dict] = None,
-        params: Optional[dict] = None,
+        json_body: dict | None = None,
+        params: dict | None = None,
     ) -> dict:
         """统一 HTTP 请求(含认证/超时/重试/响应大小限制)。
 
@@ -386,9 +387,7 @@ class CrawlerClient:
         """
         url = f"{self.config.base_url}{endpoint}"
         headers = self._build_headers()
-        return self._retry(
-            self._do_request, method, url, endpoint, headers, json_body, params
-        )
+        return self._retry(self._do_request, method, url, endpoint, headers, json_body, params)
 
     def _do_request(
         self,
@@ -396,8 +395,8 @@ class CrawlerClient:
         url: str,
         endpoint: str,
         headers: dict[str, str],
-        json_body: Optional[dict],
-        params: Optional[dict],
+        json_body: dict | None,
+        params: dict | None,
     ) -> dict:
         """单次 HTTP 请求(不含重试)。
 
@@ -413,9 +412,7 @@ class CrawlerClient:
 
         elapsed_ms = (time.monotonic() - start) * 1000
         # 审计日志:仅记录路径/状态/耗时(不含 body,隐私保护)
-        _logger.info(
-            "crawler %s %s -> %d %.1fms", method, endpoint, status, elapsed_ms
-        )
+        _logger.info("crawler %s %s -> %d %.1fms", method, endpoint, status, elapsed_ms)
 
         # 状态码分类
         if status in self.config.retry_on_status:
@@ -433,17 +430,15 @@ class CrawlerClient:
         try:
             return json.loads(text)
         except json.JSONDecodeError as e:
-            raise CrawlerError(
-                f"JSON 解析失败: {e}", status_code=status, endpoint=endpoint
-            ) from e
+            raise CrawlerError(f"JSON 解析失败: {e}", status_code=status, endpoint=endpoint) from e
 
     def _do_httpx(
         self,
         method: str,
         url: str,
         headers: dict[str, str],
-        json_body: Optional[dict],
-        params: Optional[dict],
+        json_body: dict | None,
+        params: dict | None,
     ) -> tuple[int, str]:
         """httpx 同步实现(流式读取 + 响应体大小限制)。
 
@@ -482,7 +477,8 @@ class CrawlerClient:
                 if truncated:
                     _logger.warning(
                         "crawler response truncated to %d bytes (url=%s)",
-                        max_size, url,
+                        max_size,
+                        url,
                     )
                 return status, text
         except httpx.RequestError as e:  # type: ignore[union-attr]
@@ -495,8 +491,8 @@ class CrawlerClient:
         method: str,
         url: str,
         headers: dict[str, str],
-        json_body: Optional[dict],
-        params: Optional[dict],
+        json_body: dict | None,
+        params: dict | None,
     ) -> tuple[int, str]:
         """urllib 同步降级实现(httpx 不可用时)。
 
@@ -516,7 +512,7 @@ class CrawlerClient:
             full_url = f"{url}?{urlencode(params)}"
 
         # 请求体
-        body_bytes: Optional[bytes] = None
+        body_bytes: bytes | None = None
         if json_body is not None:
             body_bytes = json.dumps(json_body, ensure_ascii=False).encode("utf-8")
             headers = {**headers, "Content-Type": "application/json"}
@@ -529,13 +525,9 @@ class CrawlerClient:
 
         max_size = self.config.max_response_size
         try:
-            req = urllib.request.Request(
-                full_url, data=body_bytes, method=method, headers=headers
-            )
+            req = urllib.request.Request(full_url, data=body_bytes, method=method, headers=headers)
             try:
-                resp = urllib.request.urlopen(
-                    req, timeout=self.config.timeout, context=ssl_context
-                )
+                resp = urllib.request.urlopen(req, timeout=self.config.timeout, context=ssl_context)
                 status = resp.status if hasattr(resp, "status") else resp.code
                 resp_stream = resp
             except HTTPError as e:
@@ -564,7 +556,8 @@ class CrawlerClient:
             if truncated:
                 _logger.warning(
                     "crawler response truncated to %d bytes (url=%s)",
-                    max_size, full_url,
+                    max_size,
+                    full_url,
                 )
             return status, text
         except (URLError, OSError, TimeoutError) as e:
@@ -584,7 +577,7 @@ class CrawlerClient:
             CrawlerError: 重试耗尽或不可重试错误
         """
         total_attempts = self.config.max_retries + 1  # 首次 + 重试次数
-        last_error: Optional[Exception] = None
+        last_error: Exception | None = None
 
         for attempt in range(1, total_attempts + 1):
             try:
@@ -595,8 +588,10 @@ class CrawlerClient:
                     delay = self._compute_backoff(attempt)
                     _logger.info(
                         "crawler retry: attempt=%d/%d status=%s delay=%.2fs",
-                        attempt, total_attempts,
-                        e.status_code, delay,
+                        attempt,
+                        total_attempts,
+                        e.status_code,
+                        delay,
                     )
                     time.sleep(delay)
                     continue
@@ -680,9 +675,7 @@ class CrawlerClient:
     def _validate_timeout(timeout: float, endpoint: str) -> None:
         """timeout > 0 校验。"""
         if not isinstance(timeout, (int, float)) or timeout <= 0:
-            raise CrawlerError(
-                f"timeout 必须 > 0, 实为 {timeout}", endpoint=endpoint
-            )
+            raise CrawlerError(f"timeout 必须 > 0, 实为 {timeout}", endpoint=endpoint)
 
     @staticmethod
     def _build_response(
@@ -704,14 +697,10 @@ class CrawlerClient:
             CrawlerError: data 不是 dict
         """
         if not isinstance(data, dict):
-            raise CrawlerError(
-                f"响应不是 JSON 对象: {type(data).__name__}", endpoint=endpoint
-            )
+            raise CrawlerError(f"响应不是 JSON 对象: {type(data).__name__}", endpoint=endpoint)
         valid_fields = {f.name for f in dataclasses.fields(response_cls)}
         kwargs = {k: v for k, v in data.items() if k in valid_fields}
         try:
             return response_cls(**kwargs)
         except TypeError as e:
-            raise CrawlerError(
-                f"响应字段不匹配: {e}", endpoint=endpoint
-            ) from e
+            raise CrawlerError(f"响应字段不匹配: {e}", endpoint=endpoint) from e

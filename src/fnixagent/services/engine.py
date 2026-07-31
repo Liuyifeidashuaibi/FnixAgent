@@ -10,14 +10,14 @@
 
 设计: 应用启动时调用 build_scheduler() 或 build_graph() 一次,后续全局复用。
 """
+
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass, field
-from typing import Optional
+from dataclasses import dataclass
 
 from fnixagent.core.config import CoreConfig, get_config
-from fnixagent.core.llm.base import BaseLLMProvider, LLMRequest
+from fnixagent.core.llm.base import BaseLLMProvider
 from fnixagent.core.llm.providers.openai import (
     GLMProvider,
     MockLLMProvider,
@@ -35,7 +35,6 @@ from fnixagent.core.reflection.validator import ResultValidator
 from fnixagent.core.security.engine import SecurityEngine
 from fnixagent.core.tools.executor import ToolExecutor
 from fnixagent.core.tools.registry import ToolRegistry
-
 
 # ---------------------------------------------------------------------------
 # LLM Provider 工厂
@@ -56,6 +55,7 @@ def _create_llm_providers() -> list[tuple[BaseLLMProvider, float]]:
     if deepseek_key:
         try:
             from fnixagent.core.llm.providers.deepseek import DeepSeekProvider
+
             model = os.getenv("DEEPSEEK_MODEL", "deepseek-v4-flash")
             providers.append((DeepSeekProvider(api_key=deepseek_key, model_name=model), 2.5))
         except ImportError:
@@ -69,9 +69,24 @@ def _create_llm_providers() -> list[tuple[BaseLLMProvider, float]]:
     if openai_key:
         providers.append((OpenAIProvider(api_key=openai_key), 1.0))
 
-    qwen_key = os.getenv("QWEN_API_KEY", "")
+    qwen_key = os.getenv("QWEN_API_KEY", "") or os.getenv("DASHSCOPE_API_KEY", "")
     if qwen_key:
-        providers.append((QwenProvider(api_key=qwen_key), 1.0))
+        model = os.getenv("QWEN_MODEL") or os.getenv("LLM_MODEL") or "qwen-plus"
+        base = os.getenv("QWEN_BASE_URL") or os.getenv("DASHSCOPE_BASE_URL") or ""
+        try:
+            from fnixagent.core.llm.providers.openai import OpenAICompatibleProvider
+
+            kwargs = {"name": "qwen", "model_name": model, "api_key": qwen_key}
+            if base:
+                kwargs["base_url"] = base.rstrip("/") + "/"
+            else:
+                kwargs["base_url"] = "https://dashscope.aliyuncs.com/compatible-mode/v1/"
+            providers.append((OpenAICompatibleProvider(**kwargs), 2.0))
+        except Exception:
+            try:
+                providers.append((QwenProvider(api_key=qwen_key), 1.0))
+            except Exception:
+                pass
 
     # 无可用 Provider 时回退到 Mock
     if not providers:
@@ -92,6 +107,7 @@ def _register_business_tools(registry: ToolRegistry) -> int:
     # 论文检索工具
     try:
         from fnixagent.business.search import register_search_tools
+
         register_search_tools(registry)
         count += 3
     except Exception as e:
@@ -100,6 +116,7 @@ def _register_business_tools(registry: ToolRegistry) -> int:
     # Word 编辑工具
     try:
         from fnixagent.business.word import register_word_tools
+
         register_word_tools(registry)
         count += 3
     except Exception as e:
@@ -108,6 +125,7 @@ def _register_business_tools(registry: ToolRegistry) -> int:
     # 格式转换工具
     try:
         from fnixagent.business.converter import register_converter_tools
+
         register_converter_tools(registry)
         count += 1
     except Exception as e:
@@ -117,6 +135,7 @@ def _register_business_tools(registry: ToolRegistry) -> int:
     # 6 个工具:crawler_fetch/render/extract/search/summary/batch
     try:
         from fnixagent.business.crawler import register_crawler_tools
+
         register_crawler_tools(registry)
         count += 6
     except Exception as e:
@@ -127,6 +146,7 @@ def _register_business_tools(registry: ToolRegistry) -> int:
     # task_result/task_cancel/reverse_api/health
     try:
         from fnixagent.business.crawler import register_zhua_tools
+
         register_zhua_tools(registry)
         count += 9
     except Exception as e:
@@ -140,7 +160,7 @@ def _register_business_tools(registry: ToolRegistry) -> int:
 # ---------------------------------------------------------------------------
 
 
-def build_scheduler(config: Optional[CoreConfig] = None) -> AgentScheduler:
+def build_scheduler(config: CoreConfig | None = None) -> AgentScheduler:
     """
     构建完整的 AgentScheduler 实例。
 
@@ -216,7 +236,7 @@ def build_scheduler(config: Optional[CoreConfig] = None) -> AgentScheduler:
 # 全局单例
 # ---------------------------------------------------------------------------
 
-_scheduler_instance: Optional[AgentScheduler] = None
+_scheduler_instance: AgentScheduler | None = None
 
 
 def get_scheduler() -> AgentScheduler:
@@ -251,36 +271,37 @@ class GraphComponents:
         - LLM 路由器(推理层)
         - 工具注册表 + 执行器(接入层)
     """
+
     # 编排层
-    graph: object                           # 编译后的 LangGraph
-    graph_builder: object = None            # GraphBuilder 实例
+    graph: object  # 编译后的 LangGraph
+    graph_builder: object = None  # GraphBuilder 实例
 
     # 结构化记忆层(KTG)
-    topology_graph: object = None           # TopologyGraph
-    search_engine: object = None            # TopologySearch
+    topology_graph: object = None  # TopologyGraph
+    search_engine: object = None  # TopologySearch
 
     # 技能层(STP)
-    binding_protocol: object = None         # SkillBindingProtocol
-    permission_policy: object = None        # SkillPermissionPolicy
-    scheduler: object = None                # SkillScheduler
-    feedback_handler: object = None         # SkillFeedbackHandler
+    binding_protocol: object = None  # SkillBindingProtocol
+    permission_policy: object = None  # SkillPermissionPolicy
+    scheduler: object = None  # SkillScheduler
+    feedback_handler: object = None  # SkillFeedbackHandler
 
     # 自进化层(MFP)
-    flywheel_perception: object = None      # 飞轮 ①
+    flywheel_perception: object = None  # 飞轮 ①
     flywheel_solidification: object = None  # 飞轮 ②
-    flywheel_reflection: object = None      # 飞轮 ③
-    flywheel_climbing: object = None        # 飞轮 ④
-    trace_store: object = None              # 轨迹存储
+    flywheel_reflection: object = None  # 飞轮 ③
+    flywheel_climbing: object = None  # 飞轮 ④
+    trace_store: object = None  # 轨迹存储
 
     # 推理层
-    llm_router: object = None               # LLMRouter
+    llm_router: object = None  # LLMRouter
 
     # 接入层
-    tool_registry: object = None            # ToolRegistry
-    tool_executor: object = None            # ToolExecutor
+    tool_registry: object = None  # ToolRegistry
+    tool_executor: object = None  # ToolExecutor
 
 
-def build_graph(config: Optional[CoreConfig] = None) -> GraphComponents:
+def build_graph(config: CoreConfig | None = None) -> GraphComponents:
     """
     构建自进化 Agent 的 LangGraph 全链路。
 
@@ -311,6 +332,7 @@ def build_graph(config: Optional[CoreConfig] = None) -> GraphComponents:
     # 2. KTG 拓扑图 + 搜索引擎
     from fnixagent.core.topology.graph import TopologyGraph
     from fnixagent.core.topology.search import TopologySearch
+
     topology_graph = TopologyGraph()
     search_engine = TopologySearch(
         graph=topology_graph,
@@ -323,6 +345,17 @@ def build_graph(config: Optional[CoreConfig] = None) -> GraphComponents:
     # 3. 工具注册中心 + 执行器
     tool_registry = ToolRegistry()
     tool_count = _register_business_tools(tool_registry)
+    # 办公 Work 工具（Excel/PPT/PDF）一并进入自进化图
+    try:
+        from fnixagent.services.work_agent import register_office_work_tools
+
+        workspace = os.getenv("FNIXAGENT_WORKSPACE", os.getcwd())
+        before = len(tool_registry._tools)
+        register_office_work_tools(tool_registry, workspace)
+        tool_count = len(tool_registry._tools)
+        print(f"[services]   业务+办公工具: {before} → {tool_count}")
+    except Exception as e:
+        print(f"[services]   办公工具注册跳过: {e}")
     print(f"[services]   已注册 {tool_count} 个业务工具")
     tool_executor = ToolExecutor(tool_registry, config=cfg.tool)
 
@@ -331,6 +364,7 @@ def build_graph(config: Optional[CoreConfig] = None) -> GraphComponents:
     from fnixagent.core.skills.levels import SkillPermissionPolicy
     from fnixagent.core.skills.protocol import SkillBindingProtocol
     from fnixagent.core.skills.scheduler import SkillScheduler
+
     binding_protocol = SkillBindingProtocol(graph=topology_graph)
     permission_policy = SkillPermissionPolicy()
     skill_scheduler = SkillScheduler(
@@ -341,8 +375,45 @@ def build_graph(config: Optional[CoreConfig] = None) -> GraphComponents:
     feedback_handler = SkillFeedbackHandler(graph=topology_graph)
     print("[services]   STP 技能调度系统已创建")
 
+    # 4b. KTG 持久化加载 → 若空则播种办公拓扑 + STP
+    topology_store_mgr = None
+    try:
+        from fnixagent.core.topology.store import JSONFileStore, TopologyStoreManager
+
+        topo_dir = os.getenv("FNIXAGENT_TOPOLOGY_DIR", "data/topology")
+        topology_store_mgr = TopologyStoreManager(
+            topology_graph,
+            JSONFileStore(topo_dir),
+        )
+        try:
+            topology_store_mgr.load_from_store()
+            print(f"[services]   KTG 已从 {topo_dir} 加载快照")
+        except Exception:
+            pass
+    except Exception as e:
+        print(f"[services]   KTG 持久化初始化跳过: {e}")
+
+    try:
+        from fnixagent.services.evolution_seed import seed_office_topology
+
+        seed_stats = seed_office_topology(topology_graph, binding_protocol)
+        print(
+            f"[services]   KTG 种子: nodes={seed_stats['nodes']} "
+            f"edges={seed_stats['edges']} bindings={seed_stats['bindings']}"
+        )
+    except Exception as e:
+        print(f"[services]   KTG 播种失败: {e}")
+
+    if topology_store_mgr is not None:
+        try:
+            snap = topology_store_mgr.save_snapshot("boot")
+            print(f"[services]   KTG 启动快照: {snap}")
+        except Exception as e:
+            print(f"[services]   KTG 快照保存跳过: {e}")
+
     # 5. LangGraph 图装配器 + 编译图
     from fnixagent.graph.builder import GraphBuilder
+
     graph_builder = GraphBuilder(
         search_engine=search_engine,
         scheduler=skill_scheduler,
@@ -354,10 +425,10 @@ def build_graph(config: Optional[CoreConfig] = None) -> GraphComponents:
     print("[services]   LangGraph 图已编译")
 
     # 6. MFP 四飞轮 + 轨迹存储
-    from fnixagent.core.flywheel.perception import PerceptionFlywheel
-    from fnixagent.core.flywheel.knowledge import KnowledgeSolidificationFlywheel
-    from fnixagent.core.flywheel.reflection import MetaReflectionFlywheel
     from fnixagent.core.flywheel.climbing import HillClimbingFlywheel
+    from fnixagent.core.flywheel.knowledge import KnowledgeSolidificationFlywheel
+    from fnixagent.core.flywheel.perception import PerceptionFlywheel
+    from fnixagent.core.flywheel.reflection import MetaReflectionFlywheel
     from fnixagent.core.flywheel.trace import TraceStore
 
     # 轨迹存储目录(可配置)
@@ -407,7 +478,7 @@ def build_graph(config: Optional[CoreConfig] = None) -> GraphComponents:
 # 全局单例(Graph 模式)
 # ---------------------------------------------------------------------------
 
-_graph_instance: Optional[GraphComponents] = None
+_graph_instance: GraphComponents | None = None
 
 
 def get_graph() -> GraphComponents:
@@ -426,8 +497,8 @@ def reset_graph() -> None:
 
 def process_with_graph(
     user_input: str,
-    components: Optional[GraphComponents] = None,
-    session_id: Optional[str] = None,
+    components: GraphComponents | None = None,
+    session_id: str | None = None,
 ) -> dict:
     """使用 LangGraph 处理用户输入(飞轮闭环入口)。
 
@@ -478,7 +549,10 @@ def process_with_graph(
             pass  # 进化失败不影响主流程
 
     return {
-        "answer": trace.goal if not trace.success else f"已处理: {user_input[:50]}",
+        "answer": (
+            (trace.metadata or {}).get("answer") if getattr(trace, "metadata", None) else None
+        )
+        or (f"已完成: {user_input[:80]}" if trace.success else f"未完成: {user_input[:80]}"),
         "trace": trace,
         "solidified": solidified,
         "reflected": reflected,

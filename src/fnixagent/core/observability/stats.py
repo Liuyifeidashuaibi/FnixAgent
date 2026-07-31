@@ -8,13 +8,15 @@
   - 容错: 单模块异常不阻塞其他模块采集
   - 可扩展: 新增模块只需注册 stats provider
 """
+
 from __future__ import annotations
 
 import logging
 import threading
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -63,9 +65,7 @@ class StatsAggregator:
     # 注册管理
     # ------------------------------------------------------------------
 
-    def register(
-        self, name: str, provider: Callable[[], dict[str, Any]]
-    ) -> None:
+    def register(self, name: str, provider: Callable[[], dict[str, Any]]) -> None:
         """注册一个统计提供者(同名覆盖)。
 
         Args:
@@ -73,9 +73,7 @@ class StatsAggregator:
             provider: 统计获取函数,返回指标字典
         """
         with self._lock:
-            self._providers[name] = StatsProvider(
-                name=name, provider=provider
-            )
+            self._providers[name] = StatsProvider(name=name, provider=provider)
         logger.debug("已注册统计提供者: %s", name)
 
     def unregister(self, name: str) -> bool:
@@ -148,7 +146,9 @@ class StatsAggregator:
                 errors[p.name] = f"{type(e).__name__}: {e}"
                 logger.warning(
                     "采集模块 %s 指标失败: %s: %s",
-                    p.name, type(e).__name__, e,
+                    p.name,
+                    type(e).__name__,
+                    e,
                 )
 
         return {
@@ -158,7 +158,7 @@ class StatsAggregator:
             "errors": errors,
         }
 
-    def collect_module(self, name: str) -> Optional[dict[str, Any]]:
+    def collect_module(self, name: str) -> dict[str, Any] | None:
         """采集单个模块指标。
 
         Args:
@@ -176,7 +176,9 @@ class StatsAggregator:
         except Exception as e:
             logger.warning(
                 "采集模块 %s 指标失败: %s: %s",
-                name, type(e).__name__, e,
+                name,
+                type(e).__name__,
+                e,
             )
             return None
 
@@ -244,9 +246,7 @@ def register_default_providers() -> None:
     try:
         from fnixagent.core.guardrail import get_guardrail_registry
 
-        agg.register(
-            "guardrail", lambda: get_guardrail_registry().get_stats()
-        )
+        agg.register("guardrail", lambda: get_guardrail_registry().get_stats())
     except Exception as e:
         logger.debug("注册 guardrail 统计提供者失败: %s", e)
 
@@ -254,9 +254,7 @@ def register_default_providers() -> None:
     try:
         from fnixagent.core.scheduler import get_autoscaled_pool
 
-        agg.register(
-            "autoscale_pool", lambda: get_autoscaled_pool().get_stats()
-        )
+        agg.register("autoscale_pool", lambda: get_autoscaled_pool().get_stats())
     except Exception as e:
         logger.debug("注册 autoscale_pool 统计提供者失败: %s", e)
 
@@ -264,9 +262,7 @@ def register_default_providers() -> None:
     try:
         from fnixagent.core.adapters import get_endpoint_pool
 
-        agg.register(
-            "endpoint_pool", lambda: get_endpoint_pool().get_stats()
-        )
+        agg.register("endpoint_pool", lambda: get_endpoint_pool().get_stats())
     except Exception as e:
         logger.debug("注册 endpoint_pool 统计提供者失败: %s", e)
 
@@ -274,9 +270,7 @@ def register_default_providers() -> None:
     try:
         from fnixagent.core.tools.deduplicator import get_deduplicator
 
-        agg.register(
-            "deduplicator", lambda: get_deduplicator().get_stats()
-        )
+        agg.register("deduplicator", lambda: get_deduplicator().get_stats())
     except Exception as e:
         logger.debug("注册 deduplicator 统计提供者失败: %s", e)
 
@@ -284,9 +278,7 @@ def register_default_providers() -> None:
     try:
         from fnixagent.core.scheduler import get_priority_queue
 
-        agg.register(
-            "priority_queue", lambda: get_priority_queue().get_stats()
-        )
+        agg.register("priority_queue", lambda: get_priority_queue().get_stats())
     except Exception as e:
         logger.debug("注册 priority_queue 统计提供者失败: %s", e)
 
@@ -294,9 +286,7 @@ def register_default_providers() -> None:
     try:
         from fnixagent.core.checkpoint import get_checkpoint_manager
 
-        agg.register(
-            "checkpoint", lambda: get_checkpoint_manager().get_stats()
-        )
+        agg.register("checkpoint", lambda: get_checkpoint_manager().get_stats())
     except Exception as e:
         logger.debug("注册 checkpoint 统计提供者失败: %s", e)
 
@@ -304,9 +294,7 @@ def register_default_providers() -> None:
     try:
         from fnixagent.core.reflection import get_reflection_manager
 
-        agg.register(
-            "reflection", lambda: get_reflection_manager().get_stats()
-        )
+        agg.register("reflection", lambda: get_reflection_manager().get_stats())
     except Exception as e:
         logger.debug("注册 reflection 统计提供者失败: %s", e)
 
@@ -314,9 +302,7 @@ def register_default_providers() -> None:
     try:
         from fnixagent.core.workflow import get_workflow_engine
 
-        agg.register(
-            "workflow", lambda: get_workflow_engine().get_stats()
-        )
+        agg.register("workflow", lambda: get_workflow_engine().get_stats())
     except Exception as e:
         logger.debug("注册 workflow 统计提供者失败: %s", e)
 
@@ -325,7 +311,7 @@ def register_default_providers() -> None:
 # 单例(双重检查锁定)
 # ---------------------------------------------------------------------------
 
-_singleton: Optional[StatsAggregator] = None
+_singleton: StatsAggregator | None = None
 _singleton_lock = threading.Lock()
 
 
@@ -361,9 +347,9 @@ def reset_stats_aggregator() -> None:
 
 
 __all__ = [
-    "StatsProvider",
     "StatsAggregator",
-    "register_default_providers",
+    "StatsProvider",
     "get_stats_aggregator",
+    "register_default_providers",
     "reset_stats_aggregator",
 ]

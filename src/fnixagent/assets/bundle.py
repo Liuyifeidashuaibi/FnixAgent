@@ -31,6 +31,7 @@
     - SkillRecord 通过 to_dict/from_dict 处理枚举
     - 缺失文件按空值兜底,不抛异常(便于增量迁移)
 """
+
 from __future__ import annotations
 
 import json
@@ -41,7 +42,6 @@ from typing import Any
 
 from fnixagent.core.types import SkillLevel, SkillRecord
 
-
 # 资产版本(随 schema 升级递增)
 ASSETS_VERSION: str = "1.0.0"
 
@@ -49,6 +49,7 @@ ASSETS_VERSION: str = "1.0.0"
 # ---------------------------------------------------------------------------
 # SkillRecord 序列化辅助
 # ---------------------------------------------------------------------------
+
 
 def skill_record_to_dict(record: SkillRecord) -> dict[str, Any]:
     """SkillRecord 序列化为 dict(枚举转字符串)。"""
@@ -84,6 +85,7 @@ def skill_record_from_dict(d: dict[str, Any]) -> SkillRecord:
 # AssetsBundle 数据类
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class AssetsBundle:
     """资产包:自进化 Agent 的全部可迁移资产。
@@ -97,6 +99,7 @@ class AssetsBundle:
         version:           资产 schema 版本
         created_at:        创建时间(Unix 时间戳)
     """
+
     topology_snapshot: dict[str, Any] = field(default_factory=dict)
     skills_registry: list[SkillRecord] = field(default_factory=list)
     flywheel_history: list[dict[str, Any]] = field(default_factory=list)
@@ -109,6 +112,7 @@ class AssetsBundle:
 # ---------------------------------------------------------------------------
 # JSONL 读写辅助
 # ---------------------------------------------------------------------------
+
 
 def _write_jsonl(path: str, records: list[dict[str, Any]]) -> None:
     """写入 JSONL 文件(覆盖写,每行一条 JSON)。"""
@@ -123,7 +127,7 @@ def _read_jsonl(path: str) -> list[dict[str, Any]]:
     if not os.path.exists(path):
         return []
     records: list[dict[str, Any]] = []
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         for line in f:
             line = line.strip()
             if not line:
@@ -143,13 +147,14 @@ def _read_json(path: str) -> Any:
     """读取 JSON 文件,不存在返回 None。"""
     if not os.path.exists(path):
         return None
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         return json.load(f)
 
 
 # ---------------------------------------------------------------------------
 # 资产包保存
 # ---------------------------------------------------------------------------
+
 
 def save_assets(bundle: AssetsBundle, path: str) -> None:
     """保存全部资产到目录。
@@ -212,6 +217,7 @@ def save_assets(bundle: AssetsBundle, path: str) -> None:
 # 资产包加载
 # ---------------------------------------------------------------------------
 
+
 def load_assets(path: str) -> AssetsBundle:
     """从目录加载全部资产。
 
@@ -224,25 +230,17 @@ def load_assets(path: str) -> AssetsBundle:
         AssetsBundle 实例
     """
     # 1. 拓扑快照(缺失返回空 dict)
-    topology_snapshot = _read_json(
-        os.path.join(path, "topology", "snapshot.json")
-    ) or {}
+    topology_snapshot = _read_json(os.path.join(path, "topology", "snapshot.json")) or {}
 
     # 2. 技能注册表(缺失返回空列表)
-    skills_data = _read_json(
-        os.path.join(path, "skills", "registry.json")
-    ) or []
+    skills_data = _read_json(os.path.join(path, "skills", "registry.json")) or []
     skills_registry = [skill_record_from_dict(d) for d in skills_data]
 
     # 3. 飞轮历史(JSONL)
-    flywheel_history = _read_jsonl(
-        os.path.join(path, "flywheel", "history.jsonl")
-    )
+    flywheel_history = _read_jsonl(os.path.join(path, "flywheel", "history.jsonl"))
 
     # 4. 轨迹归档(JSONL)
-    traces_archive = _read_jsonl(
-        os.path.join(path, "traces", "traces.jsonl")
-    )
+    traces_archive = _read_jsonl(os.path.join(path, "traces", "traces.jsonl"))
 
     # 5. 提示词目录
     prompts: dict[str, str] = {}
@@ -251,7 +249,7 @@ def load_assets(path: str) -> AssetsBundle:
         for fname in os.listdir(prompts_dir):
             fpath = os.path.join(prompts_dir, fname)
             if os.path.isfile(fpath):
-                with open(fpath, "r", encoding="utf-8") as f:
+                with open(fpath, encoding="utf-8") as f:
                     prompts[fname] = f.read()
 
     # 6. 版本元信息

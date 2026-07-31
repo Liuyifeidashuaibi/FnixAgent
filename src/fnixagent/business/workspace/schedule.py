@@ -12,22 +12,21 @@
   - Provider 调用包裹 try-except,捕获厂商 API/网络 IO 异常,
     统一转为 ConnectorResult(success=False, error=...)
 """
+
 from __future__ import annotations
 
 import abc
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from fnixagent.business.workspace.base import (
     BaseProvider,
-    ConnectorConfig,
     ConnectorResult,
     StubProvider,
     WorkspaceConnector,
 )
-
 
 _logger = logging.getLogger(__name__)
 
@@ -40,19 +39,20 @@ _logger = logging.getLogger(__name__)
 @dataclass
 class CalendarEvent:
     """日历事件。"""
+
     event_id: str = ""
     title: str = ""
     description: str = ""
-    start_time: str = ""          # ISO 8601
-    end_time: str = ""            # ISO 8601
+    start_time: str = ""  # ISO 8601
+    end_time: str = ""  # ISO 8601
     timezone: str = "Asia/Shanghai"
     location: str = ""
     attendees: list[str] = None  # type: ignore
     organizer: str = ""
     reminders_minutes: list[int] = None  # type: ignore
-    recurrence: str = ""          # RRULE 字符串
+    recurrence: str = ""  # RRULE 字符串
     conference_link: str = ""
-    status: str = "confirmed"     # confirmed / tentative / cancelled
+    status: str = "confirmed"  # confirmed / tentative / cancelled
 
     def __post_init__(self) -> None:
         if self.attendees is None:
@@ -64,6 +64,7 @@ class CalendarEvent:
 @dataclass
 class FreeBusySlot:
     """忙闲时段。"""
+
     start_time: str
     end_time: str
     busy: bool = True
@@ -75,7 +76,7 @@ class FreeBusySlot:
 # ---------------------------------------------------------------------------
 
 
-def _parse_iso(ts: str) -> Optional[datetime]:
+def _parse_iso(ts: str) -> datetime | None:
     """解析 ISO 8601 时间字符串(失败返回 None)。
 
     容忍带/不带时区、带/不带毫秒。仅做基本格式校验,不做时区转换。
@@ -96,7 +97,7 @@ def _parse_iso(ts: str) -> Optional[datetime]:
         return None
 
 
-def _validate_time_range(start: str, end: str) -> Optional[str]:
+def _validate_time_range(start: str, end: str) -> str | None:
     """校验时间范围(start < end),返回错误描述(合法返回 None)。"""
     if not start or not end:
         return "start and end must not be empty"
@@ -147,26 +148,22 @@ class ScheduleProvider(BaseProvider):
     """
 
     @abc.abstractmethod
-    def create_event(self, event: CalendarEvent) -> ConnectorResult:
-        ...
+    def create_event(self, event: CalendarEvent) -> ConnectorResult: ...
 
     @abc.abstractmethod
     def list(
         self,
         start: str,
         end: str,
-        calendar_id: Optional[str] = None,
+        calendar_id: str | None = None,
         limit: int = 50,
-    ) -> ConnectorResult:
-        ...
+    ) -> ConnectorResult: ...
 
     @abc.abstractmethod
-    def update(self, event_id: str, updates: dict) -> ConnectorResult:
-        ...
+    def update(self, event_id: str, updates: dict) -> ConnectorResult: ...
 
     @abc.abstractmethod
-    def delete(self, event_id: str) -> ConnectorResult:
-        ...
+    def delete(self, event_id: str) -> ConnectorResult: ...
 
     @abc.abstractmethod
     def check_freebusy(
@@ -174,8 +171,7 @@ class ScheduleProvider(BaseProvider):
         emails: list[str],
         start: str,
         end: str,
-    ) -> ConnectorResult:
-        ...
+    ) -> ConnectorResult: ...
 
 
 # ---------------------------------------------------------------------------
@@ -199,7 +195,7 @@ class StubScheduleProvider(StubProvider, ScheduleProvider):
         self,
         start: str,
         end: str,
-        calendar_id: Optional[str] = None,
+        calendar_id: str | None = None,
         limit: int = 50,
     ) -> ConnectorResult:
         # 空结果统一 data=[]
@@ -221,9 +217,14 @@ class StubScheduleProvider(StubProvider, ScheduleProvider):
         end: str,
     ) -> ConnectorResult:
         return self._stub_result(
-            data=[FreeBusySlot(
-                start_time=start, end_time=end, busy=False, summary="free",
-            ).__dict__],
+            data=[
+                FreeBusySlot(
+                    start_time=start,
+                    end_time=end,
+                    busy=False,
+                    summary="free",
+                ).__dict__
+            ],
             emails=emails,
         )
 
@@ -256,12 +257,12 @@ class ScheduleConnector(WorkspaceConnector):
         end_time: str,
         description: str = "",
         location: str = "",
-        attendees: Optional[list[str]] = None,
+        attendees: list[str] | None = None,
         timezone: str = "Asia/Shanghai",
-        reminders_minutes: Optional[list[int]] = None,
+        reminders_minutes: list[int] | None = None,
         conference_link: str = "",
         recurrence: str = "",
-        existing_events: Optional[list[dict]] = None,
+        existing_events: list[dict] | None = None,
     ) -> ConnectorResult:
         """创建日历事件。
 
@@ -299,19 +300,24 @@ class ScheduleConnector(WorkspaceConnector):
                     return ConnectorResult(
                         success=False,
                         error=f"time range overlaps with existing event "
-                              f"{ev.get('event_id', ev.get('title', ''))!r} "
-                              f"({es} ~ {ee})",
+                        f"{ev.get('event_id', ev.get('title', ''))!r} "
+                        f"({es} ~ {ee})",
                     )
 
         err = self._ensure_connected()
         if err:
             return err
         event = CalendarEvent(
-            title=title, start_time=start_time, end_time=end_time,
-            description=description, location=location,
-            attendees=attendees or [], timezone=timezone,
+            title=title,
+            start_time=start_time,
+            end_time=end_time,
+            description=description,
+            location=location,
+            attendees=attendees or [],
+            timezone=timezone,
             reminders_minutes=reminders_minutes or [],
-            conference_link=conference_link, recurrence=recurrence,
+            conference_link=conference_link,
+            recurrence=recurrence,
         )
         assert self._active_provider is not None
         try:
@@ -327,7 +333,7 @@ class ScheduleConnector(WorkspaceConnector):
         self,
         start: str,
         end: str,
-        calendar_id: Optional[str] = None,
+        calendar_id: str | None = None,
         limit: int = 50,
     ) -> ConnectorResult:
         """列出时间区间内的事件。
@@ -351,7 +357,10 @@ class ScheduleConnector(WorkspaceConnector):
         assert self._active_provider is not None
         try:
             return self._active_provider.list(
-                start=start, end=end, calendar_id=calendar_id, limit=safe_limit,
+                start=start,
+                end=end,
+                calendar_id=calendar_id,
+                limit=safe_limit,
             )
         except Exception as e:
             _logger.exception("schedule.list failed: %s: %s", type(e).__name__, e)
@@ -438,7 +447,8 @@ class ScheduleConnector(WorkspaceConnector):
         """
         if not emails:
             return ConnectorResult(
-                success=False, error="emails (attendees) must not be empty",
+                success=False,
+                error="emails (attendees) must not be empty",
             )
         range_err = _validate_time_range(start, end)
         if range_err is not None:
@@ -450,7 +460,9 @@ class ScheduleConnector(WorkspaceConnector):
         assert self._active_provider is not None
         try:
             return self._active_provider.check_freebusy(
-                emails=emails, start=start, end=end,
+                emails=emails,
+                start=start,
+                end=end,
             )
         except Exception as e:
             _logger.exception("schedule.check_freebusy failed: %s: %s", type(e).__name__, e)

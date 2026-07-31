@@ -11,10 +11,11 @@ API 路由 - Agent 对话接口。
 
 Phase 3.2: 接入内容审核(输入/输出双向审核)
 """
+
 import json
 import os
 import uuid
-from typing import Optional
+from typing import Any
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
@@ -23,7 +24,6 @@ from fnixagent.api.schemas.models import (
     BaseResponse,
     ChatRequest,
     ChatResponse,
-    MessageResponse,
     SessionCreate,
     SessionResponse,
 )
@@ -39,7 +39,7 @@ def _get_request_ip(request: Request) -> str:
     return request.client.host if request.client else ""
 
 
-def _get_user_id_from_request(request: Request) -> Optional[int]:
+def _get_user_id_from_request(request: Request) -> int | None:
     """从 Request 的 state 中提取 user_id(若已鉴权)。"""
     return getattr(request.state, "user_id", None)
 
@@ -51,6 +51,7 @@ def _moderate_input(text: str, request: Request) -> None:
     """
     try:
         from fnixagent.services.moderation import get_moderation_service
+
         svc = get_moderation_service()
         if not svc.config.enabled or not svc.config.input_enabled:
             return
@@ -81,6 +82,7 @@ def _moderate_output(text: str, request: Request) -> str:
     """
     try:
         from fnixagent.services.moderation import get_moderation_service
+
         svc = get_moderation_service()
         if not svc.config.enabled or not svc.config.output_enabled:
             return text
@@ -158,14 +160,11 @@ async def send_message(request: ChatRequest, http_request: Request):
 
 @router.post("/stream")
 async def stream_chat(request: ChatRequest, http_request: Request):
-    """流式对话 — 真正的逐步流式输出。
+    """流式对话 — 复用 WorkPipeline 9 步流水线（work_mode=ask）。
 
-    使用 AgenticLoop 的 run_stream() 方法，逐步返回:
-      - thinking: 思考中
-      - tool_call: 工具调用
-      - tool_result: 工具结果
-      - text: 最终文本响应
-      - done: 完成
+    chat 模式与 work 模式区别仅在 work_mode：chat=ask（只问答，不写盘）。
+    9 步流水线全跑：安全 → 记忆 → 意图 → KTG/STP → AgenticLoop → 反思 → 审核 → MFP。
+    输出格式与 /api/v1/work/stream 完全一致（chunk_type + content + done + trace_id）。
     """
     # Phase 3.2: 输入审核
     _moderate_input(request.user_input, http_request)
@@ -173,49 +172,88 @@ async def stream_chat(request: ChatRequest, http_request: Request):
     # Phase 2.10: 记录聊天消息指标
     try:
         from fnixagent.core.observability.metrics import record_chat_message
+
         mode = os.getenv("FNIXAGENT_MODE", "legacy").lower()
         record_chat_message(mode=mode)
     except Exception:
         pass
 
     async def generate():
-        """真正的流式生成器 — 使用 AgenticLoop"""
+        """流式生成器 — 复用 work_pipeline.run_work_stream（9 步流水线）"""
         try:
-            # 尝试使用 AgenticLoop 进行真正的流式输出
-            agent = _build_agent_loop_for_stream(http_request)
-            if agent is None:
-                # 回退到传统 scheduler 模式
-                scheduler = _get_scheduler(http_request)
-                response = scheduler.process(
-                    user_input=request.user_input,
-                    session_id=str(request.session_id) if request.session_id else "",
+            from fnixagent.services.llm_policy import principal_is_admin, resolve_llm_for_request
+            from fnixagent.services.work_pipeline import run_work_stream
+
+            workspace = None
+            if request.context and isinstance(request.context, dict):
+                workspace = request.context.get("workspace") or request.context.get(
+                    "workspace_path"
                 )
-                final_answer = _moderate_output(response.final_answer, http_request)
-                yield f'{{"chunk_type":"text","content":{json.dumps(final_answer)},"done":true}}\n'
+            workspace = workspace or os.getenv("FNIXAGENT_WORKSPACE") or os.getcwd()
+
+            raw_llm = request.llm.model_dump(exclude_none=True) if request.llm else None
+            llm_dict, llm_err = resolve_llm_for_request(
+                raw_llm,
+                is_admin=principal_is_admin(http_request),
+            )
+            if llm_err:
+                yield _chat_ndjson("error", llm_err, True)
                 return
 
-            async for event in agent.run_stream(request.user_input):
-                chunk_type = event.get("type", "")
+            trace_id = ""
+            async for event in run_work_stream(
+                user_input=request.user_input,
+                workspace=workspace,
+                llm=llm_dict,
+                session_id=str(request.session_id) if request.session_id else None,
+                user_id="desktop",
+                app_state=http_request.app.state,
+                work_mode="ask",
+            ):
+                et = event.get("type", "")
                 data = event.get("data", "")
 
-                if chunk_type == "thinking":
-                    yield f'{{"chunk_type":"thought","content":{json.dumps(str(data))},"done":false}}\n'
-                elif chunk_type == "tool_call":
-                    yield f'{{"chunk_type":"action","content":{json.dumps(data)},"done":false}}\n'
-                elif chunk_type == "tool_result":
-                    yield f'{{"chunk_type":"observation","content":{json.dumps(str(data))},"done":false}}\n'
-                elif chunk_type == "text":
+                if isinstance(data, dict) and data.get("trace_id"):
+                    trace_id = data["trace_id"]
+
+                if et == "evolution":
+                    yield _chat_ndjson("evolution", data, False, trace_id)
+                elif et == "mission":
+                    yield _chat_ndjson("mission", data, False, trace_id)
+                elif et == "pipeline":
+                    yield _chat_ndjson("pipeline", data, False, trace_id)
+                elif et == "thinking":
+                    yield _chat_ndjson("thought", str(data), False, trace_id)
+                elif et == "tool_call":
+                    yield _chat_ndjson("action", data, False, trace_id)
+                elif et == "tool_result":
+                    yield _chat_ndjson("observation", str(data), False, trace_id)
+                elif et == "text":
                     final = _moderate_output(str(data), http_request)
-                    yield f'{{"chunk_type":"text","content":{json.dumps(final)},"done":true}}\n'
-                elif chunk_type == "done":
-                    yield f'{{"chunk_type":"done","content":{json.dumps(data)},"done":true}}\n'
-                elif chunk_type == "error":
-                    yield f'{{"chunk_type":"error","content":{json.dumps(str(data))},"done":true}}\n'
+                    yield _chat_ndjson("text", final, True, trace_id)
+                elif et == "done":
+                    yield _chat_ndjson("done", data, True, trace_id)
+                elif et == "error":
+                    yield _chat_ndjson("error", str(data), True, trace_id)
+                else:
+                    yield _chat_ndjson(et or "event", data, False, trace_id)
 
         except Exception as e:
-            yield f'{{"chunk_type":"error","content":{json.dumps(str(e))},"done":true}}\n'
+            yield _chat_ndjson("error", str(e), True)
 
     return StreamingResponse(generate(), media_type="application/x-ndjson")
+
+
+def _chat_ndjson(chunk_type: str, content: Any, done: bool = False, trace_id: str = "") -> str:
+    """与 work._ndjson 一致的 NDJSON 行序列化。"""
+    payload: dict[str, Any] = {
+        "chunk_type": chunk_type,
+        "content": content,
+        "done": done,
+    }
+    if trace_id:
+        payload["trace_id"] = trace_id
+    return json.dumps(payload, ensure_ascii=False) + "\n"
 
 
 @router.get("/session/{session_id}/history")
@@ -323,18 +361,20 @@ async def get_topology_stats(http_request: Request):
 
     stats = components.topology_graph.stats()
     search_stats = components.search_engine.search_stats("")
-    return BaseResponse(data={
-        "topology": stats,
-        "search": search_stats,
-        "is_cold_start": components.search_engine.is_cold_start(),
-    })
+    return BaseResponse(
+        data={
+            "topology": stats,
+            "search": search_stats,
+            "is_cold_start": components.search_engine.is_cold_start(),
+        }
+    )
 
 
 @router.get("/topology/nodes")
 async def list_topology_nodes(
     http_request: Request,
-    layer: Optional[str] = None,
-    node_type: Optional[str] = None,
+    layer: str | None = None,
+    node_type: str | None = None,
 ):
     """列举拓扑图节点。"""
     components = _get_graph_components(http_request)
@@ -342,6 +382,7 @@ async def list_topology_nodes(
         return BaseResponse(success=False, message="自进化模式未初始化")
 
     from fnixagent.core.types import NodeType, TopologyLayer
+
     layer_enum = TopologyLayer(layer) if layer else None
     type_enum = NodeType(node_type) if node_type else None
     nodes = components.topology_graph.list_nodes(
@@ -349,20 +390,22 @@ async def list_topology_nodes(
         node_type=type_enum,
         include_deprecated=False,
     )
-    return BaseResponse(data=[
-        {
-            "node_id": n.node_id,
-            "layer": n.layer.value,
-            "node_type": n.node_type.value,
-            "name": n.name,
-            "weight": round(n.weight, 4),
-            "confidence": round(n.confidence, 4),
-            "use_count": n.use_count,
-            "deprecated": n.deprecated,
-            "skill_binding": n.skill_binding,
-        }
-        for n in nodes
-    ])
+    return BaseResponse(
+        data=[
+            {
+                "node_id": n.node_id,
+                "layer": n.layer.value,
+                "node_type": n.node_type.value,
+                "name": n.name,
+                "weight": round(n.weight, 4),
+                "confidence": round(n.confidence, 4),
+                "use_count": n.use_count,
+                "deprecated": n.deprecated,
+                "skill_binding": n.skill_binding,
+            }
+            for n in nodes
+        ]
+    )
 
 
 @router.post("/flywheel/reflect")
@@ -406,51 +449,17 @@ async def get_trace_stats(http_request: Request):
 # ---------------------------------------------------------------------------
 
 
-def _build_agent_loop_for_stream(http_request: Request):
-    """为流式输出构建 AgenticLoop 实例。
-
-    从应用状态获取 kernel/shell 并创建可流式执行的 AgenticLoop。
-    优先使用 LLMAdapter (API Key 接入)，回退到 kernel 的 mock 后端。
-    """
+def _build_agent_loop_for_stream(
+    http_request: Request,
+    workspace: str | None = None,
+    llm: dict | None = None,
+):
+    """为流式输出构建 AgenticLoop（含办公工具 + 可选请求级 LLM）。"""
     try:
-        from fnixagent.core.agent.loop import AgenticLoop
-        from fnixagent.core.agent.shell import create_shell
-        from fnixagent.core.tools.workspace import register_workspace_tools
-        from fnixagent.core.tools.registry import ToolRegistry
-        from fnixagent.core.llm.adapter import LLMAdapter
+        from fnixagent.services.work_agent import build_work_agent_loop
 
-        # 获取工作区
-        workspace_root = os.getenv("FNIXAGENT_WORKSPACE", os.getcwd())
-
-        # 创建 shell/kernel
-        shell = create_shell(in_memory=True, boot=True)
-
-        # 创建工具注册表
-        registry = ToolRegistry()
-        register_workspace_tools(registry, workspace_root)
-
-        # 尝试使用 LLMAdapter (API Key 接入)
-        adapter = LLMAdapter()
-        if adapter.is_configured:
-            llm_call = adapter.chat
-        else:
-            async def llm_call(messages, tools=None):
-                return {
-                    "choices": [{
-                        "message": {
-                            "role": "assistant",
-                            "content": "[LLM 未配置] 请在 .env 中设置 API Key",
-                        }
-                    }]
-                }
-
-        return AgenticLoop(
-            llm_call=llm_call,
-            tool_executor=registry,
-            workspace_root=workspace_root,
-            max_steps=30,
-            enable_evolution=False,  # 流式模式下暂不触发进化
-        )
+        root = workspace or os.getenv("FNIXAGENT_WORKSPACE") or os.getcwd()
+        return build_work_agent_loop(workspace_root=root, llm=llm)
     except Exception:
         return None
 
@@ -498,4 +507,3 @@ async def runner_chat(request: ChatRequest, http_request: Request):
             "usage": result.to_dict().get("usage"),
         },
     )
-

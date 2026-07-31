@@ -1,109 +1,112 @@
-# Python
-__pycache__/
-*.py[cod]
-*.egg-info/
-.pytest_cache/
-.coverage
-htmlcov/
-dist/
-build/
-*.egg-info
-
-# 虚拟环境
-.venv/
-venv/
-env/
-
-# Node / pnpm
-node_modules/
-pnpm-debug.log*
-npm-debug.log*
-.corepack/
-
-# 构建产物
-apps/*/dist/
-apps/*/build/
-packages/*/dist/
-packages/*/build/
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# 环境变量
+# --- Secrets & local env ---
 .env
 .env.local
 .env.*.local
-.env.prod
-.env.production
+*.pem
+*.key
+credentials.json
+secrets/
+apps/workbench/public/local-llm.bootstrap.json
+apps/workbench/.env.local
 
-# 备份配置(含敏感凭据)
-deploy/scripts/backup.env
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pyright/
+htmlcov/
+.coverage
+.coverage.*
+*.egg-info/
+dist/
+build/
+*.egg
 
-# 数据目录(运行时生成)
-data/uploads/*
-!data/uploads/.gitkeep
-
-# 测试报告
-pytest_report.xml
-coverage.xml
-
-# Helm Chart 依赖(运行 helm dependency update 拉取)
-deploy/helm/*/charts/*.tgz
-deploy/helm/*/Chart.lock
-
-# 敏感文件
-.secret_meta.json
-assets/keys/default.private.pem
-
-# 临时文件
-*.tmp
+# --- Node / pnpm ---
+node_modules/
+.pnpm-store/
 *.tsbuildinfo
+.turbo/
 
-# Vite 缓存(monorepo 子应用)
-apps/*/node_modules/
+# --- Rust / Tauri ---
+**/target/
+**/*.rs.bk
 
-# 调试文件
-_dbg_*.png
+# --- Desktop bundles ---
+apps/workbench/src-tauri/resources/fnixagent-py/*
+!apps/workbench/src-tauri/resources/fnixagent-py/README.md
+apps/workbench/src-tauri/resources/fnix-local/*
+!apps/workbench/src-tauri/resources/fnix-local/README.md
+apps/workbench/src-tauri/resources/agentd/*
+!apps/workbench/src-tauri/resources/agentd/README.md
+packaging/.pyinstaller/
+apps/desktop-tauri/resources/fnixagent-py/
+apps/desktop-tauri/resources/fnix-local/
+apps/desktop/dist/
+apps/desktop/out/
+apps/desktop/release/
 
-# 操作系统
+# --- IDE ---
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json.example
+*.swp
+*.swo
 .DS_Store
 Thumbs.db
 
-# 日志文件
+# --- Logs & runtime data ---
+logs/
 *.log
-
-# 私钥文件通配
-*.private.pem
-*.private.key
-
-# 运行时数据(保留种子数据)
-data/cache/
+data/standalone/*
+!data/standalone/.gitkeep
+data/topology/snapshots/*.json
+!data/topology/snapshots/.gitkeep
+data/traces/
+data/intelligence/
+data/uploads/*
+!data/uploads/.gitkeep
 data/db/
-data/logs/
-
-# FNIX-SE local index / durable / storage
+data/cache/
+.secret_meta.json
 .fnix/
-**/.fnix/
+.workbuddy/
 
-# AgentOS (fnix-se) canonical repo is FnixAi — keep local copy optional, never publish here
-/fnix-se/
+# --- Reference clones (index only) ---
+_references/*
+!_references/INDEX.md
+!_references/CLONE.md
 
-# Large third-party reference trees (study only; not FnixAgent product source)
-/_references/grok-build/
-/_references/ui/
+# --- Test / e2e ---
+playwright-report/
+test-results/
+blob-report/
 
-# AgentOS CI lives in FnixAi, not this repo
-.github/workflows/fnix-se-core.yml
+# --- Misc ---
+openapi.json
+app-icon.png
+*.local
+.cache/
 
-# Local AgentOS scaffold helpers (history)
-scripts/restore_fnix_se_from_trae_history.py
-scripts/scaffold_fnix_se_partial.py
-
-# Draft AgentOS docs — canonical copies live in FnixAi
-docs/FNIX-SE-*.md
-docs/archive/blueprint-ch12-plus.md
-_references/REFERENCES.md
-
+# --- Temp / one-shot outputs ---
+_write_test.tmp
+.tmp-agentd.out
+.fullsuite_report.txt
+.fullsuite_summary.txt
+apps/workbench/typecheck-out.txt
+apps/workbench/typecheck-exit.txt
+.fnix-smoke-test/
+.tmp-website-sim/
+.tmp-website-sim2/
+_debug_home/
+_debug_ws/
+debug_craft.py

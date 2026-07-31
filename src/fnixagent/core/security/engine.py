@@ -7,10 +7,11 @@
 
 设计: 组合而非继承,各子组件可独立替换。
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 from fnixagent.core.config import SecurityConfig
 from fnixagent.core.security.desensitize import Desensitizer
@@ -23,7 +24,6 @@ from fnixagent.core.security.injection import InjectionGuard
 from fnixagent.core.security.moderation import ContentModerator
 from fnixagent.core.security.sensitive import SensitiveDetector
 
-
 # ---------------------------------------------------------------------------
 # Phase 2.5: 安全事件审计日志
 # ---------------------------------------------------------------------------
@@ -31,9 +31,9 @@ from fnixagent.core.security.sensitive import SensitiveDetector
 
 def _audit_security(
     action: str,
-    user_id: Optional[int] = None,
-    detail: Optional[dict[str, Any]] = None,
-    ip_address: Optional[str] = None,
+    user_id: int | None = None,
+    detail: dict[str, Any] | None = None,
+    ip_address: str | None = None,
 ) -> None:
     """安全事件写入审计日志(失败不影响主流程)。
 
@@ -45,6 +45,7 @@ def _audit_security(
     """
     try:
         from fnixagent.core.audit import AuditLogger
+
         AuditLogger().log(
             action=action,
             user_id=user_id,
@@ -65,6 +66,7 @@ class SecurityCheckResult:
         sanitized_text: 脱敏后的文本
         details: 详细信息字典
     """
+
     passed: bool
     blocked_reason: str = ""
     sanitized_text: str = ""
@@ -88,11 +90,11 @@ class SecurityEngine:
 
     def __init__(
         self,
-        config: Optional[SecurityConfig] = None,
-        sensitive: Optional[SensitiveDetector] = None,
-        injection: Optional[InjectionGuard] = None,
-        moderator: Optional[ContentModerator] = None,
-        desensitizer: Optional[Desensitizer] = None,
+        config: SecurityConfig | None = None,
+        sensitive: SensitiveDetector | None = None,
+        injection: InjectionGuard | None = None,
+        moderator: ContentModerator | None = None,
+        desensitizer: Desensitizer | None = None,
     ) -> None:
         """初始化安全引擎。
 
@@ -119,8 +121,8 @@ class SecurityEngine:
     def check_input(
         self,
         text: str,
-        user_id: Optional[int] = None,
-        ip_address: Optional[str] = None,
+        user_id: int | None = None,
+        ip_address: str | None = None,
     ) -> SecurityCheckResult:
         """
         对用户输入做安全检查:
@@ -159,6 +161,7 @@ class SecurityEngine:
                 # Phase 2.10: 记录注入拦截指标
                 try:
                     from fnixagent.core.observability.metrics import record_injection_blocked
+
                     record_injection_blocked(injection_type="prompt_injection")
                 except Exception:
                     pass
@@ -187,6 +190,7 @@ class SecurityEngine:
                 # Phase 2.10: 记录敏感词命中指标
                 try:
                     from fnixagent.core.observability.metrics import record_sensitive_hit
+
                     for w in words:
                         record_sensitive_hit(category=w)
                 except Exception:
@@ -211,9 +215,7 @@ class SecurityEngine:
         if not self._config.moderation_enabled:
             return SecurityCheckResult(passed=True, sanitized_text=text)
 
-        mod_result = self._moderator.review(
-            text, auto_sanitize=self._config.desensitize_enabled
-        )
+        mod_result = self._moderator.review(text, auto_sanitize=self._config.desensitize_enabled)
         details = {
             "issues": mod_result.issues,
             "sensitive_hits": mod_result.sensitive_hits,
@@ -261,8 +263,8 @@ class SecurityEngine:
     def run_input_guardrails(
         self,
         text: str,
-        user_id: Optional[int] = None,
-        ip_address: Optional[str] = None,
+        user_id: int | None = None,
+        ip_address: str | None = None,
     ) -> GuardrailPipelineResult:
         """执行输入 Guardrail 管道(注入检测 + 敏感词 + 内容审核)。
 
@@ -276,9 +278,7 @@ class SecurityEngine:
         Returns:
             GuardrailPipelineResult:聚合结果(passed/tripwire/blocked_reason)
         """
-        result = self._guardrail_pipeline.run_input(
-            text, user_id=user_id, ip_address=ip_address
-        )
+        result = self._guardrail_pipeline.run_input(text, user_id=user_id, ip_address=ip_address)
         if result.tripwire_triggered:
             _audit_security(
                 "guardrail.input.tripwire",
@@ -295,7 +295,7 @@ class SecurityEngine:
     def run_output_guardrails(
         self,
         text: str,
-        user_id: Optional[int] = None,
+        user_id: int | None = None,
     ) -> GuardrailPipelineResult:
         """执行输出 Guardrail 管道(内容审核 + PII 脱敏)。
 

@@ -1,4 +1,4 @@
-﻿"""
+"""
 技能调度器 (SkillScheduler) 单元测试。
 
 测试模块: fnixagent.core.skills.scheduler.SkillScheduler
@@ -9,25 +9,21 @@
     - select_for_path: 路径命中 / 空路径 / 无绑定
     - describe_schedule: 返回结构、top_k 限制
 """
-import pytest
 
 from fnixagent.core.skills.levels import SkillPermissionPolicy
 from fnixagent.core.skills.scheduler import SkillScheduler
-from fnixagent.core.tools.protocol import ToolMetadata
 from fnixagent.core.tools.registry import ToolRegistry
 from fnixagent.core.types import SkillLevel, TopologyPath
-
 
 # ---------------------------------------------------------------------------
 # __init__
 # ---------------------------------------------------------------------------
 
+
 class TestInit:
     """测试 SkillScheduler 初始化。"""
 
-    def test_init_with_custom_policy(
-        self, sample_registry, binding_protocol, permission_policy
-    ):
+    def test_init_with_custom_policy(self, sample_registry, binding_protocol, permission_policy):
         """传入自定义权限策略时应直接使用。"""
         scheduler = SkillScheduler(
             registry=sample_registry,
@@ -49,6 +45,7 @@ class TestInit:
 # ---------------------------------------------------------------------------
 # select_skills
 # ---------------------------------------------------------------------------
+
 
 class TestSelectSkills:
     """测试 select_skills() 方法。"""
@@ -81,25 +78,19 @@ class TestSelectSkills:
 
     def test_select_category_filter(self, scheduler, sample_path):
         """category 过滤应仅返回该分类的工具。"""
-        result = scheduler.select_skills(
-            path=sample_path, top_k=10, category="search"
-        )
+        result = scheduler.select_skills(path=sample_path, top_k=10, category="search")
         names = {t.name for t in result}
         # search 分类包含 search_skill 和 unbound_skill
         assert names == {"search_skill", "unbound_skill"}
 
     def test_select_category_no_match(self, scheduler, sample_path):
         """不存在的分类应返回空列表。"""
-        result = scheduler.select_skills(
-            path=sample_path, top_k=10, category="nonexistent"
-        )
+        result = scheduler.select_skills(path=sample_path, top_k=10, category="nonexistent")
         assert result == []
 
     def test_select_auto_invoke_only(self, scheduler, sample_path):
         """auto_invoke_only=True 应仅返回可自动调用的技能(BASIC 级)。"""
-        result = scheduler.select_skills(
-            path=sample_path, top_k=10, auto_invoke_only=True
-        )
+        result = scheduler.select_skills(path=sample_path, top_k=10, auto_invoke_only=True)
         names = {t.name for t in result}
         # BASIC 级: search_skill, unbound_skill
         # REASONING 级 convert_skill 被排除(需确认)
@@ -124,9 +115,7 @@ class TestSelectSkills:
         names = {t.name for t in result}
         assert "convert_skill" in names
 
-    def test_select_disabled_tool_skipped(
-        self, scheduler, sample_registry, sample_path
-    ):
+    def test_select_disabled_tool_skipped(self, scheduler, sample_registry, sample_path):
         """enabled=False 的工具应被跳过。"""
         # 禁用 unbound_skill(优先级最高的工具)
         tool = sample_registry.get("unbound_skill")
@@ -149,9 +138,7 @@ class TestSelectSkills:
         assert len(result) >= 1
         assert result[0].name == "unbound_skill"
 
-    def test_select_authorized_meta_skill(
-        self, scheduler, permission_policy, sample_path
-    ):
+    def test_select_authorized_meta_skill(self, scheduler, permission_policy, sample_path):
         """显式授权的 META 级技能应被包含在结果中。"""
         permission_policy.authorize("meta_skill")
         result = scheduler.select_skills(path=sample_path, top_k=10)
@@ -162,6 +149,7 @@ class TestSelectSkills:
 # ---------------------------------------------------------------------------
 # select_by_concept
 # ---------------------------------------------------------------------------
+
 
 class TestSelectByConcept:
     """测试 select_by_concept() 方法。"""
@@ -184,9 +172,7 @@ class TestSelectByConcept:
         result = scheduler.select_by_concept("L2:nonexistent")
         assert result == []
 
-    def test_select_by_concept_skill_not_in_registry(
-        self, scheduler, binding_protocol
-    ):
+    def test_select_by_concept_skill_not_in_registry(self, scheduler, binding_protocol):
         """绑定的技能未在 registry 注册时应返回空列表。"""
         # chart_skill 绑定在 concept3 上,但未在 registry 注册
         result = scheduler.select_by_concept("L2:concept3")
@@ -196,6 +182,7 @@ class TestSelectByConcept:
 # ---------------------------------------------------------------------------
 # select_for_path
 # ---------------------------------------------------------------------------
+
 
 class TestSelectForPath:
     """测试 select_for_path() 方法。"""
@@ -249,6 +236,7 @@ class TestSelectForPath:
 # ---------------------------------------------------------------------------
 # describe_schedule
 # ---------------------------------------------------------------------------
+
 
 class TestDescribeSchedule:
     """测试 describe_schedule() 方法。"""

@@ -10,17 +10,17 @@ LLM Provider 适配器 - OpenAI 兼容接口。
   - 异常信息脱敏:不携带 API Key 与完整请求头
   - 响应体大小限制,避免恶意/异常大响应导致 OOM
 """
+
 from __future__ import annotations
 
 import json
 import os
 import time
-from typing import Any, Optional
+from typing import Any
 
 from fnixagent.core.exceptions import LLMError
 from fnixagent.core.llm.base import BaseLLMProvider, LLMRequest
-from fnixagent.core.types import LLMResponse, Message, MessageRole, TokenUsage
-
+from fnixagent.core.types import LLMResponse, MessageRole, TokenUsage
 
 # 单次响应体大小上限(字节),超过则拒绝解析以防 OOM
 _MAX_RESPONSE_BYTES = 32 * 1024 * 1024  # 32 MiB
@@ -126,6 +126,14 @@ class OpenAICompatibleProvider(BaseLLMProvider):
         if request.stop:
             payload["stop"] = request.stop
 
+        # Spec 2: 透传 provider 专属参数（如 DashScope enable_thinking / OpenAI reasoning_effort）
+        # — request.extra 由上层 (LLMAdapter / AgenticLoop) 注入，用于触发思考模式
+        # — 思考模式开启后，response.message.reasoning_content 会被 _parse_response 提取
+        if request.extra:
+            for k, v in request.extra.items():
+                if v is not None and k not in payload:
+                    payload[k] = v
+
         headers = {
             "Authorization": f"Bearer {self._api_key}",
             "Content-Type": "application/json",
@@ -134,7 +142,7 @@ class OpenAICompatibleProvider(BaseLLMProvider):
         model_for_err = request.model or self._model_name
 
         # 重试逻辑:仅对可重试错误重试(保持 max_retries 为总尝试次数的语义)
-        last_error: Optional[str] = None
+        last_error: str | None = None
         for attempt in range(self._max_retries):
             try:
                 client = self._get_client()
@@ -219,7 +227,33 @@ class OpenAICompatibleProvider(BaseLLMProvider):
         message = choice.get("message", {})
 
         # 提取内容
-        content = message.get("content", "")
+        content = message.get("content", "") or ""
+
+        # Spec 2: 提取 reasoning model 的思考链 (reasoning_content / reasoning / thinking)
+        # - Qwen3 (DashScope OpenAI 兼容模式): message.reasoning_content
+        # - OpenAI o1/o3: message.reasoning (汇总) 或 reasoning_content (per-step)
+        # - DeepSeek-R1: message.reasoning_content
+        # - Claude (Anthropic API): thinking blocks (需 adapter 转换)
+        # - GLM-4.5/4.6: message.reasoning_content (启用 thinking 参数后)
+        reasoning_content = (
+            message.get("reasoning_content")
+            or message.get("reasoning")
+            or message.get("thinking")
+            or ""
+        )
+        if not isinstance(reasoning_content, str):
+            # 某些 provider 可能返回 list[dict] (Anthropic thinking blocks)
+            try:
+                if isinstance(reasoning_content, list):
+                    reasoning_content = "\n\n".join(
+                        str(b.get("thinking", b.get("text", "")))
+                        for b in reasoning_content
+                        if isinstance(b, dict)
+                    )
+                else:
+                    reasoning_content = str(reasoning_content)
+            except Exception:
+                reasoning_content = ""
 
         # 提取工具调用
         tool_calls_raw = message.get("tool_calls", [])
@@ -227,25 +261,48 @@ class OpenAICompatibleProvider(BaseLLMProvider):
         for tc in tool_calls_raw:
             func = tc.get("function", {})
             args_raw = func.get("arguments", "{}")
-            # arguments 字段是字符串形式的 JSON,解析失败时报错(含上下文)
+            # arguments 可能是 JSON 字符串，也可能已被上游解析成 dict
             try:
-                args = json.loads(args_raw) if args_raw else {}
-            except (json.JSONDecodeError, TypeError) as je:
-                raise LLMError(
-                    f"[{self._name}] invalid tool_call arguments JSON: {je}"
-                ) from je
-            tool_calls.append({
-                "id": tc.get("id", ""),
-                "name": func.get("name", ""),
-                "arguments": args,
-            })
+                if isinstance(args_raw, dict):
+                    args = args_raw
+                elif isinstance(args_raw, (bytes, bytearray)):
+                    args = json.loads(args_raw.decode("utf-8") or "{}")
+                elif isinstance(args_raw, str):
+                    args = json.loads(args_raw) if args_raw.strip() else {}
+                elif args_raw is None:
+                    args = {}
+                else:
+                    args = {"value": args_raw}
+                if not isinstance(args, dict):
+                    args = {"value": args}
+            except (json.JSONDecodeError, TypeError, UnicodeDecodeError) as je:
+                raise LLMError(f"[{self._name}] invalid tool_call arguments JSON: {je}") from je
+            tool_calls.append(
+                {
+                    "id": tc.get("id", ""),
+                    "name": func.get("name", ""),
+                    "arguments": args,
+                }
+            )
 
         # 提取 usage
-        usage_raw = data.get("usage", {})
+        usage_raw = data.get("usage", {}) or {}
+        # P4.2: 解析 prompt cache 命中 token 数
+        # 兼容三种字段:
+        #   - OpenAI / qwen-plus / GLM: usage.prompt_tokens_details.cached_tokens
+        #   - DeepSeek: usage.prompt_cache_hit_tokens
+        #   - 旧 provider 无 cache 字段: 0
+        prompt_details = usage_raw.get("prompt_tokens_details") or {}
+        cached_tokens = (
+            prompt_details.get("cached_tokens", 0)
+            or usage_raw.get("prompt_cache_hit_tokens", 0)
+            or 0
+        )
         usage = TokenUsage(
             prompt_tokens=usage_raw.get("prompt_tokens", 0),
             completion_tokens=usage_raw.get("completion_tokens", 0),
             total_tokens=usage_raw.get("total_tokens", 0),
+            cached_tokens=int(cached_tokens),
         )
 
         return LLMResponse(
@@ -255,6 +312,7 @@ class OpenAICompatibleProvider(BaseLLMProvider):
             tool_calls=tool_calls,
             finish_reason=choice.get("finish_reason", "stop"),
             raw=data,
+            reasoning_content=reasoning_content,
         )
 
 
