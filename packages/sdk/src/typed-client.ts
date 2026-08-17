@@ -1,4 +1,11 @@
 /**
+ * Copyright (C) 2026 FnixAgent. All rights reserved.
+ * Software Name: FnixAgent 智能工作台系统 V1.0
+ * This software and its source code are proprietary and confidential.
+ * Unauthorized copying, modification, distribution, or use is strictly prohibited.
+ */
+
+/**
  * fnixagent 类型安全 API Client — 基于 openapi-fetch
  * 利用 openapi-typescript 生成的 schema 实现端到端类型安全
  */

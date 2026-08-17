@@ -1,7 +1,14 @@
 /**
+ * Copyright (C) 2026 FnixAgent. All rights reserved.
+ * Software Name: FnixAgent 智能工作台系统 V1.0
+ * This software and its source code are proprietary and confidential.
+ * Unauthorized copying, modification, distribution, or use is strictly prohibited.
+ */
+
+/**
  * Spec 3: Mermaid 代码块实时渲染
  * ============================================================
- * 对标: mermaid-js/mermaid-live-editor (https://github.com/mermaid-js/mermaid-live-editor)
+ * 对标: Mermaid 实时编辑器 (https://github.com/Mermaid 实时编辑器)
  *
  * 设计:
  *   - mermaid 11 动态 import,避免首屏 bundle 膨胀(~150KB)

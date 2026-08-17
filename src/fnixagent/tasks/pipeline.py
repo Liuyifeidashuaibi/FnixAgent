@@ -27,6 +27,12 @@ fnixagent 任务引擎的批量执行层:支持多文件并行处理、任务模
   - 拓扑排序检测环依赖,有环则整体失败
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import os
@@ -47,11 +53,9 @@ __all__ = [
     "Pipeline",
 ]
 
-
 # ---------------------------------------------------------------------------
 # 批量配置
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class BatchConfig:
@@ -80,11 +84,9 @@ class BatchConfig:
     suffix: str = "_processed"
     progress_callback: Callable[[str, float], None] | None = None
 
-
 # ---------------------------------------------------------------------------
 # 批量结果
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class BatchResult:
@@ -118,11 +120,9 @@ class BatchResult:
             "total_duration_ms": round(self.total_duration_ms, 2),
         }
 
-
 # ---------------------------------------------------------------------------
 # 批量处理管道
 # ---------------------------------------------------------------------------
-
 
 class Pipeline(BaseExpert):
     """批量处理管道:多文件并行 + 任务模板 + 失败重试 + 进度回调。

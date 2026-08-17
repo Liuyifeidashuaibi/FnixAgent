@@ -4,6 +4,12 @@ FastAPI 主入口 - fnixagent 智能办公助手服务。
 提供完整的 RESTful API 和流式对话接口。
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 import os
 import sys
 import uuid
@@ -358,7 +364,7 @@ async def root():
     """根路由,返回服务基本信息与文档地址。"""
     return {
         "name": "fnixagent",
-        "version": "1.1.0-beta",
+        "version": "1.0.0",
         "status": "running",
         "docs": "/docs",
         "deploy": profile_info(),
@@ -373,7 +379,7 @@ async def health_check():
     return {
         "status": "healthy",
         "service": "fnixagent",
-        "version": "1.1.0-beta",
+        "version": "1.0.0",
         **profile_info(),
     }
 
@@ -394,7 +400,7 @@ async def get_stats(request: Request):
 # ASGI 网关闸门(最外层,鉴权 → 配额 → 审计)— P0-01
 # ---------------------------------------------------------------------------
 # 必须在所有路由注册之后包裹,确保覆盖全部 HTTP / WebSocket / 挂载子应用。
-# 开发模式(debug=True)或 standalone 开源形态下 auth_required=False;
+# 开发模式(debug=True)或 standalone 形态下 auth_required=False;
 # cloud 生产模式 auth_required=True,未鉴权请求 fail-closed。
 # uvicorn 引用 fnixagent.main:app,此处置换为包裹后的 ASGI 应用。
 from fnixagent.core.gateway.capability import CapabilityMiddleware
@@ -402,7 +408,7 @@ from fnixagent.core.gateway.middleware import GatewayMiddleware
 from fnixagent.core.profile import is_standalone
 
 _settings = Settings()
-# Standalone / debug：本机开源模式无需 JWT（对标 Hermes 自托管）
+# Standalone / debug：本机模式无需 JWT（对标 Hermes 自托管）
 app = GatewayMiddleware(
     app,
     auth_required=not (_settings.debug or is_standalone()),

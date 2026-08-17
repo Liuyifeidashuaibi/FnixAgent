@@ -16,6 +16,12 @@
   - 并行执行通过 _lock 保护步骤列表的读写
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import abc
@@ -28,7 +34,6 @@ from typing import Any
 
 # 默认上传文件大小上限(50MB),防止大文件耗尽内存
 DEFAULT_MAX_FILE_BYTES: int = 50 * 1024 * 1024
-
 
 def _validate_file_path(file_path: str, base_dir: str | None = None) -> str:
     """校验文件路径安全性:非空 + 禁止路径穿越 + 可选基目录限制。
@@ -57,11 +62,9 @@ def _validate_file_path(file_path: str, base_dir: str | None = None) -> str:
             raise ValueError(f"路径越出基目录 {base_dir}: {file_path}")
     return abs_path
 
-
 # ---------------------------------------------------------------------------
 # PipelineContext
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class PipelineContext:
@@ -127,11 +130,9 @@ class PipelineContext:
             raise ValueError(f"文件大小 {size} 字节超过上限 {max_bytes} 字节: {self.file_path}")
         return size
 
-
 # ---------------------------------------------------------------------------
 # PipelineStep
 # ---------------------------------------------------------------------------
-
 
 class PipelineStep(abc.ABC):
     """流水线步骤抽象基类。"""
@@ -156,11 +157,9 @@ class PipelineStep(abc.ABC):
         """是否应执行此步骤(默认 True,子类可按文档类型跳过)。"""
         return True
 
-
 # ---------------------------------------------------------------------------
 # KnowledgePipeline
 # ---------------------------------------------------------------------------
-
 
 class KnowledgePipeline:
     """知识处理流水线。

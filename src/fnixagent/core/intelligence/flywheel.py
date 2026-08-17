@@ -1,7 +1,7 @@
 """
 自进化飞轮调度 — 定时触发，采集→提炼→生成升级建议，形成闭环
 
-飞轮架构（借鉴自顶尖开源项目设计）：
+飞轮架构（借鉴自顶尖项目设计）：
 
 ```
 采集阶段 (Collector)
@@ -18,6 +18,12 @@
   - 每周: 监控仓库发布 + 技术博客 + Reddit 讨论
   - 每月: 会议论文 + 协议更新 + 领域全景
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
 
 from __future__ import annotations
 

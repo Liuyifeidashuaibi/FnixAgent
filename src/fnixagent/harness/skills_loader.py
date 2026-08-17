@@ -14,6 +14,12 @@
 YAML frontmatter 解析零依赖（不引入 pyyaml），仅支持简单 key: value + list。
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import os
@@ -37,7 +43,7 @@ class HarnessSkill:
     description: str = ""
     triggers: list[str] = field(default_factory=list)
     priority: str = "normal"  # high / normal / low
-    # Trae Skill 系统：启用/禁用（frontmatter.enabled，缺省 true）
+    # 技能管理系统：启用/禁用（frontmatter.enabled，缺省 true）
     enabled: bool = True
 
 
@@ -184,7 +190,7 @@ def format_skills_block(skills: list[HarnessSkill]) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Trae Skill 系统：写入/删除/启停静态技能（对标 Trae Skills + Cursor Rules）
+# 技能管理系统：写入/删除/启停静态技能（技能系统 + 项目规则）
 # ---------------------------------------------------------------------------
 
 

@@ -1,4 +1,11 @@
 /**
+ * Copyright (C) 2026 FnixAgent. All rights reserved.
+ * Software Name: FnixAgent 智能工作台系统 V1.0
+ * This software and its source code are proprietary and confidential.
+ * Unauthorized copying, modification, distribution, or use is strictly prohibited.
+ */
+
+/**
  * FnixStatusBar — 底部一行信号灯
  * 运行环境信号灯：agentd / LLM / workspace / sidecar
  * 极简新中式：白底 · 细灰顶边线 · 深灰文字 · 小圆点状态色

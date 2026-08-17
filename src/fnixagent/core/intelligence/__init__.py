@@ -43,7 +43,7 @@ FnixAgent ∞ 自进化飞轮 v2.0 — 七层闭环进化体系 (Intelligence & 
   │  Layer 2: 遗传进化层 (GeneticEvolver)      ← GEPA+SIPDO         │
   │  Gene Encoder │ ParetoFrontier │ Tournament │ Crossover │ Mutate │
   ├──────────────────────────────────────────────────────────────────┤
-  │  Layer 1: 循环工程层 (LoopEngine)          ← Boris Cherny 范式   │
+  │  Layer 1: 循环工程层 (LoopEngine)          ← 循环工程范式   │
   │  LoopExecutor │ LoopScheduler │ NudgeEngine │ LoopRegistry      │
   ├──────────────────────────────────────────────────────────────────┤
   │  Layer 0: 宇宙感知层 (ContinuousCollector)  ← 14+信息源          │
@@ -66,6 +66,12 @@ FnixAgent ∞ 自进化飞轮 v2.0 — 七层闭环进化体系 (Intelligence & 
       AgentHarness,           # 全方位优化引擎
   )
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
 
 from .agent_optimizer import (
     AgentHarness,

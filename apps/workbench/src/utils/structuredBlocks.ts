@@ -1,13 +1,20 @@
 /**
+ * Copyright (C) 2026 FnixAgent. All rights reserved.
+ * Software Name: FnixAgent 智能工作台系统 V1.0
+ * This software and its source code are proprietary and confidential.
+ * Unauthorized copying, modification, distribution, or use is strictly prohibited.
+ */
+
+/**
  * Structured event blocks — AG-UI 协议对齐的结构化消息块。
  *
  * 调研证据：
- * - AG-UI 协议（CopilotKit 主导，16 种标准事件类型）：
+ * - AG-UI 协议（AG-UI 协议，16 种标准事件类型）：
  *   RunStarted/RunFinished/RunError/StepStarted/StepFinished/
  *   TextMessageStart/Content/End/ToolCallStart/Args/End/Result/
  *   StateSnapshot/StateDelta/MessagesSnapshot/ActivitySnapshot/ActivityDelta
- * - OpenHands Event Sourcing：Action/Observation 事件不可变、可重放、可审计
- * - Claude Code：block-by-block 渲染（thinking/tool_use/tool_result/text）
+ * - 事件溯源：Action/Observation 事件不可变、可重放、可审计
+ * - 逐块渲染：block-by-block 渲染（thinking/tool_use/tool_result/text）
  *
  * 设计：
  * - 后端 RunEvent（AG-UI 兼容信封）→ 前端 StructuredBlock 一对一映射
@@ -107,12 +114,12 @@ export interface TextBlock {
 }
 
 /**
- * WidgetBlock — AI 内联可视化（对标 Trae dynamic-ui PureShowWidget）
+ * WidgetBlock — AI 内联可视化（动态 UI 渲染）
  *
  * 调研：
- * - Trae dynamic-ui：模型写 SVG/HTML，PureShowWidget 工具在对话流内渲染
+ * - 动态 UI 渲染：模型写 SVG/HTML，PureShowWidget 工具在对话流内渲染
  * - Claude Inline Visualizations：Settings → Visuals 开关，HTML/SVG 即时渲染
- * - Claude Artifacts：iframe sandbox + 严格 CSP（connect-src 'none' 防数据外传）
+ * - 内联产物：iframe sandbox + 严格 CSP（connect-src 'none' 防数据外传）
  *
  * 安全：前端 WidgetBlock.tsx 用 iframe sandbox="allow-scripts"（不加 allow-same-origin）
  * + 严格 CSP + DOMPurify 三层防御。后端仅透传 code，不做任何渲染。
@@ -344,7 +351,7 @@ export function appendBlock(
   }
 
   // progress block 始终替换最后一个 progress block（单一进度条更新 UX）
-  // 调研：Claude Code / Cursor 均为单一 "Thinking..." 指示器更新，不堆叠多个进度条
+  // 设计：单一 "Thinking..." 指示器更新，不堆叠多个进度条
   // 审计轨迹保留在后端 RunEngine 事件日志（SQLite persist），前端只展示当前步骤
   if (newBlock.kind === "progress" && last.kind === "progress") {
     return [

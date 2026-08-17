@@ -12,6 +12,12 @@ API 路由 - 管理后台接口(Phase 1.8)。
     - 重置密码生成随机临时密码(Argon2id 哈希存储)
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 import os
 import secrets
 import string

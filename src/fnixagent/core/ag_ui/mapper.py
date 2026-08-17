@@ -25,6 +25,12 @@ https://docs.ag-ui.com/concepts/events
     19. HUMAN_APPROVAL       — 人工审批门(阻塞)
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import json
@@ -99,15 +105,12 @@ CHUNK_MAP: dict[str, str] = {
     "needs_input": AGUI_HUMAN_APPROVAL,
 }
 
-
 def new_run_id() -> str:
     """生成新的 run id(16 字符 hex)。"""
     return uuid.uuid4().hex[:16]
 
-
 def _now_ms() -> int:
     return int(time.time() * 1000)
-
 
 def map_work_chunk(chunk_type: str, content: Any, run_id: str) -> dict[str, Any]:
     """Fnix Work NDJSON chunk → AG-UI event dict。
@@ -206,14 +209,11 @@ def map_work_chunk(chunk_type: str, content: Any, run_id: str) -> dict[str, Any]
 
     return event
 
-
 def encode_sse(event: dict[str, Any]) -> str:
     """将事件字典编码为 SSE 行(data: <json>\\n\\n)。"""
     return f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
 
-
 # ── 便捷构造函数 ──────────────────────────────────────────────
-
 
 def run_started(run_id: str) -> str:
     """构造 RUN_STARTED SSE。"""
@@ -224,7 +224,6 @@ def run_started(run_id: str) -> str:
             "runId": run_id,
         }
     )
-
 
 def run_finished(run_id: str, result: Any = None) -> str:
     """构造 RUN_FINISHED SSE。"""
@@ -237,7 +236,6 @@ def run_finished(run_id: str, result: Any = None) -> str:
         }
     )
 
-
 def run_error(run_id: str, message: str) -> str:
     """构造 RUN_ERROR SSE。"""
     return encode_sse(
@@ -248,7 +246,6 @@ def run_error(run_id: str, message: str) -> str:
             "message": message,
         }
     )
-
 
 def text_message_start(run_id: str) -> str:
     """构造 TEXT_MESSAGE_START SSE。"""
@@ -262,7 +259,6 @@ def text_message_start(run_id: str) -> str:
         }
     )
 
-
 def text_message_content(run_id: str, delta: str) -> str:
     """构造 TEXT_MESSAGE_CONTENT SSE。"""
     return encode_sse(
@@ -275,7 +271,6 @@ def text_message_content(run_id: str, delta: str) -> str:
         }
     )
 
-
 def text_message_end(run_id: str) -> str:
     """构造 TEXT_MESSAGE_END SSE。"""
     return encode_sse(
@@ -286,7 +281,6 @@ def text_message_end(run_id: str) -> str:
             "messageId": run_id,
         }
     )
-
 
 def tool_call_start(run_id: str, tool_name: str, tool_call_id: str | None = None) -> str:
     """构造 TOOL_CALL_START SSE。"""
@@ -300,7 +294,6 @@ def tool_call_start(run_id: str, tool_name: str, tool_call_id: str | None = None
             "parentMessageId": run_id,
         }
     )
-
 
 def tool_call_result(
     run_id: str, tool_name: str, content: Any, tool_call_id: str | None = None
@@ -320,7 +313,6 @@ def tool_call_result(
         }
     )
 
-
 def step_started(run_id: str, step_name: str) -> str:
     """构造 STEP_STARTED SSE。"""
     return encode_sse(
@@ -332,7 +324,6 @@ def step_started(run_id: str, step_name: str) -> str:
         }
     )
 
-
 def step_finished(run_id: str, step_name: str) -> str:
     """构造 STEP_FINISHED SSE。"""
     return encode_sse(
@@ -343,7 +334,6 @@ def step_finished(run_id: str, step_name: str) -> str:
             "stepName": step_name,
         }
     )
-
 
 def human_approval(run_id: str, reason: str) -> str:
     """构造 HUMAN_APPROVAL SSE(阻塞,等待前端响应)。"""
@@ -357,7 +347,6 @@ def human_approval(run_id: str, reason: str) -> str:
         }
     )
 
-
 def custom_event(run_id: str, name: str, value: Any) -> str:
     """构造 CUSTOM SSE(evolution/KTG/STP/MFP/mission/widget/review/heal)。"""
     return encode_sse(
@@ -370,7 +359,6 @@ def custom_event(run_id: str, name: str, value: Any) -> str:
         }
     )
 
-
 def state_snapshot(run_id: str, snapshot: Any) -> str:
     """构造 STATE_SNAPSHOT SSE(上下文预算等全量状态)。"""
     return encode_sse(
@@ -382,7 +370,6 @@ def state_snapshot(run_id: str, snapshot: Any) -> str:
         }
     )
 
-
 def state_delta(run_id: str, delta: Any) -> str:
     """构造 STATE_DELTA SSE(增量状态)。"""
     return encode_sse(
@@ -393,7 +380,6 @@ def state_delta(run_id: str, delta: Any) -> str:
             "delta": delta if isinstance(delta, str) else json.dumps(delta, ensure_ascii=False),
         }
     )
-
 
 def map_pipeline_events(
     chunk_type: str,
@@ -411,7 +397,6 @@ def map_pipeline_events(
         yield encode_sse(map_work_chunk("error", content, run_id))
         return
     yield encode_sse(map_work_chunk(chunk_type, content, run_id))
-
 
 # ── 事件类型清单(供前端对齐) ──────────────────────────────────
 ALL_EVENT_TYPES: tuple[str, ...] = (

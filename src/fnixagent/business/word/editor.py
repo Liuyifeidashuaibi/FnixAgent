@@ -20,6 +20,12 @@ BUG 修复:
     改为先 clamp 再写入,跳过越界数据
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 import logging
 import os
 
@@ -28,7 +34,6 @@ from docx import Document
 from fnixagent.core.tools.protocol import ToolMetadata
 
 _logger = logging.getLogger(__name__)
-
 
 # ---------------------------------------------------------------------------
 # 常量
@@ -44,11 +49,9 @@ _VALID_OPERATIONS = frozenset({"add_text", "replace", "insert_table", "add_headi
 _HEADING_LEVEL_MIN = 0
 _HEADING_LEVEL_MAX = 9
 
-
 # ---------------------------------------------------------------------------
 # 内部工具
 # ---------------------------------------------------------------------------
-
 
 def _check_input_file(file_path: str) -> dict | None:
     """校验输入文件存在性与大小;返回错误 dict(无错误返回 None)。"""
@@ -81,11 +84,9 @@ def _check_input_file(file_path: str) -> dict | None:
         return {"success": False, "error": "input file is empty", "file_path": file_path}
     return None
 
-
 # ---------------------------------------------------------------------------
 # Word 读取工具 (P0 修复: 让 LLM 能读取已有 docx 内容, 用于总结/分析)
 # ---------------------------------------------------------------------------
-
 
 def read_docx(file_path: str) -> dict:
     """读取 Word 文档文本内容。
@@ -155,11 +156,9 @@ def read_docx(file_path: str) -> dict:
             "file_path": file_path,
         }
 
-
 # ---------------------------------------------------------------------------
 # Word 创建工具
 # ---------------------------------------------------------------------------
-
 
 def create_docx(
     content: str,
@@ -234,11 +233,9 @@ def create_docx(
             "error": f"{type(e).__name__}: {e}",
         }
 
-
 # ---------------------------------------------------------------------------
 # Word 编辑工具
 # ---------------------------------------------------------------------------
-
 
 def edit_docx(
     file_path: str,
@@ -387,11 +384,9 @@ def edit_docx(
             "file_path": file_path,
         }
 
-
 # ---------------------------------------------------------------------------
 # Word 格式化工具
 # ---------------------------------------------------------------------------
-
 
 def format_docx(file_path: str, style_name: str = "Normal") -> dict:
     """
@@ -441,11 +436,9 @@ def format_docx(file_path: str, style_name: str = "Normal") -> dict:
             "error": f"{type(e).__name__}: {e}",
         }
 
-
 # ---------------------------------------------------------------------------
 # 工具元数据
 # ---------------------------------------------------------------------------
-
 
 TOOL_METADATA = {
     "create_docx": ToolMetadata(
@@ -494,7 +487,6 @@ TOOL_METADATA = {
         },
     ),
 }
-
 
 def register_word_tools(registry) -> None:
     """注册 Word 工具到工具注册中心。"""

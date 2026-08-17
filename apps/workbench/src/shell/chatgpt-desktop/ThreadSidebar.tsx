@@ -1,4 +1,11 @@
 /**
+ * Copyright (C) 2026 FnixAgent. All rights reserved.
+ * Software Name: FnixAgent 智能工作台系统 V1.0
+ * This software and its source code are proprietary and confidential.
+ * Unauthorized copying, modification, distribution, or use is strictly prohibited.
+ */
+
+/**
  * Sidebar thread list — search, open, rename, delete.
  */
 
@@ -30,7 +37,7 @@ interface Props {
   onNewChat?: () => void;
 }
 
-/** 从 run.meta 提取展示标题（对标 Cursor checkpoints 的 run 列表） */
+/** 从 run.meta 提取展示标题（可恢复任务机制 的 run 列表） */
 function runTitle(meta: Record<string, unknown> | undefined, runId: string): string {
   const u = meta?.user_input;
   if (typeof u === "string" && u.trim()) {
@@ -50,7 +57,7 @@ function timeAgo(ts: number | undefined): string {
   return `${Math.floor(diff / 86400)}天前`;
 }
 
-/** Spec 4: 可恢复任务 section — 对标 Cursor checkpoints / Codex `codex resume --last` */
+/** Spec 4: 可恢复任务 section — 可恢复任务机制 / Codex `codex resume --last` */
 function ResumableRuns({
   onResume,
   disabled,

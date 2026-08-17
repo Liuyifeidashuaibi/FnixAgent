@@ -1,7 +1,14 @@
 /**
+ * Copyright (C) 2026 FnixAgent. All rights reserved.
+ * Software Name: FnixAgent 智能工作台系统 V1.0
+ * This software and its source code are proprietary and confidential.
+ * Unauthorized copying, modification, distribution, or use is strictly prohibited.
+ */
+
+/**
  * Spec 3: Markdown 渲染器
  * ============================================================
- * 对标: vercel/streamdown (https://github.com/vercel/streamdown)
+ * 对标: 流式 Markdown 渲染方案 (https://github.com/流式 Markdown 渲染方案)
  *
  * 设计:
  *   - react-markdown 10 + remark-gfm (表格/任务列表/删除线/autolink)

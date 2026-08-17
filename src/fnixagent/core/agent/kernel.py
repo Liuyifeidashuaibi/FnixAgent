@@ -34,6 +34,12 @@ OS 概念映射:
   - 护栏覆盖不全: 现在覆盖全部 syscall (INPUT/EXECUTION/OUTPUT 三层)
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import asyncio
@@ -82,7 +88,6 @@ from fnixagent.core.agent.vfs import ContextFS
 
 # Syscall 处理器签名
 SyscallHandler = Callable[[SyscallRequest], Awaitable[SyscallResponse]]
-
 
 class AgentKernel:
     """Agent 操作系统内核 (类比 Linux Kernel)。
@@ -870,13 +875,11 @@ class AgentKernel:
             "has_audit_backend": self._audit_backend is not None,
         }
 
-
 # ============================================================================
 # 全局内核实例 (延迟创建, 修复原版 import 即创建 bug)
 # ============================================================================
 
 _kernel_instance: AgentKernel | None = None
-
 
 def get_kernel() -> AgentKernel:
     """获取全局内核实例 (延迟创建)。
@@ -889,12 +892,10 @@ def get_kernel() -> AgentKernel:
         _kernel_instance = AgentKernel()
     return _kernel_instance
 
-
 def reset_kernel() -> None:
     """重置全局内核实例 (测试用)。"""
     global _kernel_instance
     _kernel_instance = None
-
 
 __all__ = [
     "AgentKernel",

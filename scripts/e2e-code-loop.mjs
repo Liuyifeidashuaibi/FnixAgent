@@ -1,5 +1,12 @@
 #!/usr/bin/env node
 /**
+ * Copyright (C) 2026 FnixAgent. All rights reserved.
+ * Software Name: FnixAgent 智能工作台系统 V1.0
+ * This software and its source code are proprietary and confidential.
+ * Unauthorized copying, modification, distribution, or use is strictly prohibited.
+ */
+
+/**
  * 全流程闭环自测入口（无需付费 API Key）
  *
  * 覆盖：新建项目 → AI 写码（脚本化 LLM）→ 编译 → 报错修复

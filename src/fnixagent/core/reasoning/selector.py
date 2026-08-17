@@ -29,6 +29,12 @@ fallback 链(BUG 修复):
   已注册策略,极端情况(注册表为空)显式抛 ValueError。
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import re
@@ -47,7 +53,6 @@ from fnixagent.core.types import ReasoningMode
 
 # 模块级预编译正则(避免每次 _score_complexity 都重新编译)
 _SENTENCE_SPLIT_RE = re.compile(r"[.!?。！？；\n]")
-
 
 class ReasoningSelector:
     """推理策略选择器(P2-6 策略模式)。

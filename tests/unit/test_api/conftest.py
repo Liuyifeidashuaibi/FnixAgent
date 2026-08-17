@@ -5,6 +5,12 @@ API 路由单元测试公共夹具。
 不依赖 AgentScheduler(这些路由只使用 services.storage)。
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 import os
 import sys
 

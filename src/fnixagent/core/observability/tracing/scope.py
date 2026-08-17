@@ -20,6 +20,12 @@ TracingScope 维护当前线程/协程的 Span 栈,支持嵌套 with 语义:
     (copy_context().run(...)),否则子线程的栈为空,parent_id 为 None。
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import contextvars
@@ -33,7 +39,6 @@ _current_stack: contextvars.ContextVar[list] = contextvars.ContextVar(
     default=None,
 )
 
-
 def _get_stack() -> list:
     """获取当前上下文的栈(惰性初始化,O(1) 取值)。
 
@@ -45,7 +50,6 @@ def _get_stack() -> list:
         stack = []
         _current_stack.set(stack)
     return stack
-
 
 class TracingScope:
     """Span 栈管理器(基于 contextvars,线程/协程隔离)。
@@ -136,16 +140,13 @@ class TracingScope:
         except Exception:
             pass
 
-
 # ---------------------------------------------------------------------------
 # 模块级便捷函数
 # ---------------------------------------------------------------------------
 
-
 def get_current_span() -> SpanImpl | None:
     """获取当前激活的 Span(栈顶)。"""
     return TracingScope.current_span()
-
 
 def get_current_span_id() -> str | None:
     """获取当前激活的 Span ID。"""

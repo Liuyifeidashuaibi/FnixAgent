@@ -1,5 +1,5 @@
 """
-FnixAgent Agentic Loop — 对标 Cursor/Trae 的核心执行循环
+FnixAgent Agentic Loop — 参考业界主流 Agent 工具 的核心执行循环
 
 真正的 Agent 执行循环:
   Think → Act → Observe → Reflect → Respond
@@ -17,6 +17,12 @@ FnixAgent Agentic Loop — 对标 Cursor/Trae 的核心执行循环
   4. 如果是文本响应 → 反思检查 → 输出给用户
   5. 记录执行轨迹 → 触发自进化飞轮
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
 
 from __future__ import annotations
 
@@ -908,7 +914,7 @@ class AgenticLoop:
 
                 # P4.2: 监控 prompt cache 命中率 (qwen-plus 隐式 / GLM / DeepSeek)
                 # 命中率 = cached_tokens / prompt_tokens, 0 表示无 cache 命中
-                # cache-safe forking (P4.1) 后, compaction LLM 调用应看到命中率提升
+                # 缓存安全分叉 (P4.1) 后, compaction LLM 调用应看到命中率提升
                 try:
                     _usage = (llm_result or {}).get("usage", {}) or {}
                     _cached = int(_usage.get("cached_tokens", 0) or 0)
@@ -934,7 +940,7 @@ class AgenticLoop:
                 #      发 text_content 作为 thought（"我决定调用 xxx 工具因为…"）
                 #   3) text_content 非空 + 无 tool_calls（最终答复）：
                 #      不发 thought chunk（避免与后面的 text chunk 内容重复）
-                # 这样前端 ProcessTimeline 的"展开思考"才有真实价值，对标 Cursor/Codex reasoning 可见性。
+                # 这样前端 ProcessTimeline 的"展开思考"才有真实价值，参考业界主流 Code Agent reasoning 可见性。
                 thought_data = ""
                 if reasoning_content and reasoning_content.strip():
                     thought_data = reasoning_content[:2000]
@@ -1072,7 +1078,7 @@ class AgenticLoop:
 
                         # AG-UI file_change 事件 — 让前端 DiffBlock 显示三态 diff 审查
                         # 调研：Cursor 论坛 "per-change Apply + inline diff review" +
-                        #   Claude Code Issue #31395 per-hunk accept/discard
+                        #   业界主流 Agent 工具 Issue #31395 per-hunk accept/discard
                         # 当工具是文件编辑操作时，emit file_change 让前端 DiffBlock 渲染
                         if tool_name in (
                             "write_file",
@@ -1101,7 +1107,7 @@ class AgenticLoop:
                             }
 
                         # Spec: inline widget 事件 — AI 调用 show_widget 时透传 code 到前端
-                        # 对标 Trae dynamic-ui PureShowWidget + Claude Inline Visualizations
+                        # 动态 UI 渲染
                         # 前端 WidgetBlock.tsx 用 iframe sandbox + CSP + DOMPurify 安全渲染
                         if tool_name == "show_widget" and ok and isinstance(tool_args, dict):
                             widget_code = str(tool_args.get("widget_code", ""))

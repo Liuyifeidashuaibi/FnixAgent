@@ -10,6 +10,12 @@
   POST   /skills/{id}/deprecate  — deprecate (PUBLISHED → DEPRECATED)
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import threading
@@ -29,15 +35,12 @@ from fnixagent.core.skills.market import (
 
 router = APIRouter(prefix="/skills", tags=["skills"])
 
-
 # ---------------------------------------------------------------------------
 # 全局单例（与 mcp.py 风格一致，进程内内存版）
 # ---------------------------------------------------------------------------
 
-
 _market: SkillMarket | None = None
 _market_lock = threading.Lock()
-
 
 def get_skill_market() -> SkillMarket:
     """全局 SkillMarket 单例。"""
@@ -48,11 +51,9 @@ def get_skill_market() -> SkillMarket:
                 _market = SkillMarket()
     return _market
 
-
 # ---------------------------------------------------------------------------
 # 请求/响应模型
 # ---------------------------------------------------------------------------
-
 
 class CreateDraftRequest(BaseModel):
     """创建技能草稿请求。"""
@@ -69,18 +70,15 @@ class CreateDraftRequest(BaseModel):
     initial_version: str | None = None  # "1.0.0"
     initial_changelog: str = ""
 
-
 class ReviewActionRequest(BaseModel):
     """审核操作请求（submit / approve / deprecate 共用）。"""
 
     reviewer_id: str = "desktop"
     comment: str = ""
 
-
 # ---------------------------------------------------------------------------
 # 端点
 # ---------------------------------------------------------------------------
-
 
 @router.get("")
 async def list_entries(
@@ -116,7 +114,6 @@ async def list_entries(
         "stats": market.stats(),
     }
 
-
 @router.get("/drafts")
 async def list_drafts(
     owner_id: str | None = None,
@@ -131,7 +128,6 @@ async def list_drafts(
         "drafts": [_entry_to_dict(e) for e in drafts],
         "count": len(drafts),
     }
-
 
 @router.post("/drafts")
 async def create_draft(body: CreateDraftRequest) -> dict[str, Any]:
@@ -162,7 +158,6 @@ async def create_draft(body: CreateDraftRequest) -> dict[str, Any]:
         raise HTTPException(status_code=400, detail=str(e))
     return {"entry": _entry_to_dict(entry), "ok": True}
 
-
 @router.post("/{entry_id}/submit")
 async def submit_for_review(
     entry_id: str,
@@ -177,7 +172,6 @@ async def submit_for_review(
     except SkillStatusError as e:
         raise HTTPException(status_code=409, detail=str(e))
     return {"entry": _entry_to_dict(entry), "ok": True}
-
 
 @router.post("/{entry_id}/approve")
 async def approve_entry(
@@ -198,7 +192,6 @@ async def approve_entry(
         raise HTTPException(status_code=409, detail=str(e))
     return {"entry": _entry_to_dict(entry), "ok": True}
 
-
 @router.post("/{entry_id}/deprecate")
 async def deprecate_entry(
     entry_id: str,
@@ -214,11 +207,9 @@ async def deprecate_entry(
         raise HTTPException(status_code=409, detail=str(e))
     return {"entry": _entry_to_dict(entry), "ok": True}
 
-
 # ---------------------------------------------------------------------------
 # 序列化
 # ---------------------------------------------------------------------------
-
 
 def _entry_to_dict(entry: Any) -> dict[str, Any]:
     """SkillMarketEntry → JSON-safe dict（datetime ISO 化）。"""
@@ -255,6 +246,5 @@ def _entry_to_dict(entry: Any) -> dict[str, Any]:
         "review_comment": entry.review_comment,
         "reviewed_at": entry.reviewed_at.isoformat() if entry.reviewed_at else None,
     }
-
 
 __all__ = ["get_skill_market", "router"]

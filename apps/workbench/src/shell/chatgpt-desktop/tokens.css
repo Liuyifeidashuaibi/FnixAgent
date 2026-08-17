@@ -1,4 +1,4 @@
-/* ChatGPT Desktop — official light UI (press assets 2026-07) */
+/* 桌面应用 — official light UI (press assets 2026-07) */
 
 html, body, #root {
   height: 100%;
@@ -906,7 +906,7 @@ html, body, #root {
   overflow: hidden;
 }
 
-/* ── Canvas Dock（对标 Cursor Canvas split view）── */
+/* ── Canvas Dock（画布分栏视图）── */
 .oai-canvas-dock {
   flex: 0 0 50%;
   min-width: 360px;
@@ -1114,7 +1114,7 @@ html, body, #root {
   transform: scale(1.08);
 }
 
-/* ── SkillManager（对标 Trae Skills + Cursor Rules）── */
+/* ── SkillManager（技能管理面板）── */
 .oai-skill-mgr {
   position: fixed;
   top: 56px;
@@ -1521,7 +1521,7 @@ html, body, #root {
   width: min(720px, 100%);
 }
 
-/* Ask / Plan / Craft — Composer footer pill（Cursor/Codex 式，非首页大卡） */
+/* Ask / Plan / Craft — Composer footer pill（式，非首页大卡） */
 .wb-mode-dd {
   position: relative;
 }
@@ -2325,7 +2325,7 @@ html, body, #root {
   border-color: rgba(0, 0, 0, 0.16);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.10);
 }
-/* Composer「+」圆形 — 对标 ChatGPT pill 左端 */
+/* Composer「+」圆形 — 输入框左端 */
 .oai-attach .oai-ibtn {
   width: 34px;
   height: 34px;
@@ -2557,7 +2557,7 @@ html, body, #root {
 }
 .oai-asst-body p { margin: 0 0 0.85em; }
 .oai-asst-body p:last-child { margin-bottom: 0; }
-/* AG-UI 结构化 block 容器 — 7 种 block 垂直堆叠，间距节奏对标 Claude Code / Cursor */
+/* AG-UI 结构化 block 容器 — 7 种 block 垂直堆叠，间距节奏参考业界主流 Agent 工具 */
 .oai-asst-blocks {
   display: flex;
   flex-direction: column;
@@ -4528,7 +4528,7 @@ button.oai-diffview-more:hover {
   .oai-set-main { padding: 20px 16px 40px; }
 }
 
-/* ── Process viz (ChatGPT Desktop goal row + tool activity) ── */
+/* ── Process viz (桌面应用 goal row + tool activity) ── */
 .oai-goal-row {
   display: flex;
   align-items: center;
@@ -5669,7 +5669,7 @@ button.oai-diffview-more:hover {
 }
 
 /* ── Spec 3: Markdown 渲染器 (.fnix-md) ──────────────────────────
- * 对标 vercel/streamdown — react-markdown + remark-gfm + rehype-highlight
+ * 参考流式 Markdown 渲染方案 — react-markdown + remark-gfm + rehype-highlight
  * 替换原 .fnix-canvas-md 的正则渲染,支持表格/任务列表/Mermaid/语法高亮
  */
 .fnix-md {
@@ -5820,7 +5820,7 @@ button.oai-diffview-more:hover {
 }
 
 /* ── Spec 3: Mermaid 实时渲染 (.fnix-mermaid) ────────────────────
- * 对标 mermaid-js/mermaid-live-editor
+ * 参考 Mermaid 实时编辑器
  * SVG 注入主线程,大图回退 mermaid.ink
  */
 .fnix-mermaid {
@@ -5888,7 +5888,7 @@ button.oai-diffview-more:hover {
 }
 
 /* ── Spec 3: ArtifactEditor (.fnix-art-editor) ───────────────────
- * 对标 ChatGPT Canvas / Cursor inline edit / Aider SEARCH-REPLACE
+ * 对标 画布编辑 / 内联编辑 / 搜索替换
  * 含 view / edit / diff 三种模式,Monaco DiffEditor 内置 diff
  */
 .fnix-art-editor {
@@ -6008,7 +6008,7 @@ button.oai-diffview-more:hover {
 }
 
 /* ── Spec 3: AI 编辑光标闪烁动画 ────────────────────────────────
- * 对标 Cursor inline edit — 应用 patch 后改动行闪烁 2.2s
+ * 内联编辑 — 应用 patch 后改动行闪烁 2.2s
  * 配合 Monaco createDecorationsCollection 使用
  */
 @keyframes fnix-ai-edit-flash {
@@ -7929,7 +7929,7 @@ body.fnx-studio-resizing .fnx-studio { animation: none; }
 
 /* ───────────────────────── 右侧栏 · StudioPanel ───────────────────────── */
 
-/* 面板本体：保持平面化，左侧发丝线，不加阴影（Cursor 式干净分界） */
+/* 面板本体：保持平面化，左侧发丝线，不加阴影（干净分界） */
 .fnx-studio {
   background: var(--bg);
   border-left: 1px solid var(--border);

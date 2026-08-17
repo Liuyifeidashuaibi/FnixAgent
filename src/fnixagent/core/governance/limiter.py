@@ -22,6 +22,12 @@ asyncio.sleep,不阻塞事件循环。
 依赖: 仅标准库(asyncio / logging / time / dataclasses / threading),零新增依赖。
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import asyncio
@@ -32,11 +38,9 @@ from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
 
-
 # ============================================================================
 # 数据结构
 # ============================================================================
-
 
 @dataclass
 class TokenBucket:
@@ -81,7 +85,6 @@ class TokenBucket:
             return float("inf")
         return (n - self.tokens) / self.rate
 
-
 @dataclass
 class EndpointRule:
     """per-endpoint 差异化限速规则。
@@ -100,7 +103,6 @@ class EndpointRule:
     qps: float | None = None
     concurrency: int | None = None
     min_interval: float | None = None
-
 
 @dataclass
 class DomainState:
@@ -121,11 +123,9 @@ class DomainState:
     default_capacity: float
     last_call: float = 0.0
 
-
 # ============================================================================
 # 多层限流器
 # ============================================================================
-
 
 class MultiLayerRateLimiter:
     """多层令牌桶限流器(全局 + 按用户 + 按工具)。
@@ -548,14 +548,12 @@ class MultiLayerRateLimiter:
                 self._global_sem = None
         logger.info("多层限流器状态已重置(端点规则保留 %d 条)", len(self._endpoint_rules))
 
-
 # ============================================================================
 # 模块级单例
 # ============================================================================
 
 _default_limiter: MultiLayerRateLimiter | None = None
 _default_lock = threading.Lock()
-
 
 def get_limiter() -> MultiLayerRateLimiter:
     """获取全局默认多层限流器(惰性单例,线程安全,默认参数)。"""
@@ -565,7 +563,6 @@ def get_limiter() -> MultiLayerRateLimiter:
             if _default_limiter is None:
                 _default_limiter = MultiLayerRateLimiter()
     return _default_limiter
-
 
 def reset_limiter() -> None:
     """重置全局默认限流器单例(释放引用,下次 get_limiter 重建)。

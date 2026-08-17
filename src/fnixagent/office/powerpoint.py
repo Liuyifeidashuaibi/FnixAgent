@@ -17,6 +17,12 @@ PowerPoint 演示文稿创建/slide/主题/图片/图表/导出图片。
   - LibreOffice headless 失败时返回 _failure,不崩溃
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import os

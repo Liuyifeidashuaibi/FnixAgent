@@ -8,6 +8,12 @@ LangGraph 图装配与编译单元测试。
     - 图的 invoke 端到端执行(使用 mock 组件)
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from fnixagent.graph.builder import GraphBuilder
 from fnixagent.graph.state import create_initial_state
 

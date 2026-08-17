@@ -11,6 +11,12 @@ selector 根据任务复杂度自动选择模式。
 P2-6 新增:策略可插拔(strategies/),4 个策略 + BaseStrategy 基类。
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from fnixagent.core.reasoning.base import ReasoningContext, ReasoningEngine
 from fnixagent.core.reasoning.planner import PlanExecuteEngine
 from fnixagent.core.reasoning.react import ReActEngine

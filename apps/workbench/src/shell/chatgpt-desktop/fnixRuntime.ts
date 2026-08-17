@@ -1,4 +1,11 @@
 /**
+ * Copyright (C) 2026 FnixAgent. All rights reserved.
+ * Software Name: FnixAgent 智能工作台系统 V1.0
+ * This software and its source code are proprietary and confidential.
+ * Unauthorized copying, modification, distribution, or use is strictly prohibited.
+ */
+
+/**
  * Fnix agentd runtime clients for the ChatGPT-look shell.
  * Work → POST /api/v1/work/stream (NDJSON)
  * Codex → POST /api/v1/chat/agent (NDJSON)
@@ -74,14 +81,14 @@ type StreamHandlers = {
   onMission?: (mission: WorkMission) => void;
   onPipeline?: (info: WorkPipelineInfo) => void;
   onEvolution?: (info: EvolutionInfo) => void;
-  /** 过程可视化活动项（ChatGPT Desktop tool activity） */
+  /** 过程可视化活动项（桌面应用 tool activity） */
   onActivity?: (item: ActivityItem) => void;
   onDone?: (payload: unknown) => void;
   onError?: (message: string) => void;
   /**
    * 结构化 block 流（AG-UI 协议对齐）— 每个后端事件转为 StructuredBlock 注入消息气泡。
    * 与 onText/onActivity/onFileChange 并行触发，消费方（useChatFlow）负责合并到消息 blocks 数组。
-   * 调研：AG-UI 16 种标准事件类型 + OpenHands Event Sourcing + Claude Code block 渲染
+   * 调研：AG-UI 16 种标准事件类型 + 事件溯源 + 逐块渲染
    */
   onStructuredBlock?: (block: import("../../utils/structuredBlocks").StructuredBlock) => void;
 };
@@ -99,7 +106,7 @@ function emitActivity(
 
 /**
  * 将 NDJSON 事件转为 StructuredBlock 并 emit 到消息气泡。
- * 基于 AG-UI 协议（16 种标准事件类型）+ OpenHands Event Sourcing。
+ * 基于 AG-UI 协议（16 种标准事件类型）+ 事件溯源。
  * 与 onActivity/onFileChange/onError 并行触发，消费方负责合并到消息 blocks 数组。
  */
 function emitStructuredBlock(
@@ -263,7 +270,7 @@ async function readNdjsonStream(
  *
  * P0-1: idle timeout 从 60s 提升到 5 分钟 — LLM 非流式调用期间 (复杂推理任务)
  * 可能 90s+ 才有响应, 60s 会误切断。后端 AgenticLoop 已加 15s 心跳, 但双保险
- * 更稳妥。Cursor/Claude 默认也是 5 分钟以上。
+ * 更稳妥。业界主流工具默认也是 5 分钟以上。
  */
 function createStreamGuard(
   external: AbortSignal | undefined,
@@ -425,7 +432,7 @@ export async function streamWork(opts: {
       return;
     }
     if (chunk === "thought" || chunk === "thinking") {
-      // Spec 2: 真实 LLM 思考内容（可折叠展示，对标 Cursor reasoning）
+      // Spec 2: 真实 LLM 思考内容（可折叠展示，推理过程展示）
       const label =
         typeof content === "string"
           ? content.slice(0, 120)
@@ -978,7 +985,7 @@ export async function streamCodex(opts: {
   }
 }
 
-/** Apply Codex preview changes to workspace (Cursor Accept). */
+/** 应用预览变更到工作区. */
 export async function applyCodexChanges(opts: {
   workspace: string;
   changes: CodexFileChange[];
@@ -1230,7 +1237,7 @@ export async function getJobStats(): Promise<WorkJobStats | null> {
 }
 
 // ─── Spec 4: 长程任务恢复（resume_from_checkpoint）─────────────────────────
-// 对标 LangGraph Checkpointer / OpenAI Codex `codex resume --last` / Cursor checkpoints
+// 对标 LangGraph Checkpointer / 会话恢复机制 / 可恢复任务机制
 // 后端端点:
 //   GET  /api/v1/work/runs            — 列出所有 run（含 resumable 标志）
 //   GET  /api/v1/work/runs/{run_id}   — 获取 run 详情 + checkpoint state + 最近 events
@@ -1296,7 +1303,7 @@ export async function resumeRun(opts: {
 }
 
 /**
- * 用户反馈信号回流 (对标 Cursor Bugbot Learning)。
+ * 用户反馈信号回流 (用户反馈信号机制)。
  *
  * 用户对 Agent 回复点 👍/👎, 信号写入 HERA SkillLibrary 的 user_feedback 字段,
  * 影响下次 retrieve_skills 召回权重:

@@ -19,6 +19,12 @@ fnixagent Prometheus 指标模块 — Phase 2.10
   record_chat_message(mode="evolve")
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import os
@@ -109,11 +115,9 @@ LLM_TOKENS_USED_TOTAL = None  # type: ignore
 LLM_CALL_DURATION_SECONDS = None  # type: ignore
 LLM_ERRORS_TOTAL = None  # type: ignore
 
-
 # ============================================================================
 # 初始化指标(仅当 prometheus_client 可用时)
 # ============================================================================
-
 
 def _init_metrics() -> None:
     """初始化所有 Prometheus 指标。幂等,可多次调用。
@@ -318,11 +322,9 @@ def _init_metrics() -> None:
             registry=_registry,
         )
 
-
 # ============================================================================
 # FastAPI 集成
 # ============================================================================
-
 
 async def _http_middleware(request: Request, call_next) -> Any:
     """HTTP 请求指标中间件(异步)。
@@ -353,7 +355,6 @@ async def _http_middleware(request: Request, call_next) -> Any:
         HTTP_REQUEST_DURATION_SECONDS.labels(method=method, path=path).observe(elapsed)
         HTTP_REQUESTS_IN_PROGRESS.labels(method=method).dec()
 
-
 # 高基数路径模式(需归一化)
 _PATH_PATTERNS = [
     ("/api/v1/users/", "/api/v1/users/:id"),
@@ -369,7 +370,6 @@ _PATH_PATTERNS = [
     ("/api/v1/auth/sso/oauth/", "/api/v1/auth/sso/oauth/:provider"),
 ]
 
-
 def _normalize_path(path: str) -> str:
     """将动态路径参数归一化,避免 Prometheus 指标高基数。"""
     for prefix, replacement in _PATH_PATTERNS:
@@ -377,7 +377,6 @@ def _normalize_path(path: str) -> str:
             # 截断到前缀长度 + 替换
             return replacement
     return path
-
 
 def setup_metrics(app: FastAPI) -> None:
     """在 FastAPI 应用中注册 Prometheus 指标。
@@ -408,11 +407,9 @@ def setup_metrics(app: FastAPI) -> None:
     metrics_app = make_asgi_app(registry=_registry)
     app.mount("/metrics", metrics_app)
 
-
 # ============================================================================
 # 业务指标记录函数(供业务代码调用)
 # ============================================================================
-
 
 def record_login(success: bool, method: str = "password") -> None:
     """记录登录尝试。"""
@@ -420,36 +417,30 @@ def record_login(success: bool, method: str = "password") -> None:
         result = "success" if success else "failure"
         LOGIN_ATTEMPTS_TOTAL.labels(method=method, result=result).inc()
 
-
 def record_user_active(user_id: str) -> None:
     """记录用户活跃事件。"""
     if USER_ACTIVE_TOTAL is not None:
         USER_ACTIVE_TOTAL.labels(user_id=user_id).inc()
-
 
 def record_user_registration(source: str = "local") -> None:
     """记录用户注册。"""
     if USER_REGISTRATIONS_TOTAL is not None:
         USER_REGISTRATIONS_TOTAL.labels(source=source).inc()
 
-
 def record_chat_message(mode: str = "evolve") -> None:
     """记录聊天消息。"""
     if CHAT_MESSAGES_TOTAL is not None:
         CHAT_MESSAGES_TOTAL.labels(mode=mode).inc()
-
 
 def record_document_operation(operation: str) -> None:
     """记录文档操作。"""
     if DOCUMENT_OPERATIONS_TOTAL is not None:
         DOCUMENT_OPERATIONS_TOTAL.labels(operation=operation).inc()
 
-
 def record_task_created(task_type: str) -> None:
     """记录任务创建。"""
     if TASKS_CREATED_TOTAL is not None:
         TASKS_CREATED_TOTAL.labels(task_type=task_type).inc()
-
 
 def record_langgraph_node(node_name: str, duration_seconds: float, success: bool = True) -> None:
     """记录 LangGraph 节点执行。"""
@@ -459,12 +450,10 @@ def record_langgraph_node(node_name: str, duration_seconds: float, success: bool
         status = "success" if success else "error"
         LANGGRAPH_NODE_EXECUTIONS_TOTAL.labels(node_name=node_name, status=status).inc()
 
-
 def record_flywheel_trigger(stage: str) -> None:
     """记录飞轮触发。"""
     if FLYWHEEL_TRIGGER_TOTAL is not None:
         FLYWHEEL_TRIGGER_TOTAL.labels(stage=stage).inc()
-
 
 def update_topology_stats(node_count: int, edge_count: int) -> None:
     """更新拓扑图统计(Gauge)。"""
@@ -472,7 +461,6 @@ def update_topology_stats(node_count: int, edge_count: int) -> None:
         TOPOLOGY_NODE_COUNT.set(node_count)
     if TOPOLOGY_EDGE_COUNT is not None:
         TOPOLOGY_EDGE_COUNT.set(edge_count)
-
 
 def record_tool_execution(tool_name: str, duration_seconds: float, success: bool = True) -> None:
     """记录工具执行。"""
@@ -482,36 +470,30 @@ def record_tool_execution(tool_name: str, duration_seconds: float, success: bool
         status = "success" if success else "error"
         TOOL_EXECUTIONS_TOTAL.labels(tool_name=tool_name, status=status).inc()
 
-
 def record_tool_error(tool_name: str, error_type: str) -> None:
     """记录工具执行错误。"""
     if TOOL_ERRORS_TOTAL is not None:
         TOOL_ERRORS_TOTAL.labels(tool_name=tool_name, error_type=error_type).inc()
-
 
 def record_permission_denied(permission: str, endpoint: str) -> None:
     """记录权限拒绝。"""
     if PERMISSION_DENIED_TOTAL is not None:
         PERMISSION_DENIED_TOTAL.labels(permission=permission, endpoint=endpoint).inc()
 
-
 def record_rate_limit_triggered(limiter_type: str = "api") -> None:
     """记录限流触发。"""
     if RATE_LIMIT_TRIGGERED_TOTAL is not None:
         RATE_LIMIT_TRIGGERED_TOTAL.labels(limiter_type=limiter_type).inc()
-
 
 def record_injection_blocked(injection_type: str) -> None:
     """记录注入拦截。"""
     if INJECTION_BLOCKED_TOTAL is not None:
         INJECTION_BLOCKED_TOTAL.labels(injection_type=injection_type).inc()
 
-
 def record_sensitive_hit(category: str) -> None:
     """记录敏感词命中。"""
     if SENSITIVE_HIT_TOTAL is not None:
         SENSITIVE_HIT_TOTAL.labels(category=category).inc()
-
 
 def record_mfa_challenge(factor_type: str, success: bool) -> None:
     """记录 MFA 挑战。"""
@@ -519,12 +501,10 @@ def record_mfa_challenge(factor_type: str, success: bool) -> None:
         result = "success" if success else "failure"
         MFA_CHALLENGE_TOTAL.labels(factor_type=factor_type, result=result).inc()
 
-
 def record_audit_log(action: str) -> None:
     """记录审计日志写入。"""
     if AUDIT_LOG_ENTRIES_TOTAL is not None:
         AUDIT_LOG_ENTRIES_TOTAL.labels(action=action).inc()
-
 
 def record_llm_call(provider: str, model: str, duration_seconds: float) -> None:
     """记录 LLM 调用。"""
@@ -532,7 +512,6 @@ def record_llm_call(provider: str, model: str, duration_seconds: float) -> None:
         LLM_CALL_DURATION_SECONDS.labels(provider=provider, model=model).observe(duration_seconds)
     if LLM_CALLS_TOTAL is not None:
         LLM_CALLS_TOTAL.labels(provider=provider, model=model).inc()
-
 
 def record_llm_tokens(
     provider: str,
@@ -561,12 +540,10 @@ def record_llm_tokens(
             completion_tokens
         )
 
-
 def record_llm_error(provider: str, error_type: str) -> None:
     """记录 LLM 调用错误。"""
     if LLM_ERRORS_TOTAL is not None:
         LLM_ERRORS_TOTAL.labels(provider=provider, error_type=error_type).inc()
-
 
 def is_enabled() -> bool:
     """检查 Prometheus 指标是否已启用。"""

@@ -1,14 +1,21 @@
 /**
- * WidgetBlock — AI 内联可视化（对标 Trae dynamic-ui PureShowWidget）
+ * Copyright (C) 2026 FnixAgent. All rights reserved.
+ * Software Name: FnixAgent 智能工作台系统 V1.0
+ * This software and its source code are proprietary and confidential.
+ * Unauthorized copying, modification, distribution, or use is strictly prohibited.
+ */
+
+/**
+ * WidgetBlock — AI 内联可视化（动态 UI 渲染）
  * ============================================================
  *
  * 调研：
- * - Trae dynamic-ui：模型写 SVG/HTML，PureShowWidget 工具在对话流内渲染；
+ * - 动态 UI 渲染：模型写 SVG/HTML，PureShowWidget 工具在对话流内渲染；
  *   window.sendPrompt 桥接「widget 按钮 → 回灌对话」
  * - Claude Inline Visualizations：Settings → Visuals 开关，HTML/SVG 即时渲染
- * - Claude Artifacts 安全方案：iframe sandbox + 全站点进程隔离 + 严格 CSP
+ * - 内联产物 安全方案：iframe sandbox + 全站点进程隔离 + 严格 CSP
  *
- * 三层安全防御（借鉴 Claude Artifacts）：
+ * 三层安全防御（借鉴 内联产物）：
  *   1. iframe sandbox="allow-scripts"（不加 allow-same-origin，防 sandbox 逃逸）
  *   2. 严格 CSP：default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline';
  *      img-src data: blob:; connect-src 'none'（禁止 fetch/XHR/WebSocket，防数据外传）

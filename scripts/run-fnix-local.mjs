@@ -1,4 +1,11 @@
 #!/usr/bin/env node
+/**
+ * Copyright (C) 2026 FnixAgent. All rights reserved.
+ * Software Name: FnixAgent 智能工作台系统 V1.0
+ * This software and its source code are proprietary and confidential.
+ * Unauthorized copying, modification, distribution, or use is strictly prohibited.
+ */
+
 /** 启动 fnix-local sidecar（Python MVP，默认 127.0.0.1:8710） */
 import { spawn } from 'node:child_process';
 import net from 'node:net';

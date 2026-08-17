@@ -2,7 +2,7 @@
   "name": "fnixagent-monorepo",
   "version": "1.0.0",
   "private": true,
-  "license": "Apache-2.0",
+  "license": "SEE LICENSE IN LICENSE",
   "description": "Fnix Harness — React + Tauri 2 + Tailwind desktop monorepo",
   "packageManager": "pnpm@9.15.9",
   "engines": {
@@ -28,7 +28,6 @@
     "smoke:fnix": "node scripts/smoke-hermes.mjs",
     "bundle:python": "node scripts/bundle-python-runtime.mjs",
     "bundle:agentd": "node scripts/build-agentd-sidecar.mjs",
-    "smoke:clean-vm": "node scripts/smoke-clean-vm.mjs",
     "smoke:clean-vm": "node scripts/smoke-clean-vm.mjs",
     "release:checksums": "node scripts/release-checksums.mjs",
     "icons": "python scripts/generate-app-icon.py && pnpm --filter @fnixagent/workbench exec tauri icon app-icon.png",

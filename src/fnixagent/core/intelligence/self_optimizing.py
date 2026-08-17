@@ -24,6 +24,12 @@ few-shot 示例；下次类似任务前召回注入 prompt，让 Agent "见多�
 零外部依赖（无向量化、无 LLM 调用、无 Chroma）。
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import hashlib
@@ -34,7 +40,6 @@ import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
-
 
 @dataclass
 class FewShotExample:
@@ -58,7 +63,6 @@ class FewShotExample:
     created_at: float
     usage_count: int = 0
     last_used_at: float = 0.0
-
 
 # 借鉴 SkillLibrary 的 _STOPWORDS，保持一致
 _STOPWORDS = frozenset(
@@ -131,7 +135,6 @@ _STOPWORDS = frozenset(
     }
 )
 
-
 def _tokenize(text: str) -> set[str]:
     """简单分词：英文按 \\w+，中文按 2-3 字符滑窗。与 SkillLibrary 一致。"""
     if not text:
@@ -147,7 +150,6 @@ def _tokenize(text: str) -> set[str]:
             if len(seg) >= 3:
                 tokens.add(seg[:3])
     return tokens
-
 
 def success_score(
     *,
@@ -176,7 +178,6 @@ def success_score(
     base += 0.15 * max(0.0, 1.0 - secs / 300.0)
     base += 0.15 * max(0.0, 1.0 - max(0, error_count) / 3.0)
     return round(min(base, 1.0), 3)
-
 
 def extract_examples_from_trace(
     *,
@@ -217,7 +218,6 @@ def extract_examples_from_trace(
         workspace_kind=workspace_kind,
         created_at=now,
     )
-
 
 class SelfOptimizingLibrary:
     """few-shot 示例库（与 SkillLibrary 互补，HERA Self-Optimizing 维度）。
@@ -368,7 +368,6 @@ class SelfOptimizingLibrary:
                     for k in {e.workspace_kind for e in self.examples}
                 },
             }
-
 
 __all__ = [
     "FewShotExample",

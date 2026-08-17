@@ -17,6 +17,12 @@
   - LLMRequest 新增 think_mode: bool = False 字段(对接 P2-6 策略)
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import enum
@@ -26,7 +32,6 @@ from typing import Any
 # ---------------------------------------------------------------------------
 # 能力位标志
 # ---------------------------------------------------------------------------
-
 
 class ModelCapabilityFlag(enum.IntFlag):
     """模型能力位标志(可用 | 组合,& 检测)。"""
@@ -54,11 +59,9 @@ class ModelCapabilityFlag(enum.IntFlag):
         | TOOL_CHOICE_REQUIRED
     )
 
-
 # ---------------------------------------------------------------------------
 # ModelCapability
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class ModelCapability:
@@ -188,11 +191,9 @@ class ModelCapability:
             avg_latency_ms=800.0,
         )
 
-
 # ---------------------------------------------------------------------------
 # LLMRequest 能力需求(对接 P2-6 策略)
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class CapabilityRequirement:

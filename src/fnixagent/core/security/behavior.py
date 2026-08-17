@@ -19,6 +19,12 @@ UEBA 行为基线引擎 (User & Entity Behavior Analytics) - P2 安全模块。
   - 可选依赖 sklearn 缺失时自动降级
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import logging
@@ -39,11 +45,9 @@ except ImportError:
     _SKLEARN_AVAILABLE = False
     IsolationForest = None  # type: ignore[assignment,misc]
 
-
 # ---------------------------------------------------------------------------
 # 审计钩子(异常吞掉,不影响主流程)
 # ---------------------------------------------------------------------------
-
 
 def _audit_behavior_anomaly(
     user_id: str,
@@ -67,11 +71,9 @@ def _audit_behavior_anomaly(
     except Exception:
         pass
 
-
 # ---------------------------------------------------------------------------
 # 数据结构
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class BehaviorFeatures:
@@ -95,7 +97,6 @@ class BehaviorFeatures:
     tools_used: list[str] = field(default_factory=list)
     data_volume_kb: float = 0.0
 
-
 @dataclass
 class BehaviorBaseline:
     """用户行为基线。
@@ -118,7 +119,6 @@ class BehaviorBaseline:
     active_hours: list[int] = field(default_factory=list)
     trained_at: str = ""
 
-
 @dataclass
 class AnomalyScore:
     """行为异常评分结果。
@@ -137,11 +137,9 @@ class AnomalyScore:
     recommendation: str = "allow"
     features: BehaviorFeatures | None = None
 
-
 # ---------------------------------------------------------------------------
 # BehaviorAnalyzer
 # ---------------------------------------------------------------------------
-
 
 class BehaviorAnalyzer:
     """UEBA 行为基线分析器。
@@ -523,15 +521,12 @@ class BehaviorAnalyzer:
         variance = sum((v - mean) ** 2 for v in values) / (len(values) - 1)
         return math.sqrt(variance)
 
-
 # ---------------------------------------------------------------------------
 # 全局单例(懒加载)
 # ---------------------------------------------------------------------------
 
-
 _analyzer_instance: BehaviorAnalyzer | None = None
 _analyzer_lock = threading.Lock()
-
 
 def get_behavior_analyzer() -> BehaviorAnalyzer:
     """获取全局 BehaviorAnalyzer 单例。"""
@@ -541,7 +536,6 @@ def get_behavior_analyzer() -> BehaviorAnalyzer:
             if _analyzer_instance is None:
                 _analyzer_instance = BehaviorAnalyzer()
     return _analyzer_instance
-
 
 def reset_behavior_analyzer() -> None:
     """重置单例(主要用于测试)。"""

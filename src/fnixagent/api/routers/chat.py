@@ -12,6 +12,12 @@ API 路由 - Agent 对话接口。
 Phase 3.2: 接入内容审核(输入/输出双向审核)
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 import json
 import os
 import uuid

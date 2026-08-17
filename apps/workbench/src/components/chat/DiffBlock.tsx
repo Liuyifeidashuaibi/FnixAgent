@@ -1,15 +1,22 @@
 /**
+ * Copyright (C) 2026 FnixAgent. All rights reserved.
+ * Software Name: FnixAgent 智能工作台系统 V1.0
+ * This software and its source code are proprietary and confidential.
+ * Unauthorized copying, modification, distribution, or use is strictly prohibited.
+ */
+
+/**
  * DiffBlock — inline diff summary with per-file/per-hunk Accept/Reject.
  *
  * 调研证据：
- * - Cursor 论坛 "Bring back per-change Apply + inline diff review"（6K views, 386 likes）：
+ * - 
  *   "per-proposal or per-turn Apply/Reject"
  *   "Clear separation between preview/pending and applied to disk"
- * - Claude Code GitHub Issue #31395:
+ * - 
  *   "per-hunk accept/discard controls inline"
  *   "A summary bar shows how many hunks are pending review across all modified files"
  * - Cline: "every edit shows up as a diff you can review, modify, or revert"
- * - StackOverflow "How do IDEs like Cursor implement diff based code editing":
+ * - 
  *   "shows a diff, lets you accept/reject per hunk, feels like git add -p"
  *
  * 设计取舍：
@@ -55,7 +62,7 @@ export interface DiffBlockProps {
   onReject?: (path: string) => void;
   /** 全部接受回调 */
   onAcceptAll?: () => void;
-  /** 钉选文件到 Canvas Dock（对标 Cursor Canvas pin）*/
+  /** 钉选文件到 Canvas Dock（画布钉选）*/
   onPin?: (path: string) => void;
   /**
    * 只读模式：用于消息气泡内的 diff 摘要展示。

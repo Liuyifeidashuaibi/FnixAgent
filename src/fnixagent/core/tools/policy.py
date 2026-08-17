@@ -4,6 +4,12 @@ All tool calls (ToolExecutor + ToolRegistry.execute) should pass through
 ``ToolPolicy.evaluate`` before side effects.
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import hashlib
@@ -127,7 +133,7 @@ class ToolPolicy:
                 auto_approve_high = False
             else:
                 # P1 安全加固: 默认 fail-closed, SHELL/DESTRUCTIVE 必须显式确认
-                # 对标 Cursor: 破坏性命令默认要求用户确认, 即使本地 standalone 模式
+                # 参考业界最佳实践: 破坏性命令默认要求用户确认, 即使本地 standalone 模式
                 # 用户可通过 FNIX_TOOL_AUTO_APPROVE=1 显式开启免确认 (不推荐生产使用)
                 auto_approve_high = False
         self.auto_approve_high = auto_approve_high

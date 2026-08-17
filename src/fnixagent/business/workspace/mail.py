@@ -16,6 +16,12 @@
     统一转为 ConnectorResult(success=False, error=...)
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import abc
@@ -33,7 +39,6 @@ from fnixagent.business.workspace.base import (
 
 _logger = logging.getLogger(__name__)
 
-
 # ---------------------------------------------------------------------------
 # 常量与工具
 # ---------------------------------------------------------------------------
@@ -47,13 +52,11 @@ MAX_ATTACHMENT_BYTES = 25 * 1024 * 1024
 # 列表分页上限(避免一次性加载全量邮件导致内存飙升)
 MAX_LIST_LIMIT = 200
 
-
 def _validate_email(addr: str) -> bool:
     """校验单个邮箱地址格式。"""
     if not isinstance(addr, str) or not addr:
         return False
     return _EMAIL_RE.match(addr) is not None
-
 
 def _validate_addrs(addrs: list[str]) -> str | None:
     """校验收件人列表,返回首个非法地址(全合法返回 None)。"""
@@ -61,7 +64,6 @@ def _validate_addrs(addrs: list[str]) -> str | None:
         if not _validate_email(a):
             return a
     return None
-
 
 def _mask_addrs(addrs: list[str] | None) -> list[str]:
     """收件人列表脱敏(仅保留首字符 + 域名),用于日志。"""
@@ -75,7 +77,6 @@ def _mask_addrs(addrs: list[str] | None) -> list[str]:
         else:
             masked.append("***")
     return masked
-
 
 def _check_attachments(attachments: list[dict] | None) -> str | None:
     """校验附件大小限制。
@@ -107,11 +108,9 @@ def _check_attachments(attachments: list[dict] | None) -> str | None:
                     return att.get("name", "<inline>")
     return None
 
-
 # ---------------------------------------------------------------------------
 # 数据结构
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class Email:
@@ -142,11 +141,9 @@ class Email:
         if self.labels is None:
             self.labels = []
 
-
 # ---------------------------------------------------------------------------
 # MailProvider 抽象
 # ---------------------------------------------------------------------------
-
 
 class MailProvider(BaseProvider):
     """邮件 Provider 抽象基类。
@@ -199,11 +196,9 @@ class MailProvider(BaseProvider):
         limit: int = 20,
     ) -> ConnectorResult: ...
 
-
 # ---------------------------------------------------------------------------
 # Stub 实现
 # ---------------------------------------------------------------------------
-
 
 class StubMailProvider(StubProvider, MailProvider):
     """邮件 stub 实现(本地开发占位)。
@@ -268,11 +263,9 @@ class StubMailProvider(StubProvider, MailProvider):
         # 搜索空结果统一 data=[],非 None(BUG 修复:避免下游 NoneType 迭代错误)
         return self._stub_result(data=[], query=query, folder=folder)
 
-
 # ---------------------------------------------------------------------------
 # MailConnector
 # ---------------------------------------------------------------------------
-
 
 class MailConnector(WorkspaceConnector):
     """邮件连接器。

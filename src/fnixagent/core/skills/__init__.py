@@ -5,7 +5,18 @@
     - list_builtin_skills() / get_builtin_skill(name)
     - format_builtin_skills_block() — Work prompt 注入（渐进式披露）
     - CapturedSkill / SkillLibrary (HERA 自动捕获)
+
+顶级架构升级组件 (参考达尔文.skill):
+    - SkillEvaluator: 9 维评估器
+    - SkillEvolver: 技能进化器（棘轮机制）
+    - HumanInTheLoop: 三层守关机制
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
 
 from fnixagent.core.skills.injector import format_builtin_skills_block
 from fnixagent.core.skills.library import CapturedSkill, SkillLibrary
@@ -19,6 +30,20 @@ from fnixagent.core.skills.registry import (
     BuiltinSkillRegistry,
     get_builtin_registry,
     reset_builtin_registry,
+)
+
+# 顶级架构升级组件 (参考达尔文.skill)
+from fnixagent.core.skills.evaluator import (
+    SkillEvaluator,
+    SkillScore,
+    DimensionScore,
+    Dimension,
+)
+from fnixagent.core.skills.evolver import (
+    SkillEvolver,
+    EvolutionResult,
+    EvolutionRecord,
+    HumanInTheLoop,
 )
 
 __all__ = [
@@ -37,6 +62,15 @@ __all__ = [
     "list_builtin_skills",
     "get_builtin_skill",
     "format_builtin_skills_block",
+    # 顶级架构升级组件
+    "SkillEvaluator",
+    "SkillScore",
+    "DimensionScore",
+    "Dimension",
+    "SkillEvolver",
+    "EvolutionResult",
+    "EvolutionRecord",
+    "HumanInTheLoop",
 ]
 
 

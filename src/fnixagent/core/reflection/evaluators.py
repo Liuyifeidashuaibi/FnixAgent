@@ -19,6 +19,12 @@ ReflectionManager 并行调用所有启用的评估器,加权计算总分。
   - 正则预编译为模块级常量,避免每次 evaluate 重新编译
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import abc
@@ -47,11 +53,9 @@ _DOI_URL_RE = re.compile(r"https?://\S+|doi:\s*\S+|10\.\d{4,}/\S+", re.IGNORECAS
 _PLACEHOLDER_RE = re.compile(r"\{\{[^}]+\}\}|TODO|待填写|待补充|XXX|<placeholder>", re.IGNORECASE)
 _BLANK_LINES_RE = re.compile(r"\n\s*\n\s*\n")  # 连续 3+ 空行
 
-
 # ---------------------------------------------------------------------------
 # 抽象基类
 # ---------------------------------------------------------------------------
-
 
 class BaseEvaluator(abc.ABC):
     """评估器抽象基类。
@@ -99,11 +103,9 @@ class BaseEvaluator(abc.ABC):
             return 1.0
         return s
 
-
 # ---------------------------------------------------------------------------
 # 1. LengthEvaluator
 # ---------------------------------------------------------------------------
-
 
 class LengthEvaluator(BaseEvaluator):
     """长度评估器。
@@ -156,11 +158,9 @@ class LengthEvaluator(BaseEvaluator):
 
         return self._clamp(score)
 
-
 # ---------------------------------------------------------------------------
 # 2. StructureEvaluator
 # ---------------------------------------------------------------------------
-
 
 class StructureEvaluator(BaseEvaluator):
     """结构评估器。
@@ -200,11 +200,9 @@ class StructureEvaluator(BaseEvaluator):
             score += 0.2
         return self._clamp(score)
 
-
 # ---------------------------------------------------------------------------
 # 3. KeywordEvaluator
 # ---------------------------------------------------------------------------
-
 
 class KeywordEvaluator(BaseEvaluator):
     """关键词覆盖评估器。
@@ -247,11 +245,9 @@ class KeywordEvaluator(BaseEvaluator):
         hit_rate = hits / total
         return self._clamp(0.3 + 0.7 * hit_rate)
 
-
 # ---------------------------------------------------------------------------
 # 4. CitationEvaluator
 # ---------------------------------------------------------------------------
-
 
 class CitationEvaluator(BaseEvaluator):
     """引用完整性评估器。
@@ -285,11 +281,9 @@ class CitationEvaluator(BaseEvaluator):
             score += 0.3
         return self._clamp(score)
 
-
 # ---------------------------------------------------------------------------
 # 5. FormatEvaluator
 # ---------------------------------------------------------------------------
-
 
 class FormatEvaluator(BaseEvaluator):
     """格式规范评估器。
@@ -324,11 +318,9 @@ class FormatEvaluator(BaseEvaluator):
             score += 0.3
         return self._clamp(score)
 
-
 # ---------------------------------------------------------------------------
 # 6. LLMEvaluator
 # ---------------------------------------------------------------------------
-
 
 class LLMEvaluator(BaseEvaluator):
     """LLM 综合评估器(可选,默认关闭)。

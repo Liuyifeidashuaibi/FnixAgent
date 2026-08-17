@@ -1,5 +1,11 @@
 """Run benchmark tasks in isolated workspaces."""
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import json
@@ -19,6 +25,10 @@ class RunOptions:
     dry_checks_only: bool = False
     agent_base_url: str = ""
     skip_agent: bool = False
+    retrieval_context: str = ""        # Context to inject into the prompt
+    reasoning_mode: str = ""           # "react" or "plan_execute"
+    max_steps_hint: int = 0            # Step budget hint
+    extra_instructions: str = ""       # Additional system-level instructions
 
 
 def materialize_workspace(task: TaskSpec, root: Path) -> Path:
@@ -51,9 +61,16 @@ def run_checks(task: TaskSpec, workspace: Path, meta: TaskRunMeta) -> list:
     return results
 
 
-def invoke_agent(task: TaskSpec, workspace: Path, base_url: str) -> TaskRunMeta:
+def invoke_agent(task: TaskSpec, workspace: Path, base_url: str, opts: RunOptions | None = None) -> TaskRunMeta:
     ensure_workspace(base_url, workspace)
-    run = stream_agent(base_url, task.prompt, str(workspace), preview=True, timeout=task.timeout_s)
+    run = stream_agent(
+        base_url, task.prompt, str(workspace),
+        preview=True, timeout=task.timeout_s,
+        retrieval_context=opts.retrieval_context if opts else "",
+        reasoning_mode=opts.reasoning_mode if opts else "",
+        max_steps_hint=opts.max_steps_hint if opts else 0,
+        extra_instructions=opts.extra_instructions if opts else "",
+    )
     meta = TaskRunMeta(
         elapsed_s=run.elapsed_s,
         steps=run.steps,
@@ -87,7 +104,7 @@ def run_task(task_path: Path, options: RunOptions | None = None) -> TaskScore:
         if options.dry_checks_only or options.skip_agent or not options.agent_base_url:
             meta = TaskRunMeta(elapsed_s=0.0, steps=0, heal_rounds=0, tool_calls=0)
         else:
-            meta = invoke_agent(task, workspace, options.agent_base_url)
+            meta = invoke_agent(task, workspace, options.agent_base_url, options)
         if meta.elapsed_s <= 0:
             meta.elapsed_s = time.perf_counter() - t0
         results = run_checks(task, workspace, meta)

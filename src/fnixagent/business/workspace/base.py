@@ -20,6 +20,12 @@ StubProvider 降级策略:
   - StubProvider 返回值统一通过 _stub_result() 构造,metadata.stub=True 标记
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import abc
@@ -30,7 +36,6 @@ from typing import Any
 # ---------------------------------------------------------------------------
 # 统一返回结构
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class ConnectorResult:
@@ -46,11 +51,9 @@ class ConnectorResult:
     error: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
-
 # ---------------------------------------------------------------------------
 # 配置
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class ConnectorConfig:
@@ -66,11 +69,9 @@ class ConnectorConfig:
     user_id: str = ""
     extra: dict[str, Any] = field(default_factory=dict)
 
-
 # ---------------------------------------------------------------------------
 # 抽象 Provider(具体厂商实现此接口)
 # ---------------------------------------------------------------------------
-
 
 class BaseProvider(abc.ABC):
     """具体厂商 Provider 抽象基类。
@@ -104,11 +105,9 @@ class BaseProvider(abc.ABC):
         """
         return None
 
-
 # ---------------------------------------------------------------------------
 # Connector 抽象基类
 # ---------------------------------------------------------------------------
-
 
 class WorkspaceConnector(abc.ABC):
     """办公生态 Connector 抽象基类。
@@ -271,11 +270,9 @@ class WorkspaceConnector(abc.ABC):
         # 不打印 token/secret,避免敏感信息泄露到日志
         return f"<{self.__class__.__name__} name={self.name} provider={self._config.provider}>"
 
-
 # ---------------------------------------------------------------------------
 # StubProvider 基类(本地开发默认实现)
 # ---------------------------------------------------------------------------
-
 
 class StubProvider(BaseProvider):
     """默认 stub provider:不调用真实 API,返回占位数据。

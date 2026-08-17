@@ -12,6 +12,11 @@ auth 路由单元测试。
   - JWT 签名校验/过期校验
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
 
 class TestRegister:
     """用户注册。"""

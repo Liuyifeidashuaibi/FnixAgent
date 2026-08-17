@@ -35,6 +35,12 @@ Usage:
     result = await agent.execute_task("任务", on_event=lambda e: print(e))
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import asyncio
@@ -50,7 +56,6 @@ from uuid import uuid4
 
 from fnixagent.core.agent.types import utcnow_iso
 
-
 def _heal_rounds() -> int:
     """报错修复最大轮数（0 = 关闭 heal）。"""
     try:
@@ -58,11 +63,9 @@ def _heal_rounds() -> int:
     except ValueError:
         return 3
 
-
 # ============================================================================
 # 任务状态枚举
 # ============================================================================
-
 
 class TaskStatus(Enum):
     """任务状态。"""
@@ -75,11 +78,9 @@ class TaskStatus(Enum):
     FAILED = "failed"
     CANCELLED = "cancelled"
 
-
 # ============================================================================
 # 数据结构
 # ============================================================================
-
 
 @dataclass
 class TaskStep:
@@ -103,7 +104,6 @@ class TaskStep:
     result: str | dict = ""
     error: str = ""
 
-
 @dataclass
 class CodingTask:
     """编码任务。
@@ -121,7 +121,6 @@ class CodingTask:
     files: list[str] = field(default_factory=list)  # 涉及文件
     constraints: list[str] = field(default_factory=list)  # 约束条件
     created_at: str = field(default_factory=lambda: utcnow_iso())
-
 
 @dataclass
 class TaskResult:
@@ -146,7 +145,6 @@ class TaskResult:
     review_notes: str = ""
     duration_sec: float = 0.0
     error: str | None = None
-
 
 @dataclass
 class CodingAgentEvent:
@@ -183,11 +181,9 @@ class CodingAgentEvent:
     review_notes: str | None = None
     result: TaskResult | None = None
 
-
 # ============================================================================
 # 编码智能体
 # ============================================================================
-
 
 class CodingAgent:
     """编码智能体 (对标 Codex/Trae Agent Mode)。
@@ -442,7 +438,7 @@ class CodingAgent:
         task: CodingTask,
     ) -> tuple[list[TaskStep], str | None, bool, str, TaskStatus, str | None]:
         """完整闭环：规划 → 执行 → 审查 →（失败则）带报错再修复。"""
-        # load-bearing state 外化 (对标 Claude Code TodoWrite):
+        # load-bearing state 外化 (任务状态外化):
         # heal 多轮时记录已尝试的 plan/失败原因, 避免 _plan_heal 失忆
         todo_store = self._load_todo_store()
         todos_block = todo_store.format_for_prompt() if todo_store else ""
@@ -581,7 +577,7 @@ class CodingAgent:
             ),
         )
         messages = list(ctx.messages)
-        # load-bearing state 注入 (对标 Claude Code TodoWrite):
+        # load-bearing state 注入 (任务状态外化):
         # heal 时让 LLM 看到历次尝试和失败原因, 避免重复相同错误
         if todos_block:
             messages.append(
@@ -632,7 +628,7 @@ class CodingAgent:
 
         Args:
             task: 编码任务。
-            todos_block: load-bearing state (对标 Claude Code TodoWrite), 可选。
+            todos_block: load-bearing state (任务状态外化), 可选。
 
         Returns:
             TaskStep 列表 (至少 1 个步骤)。
@@ -643,7 +639,7 @@ class CodingAgent:
             system_prompt="你是编码计划生成器, 将任务分解为具体步骤, 返回 JSON",
         )
         messages = list(ctx.messages)
-        # load-bearing state 注入 (对标 Claude Code TodoWrite)
+        # load-bearing state 注入 (任务状态外化)
         if todos_block:
             messages.append(
                 {
@@ -1542,7 +1538,7 @@ class CodingAgent:
         Returns:
             LLM 响应文本; 调用失败时返回空字符串。
         """
-        # Compaction (对标 OpenHands Condenser / Claude Code compaction):
+        # Compaction (上下文压缩器 / 上下文压缩机制):
         # messages 超 50K tokens 时压缩早期消息, 防止长程 heal 任务 token 溢出
         messages = await self._compact_if_needed(messages)
         try:
@@ -1553,7 +1549,7 @@ class CodingAgent:
             return ""
 
     async def _compact_if_needed(self, messages: list[dict[str, str]]) -> list[dict[str, str]]:
-        """超阈值时压缩早期 messages (对标 OpenHands Condenser 五维度摘要)。
+        """超阈值时压缩早期 messages (上下文压缩器 五维度摘要)。
 
         复用 Work 模式的 compact_messages_if_needed, 保持双模式一致。
         """
@@ -1585,7 +1581,7 @@ class CodingAgent:
             return messages
 
     # ========================================================================
-    # TodoStore 辅助 (load-bearing state, 对标 Claude Code TodoWrite)
+    # TodoStore 辅助 (load-bearing state, 任务状态外化)
     # ========================================================================
 
     def _load_todo_store(self):
@@ -1876,7 +1872,6 @@ class CodingAgent:
         if len(text) <= max_len:
             return text
         return text[:max_len] + "..."
-
 
 __all__ = [
     "CodingAgent",

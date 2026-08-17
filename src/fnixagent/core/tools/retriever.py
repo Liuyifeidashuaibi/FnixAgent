@@ -15,6 +15,12 @@
   - 不依赖外部向量库:用 list + 余弦相似度(由 core.mathops 加速)
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import threading
@@ -28,15 +34,12 @@ from fnixagent.core.tools.protocol import ToolLayer, ToolMetadata
 # 异常
 # ---------------------------------------------------------------------------
 
-
 class ToolRetrieverError(Exception):
     """工具检索器基础异常。"""
-
 
 # ---------------------------------------------------------------------------
 # ToolRetriever
 # ---------------------------------------------------------------------------
-
 
 class ToolRetriever:
     """工具检索器:基于向量相似度 + L1 加权。

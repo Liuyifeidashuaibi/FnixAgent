@@ -15,6 +15,12 @@
     拓扑权重高 → 技能优先级高 → 被选中概率高 → 执行成功 → 拓扑权重更高
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 from typing import Any

@@ -28,6 +28,12 @@ Usage:
     await engine.rollback(cs.id)
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import difflib
@@ -44,7 +50,6 @@ from fnixagent.core.agent.types import utcnow_iso
 # 变更类型与数据结构
 # ============================================================================
 
-
 class ChangeType(Enum):
     """变更类型。
 
@@ -54,7 +59,6 @@ class ChangeType(Enum):
     CREATE = "create"  # 创建新文件 (文件不能已存在)
     MODIFY = "modify"  # 修改已有文件 (old_content 必须与磁盘匹配)
     DELETE = "delete"  # 删除文件 (文件必须存在)
-
 
 @dataclass
 class FileChange:
@@ -109,7 +113,6 @@ class FileChange:
         )
         return "".join(diff_lines)
 
-
 @dataclass
 class ChangeSet:
     """变更集 (多文件原子编辑)。
@@ -160,11 +163,9 @@ class ChangeSet:
                 parts.append(diff)
         return "".join(parts)
 
-
 # ============================================================================
 # 变更集构建器 (流式 API)
 # ============================================================================
-
 
 class ChangeSetBuilder:
     """变更集构建器 (流式 API)。
@@ -254,11 +255,9 @@ class ChangeSetBuilder:
         """
         return self._changeset
 
-
 # ============================================================================
 # 应用结果
 # ============================================================================
-
 
 @dataclass
 class ApplyResult:
@@ -280,11 +279,9 @@ class ApplyResult:
     error: str | None = None
     duration_sec: float = 0.0
 
-
 # ============================================================================
 # 原子多文件编辑引擎
 # ============================================================================
-
 
 class DiffEngine:
     """原子多文件编辑引擎。
@@ -623,7 +620,6 @@ class DiffEngine:
             if change.old_content is None:
                 return "DELETE 变更缺少 old_content"
         return None
-
 
 __all__ = [
     "ApplyResult",

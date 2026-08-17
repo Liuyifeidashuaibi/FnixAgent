@@ -18,6 +18,12 @@ URL 规范化(借鉴 zhua):
   - logging 记录关键事件,不引入 loguru
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import json
@@ -43,7 +49,6 @@ try:
 except ImportError:  # pragma: no cover - 探测模块自身不应失败,兜底防御
     _try_rust_fnv64a = None  # type: ignore[assignment]
 
-
 # ---------------------------------------------------------------------------
 # FNV-64a 哈希(纯 Python,零依赖)
 # ---------------------------------------------------------------------------
@@ -51,7 +56,6 @@ except ImportError:  # pragma: no cover - 探测模块自身不应失败,兜底�
 _FNV64_OFFSET_BASIS = 0xCBF29CE484222325
 _FNV64_PRIME = 0x100000001B3
 _FNV64_MASK = (1 << 64) - 1
-
 
 def _fnv64a_pure_python(data: str) -> int:
     """FNV-64a 哈希(纯 Python 实现,作为 Rust 扩展的 fallback)。
@@ -75,7 +79,6 @@ def _fnv64a_pure_python(data: str) -> int:
         h = (h * _FNV64_PRIME) & _FNV64_MASK
     return h
 
-
 def fnv64a(data: str) -> int:
     """FNV-64a 哈希。
 
@@ -94,7 +97,6 @@ def fnv64a(data: str) -> int:
         return _try_rust_fnv64a(data, python_fallback=_fnv64a_pure_python)
     return _fnv64a_pure_python(data)
 
-
 # ---------------------------------------------------------------------------
 # URL 规范化(借鉴 zhua)
 # ---------------------------------------------------------------------------
@@ -106,7 +108,6 @@ _DEFAULT_PORTS = {
     "ws": 80,
     "wss": 443,
 }
-
 
 def normalize_url(url: str) -> str:
     """URL 规范化。
@@ -161,14 +162,12 @@ def normalize_url(url: str) -> str:
     # fragment 丢弃
     return urlunsplit((scheme, netloc, path, query, ""))
 
-
 # ---------------------------------------------------------------------------
 # Simhash 近似去重(64 位)
 # ---------------------------------------------------------------------------
 
 # 简单分词: 连续的字母/数字/下划线 或 中文字符为一个 token
 _TOKEN_RE = re.compile(r"[A-Za-z0-9_]+|[\u4e00-\u9fff]+")
-
 
 @dataclass
 class Simhash:
@@ -243,11 +242,9 @@ class Simhash:
             dist += 1
         return dist
 
-
 # ---------------------------------------------------------------------------
 # 请求指纹
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class RequestFingerprint:
@@ -336,11 +333,9 @@ class RequestFingerprint:
         """
         return Simhash.compute(self.content_text())
 
-
 # ---------------------------------------------------------------------------
 # 请求去重器
 # ---------------------------------------------------------------------------
-
 
 class RequestDeduplicator:
     """请求去重器。
@@ -601,14 +596,12 @@ class RequestDeduplicator:
             self._total_near_duplicates = 0
             self._total_evicted = 0
 
-
 # ---------------------------------------------------------------------------
 # 模块级单例
 # ---------------------------------------------------------------------------
 
 _deduplicator_singleton: RequestDeduplicator | None = None
 _singleton_lock = threading.Lock()
-
 
 def get_deduplicator(
     enable_simhash: bool = False,
@@ -637,7 +630,6 @@ def get_deduplicator(
                 max_fingerprints=max_fingerprints,
             )
         return _deduplicator_singleton
-
 
 def reset_deduplicator() -> None:
     """重置全局去重器单例(主要用于测试)。

@@ -1,3 +1,10 @@
+/**
+ * Copyright (C) 2026 FnixAgent. All rights reserved.
+ * Software Name: FnixAgent 智能工作台系统 V1.0
+ * This software and its source code are proprietary and confidential.
+ * Unauthorized copying, modification, distribution, or use is strictly prohibited.
+ */
+
 /** Agent 执行控制台：真实动作、证据和控制，不展示原始 chain-of-thought。 */
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";

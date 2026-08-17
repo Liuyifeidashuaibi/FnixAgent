@@ -25,6 +25,12 @@
     不向上抛出(返回 None / 空结果),避免 Postgres 不可用时导致主流程崩溃。
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import json
@@ -39,7 +45,6 @@ from fnixagent.core.checkpoint.types import (
     CheckpointMetadata,
     CheckpointTuple,
 )
-
 
 class PostgresCheckpointer(BaseCheckpointer):
     """PostgreSQL 版 Checkpointer(生产用)。

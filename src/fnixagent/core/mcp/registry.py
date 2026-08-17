@@ -15,6 +15,12 @@
   - 工具列表为快照,server 端变化需显式 sync_tools
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import threading
@@ -38,27 +44,21 @@ from fnixagent.core.types import ToolPermission
 # 异常
 # ---------------------------------------------------------------------------
 
-
 class MCPRegistryError(Exception):
     """MCP 注册表基础异常。"""
-
 
 class MCPServerNotFoundError(MCPRegistryError):
     """server_id 不存在。"""
 
-
 class MCPServerAlreadyExistsError(MCPRegistryError):
     """server_id 已存在。"""
-
 
 class MCPToolNotFoundError(MCPRegistryError):
     """工具名在所有 server 中找不到。"""
 
-
 # ---------------------------------------------------------------------------
 # MCPToolRegistry
 # ---------------------------------------------------------------------------
-
 
 class MCPToolRegistry:
     """MCP 工具注册表:管理多 server + 多工具。

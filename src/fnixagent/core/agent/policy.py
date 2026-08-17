@@ -25,6 +25,12 @@ PolicyEngine - 权限与能力模型 (Policy Engine & Capability Model)
   - 默认拒绝矛盾: 开发/生产模式显式切换
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import fnmatch
@@ -44,7 +50,6 @@ from fnixagent.core.agent.types import PolicyBackend
 if TYPE_CHECKING:
     from fnixagent.core.agent.process import AgentProcess
     from fnixagent.core.agent.syscall import SyscallRequest
-
 
 @dataclass
 class PolicyRule:
@@ -67,7 +72,6 @@ class PolicyRule:
     condition: Callable[[dict[str, Any]], bool] | None = None
     priority: int = 0
     description: str = ""
-
 
 class PolicyEngine:
     """策略引擎 (类比 OS 权限 / capability model)。
@@ -292,6 +296,5 @@ class PolicyEngine:
             "has_backend": self._backend is not None,
             "tracked_pids": len(self._pid_roles),
         }
-
 
 __all__ = ["PolicyEngine", "PolicyRule"]

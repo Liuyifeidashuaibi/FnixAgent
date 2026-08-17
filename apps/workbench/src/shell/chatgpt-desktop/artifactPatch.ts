@@ -1,9 +1,16 @@
 /**
+ * Copyright (C) 2026 FnixAgent. All rights reserved.
+ * Software Name: FnixAgent 智能工作台系统 V1.0
+ * This software and its source code are proprietary and confidential.
+ * Unauthorized copying, modification, distribution, or use is strictly prohibited.
+ */
+
+/**
  * Spec 3: Artifact 增量编辑 (diff-apply)
  * ============================================================
  * 对标:
  *   - e2b-dev/fragments 的 Morph Apply 集成
- *   - Cursor 的 semantic diff + code-apply
+ *   - 语义 diff + 代码应用
  *   - Aider 的 SEARCH/REPLACE block 格式
  *
  * 设计:

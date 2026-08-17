@@ -9,6 +9,12 @@ core/security/auth 子包单元测试公共夹具。
     - reset_keystore:   每个测试用例前重置 keystore 单例
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 import os
 import sys
 

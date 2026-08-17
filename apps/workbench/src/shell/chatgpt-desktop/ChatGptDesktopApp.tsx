@@ -1,4 +1,11 @@
 /**
+ * Copyright (C) 2026 FnixAgent. All rights reserved.
+ * Software Name: FnixAgent 智能工作台系统 V1.0
+ * This software and its source code are proprietary and confidential.
+ * Unauthorized copying, modification, distribution, or use is strictly prohibited.
+ */
+
+/**
  * Fnix Desktop shell — ChatGPT-client look (Chat + Codex).
  * Layout mirrors OpenAI ChatGPT desktop (sidebar + centered composer), not Google apps.
  * Runtime is Fnix BYOK.
@@ -81,7 +88,7 @@ import { useWorkspaceStore } from "./workspaceStore";
 import { useReviewStore } from "./reviewStore";
 import { canOpenReview } from "./shellFsm";
 import { ThreadSidebar } from "./ThreadSidebar";
-import { JobsPanel } from "./JobsPanel";
+import { TaskBoard } from "./TaskBoard";
 import { useJobsStore } from "./useJobsStore";
 import { CanvasView } from "./CanvasView";
 import { TerminalView } from "./TerminalView";
@@ -201,7 +208,7 @@ function ChatHead({
             type="button"
             className={`oai-ibtn sm${jobsOpen ? " active" : ""}`}
             onClick={onToggleJobs}
-            title="并行任务"
+            title="任务面板"
           >
             <Layers size={16} />
             {activeJobCount ? (
@@ -1026,7 +1033,7 @@ export default function ChatGptDesktopApp() {
           />
         )}
 
-        {/* ── Work home — 对标 ChatGPT：上品牌 / 下 Composer ── */}
+        {/* ── Work home — 上品牌 / 下输入框 ── */}
         {mode === "work" && pane === "home" && !hasSession && (
           <div className="oai-chat-home wb-home">
             <div className="oai-home-hero">
@@ -1338,13 +1345,7 @@ export default function ChatGptDesktopApp() {
           </button>
         ) : null}
         {jobsOpen ? (
-          <aside className="oai-jobs-drawer" role="dialog" aria-label="并行任务">
-            <div className="oai-jobs-drawer-head">
-              <span>并行任务</span>
-              <button type="button" onClick={() => setJobsOpen(false)}>关闭</button>
-            </div>
-            <JobsPanel />
-          </aside>
+          <TaskBoard workspace={projectPath} onClose={() => setJobsOpen(false)} />
         ) : null}
         {skillsOpen ? (
           <SkillManager workspace={projectPath} onClose={() => setSkillsOpen(false)} />

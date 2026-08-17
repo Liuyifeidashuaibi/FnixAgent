@@ -12,6 +12,12 @@ RBAC 存储层(Phase 2.1)。
     - 内置角色(is_builtin=True)不可删除,防止误操作破坏系统
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import os

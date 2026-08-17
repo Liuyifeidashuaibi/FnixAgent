@@ -110,3 +110,24 @@ apps/workbench/typecheck-exit.txt
 _debug_home/
 _debug_ws/
 debug_craft.py
+
+# --- Runtime cache & clusters ---
+.cluster/
+
+# --- Benchmark seeds (large test data) ---
+benchmarks/code/seed/
+
+# --- Generated HTML docs ---
+docs/*.html
+docs/internal/
+docs/转载用研究资料/
+
+# --- Experimental code ---
+experiments/
+ops-memory-mcp/
+apps/workbench/src/shell/chatgpt-desktop/
+
+# --- One-shot test scripts ---
+test_*.py
+verify_*.py
+test.jsonl

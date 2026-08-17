@@ -16,6 +16,12 @@ Excel 工作簿创建/读取/公式/数据透视/图表/合并/条件格式/CSV 
   - 路径穿越/扩展名/大小限制 → _validate_path 拦截
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 from typing import Any

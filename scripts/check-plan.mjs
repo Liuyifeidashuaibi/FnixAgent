@@ -1,5 +1,12 @@
 #!/usr/bin/env node
 /**
+ * Copyright (C) 2026 FnixAgent. All rights reserved.
+ * Software Name: FnixAgent 智能工作台系统 V1.0
+ * This software and its source code are proprietary and confidential.
+ * Unauthorized copying, modification, distribution, or use is strictly prohibited.
+ */
+
+/**
  * Mega Plan 验收 — 对照 docs/MEGA_PLAN.md 自动检查可验证项
  *
  * 用法: pnpm check:plan

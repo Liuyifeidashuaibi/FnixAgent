@@ -1,7 +1,7 @@
 {
   "name": "@fnixagent/workbench",
   "private": true,
-  "version": "2.1.2",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 5175 --strictPort",

@@ -16,6 +16,12 @@
   - 中文注释
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import asyncio
@@ -32,11 +38,9 @@ from .memory_manager import IntelligenceMemoryManager
 from .self_judge import SelfJudge
 from .skill_marketplace import SkillMarketplace
 
-
 def _now_iso() -> str:
     """当前 UTC 时间 ISO 字符串"""
     return datetime.now(UTC).isoformat()
-
 
 def _run_async_safely(coro_factory, *, timeout: float = 5.0) -> Any | None:
     """安全地运行协程: 无事件循环时用 asyncio.run; 有循环则返回 None (跳过)。
@@ -55,14 +59,12 @@ def _run_async_safely(coro_factory, *, timeout: float = 5.0) -> Any | None:
     except Exception:
         return None
 
-
 async def _await_with_timeout(coro, timeout: float) -> Any | None:
     """带超时的协程执行"""
     try:
         return await asyncio.wait_for(coro, timeout=timeout)
     except (TimeoutError, Exception):
         return None
-
 
 class IntelligenceIntegrator:
     """Intelligence 七层集成协调器。
@@ -423,7 +425,6 @@ class IntelligenceIntegrator:
         # 最近 5 次进化周期摘要
         report["recent_cycles"] = self._history[-5:]
         return report
-
 
 __all__ = [
     "IntelligenceIntegrator",

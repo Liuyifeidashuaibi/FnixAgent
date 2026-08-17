@@ -26,6 +26,12 @@
     )
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import hashlib
@@ -35,7 +41,6 @@ from dataclasses import dataclass, field
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
-
 
 # ---------------------------------------------------------------------------
 # 审计动作常量
@@ -115,11 +120,9 @@ ALL_AUDIT_ACTIONS: tuple[str, ...] = (
 # 哈希链 genesis 值(第一条记录的 prev_hash)
 _GENESIS_HASH: str = "0" * 64
 
-
 # ---------------------------------------------------------------------------
 # DTO
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class AuditLogDTO:
@@ -165,11 +168,9 @@ class AuditLogDTO:
             "trace_id": self.trace_id or "",
         }
 
-
 # ---------------------------------------------------------------------------
 # 哈希链工具
 # ---------------------------------------------------------------------------
-
 
 def _compute_entry_hash(
     prev_hash: str,
@@ -185,7 +186,6 @@ def _compute_entry_hash(
     """
     raw = f"{prev_hash}|{action}|{user_id or 0}|{detail_json}|{created_at_iso}|{ip_address or ''}"
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()
-
 
 def verify_hash_chain(logs: list[AuditLogDTO]) -> tuple[bool, str | None]:
     """校验哈希链完整性。
@@ -216,11 +216,9 @@ def verify_hash_chain(logs: list[AuditLogDTO]) -> tuple[bool, str | None]:
         prev_hash = log.entry_hash
     return True, None
 
-
 # ---------------------------------------------------------------------------
 # Phase 3.2: detail 字段自动脱敏
 # ---------------------------------------------------------------------------
-
 
 def _desensitize_detail(detail: dict) -> dict:
     """递归对 detail 中的字符串值做 PII 脱敏。
@@ -245,7 +243,6 @@ def _desensitize_detail(detail: dict) -> dict:
         # 脱敏失败不影响审计主流程,返回原始数据
         return detail
 
-
 def _desensitize_value(value, desensitizer) -> object:
     """递归对值做脱敏。"""
     if isinstance(value, str):
@@ -258,11 +255,9 @@ def _desensitize_value(value, desensitizer) -> object:
         return tuple(_desensitize_value(v, desensitizer) for v in value)
     return value
 
-
 # ---------------------------------------------------------------------------
 # 审计日志写入器
 # ---------------------------------------------------------------------------
-
 
 class AuditLogger:
     """审计日志写入器。

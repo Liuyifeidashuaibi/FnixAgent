@@ -22,6 +22,12 @@ P2-9 降级链示例(借鉴 open-fnix-agent 的 3 级降级):
   # chat() 调用时:主失败→降级1→降级2,逐级尝试,全部失败才抛异常
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import random
@@ -53,13 +59,11 @@ from fnixagent.core.types import LLMResponse
 # 路由策略
 # ---------------------------------------------------------------------------
 
-
 class RouteStrategy(str, Enum):
     ROUND_ROBIN = "round_robin"  # 轮询
     WEIGHTED = "weighted"  # 加权
     LEAST_LOAD = "least_load"  # 最少负载(最低平均延迟)
     FAILOVER = "failover"  # 故障转移(主→备)
-
 
 @dataclass
 class RouterStats:
@@ -93,11 +97,9 @@ class RouterStats:
             return 1.0
         return self.success_count / self.total_calls
 
-
 # ---------------------------------------------------------------------------
 # Provider 注册项
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class _ProviderEntry:
@@ -112,11 +114,9 @@ class _ProviderEntry:
         if self.stats is None:
             self.stats = RouterStats(provider_name=self.provider.name)
 
-
 # ---------------------------------------------------------------------------
 # 路由器
 # ---------------------------------------------------------------------------
-
 
 class LLMRouter:
     """

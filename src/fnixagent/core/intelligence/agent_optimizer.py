@@ -17,7 +17,7 @@
   │  Prefill/Decode   → 两阶段分别优化                            │
   ├─────────────────────────────────────────────────────────────────┤
   │  Context 管理:                                                  │
-  │  DCP (Dynamic Context Pruning) → 自动修剪, MIT开源            │
+  │  DCP (Dynamic Context Pruning) → 自动修剪                    │
   │  Context Ranking  → ranking not stuffing, 质量优先             │
   │  Microsoft AF     → 自动上下文压缩, 防溢出                     │
   ├─────────────────────────────────────────────────────────────────┤
@@ -42,6 +42,12 @@
   └──────────┴──────────┴──────────┴──────────┴──────────┘
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import asyncio
@@ -61,11 +67,9 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-
 # ============================================================
 # 1. Token 优化器 (Prompt Caching + Semantic Caching + Context Pruning)
 # ============================================================
-
 
 class CacheStrategy(str, Enum):
     """缓存策略"""
@@ -73,7 +77,6 @@ class CacheStrategy(str, Enum):
     EXACT = "exact"  # 精确匹配 (Prompt Caching)
     SEMANTIC = "semantic"  # 语义匹配 (Semantic Caching)
     HYBRID = "hybrid"  # 混合 (先精确再语义)
-
 
 @dataclass
 class CacheEntry:
@@ -87,7 +90,6 @@ class CacheEntry:
     hit_count: int = 0
     last_accessed: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
-
 
 class TokenOptimizer:
     """
@@ -385,20 +387,17 @@ class TokenOptimizer:
             ),
         }
 
-
 # ============================================================
 # 2. 模型路由器 (Cost-aware Model Routing)
 # ============================================================
-
 
 class ModelTier(str, Enum):
     """模型层级"""
 
     NANO = "nano"  # 极便宜 (DeepSeek, Qwen3.5本地)
-    FAST = "fast"  # 快 (GPT-5.4 Flash, Claude Haiku)
-    BALANCED = "balanced"  # 均衡 (GPT-5.4, Claude Sonnet)
-    FRONTIER = "frontier"  # 顶级 (GPT-5.6, Claude Opus)
-
+    FAST = "fast"  # 快 (快速模型)
+    BALANCED = "balanced"  # 均衡 (均衡模型)
+    FRONTIER = "frontier"  # 顶级 (顶级模型)
 
 @dataclass
 class ModelConfig:
@@ -413,7 +412,6 @@ class ModelConfig:
     max_tokens: int  # 最大上下文
     quality_score: float  # 质量评分 (0-1)
     is_local: bool = False  # 是否本地模型
-
 
 # 2026年主流模型价格 (USD/1M tokens)
 MODEL_REGISTRY = {
@@ -443,7 +441,6 @@ MODEL_REGISTRY = {
         "gemini-3.1-pro", ModelTier.BALANCED, "google", 1.25, 5.00, 700, 1000000, 0.86
     ),
 }
-
 
 class ModelRouter:
     """
@@ -585,11 +582,9 @@ class ModelRouter:
             return (1 - actual_cost / frontier_cost) * 100
         return 0.0
 
-
 # ============================================================
 # 3. 并行执行器 (LLMCompiler + DAG)
 # ============================================================
-
 
 class TaskStatus(str, Enum):
     PENDING = "pending"
@@ -597,7 +592,6 @@ class TaskStatus(str, Enum):
     COMPLETED = "completed"
     FAILED = "failed"
     SKIPPED = "skipped"
-
 
 @dataclass
 class TaskNode:
@@ -614,7 +608,6 @@ class TaskNode:
     error: str = ""
     duration_ms: float = 0
     wave: int = 0  # 执行波次
-
 
 class ParallelExecutor:
     """
@@ -783,17 +776,14 @@ class ParallelExecutor:
             "recent": recent[-5:],
         }
 
-
 # ============================================================
 # 4. 成本熔断器 (Circuit Breaker)
 # ============================================================
-
 
 class CircuitState(str, Enum):
     CLOSED = "closed"  # 正常
     OPEN = "open"  # 熔断
     HALF_OPEN = "half_open"  # 半开 (试探)
-
 
 class CostCircuitBreaker:
     """
@@ -916,11 +906,9 @@ class CostCircuitBreaker:
             ),
         }
 
-
 # ============================================================
 # 5. 错误恢复引擎
 # ============================================================
-
 
 class ErrorCategory(str, Enum):
     """错误分类"""
@@ -929,7 +917,6 @@ class ErrorCategory(str, Enum):
     PERMANENT = "permanent"  # 永久 (权限, 参数错误)
     DEGRADATION = "degradation"  # 降级 (服务部分可用)
     UNKNOWN = "unknown"  # 未知
-
 
 class ErrorRecoveryEngine:
     """
@@ -1134,11 +1121,9 @@ class ErrorRecoveryEngine:
             "recent_errors": self._error_history[-10:],
         }
 
-
 # ============================================================
 # 6. 性能监控器
 # ============================================================
-
 
 @dataclass
 class PerformanceSnapshot:
@@ -1166,7 +1151,6 @@ class PerformanceSnapshot:
     # 时间
     window_start: str = ""
     window_end: str = ""
-
 
 class PerformanceMonitor:
     """
@@ -1351,11 +1335,9 @@ class PerformanceMonitor:
             "bottleneck_count": len(bottlenecks),
         }
 
-
 # ============================================================
 # 7. Agent Harness 总控 (2026 范式)
 # ============================================================
-
 
 class AgentHarness:
     """

@@ -22,6 +22,12 @@ API 路由 - 用户鉴权与管理接口(Phase 0.4 安全规范对齐)。
     - 旧 Token(无 device_fp 字段)继续可用
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 import hashlib
 import hmac
 import os
@@ -77,7 +83,6 @@ from fnixagent.services.storage import (
 # Phase 2.5: 审计日志动作常量(延迟导入避免循环依赖)
 _AUDIT = None
 
-
 def _get_audit_constants():
     """延迟导入审计动作常量(单例缓存)。"""
     global _AUDIT
@@ -107,11 +112,9 @@ def _get_audit_constants():
         }
     return _AUDIT
 
-
 router = APIRouter(prefix="/auth", tags=["auth"])
 security = HTTPBearer()
 security_optional = HTTPBearer(auto_error=False)
-
 
 def _audit_log(action: str, user_id=None, detail=None, http_request=None):
     """写入审计日志(失败不影响主流程)。"""
@@ -131,7 +134,6 @@ def _audit_log(action: str, user_id=None, detail=None, http_request=None):
         )
     except Exception:
         pass
-
 
 def _audit(action_key: str, user_id=None, detail=None, http_request=None):
     """使用预定义动作常量写入审计日志(便捷封装)。"""
@@ -160,14 +162,11 @@ def _audit(action_key: str, user_id=None, detail=None, http_request=None):
     except Exception:
         pass
 
-
 # 兼容旧代码:从 token 模块导出配置
-
 
 # ===========================================================================
 # 向后兼容函数(供现有代码 / 测试直接导入)
 # ===========================================================================
-
 
 def create_jwt_token(user_id: int, username: str) -> str:
     """[向后兼容] 创建单 Access Token(无设备指纹)。
@@ -175,7 +174,6 @@ def create_jwt_token(user_id: int, username: str) -> str:
     Phase 0.4 起推荐使用 create_token_pair() 获取双 Token。
     """
     return create_access_token(user_id=user_id, username=username, role="user")
-
 
 def verify_jwt_token(
     credentials: HTTPAuthorizationCredentials = Depends(security),
@@ -202,7 +200,6 @@ def verify_jwt_token(
 
     return payload
 
-
 def verify_jwt_token_optional(
     credentials: HTTPAuthorizationCredentials | None = Depends(security_optional),
 ) -> dict:
@@ -214,7 +211,6 @@ def verify_jwt_token_optional(
         raise HTTPException(status_code=401, detail="Not authenticated")
     return verify_jwt_token(credentials)
 
-
 def _get_user_or_404(payload: dict):
     """根据 payload 从 UserStore 取用户,失败抛 404。"""
     user_id = payload.get("user_id")
@@ -222,7 +218,6 @@ def _get_user_or_404(payload: dict):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
-
 
 def _get_request_context(request: Request) -> tuple[str, str]:
     """从 Request 提取 User-Agent 与客户端 IP。"""
@@ -236,11 +231,9 @@ def _get_request_context(request: Request) -> tuple[str, str]:
         ip = request.client.host if request.client else ""
     return user_agent, ip
 
-
 # ===========================================================================
 # 路由
 # ===========================================================================
-
 
 @router.get("/pubkey", response_model=PublicKeyResponse)
 async def get_public_key():
@@ -276,7 +269,6 @@ async def get_public_key():
         expires_at=None,
     )
 
-
 @router.post("/register", response_model=UserResponse)
 async def register_user(request: UserCreate):
     """
@@ -303,7 +295,6 @@ async def register_user(request: UserCreate):
         role=user.role,
         created_at=user.created_at,
     )
-
 
 @router.post("/owner/login", response_model=TokenResponse)
 async def owner_login(request: OwnerLoginRequest, http_request: Request):
@@ -399,7 +390,6 @@ async def owner_login(request: OwnerLoginRequest, http_request: Request):
         expires_in=token_pair.expires_in,
         refresh_expires_in=token_pair.refresh_expires_in,
     )
-
 
 @router.post("/login")
 async def login_user(request: UserLogin, http_request: Request):
@@ -519,7 +509,6 @@ async def login_user(request: UserLogin, http_request: Request):
         refresh_expires_in=token_pair.refresh_expires_in,
     )
 
-
 @router.post("/refresh", response_model=TokenResponse)
 async def refresh_token(request: RefreshTokenRequest, http_request: Request):
     """用 Refresh Token 换发新的双 Token。
@@ -589,7 +578,6 @@ async def refresh_token(request: RefreshTokenRequest, http_request: Request):
         refresh_expires_in=new_pair.refresh_expires_in,
     )
 
-
 @router.get("/me", response_model=UserResponse)
 async def get_current_user(payload: dict = Depends(verify_jwt_token)):
     """获取当前登录用户信息。"""
@@ -601,7 +589,6 @@ async def get_current_user(payload: dict = Depends(verify_jwt_token)):
         role=user.role,
         created_at=user.created_at,
     )
-
 
 @router.post("/logout")
 async def logout_user(
@@ -626,7 +613,6 @@ async def logout_user(
     _audit("LOGOUT", user_id=payload.get("user_id"), http_request=http_request)
     return BaseResponse(success=True, message="Logged out")
 
-
 @router.put("/profile", response_model=BaseResponse)
 async def update_profile(
     profile_data: dict,
@@ -639,7 +625,6 @@ async def update_profile(
         raise HTTPException(status_code=500, detail="更新失败")
     return BaseResponse(success=True, message="Profile updated", data=updated.profile)
 
-
 @router.get("/quota")
 async def get_user_quota(payload: dict = Depends(verify_jwt_token)):
     """获取用户 Token 配额。"""
@@ -648,7 +633,6 @@ async def get_user_quota(payload: dict = Depends(verify_jwt_token)):
     if not quota:
         raise HTTPException(status_code=404, detail="Quota not found")
     return quota
-
 
 @router.post("/apikey")
 async def create_api_key(payload: dict = Depends(verify_jwt_token)):
@@ -668,7 +652,6 @@ async def create_api_key(payload: dict = Depends(verify_jwt_token)):
         "expires_at": record.expires_at.isoformat() if record.expires_at else None,
     }
 
-
 @router.delete("/apikey/{key_id}")
 async def delete_api_key(key_id: int, payload: dict = Depends(verify_jwt_token)):
     """删除(吊销)API Key。"""
@@ -677,7 +660,6 @@ async def delete_api_key(key_id: int, payload: dict = Depends(verify_jwt_token))
     if not ok:
         raise HTTPException(status_code=404, detail="API Key 不存在或无权操作")
     return BaseResponse(success=True, message="API Key revoked")
-
 
 @router.get("/apikey/list")
 async def list_api_keys(payload: dict = Depends(verify_jwt_token)):
@@ -695,11 +677,9 @@ async def list_api_keys(payload: dict = Depends(verify_jwt_token)):
         for k in keys
     ]
 
-
 # ===========================================================================
 # Phase 2.2: LDAP/AD 域账号登录
 # ===========================================================================
-
 
 @router.post("/ldap/login", response_model=TokenResponse)
 async def ldap_login(request: LDAPLoginRequest, http_request: Request):
@@ -788,11 +768,9 @@ async def ldap_login(request: LDAPLoginRequest, http_request: Request):
         refresh_expires_in=token_pair.refresh_expires_in,
     )
 
-
 # ===========================================================================
 # Phase 2.3: SSO 单点登录(OAuth2.0 / SAML)
 # ===========================================================================
-
 
 @router.get("/sso/providers")
 async def list_sso_providers():
@@ -811,7 +789,6 @@ async def list_sso_providers():
             "total": len(configs),
         },
     )
-
 
 @router.post("/sso/oauth/authorize")
 async def oauth_authorize(request: OAuthAuthorizeRequest):
@@ -849,7 +826,6 @@ async def oauth_authorize(request: OAuthAuthorizeRequest):
         success=True,
         data={"authorization_url": url, "state": state, "provider_code": request.provider_code},
     )
-
 
 @router.post("/sso/oauth/callback", response_model=TokenResponse)
 async def oauth_callback(request: OAuthCallbackRequest, http_request: Request):
@@ -938,7 +914,6 @@ async def oauth_callback(request: OAuthCallbackRequest, http_request: Request):
         refresh_expires_in=token_pair.refresh_expires_in,
     )
 
-
 @router.post("/sso/saml/{provider_code}/login")
 async def saml_login(provider_code: str, body: SAMLLoginRequest):
     """SAML SP 发起登录:生成 AuthnRequest,返回 IdP 重定向 URL。
@@ -974,7 +949,6 @@ async def saml_login(provider_code: str, body: SAMLLoginRequest):
             "provider_code": provider_code,
         },
     )
-
 
 @router.post("/sso/saml/{provider_code}/acs", response_model=TokenResponse)
 async def saml_acs(provider_code: str, body: SAMLACSRequest, http_request: Request):
@@ -1056,11 +1030,9 @@ async def saml_acs(provider_code: str, body: SAMLACSRequest, http_request: Reque
         refresh_expires_in=token_pair.refresh_expires_in,
     )
 
-
 # ===========================================================================
 # Phase 2.4: MFA 多因素认证
 # ===========================================================================
-
 
 @router.post("/mfa/setup", response_model=MFASetupResponse)
 async def mfa_setup(
@@ -1115,7 +1087,6 @@ async def mfa_setup(
         )
     else:
         raise HTTPException(status_code=400, detail=f"不支持的因子类型: {request.factor_type}")
-
 
 @router.post("/mfa/enable", response_model=BaseResponse)
 async def mfa_enable(
@@ -1211,7 +1182,6 @@ async def mfa_enable(
         data={"recovery_codes": codes} if codes else None,
     )
 
-
 @router.post("/mfa/disable", response_model=BaseResponse)
 async def mfa_disable(
     request: MFADisableRequest,
@@ -1275,7 +1245,6 @@ async def mfa_disable(
         )
         return BaseResponse(success=True, message="MFA 因子已禁用")
 
-
 @router.get("/mfa/factors", response_model=BaseResponse)
 async def mfa_list_factors(payload: dict = Depends(verify_jwt_token)):
     """列出当前用户已绑定的 MFA 因子(不含 secret)。"""
@@ -1299,7 +1268,6 @@ async def mfa_list_factors(payload: dict = Depends(verify_jwt_token)):
             "mfa_enabled": any(f.enabled for f in factors),
         },
     )
-
 
 @router.post("/mfa/recovery-codes/regenerate", response_model=BaseResponse)
 async def mfa_regenerate_recovery_codes(
@@ -1333,7 +1301,6 @@ async def mfa_regenerate_recovery_codes(
         message="恢复码已重新生成(明文只返回一次,请妥善保存)",
         data={"recovery_codes": codes},
     )
-
 
 @router.post("/mfa/send-code", response_model=BaseResponse)
 async def mfa_send_code(
@@ -1430,7 +1397,6 @@ async def mfa_send_code(
             "expires_in": OTP_TTL_SECONDS,
         },
     )
-
 
 @router.post("/mfa/verify", response_model=TokenResponse)
 async def mfa_verify(request: MFAVerifyRequest, http_request: Request):
@@ -1576,7 +1542,6 @@ async def mfa_verify(request: MFAVerifyRequest, http_request: Request):
         refresh_expires_in=token_pair.refresh_expires_in,
     )
 
-
 # ============================================================================
 # Phase 3.0: 手机号验证码独立登录(国内)
 # ============================================================================
@@ -1597,10 +1562,8 @@ async def mfa_verify(request: MFAVerifyRequest, http_request: Request):
 #   - 手机号未注册时返回相同响应(防用户枚举)
 # ============================================================================
 
-
 # SMS 登录专用 factor_type(与 MFA 的 sms 区分)
 _SMS_LOGIN_FACTOR = "sms_login"
-
 
 def _get_sms_login_otp_client():
     """获取 OTP 客户端(复用 MFA 的 SMS 配置)。
@@ -1636,7 +1599,6 @@ def _get_sms_login_otp_client():
             template_code=os.getenv("SMS_TEMPLATE_CODE", ""),
         )
     )
-
 
 @router.post("/sms/send-code")
 async def sms_send_code(request: SmsSendCodeRequest, http_request: Request):
@@ -1699,7 +1661,6 @@ async def sms_send_code(request: SmsSendCodeRequest, http_request: Request):
         "expires_in": 300,
         "message": "验证码已发送",
     }
-
 
 @router.post("/sms/login", response_model=TokenResponse)
 async def sms_login(request: SmsLoginRequest, http_request: Request):

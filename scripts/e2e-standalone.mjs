@@ -1,5 +1,12 @@
 #!/usr/bin/env node
 /**
+ * Copyright (C) 2026 FnixAgent. All rights reserved.
+ * Software Name: FnixAgent 智能工作台系统 V1.0
+ * This software and its source code are proprietary and confidential.
+ * Unauthorized copying, modification, distribution, or use is strictly prohibited.
+ */
+
+/**
  * Standalone 端到端冒烟 — 自动拉起 fnix-local + agentd，跑 API 验收后退出
  *
  * 用法: pnpm e2e:standalone

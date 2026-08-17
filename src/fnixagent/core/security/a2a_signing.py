@@ -22,6 +22,12 @@ Trust Store:
   - 持久化到 config/security/a2a_trust_store.json
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import base64
@@ -40,11 +46,9 @@ from fnixagent.core.security.crypto_provider import (
 
 logger = logging.getLogger(__name__)
 
-
 # ---------------------------------------------------------------------------
 # 审计钩子
 # ---------------------------------------------------------------------------
-
 
 def _audit_a2a(action: str, detail: dict | None = None) -> None:
     """将 A2A 通信安全事件写入审计日志。"""
@@ -55,11 +59,9 @@ def _audit_a2a(action: str, detail: dict | None = None) -> None:
     except Exception:
         pass
 
-
 # ---------------------------------------------------------------------------
 # 数据结构
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class SignedEnvelope:
@@ -83,7 +85,6 @@ class SignedEnvelope:
     signature: str  # base64 签名
     algorithm: str = "SM2"  # 签名算法
 
-
 @dataclass
 class AgentIdentity:
     """Agent 身份信息(trust store 条目)。
@@ -98,7 +99,6 @@ class AgentIdentity:
     public_key: bytes  # PEM 格式
     registered_at: str
 
-
 # ---------------------------------------------------------------------------
 # 常量
 # ---------------------------------------------------------------------------
@@ -110,11 +110,9 @@ _NONCE_CACHE_SIZE = 1000
 # 默认 trust store 路径(相对于项目根)
 _DEFAULT_TRUST_STORE = os.path.join("config", "security", "a2a_trust_store.json")
 
-
 # ---------------------------------------------------------------------------
 # A2ASigner
 # ---------------------------------------------------------------------------
-
 
 class A2ASigner:
     """A2A 通信签名器。
@@ -471,15 +469,12 @@ class A2ASigner:
         except Exception as exc:
             logger.error("[a2a] 保存 trust store 失败: %s", exc)
 
-
 # ---------------------------------------------------------------------------
 # 全局单例(懒加载)
 # ---------------------------------------------------------------------------
 
-
 _a2a_signer_instance: A2ASigner | None = None
 _a2a_signer_lock = threading.Lock()
-
 
 def get_a2a_signer(
     crypto_provider: CryptoProvider | None = None,
@@ -491,7 +486,6 @@ def get_a2a_signer(
             if _a2a_signer_instance is None:
                 _a2a_signer_instance = A2ASigner(crypto_provider)
     return _a2a_signer_instance
-
 
 def reset_a2a_signer() -> None:
     """重置单例(主要用于测试)。"""

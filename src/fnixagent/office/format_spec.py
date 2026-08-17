@@ -18,6 +18,12 @@
   - 返回 FormatReport 统计(total/modified/skipped + details)
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import os
@@ -44,11 +50,9 @@ _CODE_FONTS: frozenset[str] = frozenset(
     }
 )
 
-
 # ---------------------------------------------------------------------------
 # 数据结构
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class FormatSpec:
@@ -86,7 +90,6 @@ class FormatSpec:
     normalize_whitespace: bool = True  # 是否合并多余空白
     preserve_code_blocks: bool = True  # 代码块保留等宽字体
 
-
 @dataclass
 class FormatReport:
     """格式化结果报告。
@@ -103,11 +106,9 @@ class FormatReport:
     skipped_runs: int = 0
     details: list[dict] = field(default_factory=list)
 
-
 # ---------------------------------------------------------------------------
 # 格式统一器
 # ---------------------------------------------------------------------------
-
 
 class FormatNormalizer(BaseExpert):
     """格式统一器(Phase 5.6)。

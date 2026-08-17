@@ -21,6 +21,12 @@
   - 与 audit/logger.py 并行存在,不修改原模块
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import hashlib
@@ -35,11 +41,9 @@ from datetime import UTC, datetime
 
 logger = logging.getLogger(__name__)
 
-
 # ---------------------------------------------------------------------------
 # 数据结构
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class ChainEntry:
@@ -61,7 +65,6 @@ class ChainEntry:
     entry_hash: str
     content: str = ""
 
-
 @dataclass
 class MerkleProof:
     """Merkle 包含证明。
@@ -77,7 +80,6 @@ class MerkleProof:
     path: list[str]
     indices: list[int]
     root: str
-
 
 @dataclass
 class ChainSnapshot:
@@ -99,11 +101,9 @@ class ChainSnapshot:
     signature: str
     signer_key_id: str
 
-
 # ---------------------------------------------------------------------------
 # AuditChain
 # ---------------------------------------------------------------------------
-
 
 class AuditChain:
     """链式哈希审计 + WORM 存储。

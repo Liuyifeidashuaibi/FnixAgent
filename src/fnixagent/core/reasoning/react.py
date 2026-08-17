@@ -24,6 +24,12 @@
   - 达到 max_iterations → 追加"未完成"步骤后返回(不抛异常,保留 trace)
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import json
@@ -39,7 +45,6 @@ from fnixagent.core.types import (
     ThoughtStep,
     ToolCall,
 )
-
 
 class ReActEngine(ReasoningEngine):
     """ReAct 推理引擎。

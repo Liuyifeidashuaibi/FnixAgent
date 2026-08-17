@@ -19,6 +19,12 @@ AgentScheduler - 进程调度器 (Process Scheduler)
   - 无资源监控: 已实现 _resource_monitor_loop
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import asyncio
@@ -32,7 +38,6 @@ from fnixagent.core.agent.types import (
     AgentState,
     StorageBackend,
 )
-
 
 class AgentScheduler:
     """Agent 调度器 (类比 OS Scheduler)。
@@ -395,6 +400,5 @@ class AgentScheduler:
             "scheduler_running": self._scheduler_task is not None,
             "monitor_running": self._monitor_task is not None,
         }
-
 
 __all__ = ["AgentScheduler"]

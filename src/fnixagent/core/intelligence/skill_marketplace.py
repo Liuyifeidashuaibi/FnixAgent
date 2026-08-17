@@ -31,6 +31,12 @@ FnixAgent ∞ 技能市场 (Skill Marketplace) — Layer 6
     - version_gene: 版本历史
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import hashlib
@@ -45,11 +51,9 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-
 # ============================================================
 # 技能相关枚举
 # ============================================================
-
 
 class SkillStatus(str, Enum):
     DRAFT = "draft"  # 草稿
@@ -58,7 +62,6 @@ class SkillStatus(str, Enum):
     PUBLISHED = "published"  # 已发布
     DEPRECATED = "deprecated"  # 已废弃
     FAILED = "failed"  # 验证失败
-
 
 class SkillCategory(str, Enum):
     CODING = "coding"  # 代码编写
@@ -72,11 +75,9 @@ class SkillCategory(str, Enum):
     OPTIMIZATION = "optimization"  # 性能优化
     SYSTEM = "system"  # 系统操作
 
-
 # ============================================================
 # 技能基因 (Evolver GEP)
 # ============================================================
-
 
 @dataclass
 class SkillGene:
@@ -107,11 +108,9 @@ class SkillGene:
     def from_dict(cls, data: dict[str, Any]) -> SkillGene:
         return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
 
-
 # ============================================================
 # 技能定义
 # ============================================================
-
 
 @dataclass
 class Skill:
@@ -181,11 +180,9 @@ class Skill:
         data["genes"] = [SkillGene.from_dict(g) for g in data.get("genes", [])]
         return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
 
-
 # ============================================================
 # 技能市场
 # ============================================================
-
 
 class SkillMarketplace:
     """
@@ -664,11 +661,9 @@ class SkillMarketplace:
 
         logger.info(f"加载 {len(self._skills)} 个技能")
 
-
 # ============================================================
 # 技能进化工厂
 # ============================================================
-
 
 class SkillEvolutionFactory:
     """技能进化工厂 — 系统预装核心技能"""

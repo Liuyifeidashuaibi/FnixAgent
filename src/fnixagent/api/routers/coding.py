@@ -13,6 +13,12 @@ MCP 工具 (统一端点):
 鉴权: 复用 verify_jwt_token (当前用户 JWT 校验)。
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 import contextlib
 import io
 import os

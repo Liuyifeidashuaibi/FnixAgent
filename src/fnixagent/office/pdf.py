@@ -20,6 +20,12 @@ PDF 创建/合并/拆分/文本抽取/图片抽取/水印/加密/OCR。
   - OCR 单页图片大小限制,防止 OOM
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import contextlib
@@ -33,7 +39,6 @@ from fnixagent.office.base import BaseExpert, ExpertError, ExpertResult
 _MAX_OCR_IMAGE_SIZE = 20 * 1024 * 1024
 # PDF 加密允许的密钥长度(位)
 _ALLOWED_PDF_KEY_LENGTHS = (40, 128, 256)
-
 
 def _import_pdf_lib() -> tuple[Any, str | None]:
     """优先 pypdf,其次 PyPDF2。
@@ -53,7 +58,6 @@ def _import_pdf_lib() -> tuple[Any, str | None]:
         return PyPDF2, "PyPDF2"
     except ImportError:
         return None, None
-
 
 class PDFExpert(BaseExpert):
     """PDF 文档专家。

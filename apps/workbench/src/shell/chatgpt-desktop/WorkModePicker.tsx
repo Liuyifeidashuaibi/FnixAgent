@@ -1,5 +1,12 @@
 /**
- * Ask / Plan / Craft — Cursor/Codex 式 Composer 内小选项（非首页大卡）。
+ * Copyright (C) 2026 FnixAgent. All rights reserved.
+ * Software Name: FnixAgent 智能工作台系统 V1.0
+ * This software and its source code are proprietary and confidential.
+ * Unauthorized copying, modification, distribution, or use is strictly prohibited.
+ */
+
+/**
+ * Ask / Plan / Craft — 式 Composer 内小选项（非首页大卡）。
  * compact：下拉 pill；segment：三小钮（少用）。
  */
 

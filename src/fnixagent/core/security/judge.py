@@ -20,6 +20,12 @@ LLM 裁判注入检测器 (LLM Judge) - P1 安全模块。
   - 所有异常不外泄,捕获后返回 safe=False + detail
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import re
@@ -77,11 +83,9 @@ _COMPILED_FILE_WRITE: tuple[re.Pattern, ...] = tuple(
 _REPEAT_THRESHOLD = 20  # 连续重复字符超过此长度视为可疑
 _NONPRINT_RATIO = 0.30  # 非可打印字符占比阈值
 
-
 # ---------------------------------------------------------------------------
 # 数据结构
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class JudgeVerdict:
@@ -103,7 +107,6 @@ class JudgeVerdict:
     sanitized_output: str | None = None
     detail: str = ""
 
-
 @dataclass
 class JudgeConfig:
     """裁判配置。
@@ -120,7 +123,6 @@ class JudgeConfig:
     use_llm_judge: bool = False
     patterns_custom: list[str] = field(default_factory=list)
 
-
 # ---------------------------------------------------------------------------
 # 威胁严重度分级
 # ---------------------------------------------------------------------------
@@ -130,7 +132,6 @@ class JudgeConfig:
 _SEVERITY_HIGH = "high"
 _SEVERITY_MEDIUM = "medium"
 _SEVERITY_LOW = "low"
-
 
 class LLMJudge:
     """LLM 输出裁判。

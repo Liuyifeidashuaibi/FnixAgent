@@ -7,6 +7,12 @@
     - verify_hash_chain: 哈希链完整性校验
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from fnixagent.core.audit.logger import (
     ALL_AUDIT_ACTIONS,
     AUDIT_ACCOUNT_DELETE_CANCEL,

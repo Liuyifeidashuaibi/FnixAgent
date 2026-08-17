@@ -19,13 +19,18 @@
   5. 重复直到检查通过
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import os
 import tempfile
 
 from fnixagent.office.base import BaseExpert, ExpertResult
-
 
 class DocumentInspector(BaseExpert):
     """文档检查器:渲染、检查、诊断。

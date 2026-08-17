@@ -33,6 +33,12 @@ AgentShell - AgentOS 用户接口层 (User Interface Shell)
 零外部依赖: 仅 asyncio/json/sys/asyncio.inspect
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import asyncio
@@ -58,7 +64,6 @@ from fnixagent.core.agent.types import (
 # ============================================================================
 # Shell 命令结果
 # ============================================================================
-
 
 @dataclass
 class ShellResult:
@@ -99,11 +104,9 @@ class ShellResult:
             return json.dumps(self.output, ensure_ascii=False, default=str, indent=2)
         return str(self.output)
 
-
 # ============================================================================
 # Skill 抽象 (类比 shell 脚本)
 # ============================================================================
-
 
 @dataclass
 class Skill:
@@ -122,7 +125,6 @@ class Skill:
     handler: Callable[..., Awaitable[Any]] | None = None
     capabilities: set[str] = field(default_factory=set)
     source_path: str = ""
-
 
 class SkillRegistry:
     """Skill 注册表 (类比 PATH 中的可执行文件)。"""
@@ -203,11 +205,9 @@ class SkillRegistry:
             source_path=str(file_path),
         )
 
-
 # ============================================================================
 # AgentShell 主类
 # ============================================================================
-
 
 class AgentShell:
     """AgentOS 用户接口层 (类比 Unix Shell)。
@@ -847,7 +847,7 @@ class AgentShell:
         caller_pid: str | None = None,
         system_prompt: str | None = None,
     ) -> ShellResult:
-        """自然语言接口 (类比 Copilot)。
+        """自然语言接口 (类比智能助手)。
 
         将用户自然语言输入转发为 LLM_COMPLETE syscall。
         系统提示注入内核上下文 (stats + 可用命令), 供 LLM 决策。
@@ -930,11 +930,9 @@ class AgentShell:
             result = await self.execute(line)
             print(result.format(json_mode=json_mode), file=output_stream)
 
-
 # ============================================================================
 # 便捷构造函数
 # ============================================================================
-
 
 def create_shell(
     *,
@@ -984,7 +982,6 @@ def create_shell(
         else:
             asyncio.run(kernel.boot())
     return shell
-
 
 __all__ = [
     "AgentShell",

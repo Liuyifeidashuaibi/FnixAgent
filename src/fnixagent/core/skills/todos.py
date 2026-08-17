@@ -1,4 +1,4 @@
-"""TodoStore — load-bearing state 外化 (对标 Claude Code TodoWrite)。
+"""TodoStore — load-bearing state 外化 (任务状态外化)。
 
 借鉴 Anthropic《Effective Harnesses for Long-Running Agents》(2025-11):
   - "不是让 agent 记住全部上下文, 而是让它能快速理解当前工作状态"
@@ -6,7 +6,7 @@
   - feature list 初始全标 passes: false (防假性完成)
   - git 历史用于回滚 + 理解演进
 
-借鉴 Claude Code TodoWrite:
+任务状态外化设计:
   - 任务状态持久化到文件, compaction 后仍可恢复
   - 跨上下文窗口交接的关键 load-bearing state
 
@@ -16,6 +16,12 @@
   - 每轮 turn 边界写入, compaction 后重新注入 system prompt
   - 简单 JSON 格式, 无外部依赖
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
 
 from __future__ import annotations
 
@@ -27,7 +33,6 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
-
 
 @dataclass
 class TodoItem:
@@ -46,10 +51,9 @@ class TodoItem:
     completed_at: float = 0.0
     note: str = ""  # 可选备注 (如失败原因)
 
-
 @dataclass
 class TodoStore:
-    """待办事项存储 (对标 Claude Code TodoWrite)。
+    """待办事项存储 (任务状态外化)。
 
     用法:
         store = TodoStore(workspace)
@@ -183,7 +187,7 @@ class TodoStore:
             return None
 
     def format_for_prompt(self) -> str:
-        """格式化为 system prompt 注入块 (对标 Claude Code TodoWrite)。
+        """格式化为 system prompt 注入块 (任务状态外化)。
 
         compaction 后重新调用此方法, 确保 load-bearing state 不丢失。
         """
@@ -219,6 +223,5 @@ class TodoStore:
                 "completed": sum(1 for t in self.todos if t.status == "completed"),
                 "failed": sum(1 for t in self.todos if t.status == "failed"),
             }
-
 
 __all__ = ["TodoItem", "TodoStore"]

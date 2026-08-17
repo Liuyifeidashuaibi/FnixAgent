@@ -8,7 +8,7 @@ January 2026
 > This document is mainly for agents and LLMs to follow when maintaining,  
 > generating, or refactoring React and Next.js codebases. Humans  
 > may also find it useful, but guidance here is optimized for automation  
-> and consistency by AI-assisted workflows.
+> and consistency by 开发工作流.
 
 ---
 

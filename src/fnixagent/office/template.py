@@ -23,6 +23,12 @@
   - 变量替换未命中时填空串,不抛错
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import html as html_lib
@@ -37,7 +43,6 @@ from fnixagent.office.base import BaseExpert, ExpertError, ExpertResult
 # ---------------------------------------------------------------------------
 # 模板元数据
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class TemplateInfo:
@@ -59,11 +64,9 @@ class TemplateInfo:
     variables: list[str] = field(default_factory=list)
     registered_at: float = 0.0
 
-
 # ---------------------------------------------------------------------------
 # TemplateManager
 # ---------------------------------------------------------------------------
-
 
 class TemplateManager(BaseExpert):
     """文档模板管理专家。

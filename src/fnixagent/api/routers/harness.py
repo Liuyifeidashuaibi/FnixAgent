@@ -1,5 +1,11 @@
 """API 路由 — Harness 本地门面（workspace / skills / status）。"""
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import os
@@ -144,7 +150,7 @@ async def reload_skills(body: ReloadSkillsRequest):
 
 
 # ---------------------------------------------------------------------------
-# Trae Skill 系统：CRUD + 启停（对标 Trae Skills + Cursor Rules）
+# 技能管理系统：CRUD + 启停（技能系统 + 项目规则）
 # ---------------------------------------------------------------------------
 
 

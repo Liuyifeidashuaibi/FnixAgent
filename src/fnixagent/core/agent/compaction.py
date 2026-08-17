@@ -1,6 +1,6 @@
 """Spec 4: 轻量 Compaction — 当 messages 超 threshold tokens 时调 LLM 生成 summary。
 
-对标 Claude Code 三层压缩 / LCM (Lossless Context Management) 三级 escalation 的简化版。
+参考业界最佳实践 三层压缩 / LCM (Lossless Context Management) 三级 escalation 的简化版。
 
 策略 (一级压缩, 不做 DAG):
     1. 估算 messages 总 token 数 (粗略: 1 token ≈ 3.5 chars 英文 / 1.5 chars 中文)
@@ -11,21 +11,27 @@
        - 替换为 [{role: "system", content: "Earlier context summary: ..."}]
     3. 阈值默认 60K tokens (qwen-plus 128K context, 留 60K 给新内容 + tools)
 
-P4.1 cache-safe forking (借鉴 Claude Code cache-safe forking):
+P4.1 缓存安全分叉 (缓存安全分叉模式):
     - 朴素 compaction 构造全新 [system, user] prompt, 与父对话 prefix 0% 匹配, cache 全失效
-    - cache-safe forking 复用父 messages prefix, 把 compaction 指令作为新 user message 追加末尾
+    - 缓存安全分叉 复用父 messages prefix, 把 compaction 指令作为新 user message 追加末尾
     - LLM 调用 prefix 与父对话完全一致, cache 命中 (qwen-plus 隐式 20% / GLM 50% / DeepSeek 2%)
     - 唯一新计费的是 compaction 指令本身 (~1K tokens)
     - 收益: 每次 compaction LLM 调用从全价 → cache hit 价 (节省 80%+)
 
 参考:
-    - Claude Code compaction: https://deepwiki.com/anthropics/claude-code/3.3-context-window-and-compaction
+    - 上下文压缩机制: https://deepwiki.com/anthropics/claude-code/3.3-context-window-and-compaction
     - LCM paper: https://arxiv.org/abs/2506.18655
     - Anthropic prompt caching: https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching
-    - Claude Code cache-safe forking: https://claude.com/blog/lessons-from-building-claude-code-prompt-caching-is-everything
+    - 缓存安全分叉模式: https://claude.com/blog/lessons-from-building-claude-code-prompt-caching-is-everything
     - qwen-plus Context Cache: https://help.aliyun.com/zh/model-studio/context-cache
     - DeepSeek KV cache: https://api-docs.deepseek.com/guides/kv_cache
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
 
 from __future__ import annotations
 
@@ -39,7 +45,6 @@ logger = logging.getLogger(__name__)
 # 粗略 token 估算: 中英混合, 偏保守 (宁多估不少估)
 _CHARS_PER_TOKEN_EN = 3.5
 _CHARS_PER_TOKEN_ZH = 1.5
-
 
 def estimate_tokens(messages: list[dict[str, Any]]) -> int:
     """粗略估算 messages 的 token 数。
@@ -68,14 +73,12 @@ def estimate_tokens(messages: list[dict[str, Any]]) -> int:
     # 中英混合: 假设 60% 英文 40% 中文, 平均 ~2.5 chars/token
     return max(1, int(total_chars / 2.5))
 
-
 def _count_chars(text: str) -> int:
     """计算字符数, 中文按 2 计 (粗略权重)。"""
     n = 0
     for ch in text:
         n += 2 if "\u4e00" <= ch <= "\u9fff" else 1
     return n
-
 
 async def compact_messages_if_needed(
     llm_adapter: Any,
@@ -94,7 +97,7 @@ async def compact_messages_if_needed(
         threshold_tokens: 触发压缩的 token 阈值 (默认 60K)
         keep_recent: 保留最近 N 条消息不压缩 (默认 6)
         keep_first_n: 保留前 N 条 (system + 第一条 user) (默认 2)
-        cache_safe: P4.1 — 是否用 cache-safe forking (默认 True)
+        cache_safe: P4.1 — 是否用 缓存安全分叉 (默认 True)
             True: 复用父 messages prefix, 把 compaction 指令追加末尾, cache 命中
             False: 朴素 prompt (全新 [system, user]), cache 全失效, 仅用于 fallback
 
@@ -107,7 +110,7 @@ async def compact_messages_if_needed(
             "compacted_messages_count": int,  # 被压缩的消息数
             "summary": str,              # 生成的 summary (前 500 字符)
             "error": str | None,         # 压缩失败原因
-            "cache_safe": bool,          # P4.1: 是否用了 cache-safe forking
+            "cache_safe": bool,          # P4.1: 是否用了 缓存安全分叉
         }
     """
     before_tokens = estimate_tokens(messages)
@@ -144,8 +147,8 @@ async def compact_messages_if_needed(
 
     # 构造压缩 prompt
     if cache_safe:
-        # P4.1: cache-safe forking — 复用父 messages prefix, cache 命中
-        # 借鉴 Claude Code cache-safe forking: 不构造全新 prompt, 直接用父 messages
+        # P4.1: 缓存安全分叉 — 复用父 messages prefix, cache 命中
+        # 缓存安全分叉模式: 不构造全新 prompt, 直接用父 messages
         # 把 compaction 指令作为新 user message 追加末尾
         middle_start = keep_first_n
         middle_end = len(messages) - keep_recent
@@ -213,7 +216,6 @@ async def compact_messages_if_needed(
             "cache_safe": cache_safe,
         }
 
-
 def _build_cache_safe_prompt(
     parent_messages: list[dict[str, Any]],
     middle_start: int,
@@ -222,7 +224,7 @@ def _build_cache_safe_prompt(
 ) -> list[dict[str, Any]]:
     """P4.1: 构造 cache-safe compaction prompt（复用父 prefix）。
 
-    借鉴 Claude Code 的 cache-safe forking 模式:
+    借鉴 缓存安全分叉模式 模式:
     - 不构造全新 [system, user] prompt（会破坏 prefix, cache 全失效）
     - 直接用父 messages 作为 prefix（cache 命中父对话的 KV cache）
     - 把 compaction 指令作为新 user message 追加末尾
@@ -232,7 +234,7 @@ def _build_cache_safe_prompt(
 
     收益对比（以 60K tokens 父对话为例, qwen-plus 隐式 cache 20% 价格）:
     - 朴素方案: 60K 全价 = 60K 等价 tokens
-    - cache-safe forking: 60K cache hit (20%) + 1K 全价 = 12K + 1K = 13K 等价 tokens
+    - 缓存安全分叉: 60K cache hit (20%) + 1K 全价 = 12K + 1K = 13K 等价 tokens
     - 节省 78%
 
     Args:
@@ -263,7 +265,6 @@ def _build_cache_safe_prompt(
     # 复用父 messages（浅拷贝避免修改原列表），追加 compaction 指令作为新 user message
     return list(parent_messages) + [{"role": "user", "content": instruction}]
 
-
 def _serialize_messages_for_summary(messages: list[dict[str, Any]]) -> str:
     """把消息列表序列化为 LLM 可读的文本。"""
     lines: list[str] = []
@@ -291,7 +292,6 @@ def _serialize_messages_for_summary(messages: list[dict[str, Any]]) -> str:
 
         lines.append(f"[{i + 1}] {role}: {content_str}")
     return "\n".join(lines)
-
 
 def _build_summary_prompt(middle_text: str, before_tokens: int) -> list[dict[str, str]]:
     """构造压缩 prompt (用户态请求 LLM 生成 summary)。"""
@@ -321,7 +321,6 @@ def _build_summary_prompt(middle_text: str, before_tokens: int) -> list[dict[str
             ).replace("{middle_text}", middle_text),
         },
     ]
-
 
 async def _call_llm_for_summary(llm_adapter: Any, messages: list[dict[str, str]]) -> str:
     """调 LLM 生成 summary。
@@ -372,7 +371,6 @@ async def _call_llm_for_summary(llm_adapter: Any, messages: list[dict[str, str]]
         f"type={type(llm_adapter).__name__}"
     )
 
-
 def _extract_content(result: Any) -> str:
     """从 LLM 响应中提取文本内容 (兼容 OpenAI / DashScope / 直接 str)。"""
     if isinstance(result, str):
@@ -392,7 +390,6 @@ def _extract_content(result: Any) -> str:
         return json.dumps(result, ensure_ascii=False)
     return str(result)
 
-
 # ============================================================================
 # P2: 三级 Escalation (借鉴 LCM Algorithm 3 + openai-agents-context-compaction)
 # ============================================================================
@@ -411,7 +408,6 @@ def _extract_content(result: Any) -> str:
 #
 # 每级检查 Tokens(S) < Tokens(X), 失败则升级; L3 保证收敛 (无 LLM 依赖)
 # ============================================================================
-
 
 def _find_tool_call_pairs(messages: list[dict[str, Any]]) -> set[int]:
     """识别 tool_call / tool_result 配对的索引 (借鉴 openai-agents-context-compaction)。
@@ -449,7 +445,6 @@ def _find_tool_call_pairs(messages: list[dict[str, Any]]) -> set[int]:
             paired.add(idx)
 
     return paired
-
 
 def sliding_window_compact(
     messages: list[dict[str, Any]],
@@ -568,7 +563,6 @@ def sliding_window_compact(
         "error": None,
     }
 
-
 def deterministic_truncate(
     messages: list[dict[str, Any]],
     *,
@@ -640,7 +634,6 @@ def deterministic_truncate(
         "error": None,
     }
 
-
 async def compact_with_escalation(
     llm_adapter: Any,
     messages: list[dict[str, Any]],
@@ -671,7 +664,7 @@ async def compact_with_escalation(
         keep_first_n:     L1/L2 保留前 N 条 (默认 2)
         l2_target_tokens: L2 目标 token 数 (默认 30K)
         l3_max_tokens:    L3 中间区域最大 token 数 (默认 512)
-        cache_safe:       P4.1 — L1 是否用 cache-safe forking (默认 True)
+        cache_safe:       P4.1 — L1 是否用 缓存安全分叉 (默认 True)
 
     Returns:
         (compacted_messages, info_dict)
@@ -754,7 +747,6 @@ async def compact_with_escalation(
         "l2_after_tokens": l2_info.get("after_tokens", 0),
     }
 
-
 # ============================================================================
 # P3: 软/硬阈值异步 compaction (借鉴 LCM Equation 1)
 # ============================================================================
@@ -771,7 +763,6 @@ async def compact_with_escalation(
 #   - 硬阈值触发时, 如果后台任务还在跑, 等待它完成; 否则同步触发新压缩
 #   - 原子 swap: 用 lock 保护 messages 替换, 避免 turn 中途被替换
 # ============================================================================
-
 
 class BackgroundCompactor:
     """后台异步 compactor (借鉴 LCM Equation 1 的 async regime)。

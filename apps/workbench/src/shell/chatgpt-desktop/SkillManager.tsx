@@ -1,5 +1,12 @@
 /**
- * SkillManager — Trae 风格技能管理面板（对标 Trae Skills + Cursor Rules）
+ * Copyright (C) 2026 FnixAgent. All rights reserved.
+ * Software Name: FnixAgent 智能工作台系统 V1.0
+ * This software and its source code are proprietary and confidential.
+ * Unauthorized copying, modification, distribution, or use is strictly prohibited.
+ */
+
+/**
+ * SkillManager — 技能管理面板（技能管理面板）
  * ============================================================
  * 两个 tab：
  *   - 静态技能（.fnix/skills/*.md）：用户手写的 Markdown 技能包

@@ -5,6 +5,12 @@ P0-02: 提供网关级多层令牌桶限流器(全局 + 按用户 + 按工具),�
 本模块面向跨 LLM/工具/上游 API 的整体流量治理。
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from fnixagent.core.governance.limiter import (
     DomainState,
     EndpointRule,

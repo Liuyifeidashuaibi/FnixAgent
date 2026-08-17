@@ -1,4 +1,11 @@
 /**
+ * Copyright (C) 2026 FnixAgent. All rights reserved.
+ * Software Name: FnixAgent 智能工作台系统 V1.0
+ * This software and its source code are proprietary and confidential.
+ * Unauthorized copying, modification, distribution, or use is strictly prohibited.
+ */
+
+/**
  * TerminalView — 智能体执行流（右侧工作台 · 终端）
  * ============================================================
  * 把今天藏在"思考过程"抽屉里的 ActivityItem 流，以终端的形态放进工作台。

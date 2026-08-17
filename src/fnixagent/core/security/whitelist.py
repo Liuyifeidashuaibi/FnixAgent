@@ -21,6 +21,12 @@
   - 可审计:WhitelistDecision 含 matched_rule / grant 来源
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import fnmatch
@@ -54,11 +60,9 @@ DEFAULT_TASK_TOOLS: dict[str, list[str]] = {
     "shell": [],
 }
 
-
 # ---------------------------------------------------------------------------
 # 数据结构
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class ToolGrant:
@@ -78,7 +82,6 @@ class ToolGrant:
     reason: str
     granted_by: str
 
-
 @dataclass
 class WhitelistDecision:
     """白名单判定结果。
@@ -95,11 +98,9 @@ class WhitelistDecision:
     matched_rule: str | None = None
     grant: ToolGrant | None = None
 
-
 # ---------------------------------------------------------------------------
 # ToolWhitelist
 # ---------------------------------------------------------------------------
-
 
 class ToolWhitelist:
     """任务粒度工具白名单。

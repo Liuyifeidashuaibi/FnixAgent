@@ -4,6 +4,13 @@
   - ask 模式：纯问答，验证 thought (reasoning_content) + text 流出
   - craft 模式：写文件任务，验证 thought (决策独白) + action + observation + artifact 流出
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 import json
 import sys
 import time

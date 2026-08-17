@@ -22,6 +22,12 @@
   - process_with_retry 封装"LLM 调用 + 校验 + 重试"完整循环
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import json
@@ -33,11 +39,9 @@ from pydantic import BaseModel, ValidationError
 
 T = TypeVar("T", bound=BaseModel)
 
-
 # ---------------------------------------------------------------------------
 # 异常
 # ---------------------------------------------------------------------------
-
 
 class OutputValidationError(Exception):
     """LLM 输出校验失败异常。
@@ -56,11 +60,9 @@ class OutputValidationError(Exception):
         self.validation_error = validation_error
         super().__init__(message)
 
-
 # ---------------------------------------------------------------------------
 # OutputSchema
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class OutputSchema(Generic[T]):
@@ -204,11 +206,9 @@ class OutputSchema(Generic[T]):
 
         return None
 
-
 # ---------------------------------------------------------------------------
 # OutputProcessor
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class OutputProcessor(Generic[T]):
@@ -315,11 +315,9 @@ class OutputProcessor(Generic[T]):
         _ = last_error  # 保留引用供未来扩展(如日志/告警)
         return None
 
-
 # ---------------------------------------------------------------------------
 # 便捷别名
 # ---------------------------------------------------------------------------
-
 
 class ObjectOutputProcessor(OutputProcessor[T]):
     """对象输出处理器(OutputProcessor 的语义化别名)。
@@ -329,11 +327,9 @@ class ObjectOutputProcessor(OutputProcessor[T]):
 
     pass
 
-
 # ---------------------------------------------------------------------------
 # 预定义处理器(对应 schemas.py 的 4 个 Model)
 # ---------------------------------------------------------------------------
-
 
 def tool_call_decision_processor() -> ObjectOutputProcessor:
     """ReAct 单步决策处理器。"""
@@ -341,13 +337,11 @@ def tool_call_decision_processor() -> ObjectOutputProcessor:
 
     return ObjectOutputProcessor(model_type=ToolCallDecision)
 
-
 def plan_output_processor() -> ObjectOutputProcessor:
     """Plan&Execute 计划处理器。"""
     from fnixagent.core.reasoning.schemas import PlanOutput
 
     return ObjectOutputProcessor(model_type=PlanOutput)
-
 
 def final_answer_processor() -> ObjectOutputProcessor:
     """最终答案处理器。"""

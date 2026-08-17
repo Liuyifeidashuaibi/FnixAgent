@@ -25,6 +25,12 @@ fnixagent 的首个落地场景,集成任务引擎全部模块,端到端处理�
   - HumanConfirmer(高风险确认)
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import os
@@ -46,7 +52,6 @@ from fnixagent.tasks.validator import TaskValidator
 # ---------------------------------------------------------------------------
 # 数据结构
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class QuestionInfo:
@@ -78,7 +83,6 @@ class QuestionInfo:
     confidence: float = 0.0
     answer_source: str = "none"
 
-
 @dataclass
 class ProcessOptions:
     """题库处理选项。
@@ -105,7 +109,6 @@ class ProcessOptions:
     llm_router: Any | None = None
     require_confirmation: bool = True
 
-
 # ---------------------------------------------------------------------------
 # 题目正则
 # ---------------------------------------------------------------------------
@@ -119,11 +122,9 @@ _ANSWER_LINE_RE = re.compile(r"【答案】(.*)")
 # 空白括号(全角/半角)
 _BLANK_PAREN_RE = re.compile(r"[（(]\s*[）)]")
 
-
 # ---------------------------------------------------------------------------
 # 题库处理场景
 # ---------------------------------------------------------------------------
-
 
 class QuestionBankScenario(BaseExpert):
     """题库/试卷处理场景(Phase 7.1)。

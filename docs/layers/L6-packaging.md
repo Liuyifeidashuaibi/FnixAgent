@@ -14,7 +14,7 @@ Community 安装包可复现 + Enterprise 边界定稿（2B 双轨）。
 | 项 | 路径 | 状态 |
 |----|------|------|
 | COMMERCIAL 定稿 | `docs/layers/COMMERCIAL.md` | ✅ |
-| OPEN_SOURCE checklist | `docs/OPEN_SOURCE.md` | ✅ |
+| Release checklist | `docs/internal/RELEASE_CHECKLIST.md` | ✅ |
 | DEPLOY 标明 Enterprise | `docs/DEPLOY.md` | ✅ |
 | BETA_RELEASE Community 说明 | `docs/BETA_RELEASE.md` | ✅ |
 | README 双轨表 | `README.md` | ✅ |

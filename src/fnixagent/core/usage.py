@@ -20,6 +20,12 @@
   - 超限时 Runner 提前终止并返回部分结果
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -28,7 +34,6 @@ from typing import Any
 # ---------------------------------------------------------------------------
 # 异常
 # ---------------------------------------------------------------------------
-
 
 class UsageExceededError(Exception):
     """用量超限异常。
@@ -53,11 +58,9 @@ class UsageExceededError(Exception):
         self.actual = actual
         super().__init__(f"Usage limit exceeded: {limit_type} limit={limit}, actual={actual}")
 
-
 # ---------------------------------------------------------------------------
 # Usage
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class Usage:
@@ -265,11 +268,9 @@ class Usage:
             f"total={self.total_tokens}, cost=${self.cost:.4f})"
         )
 
-
 # ---------------------------------------------------------------------------
 # UsageLimits
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class UsageLimits:

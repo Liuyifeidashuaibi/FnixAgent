@@ -2,7 +2,7 @@
 
 基于官方 MCP Python SDK 的 FastMCP（modelcontextprotocol/python-sdk）：
   - @mcp.tool() 装饰器自动从 type hints 推导 JSON Schema
-  - run(transport="stdio") 给 Cursor/Trae/Claude Desktop 子进程
+  - run(transport="stdio") 供其他开发工具作为子进程
   - run(transport="sse") 或 sse_app() 挂载到 uvicorn 给远程调用
 
 工具列表:
@@ -17,6 +17,12 @@
 
 三端配置见 docs/superpowers/specs/2026-07-20-fnix-top-tier-design.md Spec 7 章节。
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
 
 from __future__ import annotations
 
@@ -57,18 +63,15 @@ mcp = FastMCP(
     ),
 )
 
-
 def _api_post(path: str, **kwargs) -> httpx.Response:
     """调用 FnixAgent HTTP API（8003 端口）。"""
     with httpx.Client(base_url=API_BASE, timeout=120.0) as client:
         return client.post(path, json=kwargs)
 
-
 def _api_get(path: str, **params) -> httpx.Response:
     """GET 请求 FnixAgent HTTP API。"""
     with httpx.Client(base_url=API_BASE, timeout=30.0) as client:
         return client.get(path, params=params)
-
 
 @mcp.tool()
 def work_stream(
@@ -124,7 +127,6 @@ def work_stream(
     except httpx.HTTPError as e:
         return f"[http error] {e}"
 
-
 @mcp.tool()
 def ask(prompt: str, workspace: str | None = None) -> str:
     """快速向 Agent 提问（不进入 Work 流水线，轻量问答）。
@@ -144,7 +146,6 @@ def ask(prompt: str, workspace: str | None = None) -> str:
         return str(data.get("response") or data.get("text") or "")
     except httpx.HTTPError as e:
         return f"[http error] {e}"
-
 
 @mcp.tool()
 def skill_list(workspace: str | None = None) -> list[dict]:
@@ -197,7 +198,6 @@ def skill_list(workspace: str | None = None) -> list[dict]:
 
     return result
 
-
 @mcp.tool()
 def skill_detail(name: str, workspace: str | None = None) -> str:
     """读取指定技能的完整内容。
@@ -233,7 +233,6 @@ def skill_detail(name: str, workspace: str | None = None) -> str:
 
     return f"skill not found: {name}"
 
-
 @mcp.tool()
 def memory_search(query: str, top_k: int = 5, workspace: str | None = None) -> list[dict]:
     """从 FnixAgent 长期记忆检索相关条目。
@@ -261,7 +260,6 @@ def memory_search(query: str, top_k: int = 5, workspace: str | None = None) -> l
         return list(hits)[:top_k]
     except httpx.HTTPError as e:
         return [{"error": str(e)}]
-
 
 @mcp.tool()
 def artifact_read(
@@ -309,7 +307,6 @@ def artifact_read(
     except OSError as e:
         return f"[error] read failed: {e}"
 
-
 @mcp.tool()
 def evolution_status(workspace: str | None = None) -> dict:
     """获取 FnixAgent 进化状态快照（KTG/STP/MFP）。
@@ -332,7 +329,6 @@ def evolution_status(workspace: str | None = None) -> dict:
     except httpx.HTTPError as e:
         return {"error": str(e)}
 
-
 @mcp.tool()
 def self_optimizing_stats(workspace: str | None = None) -> dict:
     """获取 Self-Optimizing few-shot 示例库统计。
@@ -354,15 +350,12 @@ def self_optimizing_stats(workspace: str | None = None) -> dict:
     except Exception as e:
         return {"error": str(e)}
 
-
 # ── 资源（Resources）—— IDE 可直接读取 ──
-
 
 @mcp.resource("fnix://skills/{name}")
 def skill_resource(name: str) -> str:
     """技能完整内容（IDE 可作为 resource 读取）。"""
     return skill_detail(name)
-
 
 @mcp.resource("fnix://status")
 def status_resource() -> str:
@@ -377,12 +370,11 @@ def status_resource() -> str:
     except Exception as e:
         return f"status error: {e}"
 
-
 def main() -> None:
     """MCP Server 入口。
 
     传输模式:
-      - stdio（默认）：给 Cursor/Trae/Claude Desktop 作为子进程
+      - stdio（默认）：供其他开发工具作为子进程
       - sse：启动 HTTP+SSE server，给远程客户端
       - http：streamable HTTP（mcp>=1.6，2025-06 规范）
     """
@@ -420,7 +412,6 @@ def main() -> None:
             import uvicorn
 
             uvicorn.run(mcp.sse_app(), host=args.host, port=args.port)
-
 
 if __name__ == "__main__":
     main()

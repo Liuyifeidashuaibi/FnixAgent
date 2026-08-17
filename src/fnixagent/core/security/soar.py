@@ -16,6 +16,12 @@ SOAR 响应剧本引擎 (Playbook Engine) - P2 安全模块。
   - 所有异常不外泄,捕获后返回合理默认值
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import json
@@ -37,11 +43,9 @@ try:
 except ImportError:  # pragma: no cover
     _HAS_YAML = False
 
-
 # ---------------------------------------------------------------------------
 # 数据结构
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class PlaybookAction:
@@ -57,7 +61,6 @@ class PlaybookAction:
     name: str
     params: dict
     timeout: int = 60
-
 
 @dataclass
 class PlaybookStep:
@@ -76,7 +79,6 @@ class PlaybookStep:
     condition: str | None = None
     require_approval: bool = False
     approval_timeout: int = 3600
-
 
 @dataclass
 class Playbook:
@@ -97,7 +99,6 @@ class Playbook:
     steps: list[PlaybookStep]
     enabled: bool = True
     description: str = ""
-
 
 @dataclass
 class PlaybookExecution:
@@ -125,11 +126,9 @@ class PlaybookExecution:
     error: str | None = None
     results: list[dict] = field(default_factory=list)
 
-
 # ---------------------------------------------------------------------------
 # 审计钩子(失败不影响主流程)
 # ---------------------------------------------------------------------------
-
 
 def _audit_playbook(
     action: str,
@@ -143,11 +142,9 @@ def _audit_playbook(
     except Exception:
         pass
 
-
 # ---------------------------------------------------------------------------
 # PlaybookEngine
 # ---------------------------------------------------------------------------
-
 
 class PlaybookEngine:
     """SOAR 响应剧本引擎。

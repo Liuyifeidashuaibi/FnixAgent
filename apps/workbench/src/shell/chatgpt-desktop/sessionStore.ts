@@ -1,4 +1,11 @@
 /**
+ * Copyright (C) 2026 FnixAgent. All rights reserved.
+ * Software Name: FnixAgent 智能工作台系统 V1.0
+ * This software and its source code are proprietary and confidential.
+ * Unauthorized copying, modification, distribution, or use is strictly prohibited.
+ */
+
+/**
  * Thin shell session store — mode / pane / Studio Panel (unified right inspector).
  * Persists mode + pane + panel state to localStorage so a reload restores the shell.
  *

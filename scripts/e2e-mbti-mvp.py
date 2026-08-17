@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 """E2E: 模拟前端在 test2 工作区创建 MBTI 测验站并验收（Work + Codex Apply）。"""
 from __future__ import annotations
-
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
 import json
 import os
 import shutil

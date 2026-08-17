@@ -20,6 +20,12 @@ StrategyContext 是 ReasoningContext 的"调度视图":
   StrategyContext 本身保持不可变(只读)。
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import abc
@@ -34,7 +40,6 @@ from fnixagent.core.types import ExecutionTrace
 # 策略类型枚举
 # ---------------------------------------------------------------------------
 
-
 class StrategyType(str, Enum):
     """策略类型(用于注册与查找)。"""
 
@@ -43,11 +48,9 @@ class StrategyType(str, Enum):
     PRECISE = "precise"  # 精确(Plan&Execute + Self-Reflect + 思考)
     COMPLIANCE = "compliance"  # 合规(强审计 + 人工确认)
 
-
 # ---------------------------------------------------------------------------
 # StrategyContext
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class StrategyContext:
@@ -86,11 +89,9 @@ class StrategyContext:
     # 元数据
     extra: dict[str, Any] = field(default_factory=dict)
 
-
 # ---------------------------------------------------------------------------
 # BaseStrategy
 # ---------------------------------------------------------------------------
-
 
 class BaseStrategy(abc.ABC):
     """策略抽象基类。

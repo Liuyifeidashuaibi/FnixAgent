@@ -2,7 +2,7 @@
 ∞ Loop Engine — 自主闭环工程层 (2026 范式转移)
 
 设计参考:
-  - Boris Cherny (Claude Code 之父): "I don't write prompts. I design Loops."
+  - 循环工程理念 (业界主流 Agent 工具 之父): "I don't write prompts. I design Loops."
   - Loop Engineering: 触发→执行→评估→重试/结束 闭环机制
   - Hermes Agent: Nudge Engine 自主知识持久化
   - SCOPE: 从执行轨迹在线合成指南
@@ -25,6 +25,12 @@
   └─────────────────────────────────────────────────────────────┘
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import asyncio
@@ -39,11 +45,9 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-
 # ============================================================
 # Loop 基础模型
 # ============================================================
-
 
 class LoopPhase(str, Enum):
     """Loop 执行阶段"""
@@ -58,7 +62,6 @@ class LoopPhase(str, Enum):
     RETRYING = "retrying"  # 重试中
     ABORTED = "aborted"  # 已中止
 
-
 class LoopPriority(str, Enum):
     """Loop 优先级"""
 
@@ -66,7 +69,6 @@ class LoopPriority(str, Enum):
     HIGH = "high"  # 高 (核心能力提升)
     MEDIUM = "medium"  # 中 (功能增强)
     LOW = "low"  # 低 (探索性改进)
-
 
 class LoopOutcome(str, Enum):
     """Loop 结果"""
@@ -78,7 +80,6 @@ class LoopOutcome(str, Enum):
     NO_CHANGE = "no_change"  # 无变化
     NEEDS_HUMAN = "needs_human"  # 需要人工介入
 
-
 @dataclass
 class LoopTrigger:
     """Loop 触发条件"""
@@ -89,7 +90,6 @@ class LoopTrigger:
     source: str = ""  # 触发来源
     params: dict = field(default_factory=dict)
     fired_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
-
 
 @dataclass
 class LoopStep:
@@ -105,7 +105,6 @@ class LoopStep:
     status: str = "pending"  # pending / running / success / failed
     error: str = ""
 
-
 @dataclass
 class LoopPlan:
     """Loop 执行计划"""
@@ -119,7 +118,6 @@ class LoopPlan:
     max_retries: int = 3
     timeout_seconds: int = 600
     created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
-
 
 @dataclass
 class LoopExperience:
@@ -138,7 +136,6 @@ class LoopExperience:
     tags: list[str] = field(default_factory=list)
     recorded_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
-
 @dataclass
 class LoopResult:
     """Loop 执行结果"""
@@ -155,11 +152,9 @@ class LoopResult:
     duration_ms: float = 0
     error: str = ""
 
-
 # ============================================================
 # Loop 定义
 # ============================================================
-
 
 @dataclass
 class Loop:
@@ -179,11 +174,9 @@ class Loop:
     parent_loop_id: str = ""  # 父 Loop (if nested)
     created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
-
 # ============================================================
 # Loop 执行器
 # ============================================================
-
 
 class LoopExecutor:
     """
@@ -397,11 +390,9 @@ class LoopExecutor:
         """获取已完成的 Loop 结果"""
         return self._completed_loops[-limit:]
 
-
 # ============================================================
 # Loop 调度器
 # ============================================================
-
 
 class LoopScheduler:
     """
@@ -479,11 +470,9 @@ class LoopScheduler:
 
         return results
 
-
 # ============================================================
 # Nudge Engine — 自主推动机制
 # ============================================================
-
 
 class NudgeEngine:
     """
@@ -562,11 +551,9 @@ class NudgeEngine:
 
         return None
 
-
 # ============================================================
 # Loop 注册中心
 # ============================================================
-
 
 class LoopRegistry:
     """

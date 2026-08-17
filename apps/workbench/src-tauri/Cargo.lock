@@ -1029,7 +1029,7 @@ dependencies = [
 
 [[package]]
 name = "fnix"
-version = "2.1.2"
+version = "1.0.0"
 dependencies = [
  "dirs 5.0.1",
  "futures-util",

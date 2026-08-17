@@ -24,6 +24,12 @@
   └─────────────────────────────────────────────────────┘
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import asyncio
@@ -41,11 +47,9 @@ import yaml
 
 logger = logging.getLogger(__name__)
 
-
 # ============================================================
 # 信息源类型定义 (30+ 源)
 # ============================================================
-
 
 class SourceCategory(str, Enum):
     """信息源大类"""
@@ -65,7 +69,6 @@ class SourceCategory(str, Enum):
     YOUTUBE = "youtube"  # 技术演讲/视频
     TWITTER = "twitter"  # 关键研究者动态
 
-
 @dataclass
 class SourceItem:
     """单条信息源原始数据"""
@@ -84,11 +87,9 @@ class SourceItem:
     tags: list[str] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
 
-
 # ============================================================
 # GitHub 深度采集器
 # ============================================================
-
 
 class GitHubDeepCollector:
     """GitHub 深度采集: API + Trending + Release Notes"""
@@ -195,11 +196,9 @@ class GitHubDeepCollector:
             logger.warning(f"GitHub trending failed: {e}")
             return []
 
-
 # ============================================================
 # Semantic Scholar API 采集器
 # ============================================================
-
 
 class SemanticScholarCollector:
     """Semantic Scholar API: 语义级论文检索 + 引用图谱 + 推荐"""
@@ -317,11 +316,9 @@ class SemanticScholarCollector:
                 unique.append(item)
         return unique
 
-
 # ============================================================
 # arXiv API 采集器 (增强版)
 # ============================================================
-
 
 class ArxivEnhancedCollector:
     """arXiv 增强采集: API + 语义扩展 + 自动分类"""
@@ -395,11 +392,9 @@ class ArxivEnhancedCollector:
             )
         return items
 
-
 # ============================================================
 # RSS + 技术博客采集器
 # ============================================================
-
 
 class RSSFeedCollector:
     """RSS 订阅源采集 + 大厂技术博客"""
@@ -474,11 +469,9 @@ class RSSFeedCollector:
         except ET.ParseError:
             return []
 
-
 # ============================================================
 # ∞ 统一采集引擎
 # ============================================================
-
 
 class ContinuousCollector:
     """

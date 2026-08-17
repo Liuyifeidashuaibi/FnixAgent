@@ -23,6 +23,12 @@
             continue
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import copy
@@ -36,11 +42,9 @@ from fnixagent.core.messages import Msg
 
 logger = logging.getLogger(__name__)
 
-
 # ---------------------------------------------------------------------------
 # Handoff 输入 / 输出(运行时契约)
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class HandoffInput:
@@ -74,7 +78,6 @@ class HandoffInput:
             "depth": self.depth,
             "context_keys": list(self.context.keys()),
         }
-
 
 @dataclass
 class HandoffOutput:
@@ -115,11 +118,9 @@ class HandoffOutput:
             "has_new_context": self.new_context is not None,
         }
 
-
 # ---------------------------------------------------------------------------
 # Handoff 声明(Agent 配置项)
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class Handoff:
@@ -158,7 +159,6 @@ class Handoff:
         if self.max_depth < 1:
             raise ValueError(f"Handoff.max_depth must be >= 1, got {self.max_depth}")
 
-
 def make_handoff(target: str, **kwargs: Any) -> Handoff:
     """便捷工厂:构造 Handoff 声明。
 
@@ -174,11 +174,9 @@ def make_handoff(target: str, **kwargs: Any) -> Handoff:
     """
     return Handoff(target_agent=target, **kwargs)
 
-
 # ---------------------------------------------------------------------------
 # HandoffRegistry(Agent → 可用 Handoff 列表)
 # ---------------------------------------------------------------------------
-
 
 class HandoffRegistry:
     """Handoff 注册表:管理每个 Agent 的可移交目标。
@@ -306,11 +304,9 @@ class HandoffRegistry:
         """
         return self.find(agent_name, target_agent) is not None
 
-
 # ---------------------------------------------------------------------------
 # 默认 input_filter 实现
 # ---------------------------------------------------------------------------
-
 
 def default_input_filter(history: list[Msg], max_messages: int = 20) -> list[Msg]:
     """默认 input_filter:保留最近 max_messages 条消息。
@@ -341,7 +337,6 @@ def default_input_filter(history: list[Msg], max_messages: int = 20) -> list[Msg
         return list(history)
     return list(history[-max_messages:])
 
-
 def filter_by_role(
     history: list[Msg],
     keep_roles: tuple[str, ...] = ("user", "assistant"),
@@ -364,15 +359,12 @@ def filter_by_role(
         raise TypeError(f"keep_roles must be tuple, got {type(keep_roles).__name__}")
     return [m for m in history if m.role in keep_roles]
 
-
 # ---------------------------------------------------------------------------
 # Runner 集成:AgentRunner._exec_handoff
 # ---------------------------------------------------------------------------
 
-
 class HandoffError(Exception):
     """Handoff 执行错误。"""
-
 
 def build_handoff_context(
     state: Any,
@@ -442,7 +434,6 @@ def build_handoff_context(
             # 不覆盖已有键
             context.setdefault(k, v)
     return context
-
 
 def exec_handoff(
     *,
@@ -585,7 +576,6 @@ def exec_handoff(
 
     return output, target_instance
 
-
 def apply_handoff_to_state(
     state: Any,
     output: HandoffOutput,
@@ -664,7 +654,6 @@ def apply_handoff_to_state(
         pass
 
     return new_state
-
 
 __all__ = [
     "Handoff",

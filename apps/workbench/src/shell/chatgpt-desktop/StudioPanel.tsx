@@ -1,4 +1,11 @@
 /**
+ * Copyright (C) 2026 FnixAgent. All rights reserved.
+ * Software Name: FnixAgent 智能工作台系统 V1.0
+ * This software and its source code are proprietary and confidential.
+ * Unauthorized copying, modification, distribution, or use is strictly prohibited.
+ */
+
+/**
  * StudioPanel — 右侧统一工作台面（三栏布局 v2）
  * ============================================================
  * 将原 CanvasDock / WorkResults / ReviewPane 三个各自为政的右侧面板

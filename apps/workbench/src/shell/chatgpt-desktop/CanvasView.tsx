@@ -1,4 +1,11 @@
 /**
+ * Copyright (C) 2026 FnixAgent. All rights reserved.
+ * Software Name: FnixAgent 智能工作台系统 V1.0
+ * This software and its source code are proprietary and confidential.
+ * Unauthorized copying, modification, distribution, or use is strictly prohibited.
+ */
+
+/**
  * CanvasView — Studio Panel「画布」视图（原 CanvasDock，v2 剥离外壳）
  * ============================================================
  * 作为 StudioPanel 的子视图渲染（不再自带 aside 框架 / 关闭按钮 / 开关逻辑）：

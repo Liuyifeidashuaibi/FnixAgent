@@ -1,9 +1,16 @@
 /**
+ * Copyright (C) 2026 FnixAgent. All rights reserved.
+ * Software Name: FnixAgent 智能工作台系统 V1.0
+ * This software and its source code are proprietary and confidential.
+ * Unauthorized copying, modification, distribution, or use is strictly prohibited.
+ */
+
+/**
  * Spec 3: Artifact 协同编辑器
  * ============================================================
  * 对标:
- *   - ChatGPT Canvas 的增量编辑体验
- *   - Cursor 的 inline edit + 光标闪烁
+ *   - 画布编辑 的增量编辑体验
+ *   - 内联编辑 + 光标闪烁
  *   - Aider 的 SEARCH/REPLACE block 应用
  *   - VSCode 官方推荐用法 (OnMount monaco / DiffEditor / createDecorationsCollection)
  *

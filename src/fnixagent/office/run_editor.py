@@ -17,6 +17,12 @@
   - 所有操作失败不抛异常,记录到 failed_ops,继续后续操作
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import os
@@ -29,11 +35,9 @@ from fnixagent.office.base import BaseExpert, ExpertError, ExpertResult
 # 全角/半角空白括号正则:匹配 () 或 (  ) 或 （） 或 （  ）
 _PAREN_BLANK_RE = re.compile(r"[（(]\s*[）)]")
 
-
 # ---------------------------------------------------------------------------
 # 数据结构
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class EditOp:
@@ -53,7 +57,6 @@ class EditOp:
     position: str = "after"  # insert 位置: before/after/replace
     preserve_format: bool = True  # 是否保留原格式
 
-
 @dataclass
 class EditReport:
     """编辑结果报告。
@@ -70,11 +73,9 @@ class EditReport:
     failed_ops: int = 0
     details: list[dict] = field(default_factory=list)
 
-
 # ---------------------------------------------------------------------------
 # Run 级原地修改器
 # ---------------------------------------------------------------------------
-
 
 class RunEditor(BaseExpert):
     """Run 级原地修改器(Phase 5.3)。

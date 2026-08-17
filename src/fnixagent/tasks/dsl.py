@@ -18,6 +18,12 @@
   TaskStep 逐步执行产出 ExpertResult,最终聚合为 TaskResult
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import uuid
@@ -29,7 +35,6 @@ from typing import Any
 # ---------------------------------------------------------------------------
 # 任务类型与意图枚举
 # ---------------------------------------------------------------------------
-
 
 class TaskType(Enum):
     """任务类型枚举。
@@ -49,7 +54,6 @@ class TaskType(Enum):
     REPORT_GENERATE = "report_generate"  # 报告生成
     UNKNOWN = "unknown"  # 未知/未能识别
 
-
 class Intent(Enum):
     """用户意图枚举(从自然语言描述中识别)。
 
@@ -65,11 +69,9 @@ class Intent(Enum):
     MERGE_FILES = "merge_files"  # 合并文件
     SPLIT_FILE = "split_file"  # 拆分文件
 
-
 # ---------------------------------------------------------------------------
 # 任务请求 / 结果 / 步骤
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class TaskRequest:
@@ -98,7 +100,6 @@ class TaskRequest:
     created_at: datetime = field(default_factory=datetime.now)
     priority: int = 0
     requires_confirmation: bool = False
-
 
 @dataclass
 class TaskResult:
@@ -133,7 +134,6 @@ class TaskResult:
             "error": self.error,
             "duration_ms": self.duration_ms,
         }
-
 
 @dataclass
 class TaskStep:

@@ -1,3 +1,10 @@
+/**
+ * Copyright (C) 2026 FnixAgent. All rights reserved.
+ * Software Name: FnixAgent 智能工作台系统 V1.0
+ * This software and its source code are proprietary and confidential.
+ * Unauthorized copying, modification, distribution, or use is strictly prohibited.
+ */
+
 /** Shell appearance — 支持 light/dark/system 三种偏好,显式值原样返回,system 跟随 matchMedia。 */
 
 export type ShellThemePreference = "light" | "dark" | "system";

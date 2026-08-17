@@ -18,6 +18,12 @@
   - P1-4 Runner 将切换到本模块的新 OrchestratorContext
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -26,7 +32,6 @@ from typing import Any
 # ---------------------------------------------------------------------------
 # 可持久化的 Agent 状态
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class AgentState:
@@ -154,11 +159,9 @@ class AgentState:
             user_profile=data.get("user_profile"),
         )
 
-
 # ---------------------------------------------------------------------------
 # 不可序列化的引擎引用
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class EngineRefs:
@@ -211,11 +214,9 @@ class EngineRefs:
             "has_config": self.config is not None,
         }
 
-
 # ---------------------------------------------------------------------------
 # 组合上下文 = AgentState + EngineRefs
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class OrchestratorContext:

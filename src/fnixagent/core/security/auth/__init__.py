@@ -15,6 +15,12 @@
     - 接口签名稳定,不破坏现有 API 路由
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from fnixagent.core.security.auth.blacklist import (
     TokenBlacklist,
     get_blacklist,

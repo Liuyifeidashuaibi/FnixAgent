@@ -17,6 +17,12 @@ OS 级隔离:
   - 所有操作记录审计日志(成功/失败/降级)
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import enum
@@ -32,11 +38,9 @@ from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
 
-
 # ---------------------------------------------------------------------------
 # 审计钩子(失败不影响主流程)
 # ---------------------------------------------------------------------------
-
 
 def _audit_sandbox(
     action: str,
@@ -49,7 +53,6 @@ def _audit_sandbox(
         AuditLogger().log(action=action, detail=detail or {})
     except Exception:
         pass
-
 
 # ---------------------------------------------------------------------------
 # Windows Job Object(ctypes 调用,无第三方依赖)
@@ -102,11 +105,9 @@ if sys.platform == "win32":  # pragma: no cover - 平台相关
             ("PeakJobMemoryUsed", ctypes.c_size_t),
         ]
 
-
 # ---------------------------------------------------------------------------
 # 数据结构
 # ---------------------------------------------------------------------------
-
 
 class SandboxLevel(enum.Enum):
     """分层沙箱档位(参考 OpenAI Codex Sandbox 三层模型)。
@@ -119,7 +120,6 @@ class SandboxLevel(enum.Enum):
     ALLOW = "allow"
     CONFIRM = "confirm"
     UNTRUSTED = "untrusted"
-
 
 @dataclass
 class SandboxConfig:
@@ -145,7 +145,6 @@ class SandboxConfig:
     cpu_limit_percent: int = 50
     level: SandboxLevel = SandboxLevel.ALLOW
 
-
 @dataclass
 class SandboxResult:
     """沙箱执行结果。
@@ -168,11 +167,9 @@ class SandboxResult:
     duration_ms: float
     error: str | None = None
 
-
 # ---------------------------------------------------------------------------
 # SandboxExecutor
 # ---------------------------------------------------------------------------
-
 
 class SandboxExecutor:
     """跨平台 OS 级执行沙箱。

@@ -1,5 +1,12 @@
 #!/usr/bin/env node
 /**
+ * Copyright (C) 2026 FnixAgent. All rights reserved.
+ * Software Name: FnixAgent 智能工作台系统 V1.0
+ * This software and its source code are proprietary and confidential.
+ * Unauthorized copying, modification, distribution, or use is strictly prohibited.
+ */
+
+/**
  * 全链路模拟：模拟用户从前端开始使用 FnixAgent，并验证项目内各环节是否真正发挥作用。
  * 阶段 1：真实 Chrome 加载前端 (5175) → 验证渲染 + 捕获「前端→后端」真实网络调用 + 控制台错误。
  * 阶段 2：按 OpenAPI tag 遍历后端所有子系统（无鉴权），再 owner 登录后复测受保护子系统。

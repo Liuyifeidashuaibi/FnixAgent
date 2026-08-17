@@ -1,4 +1,11 @@
 """导出 FastAPI OpenAPI schema 到 openapi.json(供前端 SDK 生成用)。"""
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 import json
 import sys
 from pathlib import Path

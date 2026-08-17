@@ -1,5 +1,11 @@
 """Unified async RunEngine — one event dialect for Work + Code."""
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import json
@@ -115,7 +121,7 @@ class RunEngine:
         """Spec 4: 流式执行 + 自动 checkpoint（含 messages_so_far 完整 state）。
 
         对标 LangGraph Checkpointer: 每个 node transition 后 commit state。
-        对标 Claude Code compaction: messages 超阈值时自动压缩（在 AgenticLoop 内）。
+        上下文压缩机制: messages 超阈值时自动压缩（在 AgenticLoop 内）。
 
         checkpoint state 包含:
             messages_so_far: list[dict]  — 累积的 OpenAI chat 格式消息

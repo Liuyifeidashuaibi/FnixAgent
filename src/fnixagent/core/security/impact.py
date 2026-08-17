@@ -17,6 +17,12 @@
   - 所有异常不外泄,失败时记录 warning 并返回 None / False
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import hashlib
@@ -29,11 +35,9 @@ from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
-
 # ---------------------------------------------------------------------------
 # 数据结构
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class Snapshot:
@@ -54,7 +58,6 @@ class Snapshot:
     mtime: str
     paragraphs: list[str] = field(default_factory=list)
     cells: list[list[str]] = field(default_factory=list)
-
 
 @dataclass
 class ImpactRecord:
@@ -78,11 +81,9 @@ class ImpactRecord:
     after: Snapshot | None
     diff_summary: str = ""
 
-
 # ---------------------------------------------------------------------------
 # ImpactTracker
 # ---------------------------------------------------------------------------
-
 
 class ImpactTracker:
     """影响溯源器。

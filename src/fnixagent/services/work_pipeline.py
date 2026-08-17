@@ -12,6 +12,12 @@
   → 9. 记忆更新 + MFP 固化 + KTG 快照 + 审计 TraceId
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import os
@@ -362,7 +368,7 @@ class WorkPipelineContext:
     ktg_paths: list = field(default_factory=list)
     concept_ids: list = field(default_factory=list)
     skills_block: str = ""
-    todos_block: str = ""  # load-bearing state (对标 Claude Code TodoWrite)
+    todos_block: str = ""  # load-bearing state (任务状态外化)
     stp_selected_count: int = 0  # STP 真接入: 拓扑调度选中的技能数 (论文 ablation 指标)
     stp_skipped_reason: str = ""  # STP 降级原因 (fail-soft-with-signal, 对齐 Critic 模式)
     workspace_kind: str = "general"
@@ -613,7 +619,7 @@ class WorkPipeline:
             extra_prompt += format_code_task_prompt()
         if ctx.skills_block:
             extra_prompt = extra_prompt + ctx.skills_block
-        # load-bearing state 注入 (对标 Claude Code TodoWrite):
+        # load-bearing state 注入 (任务状态外化):
         # compaction 后此块仍会重新注入, 确保长程任务不失忆
         if ctx.todos_block:
             extra_prompt = extra_prompt + ctx.todos_block
@@ -1214,7 +1220,7 @@ async def run_work_stream(
 
         logging.getLogger(__name__).warning("intelligence nudge skipped: %s", exc, exc_info=True)
 
-    # load-bearing state 外化 (对标 Claude Code TodoWrite):
+    # load-bearing state 外化 (任务状态外化):
     # 从 .fnix/todos.json 加载未完成待办, 注入 prompt_extra。
     # compaction 后此块仍会重新注入, 确保长程任务不失忆。
     # 借鉴 Anthropic Effective Harnesses: "不是记住全部上下文, 而是快速理解当前状态"

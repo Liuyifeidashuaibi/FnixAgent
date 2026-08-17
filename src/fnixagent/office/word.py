@@ -23,6 +23,12 @@ Word 文档创建/编辑/样式/目录/合并/比较/脱敏/表格/批注/报告
   - 行距: 单倍=1.0, 1.5倍=1.5, 双倍=2.0
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import contextlib
@@ -56,7 +62,6 @@ ALIGNMENT_MAP: dict[str, int] = {
     "right": 2,
     "justify": 3,
 }
-
 
 class WordExpert(BaseExpert):
     """Word 文档专家。

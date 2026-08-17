@@ -12,6 +12,12 @@ LLM 驱动的知识合成引擎 — 将采集信息转化为可执行的升级�
   → 注入 KTG 知识拓扑 → 触发 STP 技能更新 → 驱动 MFP 飞轮
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import json

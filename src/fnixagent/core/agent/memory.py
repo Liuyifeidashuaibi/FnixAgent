@@ -19,6 +19,12 @@ MemoryManager - 四层记忆架构 (Four-Layer Memory Architecture)
   - 完整的 store/recall/search/forget 四层路由
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import uuid
@@ -26,7 +32,6 @@ from collections import defaultdict, deque
 from typing import Any
 
 from fnixagent.core.agent.types import MemoryBackend, MemoryLayer, utcnow_iso
-
 
 class MemoryManager:
     """记忆管理器 (类比 OS 内存管理)。
@@ -277,6 +282,5 @@ class MemoryManager:
         sensory_count = len(self._sensory.pop(caller_pid, deque()))
         working_count = len(self._working.pop(caller_pid, []))
         return {"sensory_cleared": sensory_count, "working_cleared": working_count}
-
 
 __all__ = ["MemoryManager"]

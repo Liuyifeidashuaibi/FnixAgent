@@ -1,5 +1,12 @@
 #!/usr/bin/env node
 /**
+ * Copyright (C) 2026 FnixAgent. All rights reserved.
+ * Software Name: FnixAgent 智能工作台系统 V1.0
+ * This software and its source code are proprietary and confidential.
+ * Unauthorized copying, modification, distribution, or use is strictly prohibited.
+ */
+
+/**
  * Fnix product smoke (script name historical): home + setup/doctor + harness API.
  * Validates FNIX_PRODUCT.md P0 path — not a Hermes clone checklist.
  * Usage: pnpm smoke:hermes

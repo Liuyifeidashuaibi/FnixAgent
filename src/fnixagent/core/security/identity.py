@@ -20,6 +20,12 @@ NetworkPolicy:
   - 基于 from_agent / to_agent / allowed_tools 做访问控制
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import base64
@@ -69,11 +75,9 @@ _CA_VALIDITY_YEARS = 10
 # CA 密钥长度
 _CA_KEY_SIZE = 2048
 
-
 # ---------------------------------------------------------------------------
 # 数据结构
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class SVID:
@@ -95,7 +99,6 @@ class SVID:
     # JWT 模式下的 token(cryptography 可用时为 None)
     jwt_token: str | None = None
 
-
 @dataclass
 class AgentIdentity:
     """Agent 工作负载身份。
@@ -111,7 +114,6 @@ class AgentIdentity:
     role: str
     spiffe_id: str
     svid: SVID | None = None
-
 
 @dataclass
 class NetworkPolicy:
@@ -131,11 +133,9 @@ class NetworkPolicy:
     allowed_tools: list[str] = field(default_factory=list)
     denied: bool = False
 
-
 # ---------------------------------------------------------------------------
 # IdentityBroker
 # ---------------------------------------------------------------------------
-
 
 class IdentityBroker:
     """SPIFFE 风格身份代理(本地 CA + SVID 签发)。

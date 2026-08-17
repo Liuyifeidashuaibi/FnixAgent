@@ -22,6 +22,12 @@
   - 高风险判断基于启发式规则(批量/覆盖/删除/加密)
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import os
@@ -37,7 +43,6 @@ from fnixagent.tasks.dsl import (
 
 # 表格类文件扩展名(用于 TABLE_EXTRACT 推断)
 _TABLE_EXTS = {"xlsx", "xls", "csv", "xlsm"}
-
 
 class TaskRouter(BaseExpert):
     """任务路由器:意图识别 + 任务类型推断 + 步骤计划生成。

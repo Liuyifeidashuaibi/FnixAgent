@@ -20,6 +20,12 @@
   - 仅 system 消息时不淘汰
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import threading
@@ -27,7 +33,6 @@ import time
 
 from fnixagent.core.text import estimate_tokens
 from fnixagent.core.types import Message, MessageRole
-
 
 class ShortTermMemory:
     """

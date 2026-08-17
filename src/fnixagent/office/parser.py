@@ -27,6 +27,12 @@
   - cached_property: word_count/char_count 等派生属性惰性计算。
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import functools
@@ -43,7 +49,6 @@ from fnixagent.office.base import BaseExpert, ExpertError, ExpertResult
 # ---------------------------------------------------------------------------
 # 统一 Element 模型(借鉴 Unstructured)
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class Element:
@@ -88,14 +93,12 @@ class Element:
     def __hash__(self) -> int:
         return hash((self.category, self.text))
 
-
 class Title(Element):
     """标题元素(Heading 1/2/3 等)。"""
 
     @property
     def category(self) -> str:
         return "Title"
-
 
 class NarrativeText(Element):
     """正文叙述文本。"""
@@ -104,14 +107,12 @@ class NarrativeText(Element):
     def category(self) -> str:
         return "NarrativeText"
 
-
 class ListItem(Element):
     """列表项。"""
 
     @property
     def category(self) -> str:
         return "ListItem"
-
 
 class Table(Element):
     """表格元素。
@@ -150,14 +151,12 @@ class Table(Element):
         d["column_count"] = self.column_count
         return d
 
-
 class Image(Element):
     """图片元素(占位,不抽取图像内容)。"""
 
     @property
     def category(self) -> str:
         return "Image"
-
 
 class Header(Element):
     """页眉元素。"""
@@ -166,14 +165,12 @@ class Header(Element):
     def category(self) -> str:
         return "Header"
 
-
 class Footer(Element):
     """页脚元素。"""
 
     @property
     def category(self) -> str:
         return "Footer"
-
 
 class PageBreak(Element):
     """分页符元素(text 为空)。"""
@@ -185,11 +182,9 @@ class PageBreak(Element):
     def category(self) -> str:
         return "PageBreak"
 
-
 # ---------------------------------------------------------------------------
 # 自描述 FileType 枚举(借鉴 Unstructured)
 # ---------------------------------------------------------------------------
-
 
 class FileType(Enum):
     """文件类型枚举,每个值携带能力描述与扩展名映射。
@@ -257,11 +252,9 @@ class FileType(Enum):
                 return ft
         return cls.UNKNOWN
 
-
 # ---------------------------------------------------------------------------
 # ParseOptions(替代散落的布尔参数)
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class ParseOptions:
@@ -281,11 +274,9 @@ class ParseOptions:
     chunking_strategy: str | None = None
     chunk_size: int = 1200
 
-
 # ---------------------------------------------------------------------------
 # 装饰器栈(借鉴 Unstructured 的 @apply_metadata / @add_chunking_strategy)
 # ---------------------------------------------------------------------------
-
 
 def apply_metadata(func: Callable) -> Callable:
     """装饰器:为 parser 返回的 Element 列表统一注入文件级元数据。
@@ -305,7 +296,6 @@ def apply_metadata(func: Callable) -> Callable:
         return elements
 
     return wrapper
-
 
 def add_chunking_strategy(func: Callable) -> Callable:
     """装饰器:按 options.chunking_strategy 对 Element 列表分块。
@@ -328,7 +318,6 @@ def add_chunking_strategy(func: Callable) -> Callable:
         return elements
 
     return wrapper
-
 
 def _chunk_basic(elements: list[Element], chunk_size: int) -> list[Element]:
     """basic 分块:合并相邻 NarrativeText 直至达到 chunk_size。"""
@@ -370,7 +359,6 @@ def _chunk_basic(elements: list[Element], chunk_size: int) -> list[Element]:
         )
     return result
 
-
 def _chunk_by_page(elements: list[Element]) -> list[Element]:
     """by_page 分块:按 page_number 分组合并同类型元素。"""
     grouped: dict[Any, list[Element]] = {}
@@ -386,11 +374,9 @@ def _chunk_by_page(elements: list[Element]) -> list[Element]:
         result.extend(grouped[page])
     return result
 
-
 # ---------------------------------------------------------------------------
 # ParserExpert
 # ---------------------------------------------------------------------------
-
 
 class ParserExpert(BaseExpert):
     """文档解析专家。

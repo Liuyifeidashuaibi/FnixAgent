@@ -26,6 +26,12 @@ LangGraph 图装配与编译。
     graph = build_graph(search_engine=..., scheduler=..., registry=...)
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 from typing import Any
@@ -48,7 +54,6 @@ from fnixagent.graph.nodes import (
     reflect_node,
 )
 from fnixagent.graph.state import GraphState
-
 
 class GraphBuilder:
     """LangGraph 图装配器。
@@ -201,11 +206,9 @@ class GraphBuilder:
             raise RuntimeError(f"LangGraph 图编译失败(带检查点): {type(e).__name__}: {e}") from e
         return compiled
 
-
 # ---------------------------------------------------------------------------
 # 便捷函数: 一行构建图(隐藏 GraphBuilder 细节)
 # ---------------------------------------------------------------------------
-
 
 def build_graph(
     search_engine: Any,

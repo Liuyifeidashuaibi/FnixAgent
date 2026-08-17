@@ -11,6 +11,12 @@ rsa_crypto 模块单元测试(验收标准 ② RSA 加解密往返测试)。
     - rsa_decrypt_password 统一入口
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 import base64
 
 import pytest

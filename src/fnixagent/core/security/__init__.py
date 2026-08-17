@@ -35,6 +35,12 @@ P2/P3 安全模块(文件保留,暂不导出,后续按需启用):
   - LeaseManager:    密钥租约 + Cubbyhole(单次 token + 绑定 task_id + 惰性清理)
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from fnixagent.core.security.auditor import (
     AuditRecord,
     AuditReport,

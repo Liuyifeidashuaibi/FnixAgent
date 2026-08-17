@@ -1,4 +1,11 @@
 /**
+ * Copyright (C) 2026 FnixAgent. All rights reserved.
+ * Software Name: FnixAgent 智能工作台系统 V1.0
+ * This software and its source code are proprietary and confidential.
+ * Unauthorized copying, modification, distribution, or use is strictly prohibited.
+ */
+
+/**
  * ReviewView — Studio Panel「评审」视图（原 ReviewPane，v2 剥离 GlassPanel 外壳）
  * Code Review：diff + 风险分级 + Reject / Accept / Undo。
  * 关闭按钮由 StudioPanel 头部统一承担，此处不再自带。

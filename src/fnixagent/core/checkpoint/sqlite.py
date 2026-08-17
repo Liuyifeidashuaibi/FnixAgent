@@ -20,6 +20,12 @@ LICENSE 兼容性:
   5. 标准库 sqlite3,零外部依赖,standalone 友好
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import json
@@ -41,7 +47,6 @@ from fnixagent.core.checkpoint.types import (
 )
 
 logger = logging.getLogger(__name__)
-
 
 # ============================================================================
 # SQL Schema (借鉴 LangGraph SqliteSaver,MIT License)
@@ -86,7 +91,6 @@ CREATE TABLE IF NOT EXISTS writes (
 CREATE INDEX IF NOT EXISTS idx_writes_thread_cp
     ON writes(thread_id, checkpoint_id, task_id, idx);
 """
-
 
 class SqliteCheckpointer(BaseCheckpointer):
     """SQLite Checkpointer(借鉴 LangGraph SqliteSaver + OpenAI SQLiteSession)。

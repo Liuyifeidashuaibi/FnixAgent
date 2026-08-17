@@ -18,6 +18,12 @@ Span 树形结构说明:
   - OpenTelemetry:     Span 的 started_at/ended_at/status/attributes 模型
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import re
@@ -36,7 +42,6 @@ _SENSITIVE_KEY_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
-
 def _mask_sensitive(value: Any) -> Any:
     """脱敏单个值:返回固定掩码字符串,长度信息不泄露。
 
@@ -46,7 +51,6 @@ def _mask_sensitive(value: Any) -> Any:
     if isinstance(value, str) and value:
         return "***REDACTED***"
     return value
-
 
 def _filter_sensitive_dict(data: dict) -> dict:
     """过滤字典中的敏感字段(递归一层)。
@@ -65,11 +69,9 @@ def _filter_sensitive_dict(data: dict) -> dict:
             filtered[k] = v
     return filtered
 
-
 # ---------------------------------------------------------------------------
 # Span 状态
 # ---------------------------------------------------------------------------
-
 
 class SpanStatus:
     """Span 生命周期状态。
@@ -81,11 +83,9 @@ class SpanStatus:
     COMPLETED = "completed"
     FAILED = "failed"
 
-
 # ---------------------------------------------------------------------------
 # SpanData 系列(结构化数据,按 Span 类型区分)
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class SpanData:
@@ -95,7 +95,6 @@ class SpanData:
     """
 
     span_type: str = "custom"
-
 
 @dataclass
 class AgentSpanData(SpanData):
@@ -110,7 +109,6 @@ class AgentSpanData(SpanData):
     iteration: int = 0
     thought: str = ""
 
-
 @dataclass
 class LLMSpanData(SpanData):
     """LLM 调用 Span 数据。"""
@@ -124,7 +122,6 @@ class LLMSpanData(SpanData):
     latency_ms: float = 0.0
     cached: bool = False
 
-
 @dataclass
 class ToolSpanData(SpanData):
     """工具调用 Span 数据。"""
@@ -137,7 +134,6 @@ class ToolSpanData(SpanData):
     error: str = ""
     attempts: int = 1
 
-
 @dataclass
 class GuardrailSpanData(SpanData):
     """Guardrail 校验 Span 数据。"""
@@ -149,7 +145,6 @@ class GuardrailSpanData(SpanData):
     risk_score: float = 0.0
     tripwire_triggered: bool = False
 
-
 @dataclass
 class HandoffSpanData(SpanData):
     """Agent 间 Handoff Span 数据(P3-1)。"""
@@ -159,11 +154,9 @@ class HandoffSpanData(SpanData):
     to_agent: str = ""
     reason: str = ""
 
-
 # ---------------------------------------------------------------------------
 # Span(不可变快照)
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class Span:
@@ -222,17 +215,14 @@ class Span:
             "attributes": safe_attributes,
         }
 
-
 # ---------------------------------------------------------------------------
 # SpanImpl(可变,context manager)
 # ---------------------------------------------------------------------------
-
 
 # SpanImpl 对象池:复用已结束的 SpanImpl 实例,减少 GC 压力(性能优化)
 # 池中的实例在 acquire 时重置状态后供新 Span 使用,release 时归还
 _SPAN_POOL: list = []
 _SPAN_POOL_LOCK = None  # 延迟初始化,避免 import 时创建锁
-
 
 def _get_pool_lock():
     """惰性初始化对象池锁(避免 import 时副作用)。"""
@@ -242,7 +232,6 @@ def _get_pool_lock():
 
         _SPAN_POOL_LOCK = threading.Lock()
     return _SPAN_POOL_LOCK
-
 
 class SpanImpl:
     """可变的 Span 实现,支持 with 上下文管理器。

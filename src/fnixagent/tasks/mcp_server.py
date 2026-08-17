@@ -22,6 +22,12 @@ QuestionBankScenario)通过 MCP(Model Context Protocol)暴露给外部 Agent 调
   - 所有异常不外泄,统一转 _failure
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import dataclasses
@@ -33,7 +39,6 @@ from fnixagent.office.base import BaseExpert, ExpertResult
 # ---------------------------------------------------------------------------
 # 数据结构
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class ToolAnnotations:
@@ -51,7 +56,6 @@ class ToolAnnotations:
     read_only_hint: bool = True
     destructive_hint: bool = False
     idempotent_hint: bool = False
-
 
 @dataclass
 class ToolDef:
@@ -88,7 +92,6 @@ class ToolDef:
         """是否破坏性(等价于 annotations.destructive_hint)。"""
         return self.annotations.destructive_hint
 
-
 @dataclass
 class ToolInvocation:
     """工具调用。
@@ -105,11 +108,9 @@ class ToolInvocation:
     caller: str = "external"
     request_id: str = ""
 
-
 # ---------------------------------------------------------------------------
 # OfficeMCPServer
 # ---------------------------------------------------------------------------
-
 
 class OfficeMCPServer(BaseExpert):
     """MCP 文档操作服务器:把 fnixagent 能力暴露给外部 Agent。

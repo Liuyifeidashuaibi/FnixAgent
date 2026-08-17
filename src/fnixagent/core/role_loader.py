@@ -26,6 +26,12 @@
     # cfg.name / cfg.display_name / cfg.tools / cfg.reasoning_strategy ...
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import logging
@@ -44,11 +50,9 @@ except ImportError:
     _HAS_YAML = False
     yaml = None  # type: ignore
 
-
 # ---------------------------------------------------------------------------
 # RoleConfig dataclass
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class HandoffSpec:
@@ -78,7 +82,6 @@ class HandoffSpec:
         if self.max_depth < 1:
             raise ValueError(f"HandoffSpec.max_depth must be >= 1, got {self.max_depth}")
 
-
 @dataclass
 class ModelPreference:
     """模型偏好配置。
@@ -94,7 +97,6 @@ class ModelPreference:
     fallback: str = ""
     temperature: float = 0.5
     max_tokens: int | None = None
-
 
 @dataclass
 class RoleConfig:
@@ -173,11 +175,9 @@ class RoleConfig:
                 parts.append(f"- {c}")
         return "\n".join(parts)
 
-
 # ---------------------------------------------------------------------------
 # RoleLoader
 # ---------------------------------------------------------------------------
-
 
 # 合法的推理策略名(对应 P2-6 StrategyType)
 _VALID_STRATEGIES = {"fast", "cheap", "precise", "compliance"}
@@ -199,7 +199,6 @@ _KNOWN_FIELDS = {
     "handoffs",
     "model_preference",
 }
-
 
 class RoleLoader:
     """角色配置加载器。
@@ -537,7 +536,6 @@ class RoleLoader:
                         exc,
                     )
         return count
-
 
 __all__ = [
     "HandoffSpec",

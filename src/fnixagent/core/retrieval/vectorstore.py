@@ -17,6 +17,12 @@
   - 对万级以下数据足够;更大规模请用 Milvus/FAISS
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import abc
@@ -26,7 +32,6 @@ from typing import Any
 
 from fnixagent.core.mathops import batch_cosine_similarity, top_k_with_scores
 from fnixagent.core.types import MemoryItem
-
 
 @dataclass
 class _VectorRecord:
@@ -39,7 +44,6 @@ class _VectorRecord:
     id: str
     vector: list[float]
     metadata: dict[str, Any] = field(default_factory=dict)
-
 
 class BaseVectorStore(abc.ABC):
     """向量库抽象基类。"""
@@ -73,7 +77,6 @@ class BaseVectorStore(abc.ABC):
     def count(self) -> int:
         """返回总条数。"""
         ...
-
 
 class InMemoryVectorStore(BaseVectorStore):
     """
@@ -249,7 +252,6 @@ class InMemoryVectorStore(BaseVectorStore):
             self._id_index.clear()
             self._dim = None
             return n
-
 
 # 便捷别名:默认内存向量库实现
 VectorStore = InMemoryVectorStore

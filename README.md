@@ -1,5 +1,6 @@
 
 
+
 ---
 
 # Fnix Harness
@@ -10,7 +11,6 @@
 
 [![CI](https://github.com/Liuyifeidashuaibi/FnixAgent/actions/workflows/ci.yml/badge.svg)](https://github.com/Liuyifeidashuaibi/FnixAgent/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/Liuyifeidashuaibi/FnixAgent?include_prereleases&label=Release)](https://github.com/Liuyifeidashuaibi/FnixAgent/releases)
-[![License](https://img.shields.io/github/license/Liuyifeidashuaibi/FnixAgent?label=License)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.11%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
 [![Tauri](https://img.shields.io/badge/Tauri-2-orange?logo=tauri&logoColor=white)](https://v2.tauri.app/)
 [![Code Style: Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
@@ -28,17 +28,9 @@ Fnix Harness 是一个**可下载、打开即用**的本地 AI 工作台（灵�
 - **自进化内核** — KTG / STP / MFP + 本地 PDG 索引
 
 **主设计** → [docs/FNIX_PRODUCT.md](docs/FNIX_PRODUCT.md)  
-**六层报告** → [docs/layers/00-INDEX.md](docs/layers/00-INDEX.md)  
-**开源 / 企业双轨** → [docs/layers/COMMERCIAL.md](docs/layers/COMMERCIAL.md)
-
-| 轨道 | 给谁 | 怎么用 |
-|------|------|--------|
-| **Community** | 个人 / 开源 | Releases 安装包或 `pnpm dev` · standalone · BYOK · 无账号 |
-| **Enterprise** | 团队私有部署 | `FNIXAGENT_PROFILE=cloud` · [DEPLOY.md](docs/DEPLOY.md) |
+**六层报告** → [docs/layers/00-INDEX.md](docs/layers/00-INDEX.md)
 
 ---
-
-
 
 ## Download
 
@@ -51,7 +43,7 @@ Fnix Harness 是一个**可下载、打开即用**的本地 AI 工作台（灵�
 
 安装后：**打开应用 → 首次引导填 API Key** → 打开本地文件夹 → **Work**（办公/轻量建站，直写产物）或 **Code**（项目工程，Preview→Accept）。
 
-> 开源 Desktop **无需注册或登录**（对标 Hermes 自托管体验）。
+> Desktop **无需注册或登录**，打开即用。
 
 > 姊妹项目 [FnixAi](https://github.com/Liuyifeidashuaibi/FnixAi)：全 Rust AgentOS（独立仓库）。
 
@@ -82,7 +74,7 @@ fnixagent chat           # 终端对话
 pnpm smoke:hermes        # 冒烟验证
 ```
 
-完整设计见 **[docs/FNIX_PRODUCT.md](docs/FNIX_PRODUCT.md)** · **[docs/OPEN_SOURCE_DESIGN.md](docs/OPEN_SOURCE_DESIGN.md)**
+完整设计见 **[docs/FNIX_PRODUCT.md](docs/FNIX_PRODUCT.md)**
 
 ### 磁盘清理（C 盘被缓存占满时）
 
@@ -100,11 +92,9 @@ pnpm clean:cache:aggressive   # 含 npm / pip / cargo + 旧 temp
 
 | 文档                                                                  | 说明                 |
 | ------------------------------------------------------------------- | ------------------ |
-| [OPEN_SOURCE_DESIGN.md](docs/OPEN_SOURCE_DESIGN.md) | **开源用户使用方案（推荐阅读）** |
 | [QUICKSTART.md](docs/QUICKSTART.md)                                 | 快速上手               |
 | [ARCHITECTURE_LOCAL_HARNESS.md](docs/ARCHITECTURE_LOCAL_HARNESS.md) | 三进程 Harness 架构     |
 | [BETA_RELEASE.md](docs/BETA_RELEASE.md)                             | 打包与 GitHub Release |
-| [CONTRIBUTING.md](CONTRIBUTING.md)                                  | 贡献指南               |
 | [SECURITY.md](SECURITY.md)                                          | 安全报告               |
 
 
@@ -115,6 +105,23 @@ pnpm clean:cache:aggressive   # 含 npm / pip / cargo + 旧 temp
 ## 项目简介（技术）
 
 FnixAgent 是一个面向 **学习 / 教育 / 办公 / 本地编程** 的智能 Agent 平台，构建于 **7 层架构 + 自进化内核** 之上。Desktop 产品形态为 **Fnix Harness**（Tauri 2 + Python agentd + fnix-local sidecar）。
+
+### 🚀 顶级架构升级（2026-08）
+
+基于 **11 个顶级开源 Agent 项目**（EverOS、waku-agent、Darwin.skill、DeerFlow 等）的深度研究，实施了核心架构升级：
+
+**记忆系统升级**（参考 EverOS / waku-agent）：
+- **MarkdownMemoryStore** — Markdown 源真相存储，人类可读可编辑，支持快照回滚
+- **RetrievalGate** — 智能检索门控，根据查询复杂度自动决定是否检索
+- **MemoryConsolidator** — 定期记忆提炼，自动提取关键事实并去重
+- **ReflectionEngine** — 离线记忆进化，合并相似项、提炼模式、生成洞察
+
+**技能系统升级**（参考 Darwin.skill）：
+- **SkillEvaluator** — 9 维评估器（结构质量/执行效果/失败模式/可执行性/上下文/边界/资源/反馈/安全）
+- **SkillEvolver** — 技能进化器（棘轮机制，只保留改进自动回滚退步）
+- **HumanInTheLoop** — 三层守关机制（高风险操作/技能进化/记忆删除前强制确认）
+
+详见 [docs/TOP_TIER_AGENT_UPGRADE.md](docs/TOP_TIER_AGENT_UPGRADE.md) 和 [agent-research-report.md](agent-research-report.md)
 
 ### 为什么选择 Fnix Harness？
 
@@ -202,15 +209,15 @@ packages/sdk/         # TS OpenAPI 客户端（可选）
 
 
 
-## 社区与贡献
+## 问题反馈
 
-- [CONTRIBUTING.md](CONTRIBUTING.md) — 开发环境与 PR 流程
 - [SECURITY.md](SECURITY.md) — 漏洞报告
-- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) — 行为准则
 - [Issues](https://github.com/Liuyifeidashuaibi/FnixAgent/issues) · [Discussions](https://github.com/Liuyifeidashuaibi/FnixAgent/discussions)
 
 
 
 ## License
 
-[Apache License 2.0](LICENSE)
+Copyright (C) 2024-2026 FnixAgent. All Rights Reserved.
+
+本软件为专有软件（Proprietary Software），详见 [LICENSE](LICENSE)。

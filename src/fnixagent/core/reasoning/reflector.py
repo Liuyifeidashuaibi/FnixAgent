@@ -21,6 +21,12 @@
   "生成内容质量评估",二者可叠加使用。
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import json
@@ -40,7 +46,6 @@ from fnixagent.core.types import (
     ReasoningMode,
     ReflectionResult,
 )
-
 
 class SelfReflectEngine(ReasoningEngine):
     """Self-Reflection 推理引擎。

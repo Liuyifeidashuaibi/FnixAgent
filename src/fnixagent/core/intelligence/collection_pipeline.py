@@ -11,7 +11,7 @@
   ├─────────────────────────────────────────────────────────────────┤
   │  Web Scraping & Extraction:                                     │
   │  FireCrawl               → LLM就绪, 智能清洗→Markdown/JSON      │
-  │  Crawl4AI                → AI驱动, LLM理解+传统爬虫性能         │
+  │  Crawl4AI                → AI驱动, LLM理解+传统采集性能         │
   │  Bright Data MCP         → 企业级, 自动规避CAPTCHA, 代理池      │
   │  Jina Reader API         → 任意URL→LLM-ready Markdown           │
   ├─────────────────────────────────────────────────────────────────┤
@@ -43,6 +43,12 @@
   协议: MCP, ACP, HTTP/2, WebSocket, Webhook
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import asyncio
@@ -61,11 +67,9 @@ import httpx
 
 logger = logging.getLogger(__name__)
 
-
 # ============================================================
 # 信息源注册表 — 30+ 源完整定义
 # ============================================================
-
 
 class SourceTier(str, Enum):
     """信息源等级"""
@@ -74,7 +78,6 @@ class SourceTier(str, Enum):
     TIER_1 = "tier_1"  # 重要 (Tavily, RSS, HuggingFace)
     TIER_2 = "tier_2"  # 补充 (Reddit, HN, Twitter)
     TIER_3 = "tier_3"  # 探索 (YouTube, 小众博客)
-
 
 class CollectionMethod(str, Enum):
     """采集方式"""
@@ -86,7 +89,6 @@ class CollectionMethod(str, Enum):
     WEBHOOK = "webhook"  # Webhook 推送
     GRAPHQL = "graphql"  # GraphQL 查询
     SDK = "sdk"  # 官方 SDK
-
 
 @dataclass
 class SourceConfig:
@@ -112,7 +114,6 @@ class SourceConfig:
     # 分类/标签过滤
     categories: list[str] = field(default_factory=list)
     tags: list[str] = field(default_factory=list)
-
 
 # ============================================================
 # 30+ 信息源定义
@@ -361,11 +362,9 @@ SUPPLEMENTARY_SOURCES = [
     {"id": "icml", "name": "ICML", "category": "academic"},
 ]
 
-
 # ============================================================
 # 采集结果统一模型
 # ============================================================
-
 
 @dataclass
 class RawItem:
@@ -385,7 +384,6 @@ class RawItem:
     content_length: int = 0
     language: str = "en"
     is_duplicate: bool = False
-
 
 @dataclass
 class NormalizedItem:
@@ -415,7 +413,6 @@ class NormalizedItem:
     quality_score: float = 0.0
     is_high_quality: bool = False
 
-
 @dataclass
 class CollectionBatch:
     """一次采集批次"""
@@ -437,11 +434,9 @@ class CollectionBatch:
     per_source_duration: dict = field(default_factory=dict)
     errors: list[str] = field(default_factory=list)
 
-
 # ============================================================
 # Layer 1: 数据清洗与标准化
 # ============================================================
-
 
 class DataNormalizer:
     """
@@ -450,7 +445,7 @@ class DataNormalizer:
     设计参考:
       - FireCrawl: 智能内容清洗, 过滤导航栏/页脚/广告, 输出纯净Markdown
       - Jina Reader: 任意URL→LLM-ready Markdown
-      - Crawl4AI: LLM理解+传统爬虫性能
+      - Crawl4AI: LLM理解+传统采集性能
 
     功能:
       - HTML→Markdown 转换
@@ -698,11 +693,9 @@ class DataNormalizer:
 
         return min(1.0, score)
 
-
 # ============================================================
 # Layer 2: 统一采集管道
 # ============================================================
-
 
 class UnifiedCollector:
     """
@@ -1370,11 +1363,9 @@ class UnifiedCollector:
 
         return batch
 
-
 # ============================================================
 # Layer 3: 多Agent协同编排层 (FlowSearch 启发)
 # ============================================================
-
 
 class AgentRole(str, Enum):
     """Agent 角色"""
@@ -1386,7 +1377,6 @@ class AgentRole(str, Enum):
     SOCIAL_AGENT = "social_agent"  # 社交媒体Agent
     SYNTHESIS_AGENT = "synthesis_agent"  # 综合合成Agent
 
-
 @dataclass
 class AgentTask:
     """Agent 任务"""
@@ -1396,7 +1386,6 @@ class AgentTask:
     sources: list[SourceConfig]
     priority: int = 0  # 0=最高
     dependencies: list[str] = field(default_factory=list)  # 依赖的 task_id
-
 
 class MultiAgentOrchestrator:
     """
@@ -1571,11 +1560,9 @@ class MultiAgentOrchestrator:
 
         return report
 
-
 # ============================================================
 # Layer 4: 智能调度中心
 # ============================================================
-
 
 class ScheduleFrequency(str, Enum):
     """调度频率"""
@@ -1585,7 +1572,6 @@ class ScheduleFrequency(str, Enum):
     DAILY = "daily"  # 每日
     WEEKLY = "weekly"  # 每周
     MONTHLY = "monthly"  # 每月
-
 
 class IntelligentScheduler:
     """
@@ -1772,11 +1758,9 @@ class IntelligentScheduler:
             }
         return health
 
-
 # ============================================================
 # CollectionPipeline 别名 (兼容外部代码引用)
 # ============================================================
-
 
 class CollectionPipeline(UnifiedCollector):
     """

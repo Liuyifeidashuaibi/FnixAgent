@@ -1,4 +1,11 @@
 /**
+ * Copyright (C) 2026 FnixAgent. All rights reserved.
+ * Software Name: FnixAgent 智能工作台系统 V1.0
+ * This software and its source code are proprietary and confidential.
+ * Unauthorized copying, modification, distribution, or use is strictly prohibited.
+ */
+
+/**
  * BrowserView — HTML 成果浏览器（右侧工作台 · 浏览器）
  * ============================================================
  * 以"终端用户"视角体验 HTML 成果。与画布分工：

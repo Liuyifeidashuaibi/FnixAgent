@@ -23,6 +23,12 @@
   - 路径校验前置,避免无效 IO
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import os
@@ -37,7 +43,6 @@ __all__ = [
     "TaskValidator",
     "ValidationReport",
 ]
-
 
 # ---------------------------------------------------------------------------
 # 正则模式
@@ -61,11 +66,9 @@ _ANSWER_LINE_PATTERN = re.compile(r"【答案】")
 # 格式组合数量阈值(超过则 warning)
 _FORMAT_COMBO_WARNING_THRESHOLD = 5
 
-
 # ---------------------------------------------------------------------------
 # 验证报告与检查项
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class CheckItem:
@@ -84,7 +87,6 @@ class CheckItem:
     severity: str = "error"
     detail: str = ""
     fix_suggestion: str | None = None
-
 
 @dataclass
 class ValidationReport:
@@ -144,11 +146,9 @@ class ValidationReport:
             ],
         )
 
-
 # ---------------------------------------------------------------------------
 # TaskValidator
 # ---------------------------------------------------------------------------
-
 
 class TaskValidator(BaseExpert):
     """自我验证模块。

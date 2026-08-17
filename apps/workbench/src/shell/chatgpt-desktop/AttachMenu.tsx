@@ -1,4 +1,11 @@
 /**
+ * Copyright (C) 2026 FnixAgent. All rights reserved.
+ * Software Name: FnixAgent 智能工作台系统 V1.0
+ * This software and its source code are proprietary and confidential.
+ * Unauthorized copying, modification, distribution, or use is strictly prohibited.
+ */
+
+/**
  * Composer 「+」菜单 — 上传附件入口（照片 / 文件 / 文件夹）。
  * 复用浏览器/WebView 原生 <input type=file>，在桌面端(Tauri WebView)与浏览器预览下均可工作。
  */

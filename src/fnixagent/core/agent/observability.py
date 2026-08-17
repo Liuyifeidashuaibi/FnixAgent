@@ -10,6 +10,12 @@ Observability - 可观测性 (Observability)
   - 零依赖: 纯 Python 实现, 无需 opentelemetry-sdk
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 from collections import defaultdict, deque

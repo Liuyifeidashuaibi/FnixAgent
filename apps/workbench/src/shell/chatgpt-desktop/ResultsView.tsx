@@ -1,4 +1,11 @@
 /**
+ * Copyright (C) 2026 FnixAgent. All rights reserved.
+ * Software Name: FnixAgent 智能工作台系统 V1.0
+ * This software and its source code are proprietary and confidential.
+ * Unauthorized copying, modification, distribution, or use is strictly prohibited.
+ */
+
+/**
  * ResultsView — Studio Panel「结果」视图（原 WorkResults，v2 剥离 GlassPanel 外壳）
  * Artifacts | Files | Changes | Preview
  * Version · open · reveal · export · quality status

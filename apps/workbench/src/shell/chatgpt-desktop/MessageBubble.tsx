@@ -1,4 +1,11 @@
 /**
+ * Copyright (C) 2026 FnixAgent. All rights reserved.
+ * Software Name: FnixAgent 智能工作台系统 V1.0
+ * This software and its source code are proprietary and confidential.
+ * Unauthorized copying, modification, distribution, or use is strictly prohibited.
+ */
+
+/**
  * Memoized message bubble — windowed content + idle-deferred highlight.
  */
 
@@ -285,7 +292,7 @@ function renderContent(text: string, deferHighlight: boolean) {
  * error → ErrorBlock（严重级别错误恢复：transient/persistent/fatal）
  * text → renderContent（纯文本，支持 markdown + 代码块）
  *
- * 调研：AG-UI 16 种标准事件类型 + Claude Code block-by-block 渲染
+ * 调研：AG-UI 16 种标准事件类型 + 逐块渲染
  */
 function renderBlocks(
   blocks: StructuredBlock[],
@@ -380,7 +387,7 @@ function renderBlocks(
           </div>
         );
       case "widget":
-        // AI 内联可视化（对标 Trae dynamic-ui）— iframe sandbox 渲染，
+        // AI 内联可视化（动态 UI 渲染）— iframe sandbox 渲染，
         // widget 内 sendPrompt 按钮经 postMessage 回灌为新用户消息
         return (
           <WidgetBlock
@@ -485,7 +492,7 @@ function MessageBubbleInner({
         {/* 结构化 block 优先渲染（AG-UI 协议对齐）。
             当 blocks 存在时，按 block 顺序渲染 thinking/progress/tool_call/diff/error/text 组件，
             而非纯文本 content。blocks 追加 only（Event Sourcing），保留完整执行轨迹。
-            调研：AG-UI 16 种标准事件类型 + Claude Code block-by-block 渲染 + OpenHands Event Sourcing */}
+            调研：AG-UI 16 种标准事件类型 + 逐块渲染 + 事件溯源 */}
         {m.blocks && m.blocks.length > 0 ? (
           <>
             <div className="oai-asst-blocks">

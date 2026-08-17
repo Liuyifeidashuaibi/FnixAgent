@@ -16,6 +16,12 @@ config 格式:{"thread_id": str, "checkpoint_id": Optional[str]}
   - checkpoint_id 可选(为 None 时表示最新检查点)
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import abc
@@ -26,7 +32,6 @@ from fnixagent.core.checkpoint.types import (
     CheckpointMetadata,
     CheckpointTuple,
 )
-
 
 class BaseCheckpointer(abc.ABC):
     """Checkpointer 抽象基类。

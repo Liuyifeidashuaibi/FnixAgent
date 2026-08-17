@@ -37,6 +37,12 @@ Usage:
     result = await tools.test(["-x", "--tb=short"])
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import asyncio
@@ -53,7 +59,6 @@ from fnixagent.core.code.diff import (
 # ============================================================================
 # 工具执行结果
 # ============================================================================
-
 
 @dataclass
 class ToolResult:
@@ -95,11 +100,9 @@ class ToolResult:
         """
         return cls(success=False, output=None, error=error)
 
-
 # ============================================================================
 # 代码操作工具集
 # ============================================================================
-
 
 class CodeTools:
     """代码操作工具集, 6 个核心工具。
@@ -816,6 +819,5 @@ class CodeTools:
                 return False
 
         return True
-
 
 __all__ = ["CodeTools", "ToolResult"]

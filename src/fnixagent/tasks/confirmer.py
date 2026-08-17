@@ -23,6 +23,12 @@ fnixagent 任务引擎的安全护栏:高风险操作(批量删除/覆盖原文�
   实际可替换为 fnixagent.core.audit.logger。
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import uuid
@@ -36,7 +42,6 @@ from fnixagent.office.base import BaseExpert, ExpertResult
 # 风险等级
 # ---------------------------------------------------------------------------
 
-
 class RiskLevel(Enum):
     """操作风险等级。
 
@@ -48,7 +53,6 @@ class RiskLevel(Enum):
     MEDIUM = "medium"  # 修改原文件但可撤销(如格式统一)
     HIGH = "high"  # 不可逆操作(删除段落/批量删除/覆盖/加密)
 
-
 # 风险等级→数值映射,数值越大风险越高
 _RISK_ORDER: dict[RiskLevel, int] = {
     RiskLevel.SAFE: 0,
@@ -56,7 +60,6 @@ _RISK_ORDER: dict[RiskLevel, int] = {
     RiskLevel.MEDIUM: 2,
     RiskLevel.HIGH: 3,
 }
-
 
 # 高风险关键词(小写匹配,命中即判 HIGH)
 _HIGH_RISK_KEYWORDS: frozenset[str] = frozenset(
@@ -93,7 +96,6 @@ _BATCH_KEYWORDS: frozenset[str] = frozenset(
     }
 )
 
-
 def _bump_up(level: RiskLevel) -> RiskLevel:
     """风险等级提升一级(封顶 HIGH)。"""
     order = _RISK_ORDER[level]
@@ -104,11 +106,9 @@ def _bump_up(level: RiskLevel) -> RiskLevel:
             return lvl
     return RiskLevel.HIGH
 
-
 # ---------------------------------------------------------------------------
 # 确认请求
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class ConfirmationRequest:
@@ -142,11 +142,9 @@ class ConfirmationRequest:
     decided_by: str | None = None
     reason: str | None = None
 
-
 # ---------------------------------------------------------------------------
 # HumanConfirmer
 # ---------------------------------------------------------------------------
-
 
 class HumanConfirmer(BaseExpert):
     """人工确认节点。

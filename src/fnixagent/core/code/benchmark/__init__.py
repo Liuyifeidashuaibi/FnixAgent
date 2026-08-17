@@ -1,5 +1,11 @@
 """Fnix Code Benchmark package."""
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from fnixagent.core.code.benchmark.checks import CheckResult, run_check
 from fnixagent.core.code.benchmark.generator import generate_tasks, write_generated
 from fnixagent.core.code.benchmark.report import write_report

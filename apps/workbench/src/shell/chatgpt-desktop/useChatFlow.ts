@@ -1,4 +1,11 @@
 /**
+ * Copyright (C) 2026 FnixAgent. All rights reserved.
+ * Software Name: FnixAgent 智能工作台系统 V1.0
+ * This software and its source code are proprietary and confidential.
+ * Unauthorized copying, modification, distribution, or use is strictly prohibited.
+ */
+
+/**
  * Fnix Work / Codex flow via agentd (ChatGPT-look shell).
  * Work → /api/v1/work/stream · Codex → /api/v1/chat/agent
  */
@@ -813,7 +820,7 @@ export function useChatFlow(opts: {
   /**
    * Spec 4: 从 checkpoint 恢复长程任务。
    *
-   * 对标 OpenAI Codex `codex resume --last` / Cursor checkpoints recover。
+   * 会话恢复机制 / 可恢复任务机制 recover。
    * 不需要 user_input — 后端从 checkpoint 重建 LLM 上下文后继续执行。
    *
    * UX:

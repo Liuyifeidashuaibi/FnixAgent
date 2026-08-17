@@ -1,4 +1,11 @@
 /**
+ * Copyright (C) 2026 FnixAgent. All rights reserved.
+ * Software Name: FnixAgent 智能工作台系统 V1.0
+ * This software and its source code are proprietary and confidential.
+ * Unauthorized copying, modification, distribution, or use is strictly prohibited.
+ */
+
+/**
  * Composer — thin shell wrapper over GlassComposer + AttachMenu.
  * 内置 @file 补全：检测光标前最后一个 @ 后的查询串，
  * 弹出文件列表 popover（桌面环境读取本地文件，浏览器 dev 显示提示）。

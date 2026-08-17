@@ -23,6 +23,12 @@ Agent 是比 ReasoningEngine 更高层的抽象:
   - 达到 max_iterations:进入 reflect(可能不完整)
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import abc
@@ -30,10 +36,9 @@ from collections.abc import AsyncGenerator
 from dataclasses import dataclass, field
 from typing import Any
 
-__version__ = "1.1.0"
+__version__ = "1.0.0"
 
 from fnixagent.core.messages import Msg
-
 
 @dataclass
 class AgentContext:
@@ -86,7 +91,6 @@ class AgentContext:
         if not isinstance(msg, Msg):
             raise TypeError(f"msg must be Msg, got {type(msg).__name__}")
         self.history.append(msg)
-
 
 class Agent(abc.ABC):
     """Agent 基类:4 步 ReAct + 双入口(同步/流式)。

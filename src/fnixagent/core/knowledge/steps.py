@@ -15,6 +15,12 @@
   - 大文档分块采用流式处理,避免一次性加载全文
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import os
@@ -27,7 +33,6 @@ from fnixagent.core.text import estimate_tokens, tokenize
 # ---------------------------------------------------------------------------
 # Step 1: OCRStep
 # ---------------------------------------------------------------------------
-
 
 class OCRStep(PipelineStep):
     """OCR 步骤:对图片/扫描件进行文字识别。
@@ -89,11 +94,9 @@ class OCRStep(PipelineStep):
             )
         return ctx
 
-
 # ---------------------------------------------------------------------------
 # Step 2: ParseStep
 # ---------------------------------------------------------------------------
-
 
 class ParseStep(PipelineStep):
     """文档解析步骤:把原始文档解析为 blocks。
@@ -201,11 +204,9 @@ class ParseStep(PipelineStep):
             lines.append(" | ".join(str(c) for c in row))
         return "\n".join(lines)
 
-
 # ---------------------------------------------------------------------------
 # Step 3: ChunkStep
 # ---------------------------------------------------------------------------
-
 
 class ChunkStep(PipelineStep):
     """文本分块步骤:按 token 数切分,滑窗重叠。
@@ -309,11 +310,9 @@ class ChunkStep(PipelineStep):
 
         return ctx
 
-
 # ---------------------------------------------------------------------------
 # Step 4: ExtractStep
 # ---------------------------------------------------------------------------
-
 
 class ExtractStep(PipelineStep):
     """元数据抽取步骤:从文本中抽取标题/作者/日期/关键词等。
@@ -418,11 +417,9 @@ class ExtractStep(PipelineStep):
 
         return ctx
 
-
 # ---------------------------------------------------------------------------
 # Step 5: PermissionStep
 # ---------------------------------------------------------------------------
-
 
 class PermissionStep(PipelineStep):
     """权限打标步骤:为文档打上可见性/权限标签。
@@ -495,11 +492,9 @@ class PermissionStep(PipelineStep):
         ctx.permission_tags = tags
         return ctx
 
-
 # ---------------------------------------------------------------------------
 # Step 6: EmbedStep
 # ---------------------------------------------------------------------------
-
 
 class EmbedStep(PipelineStep):
     """向量编码步骤:把 chunks 编码为向量。

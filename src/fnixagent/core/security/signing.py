@@ -22,6 +22,12 @@
   - 与 JWT 密钥分离,独立 KMS 管理(本模块用本地 keystore)
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import base64
@@ -45,7 +51,6 @@ try:
     _HAS_CRYPTO = True
 except ImportError:  # pragma: no cover
     _HAS_CRYPTO = False
-
 
 # ---------------------------------------------------------------------------
 # 常量
@@ -77,11 +82,9 @@ _SALT = b"fnixagent-signing-salt-v1"  # 固定盐(密码本身应为高熵)
 # 默认 keystore 路径(相对于项目根)
 _DEFAULT_KEYSTORE = os.path.join("assets", "keys")
 
-
 # ---------------------------------------------------------------------------
 # 数据结构
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class SignatureInfo:
@@ -99,7 +102,6 @@ class SignatureInfo:
     file_hash: str
     signature: str
 
-
 @dataclass
 class VerifyResult:
     """验签结果。
@@ -114,11 +116,9 @@ class VerifyResult:
     signed_by: str | None = None
     reason: str = ""
 
-
 # ---------------------------------------------------------------------------
 # DocumentSigner
 # ---------------------------------------------------------------------------
-
 
 class DocumentSigner:
     """OOXML 文档数字签名器。

@@ -1,4 +1,11 @@
 /**
+ * Copyright (C) 2026 FnixAgent. All rights reserved.
+ * Software Name: FnixAgent 智能工作台系统 V1.0
+ * This software and its source code are proprietary and confidential.
+ * Unauthorized copying, modification, distribution, or use is strictly prohibited.
+ */
+
+/**
  * ChatGPT-client transcript — windowed turns + memoized bubbles.
  */
 
@@ -92,7 +99,7 @@ export function MessageList({
   const onVote = useCallback(
     (id: string, v: "up" | "down") => {
       setVote((prev) => ({ ...prev, [id]: v }));
-      // 用户反馈信号回流 (对标 Cursor Bugbot Learning):
+      // 用户反馈信号回流 (用户反馈信号机制):
       // 找到这条 assistant 消息对应的上一条 user 消息, 把反馈写入 HERA
       const msgIdx = messages.findIndex((m) => m.id === id);
       if (msgIdx < 0) return;

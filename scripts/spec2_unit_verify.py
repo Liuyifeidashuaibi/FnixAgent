@@ -3,6 +3,13 @@
 绕过 HTTP 层，但保留 work_pipeline 9 步完整流程，专注验证 loop.py 的
 thought/action/observation chunk 真实产出。
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 import asyncio
 import json
 import sys

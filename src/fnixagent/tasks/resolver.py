@@ -20,6 +20,12 @@
   - LLMRouter 未注入时 _llm_solve 返回 None,自动降级到 L3
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import hashlib
@@ -35,7 +41,6 @@ __all__ = [
     "GarbageReport",
     "ResolveResult",
 ]
-
 
 # ---------------------------------------------------------------------------
 # 正则模式
@@ -69,11 +74,9 @@ _CONFIDENCE_THRESHOLD = 0.7
 # 题干指纹取前 N 个字符
 _FINGERPRINT_HEAD_LEN = 50
 
-
 # ---------------------------------------------------------------------------
 # 乱码检测报告
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class GarbageReport:
@@ -97,11 +100,9 @@ class GarbageReport:
     parsed_options: list[tuple[str, str]] = field(default_factory=list)
     raw_text: str = ""
 
-
 # ---------------------------------------------------------------------------
 # 乱码检测器
 # ---------------------------------------------------------------------------
-
 
 class GarbageDetector(BaseExpert):
     """乱码检测器。
@@ -193,11 +194,9 @@ class GarbageDetector(BaseExpert):
             pairs.append((letter, content))
         return pairs
 
-
 # ---------------------------------------------------------------------------
 # 答案恢复结果
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class ResolveResult:
@@ -217,11 +216,9 @@ class ResolveResult:
     source: str = "none"
     needs_manual: bool = True
 
-
 # ---------------------------------------------------------------------------
 # 答案恢复器
 # ---------------------------------------------------------------------------
-
 
 class AnswerResolver(BaseExpert):
     """答案恢复器(多级策略链)。

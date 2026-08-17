@@ -11,6 +11,12 @@
 设计: 应用启动时调用 build_scheduler() 或 build_graph() 一次,后续全局复用。
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import os
@@ -130,27 +136,6 @@ def _register_business_tools(registry: ToolRegistry) -> int:
         count += 1
     except Exception as e:
         print(f"[services] 注册格式转换工具失败: {e}")
-
-    # 爬虫工具(旧爬虫系统,/api/v1/* 接口,端口 9100)
-    # 6 个工具:crawler_fetch/render/extract/search/summary/batch
-    try:
-        from fnixagent.business.crawler import register_crawler_tools
-
-        register_crawler_tools(registry)
-        count += 6
-    except Exception as e:
-        print(f"[services] 注册爬虫工具(crawler_*)失败: {e}")
-
-    # zhua-crawler 工具(zhua-crawler 系统,/v1/* 接口,端口 8000)
-    # 9 个工具:zhua_scrape/extract/agent/task_create/task_status/
-    # task_result/task_cancel/reverse_api/health
-    try:
-        from fnixagent.business.crawler import register_zhua_tools
-
-        register_zhua_tools(registry)
-        count += 9
-    except Exception as e:
-        print(f"[services] 注册 zhua-crawler 工具(zhua_*)失败: {e}")
 
     return count
 

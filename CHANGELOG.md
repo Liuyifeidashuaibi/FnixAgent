@@ -72,7 +72,7 @@
 
 ### Added
 
-- **协议升级**:Apache 2.0 协议替换原 MIT 协议,提供专利授权条款
+- **许可证规范化**:统一为专有软件许可（Proprietary），明确著作权归属
 - **工程基础设施**:新增 pre-commit / CHANGELOG / CONTRIBUTING / SECURITY / CODE_OF_CONDUCT 完整工程文档
 - **安全增强模块**:
   - OS 级执行沙箱(Windows Job Object / Linux bubblewrap / macOS Seatbelt)
@@ -92,7 +92,7 @@
 
 ### Changed
 
-- **协议**:从 MIT 改为 Apache-2.0
+- **许可证**:统一为专有软件许可（Proprietary）
 - **代码格式化工具**:从 black + isort + flake8 迁移到 ruff(check + format)
 - **构建后端**:从 setuptools 迁移到 hatchling
 - **类型检查**:从 mypy 迁移到 pyright(strict 模式)

@@ -21,6 +21,12 @@ Token 格式: JWT HS256(保持与旧实现一致,便于无缝替换)
     - 黑名单通过 blacklist 模块实现
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import base64
@@ -45,33 +51,27 @@ ACCESS_TOKEN_TTL = int(os.getenv("ACCESS_TOKEN_TTL", str(2 * 3600)))
 # Refresh Token 有效期:7 天
 REFRESH_TOKEN_TTL = int(os.getenv("REFRESH_TOKEN_TTL", str(7 * 24 * 3600)))
 
-
 # ---------------------------------------------------------------------------
 # Base64url 工具
 # ---------------------------------------------------------------------------
 
-
 def _b64url_encode(data: bytes) -> str:
     """Base64url 编码(无填充)。"""
     return base64.urlsafe_b64encode(data).rstrip(b"=").decode("ascii")
-
 
 def _b64url_decode(s: str) -> bytes:
     """Base64url 解码(自动补齐填充)。"""
     pad = "=" * (-len(s) % 4)
     return base64.urlsafe_b64decode(s + pad)
 
-
 def _jwt_sign(message: str) -> str:
     """HMAC-SHA256 签名。"""
     sig = hmac.new(JWT_SECRET_KEY.encode("utf-8"), message.encode("utf-8"), hashlib.sha256).digest()
     return _b64url_encode(sig)
 
-
 # ---------------------------------------------------------------------------
 # Token 容器
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class TokenPair:
@@ -83,11 +83,9 @@ class TokenPair:
     expires_in: int = ACCESS_TOKEN_TTL  # Access Token 剩余有效期(秒)
     refresh_expires_in: int = REFRESH_TOKEN_TTL  # Refresh Token 剩余有效期(秒)
 
-
 # ---------------------------------------------------------------------------
 # Token 创建
 # ---------------------------------------------------------------------------
-
 
 def _create_token(
     user_id: int,
@@ -121,7 +119,6 @@ def _create_token(
     signature = _jwt_sign(signing_input)
     return f"{signing_input}.{signature}"
 
-
 def create_access_token(
     user_id: int,
     username: str,
@@ -137,7 +134,6 @@ def create_access_token(
         ttl=ACCESS_TOKEN_TTL,
         device_fp=device_fp,
     )
-
 
 def create_refresh_token(
     user_id: int,
@@ -159,7 +155,6 @@ def create_refresh_token(
         device_fp=device_fp,
     )
 
-
 def create_token_pair(
     user_id: int,
     username: str,
@@ -178,11 +173,9 @@ def create_token_pair(
         refresh_expires_in=REFRESH_TOKEN_TTL,
     )
 
-
 # ---------------------------------------------------------------------------
 # Token 校验
 # ---------------------------------------------------------------------------
-
 
 def verify_token(token: str, expected_type: str | None = None) -> dict:
     """校验 JWT Token 签名 + 过期 + 类型,返回 payload。
@@ -232,7 +225,6 @@ def verify_token(token: str, expected_type: str | None = None) -> dict:
         )
 
     return payload
-
 
 def decode_token_unsafe(token: str) -> dict:
     """仅解码 payload,不校验签名(用于调试/日志)。"""

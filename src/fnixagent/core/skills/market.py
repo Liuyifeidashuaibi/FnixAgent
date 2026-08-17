@@ -22,6 +22,12 @@
 持久化:本实现为内存版;生产环境可由子类重写 _load/_persist 接入 DB。
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import re
@@ -38,11 +44,9 @@ _SKILL_NAME_PATTERN = re.compile(r"^[A-Za-z0-9_\-]{1,64}$")
 # 版本号语义化版本(semver)宽松匹配
 _VERSION_PATTERN = re.compile(r"^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.\-]+)?$")
 
-
 # ---------------------------------------------------------------------------
 # 枚举
 # ---------------------------------------------------------------------------
-
 
 class SkillStatus(str, Enum):
     """技能生命周期状态。
@@ -58,7 +62,6 @@ class SkillStatus(str, Enum):
     PUBLISHED = "published"  # 已发布(可被安装)
     REJECTED = "rejected"  # 审核拒绝(可改回 DRAFT 修改)
     DEPRECATED = "deprecated"  # 已弃用(不可安装,已安装可继续用)
-
 
 # 允许的状态转换(用于校验)。
 # 状态机设计原则:严格线性流转,禁止跳过 PENDING_REVIEW 直接进入 PUBLISHED。
@@ -81,11 +84,9 @@ _VALID_TRANSITIONS: dict[SkillStatus, set[SkillStatus]] = {
     SkillStatus.DEPRECATED: {SkillStatus.DRAFT},  # 重新上架需走草稿流程
 }
 
-
 # ---------------------------------------------------------------------------
 # Pydantic 模型
 # ---------------------------------------------------------------------------
-
 
 class SkillVersion(BaseModel):
     """技能版本。
@@ -110,7 +111,6 @@ class SkillVersion(BaseModel):
     )
     created_at: datetime = Field(default_factory=datetime.utcnow)
     created_by: str = Field("", description="创建者用户 ID")
-
 
 class SkillMarketEntry(BaseModel):
     """技能市场条目。
@@ -142,40 +142,31 @@ class SkillMarketEntry(BaseModel):
     review_comment: str = ""
     reviewed_at: datetime | None = None
 
-
 # ---------------------------------------------------------------------------
 # 异常
 # ---------------------------------------------------------------------------
 
-
 class SkillMarketError(Exception):
     """技能市场基础异常。"""
-
 
 class SkillNotFoundError(SkillMarketError):
     """技能不存在。"""
 
-
 class SkillVersionNotFoundError(SkillMarketError):
     """技能版本不存在。"""
-
 
 class SkillStatusError(SkillMarketError):
     """状态转换非法(如 DRAFT 直接 PUBLISHED)。"""
 
-
 class SkillAlreadyExistsError(SkillMarketError):
     """技能名已存在(同租户内唯一)。"""
-
 
 class SkillReviewError(SkillMarketError):
     """审核操作非法(如非 PENDING_REVIEW 状态调 approve)。"""
 
-
 # ---------------------------------------------------------------------------
 # SkillMarket
 # ---------------------------------------------------------------------------
-
 
 class SkillMarket:
     """组织内技能市场。

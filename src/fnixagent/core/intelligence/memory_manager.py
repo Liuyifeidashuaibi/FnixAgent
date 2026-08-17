@@ -23,6 +23,12 @@
   >>> mgr.get_stats()
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import hashlib
@@ -104,7 +110,6 @@ _STOPWORDS = frozenset(
     }
 )
 
-
 def _tokenize(text: str) -> set[str]:
     """简单分词: 英文按 \\w+, 中文按 2-3 字符滑窗。与 self_optimizing.py 一致。"""
     if not text:
@@ -121,10 +126,8 @@ def _tokenize(text: str) -> set[str]:
                 tokens.add(seg[:3])
     return tokens
 
-
 # 支持的记忆类型
 _VALID_TYPES = frozenset({"episodic", "semantic", "procedural", "working"})
-
 
 @dataclass
 class MemoryEntry:
@@ -140,7 +143,6 @@ class MemoryEntry:
     importance: float = 0.5  # 0.0-1.0, 巩固时按此排序
     consolidated: bool = False  # 是否已固化为长期记忆
     tags: list[str] = field(default_factory=list)
-
 
 class IntelligenceMemoryManager:
     """Intelligence 七层 L5 记忆层 — 持久化记忆管理。
@@ -362,7 +364,6 @@ class IntelligenceMemoryManager:
                     else 0.0
                 ),
             }
-
 
 __all__ = [
     "IntelligenceMemoryManager",

@@ -1,9 +1,15 @@
 """
 LLM 基础服务层 · 统一抽象接口。
 
-所有闭源(GLM/OpenAI/Claude)与开源(Qwen/Llama3+vLLM) provider 均实现同一抽象,
+所有闭源(GLM/OpenAI/Claude)与开源模型(Qwen/Llama3+vLLM) provider 均实现同一抽象,
 上层 Router/Cache/Billing 只依赖 BaseLLMProvider,不感知具体厂商差异。
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
 
 from __future__ import annotations
 

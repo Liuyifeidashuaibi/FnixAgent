@@ -1,5 +1,5 @@
 """
-Workspace 工具集 — 对标 Cursor/Trae 的 Agent 工具能力
+Workspace 工具集 — 参考业界主流 Agent 工具 的 Agent 工具能力
 
 提供 AI Agent 与本地文件系统和 Shell 交互所需的核心工具:
   - read_file: 读取文件
@@ -18,6 +18,12 @@ Workspace 工具集 — 对标 Cursor/Trae 的 Agent 工具能力
   - 防止路径遍历攻击
   - 操作结果可序列化为 LLM 友好格式
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
 
 from __future__ import annotations
 
@@ -268,7 +274,7 @@ class WorkspaceContext:
 
 class WorkspaceTools:
     """
-    Workspace 工具集 — 对标 Cursor/Trae 的 Agent 工具
+    Workspace 工具集 — 参考业界主流 Agent 工具 的 Agent 工具
 
     用法:
         tools = WorkspaceTools(workspace_root="/path/to/project")
@@ -1347,7 +1353,7 @@ def register_workspace_tools(
     )
 
     # Spec: inline widget — AI 在对话流内即时渲染可视化（SVG/HTML）
-    # 对标 Trae dynamic-ui + Claude Inline Visualizations
+    # 动态 UI 渲染
     # 三层安全：前端 iframe sandbox + CSP + DOMPurify（后端仅透传 code）
     registry.register(
         ToolMetadata(

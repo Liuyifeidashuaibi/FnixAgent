@@ -26,6 +26,12 @@
   - BaseExpert:抽象基类,提供 _require_lib / _validate_* 工具方法
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import abc
@@ -37,11 +43,9 @@ from typing import Any
 # 默认文件大小上限(100 MB),防止 OOM
 DEFAULT_MAX_FILE_SIZE = 100 * 1024 * 1024
 
-
 # ---------------------------------------------------------------------------
 # 返回结构
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class ExpertResult:
@@ -61,11 +65,9 @@ class ExpertResult:
     metadata: dict[str, Any] = field(default_factory=dict)
     duration_ms: float = 0.0
 
-
 # ---------------------------------------------------------------------------
 # 异常
 # ---------------------------------------------------------------------------
-
 
 class ExpertError(Exception):
     """Expert 基础异常。
@@ -78,11 +80,9 @@ class ExpertError(Exception):
         super().__init__(message)
         self.missing_lib = missing_lib
 
-
 # ---------------------------------------------------------------------------
 # BaseExpert
 # ---------------------------------------------------------------------------
-
 
 class BaseExpert(abc.ABC):
     """Office Expert 抽象基类。

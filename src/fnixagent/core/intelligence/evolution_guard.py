@@ -32,6 +32,12 @@
   └─────────────────────────────────────────────────────────────┘
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import hashlib
@@ -46,11 +52,9 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-
 # ============================================================
 # 安全等级和信号
 # ============================================================
-
 
 class GuardLevel(str, Enum):
     """安全等级"""
@@ -60,7 +64,6 @@ class GuardLevel(str, Enum):
     DEGRADING = "degrading"  # 退化中
     CRITICAL = "critical"  # 严重
     ROLLBACK_REQUIRED = "rollback"  # 需要回滚
-
 
 class DegradationType(str, Enum):
     """退化类型"""
@@ -74,11 +77,9 @@ class DegradationType(str, Enum):
     GOAL_DRIFT = "goal_drift"  # 目标漂移
     CIRCULAR_EVOLUTION = "circular_evolution"  # 循环进化 (来回折腾)
 
-
 # ============================================================
 # 基准快照
 # ============================================================
-
 
 @dataclass
 class BenchmarkSnapshot:
@@ -106,11 +107,9 @@ class BenchmarkSnapshot:
     degradation_signals: list[dict] = field(default_factory=list)
     guard_level: str = GuardLevel.SAFE
 
-
 # ============================================================
 # 认知边界感知 (KnowRL 启发)
 # ============================================================
-
 
 class BoundaryAwareness:
     """
@@ -240,11 +239,9 @@ class BoundaryAwareness:
         )
         return max(0.0, 1.0 - avg_error)
 
-
 # ============================================================
 # 退化检测器 (Misevolution 启发)
 # ============================================================
-
 
 class DegradationDetector:
     """
@@ -439,11 +436,9 @@ class DegradationDetector:
             "recent_events": self._degradation_events[-5:],
         }
 
-
 # ============================================================
 # 沙盒验证器
 # ============================================================
-
 
 class SandboxValidator:
     """
@@ -549,11 +544,9 @@ class SandboxValidator:
 
         return {"passed": True, "actual": expected}
 
-
 # ============================================================
 # 回滚管理器
 # ============================================================
-
 
 class RollbackManager:
     """
@@ -662,11 +655,9 @@ class RollbackManager:
         )
         return sorted_snaps[-1][1]
 
-
 # ============================================================
 # 进化守卫总控
 # ============================================================
-
 
 class EvolutionGuard:
     """

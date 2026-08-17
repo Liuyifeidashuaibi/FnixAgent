@@ -22,6 +22,12 @@
   - 输出:generate_response 根据 assessment 生成给用户的回复文本
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import re
@@ -34,7 +40,6 @@ from typing import Any
 # 枚举
 # ---------------------------------------------------------------------------
 
-
 class BoundaryDecision(str, Enum):
     """边界评估决策。"""
 
@@ -42,7 +47,6 @@ class BoundaryDecision(str, Enum):
     PARTIAL = "partial"  # 部分可做(某些子任务越界)
     OUT_OF_SCOPE = "out_of_scope"  # 完全越界(不在能力范围)
     NEEDS_HUMAN = "needs_human"  # 需要人工介入(敏感/低置信度)
-
 
 class ResponseStrategy(str, Enum):
     """响应策略(对应不同决策)。"""
@@ -53,11 +57,9 @@ class ResponseStrategy(str, Enum):
     SUGGEST_ALTERNATIVE = "suggest_alternative"  # 建议替代方案(OUT_OF_SCOPE 但有替代)
     DIRECT_ANSWER = "direct_answer"  # 直接作答(WITHIN)
 
-
 # ---------------------------------------------------------------------------
 # 数据模型
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class CapabilityDeclaration:
@@ -87,7 +89,6 @@ class CapabilityDeclaration:
     sensitivity: str = "low"
     fallback_capability: str | None = None
 
-
 @dataclass
 class IntentAssessment:
     """意图评估结果。
@@ -104,24 +105,19 @@ class IntentAssessment:
     missing_sub_capabilities: list[str] = field(default_factory=list)  # PARTIAL 时列出缺失子能力
     user_facing_explanation: str = ""  # 给用户看的解释(可中文)
 
-
 # ---------------------------------------------------------------------------
 # 异常
 # ---------------------------------------------------------------------------
 
-
 class BoundaryError(Exception):
     """边界评估异常。"""
-
 
 class CapabilityNotFoundError(BoundaryError):
     """能力声明不存在。"""
 
-
 # ---------------------------------------------------------------------------
 # 默认能力声明(fnixagent 顶级 Office + 办公生态定位)
 # ---------------------------------------------------------------------------
-
 
 def _default_l1_office_capabilities() -> list[CapabilityDeclaration]:
     """L1 Office 顶级专家层默认能力声明。"""
@@ -182,7 +178,6 @@ def _default_l1_office_capabilities() -> list[CapabilityDeclaration]:
         ),
     ]
 
-
 def _default_l2_ecosystem_capabilities() -> list[CapabilityDeclaration]:
     """L2 办公生态层默认能力声明。"""
     return [
@@ -226,11 +221,9 @@ def _default_l2_ecosystem_capabilities() -> list[CapabilityDeclaration]:
         ),
     ]
 
-
 # ---------------------------------------------------------------------------
 # 明确越界的意图(任何能力都不支持)
 # ---------------------------------------------------------------------------
-
 
 _OUT_OF_SCOPE_INTENTS: list[str] = [
     # 实时性数据
@@ -260,11 +253,9 @@ _OUT_OF_SCOPE_INTENTS: list[str] = [
     "发短信",
 ]
 
-
 # ---------------------------------------------------------------------------
 # CapabilityBoundary
 # ---------------------------------------------------------------------------
-
 
 class CapabilityBoundary:
     """能力边界管理器。

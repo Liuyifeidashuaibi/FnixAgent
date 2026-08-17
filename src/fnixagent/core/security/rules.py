@@ -25,6 +25,12 @@ detection 语法:
   - 不修改 office/base.py 与其他现有源文件
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import logging
@@ -46,11 +52,9 @@ except ImportError:
     FileSystemEventHandler = object  # type: ignore[assignment,misc]
     Observer = None  # type: ignore[assignment,misc]
 
-
 # ---------------------------------------------------------------------------
 # 审计钩子(异常吞掉)
 # ---------------------------------------------------------------------------
-
 
 def _audit_rule_match(rule: SigmaRule, event: dict) -> None:
     """将规则命中写入审计日志(异常吞掉)。"""
@@ -70,11 +74,9 @@ def _audit_rule_match(rule: SigmaRule, event: dict) -> None:
     except Exception:
         pass
 
-
 # ---------------------------------------------------------------------------
 # SigmaRule
 # ---------------------------------------------------------------------------
-
 
 # 支持的字段修饰符
 _FIELD_MODIFIERS: tuple[str, ...] = (
@@ -86,7 +88,6 @@ _FIELD_MODIFIERS: tuple[str, ...] = (
     "gt",
     "lt",
 )
-
 
 @dataclass
 class SigmaRule:
@@ -280,11 +281,9 @@ class SigmaRule:
                 return None
         return cur
 
-
 # ---------------------------------------------------------------------------
 # RuleMatch
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class RuleMatch:
@@ -302,11 +301,9 @@ class RuleMatch:
     matched_at: str = ""
     mitre: list[str] = field(default_factory=list)
 
-
 # ---------------------------------------------------------------------------
 # RuleEngine
 # ---------------------------------------------------------------------------
-
 
 class _RuleFileHandler(FileSystemEventHandler):  # type: ignore[misc]
     """watchdog 文件变更处理器(触发 reload)。"""
@@ -329,7 +326,6 @@ class _RuleFileHandler(FileSystemEventHandler):  # type: ignore[misc]
             return
         logger.info("[rules] 检测到新规则文件,触发 reload: %s", event.src_path)
         self._engine.reload()
-
 
 class RuleEngine:
     """Sigma 风格规则引擎。
@@ -545,15 +541,12 @@ class RuleEngine:
             logger.warning("[rules] 解析规则失败: %s", exc)
             return None
 
-
 # ---------------------------------------------------------------------------
 # 全局单例(懒加载)
 # ---------------------------------------------------------------------------
 
-
 _engine_instance: RuleEngine | None = None
 _engine_lock = threading.Lock()
-
 
 def get_rule_engine() -> RuleEngine:
     """获取全局 RuleEngine 单例。"""
@@ -563,7 +556,6 @@ def get_rule_engine() -> RuleEngine:
             if _engine_instance is None:
                 _engine_instance = RuleEngine()
     return _engine_instance
-
 
 def reset_rule_engine() -> None:
     """重置单例(主要用于测试)。"""

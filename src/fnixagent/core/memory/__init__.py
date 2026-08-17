@@ -11,16 +11,48 @@
   - 长期记忆写入时做内容校验(防投毒)
   - 实体记忆更新时做权限检查
   - 记忆检索结果做来源标记
+
+顶级架构升级组件 (参考 EverOS / waku-agent):
+  - MarkdownMemoryStore: Markdown 源真相存储层
+  - RetrievalGate: 智能检索门控
+  - MemoryConsolidator: 定期记忆提炼
+  - ReflectionEngine: 离线记忆进化
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
 
 from fnixagent.core.memory.entity import EntityMemory
 from fnixagent.core.memory.long_term import LongTermMemory
 from fnixagent.core.memory.manager import MemoryManager
 from fnixagent.core.memory.short_term import ShortTermMemory
 
+# 顶级架构升级组件 (参考 EverOS / waku-agent)
+from fnixagent.core.memory.markdown_store import MarkdownMemoryStore, MemoryEntry
+from fnixagent.core.memory.retrieval_gate import RetrievalGate, RetrievalDecision
+from fnixagent.core.memory.consolidation import (
+    MemoryConsolidator,
+    ExtractedFact,
+    ConsolidationResult,
+    ReflectionEngine,
+)
+
 __all__ = [
+    # 原有组件
     "EntityMemory",
     "LongTermMemory",
     "MemoryManager",
     "ShortTermMemory",
+    # 顶级架构升级组件
+    "MarkdownMemoryStore",
+    "MemoryEntry",
+    "RetrievalGate",
+    "RetrievalDecision",
+    "MemoryConsolidator",
+    "ExtractedFact",
+    "ConsolidationResult",
+    "ReflectionEngine",
 ]

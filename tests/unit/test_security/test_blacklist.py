@@ -14,6 +14,12 @@ blacklist 模块单元测试(验收标准 ⑤ 登出后 Access Token 在 1s 内�
     - is_using_memory 在无 Redis 时为 True
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 import time
 
 from fnixagent.core.security.auth.blacklist import (

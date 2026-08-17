@@ -17,6 +17,12 @@
   - Provider 调用包裹 try-except,捕获厂商 API(飞书/语雀/Notion/Confluence)异常
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import abc
@@ -32,7 +38,6 @@ from fnixagent.business.workspace.base import (
 
 _logger = logging.getLogger(__name__)
 
-
 # ---------------------------------------------------------------------------
 # 常量
 # ---------------------------------------------------------------------------
@@ -46,11 +51,9 @@ MAX_UPLOAD_CONTENT_BYTES = 10 * 1024 * 1024
 # 支持的文档内容类型
 _VALID_CONTENT_TYPES = {"markdown", "html", "wiki", "pdf"}
 
-
 # ---------------------------------------------------------------------------
 # 数据结构
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class KnowledgeBase:
@@ -63,7 +66,6 @@ class KnowledgeBase:
     doc_count: int = 0
     created_at: str = ""
     updated_at: str = ""
-
 
 @dataclass
 class KnowledgeDoc:
@@ -84,7 +86,6 @@ class KnowledgeDoc:
         if self.tags is None:
             self.tags = []
 
-
 @dataclass
 class SearchResult:
     """知识库搜索结果。"""
@@ -98,11 +99,9 @@ class SearchResult:
         if self.matched_fields is None:
             self.matched_fields = []
 
-
 # ---------------------------------------------------------------------------
 # KnowledgeProvider 抽象
 # ---------------------------------------------------------------------------
-
 
 class KnowledgeProvider(BaseProvider):
     """知识库 Provider 抽象基类。
@@ -140,11 +139,9 @@ class KnowledgeProvider(BaseProvider):
         parent_doc_id: str | None = None,
     ) -> ConnectorResult: ...
 
-
 # ---------------------------------------------------------------------------
 # Stub 实现
 # ---------------------------------------------------------------------------
-
 
 class StubKnowledgeProvider(StubProvider, KnowledgeProvider):
     """知识库 stub 实现。
@@ -203,11 +200,9 @@ class StubKnowledgeProvider(StubProvider, KnowledgeProvider):
             action="upload",
         )
 
-
 # ---------------------------------------------------------------------------
 # KnowledgeConnector
 # ---------------------------------------------------------------------------
-
 
 class KnowledgeConnector(WorkspaceConnector):
     """外部知识库连接器(飞书知识库/语雀/Notion 等)。

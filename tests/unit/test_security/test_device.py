@@ -15,6 +15,12 @@ device 模块单元测试(验收标准 ④ 设备指纹不匹配时拒绝 Refres
     - is_valid_client_uuid 格式校验
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 import hashlib
 
 from fnixagent.core.security.auth.device import (

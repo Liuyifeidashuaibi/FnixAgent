@@ -25,6 +25,12 @@
   - 本模块面向 Agent 全链路的三层护栏(粗粒度,可插拔,含执行层)
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import abc
@@ -50,11 +56,9 @@ __all__ = [
 
 _logger = logging.getLogger(__name__)
 
-
 # ---------------------------------------------------------------------------
 # 动作枚举
 # ---------------------------------------------------------------------------
-
 
 class GuardrailAction(str, Enum):
     """护栏执行结果动作。"""
@@ -64,11 +68,9 @@ class GuardrailAction(str, Enum):
     BLOCK = "block"  # 拦截,停止执行
     MODIFY = "modify"  # 修改,使用修改后的数据继续
 
-
 # ---------------------------------------------------------------------------
 # 上下文与结果
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class GuardrailContext:
@@ -92,7 +94,6 @@ class GuardrailContext:
     content: str = ""
     metadata: dict[str, Any] = field(default_factory=dict)
 
-
 @dataclass
 class GuardrailCheckResult:
     """单个护栏检查结果。
@@ -114,11 +115,9 @@ class GuardrailCheckResult:
     risk_score: float = 0.0
     details: dict[str, Any] = field(default_factory=dict)
 
-
 # ---------------------------------------------------------------------------
 # 护栏闸门基类
 # ---------------------------------------------------------------------------
-
 
 class BaseGuardrailGate(abc.ABC):
     """护栏闸门基类。
@@ -160,7 +159,6 @@ class BaseGuardrailGate(abc.ABC):
         """子类实现具体检查逻辑。"""
         ...
 
-
 class InputGuardrailGate(BaseGuardrailGate):
     """输入护栏基类 - 用户输入进入 Agent 前。
 
@@ -168,7 +166,6 @@ class InputGuardrailGate(BaseGuardrailGate):
     """
 
     pass
-
 
 class ExecutionGuardrailGate(BaseGuardrailGate):
     """执行护栏基类 - 工具调用执行前。
@@ -178,10 +175,8 @@ class ExecutionGuardrailGate(BaseGuardrailGate):
 
     pass
 
-
 # 别名: 兼容 __init__ 导出的 ExecutionGuardrail 名称
 ExecutionGuardrail = ExecutionGuardrailGate
-
 
 class OutputGuardrailGate(BaseGuardrailGate):
     """输出护栏基类 - Agent 输出返回用户前。
@@ -191,11 +186,9 @@ class OutputGuardrailGate(BaseGuardrailGate):
 
     pass
 
-
 # ---------------------------------------------------------------------------
 # 三层护栏注册中心
 # ---------------------------------------------------------------------------
-
 
 class GuardrailRegistry:
     """三层护栏注册中心。
@@ -490,14 +483,12 @@ class GuardrailRegistry:
         elif isinstance(result.modified_data, dict):
             ctx.tool_arguments = result.modified_data
 
-
 # ---------------------------------------------------------------------------
 # 模块级单例
 # ---------------------------------------------------------------------------
 
 _registry_singleton: GuardrailRegistry | None = None
 _singleton_lock = threading.Lock()
-
 
 def get_guardrail_registry() -> GuardrailRegistry:
     """获取全局护栏注册中心单例(惰性创建)。
@@ -510,7 +501,6 @@ def get_guardrail_registry() -> GuardrailRegistry:
         if _registry_singleton is None:
             _registry_singleton = GuardrailRegistry()
         return _registry_singleton
-
 
 def reset_guardrail_registry() -> None:
     """重置全局护栏注册中心单例(主要用于测试)。

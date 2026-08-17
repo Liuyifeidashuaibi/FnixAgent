@@ -6,6 +6,12 @@ Agent 调度中枢 (Orchestrator)。
   → 结果校验反思 → 输出审核 → 记忆保存 → 返回回复
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from fnixagent.core.orchestrator.context import OrchestratorContext
 from fnixagent.core.orchestrator.lifecycle import Lifecycle, PipelineResult
 from fnixagent.core.orchestrator.scheduler import AgentResponse, AgentScheduler

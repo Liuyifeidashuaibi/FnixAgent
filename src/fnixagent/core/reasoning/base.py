@@ -12,6 +12,12 @@ ReasoningContext 封装推理所需的全部依赖:
 设计: 策略模式,各模式为独立策略,selector 选择策略。
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import abc

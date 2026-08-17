@@ -24,6 +24,12 @@ Reciprocal Rank Fusion:
   最终按融合分数降序排列。
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import math
@@ -37,7 +43,6 @@ from fnixagent.core.types import MemoryItem
 # ---------------------------------------------------------------------------
 # BM25 关键词检索
 # ---------------------------------------------------------------------------
-
 
 class BM25Retriever:
     """
@@ -146,11 +151,9 @@ class BM25Retriever:
             # 关键词检索异常捕获:返回空结果,避免阻断混合检索流程
             return []
 
-
 # ---------------------------------------------------------------------------
 # 混合检索器
 # ---------------------------------------------------------------------------
-
 
 class HybridRetriever:
     """

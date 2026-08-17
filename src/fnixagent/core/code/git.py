@@ -39,6 +39,12 @@ Usage:
     result = await agent.smart_undo()
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import asyncio
@@ -51,7 +57,6 @@ from fnixagent.core.code.tools import CodeTools
 # ============================================================================
 # Git 操作结果
 # ============================================================================
-
 
 @dataclass
 class GitResult:
@@ -93,11 +98,9 @@ class GitResult:
         """
         return cls(success=False, output=None, error=error)
 
-
 # ============================================================================
 # 自动化 Git 操作智能体
 # ============================================================================
-
 
 class GitAgent:
     """自动化 Git 操作智能体。
@@ -527,6 +530,5 @@ class GitAgent:
         if result.success:
             return result.output.strip()
         return ""
-
 
 __all__ = ["GitAgent", "GitResult"]

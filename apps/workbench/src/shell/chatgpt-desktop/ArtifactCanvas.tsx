@@ -1,7 +1,14 @@
 /**
+ * Copyright (C) 2026 FnixAgent. All rights reserved.
+ * Software Name: FnixAgent 智能工作台系统 V1.0
+ * This software and its source code are proprietary and confidential.
+ * Unauthorized copying, modification, distribution, or use is strictly prohibited.
+ */
+
+/**
  * Spec 3: ArtifactCanvas — 产物画布
  * ============================================================
- * 真正的内联预览 + 编辑（对标 Claude Artifacts + OpenAI Canvas）
+ * 真正的内联预览 + 编辑（内联预览与编辑）
  *
  * 支持类型：
  *   - HTML: iframe sandbox srcdoc（隔离 DOM，allow-scripts 不加 allow-same-origin）
@@ -18,10 +25,10 @@
  *   - 编辑模式（除图片外）：调用 ArtifactEditor，支持 SEARCH/REPLACE patch 增量编辑
  *   - 新中式宋韵风：青灰主色 / 茶白底 / 思源宋体 / 细线轴
  *
- * Spec 3 改进点（对标顶级开源项目）：
- *   - react-markdown 替换正则渲染器（对标 vercel/streamdown）
- *   - Mermaid 代码块实时渲染（对标 mermaid-js/mermaid-live-editor）
- *   - 增量编辑 SEARCH/REPLACE（对标 Aider + Cursor inline edit）
+ * Spec 3 改进点：
+ *   - react-markdown 替换正则渲染器
+ *   - Mermaid 代码块实时渲染
+ *   - 增量编辑 SEARCH/REPLACE（参考业界最佳实践 + 内联编辑）
  *   - Monaco DiffEditor + createDecorationsCollection（VSCode 官方推荐）
  */
 

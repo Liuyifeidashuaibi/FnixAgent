@@ -83,4 +83,4 @@ pnpm doctor          # 环境诊断
 
 ---
 
-更多：[INSTALL.md](./INSTALL.md) · [HERMES_ALIGNMENT.md](./HERMES_ALIGNMENT.md) · [OPEN_SOURCE_DESIGN.md](./OPEN_SOURCE_DESIGN.md)
+更多：[INSTALL.md](./INSTALL.md) · [HERMES_ALIGNMENT.md](./HERMES_ALIGNMENT.md) · [RELEASE_DESIGN.md](./RELEASE_DESIGN.md)

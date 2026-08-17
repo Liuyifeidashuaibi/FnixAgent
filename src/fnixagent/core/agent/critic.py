@@ -21,6 +21,12 @@
   CriticAgent 以独立第三方视角对产物做语义审查。
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import logging
@@ -29,7 +35,6 @@ import re
 from pydantic import BaseModel, Field, ValidationError
 
 logger = logging.getLogger(__name__)
-
 
 # H4: Pydantic BaseModel 强约束 (借鉴 OpenAI Agents SDK output_type)
 # 替代原 dataclass, 让 LLM 输出有结构化校验
@@ -58,7 +63,6 @@ class CriticVerdict(BaseModel):
     raw_response: str = Field(default="", description="LLM 原始响应", exclude=True)
 
     model_config = {"extra": "ignore"}  # 允许 LLM 输出多余字段, 忽略即可
-
 
 class CriticAgent:
     """Spec 5 独立 Critic Agent。
@@ -338,6 +342,5 @@ class CriticAgent:
                 if depth == 0 and start >= 0:
                     return text[start : i + 1]
         return ""
-
 
 __all__ = ["CriticAgent", "CriticVerdict"]

@@ -1,7 +1,7 @@
 """
 CodeIndexer - 代码库语义索引器
 ================================
-对标 Aider RepoMap (tree-sitter 符号图) + Trae 全量索引 + Codex 语义搜索。
+仓库地图索引 (tree-sitter 符号图) + Trae 全量索引 + Codex 语义搜索。
 
 设计要点:
   - AST 解析 (Python 内置 ast 模块, 零依赖)
@@ -13,6 +13,12 @@ CodeIndexer - 代码库语义索引器
 
 零外部依赖: 仅 ast / re / hashlib / pathlib / os
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
 
 from __future__ import annotations
 
@@ -324,7 +330,7 @@ def _parse_with_regex(file_path: str, source: str) -> list[SymbolInfo]:
 
 
 class CodeIndexer:
-    """代码库语义索引器 (对标 Aider RepoMap + Trae 全量索引)。
+    """代码库语义索引器 (仓库地图索引 + Trae 全量索引)。
 
     功能:
       1. AST/正则解析 → 符号表 (定义位置)
@@ -677,7 +683,7 @@ class CodeIndexer:
         return [s for syms in self._symbols.values() for s in syms if s.location.file == file_path]
 
     def get_repo_map(self, max_tokens: int = 4096) -> str:
-        """生成仓库地图 (对标 Aider RepoMap)。
+        """生成仓库地图 (仓库地图索引)。
 
         输出格式:
           path/to/file.py

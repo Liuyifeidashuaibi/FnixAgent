@@ -8,19 +8,19 @@ build-backend = "hatchling.build"
 
 [project]
 name = "fnixagent"
-version = "1.1.0"
+version = "1.0.0"
 description = "Fnix Harness — local-first AI workspace (Work + Code), BYOK, Tauri Desktop + Python agentd"
 readme = "README.md"
 requires-python = ">=3.11"
-license = "Apache-2.0"
+license = { text = "Proprietary" }
 authors = [
-    { name = "FnixAgent Team" },
+    { name = "FnixAgent" },
 ]
 keywords = ["agent", "llm", "langgraph", "self-evolution", "ktg", "office"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: Apache Software License",
+    "License :: Other/Proprietary License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",

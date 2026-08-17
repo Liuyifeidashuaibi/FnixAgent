@@ -4,6 +4,12 @@
   安全 → 记忆 → 推理选择 → KTG/STP → 执行 → 审核 → MFP/持久化
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import json
@@ -610,7 +616,7 @@ async def work_read_artifact(path: str, request: Request):
 
 
 # ─── Spec 3: Artifact 增量编辑 (diff-apply) ──────────────────────────────
-# 对标 ChatGPT Canvas / Cursor inline edit / Aider SEARCH-REPLACE block
+# 画布编辑 / 内联编辑 / 搜索替换块
 #
 # 设计:
 #   - POST /artifacts/write  用户手动编辑后整文件写入
@@ -777,7 +783,7 @@ async def work_write_artifact(req: ArtifactWriteRequest, request: Request):
 async def work_apply_artifact_patch(req: ArtifactApplyRequest, request: Request):
     """应用 SEARCH/REPLACE patch 到 artifact 文件(增量编辑)。
 
-    对标: Aider SEARCH/REPLACE block + Cursor inline edit + ChatGPT Canvas
+    对标: 搜索替换块 + 内联编辑 + 画布编辑
 
     流程:
         1. 读取原文件
@@ -1192,7 +1198,7 @@ async def work_resume_run(run_id: str, request: Request):
     return StreamingResponse(generate(), media_type="application/x-ndjson")
 
 
-# ── 用户反馈信号回路 (对标 Cursor Bugbot Learning) ──────────────────────
+# ── 用户反馈信号回路 (用户反馈信号机制) ──────────────────────
 
 
 class FeedbackRequest(BaseModel):
@@ -1214,7 +1220,7 @@ class FeedbackRequest(BaseModel):
 
 @router.post("/feedback")
 async def work_feedback(req: FeedbackRequest, request: Request):
-    """用户反馈信号回流端点 (对标 Cursor Bugbot Learning)。
+    """用户反馈信号回流端点 (用户反馈信号机制)。
 
     用户 👍/👎 写入 HERA SkillLibrary 的 user_feedback 字段,
     影响下次 retrieve_skills 召回权重:

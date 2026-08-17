@@ -1,9 +1,9 @@
 [package]
 name = "fnix"
-version = "2.1.2"
+version = "1.0.0"
 description = "Fnix v2.0 - AI-powered code editor built with Tauri"
-authors = ["you"]
-license = "MIT"
+authors = ["FnixAgent"]
+license-file = "../LICENSE"
 edition = "2021"
 rust-version = "1.77.2"
 

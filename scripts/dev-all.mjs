@@ -1,5 +1,12 @@
 #!/usr/bin/env node
 /**
+ * Copyright (C) 2026 FnixAgent. All rights reserved.
+ * Software Name: FnixAgent 智能工作台系统 V1.0
+ * This software and its source code are proprietary and confidential.
+ * Unauthorized copying, modification, distribution, or use is strictly prohibited.
+ */
+
+/**
  * 一键启动 Standalone — 转发到 Tauri 三进程（主路径）
  *
  * @deprecated 直接 `pnpm dev:all:tauri` 等价；Electron 见 dev:electron

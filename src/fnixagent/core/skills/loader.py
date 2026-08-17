@@ -13,6 +13,12 @@
 容错策略: 单个 skill 解析失败不阻塞其他 skill 加载,错误以日志形式输出。
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import logging
@@ -41,11 +47,9 @@ _FRONTMATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n?(.*)$", re.DOTALL)
 # 必填 frontmatter 字段
 _REQUIRED_FIELDS: tuple[str, ...] = ("name", "description", "version", "license")
 
-
 # ---------------------------------------------------------------------------
 # 数据模型
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class BuiltinSkill:
@@ -77,20 +81,16 @@ class BuiltinSkill:
     body: str = ""
     path: str = ""
 
-
 # ---------------------------------------------------------------------------
 # 异常
 # ---------------------------------------------------------------------------
 
-
 class BuiltinSkillLoadError(Exception):
     """内置 Skill 加载异常 (单个 skill 解析失败时抛出,不阻塞其他 skill)。"""
-
 
 # ---------------------------------------------------------------------------
 # BuiltinSkillLoader
 # ---------------------------------------------------------------------------
-
 
 class BuiltinSkillLoader:
     """扫描 builtin/ 目录,解析每个子目录下的 SKILL.md。

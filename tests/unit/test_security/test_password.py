@@ -13,6 +13,12 @@ password 模块单元测试(验收标准 ① 单元测试覆盖 Argon2id 哈希/
     - 空哈希 / 未知格式拒绝
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 import pytest
 
 from fnixagent.core.security.auth.password import (

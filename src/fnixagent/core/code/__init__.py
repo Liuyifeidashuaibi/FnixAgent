@@ -15,6 +15,12 @@ fnixagent Coding - 编码智能体能力层
 可插拔后端: 复用 retrieval/embedder + retrieval/vectorstore + retrieval/hybrid
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 from fnixagent.core.code.agent import (

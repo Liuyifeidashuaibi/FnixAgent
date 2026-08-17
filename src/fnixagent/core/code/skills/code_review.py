@@ -4,6 +4,12 @@ Skill: 代码审查 (Code Review)
 审查代码变更, 检查安全/性能/风格问题。
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 SKILL_NAME = "code_review"
 SKILL_DESCRIPTION = "审查代码变更, 检查安全/性能/风格问题"
 SKILL_CAPABILITIES = {"code.read", "code.search"}

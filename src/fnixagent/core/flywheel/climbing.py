@@ -18,6 +18,12 @@
         - 连续 30 天未命中: 标记 stale=True(不删除,仅降权)
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import time
@@ -47,7 +53,6 @@ TOP_PATHS_LIMIT: int = 10
 
 # 高频技能组合阈值
 SKILL_COMBO_THRESHOLD: int = 3
-
 
 class HillClimbingFlywheel:
     """飞轮 ④ 爬坡进化环。

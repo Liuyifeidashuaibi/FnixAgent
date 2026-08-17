@@ -19,6 +19,12 @@ DLP 出口拦截 (Data Loss Prevention Gateway) - P2 安全模块。
   - 所有异常不外泄,捕获后返回 ALLOW(避免阻断业务)
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import logging
@@ -29,11 +35,9 @@ from enum import Enum
 
 logger = logging.getLogger(__name__)
 
-
 # ---------------------------------------------------------------------------
 # 数据结构
 # ---------------------------------------------------------------------------
-
 
 class DLPAction(Enum):
     """DLP 策略动作。"""
@@ -42,7 +46,6 @@ class DLPAction(Enum):
     BLOCK = "block"
     REDACT = "redact"
     WARN = "warn"
-
 
 @dataclass
 class DLPPolicy:
@@ -70,7 +73,6 @@ class DLPPolicy:
     action: DLPAction = DLPAction.WARN
     min_confidence: float = 0.7
 
-
 @dataclass
 class DLPDetection:
     """单次检测结果。
@@ -88,7 +90,6 @@ class DLPDetection:
     position: tuple[int, int]
     confidence: float
     severity: str
-
 
 @dataclass
 class DLPResult:
@@ -108,11 +109,9 @@ class DLPResult:
     sanitized_output: str | None = None
     reason: str = ""
 
-
 # ---------------------------------------------------------------------------
 # DLPGateway
 # ---------------------------------------------------------------------------
-
 
 class DLPGateway:
     """DLP 出口拦截网关。

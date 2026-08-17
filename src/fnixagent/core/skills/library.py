@@ -14,6 +14,12 @@
   - letta/schemas/memory.py 的 Block 模型（核心记忆 + 归档记忆分层）
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import hashlib
@@ -35,7 +41,7 @@ class CapturedSkill:
       - program_code → solution_summary + tool_calls
       - description → task_signature
 
-    user_feedback 字段对标 Cursor Bugbot Learning 的反馈信号回路:
+    user_feedback 字段用户反馈信号机制 的反馈信号回路:
       用户对 Agent 回复点 👍/👎, 信号回流到技能评分, 影响下次召回权重。
     """
 
@@ -49,7 +55,7 @@ class CapturedSkill:
     created_at: float
     usage_count: int = 0
     last_used_at: float = 0.0
-    # 用户反馈信号 (对标 Cursor Bugbot Learning)
+    # 用户反馈信号 (用户反馈信号机制)
     # "up"=有帮助 / "down"=没帮助 / "none"=未反馈
     user_feedback: str = "none"
     feedback_comment: str = ""  # 用户可选的文字反馈
@@ -207,7 +213,7 @@ class SkillLibrary:
 
         成功技能: 保存为可召回的正向经验。
         失败技能: 保存为可召回的反面经验（标注 success=False），供 DAAO
-        计算真实失败率、避免下次重复踩坑。借鉴 Cursor Bugbot Learning
+        计算真实失败率、避免下次重复踩坑。借鉴 用户反馈信号机制
         的"开发者是否 acted on report"反馈信号思路——失败轨迹同样
         是有效训练信号。
 
@@ -259,7 +265,7 @@ class SkillLibrary:
         feedback: str,
         comment: str = "",
     ) -> bool:
-        """用户反馈信号回流 (对标 Cursor Bugbot Learning)。
+        """用户反馈信号回流 (用户反馈信号机制)。
 
         用户对 Agent 回复点 👍/👎, 信号回流到对应技能的 user_feedback 字段,
         影响 retrieve_skills 下次召回权重:
@@ -338,7 +344,7 @@ class SkillLibrary:
                 # 避免失败案例占满 top-K 挤掉成功路径）
                 if not skill.success:
                     score *= 0.6
-                # 用户反馈信号 (对标 Cursor Bugbot Learning):
+                # 用户反馈信号 (用户反馈信号机制):
                 # 👍 有帮助 → 微加分 (用户验证过的可靠路径)
                 # 👎 没帮助 → 大幅降权 (用户否定的路径, 下次优先避开)
                 if skill.user_feedback == "up":

@@ -1,5 +1,11 @@
 """HTTP client for running benchmark tasks against agentd."""
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import json
@@ -23,14 +29,26 @@ class AgentRunResult:
 
 
 def _llm_config() -> dict[str, str]:
+    provider = os.environ.get("LLM_PROVIDER", "qwen")
+    if provider == "glm":
+        return {
+            "provider": "glm",
+            "model": os.environ.get("LLM_MODEL") or os.environ.get("GLM_MODEL") or "glm-4.5-flash",
+            "api_key": os.environ.get("GLM_API_KEY", ""),
+            "base_url": os.environ.get("GLM_BASE_URL", "https://open.bigmodel.cn/api/paas/v4"),
+        }
+    elif provider == "deepseek":
+        return {
+            "provider": "deepseek",
+            "model": os.environ.get("LLM_MODEL") or os.environ.get("DEEPSEEK_MODEL") or "deepseek-chat",
+            "api_key": os.environ.get("DEEPSEEK_API_KEY", ""),
+            "base_url": os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1"),
+        }
     return {
-        "provider": os.environ.get("LLM_PROVIDER", "qwen"),
-        "model": os.environ.get("LLM_MODEL", "qwen-plus-2025-07-28"),
+        "provider": "qwen",
+        "model": os.environ.get("LLM_MODEL") or os.environ.get("QWEN_MODEL") or "qwen-plus",
         "api_key": os.environ.get("DASHSCOPE_API_KEY", ""),
-        "base_url": os.environ.get(
-            "DASHSCOPE_BASE_URL",
-            "https://dashscope.aliyuncs.com/compatible-mode/v1",
-        ),
+        "base_url": os.environ.get("DASHSCOPE_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1"),
     }
 
 
@@ -63,11 +81,35 @@ def stream_agent(
     *,
     preview: bool = True,
     timeout: int = 600,
+    retrieval_context: str = "",
+    reasoning_mode: str = "",
+    max_steps_hint: int = 0,
+    extra_instructions: str = "",
 ) -> AgentRunResult:
     import time
 
+    # Build enhanced prompt with configuration-specific context
+    enhanced_prompt = prompt
+
+    if extra_instructions:
+        enhanced_prompt = f"{extra_instructions}\n\n{enhanced_prompt}"
+
+    if retrieval_context:
+        enhanced_prompt = f"[Context]\n{retrieval_context}\n\n[Task]\n{enhanced_prompt}"
+
+    if reasoning_mode == "plan_execute":
+        enhanced_prompt = f"Approach this task using a plan-then-execute strategy. First outline your plan, then implement it step by step.\n\n{enhanced_prompt}"
+    elif reasoning_mode == "react":
+        enhanced_prompt = f"Use a reason-act-observe loop. Think about what files to create, then create them.\n\n{enhanced_prompt}"
+
+    if max_steps_hint > 0:
+        enhanced_prompt = f"You have up to {max_steps_hint} steps. Be thorough.\n\n{enhanced_prompt}"
+
+    # Always add explicit file creation instruction
+    enhanced_prompt += "\n\nIMPORTANT: Create all required files in the workspace. Use the write_file tool to create each file with its complete content."
+
     body = {
-        "messages": [{"role": "user", "content": prompt}],
+        "messages": [{"role": "user", "content": enhanced_prompt}],
         "workspace": workspace,
         "preview": preview,
         "llm": _llm_config(),

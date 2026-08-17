@@ -4,6 +4,12 @@
 所有跨模块流转的数据结构集中在此,确保上下游契约一致。
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -181,7 +187,7 @@ class LLMResponse:
     finish_reason: str | None = None
     tool_calls: list[dict] = field(default_factory=list)  # function calling 工具调用
     # Spec 2: reasoning model 的思考链内容 (Qwen3 reasoning_content / OpenAI o1 reasoning /
-    # Claude thinking)。普通模型 (qwen-plus / glm-4 / gpt-4o) 此字段为空。
+    # 推理模型 thinking)。普通模型 (qwen-plus / glm-4 / gpt-4o) 此字段为空。
     # 由 OpenAICompatibleProvider._parse_response 从 message.reasoning_content /
     # message.reasoning / message.thinking 中提取，供前端 ProcessTimeline 折叠展示。
     reasoning_content: str = ""

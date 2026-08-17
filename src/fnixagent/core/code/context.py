@@ -1,7 +1,7 @@
 """
 ContextBuilder - 上下文工程引擎
 ================================
-对标 Trae Context Engineering 和 Codex 上下文组装。
+上下文工程 和 Codex 上下文组装。
 
 设计要点:
   - 优先级驱动的上下文组装 (系统 > 任务 > 约定 > 代码 > 依赖 > 历史 > 仓库地图)
@@ -9,7 +9,7 @@ ContextBuilder - 上下文工程引擎
   - 多源融合: CodeIndexer 语义切片 + 符号定义 + MemoryManager 历史 + 项目约定
   - 零外部依赖: 仅 Python stdlib (pathlib / re / tomllib)
 
-组装策略 (对标 Trae Context Engineering):
+组装策略 (上下文工程):
   1. 任务相关代码切片 (CodeIndexer.search_code)
   2. 依赖符号定义 (CodeIndexer.get_symbol_info)
   3. 历史上下文 (MemoryManager)
@@ -20,6 +20,12 @@ Usage:
     builder = ContextBuilder(indexer, memory_manager)
     ctx = await builder.build_context(task, token_budget=32000)
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
 
 from __future__ import annotations
 
@@ -33,7 +39,6 @@ from typing import Any
 # 数据结构
 # ============================================================================
 
-
 class ContextPriority(Enum):
     """上下文优先级 (数值越小优先级越高)。"""
 
@@ -45,7 +50,6 @@ class ContextPriority(Enum):
     HISTORY = 5  # 历史上下文
     REPO_MAP = 6  # 仓库地图
     EXTRA = 7  # 额外信息
-
 
 @dataclass
 class ContextEntry:
@@ -65,7 +69,6 @@ class ContextEntry:
     token_estimate: int = 0  # 估算 token 数
     metadata: dict[str, Any] = field(default_factory=dict)
 
-
 @dataclass
 class BuiltContext:
     """构建完成的上下文。
@@ -81,7 +84,6 @@ class BuiltContext:
     total_tokens: int  # 总 token 估算
     entries: list[ContextEntry]  # 所有条目
     truncated: bool = False  # 是否被截断
-
 
 # ============================================================================
 # ContextBuilder 主类
@@ -102,9 +104,8 @@ _CJK_RANGE = re.compile(
 # 标识符提取正则 (CamelCase / snake_case, 长度 >= 3)
 _IDENTIFIER_RE = re.compile(r"\b[A-Za-z_][A-Za-z0-9_]{2,}\b")
 
-
 class ContextBuilder:
-    """上下文工程引擎 (对标 Trae Context Engineering)。
+    """上下文工程引擎 (上下文工程)。
 
     组装策略:
       1. 任务相关代码切片 (CodeIndexer.search_code)
@@ -730,7 +731,6 @@ class ContextBuilder:
             messages.append({"role": "user", "content": user_content})
 
         return messages
-
 
 __all__ = [
     "BuiltContext",

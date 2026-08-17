@@ -16,6 +16,12 @@
 生产环境应配合 Docker/gVisor 容器隔离使用。
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import io
@@ -28,7 +34,6 @@ from typing import Any
 
 from fnixagent.core.config import ToolConfig
 from fnixagent.core.tools.sandbox.policy import SandboxPolicy
-
 
 @dataclass
 class SandboxResult:
@@ -55,7 +60,6 @@ class SandboxResult:
     violations: list[str] = field(default_factory=list)
     timed_out: bool = False
     memory_exceeded: bool = False
-
 
 class CodeSandbox:
     """受限代码执行沙箱。

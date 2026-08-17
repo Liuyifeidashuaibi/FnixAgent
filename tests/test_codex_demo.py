@@ -7,6 +7,12 @@ FnixAgent Coding — Codex 对标演示
 使用 ScriptedLLM 按调用顺序返回预设 JSON, 让 Plan→Execute→Review 三阶段真实跑通。
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import asyncio

@@ -15,6 +15,12 @@ RSA-2048 密码传输加密(Phase 0.4)。
     - 生产环境:从环境变量 RSA_PRIVATE_KEY_PATH 加载持久化密钥
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import base64

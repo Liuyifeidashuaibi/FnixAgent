@@ -17,6 +17,12 @@
   - action_type 用 Literal 限定取值,避免 LLM 输出非法值后静默继续
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import json
@@ -27,7 +33,6 @@ from pydantic import BaseModel, Field, ValidationError, field_validator
 # ---------------------------------------------------------------------------
 # ReAct 单步决策
 # ---------------------------------------------------------------------------
-
 
 class ToolCallDecision(BaseModel):
     """ReAct 单步决策(LLM 输出 JSON,校验后转为 ToolCall 或最终答案)。
@@ -80,11 +85,9 @@ class ToolCallDecision(BaseModel):
         """是否为最终答案决策。"""
         return self.action_type == "final_answer"
 
-
 # ---------------------------------------------------------------------------
 # Plan&Execute 规划
 # ---------------------------------------------------------------------------
-
 
 class PlanStepOutput(BaseModel):
     """Plan&Execute 单步规划输出。
@@ -97,7 +100,6 @@ class PlanStepOutput(BaseModel):
     tool_name: str | None = Field(default=None, description="工具名(无工具则为纯推理步骤)")
     arguments: dict[str, Any] = Field(default_factory=dict, description="工具参数")
     depends_on: list[int] = Field(default_factory=list, description="依赖的前置步骤号列表")
-
 
 class PlanOutput(BaseModel):
     """Plan&Execute 完整计划输出。
@@ -119,11 +121,9 @@ class PlanOutput(BaseModel):
     steps: list[PlanStepOutput] = Field(description="步骤列表")
     reasoning: str = Field(default="", description="规划推理过程")
 
-
 # ---------------------------------------------------------------------------
 # 最终答案
 # ---------------------------------------------------------------------------
-
 
 class FinalAnswer(BaseModel):
     """最终答案输出(含置信度/引用/摘要)。
@@ -137,11 +137,9 @@ class FinalAnswer(BaseModel):
     citations: list[str] = Field(default_factory=list, description="引用来源列表(如论文 DOI/URL)")
     summary: str = Field(default="", description="答案摘要(一句话总结)")
 
-
 # ---------------------------------------------------------------------------
 # 便捷校验函数
 # ---------------------------------------------------------------------------
-
 
 def validate_tool_call_decision(text: str) -> ToolCallDecision | None:
     """尝试从 LLM 输出文本解析并校验 ToolCallDecision。
@@ -163,7 +161,6 @@ def validate_tool_call_decision(text: str) -> ToolCallDecision | None:
     except ValidationError:
         return None
 
-
 def validate_plan_output(text: str) -> PlanOutput | None:
     """尝试从 LLM 输出文本解析并校验 PlanOutput。
 
@@ -183,7 +180,6 @@ def validate_plan_output(text: str) -> PlanOutput | None:
         return PlanOutput.model_validate(data)
     except ValidationError:
         return None
-
 
 def validate_final_answer(text: str) -> FinalAnswer | None:
     """尝试从 LLM 输出文本解析并校验 FinalAnswer。

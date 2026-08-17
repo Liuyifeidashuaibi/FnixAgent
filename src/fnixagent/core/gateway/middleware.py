@@ -21,6 +21,12 @@
     app = GatewayMiddleware(app, auth_required=not settings.debug)
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import asyncio
@@ -67,18 +73,15 @@ PUBLIC_PATH_PREFIXES: tuple[str, ...] = (
     "/api/settings/",
 )
 
-
 def _is_public_path(path: str) -> bool:
     """Return True if the path may skip authentication."""
     if path in PUBLIC_PATHS:
         return True
     return any(path.startswith(prefix) for prefix in PUBLIC_PATH_PREFIXES)
 
-
 # ---------------------------------------------------------------------------
 # Principal(鉴权通过后写入 scope["state"]["principal"])
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class Principal:
@@ -100,11 +103,9 @@ class Principal:
         """是否匿名(非 token 鉴权)。"""
         return self.via != "token"
 
-
 # ---------------------------------------------------------------------------
 # 审计
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class AuditEntry:
@@ -117,7 +118,6 @@ class AuditEntry:
     latency_ms: float
     via: str
     timestamp: str = ""
-
 
 class AuditLogger:
     """网关审计日志器(基于 loguru)。
@@ -144,11 +144,9 @@ class AuditLogger:
             # 审计失败不应影响请求处理
             pass
 
-
 # ---------------------------------------------------------------------------
 # 配额管理器
 # ---------------------------------------------------------------------------
-
 
 class QuotaManager:
     """协程安全(单事件循环内)的配额管理器。
@@ -262,14 +260,12 @@ class QuotaManager:
         except ValueError:
             pass
 
-
 # ---------------------------------------------------------------------------
 # 模块级单例
 # ---------------------------------------------------------------------------
 
 _quota_manager: QuotaManager | None = None
 _audit_logger: AuditLogger | None = None
-
 
 def get_quota_manager() -> QuotaManager:
     """获取配额管理器单例(惰性初始化)。"""
@@ -278,7 +274,6 @@ def get_quota_manager() -> QuotaManager:
         _quota_manager = QuotaManager()
     return _quota_manager
 
-
 def get_audit_logger() -> AuditLogger:
     """获取审计日志器单例(惰性初始化)。"""
     global _audit_logger
@@ -286,11 +281,9 @@ def get_audit_logger() -> AuditLogger:
         _audit_logger = AuditLogger()
     return _audit_logger
 
-
 # ---------------------------------------------------------------------------
 # ASGI 三道闸门中间件
 # ---------------------------------------------------------------------------
-
 
 class GatewayMiddleware:
     """ASGI 三道闸门中间件(鉴权 → 配额 → 审计)。

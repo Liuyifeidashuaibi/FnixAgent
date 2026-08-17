@@ -27,6 +27,12 @@ Channel + Version 模型说明:
     否则并发节点执行会出现"丢失更新"竞态。
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import re
@@ -40,13 +46,11 @@ _SENSITIVE_KEY_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
-
 def _mask_sensitive_value(value: Any) -> Any:
     """脱敏单个值:字符串替换为固定掩码,非字符串原样返回。"""
     if isinstance(value, str) and value:
         return "***REDACTED***"
     return value
-
 
 def _filter_sensitive(data: dict) -> dict:
     """递归过滤字典中的敏感字段(深度优先)。
@@ -72,7 +76,6 @@ def _filter_sensitive(data: dict) -> dict:
         else:
             filtered[k] = v
     return filtered
-
 
 @dataclass
 class CheckpointMetadata:
@@ -116,7 +119,6 @@ class CheckpointMetadata:
             score=data.get("score"),
         )
 
-
 @dataclass
 class Checkpoint:
     """检查点内容。
@@ -156,7 +158,6 @@ class Checkpoint:
             versions_seen=dict(data.get("versions_seen", {})),
             metadata=CheckpointMetadata.from_dict(data.get("metadata", {})),
         )
-
 
 @dataclass
 class CheckpointTuple:

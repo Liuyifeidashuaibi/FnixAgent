@@ -1,4 +1,11 @@
-/** ChatGPT Desktop 过程可视化 — 活动项模型（对标 tool activity / subagent progress） */
+/**
+ * Copyright (C) 2026 FnixAgent. All rights reserved.
+ * Software Name: FnixAgent 智能工作台系统 V1.0
+ * This software and its source code are proprietary and confidential.
+ * Unauthorized copying, modification, distribution, or use is strictly prohibited.
+ */
+
+/** 桌面应用 过程可视化 — 活动项模型（工具活动与子任务进度） */
 
 export type ActivityKind =
   | "plan"

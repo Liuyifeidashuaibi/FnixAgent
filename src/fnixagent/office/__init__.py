@@ -20,6 +20,12 @@
   - 零硬编码:模板/样式/图表类型由参数驱动,不预置偏好
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from fnixagent.office.base import BaseExpert, ExpertError, ExpertResult
 from fnixagent.office.chart import ChartExpert
 from fnixagent.office.converter import ConverterExpert

@@ -3,6 +3,12 @@
 对标 TRAE Work / WorkBuddy：任务拆解 → 调 Office/业务工具 → 可交付产物。
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import asyncio
@@ -48,7 +54,7 @@ WORK_SYSTEM_PROMPT = """你是 FnixAgent 办公工作台助手（对标 TRAE Wor
 
 
 def format_code_task_prompt() -> str:
-    """Work 模式下检测到编码/建站任务时追加的提示（对标 Trae Work App gen + WorkBuddy Craft）。"""
+    """Work 模式下检测到编码/建站任务时追加的提示（工作模式编码任务检测）。"""
     return """
 
 ## 编码/应用生成任务（Work 内可做，对标 TRAE Work App generation + WorkBuddy Craft）

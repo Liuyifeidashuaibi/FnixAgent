@@ -11,10 +11,10 @@
 
 不依赖额外 LLM 调用 — 纯启发式 + 规则，零延迟。
 
-设计取舍 (对标 Aider "简单性 > 复杂性"):
+设计取舍 (设计原则:简单性优先):
   原设计含 tool_subset 字段试图筛选工具子集, 但 8 处分支全部赋空 list,
   且 work_pipeline 仅透传给前端 UI 展示, 不实际过滤工具集。
-  对标 Cursor/Claude Code/Aider 均不做工具子集筛选——LLM 自己会选对工具,
+  参考业界最佳实践/业界主流 Agent 工具/Aider 均不做工具子集筛选——LLM 自己会选对工具,
   强行过滤反而可能让 LLM 拿不到需要的工具。已诚实移除该字段, 消除误导。
 
 四维闭环核心（Spec 7+）:
@@ -23,11 +23,16 @@
   - recent_failure_rate ≥ 0.5 → 该类任务易失败 → 切换到 plan_execute
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any
-
 
 @dataclass
 class RouteDecision:
@@ -41,7 +46,6 @@ class RouteDecision:
     hera_hit_rate: float = 0.0  # 0.0-1.0
     recent_failure_rate: float = 0.0
     confidence: float = 1.0
-
 
 # ── 难度信号关键词 ────────────────────────────────────────────────────
 
@@ -92,7 +96,6 @@ _COMPLEXITY_KEYWORDS = {
     ],
 }
 
-
 def estimate_difficulty(
     user_input: str,
     workspace_kind: str,
@@ -133,9 +136,7 @@ def estimate_difficulty(
 
     return max(0.0, min(1.0, base + length_bonus + keyword_bonus + kind_bonus))
 
-
 # ── 路由策略 ────────────────────────────────────────────────────────────
-
 
 def route(
     *,
@@ -168,10 +169,16 @@ def route(
         max_reflect_rounds = 2
         reason = "Plan 模式：Plan&Execute，先规划再执行"
     elif workspace_kind == "code":
-        reasoning_mode = "react"
-        max_steps = 16
-        max_reflect_rounds = 2
-        reason = f"Craft 编码任务：ReAct + {max_steps} 步上限，优先 write_file 落盘"
+        if difficulty >= 0.7:
+            reasoning_mode = "plan_execute"
+            max_steps = 20
+            max_reflect_rounds = 2
+            reason = f"Craft 编码高难度任务(diff={difficulty:.2f})：Plan&Execute + {max_steps} 步"
+        else:
+            reasoning_mode = "react"
+            max_steps = 16
+            max_reflect_rounds = 2
+            reason = f"Craft 编码任务(diff={difficulty:.2f})：ReAct + {max_steps} 步上限，优先 write_file 落盘"
     elif workspace_kind == "research":
         reasoning_mode = "react"
         max_steps = 12
@@ -226,7 +233,6 @@ def route(
         confidence=1.0 if hera_hit_rate > 0 else 0.7,
     )
 
-
 def compute_hera_hit_rate(
     *,
     retrieved_count: int,
@@ -240,7 +246,6 @@ def compute_hera_hit_rate(
     if requested_top_k <= 0:
         return 0.0
     return min(1.0, retrieved_count / requested_top_k)
-
 
 def compute_recent_failure_rate(
     *,
@@ -274,7 +279,6 @@ def compute_recent_failure_rate(
         return failed / len(recent)
     except Exception:
         return 0.0
-
 
 __all__ = [
     "RouteDecision",

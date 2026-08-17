@@ -16,12 +16,17 @@
 两者互补: 本类专注 LLM per-key 限流,治理层专注跨 LLM/工具/上游 API 的整体流量治理。
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import threading
 import time
 from dataclasses import dataclass
-
 
 @dataclass
 class _Bucket:
@@ -38,7 +43,6 @@ class _Bucket:
         if elapsed > 0:
             self.tokens = min(self.capacity, self.tokens + elapsed * self.refill_rate)
             self.last_refill = now
-
 
 class TokenBucketRateLimiter:
     """多 key 令牌桶限流器。
@@ -207,7 +211,6 @@ class TokenBucketRateLimiter:
                     for key, b in self._buckets.items()
                 },
             }
-
 
 # 向后兼容别名:对外提供 RateLimiter 简称,与 TokenBucketRateLimiter 等价
 RateLimiter = TokenBucketRateLimiter

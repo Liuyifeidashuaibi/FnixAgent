@@ -1,4 +1,11 @@
 /**
+ * Copyright (C) 2026 FnixAgent. All rights reserved.
+ * Software Name: FnixAgent 智能工作台系统 V1.0
+ * This software and its source code are proprietary and confidential.
+ * Unauthorized copying, modification, distribution, or use is strictly prohibited.
+ */
+
+/**
  * Fnix Harness bridge — sync Workbench BYOK / workspace with agentd (~/.fnix).
  * UI remains Tauri-native; agentd is the Python brain for Work / harness APIs.
  */
@@ -572,7 +579,7 @@ export async function deprecateSkill(entryId: string, reason = ""): Promise<{ ok
 
 // ===========================================================================
 // Trae Skill 系统：静态技能 CRUD + 启停（.fnix/skills/*.md）
-// 对标 Trae Skills + Cursor Rules
+// 技能管理面板
 // ===========================================================================
 
 export interface HarnessSkill {
@@ -674,7 +681,7 @@ export async function toggleHarnessSkill(
 }
 
 // ─── Spec 3: Artifact Canvas 增量编辑 ────────────────────────────────────
-// 对标 ChatGPT Canvas / Cursor inline edit / Aider SEARCH-REPLACE block
+// 对标 画布编辑 / 内联编辑 / 搜索替换 block
 // 后端端点: POST /api/v1/work/artifacts/write 和 /artifacts/apply
 
 export interface ArtifactWriteResult {

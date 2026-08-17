@@ -18,6 +18,12 @@ PostgreSQL 持久化存储层(Phase 0.8)。
   未设置 DATABASE_URL 时,回退到内存 Store(开发/测试零依赖)。
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import hashlib
@@ -58,7 +64,6 @@ from fnixagent.services.storage import (
 _DEFAULT_TENANT_ID: int = 1
 _DEFAULT_TENANT_NAME: str = "default"
 
-
 def _ensure_default_tenant(session: SASession) -> None:
     """确保默认租户存在(幂等)。"""
     tenant = session.get(Tenant, _DEFAULT_TENANT_ID)
@@ -72,11 +77,9 @@ def _ensure_default_tenant(session: SASession) -> None:
         session.add(tenant)
         session.flush()
 
-
 # ---------------------------------------------------------------------------
 # ORM ↔ Dataclass 转换函数
 # ---------------------------------------------------------------------------
-
 
 def _user_to_stored(u: User) -> StoredUser:
     """User ORM → StoredUser dataclass。quota 信息从 profile JSON 提取。"""
@@ -93,7 +96,6 @@ def _user_to_stored(u: User) -> StoredUser:
         created_at=u.created_at,
     )
 
-
 def _cred_to_stored(c: APICredential, plaintext: str = "") -> StoredApiKey:
     """APICredential ORM → StoredApiKey dataclass。"""
     return StoredApiKey(
@@ -106,7 +108,6 @@ def _cred_to_stored(c: APICredential, plaintext: str = "") -> StoredApiKey:
         expires_at=c.expires_at,
         revoked=bool(c.revoked_at),
     )
-
 
 def _doc_to_stored(d: Document) -> StoredDocument:
     """Document ORM → StoredDocument dataclass。"""
@@ -124,7 +125,6 @@ def _doc_to_stored(d: Document) -> StoredDocument:
         created_at=d.created_at,
         deleted=bool(d.deleted_at),
     )
-
 
 def _task_to_stored(t: Task, steps: list[TaskStep]) -> StoredTask:
     """Task ORM + TaskStep 列表 → StoredTask dataclass。"""
@@ -156,11 +156,9 @@ def _task_to_stored(t: Task, steps: list[TaskStep]) -> StoredTask:
         finished_at=t.finished_at,
     )
 
-
 # ---------------------------------------------------------------------------
 # PgUserStore
 # ---------------------------------------------------------------------------
-
 
 class PgUserStore:
     """PostgreSQL 持久化 UserStore(接口与 UserStore 一致)。"""
@@ -473,11 +471,9 @@ class PgUserStore:
         with self._db.session() as session:
             return session.query(User).filter_by(tenant_id=_DEFAULT_TENANT_ID).count()
 
-
 # ---------------------------------------------------------------------------
 # PgApiKeyStore
 # ---------------------------------------------------------------------------
-
 
 class PgApiKeyStore:
     """PostgreSQL 持久化 ApiKeyStore。"""
@@ -523,11 +519,9 @@ class PgApiKeyStore:
             )
             return [_cred_to_stored(c) for c in creds]
 
-
 # ---------------------------------------------------------------------------
 # PgDocumentStore
 # ---------------------------------------------------------------------------
-
 
 class PgDocumentStore:
     """PostgreSQL 持久化 DocumentStore(文件落盘 + 元数据入库)。"""
@@ -709,11 +703,9 @@ class PgDocumentStore:
         with self._db.session() as session:
             return session.query(Document).filter(Document.deleted_at.is_(None)).count()
 
-
 # ---------------------------------------------------------------------------
 # PgTaskStore
 # ---------------------------------------------------------------------------
-
 
 class PgTaskStore:
     """PostgreSQL 持久化 TaskStore。"""
@@ -939,15 +931,12 @@ class PgTaskStore:
         with self._db.session() as session:
             return session.query(Task).count()
 
-
 # ---------------------------------------------------------------------------
 # 工厂函数(根据 DATABASE_URL 选择实现)
 # ---------------------------------------------------------------------------
 
-
 _db_adapter: DatabaseAdapter | None = None
 _db_adapter_lock = threading.Lock()
-
 
 def get_db_adapter() -> DatabaseAdapter | None:
     """获取 DatabaseAdapter 单例。
@@ -965,7 +954,6 @@ def get_db_adapter() -> DatabaseAdapter | None:
                     return None
                 _db_adapter = DatabaseAdapter(url)
     return _db_adapter
-
 
 def reset_db_adapter() -> None:
     """重置 DatabaseAdapter 单例(用于测试)。"""
