@@ -22,7 +22,7 @@ elasticsearch==8.10.0
 minio==7.2.0
 
 # Milvus 向量数据库（长期记忆语义检索，cloud 可选）
-pymilvus==2.3.0
+pymilvus==3.0.1
 
 # LDAP / AD 域集成（Phase 2.2，cloud 企业 SSO）
 ldap3==2.9.1
