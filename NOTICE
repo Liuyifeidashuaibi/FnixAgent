@@ -1,424 +1,146 @@
-FnixAgent 智能工作台系统 V1.0
-Copyright (C) 2024-2026 FnixAgent. All Rights Reserved.
-
-本软件为专有软件（Proprietary Software），著作权归 FnixAgent 所有。
-本软件通过互联网以安装包形式向最终用户提供下载使用，具体许可条款
-详见随附的 LICENSE 文件及《用户协议》。
-
-Architecture: Tauri 2 Desktop -> Python agentd -> fnix-local sidecar (Rust)
+FnixAgent™ 智能工作台系统
+Copyright (C) 2024-2026 FnixAgent / 刘逸飞. All Rights Reserved.
 
 ================================================================================
+法律声明 / Legal Notice
+================================================================================
 
-DERIVED WORK NOTICE
+本软件为**专有软件 (Proprietary Software)**,著作权归 FnixAgent / 刘逸飞
+依法所有。未经著作权人事先书面许可,严禁以任何形式复制、修改、分发、
+商用、衍生创作。具体许可条款详见同目录下的 LICENSE 文件。
+
+如需商用,请参考 LICENSE-COMMERCIAL.md 的联系流程。
+
+This software is **PROPRIETARY SOFTWARE**. All rights are reserved by the
+copyright holder FnixAgent / Liu Yifei. Reproduction, modification,
+distribution, commercial use, and creation of derivative works are
+strictly prohibited without prior written permission. See the LICENSE
+file for complete terms.
+
+For commercial licensing, see LICENSE-COMMERCIAL.md.
+
+================================================================================
+架构 / Architecture
+================================================================================
+
+Tauri 2 Desktop (Rust + WebView) → Python agentd → fnix-local sidecar (Rust)
+
+  ┌─────────────┐    IPC     ┌──────────────┐    stdio    ┌─────────────┐
+  │  WebView    │ ◄────────► │  Tauri Core  │ ◄─────────► │  fnix-local │
+  │  (React UI) │  invoke()  │   (Rust)     │  JSON-RPC  │   (Rust)    │
+  └─────────────┘            └──────┬───────┘             └─────────────┘
+                                    │
+                          ┌─────────▼─────────┐
+                          │  Python agentd    │
+                          │  (this repo)      │
+                          └───────────────────┘
+
+================================================================================
+DERIVED WORK NOTICE / 衍生作品声明
+================================================================================
 
 apps/workbench (Fnix desktop UI) is derived from PunamIDE (MIT License).
-Original project: https://github.com/mandaloriantrader/PunamIDE
-Original license text: apps/workbench/LICENSE-MIT-PUNAMIDE
+Original project : https://github.com/mandaloriantrader/PunamIDE
+Original license : apps/workbench/LICENSE-MIT-PUNAMIDE
 
 Fnix-specific changes include:
-  - Product identity, prompts, settings keys, and data dirs (.fnix, fnix-settings*.json)
-  - Harness bridge to Fnix agentd (src/lib/fnixBridge.ts) for BYOK -> ~/.fnix
-  - Workspace ensure -> {workspace}/.fnix
+  - Product identity, prompts, settings keys, and data dirs
+    (.fnix, fnix-settings*.json)
+  - Harness bridge to Fnix agentd (src/lib/fnixBridge.ts) for BYOK → ~/.fnix
+  - Workspace ensure → {workspace}/.fnix
   - Project rules: .fnix/rules.md / AGENTS.md
   - No default third-party Sentry DSN
 
-================================================================================
-
-THIRD-PARTY COMPONENT COPYRIGHT NOTICES
-
-This product incorporates components from the following third-party projects.
-Each component is licensed under its respective license terms. The copyrights
-of such components belong to their respective owners.
-
---------------------------------------------------------------------------------
-Python Dependencies
---------------------------------------------------------------------------------
-
-FastAPI
-  Copyright (c) 2018 Sebastián Ramírez
-  License: MIT
-  https://github.com/tiangolo/fastapi
-
-Uvicorn
-  Copyright (c) 2014, Encode OSS Ltd
-  License: BSD-3-Clause
-  https://github.com/encode/uvicorn
-
-Pydantic
-  Copyright (c) 2017 to present, Pydantic Services Inc.
-  License: MIT
-  https://github.com/pydantic/pydantic
-
-Starlette
-  Copyright (c) 2018, Encode OSS Ltd
-  License: BSD-3-Clause
-  https://github.com/encode/starlette
-
-MCP (Model Context Protocol)
-  Copyright (c) Anthropic, PBC
-  License: MIT
-  https://github.com/modelcontextprotocol
-
-SQLAlchemy
-  Copyright (c) 2005-2024 SQLAlchemy authors and contributors
-  License: MIT
-  https://www.sqlalchemy.org
-
-Alembic
-  Copyright (c) 2009-2024 Michael Bayer
-  License: MIT
-  https://github.com/sqlalchemy/alembic
-
-OpenAI Python
-  Copyright (c) OpenAI
-  License: Apache-2.0
-  https://github.com/openai/openai-python
-
-tiktoken
-  Copyright (c) OpenAI
-  License: MIT
-  https://github.com/openai/tiktoken
-
-LangGraph
-  Copyright (c) LangChain, Inc.
-  License: MIT
-  https://github.com/langchain-ai/langgraph
-
-LangChain Core
-  Copyright (c) LangChain, Inc.
-  License: MIT
-  https://github.com/langchain-ai/langchain
-
-LangChain OpenAI
-  Copyright (c) LangChain, Inc.
-  License: MIT
-  https://github.com/langchain-ai/langchain
-
-python-docx
-  Copyright (c) Steve Canny
-  License: MIT
-  https://github.com/python-openxml/python-docx
-
-ReportLab
-  Copyright (c) ReportLab Inc.
-  License: BSD-3-Clause
-  https://www.reportlab.com
-
-pypdf
-  Copyright (c) Mathieu Fenniak and contributors
-  License: BSD-3-Clause
-  https://github.com/py-pdf/pypdf
-
-Matplotlib
-  Copyright (c) Matplotlib Development Team
-  License: PSD (Python Software Foundation License) / Matplotlib license
-  https://matplotlib.org
-
-Plotly
-  Copyright (c) Plotly Technologies Corp.
-  License: MIT
-  https://github.com/plotly/plotly.py
-
-Requests
-  Copyright (c) Kenneth Reitz
-  License: Apache-2.0
-  https://github.com/psf/requests
-
-argon2-cffi
-  Copyright (c) Hynek Schlawack
-  License: MIT
-  https://github.com/hynek/argon2-cffi
-
-cryptography
-  Copyright (c) The Python Cryptographic Authority and individual contributors
-  License: Apache-2.0 OR BSD-3-Clause
-  https://github.com/pyca/cryptography
-
-prometheus-client
-  Copyright (c) Prometheus Authors
-  License: Apache-2.0
-  https://github.com/prometheus/client_python
-
-Loguru
-  Copyright (c) Delgan
-  License: MIT
-  https://github.com/Delgan/loguru
-
-pytest
-  Copyright (c) Holger Krekel and contributors
-  License: MIT
-  https://github.com/pytest-dev/pytest
-
-httpx
-  Copyright (c) Encode OSS Ltd
-  License: BSD-3-Clause
-  https://github.com/encode/httpx
-
-croniter
-  Copyright (c) kiorky
-  License: MIT
-  https://github.com/kiorky/croniter
-
-PyYAML
-  Copyright (c) Kirill Simonov
-  License: MIT
-  https://github.com/yaml/pyyaml
-
-python-dateutil
-  Copyright (c) Gustavo Niemeyer
-  License: BSD-3-Clause / Apache-2.0
-  https://github.com/dateutil/dateutil
-
-pytz
-  Copyright (c) Stuart Bishop
-  License: MIT
-  https://github.com/stub42/pytz
-
-pydantic-settings
-  Copyright (c) Pydantic Services Inc.
-  License: MIT
-  https://github.com/pydantic/pydantic-settings
-
-pytest-asyncio
-  Copyright (c) Microsoft Corporation
-  License: Apache-2.0
-  https://github.com/pytest-dev/pytest-asyncio
-
-pytest-cov
-  Copyright (c) Marc Schlaich
-  License: MIT
-  https://github.com/pytest-dev/pytest-cov
-
---------------------------------------------------------------------------------
-Frontend / JavaScript / TypeScript Dependencies
---------------------------------------------------------------------------------
-
-React
-  Copyright (c) Meta Platforms, Inc. and affiliates
-  License: MIT
-  https://react.dev
-
-React DOM
-  Copyright (c) Meta Platforms, Inc. and affiliates
-  License: MIT
-  https://react.dev
-
-@tauri-apps/api
-  Copyright (c) Tauri Programme within The Commons Conservancy
-  License: Apache-2.0 OR MIT
-  https://tauri.app
-
-@tauri-apps/plugin-dialog
-  Copyright (c) Tauri Programme within The Commons Conservancy
-  License: Apache-2.0 OR MIT
-  https://tauri.app
-
-@tauri-apps/plugin-shell
-  Copyright (c) Tauri Programme within The Commons Conservancy
-  License: Apache-2.0 OR MIT
-  https://tauri.app
-
-@tauri-apps/plugin-fs
-  Copyright (c) Tauri Programme within The Commons Conservancy
-  License: Apache-2.0 OR MIT
-  https://tauri.app
-
-@tauri-apps/plugin-store
-  Copyright (c) Tauri Programme within The Commons Conservancy
-  License: Apache-2.0 OR MIT
-  https://tauri.app
-
-@tauri-apps/plugin-log
-  Copyright (c) Tauri Programme within The Commons Conservancy
-  License: Apache-2.0 OR MIT
-  https://tauri.app
-
-@tauri-apps/plugin-opener
-  Copyright (c) Tauri Programme within The Commons Conservancy
-  License: Apache-2.0 OR MIT
-  https://tauri.app
-
-Zustand
-  Copyright (c) Paul Henschel
-  License: MIT
-  https://github.com/pmndrs/zustand
-
-Monaco Editor
-  Copyright (c) Microsoft Corporation
-  License: MIT
-  https://github.com/microsoft/monaco-editor
-
-@monaco-editor/react
-  Copyright (c) Suren Atoyan
-  License: MIT
-  https://github.com/suren-atoyan/monaco-react
-
-@xyflow/react (React Flow)
-  Copyright (c) Hayleigh Thompson
-  License: MIT
-  https://github.com/xyflow/xyflow
-
-Mermaid
-  Copyright (c) Knut Sveidqvist
-  License: MIT
-  https://github.com/mermaid-js/mermaid
-
-react-markdown
-  Copyright (c) Titus Wormer
-  License: MIT
-  https://github.com/remarkjs/react-markdown
-
-remark-gfm
-  Copyright (c) Titus Wormer
-  License: MIT
-  https://github.com/remarkjs/remark-gfm
-
-rehype-highlight
-  Copyright (c) Titus Wormer
-  License: MIT
-  https://github.com/rehypejs/rehype-highlight
-
-highlight.js
-  Copyright (c) Ivan Sagalaev
-  License: BSD-3-Clause
-  https://github.com/highlightjs/highlight.js
-
-DOMPurify
-  Copyright (c) 2015 Mario Heiderich
-  License: Apache-2.0 OR MPL-2.0
-  https://github.com/cure53/DOMPurify
-
-diff-match-patch
-  Copyright (c) 2018 Google Inc.
-  License: Apache-2.0
-  https://github.com/google/diff-match-patch
-
-@xterm/xterm
-  Copyright (c) Daniel Imms and contributors
-  License: MIT
-  https://github.com/xtermjs/xterm.js
-
-lucide-react
-  Copyright (c) Lucide Contributors
-  License: ISC
-  https://github.com/lucide-icons/lucide
-
-@xenova/transformers
-  Copyright (c) Hugging Face Inc.
-  License: Apache-2.0
-  https://github.com/xenova/transformers.js
-
-ts-morph
-  Copyright (c) 2016 David Sherret
-  License: MIT
-  https://github.com/dsherret/ts-morph
-
-web-tree-sitter
-  Copyright (c) Max Brunsfeld
-  License: MIT
-  https://github.com/tree-sitter/tree-sitter
-
-react-split
-  Copyright (c) Nathan Catania
-  License: MIT
-  https://github.com/nathancaito/react-split
-
-Vite
-  Copyright (c) Yuxi (Evan) You and Vite contributors
-  License: MIT
-  https://vitejs.dev
-
-TypeScript
-  Copyright (c) Microsoft Corporation
-  License: Apache-2.0
-  https://www.typescriptlang.org
-
-Tailwind CSS
-  Copyright (c) Tailwind Labs, LLC
-  License: MIT
-  https://tailwindcss.com
-
-ESLint
-  Copyright (c) OpenJS Foundation and individual contributors
-  License: MIT
-  https://eslint.org
-
-Playwright
-  Copyright (c) Microsoft Corporation
-  License: Apache-2.0
-  https://playwright.dev
-
-Prettier
-  Copyright (c) James Long
-  License: MIT
-  https://prettier.io
-
-@vitejs/plugin-react
-  Copyright (c) Yuxi (Evan) You
-  License: MIT
-  https://github.com/vitejs/vite-plugin-react
-
---------------------------------------------------------------------------------
-Rust Dependencies
---------------------------------------------------------------------------------
-
-Tauri
-  Copyright (c) Tauri Programme within The Commons Conservancy
-  License: Apache-2.0 OR MIT
-  https://tauri.app
-
-Axum
-  Copyright (c) 2019 Axum Contributors
-  License: MIT
-  https://github.com/tokio-rs/axum
-
-Serde
-  Copyright (c) Serde Contributors
-  License: MIT OR Apache-2.0
-  https://github.com/serde-rs/serde
-
-serde_json
-  Copyright (c) Serde Contributors
-  License: MIT OR Apache-2.0
-  https://github.com/serde-rs/json
-
-Tokio
-  Copyright (c) Tokio Contributors
-  License: MIT
-  https://github.com/tokio-rs/tokio
-
-tower-http
-  Copyright (c) Tower Web Contributors
-  License: MIT
-  https://github.com/tower-rs/tower-http
-
-Tracing
-  Copyright (c) Tracing Contributors
-  License: MIT
-  https://github.com/tokio-rs/tracing
-
-tracing-subscriber
-  Copyright (c) Tracing Contributors
-  License: MIT
-  https://github.com/tokio-rs/tracing
-
-UUID
-  Copyright (c) The Rust Project Developers
-  License: MIT OR Apache-2.0
-  https://github.com/uuid-rs/uuid
-
-walkdir
-  Copyright (c) Andrew Gallant
-  License: Unlicense OR MIT
-  https://github.com/BurntSushi/walkdir
+NOTE — Despite apps/workbench being derived from a MIT-licensed upstream,
+the rest of this repository (including the Python agentd, fnix-local
+sidecar, all documentation, prompts, skills, configuration, and any other
+files outside apps/workbench) is **independent original work** of the
+copyright holder and is governed by the proprietary LICENSE.
+
+apps/workbench itself is governed by its own LICENSE-MIT-PUNAMIDE file
+located inside that subdirectory; the rest of the repository is NOT MIT.
 
 ================================================================================
+第三方组件版权声明 / Third-Party Component Notices
+================================================================================
 
-This NOTICE file is distributed as part of FnixAgent 智能工作台系统 V1.0.
-The contents of this file are for informational purposes only and do not modify
-the proprietary license under which this software is distributed. For the full
-text of each third-party component's license, please refer to the respective
-project repository or the license file included with the component.
+本软件作为独立产品运行时会**调用 / 链接**若干第三方开源组件。这些组件
+**仅作为运行时所依赖的独立技术组件**,它们的著作权归各自权利人所有,
+各自的许可证条款**仅约束该等组件本身**,不构成本软件其他部分权利状态
+的变更,也不构成本软件对自身专有权利的放弃。
 
-For the complete list of third-party dependencies and their licenses,
-please refer to: docs/软著申请材料/第三方依赖许可证清单.md
+本节列出的所有第三方组件:
+
+  (a) 是各自项目独立发布的开源 / 商业软件;
+  (b) 本软件通过标准的包管理器 (npm / cargo / pip / uv / system) 获取;
+  (c) 其原始许可证文本随本软件一同分发,详见各组件目录内的 LICENSE 文件;
+  (d) 其许可证条款的最终解释权归各自权利人所有;
+  (e) **不构成本软件源代码的开放授权**;
+  (f) **不构成本软件任何部分著作权或专利权的放弃或转移**;
+  (g) **不构成对任何第三方使用本软件其他部分的授权**;
+  (h) 如某个第三方组件自身的许可证要求披露其源代码,该披露义务**仅
+      限于该第三方组件本身**,不延伸至本软件的其他专有部分。
+
+下列组件 (但不限于此) 在运行时被使用:
+
+Core / Runtime
+  - Python 3.10-3.13                (PSF License)
+  - Tauri 2.x                       (MIT / Apache-2.0)
+  - Rust toolchain                  (MIT / Apache-2.0)
+  - Node.js 20+                     (MIT)
+
+LLM / AI
+  - OpenAI Python SDK               (Apache-2.0)
+  - Anthropic SDK                   (MIT)
+  - tiktoken                        (MIT)
+  - sentence-transformers           (Apache-2.0)
+  - sqlite-vec                      (MIT)
+
+Storage
+  - SQLite                          (Public Domain)
+  - LanceDB                         (Apache-2.0)
+
+Desktop / Frontend
+  - React 18                        (MIT)
+  - Vite                            (MIT)
+  - TypeScript                      (Apache-2.0)
+  - TailwindCSS                     (MIT)
+  - shadcn/ui                       (MIT)
+  - Radix UI                        (MIT)
+
+DevOps / CI
+  - GitHub Actions (官方 workflow)   (免费使用,非组件)
+  - CodeQL                          (免费,GitHub 集成)
+  - Dependabot                      (免费,GitHub 集成)
+  - Renovate                        (Apache-2.0)
+
+Documentation
+  - MkDocs / Material for MkDocs    (BSD-2 / MIT)
+  - All-Contributors bot            (MIT)
+
+完整清单与版本以 `package.json` / `pyproject.toml` / `Cargo.toml` /
+`pnpm-lock.yaml` / `uv.lock` 为准。
+
+完整、准确、机器可读的 SBOM (Software Bill of Materials) 见
+`reports/sbom.spdx.json` (由 `make sbom` 生成)。
+
+================================================================================
+商标 / Trademarks
+================================================================================
+
+"FnixAgent"、FnixAgent Logo、F 图形标识均为 FnixAgent / 刘逸飞的注册商标
+或正在申请的商标。未经书面许可,不得用于:
+
+  - 任何商业产品的名称 / 域名 / App 名
+  - 商品 / 服务 / 培训 / 课程的对外宣传
+  - 暗示与 FnixAgent 有关联或背书的场景
+
+详见 TRADEMARKS.md。
+
+"FnixAgent™", the FnixAgent logo, and the F monogram are trademarks or
+pending trademarks of FnixAgent / Liu Yifei. See TRADEMARKS.md for the
+full trademark policy.
+
+================================================================================
+© 2024-2026 FnixAgent. All Rights Reserved.
+================================================================================

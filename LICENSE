@@ -1,49 +1,141 @@
-FnixAgent 智能工作台系统 V1.0
-Copyright (C) 2024-2026 FnixAgent. All Rights Reserved.
-
-本软件及其源代码为专有软件（Proprietary Software），著作权归 FnixAgent 所有。
-未经 FnixAgent 书面许可，任何单位或个人不得以任何形式复制、修改、分发、
-传播、出版、展示、演绎本软件的全部或任何部分，亦不得将其用于任何商业用途。
-
-本软件通过互联网以安装包形式向最终用户提供下载使用。用户在遵守随附的
-《用户协议》（End-User License Agreement）条款的前提下，可在本地设备上
-安装、运行本软件用于个人合法用途。
-
-本软件使用了若干第三方开源组件（如 MIT、BSD-3-Clause、Apache-2.0 等许可证），
-各第三方组件的著作权归其各自的权利人所有，本软件遵循各组件的许可证条款进行使用。
-第三方组件的清单与许可证信息详见随附的 NOTICE 文件及
-《第三方依赖许可证清单》。
-
-未经明确书面授权，本 LICENSE 不授予任何专利权、商标权或其他知识产权。
-本软件按"现状"（AS IS）提供，不提供任何明示或暗示的担保。
-在适用法律允许的最大范围内，FnixAgent 不对因使用本软件而产生的任何
-直接或间接损失承担责任。
-
-如需获得商业许可或其他授权，请联系 FnixAgent。
+FnixAgent™ 智能工作台系统
+Copyright (C) 2024-2026 FnixAgent / 刘逸飞. All Rights Reserved.
 
 ================================================================================
+中文版 (Chinese Version)
+================================================================================
 
-FnixAgent Intelligent Workbench System V1.0
-Copyright (C) 2024-2026 FnixAgent. All Rights Reserved.
+本软件(包括但不限于源代码、目标代码、文档、图形、Logo、商标、设计稿、
+配置文件、模型权重、Skill 包、提示词模板、本文档及任何衍生作品,以下统称
+"本软件") 系著作权人 FnixAgent / 刘逸飞 依法享有著作权的专有作品。
 
-This software and its source code are proprietary. The copyright is owned
-by FnixAgent. No part of this software may be reproduced, modified,
-distributed, published, displayed, or used for any commercial purpose,
-in whole or in part, without the prior written permission of FnixAgent.
+未经著作权人事先书面许可,**严禁**任何单位或个人:
 
-This software is distributed to end users via internet download. Users may
-install and run this software on local devices for personal lawful use,
-subject to the terms of the accompanying End-User License Agreement.
+  1. 复制、转载、下载、镜像、抓取本软件的全部或任何部分;
+  2. 修改、改编、翻译、汇编、整理、再创作本软件的全部或任何部分;
+  3. 公开发布、公开展示、公开发行、传播本软件的全部或任何部分;
+  4. 将本软件的全部或任何部分用于任何商业目的,包括但不限于:
+     - 直接销售 / 收费 / 订阅
+     - 嵌入到商业产品 / SaaS 服务 / 商业项目
+     - 用于提供对外服务 (无论收费与否)
+     - 用于内部商业运营、培训、咨询、交付物
+  5. 基于本软件创作衍生作品 / 派生作品 / Fork 项目;
+  6. 将本软件的部分或全部反向工程、反编译、反汇编(在适用法律允许的
+     互操作性范围内除外);
+  7. 删除、遮掩、修改本软件上的任何版权标识、商标、水印;
+  8. 以"开源"、"免费"或其他名义诱导他人使用本软件的实质部分;
+  9. 将本软件的访问权或使用权再许可给第三方。
 
-This software incorporates third-party open-source components (licensed under
-MIT, BSD-3-Clause, Apache-2.0, etc.). The copyrights of such components belong
-to their respective owners, and this software complies with their respective
-license terms. See the accompanying NOTICE file and the Third-Party Dependency
-License List for details.
+**GitHub / Gitee / GitLab / 任何公开代码托管平台上的"公开浏览"行为**
+(如:个人阅读、在浏览器中查看单个文件、提交 GitHub Issue / Discussion
+作为参考性问题) 不被视为上述"分发"行为,但仍不得进行复制、下载、
+镜像、Fork、再分发等行为。
 
-This LICENSE does not grant any patent, trademark, or other intellectual
-property rights. The software is provided "AS IS" without warranty of any kind.
-To the maximum extent permitted by applicable law, FnixAgent shall not be
-liable for any direct or indirect damages arising from the use of this software.
+如仅为**学习目的**的个人性、非系统性、非商业性参考阅读(不含复制、
+不含下载至本地副本、不含商用),著作权人在此给予有限的、不可转让的、
+可撤销的、非排他性的**阅览许可 (View-Only License)**,该许可:
 
-For commercial licensing or other authorization, please contact FnixAgent.
+  (a) 不构成对本软件著作权的放弃;
+  (b) 不允许以任何方式存储、复制、再传播本软件;
+  (c) 在任何情况下均不得用于商业用途;
+  (d) 不得将参考所得的设计、架构、算法、提示词等直接用于构建
+      与本软件实质相似的替代品。
+
+本软件按"现状" (AS IS) 提供,不提供任何明示或暗示的担保。在适用法律
+允许的最大范围内,著作权人不就因浏览、参考或试图使用本软件而产生的
+任何直接或间接损失承担责任。
+
+本软件涉及若干第三方开源组件,其各自的著作权归相应权利人所有,该等
+组件的清单、版本及原始许可证信息详见 NOTICE 文件及第三方依赖清单。
+该等第三方组件**仅作为本软件运行时所依赖的独立技术组件**,其许可证
+条款仅约束该等组件本身,不构成对本软件其他部分权利状态的变更。
+
+如需获得超出本声明范围的授权(包括但不限于商业许可、授权许可、
+学术合作、白盒审计、技术转让等),请联系:
+
+  ✉  Email : licensing@fnixagent.dev
+  🌐 Web   : https://fnixagent.dev/commercial
+
+================================================================================
+English Version
+================================================================================
+
+FnixAgent™ Intelligent Workbench System
+Copyright (C) 2024-2026 FnixAgent / Liu Yifei. All Rights Reserved.
+
+This software (including but not limited to source code, object code,
+documentation, graphics, logos, trademarks, designs, configuration files,
+model weights, skill packages, prompt templates, this document, and any
+derivative works, collectively the "Software") is the proprietary work of
+the copyright holder FnixAgent / Liu Yifei, and is protected by applicable
+copyright law and international treaty.
+
+Without the prior written permission of the copyright holder, NO entity or
+individual may:
+
+  1. Copy, reprint, download, mirror, scrape, or otherwise reproduce the
+     Software, in whole or in part;
+  2. Modify, adapt, translate, compile, arrange, or create derivative works
+     based on the Software, in whole or in part;
+  3. Publicly release, display, publish, distribute, or transmit the
+     Software, in whole or in part;
+  4. Use the Software for any commercial purpose, including but not limited
+     to: direct sale, charging fees, subscription; embedding in commercial
+     products, SaaS services, or commercial projects; providing services
+     to third parties (whether charged or free); internal commercial
+     operations, training, consulting, or deliverables;
+  5. Create derivative works, forks, or ports based on the Software;
+  6. Reverse engineer, decompile, or disassemble the Software (except to
+     the extent expressly permitted by applicable law for interoperability);
+  7. Remove, obscure, or alter any copyright notice, trademark, or
+     watermark on the Software;
+  8. Induce or assist third parties to use the Software under the guise
+     of "open source", "free", or other false pretenses;
+  9. Sublicense the access or usage rights of the Software to third parties.
+
+"Public viewing" on a public code-hosting platform (such as GitHub, Gitee,
+GitLab) — including personal reading, viewing a single file in a browser,
+and submitting an issue or a question to a public discussion forum for
+referential purposes — is NOT considered "distribution" as defined above.
+However, copying, downloading, mirroring, forking, or redistributing the
+Software remains strictly prohibited.
+
+For **personal, non-systematic, non-commercial reference reading for
+purely educational purposes** (excluding reproduction, downloading to a
+local copy, and any commercial use), the copyright holder hereby grants a
+limited, non-transferable, revocable, non-exclusive **View-Only License**,
+subject to the following conditions:
+
+  (a) This View-Only License does NOT constitute a waiver of any copyright
+      or other intellectual property right in the Software;
+  (b) The licensee may NOT store, copy, or further distribute the
+      Software in any form;
+  (c) The licensee may NOT use the Software for any commercial purpose
+      under any circumstances;
+  (d) The licensee may NOT directly use any design, architecture,
+      algorithm, prompt template, or other element observed in the
+      Software to construct a substantially similar substitute.
+
+The Software is provided "AS IS" without warranty of any kind. To the
+maximum extent permitted by applicable law, the copyright holder shall not
+be liable for any direct or indirect damages arising from viewing,
+referencing, or attempting to use the Software.
+
+This Software incorporates third-party open-source components; their
+respective copyrights belong to their respective owners. A list of such
+components, their versions, and original licenses is available in the
+NOTICE file and the third-party dependency list. Said third-party
+components are **independent technological components upon which this
+Software depends at runtime**; their respective license terms govern only
+those components themselves, and do NOT alter the proprietary status of
+the rest of the Software.
+
+For any authorization beyond the scope of this notice (including but not
+limited to commercial licensing, academic collaboration, white-box audit,
+or technology transfer), please contact:
+
+  ✉  Email : licensing@fnixagent.dev
+  🌐 Web   : https://fnixagent.dev/commercial
+
+================================================================================
+最后更新 / Last Updated: 2026-08-17

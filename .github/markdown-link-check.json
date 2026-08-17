@@ -1,0 +1,26 @@
+{
+  "ignorePatterns": [
+    {
+      "pattern": "^http://localhost"
+    },
+    {
+      "pattern": "^http://127\\.0\\.0\\.1"
+    },
+    {
+      "pattern": "^http://0\\.0\\.0\\.0"
+    },
+    {
+      "pattern": "^https://github\\.com/.*/(issues|pulls|actions|commit|blob|tree)/[a-f0-9]{6,}$"
+    }
+  ],
+  "httpHeaders": [
+    {
+      "urls": ["https://api.github.com"],
+      "headers": ["Accept: application/vnd.github.v3+json"]
+    }
+  ],
+  "retryOn429": true,
+  "retryCount": 3,
+  "fallbackRedirects": true,
+  "aliveStatusCodes": [200, 206, 301, 302, 303, 304, 307, 308]
+}

@@ -1,0 +1,51 @@
+# EditorConfig is awesome: https://EditorConfig.org
+
+# Top-level config — applies to everything.
+root = true
+
+[*]
+charset                  = utf-8
+end_of_line              = lf
+indent_style             = space
+indent_size              = 2
+insert_final_newline     = true
+trim_trailing_whitespace = true
+max_line_length          = 100
+
+# Python — PEP 8 (4-space indent, Ruff is authoritative, this is for editor feel)
+[*.py]
+indent_size = 4
+max_line_length = 100
+
+# TypeScript / JavaScript / JSON / YAML — Prettier's defaults
+[*.{ts,tsx,js,jsx,mjs,cjs,json,yml,yaml}]
+indent_size = 2
+max_line_length = 100
+
+# Markdown — keep readable, don't break prose
+[*.md]
+trim_trailing_whitespace = false
+max_line_length = off
+
+# Rust — rustfmt is authoritative
+[*.rs]
+indent_size = 4
+max_line_length = 100
+
+# Shell
+[*.{sh,bash}]
+indent_size = 2
+
+# Make / CMake
+[{Makefile,makefile,GNUmakefile,*.mk}]
+indent_style = tab
+
+# Go (in case any tool depends on it)
+[*.go]
+indent_style = tab
+indent_size = 4
+
+# Windows batch
+[*.{bat,cmd,ps1}]
+end_of_line = crlf
+indent_size = 4

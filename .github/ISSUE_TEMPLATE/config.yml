@@ -1,0 +1,23 @@
+---
+name: Issue config
+about: Configure which templates are shown to users
+title: ''
+attributes:
+  links:
+    - https://github.com/Liuyifeidashuaibi/FnixAgent/blob/main/SECURITY.md
+    - https://github.com/Liuyifeidashuaibi/FnixAgent/blob/main/.github/SUPPORT.md
+    - https://github.com/Liuyifeidashuaibi/FnixAgent/discussions
+  labels: []
+contact_links:
+  - name: 💬 Community Q&A (Discussions)
+    url: https://github.com/Liuyifeidashuaibi/FnixAgent/discussions/categories/q-a
+    about: Ask questions, get help, and discuss with the community.
+  - name: 💡 Ideas & feature requests (Discussions)
+    url: https://github.com/Liuyifeidashuaibi/FnixAgent/discussions/categories/ideas
+    about: Brainstorm and discuss ideas before opening a feature request.
+  - name: 🛡️ Security disclosure (private)
+    url: https://github.com/Liuyifeidashuaibi/FnixAgent/blob/main/SECURITY.md
+    about: Report security vulnerabilities privately. Do NOT use a public issue.
+  - name: 📖 Documentation
+    url: https://github.com/Liuyifeidashuaibi/FnixAgent/tree/main/docs
+    about: Browse the full documentation site.

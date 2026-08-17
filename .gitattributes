@@ -1,55 +1,87 @@
-# FnixAgent Git 属性配置
-# 统一换行符处理,确保跨平台一致性
+# Git attributes — normalize line endings, control diffs, ship exports.
 
-# 自动检测文本文件,转换换行符为 LF
-* text=auto
+# ──────────────────────────────────────────────────────────────────────────────
+# Line endings
+#   - source code: LF (Unix)
+#   - Windows-only files: CRLF
+#   - anything not matched: LF (default)
+# ──────────────────────────────────────────────────────────────────────────────
+*                 text=auto eol=lf
 
-# 源代码文件(强制 LF)
-*.py text eol=lf
-*.ts text eol=lf
-*.tsx text eol=lf
-*.js text eol=lf
-*.jsx text eol=lf
-*.css text eol=lf
-*.json text eol=lf
-*.yaml text eol=lf
-*.yml text eol=lf
-*.toml text eol=lf
-*.md text eol=lf
-*.html text eol=lf
-*.xml text eol=lf
-*.cfg text eol=lf
-*.ini text eol=lf
-*.sh text eol=lf
-*.env text eol=lf
-*.txt text eol=lf
-*.rego text eol=lf
-Dockerfile text eol=lf
-Makefile text eol=lf
-*.cjs text eol=lf
+# Windows batch / PowerShell
+*.bat             text eol=crlf
+*.cmd             text eol=crlf
+*.ps1             text eol=crlf
 
-# 二进制文件(不转换)
-*.png binary
-*.jpg binary
-*.jpeg binary
-*.gif binary
-*.ico binary
-*.pdf binary
-*.docx binary
-*.xlsx binary
-*.pptx binary
-*.zip binary
-*.tar.gz binary
-*.epub binary
-*.ttf binary
-*.woff binary
-*.woff2 binary
-*.eot binary
-*.svg text eol=lf
-*.pem binary
-*.pak binary
-*.dll binary
-*.exe binary
-*.so binary
-*.dylib binary
-*.lock binary
+# Shell scripts must stay LF even on Windows checkouts
+*.sh              text eol=lf
+*.bash            text eol=lf
+
+# Windows-only source
+*.sln             text eol=crlf
+*.csproj          text eol=crlf
+*.vcxproj         text eol=crlf
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Diff / merge drivers — make noisy files reviewable
+# ──────────────────────────────────────────────────────────────────────────────
+*.svg             diff=svg
+*.png             binary
+*.jpg             binary
+*.jpeg            binary
+*.gif             binary
+*.webp            binary
+*.ico             binary
+*.pdf             binary
+*.zip             binary
+*.gz              binary
+*.tar             binary
+*.7z              binary
+*.woff            binary
+*.woff2           binary
+*.ttf             binary
+*.eot             binary
+
+# Lockfiles are large and noisy — show them as "changed" but don't diff
+package-lock.json -diff
+pnpm-lock.yaml    -diff
+yarn.lock         -diff
+Cargo.lock        -diff
+composer.lock     -diff
+poetry.lock       -diff
+uv.lock           -diff
+
+# Generated files — don't diff by default
+openapi.json      linguist-generated
+CHANGELOG.md      linguist-generated
+package.json      -diff
+
+# Custom: collapse generated OpenAPI diffs
+/api/openapi/*.json  linguist-generated
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Linguist overrides — give credit to the right languages
+# ──────────────────────────────────────────────────────────────────────────────
+*.pymacs          linguist-language=Python
+*.tmSnippet       linguist-language=XML
+
+# Treat workflow files as YAML (they already are, but be explicit)
+.github/workflows/*.yml linguist-language=YAML
+
+# Vendored dependencies — exclude from language stats
+/_references/*    linguist-vendored
+/.fnixrules       linguist-vendored
+/.cluster         linguist-vendored
+/node_modules     linguist-vendored
+/dist             linguist-vendored
+/build            linguist-vendored
+/target           linguist-vendored
+/coverage         linguist-vendored
+/.pytest_cache    linguist-vendored
+/.ruff_cache      linguist-vendored
+/__pycache__      linguist-vendored
+*.pyc             linguist-vendored
+
+# Documentation
+/docs/**          linguist-documentation
+**/*.md           linguist-documentation

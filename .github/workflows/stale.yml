@@ -1,0 +1,68 @@
+name: Stale
+
+# Closes abandoned issues / PRs after a grace period.
+# 微软 / 谷歌 / rust-lang 等顶级项目的标配.
+
+on:
+  schedule:
+    - cron: "0 3 * * *"  # Daily 03:00 UTC
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v9
+        with:
+          # Issues
+          days-before-issue-stale: 60
+          days-before-issue-close: 14
+          stale-issue-label: "stale"
+          close-issue-label: "closed-by-stale"
+          exempt-issue-labels: |
+            pinned
+            security
+            rfc
+            discussion
+            good first issue
+            help wanted
+            priority/critical
+            priority/high
+          stale-issue-message: |
+            👋 This issue has been idle for 60 days. It will be closed in 14 days unless there's activity.
+
+            If this is still relevant, please:
+            1. Confirm the issue still reproduces on the latest release.
+            2. Add any new context.
+            3. Remove the `stale` label.
+
+            Thanks for your patience! 🙏
+          close-issue-message: |
+            🔒 This issue was closed automatically because it has been stale for 14 days after the stale notice. If this is still a problem, please open a new issue with a fresh reproduction.
+
+          # PRs
+          days-before-pr-stale: 45
+          days-before-pr-close: 14
+          stale-pr-label: "stale"
+          close-pr-label: "closed-by-stale"
+          exempt-pr-labels: |
+            pinned
+            security
+            rfc
+            do-not-merge
+            work-in-progress
+          stale-pr-message: |
+            👋 This PR has been idle for 45 days. It will be closed in 14 days unless there's activity.
+
+            If you're still working on this, please:
+            1. Rebase onto the latest `main`.
+            2. Resolve any merge conflicts.
+            3. Remove the `stale` label.
+
+          # Only run on repo, not on forks
+          only: issues
+          operations-per-run: 100

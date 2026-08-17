@@ -1,0 +1,135 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: fnixagent
+  labels:
+    name: fnixagent
+    app.kubernetes.io/name: fnixagent
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: fnixagent-data
+  namespace: fnixagent
+  labels:
+    app.kubernetes.io/name: fnixagent
+spec:
+  accessModes:
+    - ReadWriteOncePod   # 单 Pod 独占,避免多副本冲突
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: standard
+  volumeMode: Filesystem
+---
+# 敏感配置(API Key 等)由外部 secret manager 注入
+# 这里只做占位
+apiVersion: v1
+kind: Secret
+metadata:
+  name: fnixagent-secrets
+  namespace: fnixagent
+  labels:
+    app.kubernetes.io/name: fnixagent
+type: Opaque
+stringData:
+  # ⚠️ 真实部署时请使用 External Secrets Operator / Sealed Secrets
+  # 这里只放占位,生产请改为引用 external secret
+  OPENAI_API_KEY: "REPLACE_ME"
+  ANTHROPIC_API_KEY: "REPLACE_ME"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fnixagent-config
+  namespace: fnixagent
+  labels:
+    app.kubernetes.io/name: fnixagent
+data:
+  agentd.yaml: |
+    server:
+      host: 0.0.0.0
+      port: 7891
+      workers: 2
+
+    llm:
+      default_provider: openai
+      providers:
+        openai:
+          base_url: https://api.openai.com/v1
+          api_key_ref: env:OPENAI_API_KEY
+          default_model: gpt-4o
+        anthropic:
+          base_url: https://api.anthropic.com
+          api_key_ref: env:ANTHROPIC_API_KEY
+          default_model: claude-sonnet-4-5
+
+    runtime:
+      workers: 4
+      max_context_tokens: 8192
+      token_budget_per_session: 100000
+
+    memory:
+      backend: sqlite_vec
+      path: /home/fnixagent/.fnix/memory
+
+    logging:
+      level: info
+      format: json
+      sinks:
+        - stdout
+
+    telemetry:
+      enabled: true
+      block_all_outbound: 0   # 在 K8s 内允许 Prometheus metrics
+---
+# ServiceAccount
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: fnixagent
+  namespace: fnixagent
+  labels:
+    app.kubernetes.io/name: fnixagent
+automountServiceAccountToken: false
+---
+# ResourceQuota
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: fnixagent-quota
+  namespace: fnixagent
+spec:
+  hard:
+    requests.cpu: "10"
+    requests.memory: 20Gi
+    limits.cpu: "20"
+    limits.memory: 40Gi
+    pods: "20"
+    persistentvolumeclaims: "5"
+    services: "20"
+    secrets: "50"
+    configmaps: "50"
+---
+# LimitRange
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: fnixagent-limits
+  namespace: fnixagent
+spec:
+  limits:
+    - type: Container
+      default:
+        cpu: 2000m
+        memory: 1Gi
+      defaultRequest:
+        cpu: 100m
+        memory: 256Mi
+      max:
+        cpu: 4000m
+        memory: 4Gi
