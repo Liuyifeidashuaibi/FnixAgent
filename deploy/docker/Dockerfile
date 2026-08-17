@@ -1,5 +1,5 @@
 # FnixAgent production image
-FROM python:3.11-slim
+FROM python:3.14-slim
 
 WORKDIR /app
 
