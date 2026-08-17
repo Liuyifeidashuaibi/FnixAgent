@@ -13,7 +13,7 @@ mcp[cli]>=1.6.0
 # 数据库
 # - SQLAlchemy 为 storage 层依赖（standalone 走内存/JSON，仍需导入）
 # - psycopg2-binary 已移至 requirements-optional.txt（仅 cloud/local-stack 需要）
-sqlalchemy==2.0.23
+sqlalchemy==2.0.52
 alembic==1.12.1
 
 # 缓存
