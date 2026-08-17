@@ -67,7 +67,7 @@
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
     "vite": "^8.0.12",
-    "vitest": "^3.2.0"
+    "vitest": "^4.1.10"
   },
   "description": "Fnix Workbench — React+Tauri+Tailwind+Monaco (Fnix-native; derived from PunamIDE MIT)"
 }
