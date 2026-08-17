@@ -35,7 +35,7 @@
     "highlight.js": "^11.11.1",
     "lucide-react": "^1.16.0",
     "mermaid": "^11.16.0",
-    "monaco-editor": "^0.55.1",
+    "monaco-editor": "^0.56.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-markdown": "^10.1.0",
