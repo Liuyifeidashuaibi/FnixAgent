@@ -18,7 +18,7 @@ jobs:
           node-version: '20'
       - run: npx all-contributors-cli check
       - run: npx all-contributors-cli generate
-      - uses: stefanzweifel/git-auto-commit-action@v5
+      - uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "docs(contributors): update contributors list"
           file_pattern: "README.md .all-contributorsrc"
@@ -42,6 +42,6 @@ jobs:
         if: steps.parse.outputs.username
         run: |
           npx all-contributors-cli add ${{ steps.parse.outputs.username }} ${{ steps.parse.outputs.contribution }}
-      - uses: stefanzweifel/git-auto-commit-action@v5
+      - uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "docs(contributors): add @${{ steps.parse.outputs.username }} as ${{ steps.parse.outputs.contribution }}"
