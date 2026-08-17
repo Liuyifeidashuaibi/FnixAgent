@@ -14,9 +14,14 @@
         - 路径未经过但同属 L2 兄弟节点: 0.3
         - 完全无关: 0.0
 """
-from __future__ import annotations
 
-from typing import Optional
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
+from __future__ import annotations
 
 from fnixagent.core.exceptions import (
     SkillBindingError,
@@ -33,9 +38,9 @@ from fnixagent.core.types import (
 )
 
 # 路径命中系数(来自计划 3.2)
-HIT_COEFFICIENT_ON_PATH: float = 1.0       # 路径经过该 CONCEPT
-HIT_COEFFICIENT_SIBLING: float = 0.3       # 同属 L2 兄弟节点
-HIT_COEFFICIENT_UNRELATED: float = 0.0     # 完全无关
+HIT_COEFFICIENT_ON_PATH: float = 1.0  # 路径经过该 CONCEPT
+HIT_COEFFICIENT_SIBLING: float = 0.3  # 同属 L2 兄弟节点
+HIT_COEFFICIENT_UNRELATED: float = 0.0  # 完全无关
 
 
 class SkillBindingProtocol:
@@ -118,7 +123,7 @@ class SkillBindingProtocol:
     # 绑定查询
     # -----------------------------------------------------------------------
 
-    def get_bound_skill(self, concept_node_id: str) -> Optional[str]:
+    def get_bound_skill(self, concept_node_id: str) -> str | None:
         """查询概念节点绑定的技能名。"""
         try:
             node = self._graph.get_node(concept_node_id)
@@ -149,15 +154,17 @@ class SkillBindingProtocol:
                 level = SkillLevel(level_str)
             except ValueError:
                 level = SkillLevel.BASIC
-            records.append(SkillRecord(
-                name=c.skill_binding,
-                skill_level=level,
-                bound_concept_id=c.node_id,
-                priority=c.weight,  # 初始优先级 = 节点权重
-                success_count=c.metadata.get("success_count", 0),
-                failure_count=c.metadata.get("failure_count", 0),
-                last_invoked_at=c.last_used_at,
-            ))
+            records.append(
+                SkillRecord(
+                    name=c.skill_binding,
+                    skill_level=level,
+                    bound_concept_id=c.node_id,
+                    priority=c.weight,  # 初始优先级 = 节点权重
+                    success_count=c.metadata.get("success_count", 0),
+                    failure_count=c.metadata.get("failure_count", 0),
+                    last_invoked_at=c.last_used_at,
+                )
+            )
         return records
 
     # -----------------------------------------------------------------------
@@ -167,7 +174,7 @@ class SkillBindingProtocol:
     def compute_priority(
         self,
         skill_name: str,
-        path: Optional[TopologyPath] = None,
+        path: TopologyPath | None = None,
     ) -> float:
         """根据拓扑权重换算技能调度优先级。
 
@@ -186,9 +193,9 @@ class SkillBindingProtocol:
 
         path_node_ids = set(path.nodes) if path else set()
         path_concept_ids = {
-            nid for nid in path_node_ids
-            if self._graph.has_node(nid)
-            and self._graph.get_node(nid).node_type == NodeType.CONCEPT
+            nid
+            for nid in path_node_ids
+            if self._graph.has_node(nid) and self._graph.get_node(nid).node_type == NodeType.CONCEPT
         }
 
         priority_sum = 0.0
@@ -209,7 +216,7 @@ class SkillBindingProtocol:
     def compute_priorities(
         self,
         skill_names: list[str],
-        path: Optional[TopologyPath] = None,
+        path: TopologyPath | None = None,
     ) -> list[tuple[str, float]]:
         """批量计算技能优先级,返回按优先级降序排列的列表。
 

@@ -9,8 +9,12 @@ tasks 路由单元测试。
   - 任务生命周期(start/complete/fail/cancel/retry)
   - 列表查询(过滤)
 """
-import pytest
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
 
 class TestCreateTask:
     """任务创建。"""
@@ -85,8 +89,12 @@ class TestTaskStatus:
         )
         tid = create.json()["id"]
         # 添加 2 步
-        client.post(f"/api/v1/tasks/{tid}/steps", params={"description": "step1", "tool_name": "tool_a"})
-        client.post(f"/api/v1/tasks/{tid}/steps", params={"description": "step2", "tool_name": "tool_b"})
+        client.post(
+            f"/api/v1/tasks/{tid}/steps", params={"description": "step1", "tool_name": "tool_a"}
+        )
+        client.post(
+            f"/api/v1/tasks/{tid}/steps", params={"description": "step2", "tool_name": "tool_b"}
+        )
         resp = client.get(f"/api/v1/tasks/{tid}/status")
         assert resp.status_code == 200
         data = resp.json()

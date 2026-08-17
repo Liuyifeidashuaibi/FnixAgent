@@ -20,19 +20,26 @@ ConverterRegistry 支持注册/查找/派发,并提供 fallback 降级机制
   - markitdown/src/markitdown/converters/_base.py(DocumentConverter Protocol)
   - markitdown 的 ConverterRegistry 派发机制
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import os
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Optional, Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 from fnixagent.office.markdown import MarkdownRenderer
 from fnixagent.office.parser import (
     Element,
-    Header,
     Footer,
+    Header,
     Image,
     ListItem,
     NarrativeText,
@@ -42,29 +49,25 @@ from fnixagent.office.parser import (
     Title,
 )
 
-
 # ---------------------------------------------------------------------------
 # 三层质量梯度
 # ---------------------------------------------------------------------------
 
-
 class ConverterLayer(Enum):
     """转换器质量层(数值越大质量越高,但成本/延迟越高)。"""
 
-    L1_LOCAL = "local"   # 本地解析
-    L2_LLM = "llm"       # LLM 增强
-    L3_CLOUD = "cloud"   # 云端
+    L1_LOCAL = "local"  # 本地解析
+    L2_LLM = "llm"  # LLM 增强
+    L3_CLOUD = "cloud"  # 云端
 
     @classmethod
-    def ordered_high_to_low(cls) -> list["ConverterLayer"]:
+    def ordered_high_to_low(cls) -> list[ConverterLayer]:
         """从高到低排序(用于 fallback 降级)。"""
         return [cls.L3_CLOUD, cls.L2_LLM, cls.L1_LOCAL]
-
 
 # ---------------------------------------------------------------------------
 # 转换结果
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class DocumentConverterResult:
@@ -81,18 +84,16 @@ class DocumentConverterResult:
     """
 
     markdown: str = ""
-    title: Optional[str] = None
+    title: str | None = None
     text_content: str = ""
     elements: list = field(default_factory=list)
     metadata: dict = field(default_factory=dict)
     layer: str = "local"
     duration_ms: float = 0.0
 
-
 # ---------------------------------------------------------------------------
 # DocumentConverter Protocol(参考 markitdown)
 # ---------------------------------------------------------------------------
-
 
 @runtime_checkable
 class DocumentConverter(Protocol):
@@ -116,11 +117,9 @@ class DocumentConverter(Protocol):
         """优先级(数值越小优先级越高)。"""
         ...
 
-
 # ---------------------------------------------------------------------------
 # ConverterEntry / ConverterRegistry
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class ConverterEntry:
@@ -131,14 +130,12 @@ class ConverterEntry:
     priority: int
     name: str
 
-
 # layer 排序权重(数值越小越靠前,即高 layer 优先)
 _LAYER_ORDER = {
     ConverterLayer.L3_CLOUD: 0,
     ConverterLayer.L2_LLM: 1,
     ConverterLayer.L1_LOCAL: 2,
 }
-
 
 class ConverterRegistry:
     """转换器注册表:注册/查找/派发,支持 fallback 降级。
@@ -155,7 +152,7 @@ class ConverterRegistry:
     def register(
         self,
         converter: DocumentConverter,
-        name: Optional[str] = None,
+        name: str | None = None,
     ) -> None:
         """注册转换器(同名覆盖)。
 
@@ -190,8 +187,8 @@ class ConverterRegistry:
     def find(
         self,
         file_path: str,
-        layer: Optional[ConverterLayer] = None,
-    ) -> Optional[DocumentConverter]:
+        layer: ConverterLayer | None = None,
+    ) -> DocumentConverter | None:
         """查找能处理该文件的转换器。
 
         Args:
@@ -215,7 +212,7 @@ class ConverterRegistry:
     def convert(
         self,
         file_path: str,
-        layer: Optional[ConverterLayer] = None,
+        layer: ConverterLayer | None = None,
         **kwargs: Any,
     ) -> DocumentConverterResult:
         """转换文件(指定层或最佳匹配)。
@@ -252,7 +249,7 @@ class ConverterRegistry:
             DocumentConverterResult(成功时含 markdown/elements;
             全部失败时 metadata.error 记录各层错误)
         """
-        last_error: Optional[str] = None
+        last_error: str | None = None
         for target_layer in ConverterLayer.ordered_high_to_low():
             converter = self.find(file_path, layer=target_layer)
             if converter is None:
@@ -260,10 +257,7 @@ class ConverterRegistry:
             try:
                 return converter.convert(file_path, **kwargs)
             except Exception as e:
-                last_error = (
-                    f"[{target_layer.value}] "
-                    f"{converter.__class__.__name__}: {e}"
-                )
+                last_error = f"[{target_layer.value}] {converter.__class__.__name__}: {e}"
                 continue
         # 全部失败:返回空结果 + 错误信息
         return DocumentConverterResult(
@@ -277,11 +271,9 @@ class ConverterRegistry:
         """列出所有已注册转换器(按排序顺序)。"""
         return list(self._entries)
 
-
 # ---------------------------------------------------------------------------
 # 内置 L1 转换器(包装 ParserExpert + MarkdownRenderer)
 # ---------------------------------------------------------------------------
-
 
 # category → Element 子类映射(用于 to_dict 逆序列化)
 _CATEGORY_MAP = {
@@ -294,7 +286,6 @@ _CATEGORY_MAP = {
     "Footer": Footer,
     "PageBreak": PageBreak,
 }
-
 
 class _BaseL1Converter:
     """L1 本地转换器基类(包装 ParserExpert + MarkdownRenderer)。
@@ -343,11 +334,7 @@ class _BaseL1Converter:
         if title is None:
             title = (output.get("metadata") or {}).get("title") or None
         # 纯文本(无 Markdown 标记)
-        text_content = "\n".join(
-            getattr(e, "text", "")
-            for e in elements
-            if getattr(e, "text", "")
-        )
+        text_content = "\n".join(getattr(e, "text", "") for e in elements if getattr(e, "text", ""))
         return DocumentConverterResult(
             markdown=markdown,
             title=title,
@@ -385,42 +372,36 @@ class _BaseL1Converter:
         return elements
 
     @staticmethod
-    def _extract_title(elements: list) -> Optional[str]:
+    def _extract_title(elements: list) -> str | None:
         """从元素列表提取第一个 Title 作为文档标题。"""
         for el in elements:
             if isinstance(el, Title) and el.text.strip():
                 return el.text.strip()
         return None
 
-
 class WordConverter(_BaseL1Converter):
     """Word 文档 L1 转换器(.docx/.doc)。"""
 
     _accept_exts = ("docx", "doc")
-
 
 class ExcelConverter(_BaseL1Converter):
     """Excel 文档 L1 转换器(.xlsx/.xls)。"""
 
     _accept_exts = ("xlsx", "xls")
 
-
 class PPTConverter(_BaseL1Converter):
     """PPT 文档 L1 转换器(.pptx)。"""
 
     _accept_exts = ("pptx",)
-
 
 class PDFConverter(_BaseL1Converter):
     """PDF 文档 L1 转换器(.pdf)。"""
 
     _accept_exts = ("pdf",)
 
-
 # ---------------------------------------------------------------------------
 # 默认注册表工厂
 # ---------------------------------------------------------------------------
-
 
 def create_default_registry() -> ConverterRegistry:
     """创建包含内置 L1 转换器的默认注册表。

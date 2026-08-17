@@ -10,8 +10,14 @@ API 路由 - 文档管理接口。
   - 文档处理(summarize/extract_tables/convert)
   - 下载文件流
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 import os
-from typing import Optional
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
@@ -21,7 +27,6 @@ from fnixagent.api.schemas.models import (
     DocumentProcess,
     DocumentResponse,
     DocumentUpload,
-    ErrorResponse,
 )
 from fnixagent.services.storage import get_document_store
 
@@ -46,7 +51,7 @@ def _doc_to_response(doc) -> DocumentResponse:
 @router.post("/upload", response_model=DocumentResponse)
 async def upload_document(
     file: UploadFile = File(...),
-    metadata: Optional[dict] = None,
+    metadata: dict | None = None,
 ):
     """
     上传文档。
@@ -96,8 +101,8 @@ async def create_document(request: DocumentUpload):
 
 @router.get("/list")
 async def list_documents(
-    user_id: Optional[int] = None,
-    doc_type: Optional[str] = None,
+    user_id: int | None = None,
+    doc_type: str | None = None,
     limit: int = 50,
 ):
     """查询文档列表(支持按用户/类型过滤)。"""
@@ -142,7 +147,7 @@ async def process_document(document_id: int, request: DocumentProcess):
     )
 
 
-def _apply_operation(doc, operation: str, params: Optional[dict]) -> dict:
+def _apply_operation(doc, operation: str, params: dict | None) -> dict:
     """对文档应用处理操作(规则化实现)。"""
     base = {
         "document_id": doc.id,

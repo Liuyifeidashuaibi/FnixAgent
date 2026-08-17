@@ -15,6 +15,13 @@ SOAR 响应剧本引擎 (Playbook Engine) - P2 安全模块。
   - 可选依赖(yaml)缺失时降级为仅支持编程式 add_playbook
   - 所有异常不外泄,捕获后返回合理默认值
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import json
@@ -24,8 +31,7 @@ import threading
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 logger = logging.getLogger(__name__)
 
@@ -37,11 +43,9 @@ try:
 except ImportError:  # pragma: no cover
     _HAS_YAML = False
 
-
 # ---------------------------------------------------------------------------
 # 数据结构
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class PlaybookAction:
@@ -53,10 +57,10 @@ class PlaybookAction:
         params: 动作参数字典
         timeout: 超时秒数(默认 60)
     """
+
     name: str
     params: dict
     timeout: int = 60
-
 
 @dataclass
 class PlaybookStep:
@@ -69,12 +73,12 @@ class PlaybookStep:
         require_approval: 是否需要人工审批
         approval_timeout: 审批超时秒数(超时自动 reject)
     """
+
     name: str
     actions: list[PlaybookAction]
-    condition: Optional[str] = None
+    condition: str | None = None
     require_approval: bool = False
     approval_timeout: int = 3600
-
 
 @dataclass
 class Playbook:
@@ -88,13 +92,13 @@ class Playbook:
         enabled: 是否启用
         description: 描述
     """
+
     name: str
     id: str
     trigger: str
     steps: list[PlaybookStep]
     enabled: bool = True
     description: str = ""
-
 
 @dataclass
 class PlaybookExecution:
@@ -111,38 +115,36 @@ class PlaybookExecution:
         error: 错误信息
         results: 各步骤执行结果
     """
+
     execution_id: str
     playbook_id: str
     triggered_by: str
     status: str = "pending"
     current_step: int = 0
     started_at: str = ""
-    completed_at: Optional[str] = None
-    error: Optional[str] = None
+    completed_at: str | None = None
+    error: str | None = None
     results: list[dict] = field(default_factory=list)
-
 
 # ---------------------------------------------------------------------------
 # 审计钩子(失败不影响主流程)
 # ---------------------------------------------------------------------------
 
-
 def _audit_playbook(
     action: str,
-    detail: Optional[dict] = None,
+    detail: dict | None = None,
 ) -> None:
     """将剧本操作写入审计日志(异常吞掉)。"""
     try:
         from fnixagent.core.audit import AuditLogger
+
         AuditLogger().log(action=action, detail=detail or {})
     except Exception:
         pass
 
-
 # ---------------------------------------------------------------------------
 # PlaybookEngine
 # ---------------------------------------------------------------------------
-
 
 class PlaybookEngine:
     """SOAR 响应剧本引擎。
@@ -197,7 +199,7 @@ class PlaybookEngine:
                 continue
             path = os.path.join(self._playbooks_dir, name)
             try:
-                with open(path, "r", encoding="utf-8") as f:
+                with open(path, encoding="utf-8") as f:
                     data = yaml.safe_load(f)
                 if not isinstance(data, dict):
                     continue
@@ -249,7 +251,7 @@ class PlaybookEngine:
                 playbook_id=playbook.id,
                 triggered_by=event_id,
                 status="pending",
-                started_at=datetime.now(timezone.utc).isoformat(),
+                started_at=datetime.now(UTC).isoformat(),
             )
             with self._lock:
                 self._executions[execution.execution_id] = execution
@@ -257,10 +259,14 @@ class PlaybookEngine:
             # 异步执行
             self._executor.submit(self._safe_execute, execution.execution_id)
         if exec_ids:
-            _audit_playbook("soar.trigger", detail={
-                "event_type": event_type, "event_id": event_id,
-                "executions": exec_ids,
-            })
+            _audit_playbook(
+                "soar.trigger",
+                detail={
+                    "event_type": event_type,
+                    "event_id": event_id,
+                    "executions": exec_ids,
+                },
+            )
         return exec_ids
 
     def execute(self, execution_id: str) -> bool:
@@ -283,9 +289,13 @@ class PlaybookEngine:
             event = self._pending_approvals.get(execution_id)
         if execution is None or event is None:
             return False
-        _audit_playbook("soar.approve", detail={
-            "execution_id": execution_id, "approver": approver,
-        })
+        _audit_playbook(
+            "soar.approve",
+            detail={
+                "execution_id": execution_id,
+                "approver": approver,
+            },
+        )
         event.set()  # 唤醒等待
         return True
 
@@ -298,17 +308,22 @@ class PlaybookEngine:
             return False
         execution.status = "failed"
         execution.error = f"被 {approver} 拒绝: {reason}"
-        execution.completed_at = datetime.now(timezone.utc).isoformat()
-        _audit_playbook("soar.reject", detail={
-            "execution_id": execution_id, "approver": approver, "reason": reason,
-        })
+        execution.completed_at = datetime.now(UTC).isoformat()
+        _audit_playbook(
+            "soar.reject",
+            detail={
+                "execution_id": execution_id,
+                "approver": approver,
+                "reason": reason,
+            },
+        )
         if event is not None:
             # 用 reject 标记唤醒:先存入 execution 再 set
             self._reject_flags.add(execution_id)
             event.set()
         return True
 
-    def get_execution(self, execution_id: str) -> Optional[PlaybookExecution]:
+    def get_execution(self, execution_id: str) -> PlaybookExecution | None:
         """查询执行状态。"""
         with self._lock:
             return self._executions.get(execution_id)
@@ -336,7 +351,7 @@ class PlaybookEngine:
                 if execution is not None:
                     execution.status = "failed"
                     execution.error = f"执行异常: {exc}"
-                    execution.completed_at = datetime.now(timezone.utc).isoformat()
+                    execution.completed_at = datetime.now(UTC).isoformat()
 
     def _do_execute(self, execution_id: str) -> None:
         """执行剧本各步骤。"""
@@ -351,9 +366,13 @@ class PlaybookEngine:
             return
 
         execution.status = "running"
-        _audit_playbook("soar.execute.start", detail={
-            "execution_id": execution_id, "playbook": playbook.name,
-        })
+        _audit_playbook(
+            "soar.execute.start",
+            detail={
+                "execution_id": execution_id,
+                "playbook": playbook.name,
+            },
+        )
 
         for idx, step in enumerate(playbook.steps):
             execution.current_step = idx
@@ -364,34 +383,51 @@ class PlaybookEngine:
             # 执行该步骤的所有动作
             for action in step.actions:
                 result = self._execute_action(action)
-                execution.results.append({
-                    "step": step.name, "action": action.name, "result": result,
-                })
+                execution.results.append(
+                    {
+                        "step": step.name,
+                        "action": action.name,
+                        "result": result,
+                    }
+                )
                 if not result.get("success", False):
                     # 动作失败:记录但继续后续动作(容错)
                     logger.warning(
                         "[soar] 动作失败 %s (step=%s): %s",
-                        action.name, step.name, result.get("error"),
+                        action.name,
+                        step.name,
+                        result.get("error"),
                     )
 
         execution.status = "completed"
-        execution.completed_at = datetime.now(timezone.utc).isoformat()
-        _audit_playbook("soar.execute.complete", detail={
-            "execution_id": execution_id, "playbook": playbook.name,
-            "results_count": len(execution.results),
-        })
+        execution.completed_at = datetime.now(UTC).isoformat()
+        _audit_playbook(
+            "soar.execute.complete",
+            detail={
+                "execution_id": execution_id,
+                "playbook": playbook.name,
+                "results_count": len(execution.results),
+            },
+        )
 
     def _wait_for_approval(
-        self, execution_id: str, step: PlaybookStep, execution: PlaybookExecution,
+        self,
+        execution_id: str,
+        step: PlaybookStep,
+        execution: PlaybookExecution,
     ) -> bool:
         """等待人工审批,返回 True=通过 / False=拒绝或超时。"""
         execution.status = "approval_required"
         event = threading.Event()
         with self._lock:
             self._pending_approvals[execution_id] = event
-        _audit_playbook("soar.approval_required", detail={
-            "execution_id": execution_id, "step": step.name,
-        })
+        _audit_playbook(
+            "soar.approval_required",
+            detail={
+                "execution_id": execution_id,
+                "step": step.name,
+            },
+        )
         # 等待审批(超时自动拒绝)
         signaled = event.wait(timeout=step.approval_timeout)
         with self._lock:
@@ -401,10 +437,14 @@ class PlaybookEngine:
         if not signaled:
             execution.status = "failed"
             execution.error = f"审批超时({step.approval_timeout}s)"
-            execution.completed_at = datetime.now(timezone.utc).isoformat()
-            _audit_playbook("soar.approval_timeout", detail={
-                "execution_id": execution_id, "step": step.name,
-            })
+            execution.completed_at = datetime.now(UTC).isoformat()
+            _audit_playbook(
+                "soar.approval_timeout",
+                detail={
+                    "execution_id": execution_id,
+                    "step": step.name,
+                },
+            )
             return False
         if rejected:
             return False  # reject 已设置 status=failed
@@ -423,9 +463,13 @@ class PlaybookEngine:
             return {"success": False, "error": f"动作未实现: {action.name}"}
         try:
             result = handler(action.params)
-            _audit_playbook(f"soar.action.{action.name}", detail={
-                "params": action.params, "result": result,
-            })
+            _audit_playbook(
+                f"soar.action.{action.name}",
+                detail={
+                    "params": action.params,
+                    "result": result,
+                },
+            )
             return result
         except Exception as exc:
             logger.exception("[soar] 动作异常 %s", action.name)
@@ -440,7 +484,7 @@ class PlaybookEngine:
             os.makedirs(os.path.dirname(self._BLOCKED_IPS_FILE), exist_ok=True)
             blocked: list = []
             if os.path.exists(self._BLOCKED_IPS_FILE):
-                with open(self._BLOCKED_IPS_FILE, "r", encoding="utf-8") as f:
+                with open(self._BLOCKED_IPS_FILE, encoding="utf-8") as f:
                     blocked = json.load(f)
             if ip not in blocked:
                 blocked.append(ip)
@@ -457,6 +501,7 @@ class PlaybookEngine:
             return {"success": False, "error": "缺少 user_id 参数"}
         try:
             from fnixagent.services.storage import get_user_store
+
             store = get_user_store()
             user = store.get_by_id(int(user_id))
             if user is None:
@@ -482,6 +527,7 @@ class PlaybookEngine:
             # 失效权限缓存
             try:
                 from fnixagent.core.security.rbac import invalidate_user_permission_cache
+
                 invalidate_user_permission_cache(int(user_id))
             except Exception:
                 pass
@@ -495,6 +541,7 @@ class PlaybookEngine:
         revoked: list[str] = []
         try:
             from fnixagent.core.security.secrets import get_secret_manager
+
             mgr = get_secret_manager()
             for name in mgr.check_rotation():
                 revoked.append(name)
@@ -508,6 +555,7 @@ class PlaybookEngine:
         reason = params.get("reason", "")
         try:
             from fnixagent.core.security.sandbox import SandboxConfig, SandboxExecutor
+
             cfg = SandboxConfig(
                 workspace_root=params.get("workspace", "/tmp/oa_isolate"),
                 network_allowed=False,
@@ -536,6 +584,7 @@ class PlaybookEngine:
         """回滚操作:调用 ImpactTracker.rollback 回滚最近操作。"""
         try:
             from fnixagent.core.security.impact import ImpactTracker
+
             tracker = ImpactTracker()
             if params.get("lookup_recent", False):
                 # 查找最近一条操作并回滚
@@ -555,25 +604,29 @@ class PlaybookEngine:
     # -- 内部:YAML 解析 --------------------------------------------------
 
     @staticmethod
-    def _parse_playbook(data: dict) -> Optional[Playbook]:
+    def _parse_playbook(data: dict) -> Playbook | None:
         """将 YAML 字典解析为 Playbook 对象。"""
         try:
             steps: list[PlaybookStep] = []
             for s in data.get("steps", []):
                 actions: list[PlaybookAction] = []
                 for a in s.get("actions", []):
-                    actions.append(PlaybookAction(
-                        name=a.get("name", ""),
-                        params=a.get("params", {}),
-                        timeout=a.get("timeout", 60),
-                    ))
-                steps.append(PlaybookStep(
-                    name=s.get("name", ""),
-                    actions=actions,
-                    condition=s.get("condition"),
-                    require_approval=s.get("require_approval", False),
-                    approval_timeout=s.get("approval_timeout", 3600),
-                ))
+                    actions.append(
+                        PlaybookAction(
+                            name=a.get("name", ""),
+                            params=a.get("params", {}),
+                            timeout=a.get("timeout", 60),
+                        )
+                    )
+                steps.append(
+                    PlaybookStep(
+                        name=s.get("name", ""),
+                        actions=actions,
+                        condition=s.get("condition"),
+                        require_approval=s.get("require_approval", False),
+                        approval_timeout=s.get("approval_timeout", 3600),
+                    )
+                )
             return Playbook(
                 name=data.get("name", ""),
                 id=data.get("id", uuid.uuid4().hex),

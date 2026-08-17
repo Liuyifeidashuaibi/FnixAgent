@@ -1,0 +1,12 @@
+FnixAgent 智能工作台系统 V1.0 — Desktop UI (apps/workbench)
+Copyright (C) 2024-2026 FnixAgent. All Rights Reserved.
+
+本桌面前端组件为 FnixAgent 智能工作台系统的专有组成部分，著作权归 FnixAgent 所有。
+未经 FnixAgent 书面许可，不得复制、修改、分发或用于任何商业用途。
+
+本组件派生自 PunamIDE (MIT License)，原始许可证文本见 LICENSE-MIT-PUNAMIDE。
+MIT 许可证要求的版权声明与许可条件已在此文件中保留。
+
+本组件使用的第三方前端库（React、Tauri、Monaco Editor、Zustand 等）的
+著作权归各自权利人所有，遵循其各自的许可证条款。
+详见项目根目录 NOTICE 文件。

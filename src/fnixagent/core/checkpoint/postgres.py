@@ -24,12 +24,20 @@
     所有数据库操作捕获 psycopg.OperationalError / InterfaceError,
     不向上抛出(返回 None / 空结果),避免 Postgres 不可用时导致主流程崩溃。
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import json
 import threading
 import uuid
-from typing import Any, Iterator, Optional
+from collections.abc import Iterator
+from typing import Any
 
 from fnixagent.core.checkpoint.base import BaseCheckpointer
 from fnixagent.core.checkpoint.types import (
@@ -37,7 +45,6 @@ from fnixagent.core.checkpoint.types import (
     CheckpointMetadata,
     CheckpointTuple,
 )
-
 
 class PostgresCheckpointer(BaseCheckpointer):
     """PostgreSQL 版 Checkpointer(生产用)。
@@ -71,9 +78,9 @@ class PostgresCheckpointer(BaseCheckpointer):
 
     def __init__(
         self,
-        conn_string: Optional[str] = None,
-        connection: Optional[Any] = None,
-        sslmode: Optional[str] = None,
+        conn_string: str | None = None,
+        connection: Any | None = None,
+        sslmode: str | None = None,
     ) -> None:
         """初始化。
 
@@ -116,6 +123,7 @@ class PostgresCheckpointer(BaseCheckpointer):
             return self._connection
         # 延迟 import,避免未安装 psycopg 时模块加载失败
         import psycopg  # type: ignore
+
         return psycopg.connect(self._conn_string)
 
     def setup(self) -> None:
@@ -204,7 +212,7 @@ class PostgresCheckpointer(BaseCheckpointer):
                 pass
         return new_config
 
-    def get_tuple(self, config: dict) -> Optional[CheckpointTuple]:
+    def get_tuple(self, config: dict) -> CheckpointTuple | None:
         """从 PostgreSQL 获取检查点元组。
 
         异常:连接失败时返回 None(不崩溃),调用方据此判断"无检查点"。
@@ -215,30 +223,29 @@ class PostgresCheckpointer(BaseCheckpointer):
 
         try:
             conn = self._get_conn()
-            with self._lock:
-                with conn.cursor() as cur:
-                    if checkpoint_id is None:
-                        # 最新
-                        cur.execute(
-                            """
+            with self._lock, conn.cursor() as cur:
+                if checkpoint_id is None:
+                    # 最新
+                    cur.execute(
+                        """
                             SELECT checkpoint_id, parent_id, checkpoint, metadata
                             FROM agent_checkpoints
                             WHERE thread_id = %s
                             ORDER BY created_at DESC
                             LIMIT 1
                             """,
-                            (thread_id,),
-                        )
-                    else:
-                        cur.execute(
-                            """
+                        (thread_id,),
+                    )
+                else:
+                    cur.execute(
+                        """
                             SELECT checkpoint_id, parent_id, checkpoint, metadata
                             FROM agent_checkpoints
                             WHERE thread_id = %s AND checkpoint_id = %s
                             """,
-                            (thread_id, checkpoint_id),
-                        )
-                    row = cur.fetchone()
+                        (thread_id, checkpoint_id),
+                    )
+                row = cur.fetchone()
         except Exception:
             # 连接异常不崩溃,返回 None(视为无检查点)
             return None
@@ -253,11 +260,7 @@ class PostgresCheckpointer(BaseCheckpointer):
         metadata = CheckpointMetadata.from_dict(
             meta_json if isinstance(meta_json, dict) else json.loads(meta_json)
         )
-        parent_config = (
-            {"thread_id": thread_id, "checkpoint_id": parent_id}
-            if parent_id
-            else None
-        )
+        parent_config = {"thread_id": thread_id, "checkpoint_id": parent_id} if parent_id else None
         return CheckpointTuple(
             config={"thread_id": thread_id, "checkpoint_id": cp_id},
             checkpoint=checkpoint,
@@ -267,11 +270,11 @@ class PostgresCheckpointer(BaseCheckpointer):
 
     def list(
         self,
-        config: Optional[dict],
+        config: dict | None,
         *,
-        filter: Optional[dict] = None,
-        before: Optional[dict] = None,
-        limit: Optional[int] = None,
+        filter: dict | None = None,
+        before: dict | None = None,
+        limit: int | None = None,
     ) -> Iterator[CheckpointTuple]:
         """列出 PostgreSQL 中的检查点历史。
 
@@ -301,10 +304,9 @@ class PostgresCheckpointer(BaseCheckpointer):
 
         try:
             conn = self._get_conn()
-            with self._lock:
-                with conn.cursor() as cur:
-                    cur.execute(sql, params)
-                    rows = cur.fetchall()
+            with self._lock, conn.cursor() as cur:
+                cur.execute(sql, params)
+                rows = cur.fetchall()
         except Exception:
             # 连接异常不崩溃:不 yield 任何项(视为空历史)
             return
@@ -327,9 +329,7 @@ class PostgresCheckpointer(BaseCheckpointer):
                 if not match:
                     continue
             parent_config = (
-                {"thread_id": thread_id, "checkpoint_id": parent_id}
-                if parent_id
-                else None
+                {"thread_id": thread_id, "checkpoint_id": parent_id} if parent_id else None
             )
             yield CheckpointTuple(
                 config={"thread_id": thread_id, "checkpoint_id": cp_id},

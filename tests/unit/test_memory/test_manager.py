@@ -1,4 +1,4 @@
-﻿"""
+"""
 单元测试 - Memory 测试。
 
 测试真实接口:
@@ -6,13 +6,19 @@
   - EntityMemory.upsert(entity) / get(type, name) / list_by_type(type)
   - MemoryManager.save() / load_context()
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 import pytest
 
 from fnixagent.core.memory.entity import EntityMemory
 from fnixagent.core.memory.manager import MemoryManager
 from fnixagent.core.memory.short_term import ShortTermMemory
 from fnixagent.core.types import Entity, Message, MessageRole
-
 
 # ---------------------------------------------------------------------------
 # ShortTermMemory
@@ -69,11 +75,13 @@ def test_entity_upsert_and_get():
     """测试实体记忆写入与查询。"""
     em = EntityMemory()
 
-    em.upsert(Entity(
-        entity_type="paper",
-        name="paper_001",
-        attributes={"title": "Deep Learning", "year": 2023},
-    ))
+    em.upsert(
+        Entity(
+            entity_type="paper",
+            name="paper_001",
+            attributes={"title": "Deep Learning", "year": 2023},
+        )
+    )
 
     result = em.get("paper", "paper_001")
     assert result is not None

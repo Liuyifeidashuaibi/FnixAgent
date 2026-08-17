@@ -203,7 +203,9 @@ services:
       PIPELINE_WORKERS: ${DOC_PARSER_WORKERS:-2}
       # OCR 语言包
       OCR_LANG: ${OCR_LANG:-chi_sim+eng}
-    command: ["python", "-m", "fnixagent.main", "--service", "doc-parser"]
+# 蜂巢化拆分尚未实现：当前四个容器均跑完整 FastAPI（不同端口），
+# 直到真正的 --service 入口落地前，勿依赖按路径分流。
+    command: ["python", "-m", "fnixagent.main", "serve", "--host", "0.0.0.0", "--port", "8001", "--no-reload"]
     depends_on:
       postgres:
         condition: service_healthy
@@ -232,7 +234,7 @@ services:
       EMBEDDER_DIM: ${EMBEDDER_DIM:-256}
       # 检索参数
       RETRIEVAL_TOP_K: ${RETRIEVAL_TOP_K:-10}
-    command: ["python", "-m", "fnixagent.main", "--service", "knowledge"]
+    command: ["python", "-m", "fnixagent.main", "serve", "--host", "0.0.0.0", "--port", "8002", "--no-reload"]
     depends_on:
       postgres:
         condition: service_healthy
@@ -264,7 +266,7 @@ services:
       DEFAULT_THINK_MODE: ${DEFAULT_THINK_MODE:-false}
       # Checkpoint 持久化
       CHECKPOINT_BACKEND: postgres
-    command: ["python", "-m", "fnixagent.main", "--service", "agent-runner"]
+    command: ["python", "-m", "fnixagent.main", "serve", "--host", "0.0.0.0", "--port", "8003", "--no-reload"]
     depends_on:
       postgres:
         condition: service_healthy
@@ -295,7 +297,7 @@ services:
       SANDBOX_TIMEOUT_SECONDS: ${SANDBOX_TIMEOUT:-30}
       # MCP 配置
       MCP_SERVERS_CONFIG: /app/config/mcp_servers.yaml
-    command: ["python", "-m", "fnixagent.main", "--service", "tool-executor"]
+    command: ["python", "-m", "fnixagent.main", "serve", "--host", "0.0.0.0", "--port", "8004", "--no-reload"]
     depends_on:
       postgres:
         condition: service_healthy

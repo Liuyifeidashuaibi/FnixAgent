@@ -1,0 +1,7 @@
+{
+  "id": "brief_pdf",
+  "prompt": "用 create_pdf 生成一份简短产品简介 PDF（标题 Fnix Brief，正文两三句）。保存到 .fnix/artifacts/brief/product.pdf",
+  "work_mode": "craft",
+  "expect_glob": ".fnix/artifacts/brief/**/*.pdf",
+  "timeout_s": 180
+}

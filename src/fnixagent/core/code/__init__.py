@@ -14,33 +14,67 @@ fnixagent Coding - 编码智能体能力层
 零外部依赖: 仅 Python stdlib (ast / tokenize / hashlib / difflib)
 可插拔后端: 复用 retrieval/embedder + retrieval/vectorstore + retrieval/hybrid
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
-from fnixagent.core.code.indexer import (
-    CodeIndexer, CodeSlice, SymbolInfo, SymbolKind, IndexStats, Location,
+from fnixagent.core.code.agent import (
+    CodingAgent,
+    CodingTask,
+    TaskResult,
+    TaskStep,
 )
 from fnixagent.core.code.context import (
-    ContextBuilder, BuiltContext, ContextPriority,
+    BuiltContext,
+    ContextBuilder,
+    ContextPriority,
 )
 from fnixagent.core.code.diff import (
-    DiffEngine, ChangeSet, FileChange, ChangeSetBuilder, ApplyResult,
+    ApplyResult,
+    ChangeSet,
+    ChangeSetBuilder,
     ChangeType,
+    DiffEngine,
+    FileChange,
 )
-from fnixagent.core.code.tools import CodeTools
-from fnixagent.core.code.agent import (
-    CodingAgent, CodingTask, TaskResult, TaskStep,
+from fnixagent.core.code.indexer import (
+    CodeIndexer,
+    CodeSlice,
+    IndexStats,
+    Location,
+    SymbolInfo,
+    SymbolKind,
 )
 from fnixagent.core.code.server import IDEServer
+from fnixagent.core.code.tools import CodeTools
 
 __all__ = [
-    "CodeIndexer", "CodeSlice", "SymbolInfo", "SymbolKind", "IndexStats",
-    "Location",
-    "ContextBuilder", "BuiltContext", "ContextPriority",
-    "DiffEngine", "ChangeSet", "FileChange", "ChangeSetBuilder", "ApplyResult",
+    "ApplyResult",
+    "BuiltContext",
+    "ChangeSet",
+    "ChangeSetBuilder",
     "ChangeType",
+    "CodeIndexer",
+    "CodeSlice",
     "CodeTools",
-    "CodingAgent", "CodingTask", "TaskResult", "TaskStep",
+    "CodingAgent",
+    "CodingTask",
+    "ContextBuilder",
+    "ContextPriority",
+    "DiffEngine",
+    "FileChange",
     "IDEServer",
+    "IndexStats",
+    "Location",
+    "SymbolInfo",
+    "SymbolKind",
+    "TaskResult",
+    "TaskStep",
 ]
 
 __version__ = "1.0.0"

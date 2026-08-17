@@ -11,31 +11,39 @@ API 路由 - 管理后台接口(Phase 1.8)。
     - 普通用户访问返回 403
     - 重置密码生成随机临时密码(Argon2id 哈希存储)
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 import os
 import secrets
 import string
 from datetime import datetime
-from typing import Optional
 
 import yaml
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
-from fnixagent.api.routers.auth import verify_jwt_token, _get_user_or_404
+from fnixagent.api.routers.auth import _get_user_or_404, verify_jwt_token
 from fnixagent.api.schemas.models import BaseResponse, MFAEnforcementRequest
 from fnixagent.services.storage import get_user_store
+
 
 # Phase 2.5: 审计动作常量(延迟导入避免循环依赖)
 def _audit_constants():
     """延迟导入审计动作常量。"""
     from fnixagent.core.audit import (
+        AUDIT_CONFIG_UPDATE,
+        AUDIT_DATA_DELETE,
+        AUDIT_FACTOR_FORCE_DISABLED,
+        AUDIT_PASSWORD_RESET,
         AUDIT_USER_DISABLE,
         AUDIT_USER_ENABLE,
         AUDIT_USER_ROLE_CHANGE,
-        AUDIT_PASSWORD_RESET,
-        AUDIT_CONFIG_UPDATE,
-        AUDIT_FACTOR_FORCE_DISABLED,
-        AUDIT_DATA_DELETE,
     )
+
     return {
         "USER_DISABLE": AUDIT_USER_DISABLE,
         "USER_ENABLE": AUDIT_USER_ENABLE,
@@ -45,6 +53,7 @@ def _audit_constants():
         "FACTOR_FORCE_DISABLED": AUDIT_FACTOR_FORCE_DISABLED,
         "DATA_DELETE": AUDIT_DATA_DELETE,
     }
+
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -82,6 +91,7 @@ def _audit_admin(action: str, admin_payload: dict, detail: dict, http_request: R
     """写入管理员操作的审计日志(失败不影响主流程)。"""
     try:
         from fnixagent.core.audit import AuditLogger
+
         ip = None
         ua = None
         if http_request:
@@ -111,7 +121,7 @@ def _audit_admin(action: str, admin_payload: dict, detail: dict, http_request: R
 async def list_users(
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
-    search: Optional[str] = Query(None, description="按用户名/邮箱搜索"),
+    search: str | None = Query(None, description="按用户名/邮箱搜索"),
     _admin: dict = Depends(require_admin),
 ):
     """列出所有用户(分页 + 搜索)。"""
@@ -138,8 +148,9 @@ async def disable_user(
     store = get_user_store()
     if not store.set_user_disabled(user_id, True):
         raise HTTPException(status_code=404, detail="用户不存在")
-    _audit_admin(_audit_constants()["USER_DISABLE"], _admin,
-                 {"target_user_id": user_id}, http_request)
+    _audit_admin(
+        _audit_constants()["USER_DISABLE"], _admin, {"target_user_id": user_id}, http_request
+    )
     return BaseResponse(success=True, message="用户已禁用")
 
 
@@ -153,8 +164,9 @@ async def enable_user(
     store = get_user_store()
     if not store.set_user_disabled(user_id, False):
         raise HTTPException(status_code=404, detail="用户不存在")
-    _audit_admin(_audit_constants()["USER_ENABLE"], _admin,
-                 {"target_user_id": user_id}, http_request)
+    _audit_admin(
+        _audit_constants()["USER_ENABLE"], _admin, {"target_user_id": user_id}, http_request
+    )
     return BaseResponse(success=True, message="用户已启用")
 
 
@@ -174,8 +186,12 @@ async def reset_password(
     new_password = "".join(secrets.choice(alphabet) for _ in range(12))
     if not store.update_password(user_id, new_password):
         raise HTTPException(status_code=500, detail="重置失败")
-    _audit_admin(_audit_constants()["PASSWORD_RESET"], _admin,
-                 {"target_user_id": user_id, "username": user.username}, http_request)
+    _audit_admin(
+        _audit_constants()["PASSWORD_RESET"],
+        _admin,
+        {"target_user_id": user_id, "username": user.username},
+        http_request,
+    )
     return BaseResponse(
         success=True,
         message="密码已重置,请将临时密码告知用户",
@@ -198,9 +214,12 @@ async def update_user_role(
     old_role = target_user.role
     if not store.update_role(user_id, role):
         raise HTTPException(status_code=404, detail="用户不存在")
-    _audit_admin(_audit_constants()["USER_ROLE_CHANGE"], _admin,
-                 {"target_user_id": user_id, "old_role": old_role, "new_role": role},
-                 http_request)
+    _audit_admin(
+        _audit_constants()["USER_ROLE_CHANGE"],
+        _admin,
+        {"target_user_id": user_id, "old_role": old_role, "new_role": role},
+        http_request,
+    )
     return BaseResponse(success=True, message=f"角色已更新为 {role}")
 
 
@@ -213,10 +232,10 @@ async def update_user_role(
 async def list_audit_logs(
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
-    user_id: Optional[int] = Query(None, description="按用户 ID 筛选"),
-    action: Optional[str] = Query(None, description="按操作类型筛选"),
-    start: Optional[str] = Query(None, description="起始时间 ISO 8601"),
-    end: Optional[str] = Query(None, description="结束时间 ISO 8601"),
+    user_id: int | None = Query(None, description="按用户 ID 筛选"),
+    action: str | None = Query(None, description="按操作类型筛选"),
+    start: str | None = Query(None, description="起始时间 ISO 8601"),
+    end: str | None = Query(None, description="结束时间 ISO 8601"),
     _admin: dict = Depends(require_admin),
 ):
     """查询审计日志(按时间/用户/操作类型筛选)。"""
@@ -249,12 +268,7 @@ async def list_audit_logs(
             except ValueError:
                 raise HTTPException(status_code=400, detail="end 格式无效")
         total = q.count()
-        logs = (
-            q.order_by(AuditLog.id.desc())
-            .limit(limit)
-            .offset(offset)
-            .all()
-        )
+        logs = q.order_by(AuditLog.id.desc()).limit(limit).offset(offset).all()
         return BaseResponse(
             success=True,
             data={
@@ -360,8 +374,9 @@ async def update_config(
         _set_nested(config, key, value)
         updated[key] = value
     _write_settings(config)
-    _audit_admin(_audit_constants()["CONFIG_UPDATE"], _admin,
-                 {"updated_keys": list(updated.keys())}, request)
+    _audit_admin(
+        _audit_constants()["CONFIG_UPDATE"], _admin, {"updated_keys": list(updated.keys())}, request
+    )
     return BaseResponse(
         success=True,
         message="配置已更新并写回 settings.yaml(即时生效)",
@@ -457,8 +472,12 @@ async def delete_ldap_config(
     store = get_ldap_config_store()
     if not store.delete_config(config_id):
         raise HTTPException(status_code=404, detail="LDAP 配置不存在")
-    _audit_admin(_audit_constants()["DATA_DELETE"], _admin,
-                 {"target": "ldap_config", "config_id": config_id}, http_request)
+    _audit_admin(
+        _audit_constants()["DATA_DELETE"],
+        _admin,
+        {"target": "ldap_config", "config_id": config_id},
+        http_request,
+    )
     return BaseResponse(success=True, message="LDAP 配置已删除")
 
 
@@ -488,7 +507,7 @@ async def test_ldap_config(
 
 @router.post("/ldap/sync")
 async def sync_ldap_users(
-    config_id: Optional[int] = None,
+    config_id: int | None = None,
     _admin: dict = Depends(require_admin),
 ):
     """手动触发 LDAP 用户同步。
@@ -517,11 +536,17 @@ async def sync_ldap_users(
             client = LDAPClient(cfg.to_ldap_config())
             stats = client.sync_users_to_local()
             store.mark_synced(cfg.id)
-            results.append({"config_id": cfg.id, "config_name": cfg.name, "stats": stats, "ok": True})
+            results.append(
+                {"config_id": cfg.id, "config_name": cfg.name, "stats": stats, "ok": True}
+            )
         except LDAPNotInstalledError:
-            results.append({"config_id": cfg.id, "config_name": cfg.name, "ok": False, "error": "ldap3 未安装"})
+            results.append(
+                {"config_id": cfg.id, "config_name": cfg.name, "ok": False, "error": "ldap3 未安装"}
+            )
         except LDAPError as e:
-            results.append({"config_id": cfg.id, "config_name": cfg.name, "ok": False, "error": str(e)})
+            results.append(
+                {"config_id": cfg.id, "config_name": cfg.name, "ok": False, "error": str(e)}
+            )
 
     return BaseResponse(success=True, data={"results": results})
 
@@ -533,7 +558,7 @@ async def sync_ldap_users(
 
 @router.get("/sso/configs")
 async def list_sso_configs(
-    provider_type: Optional[str] = Query(None, description="按类型筛选:oauth/saml"),
+    provider_type: str | None = Query(None, description="按类型筛选:oauth/saml"),
     _admin: dict = Depends(require_admin),
 ):
     """列出所有 SSO 配置(不含 secret)。"""
@@ -566,8 +591,7 @@ async def create_sso_config(
     # 参数校验
     provider_type = body.get("provider_type")
     if provider_type not in ("oauth", "saml"):
-        raise HTTPException(status_code=400,
-                            detail="provider_type 必须为 oauth 或 saml")
+        raise HTTPException(status_code=400, detail="provider_type 必须为 oauth 或 saml")
     for k in ("provider_code", "name"):
         if not body.get(k):
             raise HTTPException(status_code=400, detail=f"缺少必填字段: {k}")
@@ -614,8 +638,12 @@ async def delete_sso_config(
     store = get_sso_config_store()
     if not store.delete_config(config_id):
         raise HTTPException(status_code=404, detail="SSO 配置不存在")
-    _audit_admin(_audit_constants()["DATA_DELETE"], _admin,
-                 {"target": "sso_config", "config_id": config_id}, http_request)
+    _audit_admin(
+        _audit_constants()["DATA_DELETE"],
+        _admin,
+        {"target": "sso_config", "config_id": config_id},
+        http_request,
+    )
     return BaseResponse(success=True, message="SSO 配置已删除")
 
 
@@ -640,22 +668,30 @@ async def test_sso_config(
         # 尝试构建授权 URL(验证配置完整性)
         try:
             from fnixagent.core.security.auth.oauth import OAuthClient, OAuthConfigError
+
             client = OAuthClient(cfg.to_oauth_config())
             url = client.build_authorization_url(state="test")
-            return BaseResponse(success=True, message="OAuth 配置有效",
-                                data={"authorize_url_prefix": url.split("?")[0]})
+            return BaseResponse(
+                success=True,
+                message="OAuth 配置有效",
+                data={"authorize_url_prefix": url.split("?")[0]},
+            )
         except OAuthConfigError as e:
             return BaseResponse(success=False, error=str(e))
         except Exception as e:
             return BaseResponse(success=False, error=f"测试异常: {e}")
     else:  # saml
         # SAML:校验必填字段 + 检查 python3-saml 是否安装
-        missing = [k for k in ("sp_entity_id", "acs_url", "idp_entity_id",
-                                "idp_sso_url", "idp_x509_cert") if not getattr(cfg, k)]
+        missing = [
+            k
+            for k in ("sp_entity_id", "acs_url", "idp_entity_id", "idp_sso_url", "idp_x509_cert")
+            if not getattr(cfg, k)
+        ]
         if missing:
             return BaseResponse(success=False, error=f"SAML 配置缺少字段: {missing}")
         try:
             from fnixagent.core.security.auth.saml import SAMLClient, SAMLNotInstalledError
+
             client = SAMLClient(cfg.to_saml_config())
             # 触发延迟导入以检查库是否可用
             client._import_saml()
@@ -668,7 +704,7 @@ async def test_sso_config(
 
 @router.get("/sso/bindings")
 async def list_sso_bindings(
-    user_id: Optional[int] = Query(None, description="按用户 ID 筛选"),
+    user_id: int | None = Query(None, description="按用户 ID 筛选"),
     _admin: dict = Depends(require_admin),
 ):
     """查询用户的 SSO 绑定关系。"""
@@ -677,8 +713,9 @@ async def list_sso_bindings(
     store = get_sso_binding_store()
     if user_id is None:
         # 不传 user_id 时返回提示(避免全表扫描,绑定表通常按用户查询)
-        return BaseResponse(success=True, data={"items": [], "total": 0,
-                                                "message": "请提供 user_id 查询参数"})
+        return BaseResponse(
+            success=True, data={"items": [], "total": 0, "message": "请提供 user_id 查询参数"}
+        )
     bindings = store.list_by_user(user_id)
     return BaseResponse(
         success=True,
@@ -734,8 +771,7 @@ async def upsert_mfa_enforcement(
     store = get_mfa_enforcement_store()
     e = store.upsert(role=body.role, factor_type=body.factor_type, enabled=body.enabled)
     action = "已更新" if e.updated_at and e.created_at != e.updated_at else "已创建"
-    return BaseResponse(success=True, message=f"MFA 强制策略{action}",
-                        data=e.to_dict())
+    return BaseResponse(success=True, message=f"MFA 强制策略{action}", data=e.to_dict())
 
 
 @router.delete("/mfa/enforcements/{enforcement_id}")
@@ -817,12 +853,16 @@ async def admin_disable_factor(
         user_store = get_user_store()
         user_store.update_profile(user_id, {"mfa_enabled": False})
 
-    _audit_admin(_audit_constants()["FACTOR_FORCE_DISABLED"], _admin,
-                 {"target_user_id": user_id, "factor_id": factor_id,
-                  "factor_type": factor_type}, http_request)
-    return BaseResponse(success=True,
-                        message="MFA 因子已被管理员禁用" +
-                                (",用户已无任何 MFA 因子" if not remaining else ""))
+    _audit_admin(
+        _audit_constants()["FACTOR_FORCE_DISABLED"],
+        _admin,
+        {"target_user_id": user_id, "factor_id": factor_id, "factor_type": factor_type},
+        http_request,
+    )
+    return BaseResponse(
+        success=True,
+        message="MFA 因子已被管理员禁用" + (",用户已无任何 MFA 因子" if not remaining else ""),
+    )
 
 
 # ===========================================================================
@@ -833,6 +873,7 @@ async def admin_disable_factor(
 def _config_manager():
     """延迟导入配置热更新管理器单例(避免循环依赖)。"""
     from fnixagent.core.config_watcher import get_config_manager
+
     return get_config_manager()
 
 
@@ -872,9 +913,12 @@ async def add_rate_limit_rule(
     ok = _config_manager().add_rate_limit_rule(rule, operator=operator)
     if not ok:
         raise HTTPException(status_code=500, detail="添加限流规则失败")
-    _audit_admin(_audit_constants()["CONFIG_UPDATE"], _admin,
-                 {"target": "rate_limit_rule", "action": "add", "prefix": prefix},
-                 request)
+    _audit_admin(
+        _audit_constants()["CONFIG_UPDATE"],
+        _admin,
+        {"target": "rate_limit_rule", "action": "add", "prefix": prefix},
+        request,
+    )
     return BaseResponse(success=True, message="限流规则已添加", data={"prefix": prefix})
 
 
@@ -898,9 +942,12 @@ async def remove_rate_limit_rule(
         prefix = "/" + prefix
     if not ok:
         raise HTTPException(status_code=404, detail=f"限流规则不存在: {prefix}")
-    _audit_admin(_audit_constants()["CONFIG_UPDATE"], _admin,
-                 {"target": "rate_limit_rule", "action": "remove", "prefix": prefix},
-                 request)
+    _audit_admin(
+        _audit_constants()["CONFIG_UPDATE"],
+        _admin,
+        {"target": "rate_limit_rule", "action": "remove", "prefix": prefix},
+        request,
+    )
     return BaseResponse(success=True, message="限流规则已移除")
 
 
@@ -915,8 +962,12 @@ async def enable_guardrail(
     ok = _config_manager().enable_guardrail(name, operator=operator)
     if not ok:
         raise HTTPException(status_code=404, detail=f"护栏不存在: {name}")
-    _audit_admin(_audit_constants()["CONFIG_UPDATE"], _admin,
-                 {"target": "guardrail", "action": "enable", "name": name}, request)
+    _audit_admin(
+        _audit_constants()["CONFIG_UPDATE"],
+        _admin,
+        {"target": "guardrail", "action": "enable", "name": name},
+        request,
+    )
     return BaseResponse(success=True, message=f"护栏 {name} 已启用")
 
 
@@ -931,14 +982,20 @@ async def disable_guardrail(
     ok = _config_manager().disable_guardrail(name, operator=operator)
     if not ok:
         raise HTTPException(status_code=404, detail=f"护栏不存在: {name}")
-    _audit_admin(_audit_constants()["CONFIG_UPDATE"], _admin,
-                 {"target": "guardrail", "action": "disable", "name": name}, request)
+    _audit_admin(
+        _audit_constants()["CONFIG_UPDATE"],
+        _admin,
+        {"target": "guardrail", "action": "disable", "name": name},
+        request,
+    )
     return BaseResponse(success=True, message=f"护栏 {name} 已禁用")
 
 
 @router.get("/config/history")
 async def get_config_history(
-    module: Optional[str] = Query(None, description="按模块筛选: rate_limit/guardrail/expert_route/autoscale"),
+    module: str | None = Query(
+        None, description="按模块筛选: rate_limit/guardrail/expert_route/autoscale"
+    ),
     limit: int = Query(20, ge=1, le=200),
     _admin: dict = Depends(require_admin),
 ):
@@ -983,8 +1040,12 @@ async def rollback_config(
     if not isinstance(steps, int) or steps < 1:
         raise HTTPException(status_code=400, detail="steps 必须为正整数")
     ok = _config_manager().rollback(steps=steps)
-    _audit_admin(_audit_constants()["CONFIG_UPDATE"], _admin,
-                 {"target": "config_rollback", "steps": steps, "success": ok}, request)
+    _audit_admin(
+        _audit_constants()["CONFIG_UPDATE"],
+        _admin,
+        {"target": "config_rollback", "steps": steps, "success": ok},
+        request,
+    )
     if not ok:
         return BaseResponse(
             success=False,

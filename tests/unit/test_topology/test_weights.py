@@ -1,4 +1,4 @@
-﻿"""
+"""
 知识拓扑图 (KTG) 权重体系单元测试。
 
 测试模块: fnixagent.core.topology.weights
@@ -8,21 +8,25 @@
     - 节点操作: node_on_hit, node_daily_decay, node_on_skill_success, node_on_skill_failure
     - 边操作: edge_on_path_hit, edge_on_failure, edge_daily_decay
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 import pytest
 
 from fnixagent.core.topology import weights
 from fnixagent.core.types import (
     EdgeType,
     TopologyEdge,
-    TopologyLayer,
-    TopologyNode,
-    NodeType,
 )
-
 
 # ---------------------------------------------------------------------------
 # 固化常量
 # ---------------------------------------------------------------------------
+
 
 class TestConstants:
     """测试权重体系固化常量。"""
@@ -67,6 +71,7 @@ class TestConstants:
 # ---------------------------------------------------------------------------
 # 纯函数
 # ---------------------------------------------------------------------------
+
 
 class TestClampWeight:
     """测试 clamp_weight() 函数。"""
@@ -172,6 +177,7 @@ class TestShouldDeprecate:
 # 节点权重操作
 # ---------------------------------------------------------------------------
 
+
 class TestNodeOnHit:
     """测试 node_on_hit() 函数。"""
 
@@ -244,7 +250,7 @@ class TestNodeDailyDecay:
     def test_stale_penalty_applied(self, sample_node):
         """freshness 低且 use_count 低时应触发 stale 惩罚。"""
         sample_node.freshness = 0.2  # < STALE_FRESHNESS=0.3
-        sample_node.use_count = 0    # < STALE_USE_COUNT=5
+        sample_node.use_count = 0  # < STALE_USE_COUNT=5
         sample_node.weight = 0.5
         weights.node_daily_decay(sample_node)
         # freshness 先 *= 0.999 → 0.1998(仍 < 0.3)
@@ -338,6 +344,7 @@ class TestNodeOnSkillFailure:
 # ---------------------------------------------------------------------------
 # 边权重操作
 # ---------------------------------------------------------------------------
+
 
 class TestEdgeOnPathHit:
     """测试 edge_on_path_hit() 函数。"""

@@ -19,21 +19,16 @@
   - 工具化:每个 Expert 暴露为 ToolRegistry 中的多个工具(layer=L1_OFFICE)
   - 零硬编码:模板/样式/图表类型由参数驱动,不预置偏好
 """
-from fnixagent.office.base import BaseExpert, ExpertResult, ExpertError
-from fnixagent.office.word import WordExpert
-from fnixagent.office.excel import ExcelExpert
-from fnixagent.office.powerpoint import PPTExpert
-from fnixagent.office.pdf import PDFExpert
-from fnixagent.office.converter import ConverterExpert
-from fnixagent.office.parser import ParserExpert
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
+from fnixagent.office.base import BaseExpert, ExpertError, ExpertResult
 from fnixagent.office.chart import ChartExpert
-from fnixagent.office.image import ImageExpert
-from fnixagent.office.template import TemplateManager
-from fnixagent.office.inspector import DocumentInspector
-from fnixagent.office.evaluator import Evaluator
-from fnixagent.office.format_spec import FormatSpec, FormatReport, FormatNormalizer
-from fnixagent.office.run_editor import RunEditor, EditOp, EditReport
-from fnixagent.office.markdown import MarkdownRenderer
+from fnixagent.office.converter import ConverterExpert
 from fnixagent.office.converter_protocol import (
     ConverterEntry,
     ConverterLayer,
@@ -46,7 +41,19 @@ from fnixagent.office.converter_protocol import (
     WordConverter,
     create_default_registry,
 )
+from fnixagent.office.evaluator import Evaluator
+from fnixagent.office.excel import ExcelExpert
+from fnixagent.office.format_spec import FormatNormalizer, FormatReport, FormatSpec
+from fnixagent.office.image import ImageExpert
+from fnixagent.office.inspector import DocumentInspector
+from fnixagent.office.markdown import MarkdownRenderer
+from fnixagent.office.parser import ParserExpert
+from fnixagent.office.pdf import PDFExpert
 from fnixagent.office.plugins import PluginEntry, PluginManager, PluginMeta
+from fnixagent.office.powerpoint import PPTExpert
+from fnixagent.office.run_editor import EditOp, EditReport, RunEditor
+from fnixagent.office.template import TemplateManager
+from fnixagent.office.word import WordExpert
 
 __all__ = [
     "BaseExpert",

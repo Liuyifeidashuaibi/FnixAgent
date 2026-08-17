@@ -10,6 +10,13 @@
 
 静态检查: 扫描代码字符串, 不执行即可拦截大部分危险操作。
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import re
@@ -28,53 +35,57 @@ class SandboxPolicy:
     """
 
     # 高危 shell 命令模式(正则,匹配即拦截)
-    forbidden_commands: list[str] = field(default_factory=lambda: [
-        r"\brm\s+-rf?\b",
-        r"\bdel\s+/[fqs]\b",
-        r"\bformat\s+[a-z]:",
-        r"\bmkfs\b",
-        r"\bshutdown\b",
-        r"\breboot\b",
-        r"\bchmod\s+\d+",
-        r"\bchown\b",
-        r"\bkill\s+-9\b",
-        r"\bpkill\b",
-        r"\biotop\b",
-        r"\bnnformat\b",
-    ])
+    forbidden_commands: list[str] = field(
+        default_factory=lambda: [
+            r"\brm\s+-rf?\b",
+            r"\bdel\s+/[fqs]\b",
+            r"\bformat\s+[a-z]:",
+            r"\bmkfs\b",
+            r"\bshutdown\b",
+            r"\breboot\b",
+            r"\bchmod\s+\d+",
+            r"\bchown\b",
+            r"\bkill\s+-9\b",
+            r"\bpkill\b",
+            r"\biotop\b",
+            r"\bnnformat\b",
+        ]
+    )
 
     # 禁止 import 的模块(精确匹配或前缀匹配)
     # os/subprocess/ctypes 等可逃逸沙箱或操作系统资源
-    forbidden_imports: list[str] = field(default_factory=lambda: [
-        "os",            # 操作系统接口(文件/进程/环境变量)
-        "subprocess",    # 子进程执行
-        "ctypes",        # FFI,可绕过 Python 沙箱
-        "shutil",        # 高级文件操作(复制/删除目录)
-        "sys",           # 解释器内部(退出/模块路径)
-        "signal",        # 信号处理
-        "multiprocessing",  # 多进程
-        "os.system",
-        "os.popen",
-        "os.exec",
-        "os.spawn",
-        "os.remove",
-        "os.unlink",
-        "os.rmdir",
-        "os.removedirs",
-        "socket",        # 网络访问
-        "http",
-        "urllib",
-        "requests",
-        "ftplib",
-        "telnetlib",
-        "smtplib",
-        "webbrowser",
-        "antigravity",
-        "pickle",        # 反序列化攻击
-        "marshal",
-        "importlib",
-        "builtins",
-    ])
+    forbidden_imports: list[str] = field(
+        default_factory=lambda: [
+            "os",  # 操作系统接口(文件/进程/环境变量)
+            "subprocess",  # 子进程执行
+            "ctypes",  # FFI,可绕过 Python 沙箱
+            "shutil",  # 高级文件操作(复制/删除目录)
+            "sys",  # 解释器内部(退出/模块路径)
+            "signal",  # 信号处理
+            "multiprocessing",  # 多进程
+            "os.system",
+            "os.popen",
+            "os.exec",
+            "os.spawn",
+            "os.remove",
+            "os.unlink",
+            "os.rmdir",
+            "os.removedirs",
+            "socket",  # 网络访问
+            "http",
+            "urllib",
+            "requests",
+            "ftplib",
+            "telnetlib",
+            "smtplib",
+            "webbrowser",
+            "antigravity",
+            "pickle",  # 反序列化攻击
+            "marshal",
+            "importlib",
+            "builtins",
+        ]
+    )
 
     # 网络白名单域名(默认空=全禁)
     network_whitelist: list[str] = field(default_factory=list)

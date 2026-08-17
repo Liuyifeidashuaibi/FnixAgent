@@ -1,4 +1,4 @@
-﻿"""
+"""
 LangGraph 条件边路由函数单元测试。
 
 测试模块: fnixagent.graph.edges
@@ -7,6 +7,13 @@ LangGraph 条件边路由函数单元测试。
     - should_stop_on_error: 错误检查路由
     - 边名称常量
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from fnixagent.graph.edges import (
     EDGE_LOOP_BACK,
     EDGE_TO_END,
@@ -18,10 +25,10 @@ from fnixagent.graph.edges import (
     should_stop_on_error,
 )
 
-
 # ---------------------------------------------------------------------------
 # 边名称常量
 # ---------------------------------------------------------------------------
+
 
 class TestEdgeConstants:
     """测试边名称常量。"""
@@ -38,8 +45,12 @@ class TestEdgeConstants:
     def test_edge_constants_unique(self):
         """边名称常量应互不相同。"""
         edges = {
-            EDGE_TO_SEARCH, EDGE_TO_SKILL_SELECT, EDGE_TO_EXECUTE,
-            EDGE_TO_REFLECT, EDGE_LOOP_BACK, EDGE_TO_END,
+            EDGE_TO_SEARCH,
+            EDGE_TO_SKILL_SELECT,
+            EDGE_TO_EXECUTE,
+            EDGE_TO_REFLECT,
+            EDGE_LOOP_BACK,
+            EDGE_TO_END,
         }
         assert len(edges) == 6
 
@@ -47,6 +58,7 @@ class TestEdgeConstants:
 # ---------------------------------------------------------------------------
 # route_after_reflect
 # ---------------------------------------------------------------------------
+
 
 class TestRouteAfterReflect:
     """测试 route_after_reflect() 函数。"""
@@ -76,6 +88,7 @@ class TestRouteAfterReflect:
 # ---------------------------------------------------------------------------
 # should_stop_on_error
 # ---------------------------------------------------------------------------
+
 
 class TestShouldStopOnError:
     """测试 should_stop_on_error() 函数。"""

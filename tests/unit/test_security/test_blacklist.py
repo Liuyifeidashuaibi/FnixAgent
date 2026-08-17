@@ -1,4 +1,4 @@
-﻿"""
+"""
 blacklist 模块单元测试(验收标准 ⑤ 登出后 Access Token 在 1s 内失效 - 单元层)。
 
 覆盖:
@@ -13,20 +13,24 @@ blacklist 模块单元测试(验收标准 ⑤ 登出后 Access Token 在 1s 内�
     - 全局单例 get_blacklist / reset_blacklist
     - is_using_memory 在无 Redis 时为 True
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 import time
 
-import pytest
-
 from fnixagent.core.security.auth.blacklist import (
-    TokenBlacklist,
     get_blacklist,
     reset_blacklist,
 )
 
-
 # ---------------------------------------------------------------------------
 # 初始化
 # ---------------------------------------------------------------------------
+
 
 class TestBlacklistInit:
     """TokenBlacklist 初始化。"""
@@ -44,6 +48,7 @@ class TestBlacklistInit:
 # ---------------------------------------------------------------------------
 # add / contains(验收标准 ⑤)
 # ---------------------------------------------------------------------------
+
 
 class TestAddAndContains:
     """add / contains 操作。"""
@@ -90,6 +95,7 @@ class TestAddAndContains:
 # TTL 过期
 # ---------------------------------------------------------------------------
 
+
 class TestTtlExpiry:
     """TTL 到期后自动失效。"""
 
@@ -125,6 +131,7 @@ class TestTtlExpiry:
 # remove / clear
 # ---------------------------------------------------------------------------
 
+
 class TestRemoveAndClear:
     """remove / clear 操作。"""
 
@@ -159,6 +166,7 @@ class TestRemoveAndClear:
 # ---------------------------------------------------------------------------
 # 全局单例
 # ---------------------------------------------------------------------------
+
 
 class TestGlobalSingleton:
     """get_blacklist / reset_blacklist 全局单例。"""

@@ -1,4 +1,4 @@
-﻿"""Phase 4.4 Dashboard API 测试。
+"""Phase 4.4 Dashboard API 测试。
 
 覆盖:
   1. GET /dashboard/overview       — 总览
@@ -10,6 +10,13 @@
   7. GET /dashboard/trends         — 趋势
   8. 鉴权:非 admin 403,未登录 401
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -18,11 +25,11 @@ from fastapi.testclient import TestClient
 @pytest.fixture(autouse=True)
 def _reset_stores():
     """每个测试前后重置存储。"""
-    from fnixagent.services.storage_audit import reset_audit_store
-    from fnixagent.services.storage import reset_stores
-    from fnixagent.services.storage_rbac import reset_rbac_store
-    from fnixagent.services.moderation_service import reset_moderation_service
     from fnixagent.core.security import rbac
+    from fnixagent.services.moderation_service import reset_moderation_service
+    from fnixagent.services.storage import reset_stores
+    from fnixagent.services.storage_audit import reset_audit_store
+    from fnixagent.services.storage_rbac import reset_rbac_store
 
     reset_audit_store()
     reset_stores()
@@ -40,6 +47,7 @@ def _reset_stores():
 def _create_app():
     """创建带 dashboard + auth 路由的测试 app。"""
     from fnixagent.api.routers import auth, dashboard
+
     app = FastAPI()
     app.include_router(auth.router, prefix="/api/v1")
     app.include_router(dashboard.router, prefix="/api/v1")
@@ -50,14 +58,14 @@ def _register_admin_and_login(client, username="admin1"):
     """注册管理员并登录。"""
     resp = client.post(
         "/api/v1/auth/register",
-        json={"username": username, "email": f"{username}@example.com",
-              "password": "Pass1234"},
+        json={"username": username, "email": f"{username}@example.com", "password": "Pass1234"},
     )
     assert resp.status_code == 200, resp.text
     user_id = resp.json()["id"]
 
     # 提升为 admin
     from fnixagent.services.storage import get_user_store
+
     get_user_store().update_role(user_id, "admin")
 
     # 登录
@@ -73,8 +81,7 @@ def _register_normal_user_and_login(client, username="user1"):
     """注册普通用户并登录。"""
     resp = client.post(
         "/api/v1/auth/register",
-        json={"username": username, "email": f"{username}@example.com",
-              "password": "Pass1234"},
+        json={"username": username, "email": f"{username}@example.com", "password": "Pass1234"},
     )
     assert resp.status_code == 200, resp.text
     resp = client.post(
@@ -136,8 +143,7 @@ class TestDashboardOverview:
         for i in range(3):
             resp = client.post(
                 "/api/v1/auth/register",
-                json={"username": f"user{i}", "email": f"user{i}@e.com",
-                      "password": "Pass1234"},
+                json={"username": f"user{i}", "email": f"user{i}@e.com", "password": "Pass1234"},
             )
             assert resp.status_code == 200, f"注册 user{i} 失败: {resp.text}"
         resp = client.get(
@@ -187,10 +193,10 @@ class TestDashboardOverview:
         # 注册用户并软删除
         client.post(
             "/api/v1/auth/register",
-            json={"username": "todelete", "email": "td@e.com",
-                  "password": "Pass1234"},
+            json={"username": "todelete", "email": "td@e.com", "password": "Pass1234"},
         )
         from fnixagent.services.storage import get_user_store
+
         store = get_user_store()
         user = store.get_by_username("todelete")
         store.soft_delete_user(user.id)
@@ -219,8 +225,7 @@ class TestDashboardUsers:
         for i in range(5):
             resp = client.post(
                 "/api/v1/auth/register",
-                json={"username": f"role{i}", "email": f"role{i}@e.com",
-                      "password": "Pass1234"},
+                json={"username": f"role{i}", "email": f"role{i}@e.com", "password": "Pass1234"},
             )
             assert resp.status_code == 200, f"注册 role{i} 失败: {resp.text}"
         resp = client.get(
@@ -303,8 +308,7 @@ class TestDashboardModeration:
         token, _ = _register_admin_and_login(client)
         resp = client.patch(
             "/api/v1/dashboard/moderation/config",
-            headers={"Authorization": f"Bearer {token}",
-                     "Content-Type": "application/json"},
+            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
             json={"block_high_risk_only": True, "high_risk_threshold": 50},
         )
         assert resp.status_code == 200
@@ -319,8 +323,7 @@ class TestDashboardModeration:
         token, _ = _register_admin_and_login(client)
         resp = client.patch(
             "/api/v1/dashboard/moderation/config",
-            headers={"Authorization": f"Bearer {token}",
-                     "Content-Type": "application/json"},
+            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
             json={"unknown_key": "value", "enabled": False},
         )
         assert resp.status_code == 200
@@ -412,8 +415,7 @@ class TestDashboardTrends:
         # 注册一个新用户(今天)
         client.post(
             "/api/v1/auth/register",
-            json={"username": "trenduser", "email": "tu@e.com",
-                  "password": "Pass1234"},
+            json={"username": "trenduser", "email": "tu@e.com", "password": "Pass1234"},
         )
         resp = client.get(
             "/api/v1/dashboard/trends?days=7",

@@ -13,6 +13,13 @@
 
 可选项依赖: cryptography(已在 requirements.txt 中)
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import ctypes
@@ -22,7 +29,6 @@ import threading
 from dataclasses import dataclass
 from datetime import datetime
 from functools import lru_cache
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -32,10 +38,11 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 
-def _audit_kdf(action: str, detail: Optional[dict] = None) -> None:
+def _audit_kdf(action: str, detail: dict | None = None) -> None:
     """将密钥派生操作写入审计日志(不记录密钥本身,仅记录元信息)。"""
     try:
         from fnixagent.core.audit import AuditLogger
+
         AuditLogger().log(action=action, detail=detail or {})
     except Exception:
         pass
@@ -56,6 +63,7 @@ class DerivedKey:
         derived_at: 派生时间(ISO 字符串)
         kdk_id: 主密钥 ID(不暴露主密钥本身)
     """
+
     key: bytes
     context: str
     derived_at: str
@@ -94,7 +102,7 @@ class KDFManager:
 
     def __init__(
         self,
-        kdk: Optional[bytes] = None,
+        kdk: bytes | None = None,
         kdk_id: str = "default",
     ) -> None:
         self._lock = threading.Lock()
@@ -164,10 +172,13 @@ class KDFManager:
             self._derive_count = 0
             # 清空 lru_cache
             self._derive_cached.cache_clear()
-        _audit_kdf("kdk.rotate", detail={
-            "new_kdk_id": new_kdk_id,
-            "kdk_length": len(new_kdk),
-        })
+        _audit_kdf(
+            "kdk.rotate",
+            detail={
+                "new_kdk_id": new_kdk_id,
+                "kdk_length": len(new_kdk),
+            },
+        )
         logger.info("[kdf] 主密钥已轮换到 %s", new_kdk_id)
         return True
 
@@ -208,13 +219,16 @@ class KDFManager:
             key = hkdf.derive(self._kdk)
             with self._lock:
                 self._derive_count += 1
-            _audit_kdf("kdk.derive", detail={
-                "context": context,
-                "length": length,
-                "kdk_id": self._kdk_id,
-            })
+            _audit_kdf(
+                "kdk.derive",
+                detail={
+                    "context": context,
+                    "length": length,
+                    "kdk_id": self._kdk_id,
+                },
+            )
             return key
-        except Exception as exc:
+        except Exception:
             logger.exception("[kdf] HKDF 派生失败,使用 fallback")
             return self._hkdf_fallback(context, length)
 
@@ -255,6 +269,7 @@ class KDFManager:
         """
         try:
             from fnixagent.core.security.secrets import get_secret_manager
+
             mgr = get_secret_manager()
             sv = mgr.get("KDK")
             if sv.value and len(sv.value) >= self._DEFAULT_KDK_LENGTH:
@@ -269,6 +284,7 @@ class KDFManager:
                 # 不足 32 字节则哈希派生
                 if len(kdk) < self._DEFAULT_KDK_LENGTH:
                     import hashlib
+
                     kdk = hashlib.sha256(kdk).digest()
                 return kdk, "env"
         except Exception as exc:
@@ -276,12 +292,13 @@ class KDFManager:
 
         # 生成随机 KDK(开发环境)
         kdk = os.urandom(self._DEFAULT_KDK_LENGTH)
-        logger.warning(
-            "[kdf] fnixagent_KDK 未配置,生成临时 KDK(重启后失效,生产环境必须配置)"
+        logger.warning("[kdf] fnixagent_KDK 未配置,生成临时 KDK(重启后失效,生产环境必须配置)")
+        _audit_kdf(
+            "kdk.generated",
+            detail={
+                "reason": "KDK not configured, generated ephemeral key",
+            },
         )
-        _audit_kdf("kdk.generated", detail={
-            "reason": "KDK not configured, generated ephemeral key",
-        })
         return kdk, "generated"
 
 
@@ -290,7 +307,7 @@ class KDFManager:
 # ---------------------------------------------------------------------------
 
 
-_manager_instance: Optional[KDFManager] = None
+_manager_instance: KDFManager | None = None
 _manager_lock = threading.Lock()
 
 

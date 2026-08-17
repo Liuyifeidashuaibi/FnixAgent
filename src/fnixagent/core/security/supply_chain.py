@@ -14,6 +14,13 @@
   - 所有异常不外泄,捕获后返回合理默认值
   - 白名单存储:trusted_keys.json = {key_id: {public_key_pem, fingerprint, trusted_at}}
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import base64
@@ -24,8 +31,7 @@ import os
 import re
 import subprocess
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 logger = logging.getLogger(__name__)
 
@@ -57,12 +63,13 @@ class PackageInfo:
         signature: base64 签名(可选)
         signed_by: 签名者 key_id(可选)
     """
+
     name: str
     version: str
     source: str
     sha256: str
-    signature: Optional[str] = None
-    signed_by: Optional[str] = None
+    signature: str | None = None
+    signed_by: str | None = None
 
 
 @dataclass
@@ -78,6 +85,7 @@ class VerificationResult:
         vulnerabilities: 漏洞列表
         reason: 判定原因
     """
+
     valid: bool
     trusted: bool
     signature_valid: bool
@@ -98,6 +106,7 @@ class SBOMEntry:
         purl: Package URL
         hashes: {algorithm: hash}
     """
+
     name: str
     version: str
     type: str
@@ -132,7 +141,9 @@ class SupplyChainVerifier:
     # -- 公开接口:包校验 -------------------------------------------------
 
     def verify_package(
-        self, package_path: str, signature: Optional[str] = None,
+        self,
+        package_path: str,
+        signature: str | None = None,
     ) -> VerificationResult:
         """校验插件包(哈希 + 签名 + 白名单)。
 
@@ -142,8 +153,11 @@ class SupplyChainVerifier:
         """
         if not os.path.exists(package_path):
             return VerificationResult(
-                valid=False, trusted=False, signature_valid=False,
-                hash_matched=False, sbom_generated=False,
+                valid=False,
+                trusted=False,
+                signature_valid=False,
+                hash_matched=False,
+                sbom_generated=False,
                 reason=f"包不存在: {package_path}",
             )
         # 1. 计算哈希
@@ -151,13 +165,14 @@ class SupplyChainVerifier:
         hash_matched = True  # 无预期哈希时,仅记录实际哈希
         # 2. 签名校验
         signature_valid = False
-        signed_by: Optional[str] = None
+        signed_by: str | None = None
         if signature:
             try:
                 with open(package_path, "rb") as f:
                     data = f.read()
                 signed_by, signature_valid = self._verify_signature_any_key(
-                    data, signature,
+                    data,
+                    signature,
                 )
             except Exception as exc:
                 logger.warning("[supply_chain] 签名校验失败: %s", exc)
@@ -175,13 +190,21 @@ class SupplyChainVerifier:
         if not signature:
             reason_parts.append("无签名(未校验)")
         reason = "; ".join(reason_parts) if reason_parts else "校验通过"
-        self._audit_verify("supply_chain.verify_package", {
-            "path": package_path, "sha256": sha256[:16] + "...",
-            "signature_valid": signature_valid, "trusted": trusted,
-        })
+        self._audit_verify(
+            "supply_chain.verify_package",
+            {
+                "path": package_path,
+                "sha256": sha256[:16] + "...",
+                "signature_valid": signature_valid,
+                "trusted": trusted,
+            },
+        )
         return VerificationResult(
-            valid=valid, trusted=trusted, signature_valid=signature_valid,
-            hash_matched=hash_matched, sbom_generated=False,
+            valid=valid,
+            trusted=trusted,
+            signature_valid=signature_valid,
+            hash_matched=hash_matched,
+            sbom_generated=False,
             reason=reason,
         )
 
@@ -196,8 +219,11 @@ class SupplyChainVerifier:
         vulns = self._run_pip_audit_for_pkg(name, version)
         valid = len(vulns) == 0
         return VerificationResult(
-            valid=valid, trusted=True, signature_valid=True,
-            hash_matched=True, sbom_generated=False,
+            valid=valid,
+            trusted=True,
+            signature_valid=True,
+            hash_matched=True,
+            sbom_generated=False,
             vulnerabilities=vulns,
             reason="无已知漏洞" if valid else f"发现 {len(vulns)} 个漏洞",
         )
@@ -205,7 +231,8 @@ class SupplyChainVerifier:
     # -- 公开接口:SBOM ---------------------------------------------------
 
     def generate_sbom(
-        self, requirements_path: str = "requirements.txt",
+        self,
+        requirements_path: str = "requirements.txt",
     ) -> list[SBOMEntry]:
         """解析 requirements.txt 生成 SBOM(cyclonedx 兼容)。
 
@@ -217,7 +244,7 @@ class SupplyChainVerifier:
             logger.warning("[supply_chain] requirements 不存在: %s", requirements_path)
             return entries
         try:
-            with open(requirements_path, "r", encoding="utf-8") as f:
+            with open(requirements_path, encoding="utf-8") as f:
                 for line in f:
                     line = line.strip()
                     if not line or line.startswith("#"):
@@ -232,10 +259,15 @@ class SupplyChainVerifier:
                     if not name:
                         continue
                     purl = f"pkg:pypi/{name.lower()}@{version}"
-                    entries.append(SBOMEntry(
-                        name=name, version=version, type="pip",
-                        purl=purl, hashes={},
-                    ))
+                    entries.append(
+                        SBOMEntry(
+                            name=name,
+                            version=version,
+                            type="pip",
+                            purl=purl,
+                            hashes={},
+                        )
+                    )
         except Exception as exc:
             logger.warning("[supply_chain] SBOM 生成失败: %s", exc)
         return entries
@@ -243,7 +275,8 @@ class SupplyChainVerifier:
     # -- 公开接口:CVE 检查 ----------------------------------------------
 
     def check_vulnerabilities(
-        self, requirements_path: str = "requirements.txt",
+        self,
+        requirements_path: str = "requirements.txt",
     ) -> list[dict]:
         """调用 pip-audit 检查依赖漏洞。
 
@@ -258,14 +291,17 @@ class SupplyChainVerifier:
     # -- 公开接口:信任密钥管理 -------------------------------------------
 
     def add_trusted_key(
-        self, key_id: str, public_key: str, fingerprint: str,
+        self,
+        key_id: str,
+        public_key: str,
+        fingerprint: str,
     ) -> bool:
         """添加信任公钥到白名单。"""
         try:
             self._trusted_keys[key_id] = {
                 "public_key_pem": public_key,
                 "fingerprint": fingerprint,
-                "trusted_at": datetime.now(timezone.utc).isoformat(),
+                "trusted_at": datetime.now(UTC).isoformat(),
             }
             return self._save_trusted_keys()
         except Exception as exc:
@@ -293,14 +329,18 @@ class SupplyChainVerifier:
         return h.hexdigest()
 
     def _verify_signature(
-        self, data: bytes, signature: bytes, public_key: bytes,
+        self,
+        data: bytes,
+        signature: bytes,
+        public_key: bytes,
     ) -> bool:
         """RSA-2048 + SHA256 签名校验。"""
         if not _HAS_CRYPTO:
             return False
         try:
             pub = serialization.load_pem_public_key(
-                public_key, backend=default_backend(),
+                public_key,
+                backend=default_backend(),
             )
             pub.verify(
                 signature,
@@ -316,8 +356,10 @@ class SupplyChainVerifier:
             return False
 
     def _verify_signature_any_key(
-        self, data: bytes, signature_b64: str,
-    ) -> tuple[Optional[str], bool]:
+        self,
+        data: bytes,
+        signature_b64: str,
+    ) -> tuple[str | None, bool]:
         """用任一信任公钥验签,返回 (key_id, 是否通过)。"""
         if not _HAS_CRYPTO:
             return None, False
@@ -337,14 +379,18 @@ class SupplyChainVerifier:
         return None, False
 
     def _verify_hash_signature(
-        self, data_hash: bytes, signature: bytes, public_key_pem: bytes,
+        self,
+        data_hash: bytes,
+        signature: bytes,
+        public_key_pem: bytes,
     ) -> bool:
         """校验对哈希字符串的 RSA 签名(与 DocumentSigner 算法对齐)。"""
         if not _HAS_CRYPTO:
             return False
         try:
             pub = serialization.load_pem_public_key(
-                public_key_pem, backend=default_backend(),
+                public_key_pem,
+                backend=default_backend(),
             )
             pub.verify(
                 signature,
@@ -362,7 +408,8 @@ class SupplyChainVerifier:
     # -- 内部:pip-audit -------------------------------------------------
 
     def _run_pip_audit(
-        self, requirements_path: str = "requirements.txt",
+        self,
+        requirements_path: str = "requirements.txt",
     ) -> list[dict]:
         """调用 pip-audit 子进程检查漏洞。
 
@@ -371,12 +418,13 @@ class SupplyChainVerifier:
         try:
             proc = subprocess.run(
                 ["pip-audit", "-r", requirements_path, "-f", "json"],
-                capture_output=True, text=True, timeout=120, check=False,
+                capture_output=True,
+                text=True,
+                timeout=120,
+                check=False,
             )
             if proc.returncode != 0 and not proc.stdout:
-                logger.warning(
-                    "[supply_chain] pip-audit 失败: %s", proc.stderr[:200]
-                )
+                logger.warning("[supply_chain] pip-audit 失败: %s", proc.stderr[:200])
                 return []
             data = json.loads(proc.stdout)
             vulns: list[dict] = []
@@ -385,13 +433,15 @@ class SupplyChainVerifier:
                 if not vulns_list:
                     continue
                 for v in vulns_list:
-                    vulns.append({
-                        "name": dep.get("name", ""),
-                        "version": dep.get("version", ""),
-                        "id": v.get("id", v.get("vuln_id", "")),
-                        "summary": v.get("description", v.get("summary", "")),
-                        "fix_versions": v.get("fix_versions", []),
-                    })
+                    vulns.append(
+                        {
+                            "name": dep.get("name", ""),
+                            "version": dep.get("version", ""),
+                            "id": v.get("id", v.get("vuln_id", "")),
+                            "summary": v.get("description", v.get("summary", "")),
+                            "fix_versions": v.get("fix_versions", []),
+                        }
+                    )
             return vulns
         except FileNotFoundError:
             logger.warning("[supply_chain] pip-audit 未安装,跳过 CVE 检查")
@@ -406,9 +456,13 @@ class SupplyChainVerifier:
     def _run_pip_audit_for_pkg(self, name: str, version: str) -> list[dict]:
         """检查单个包的漏洞(生成临时 requirements 后调用 pip-audit)。"""
         import tempfile
+
         try:
             with tempfile.NamedTemporaryFile(
-                mode="w", suffix=".txt", delete=False, encoding="utf-8",
+                mode="w",
+                suffix=".txt",
+                delete=False,
+                encoding="utf-8",
             ) as tmp:
                 tmp.write(f"{name}=={version}\n")
                 tmp_path = tmp.name
@@ -427,7 +481,7 @@ class SupplyChainVerifier:
         """加载信任密钥白名单。"""
         try:
             if os.path.exists(self._trusted_keys_path):
-                with open(self._trusted_keys_path, "r", encoding="utf-8") as f:
+                with open(self._trusted_keys_path, encoding="utf-8") as f:
                     data = json.load(f)
                     if isinstance(data, dict):
                         return data
@@ -471,6 +525,7 @@ class SupplyChainVerifier:
         """将校验事件写入审计日志(失败不影响主流程)。"""
         try:
             from fnixagent.core.audit import AuditLogger
+
             AuditLogger().log(action=action, detail=detail)
         except Exception:
             pass

@@ -21,6 +21,13 @@ asyncio.sleep,不阻塞事件循环。
 
 依赖: 仅标准库(asyncio / logging / time / dataclasses / threading),零新增依赖。
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import asyncio
@@ -28,15 +35,12 @@ import logging
 import threading
 import time
 from dataclasses import dataclass, field
-from typing import Optional
 
 logger = logging.getLogger(__name__)
-
 
 # ============================================================================
 # 数据结构
 # ============================================================================
-
 
 @dataclass
 class TokenBucket:
@@ -81,7 +85,6 @@ class TokenBucket:
             return float("inf")
         return (n - self.tokens) / self.rate
 
-
 @dataclass
 class EndpointRule:
     """per-endpoint 差异化限速规则。
@@ -97,10 +100,9 @@ class EndpointRule:
     """
 
     prefix: str
-    qps: Optional[float] = None
-    concurrency: Optional[int] = None
-    min_interval: Optional[float] = None
-
+    qps: float | None = None
+    concurrency: int | None = None
+    min_interval: float | None = None
 
 @dataclass
 class DomainState:
@@ -121,11 +123,9 @@ class DomainState:
     default_capacity: float
     last_call: float = 0.0
 
-
 # ============================================================================
 # 多层限流器
 # ============================================================================
-
 
 class MultiLayerRateLimiter:
     """多层令牌桶限流器(全局 + 按用户 + 按工具)。
@@ -150,8 +150,8 @@ class MultiLayerRateLimiter:
         default_user_qps: float = 10.0,
         default_tool_qps: float = 5.0,
         default_user_concurrency: int = 5,
-        global_concurrency: Optional[int] = None,
-        endpoint_rules: Optional[list[EndpointRule]] = None,
+        global_concurrency: int | None = None,
+        endpoint_rules: list[EndpointRule] | None = None,
     ):
         """初始化多层限流器。
 
@@ -191,7 +191,7 @@ class MultiLayerRateLimiter:
         self._user_states: dict[str, DomainState] = {}
         self._tool_states: dict[str, DomainState] = {}
         self._user_sems: dict[str, asyncio.Semaphore] = {}
-        self._global_sem: Optional[asyncio.Semaphore] = (
+        self._global_sem: asyncio.Semaphore | None = (
             asyncio.Semaphore(global_concurrency) if global_concurrency is not None else None
         )
 
@@ -209,7 +209,7 @@ class MultiLayerRateLimiter:
         """按 prefix 长度降序排列(最长前缀优先匹配)。调用者需持锁。"""
         self._endpoint_rules.sort(key=lambda r: len(r.prefix), reverse=True)
 
-    def _match_rule(self, name: str) -> Optional[EndpointRule]:
+    def _match_rule(self, name: str) -> EndpointRule | None:
         """返回与 name 最长前缀匹配的规则,无匹配返回 None。调用者需持锁。"""
         for rule in self._endpoint_rules:
             if rule.prefix and name.startswith(rule.prefix):
@@ -233,7 +233,7 @@ class MultiLayerRateLimiter:
             rule.min_interval,
         )
 
-    def remove_endpoint_rule(self, prefix: str) -> Optional[EndpointRule]:
+    def remove_endpoint_rule(self, prefix: str) -> EndpointRule | None:
         """按 prefix 移除端点规则(线程安全,P2-03 热更新支持)。
 
         仅移除首个 prefix 完全相等的规则(不做前缀匹配,避免误删)。
@@ -324,7 +324,7 @@ class MultiLayerRateLimiter:
             bool: 放行返回 True,限流返回 False。
         """
         # 1. 最小间隔检查(提前判断,避免无谓扣令牌)
-        tool_st: Optional[DomainState] = None
+        tool_st: DomainState | None = None
         if tool_name:
             tool_st = self._get_tool_state(tool_name, now)
             rule = self._match_rule(tool_name)
@@ -428,7 +428,7 @@ class MultiLayerRateLimiter:
                 self._user_sems[user_id] = sem
             return sem
 
-    def global_semaphore(self) -> Optional[asyncio.Semaphore]:
+    def global_semaphore(self) -> asyncio.Semaphore | None:
         """返回全局并发信号量(未配置全局并发上限时返回 None)。"""
         return self._global_sem
 
@@ -548,14 +548,12 @@ class MultiLayerRateLimiter:
                 self._global_sem = None
         logger.info("多层限流器状态已重置(端点规则保留 %d 条)", len(self._endpoint_rules))
 
-
 # ============================================================================
 # 模块级单例
 # ============================================================================
 
-_default_limiter: Optional[MultiLayerRateLimiter] = None
+_default_limiter: MultiLayerRateLimiter | None = None
 _default_lock = threading.Lock()
-
 
 def get_limiter() -> MultiLayerRateLimiter:
     """获取全局默认多层限流器(惰性单例,线程安全,默认参数)。"""
@@ -565,7 +563,6 @@ def get_limiter() -> MultiLayerRateLimiter:
             if _default_limiter is None:
                 _default_limiter = MultiLayerRateLimiter()
     return _default_limiter
-
 
 def reset_limiter() -> None:
     """重置全局默认限流器单例(释放引用,下次 get_limiter 重建)。

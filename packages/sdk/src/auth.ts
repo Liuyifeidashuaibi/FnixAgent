@@ -1,4 +1,11 @@
 /**
+ * Copyright (C) 2026 FnixAgent. All rights reserved.
+ * Software Name: FnixAgent 智能工作台系统 V1.0
+ * This software and its source code are proprietary and confidential.
+ * Unauthorized copying, modification, distribution, or use is strictly prohibited.
+ */
+
+/**
  * fnixagent 鉴权模块 — Phase 1.7
  *
  * 功能:
@@ -333,6 +340,47 @@ export class AuthManager {
       await this.storage.set(STORAGE_KEYS.username, username);
     }
     return result;
+  }
+
+  /**
+   * 所有者 / 管理员特殊通道登录。
+   * 需服务端配置 FNIX_OWNER_TOKEN；可首次创建 admin 账号。
+   */
+  async ownerLogin(input: {
+    username: string;
+    password: string;
+    ownerToken: string;
+    remember?: boolean;
+  }): Promise<TokenInfo> {
+    const clientUuid = await this.getClientUuid();
+    const resp = await fetch(`${this.client['baseUrl']}/api/v1/auth/owner/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: input.username,
+        password: input.password,
+        owner_token: input.ownerToken,
+        client_uuid: clientUuid,
+        remember: input.remember ?? true,
+      }),
+    });
+    if (resp.status === 401) {
+      throw new Error('所有者口令或密码错误');
+    }
+    if (resp.status === 403) {
+      const text = await resp.text().catch(() => '');
+      throw new Error(text || '所有者通道未启用或账号不允许');
+    }
+    if (!resp.ok) {
+      const text = await resp.text().catch(() => '');
+      throw new Error(`所有者登录失败 ${resp.status}: ${text}`);
+    }
+    const token = (await resp.json()) as TokenInfo;
+    await this.persistTokens(token, input.remember ?? true);
+    if (input.remember !== false) {
+      await this.storage.set(STORAGE_KEYS.username, input.username);
+    }
+    return token;
   }
 
   /** 完成 MFA 验证(登录流程中,捕获 MfaRequiredError 后调用) */

@@ -19,6 +19,13 @@ NetworkPolicy:
   - YAML 配置(config/security/network_policies.yaml),运行时加载
   - 基于 from_agent / to_agent / allowed_tools 做访问控制
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import base64
@@ -30,16 +37,17 @@ import os
 import threading
 import time
 from dataclasses import dataclass, field
-from typing import Optional
+from datetime import UTC
 
 # 可选依赖:cryptography(x509 SVID)
 try:
+    from datetime import datetime, timedelta
+
     from cryptography import x509
     from cryptography.hazmat.backends import default_backend
     from cryptography.hazmat.primitives import hashes, serialization
     from cryptography.hazmat.primitives.asymmetric import rsa
     from cryptography.x509.oid import ExtendedKeyUsageOID, NameOID
-    from datetime import datetime, timedelta, timezone
 
     _HAS_CRYPTO = True
 except ImportError:  # pragma: no cover
@@ -67,11 +75,9 @@ _CA_VALIDITY_YEARS = 10
 # CA 密钥长度
 _CA_KEY_SIZE = 2048
 
-
 # ---------------------------------------------------------------------------
 # 数据结构
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class SVID:
@@ -84,14 +90,14 @@ class SVID:
         expires_at:      过期时间(unix timestamp)
         issuer:          签发者(默认 fnixagent-ca)
     """
+
     spiffe_id: str
     cert_pem: bytes
     private_key_pem: bytes
     expires_at: float
     issuer: str = "fnixagent-ca"
     # JWT 模式下的 token(cryptography 可用时为 None)
-    jwt_token: Optional[str] = None
-
+    jwt_token: str | None = None
 
 @dataclass
 class AgentIdentity:
@@ -103,11 +109,11 @@ class AgentIdentity:
         spiffe_id:  SPIFFE ID
         svid:       当前持有的 SVID(None 表示尚未签发)
     """
+
     agent_id: str
     role: str
     spiffe_id: str
-    svid: Optional[SVID] = None
-
+    svid: SVID | None = None
 
 @dataclass
 class NetworkPolicy:
@@ -120,17 +126,16 @@ class NetworkPolicy:
         allowed_tools:  允许调用的工具列表
         denied:         是否拒绝(默认 False=允许)
     """
+
     name: str
     from_agent: str
     to_agent: str
     allowed_tools: list[str] = field(default_factory=list)
     denied: bool = False
 
-
 # ---------------------------------------------------------------------------
 # IdentityBroker
 # ---------------------------------------------------------------------------
-
 
 class IdentityBroker:
     """SPIFFE 风格身份代理(本地 CA + SVID 签发)。
@@ -152,9 +157,9 @@ class IdentityBroker:
 
     def __init__(
         self,
-        ca_cert_path: Optional[str] = None,
-        ca_key_path: Optional[str] = None,
-        policy_path: Optional[str] = None,
+        ca_cert_path: str | None = None,
+        ca_key_path: str | None = None,
+        policy_path: str | None = None,
     ) -> None:
         self._lock = threading.Lock()
         self._agents: dict[str, AgentIdentity] = {}
@@ -164,9 +169,9 @@ class IdentityBroker:
         self._policies: list[NetworkPolicy] = []
 
         # CA 证书与私钥(惰性加载)
-        self._ca_cert: Optional[bytes] = None  # CA 证书 PEM
-        self._ca_key: Optional[object] = None  # CA 私钥对象
-        self._ca_cert_obj: Optional[object] = None  # CA 证书对象(用于验证)
+        self._ca_cert: bytes | None = None  # CA 证书 PEM
+        self._ca_key: object | None = None  # CA 私钥对象
+        self._ca_cert_obj: object | None = None  # CA 证书对象(用于验证)
 
         # JWT 降级模式的共享密钥
         self._jwt_key: bytes = self._load_jwt_key()
@@ -267,7 +272,9 @@ class IdentityBroker:
                     logger.info("[identity] 自动旋转 Agent %s 的 SVID", agent_id)
                 except Exception as exc:
                     logger.warning(
-                        "[identity] 旋转 Agent %s 失败: %s", agent_id, exc,
+                        "[identity] 旋转 Agent %s 失败: %s",
+                        agent_id,
+                        exc,
                     )
         return rotated
 
@@ -302,7 +309,7 @@ class IdentityBroker:
         # 无匹配策略,默认拒绝
         return False
 
-    def load_policies(self, path: Optional[str] = None) -> int:
+    def load_policies(self, path: str | None = None) -> int:
         """重新加载 NetworkPolicy 配置,返回加载数量。"""
         self._policy_path = path or self._policy_path
         self._load_policies()
@@ -326,7 +333,8 @@ class IdentityBroker:
                 self._generate_ca()
         except Exception as exc:
             logger.warning(
-                "[identity] CA 初始化失败,降级到 JWT-SVID: %s", exc,
+                "[identity] CA 初始化失败,降级到 JWT-SVID: %s",
+                exc,
             )
             self._ca_key = None
 
@@ -337,10 +345,13 @@ class IdentityBroker:
         with open(self._ca_key_path, "rb") as f:
             ca_key_pem = f.read()
         self._ca_key = serialization.load_pem_private_key(
-            ca_key_pem, password=None, backend=default_backend(),
+            ca_key_pem,
+            password=None,
+            backend=default_backend(),
         )
         self._ca_cert_obj = x509.load_pem_x509_certificate(
-            self._ca_cert, default_backend(),
+            self._ca_cert,
+            default_backend(),
         )
         logger.info("[identity] 加载已有 CA 证书: %s", self._ca_cert_path)
 
@@ -359,11 +370,13 @@ class IdentityBroker:
         )
 
         # 生成自签名 CA 证书
-        subject = issuer = x509.Name([
-            x509.NameAttribute(NameOID.COMMON_NAME, "fnixagent CA"),
-            x509.NameAttribute(NameOID.ORGANIZATION_NAME, "fnixagent"),
-        ])
-        now = datetime.now(timezone.utc)
+        subject = issuer = x509.Name(
+            [
+                x509.NameAttribute(NameOID.COMMON_NAME, "fnixagent CA"),
+                x509.NameAttribute(NameOID.ORGANIZATION_NAME, "fnixagent"),
+            ]
+        )
+        now = datetime.now(UTC)
         ca_cert = (
             x509.CertificateBuilder()
             .subject_name(subject)
@@ -373,7 +386,8 @@ class IdentityBroker:
             .not_valid_before(now)
             .not_valid_after(now + timedelta(days=365 * _CA_VALIDITY_YEARS))
             .add_extension(
-                x509.BasicConstraints(ca=True, path_length=None), critical=True,
+                x509.BasicConstraints(ca=True, path_length=None),
+                critical=True,
             )
             .add_extension(
                 x509.KeyUsage(
@@ -433,16 +447,20 @@ class IdentityBroker:
         )
 
         # 构造证书
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         ttl = expires_at - time.time()
-        subject = x509.Name([
-            x509.NameAttribute(NameOID.COMMON_NAME, agent.agent_id),
-            x509.NameAttribute(NameOID.ORGANIZATION_NAME, "fnixagent"),
-        ])
+        subject = x509.Name(
+            [
+                x509.NameAttribute(NameOID.COMMON_NAME, agent.agent_id),
+                x509.NameAttribute(NameOID.ORGANIZATION_NAME, "fnixagent"),
+            ]
+        )
         # SAN URI = spiffe_id(SPIFFE 规范)
-        san = x509.SubjectAlternativeName([
-            x509.UniformResourceIdentifier(agent.spiffe_id),
-        ])
+        san = x509.SubjectAlternativeName(
+            [
+                x509.UniformResourceIdentifier(agent.spiffe_id),
+            ]
+        )
 
         ca_key = self._ca_key  # type: ignore[assignment]
         ca_cert_obj = self._ca_cert_obj
@@ -457,8 +475,9 @@ class IdentityBroker:
             .not_valid_after(now + timedelta(seconds=max(ttl, 1)))
             .add_extension(san, critical=False)
             .add_extension(
-                x509.ExtendedKeyUsage([ExtendedKeyUsageOID.SERVER_AUTH,
-                                       ExtendedKeyUsageOID.CLIENT_AUTH]),
+                x509.ExtendedKeyUsage(
+                    [ExtendedKeyUsageOID.SERVER_AUTH, ExtendedKeyUsageOID.CLIENT_AUTH]
+                ),
                 critical=False,
             )
             .sign(ca_key, hashes.SHA256(), default_backend())
@@ -483,7 +502,8 @@ class IdentityBroker:
         """验证 x509-SVID:证书链验证(svid cert → CA cert)。"""
         try:
             cert = x509.load_pem_x509_certificate(
-                svid.cert_pem, default_backend(),
+                svid.cert_pem,
+                default_backend(),
             )
             ca_cert = self._ca_cert_obj
             if ca_cert is None:
@@ -491,6 +511,7 @@ class IdentityBroker:
             # 检查签名(用 CA 公钥验证 svid 证书签名)
             ca_pubkey = ca_cert.public_key()
             from cryptography.hazmat.primitives.asymmetric import padding as rsa_padding
+
             ca_pubkey.verify(  # type: ignore[union-attr]
                 cert.signature,
                 cert.tbs_certificate_bytes,
@@ -505,7 +526,8 @@ class IdentityBroker:
             if svid.spiffe_id not in uris:
                 logger.warning(
                     "[identity] SVID SAN URI 不匹配: %s vs %s",
-                    svid.spiffe_id, uris,
+                    svid.spiffe_id,
+                    uris,
                 )
                 return False
             return True
@@ -562,7 +584,9 @@ class IdentityBroker:
                 return False
             signing_input = (parts[0] + "." + parts[1]).encode("ascii")
             expected_sig = hmac.new(
-                self._jwt_key, signing_input, hashlib.sha256,
+                self._jwt_key,
+                signing_input,
+                hashlib.sha256,
             ).digest()
             actual_sig = base64.urlsafe_b64decode(parts[2] + "==")
             if not hmac.compare_digest(expected_sig, actual_sig):
@@ -590,10 +614,11 @@ class IdentityBroker:
         try:
             if not os.path.exists(self._policy_path):
                 logger.info(
-                    "[identity] NetworkPolicy 配置不存在: %s", self._policy_path,
+                    "[identity] NetworkPolicy 配置不存在: %s",
+                    self._policy_path,
                 )
                 return
-            with open(self._policy_path, "r", encoding="utf-8") as f:
+            with open(self._policy_path, encoding="utf-8") as f:
                 data = yaml.safe_load(f) or {}
             policies_data = data.get("policies", [])
             for item in policies_data:
@@ -606,7 +631,8 @@ class IdentityBroker:
                 )
                 self._policies.append(policy)
             logger.info(
-                "[identity] 加载 %d 条 NetworkPolicy", len(self._policies),
+                "[identity] 加载 %d 条 NetworkPolicy",
+                len(self._policies),
             )
         except Exception as exc:
             logger.warning("[identity] NetworkPolicy 加载失败: %s", exc)

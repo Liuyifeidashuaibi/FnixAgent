@@ -26,6 +26,13 @@ semaphore 替换)均在 self._lock 内完成,避免 check-then-act 竞态。
 依赖: 仅标准库(threading / logging / time / collections / dataclasses),
 psutil 为可选依赖(缺失时跳过 CPU/内存检查)。
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import dataclasses
@@ -35,7 +42,7 @@ import threading
 import time
 from collections import deque
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 # psutil 为可选依赖: 缺失时仅依赖延迟指标做自适应调整
 try:
@@ -47,11 +54,9 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-
 # ============================================================================
 # 配置
 # ============================================================================
-
 
 @dataclass
 class AutoscaledPoolConfig:
@@ -71,26 +76,24 @@ class AutoscaledPoolConfig:
         check_interval: 检查间隔(秒,实际为惰性检查的最小间隔)。
     """
 
-    min_concurrency: int = 1                # 最小并发(降级下限)
-    max_concurrency: int = 8                # 最大并发(升级上限)
-    initial_concurrency: int = 4            # 初始并发
+    min_concurrency: int = 1  # 最小并发(降级下限)
+    max_concurrency: int = 8  # 最大并发(升级上限)
+    initial_concurrency: int = 4  # 初始并发
     # 系统负载阈值
-    cpu_threshold: float = 0.80             # CPU 使用率阈值
-    memory_threshold: float = 0.85          # 内存使用率阈值
-    latency_threshold_ms: float = 5000.0    # 平均响应延迟阈值(ms)
+    cpu_threshold: float = 0.80  # CPU 使用率阈值
+    memory_threshold: float = 0.85  # 内存使用率阈值
+    latency_threshold_ms: float = 5000.0  # 平均响应延迟阈值(ms)
     # 调整参数
-    scale_down_factor: float = 0.5          # 降级: 当前并发 × 此因子
-    scale_up_factor: float = 1.25           # 升级: 当前并发 × 此因子
-    cooldown_seconds: float = 30.0          # 调整冷却期(秒)
-    latency_window_size: int = 32           # 延迟滚动窗口大小
-    check_interval: float = 10.0            # 检查间隔(秒,实际为惰性检查)
+    scale_down_factor: float = 0.5  # 降级: 当前并发 × 此因子
+    scale_up_factor: float = 1.25  # 升级: 当前并发 × 此因子
+    cooldown_seconds: float = 30.0  # 调整冷却期(秒)
+    latency_window_size: int = 32  # 延迟滚动窗口大小
+    check_interval: float = 10.0  # 检查间隔(秒,实际为惰性检查)
 
     def __post_init__(self) -> None:
         """参数合法性校验,防止构造出无法运行的配置。"""
         if self.min_concurrency < 1:
-            raise ValueError(
-                f"min_concurrency 必须 >= 1, got {self.min_concurrency}"
-            )
+            raise ValueError(f"min_concurrency 必须 >= 1, got {self.min_concurrency}")
         if self.max_concurrency < self.min_concurrency:
             raise ValueError(
                 f"max_concurrency({self.max_concurrency}) 不能小于 "
@@ -106,33 +109,24 @@ class AutoscaledPoolConfig:
                 f"scale_down_factor 必须在 (0, 1) 开区间, got {self.scale_down_factor}"
             )
         if self.scale_up_factor <= 1:
-            raise ValueError(
-                f"scale_up_factor 必须 > 1, got {self.scale_up_factor}"
-            )
+            raise ValueError(f"scale_up_factor 必须 > 1, got {self.scale_up_factor}")
         if self.cooldown_seconds < 0:
-            raise ValueError(
-                f"cooldown_seconds 不能为负, got {self.cooldown_seconds}"
-            )
+            raise ValueError(f"cooldown_seconds 不能为负, got {self.cooldown_seconds}")
         if self.latency_window_size < 1:
-            raise ValueError(
-                f"latency_window_size 必须 >= 1, got {self.latency_window_size}"
-            )
-
+            raise ValueError(f"latency_window_size 必须 >= 1, got {self.latency_window_size}")
 
 # ============================================================================
 # 自适应并发池
 # ============================================================================
 
-
 @dataclass
 class _AdjustmentRecord:
     """单次调整记录(用于 get_stats 的调整历史)。"""
 
-    timestamp: float           # monotonic 时间戳
-    old_concurrency: int       # 调整前并发
-    new_concurrency: int       # 调整后并发
-    reason: str                # 调整原因
-
+    timestamp: float  # monotonic 时间戳
+    old_concurrency: int  # 调整前并发
+    new_concurrency: int  # 调整后并发
+    reason: str  # 调整原因
 
 class AutoscaledPool:
     """自适应并发池 — 根据系统负载动态调整并发数。
@@ -172,24 +166,18 @@ class AutoscaledPool:
         # 当前并发数(信号量许可数)
         self._current_concurrency: int = self._config.initial_concurrency
         # 信号量: 控制实际并发槽位。调整并发数时整体替换。
-        self._semaphore: threading.Semaphore = threading.Semaphore(
-            self._current_concurrency
-        )
+        self._semaphore: threading.Semaphore = threading.Semaphore(self._current_concurrency)
         # 滚动延迟窗口(线程安全: 读写均持 self._lock)
-        self._latency_window: deque[float] = deque(
-            maxlen=self._config.latency_window_size
-        )
+        self._latency_window: deque[float] = deque(maxlen=self._config.latency_window_size)
         # 上次调整时间戳(monotonic);初始化为 -cooldown 以允许首次立即调整
-        self._last_adjust_time: float = (
-            time.monotonic() - self._config.cooldown_seconds
-        )
+        self._last_adjust_time: float = time.monotonic() - self._config.cooldown_seconds
         # 上次指标检查时间戳(用于 check_interval 节流)
         self._last_check_time: float = 0.0
         # 调整历史(最多保留 64 条,避免无限增长)
         self._adjustment_history: deque[_AdjustmentRecord] = deque(maxlen=64)
         # 最新一次采样到的系统指标快照(供 get_stats 展示)
-        self._last_cpu: Optional[float] = None
-        self._last_memory: Optional[float] = None
+        self._last_cpu: float | None = None
+        self._last_memory: float | None = None
         # 关闭标志
         self._shutdown: bool = False
 
@@ -228,9 +216,7 @@ class AutoscaledPool:
         with self._lock:
             current = self._config
             valid_fields = {f.name for f in dataclasses.fields(current)}
-            filtered = {
-                k: v for k, v in kwargs.items() if k in valid_fields
-            }
+            filtered = {k: v for k, v in kwargs.items() if k in valid_fields}
             if not filtered:
                 return current
             new_config = dataclasses.replace(current, **filtered)
@@ -246,7 +232,8 @@ class AutoscaledPool:
                 self._semaphore = threading.Semaphore(clamped)
             logger.info(
                 "AutoscaledPool 配置已更新: %s (current_concurrency=%d)",
-                filtered, self._current_concurrency,
+                filtered,
+                self._current_concurrency,
             )
             return new_config
 
@@ -342,8 +329,8 @@ class AutoscaledPool:
             self._last_check_time = now
 
             # 采样系统指标
-            cpu_usage: Optional[float] = None
-            memory_usage: Optional[float] = None
+            cpu_usage: float | None = None
+            memory_usage: float | None = None
             if _HAS_PSUTIL:
                 try:
                     cpu_usage = psutil.cpu_percent(interval=None) / 100.0
@@ -361,13 +348,9 @@ class AutoscaledPool:
             # 判定是否需要降级: 任一可用指标超阈值
             overload_reasons: list[str] = []
             if cpu_usage is not None and cpu_usage >= cfg.cpu_threshold:
-                overload_reasons.append(
-                    f"CPU={cpu_usage:.2f}>={cfg.cpu_threshold:.2f}"
-                )
+                overload_reasons.append(f"CPU={cpu_usage:.2f}>={cfg.cpu_threshold:.2f}")
             if memory_usage is not None and memory_usage >= cfg.memory_threshold:
-                overload_reasons.append(
-                    f"MEM={memory_usage:.2f}>={cfg.memory_threshold:.2f}"
-                )
+                overload_reasons.append(f"MEM={memory_usage:.2f}>={cfg.memory_threshold:.2f}")
             if avg_latency >= cfg.latency_threshold_ms:
                 overload_reasons.append(
                     f"latency={avg_latency:.0f}ms>={cfg.latency_threshold_ms:.0f}ms"
@@ -437,11 +420,11 @@ class AutoscaledPool:
                 - adjustments: 调整历史列表(每条含 timestamp/old/new/reason)
         """
         with self._lock:
-            avg_latency: Optional[float] = None
+            avg_latency: float | None = None
             if self._latency_window:
                 avg_latency = sum(self._latency_window) / len(self._latency_window)
             now = time.monotonic()
-            last_adjust_ago: Optional[float] = None
+            last_adjust_ago: float | None = None
             if self._adjustment_history:
                 last_adjust_ago = now - self._adjustment_history[-1].timestamp
             elif self._last_adjust_time > 0:
@@ -481,9 +464,7 @@ class AutoscaledPool:
             self._semaphore = threading.Semaphore(self._current_concurrency)
             self._latency_window.clear()
             self._adjustment_history.clear()
-            self._last_adjust_time = (
-                time.monotonic() - self._config.cooldown_seconds
-            )
+            self._last_adjust_time = time.monotonic() - self._config.cooldown_seconds
             self._last_check_time = 0.0
             self._last_cpu = None
             self._last_memory = None
@@ -499,14 +480,12 @@ class AutoscaledPool:
         with self._lock:
             self._shutdown = True
 
-
 # ============================================================================
 # 模块级单例
 # ============================================================================
 
-_default_pool: Optional[AutoscaledPool] = None
+_default_pool: AutoscaledPool | None = None
 _default_lock = threading.Lock()
-
 
 def get_autoscaled_pool(config: AutoscaledPoolConfig | None = None) -> AutoscaledPool:
     """获取全局默认自适应并发池(惰性单例,线程安全)。
@@ -524,7 +503,6 @@ def get_autoscaled_pool(config: AutoscaledPoolConfig | None = None) -> Autoscale
             if _default_pool is None:
                 _default_pool = AutoscaledPool(config)
     return _default_pool
-
 
 def reset_autoscaled_pool() -> None:
     """重置全局默认自适应并发池单例(释放引用,下次 get_autoscaled_pool 重建)。

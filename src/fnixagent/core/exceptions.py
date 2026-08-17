@@ -15,6 +15,13 @@
     - Skill:      技能-拓扑突触(STP)
     - Flywheel:   四阶进化飞轮(MFP)
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 
@@ -33,6 +40,7 @@ class fnixagentError(Exception):
 # ---------------------------------------------------------------------------
 # LLM 域
 # ---------------------------------------------------------------------------
+
 
 class LLMError(fnixagentError):
     """LLM 调用通用错误。"""
@@ -57,6 +65,7 @@ class LLMCircuitOpenError(LLMError):
 # ---------------------------------------------------------------------------
 # 工具域
 # ---------------------------------------------------------------------------
+
 
 class ToolError(fnixagentError):
     """工具执行通用错误。"""
@@ -90,6 +99,7 @@ class ToolCyclicDependencyError(ToolError):
 # 记忆与检索域
 # ---------------------------------------------------------------------------
 
+
 class MemoryError(fnixagentError):
     """记忆系统错误。"""
 
@@ -105,6 +115,7 @@ class RetrievalError(fnixagentError):
 # ---------------------------------------------------------------------------
 # 安全域
 # ---------------------------------------------------------------------------
+
 
 class SecurityError(fnixagentError):
     """安全拦截基类。"""
@@ -151,13 +162,9 @@ class GuardrailBlockedError(SecurityError):
             TypeError: reason 不是 str 或 risk_score 不是数值类型
         """
         if not isinstance(reason, str):
-            raise TypeError(
-                f"reason must be str, got {type(reason).__name__}"
-            )
+            raise TypeError(f"reason must be str, got {type(reason).__name__}")
         if not isinstance(risk_score, (int, float)) or isinstance(risk_score, bool):
-            raise TypeError(
-                f"risk_score must be float, got {type(risk_score).__name__}"
-            )
+            raise TypeError(f"risk_score must be float, got {type(risk_score).__name__}")
         # 截断到 [0.0, 1.0],避免上层误传 >1 或 <0 的值
         if risk_score < 0.0:
             risk_score = 0.0
@@ -172,6 +179,7 @@ class GuardrailBlockedError(SecurityError):
 # ---------------------------------------------------------------------------
 # 推理与规划域
 # ---------------------------------------------------------------------------
+
 
 class ReasoningError(fnixagentError):
     """推理引擎错误。"""
@@ -189,6 +197,7 @@ class ReflectionFailedError(ReasoningError):
 # 调度域
 # ---------------------------------------------------------------------------
 
+
 class OrchestratorError(fnixagentError):
     """调度中枢错误。"""
 
@@ -196,6 +205,7 @@ class OrchestratorError(fnixagentError):
 # ---------------------------------------------------------------------------
 # 知识拓扑图 (KTG) 域
 # ---------------------------------------------------------------------------
+
 
 class TopologyError(fnixagentError):
     """知识拓扑图通用错误。"""
@@ -221,6 +231,7 @@ class TopologyLayerViolationError(TopologyError):
 # 技能-拓扑突触协议 (STP) 域
 # ---------------------------------------------------------------------------
 
+
 class SkillError(fnixagentError):
     """技能系统通用错误。"""
 
@@ -240,6 +251,7 @@ class SkillBindingError(SkillError):
 # ---------------------------------------------------------------------------
 # 四阶进化飞轮 (MFP) 域
 # ---------------------------------------------------------------------------
+
 
 class FlywheelError(fnixagentError):
     """进化飞轮通用错误。"""

@@ -28,10 +28,16 @@ fallback 链(BUG 修复):
   导致后续 get_strategy('fast') 仍返回 None。现统一保证至少返回
   已注册策略,极端情况(注册表为空)显式抛 ValueError。
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import re
-from typing import Optional
 
 from fnixagent.core.config import ReasoningConfig
 from fnixagent.core.reasoning.strategies import (
@@ -45,10 +51,8 @@ from fnixagent.core.reasoning.strategies import (
 )
 from fnixagent.core.types import ReasoningMode
 
-
 # 模块级预编译正则(避免每次 _score_complexity 都重新编译)
 _SENTENCE_SPLIT_RE = re.compile(r"[.!?。！？；\n]")
-
 
 class ReasoningSelector:
     """推理策略选择器(P2-6 策略模式)。
@@ -66,18 +70,39 @@ class ReasoningSelector:
 
     # 复杂度关键词(出现说明任务可能需要多步骤)
     _COMPLEX_KEYWORDS: tuple[str, ...] = (
-        "然后", "接着", "之后", "最后", "并", "同时",
-        "多个", "批量", "全部", "完整", "端到端",
-        "步骤", "流程", "工作流", "依次",
+        "然后",
+        "接着",
+        "之后",
+        "最后",
+        "并",
+        "同时",
+        "多个",
+        "批量",
+        "全部",
+        "完整",
+        "端到端",
+        "步骤",
+        "流程",
+        "工作流",
+        "依次",
     )
 
     # 质量要求关键词(出现说明需要自我纠错)
     _QUALITY_KEYWORDS: tuple[str, ...] = (
-        "精确", "准确", "校验", "验证", "重要", "正式",
-        "检查", "确认", "确保", "无误", "严格",
+        "精确",
+        "准确",
+        "校验",
+        "验证",
+        "重要",
+        "正式",
+        "检查",
+        "确认",
+        "确保",
+        "无误",
+        "严格",
     )
 
-    def __init__(self, config: Optional[ReasoningConfig] = None):
+    def __init__(self, config: ReasoningConfig | None = None):
         self._config = config or ReasoningConfig()
         # 策略注册表(P2-6):O(1) 查表
         self._strategies: dict[str, BaseStrategy] = {}
@@ -97,7 +122,7 @@ class ReasoningSelector:
         self.register_strategy(PreciseStrategy())
         self.register_strategy(ComplianceStrategy())
 
-    def register_strategy(self, strategy: BaseStrategy) -> "ReasoningSelector":
+    def register_strategy(self, strategy: BaseStrategy) -> ReasoningSelector:
         """注册新策略(同名覆盖)。
 
         Args:
@@ -107,14 +132,11 @@ class ReasoningSelector:
             self(链式调用)
         """
         if not isinstance(strategy, BaseStrategy):
-            raise TypeError(
-                f"strategy 必须为 BaseStrategy 实例,实际: "
-                f"{type(strategy).__name__}"
-            )
+            raise TypeError(f"strategy 必须为 BaseStrategy 实例,实际: {type(strategy).__name__}")
         self._strategies[strategy.name] = strategy
         return self
 
-    def unregister_strategy(self, name: str) -> Optional[BaseStrategy]:
+    def unregister_strategy(self, name: str) -> BaseStrategy | None:
         """注销策略。
 
         Args:
@@ -125,7 +147,7 @@ class ReasoningSelector:
         """
         return self._strategies.pop(name, None)
 
-    def get_strategy(self, name: str) -> Optional[BaseStrategy]:
+    def get_strategy(self, name: str) -> BaseStrategy | None:
         """按名获取策略(O(1) 查表)。"""
         return self._strategies.get(name)
 
@@ -190,9 +212,7 @@ class ReasoningSelector:
         # 7. 极端情况:无策略注册
         # BUG 修复:原返回 FastStrategy() 临时实例,但该实例未入注册表,
         # 导致后续 get_strategy('fast') 返回 None。现显式抛异常让上层感知。
-        raise ValueError(
-            "ReasoningSelector 无已注册策略,请先 register_strategy()"
-        )
+        raise ValueError("ReasoningSelector 无已注册策略,请先 register_strategy()")
 
     def select_by_complexity(
         self,

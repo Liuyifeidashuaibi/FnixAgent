@@ -8,24 +8,31 @@
 
 全部纯 Python 标准库实现,零第三方依赖。
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from fnixagent.core.retrieval.embedder import (
     BaseEmbedder,
     HashingEmbedder,
-)
-from fnixagent.core.retrieval.vectorstore import (
-    BaseVectorStore,
-    InMemoryVectorStore,
 )
 from fnixagent.core.retrieval.hybrid import (
     BM25Retriever,
     HybridRetriever,
 )
+from fnixagent.core.retrieval.vectorstore import (
+    BaseVectorStore,
+    InMemoryVectorStore,
+)
 
 __all__ = [
-    "BaseEmbedder",
-    "HashingEmbedder",
-    "BaseVectorStore",
-    "InMemoryVectorStore",
     "BM25Retriever",
+    "BaseEmbedder",
+    "BaseVectorStore",
+    "HashingEmbedder",
     "HybridRetriever",
+    "InMemoryVectorStore",
 ]

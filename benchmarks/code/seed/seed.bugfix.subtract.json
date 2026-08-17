@@ -1,0 +1,22 @@
+{
+  "id": "seed.bugfix.subtract",
+  "title": "Fix subtract uses addition",
+  "prompt": "math_utils.py subtract(a,b) incorrectly returns a+b. Fix it to return a-b. Do not change other behavior.",
+  "capability": ["bugfix", "edit"],
+  "difficulty": 1,
+  "language": "python",
+  "tags": ["seed", "smoke"],
+  "timeout_s": 120,
+  "setup": {
+    "files": {
+      "math_utils.py": "def subtract(a, b):\n    return a + b  # bug\n",
+      "test_math_utils.py": "from math_utils import subtract\n\n\ndef test_subtract():\n    assert subtract(5, 3) == 2\n    assert subtract(0, 1) == -1\n"
+    }
+  },
+  "checks": [
+    { "function": "file_not_contains", "args": { "path": "math_utils.py", "text": "a + b" } },
+    { "function": "file_contains", "args": { "path": "math_utils.py", "text": "a - b" } },
+    { "function": "pytest_passes", "args": { "path": "test_math_utils.py" } },
+    { "function": "no_stub_content", "args": {} }
+  ]
+}

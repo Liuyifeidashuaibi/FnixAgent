@@ -8,23 +8,31 @@
   - 内存数据结构, 重启丢失 (生产用 postgres/redis 适配器)
   - 完整实现 6 个 Protocol 接口
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import asyncio
 import hashlib
 import time
-from collections import defaultdict, deque
-from typing import Any, AsyncIterator
+from collections import deque
+from collections.abc import AsyncIterator
+from typing import Any
 
 from fnixagent.core.agent.types import (
-    AuditBackend, LLMBackend, MemoryBackend, MemoryLayer,
-    PolicyBackend, StorageBackend, ToolBackend, utcnow_iso,
+    MemoryLayer,
+    utcnow_iso,
 )
-
 
 # ============================================================================
 # InMemoryLLMBackend
 # ============================================================================
+
 
 class InMemoryLLMBackend:
     """内存 LLM 后端 (Mock 实现, 用于测试)。
@@ -36,8 +44,7 @@ class InMemoryLLMBackend:
       - count_tokens: 简单空格分词计数
     """
 
-    def __init__(self, response_template: str = "[LLM] {prompt}",
-                 embed_dim: int = 128):
+    def __init__(self, response_template: str = "[LLM] {prompt}", embed_dim: int = 128):
         self._template = response_template
         self._embed_dim = embed_dim
         self._call_count = 0
@@ -51,8 +58,7 @@ class InMemoryLLMBackend:
         self._total_tokens += len(prompt.split())
         return self._template.format(prompt=prompt[:100])
 
-    async def stream(self, messages: list[dict[str, Any]],
-                     **kwargs: Any) -> AsyncIterator[str]:
+    async def stream(self, messages: list[dict[str, Any]], **kwargs: Any) -> AsyncIterator[str]:
         self._call_count += 1
         last_msg = messages[-1] if messages else {}
         prompt = str(last_msg.get("content", ""))
@@ -90,6 +96,7 @@ class InMemoryLLMBackend:
 # InMemoryMemoryBackend
 # ============================================================================
 
+
 class InMemoryMemoryBackend:
     """内存记忆后端 (Mock 实现)。
 
@@ -104,24 +111,24 @@ class InMemoryMemoryBackend:
         self._id_map: dict[str, dict] = {}
         self._counter = 0
 
-    async def recall(self, query: str, top_k: int = 5,
-                     layer: MemoryLayer | None = None) -> list[dict]:
+    async def recall(
+        self, query: str, top_k: int = 5, layer: MemoryLayer | None = None
+    ) -> list[dict]:
         layers = [layer] if layer else list(self._stores.keys())
         results: list[dict] = []
         query_lower = query.lower()
         for ly in layers:
             for item in self._stores.get(ly, []):
                 content = str(item.get("content", "")).lower()
-                if query_lower in content or any(
-                    w in content for w in query_lower.split()
-                ):
+                if query_lower in content or any(w in content for w in query_lower.split()):
                     item_copy = dict(item)
                     item_copy["score"] = 0.9  # 简单评分
                     results.append(item_copy)
         return results[:top_k]
 
-    async def store(self, content: str, metadata: dict[str, Any],
-                    layer: MemoryLayer = MemoryLayer.EPISODIC) -> str:
+    async def store(
+        self, content: str, metadata: dict[str, Any], layer: MemoryLayer = MemoryLayer.EPISODIC
+    ) -> str:
         self._counter += 1
         memory_id = f"mem-{self._counter}"
         item = {
@@ -135,8 +142,9 @@ class InMemoryMemoryBackend:
         self._id_map[memory_id] = item
         return memory_id
 
-    async def search(self, query: str, top_k: int = 5,
-                     layer: MemoryLayer | None = None) -> list[dict]:
+    async def search(
+        self, query: str, top_k: int = 5, layer: MemoryLayer | None = None
+    ) -> list[dict]:
         return await self.recall(query, top_k=top_k, layer=layer)
 
     async def forget(self, memory_id: str) -> bool:
@@ -162,6 +170,7 @@ class InMemoryMemoryBackend:
 # InMemoryToolBackend
 # ============================================================================
 
+
 class InMemoryToolBackend:
     """内存工具后端 (Mock 实现)。
 
@@ -172,13 +181,16 @@ class InMemoryToolBackend:
         self._tools: dict[str, dict[str, Any]] = {}
         self._handlers: dict[str, Any] = {}
         # 内置工具
-        self.register("echo", {"description": "回显输入"},
-                      lambda args: {"echo": args.get("text", "")})
-        self.register("add", {"description": "加法"},
-                      lambda args: {"sum": args.get("a", 0) + args.get("b", 0)})
+        self.register(
+            "echo", {"description": "回显输入"}, lambda args: {"echo": args.get("text", "")}
+        )
+        self.register(
+            "add",
+            {"description": "加法"},
+            lambda args: {"sum": args.get("a", 0) + args.get("b", 0)},
+        )
 
-    def register(self, name: str, metadata: dict[str, Any],
-                 handler: Any) -> None:
+    def register(self, name: str, metadata: dict[str, Any], handler: Any) -> None:
         """注册工具。"""
         self._tools[name] = metadata
         self._handlers[name] = handler
@@ -199,6 +211,7 @@ class InMemoryToolBackend:
 # ============================================================================
 # InMemoryStorageBackend
 # ============================================================================
+
 
 class InMemoryStorageBackend:
     """内存存储后端 (Mock 实现)。
@@ -244,16 +257,14 @@ class InMemoryStorageBackend:
     def get_stats(self) -> dict[str, Any]:
         return {
             "total_keys": len(self._data),
-            "expired_keys": sum(
-                1 for _, exp in self._data.values()
-                if exp and time.time() > exp
-            ),
+            "expired_keys": sum(1 for _, exp in self._data.values() if exp and time.time() > exp),
         }
 
 
 # ============================================================================
 # InMemoryPolicyBackend
 # ============================================================================
+
 
 class InMemoryPolicyBackend:
     """内存策略后端 (Mock 实现)。
@@ -270,25 +281,29 @@ class InMemoryPolicyBackend:
         self._rules: list[tuple[str, str, str, bool]] = []
         self._default_allow = default_allow
 
-    def add_rule(self, action_pattern: str, resource_pattern: str,
-                 subject_pattern: str, allow: bool) -> None:
+    def add_rule(
+        self, action_pattern: str, resource_pattern: str, subject_pattern: str, allow: bool
+    ) -> None:
         """添加策略规则。"""
-        self._rules.append((action_pattern, resource_pattern,
-                            subject_pattern, allow))
+        self._rules.append((action_pattern, resource_pattern, subject_pattern, allow))
 
     @staticmethod
     def _match(pattern: str, value: str) -> bool:
         import fnmatch
+
         if pattern == "*":
             return True
         return fnmatch.fnmatch(value, pattern)
 
-    async def evaluate(self, action: str, resource: str, subject: str,
-                       context: dict[str, Any]) -> tuple[bool, str]:
+    async def evaluate(
+        self, action: str, resource: str, subject: str, context: dict[str, Any]
+    ) -> tuple[bool, str]:
         for ap, rp, sp, allow in self._rules:
-            if (self._match(ap, action) and
-                self._match(rp, resource or "*") and
-                    self._match(sp, subject)):
+            if (
+                self._match(ap, action)
+                and self._match(rp, resource or "*")
+                and self._match(sp, subject)
+            ):
                 if allow:
                     return True, ""
                 return False, f"策略拒绝: {ap}/{rp}/{sp}"
@@ -301,6 +316,7 @@ class InMemoryPolicyBackend:
 # InMemoryAuditBackend
 # ============================================================================
 
+
 class InMemoryAuditBackend:
     """内存审计后端 (带简单哈希链)。
 
@@ -311,9 +327,13 @@ class InMemoryAuditBackend:
         self._entries: deque[dict] = deque(maxlen=max_entries)
         self._last_hash: str = "0" * 64  # 创世哈希
 
-    async def log(self, action: str, subject: str | None = None,
-                  detail: dict[str, Any] | None = None,
-                  trace_id: str | None = None) -> None:
+    async def log(
+        self,
+        action: str,
+        subject: str | None = None,
+        detail: dict[str, Any] | None = None,
+        trace_id: str | None = None,
+    ) -> None:
         entry = {
             "action": action,
             "subject": subject,
@@ -328,15 +348,19 @@ class InMemoryAuditBackend:
         self._last_hash = entry["hash"]
         self._entries.append(entry)
 
-    async def query(self, limit: int = 100, offset: int = 0,
-                    action: str | None = None,
-                    subject: str | None = None) -> list[dict]:
+    async def query(
+        self,
+        limit: int = 100,
+        offset: int = 0,
+        action: str | None = None,
+        subject: str | None = None,
+    ) -> list[dict]:
         entries = list(self._entries)
         if action:
             entries = [e for e in entries if e.get("action") == action]
         if subject:
             entries = [e for e in entries if e.get("subject") == subject]
-        return entries[offset:offset + limit]
+        return entries[offset : offset + limit]
 
     def verify_chain(self) -> tuple[bool, int | None]:
         """验证哈希链完整性。"""
@@ -355,6 +379,10 @@ class InMemoryAuditBackend:
 
 
 __all__ = [
-    "InMemoryLLMBackend", "InMemoryMemoryBackend", "InMemoryToolBackend",
-    "InMemoryStorageBackend", "InMemoryPolicyBackend", "InMemoryAuditBackend",
+    "InMemoryAuditBackend",
+    "InMemoryLLMBackend",
+    "InMemoryMemoryBackend",
+    "InMemoryPolicyBackend",
+    "InMemoryStorageBackend",
+    "InMemoryToolBackend",
 ]

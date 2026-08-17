@@ -17,6 +17,13 @@
   - 若未配置 SecretManager,lease() 抛 ValueError
   - Cubbyhole 不依赖 SecretManager,直接接收 secrets dict
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import json
@@ -26,7 +33,7 @@ import secrets as _secrets
 import threading
 import time
 from dataclasses import asdict, dataclass, field
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from fnixagent.core.security.secrets import SecretManager
@@ -38,21 +45,18 @@ _DEFAULT_LEASES_FILE = ".leases.json"
 # 默认最大 TTL(24 小时)
 _DEFAULT_MAX_TTL = 86400
 
-
 # ---------------------------------------------------------------------------
 # 异常
 # ---------------------------------------------------------------------------
 
-
 class LeaseExpiredError(Exception):
     """租约已过期或已撤销。"""
-    pass
 
+    pass
 
 # ---------------------------------------------------------------------------
 # 数据结构
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class LeasedSecret:
@@ -68,6 +72,7 @@ class LeasedSecret:
         max_ttl:    最大 TTL(秒,默认 86400=24h)
         bound_to:   绑定的 task_id / user_id(None 表示不绑定)
     """
+
     name: str
     value: str
     lease_id: str
@@ -75,8 +80,7 @@ class LeasedSecret:
     expires_at: float
     renewable: bool = True
     max_ttl: int = _DEFAULT_MAX_TTL
-    bound_to: Optional[str] = None
-
+    bound_to: str | None = None
 
 @dataclass
 class CubbyholeToken:
@@ -89,17 +93,16 @@ class CubbyholeToken:
         expires_at: 过期时间(unix timestamp)
         used:       是否已使用(用后立即置 True)
     """
+
     token: str
     task_id: str
     secrets: dict[str, str] = field(default_factory=dict)
     expires_at: float = 0.0
     used: bool = False
 
-
 # ---------------------------------------------------------------------------
 # LeaseManager
 # ---------------------------------------------------------------------------
-
 
 class LeaseManager:
     """密钥租约管理器(线程安全)。
@@ -122,8 +125,8 @@ class LeaseManager:
 
     def __init__(
         self,
-        secret_manager: Optional["SecretManager"] = None,
-        persist_path: Optional[str] = None,
+        secret_manager: SecretManager | None = None,
+        persist_path: str | None = None,
     ) -> None:
         self._secret_manager = secret_manager
         self._lock = threading.Lock()
@@ -137,7 +140,7 @@ class LeaseManager:
         self,
         name: str,
         ttl_seconds: int = 3600,
-        bound_to: Optional[str] = None,
+        bound_to: str | None = None,
     ) -> LeasedSecret:
         """签发凭证租约(从 SecretManager 取值并包装)。
 
@@ -179,7 +182,10 @@ class LeaseManager:
             self._leases[lease_id] = leased
         logger.debug(
             "[leases] 签发租约 %s (name=%s, bound_to=%s, ttl=%ds)",
-            lease_id, name, bound_to, actual_ttl,
+            lease_id,
+            name,
+            bound_to,
+            actual_ttl,
         )
         return leased
 
@@ -242,33 +248,29 @@ class LeaseManager:
         """撤销绑定到指定 task_id / user_id 的所有租约,返回撤销数。"""
         count = 0
         with self._lock:
-            to_remove = [
-                lid for lid, ls in self._leases.items()
-                if ls.bound_to == bound_to
-            ]
+            to_remove = [lid for lid, ls in self._leases.items() if ls.bound_to == bound_to]
             for lid in to_remove:
                 del self._leases[lid]
                 count += 1
         if count > 0:
             logger.info(
-                "[leases] 批量撤销 %d 个租约(bound_to=%s)", count, bound_to,
+                "[leases] 批量撤销 %d 个租约(bound_to=%s)",
+                count,
+                bound_to,
             )
         return count
 
-    def list_leases(self, bound_to: Optional[str] = None) -> list[LeasedSecret]:
+    def list_leases(self, bound_to: str | None = None) -> list[LeasedSecret]:
         """列出租约(bound_to 过滤;已过期的惰性清理)。"""
         now = time.time()
         with self._lock:
             # 惰性清理过期租约
-            expired = [
-                lid for lid, ls in self._leases.items() if ls.expires_at <= now
-            ]
+            expired = [lid for lid, ls in self._leases.items() if ls.expires_at <= now]
             for lid in expired:
                 del self._leases[lid]
             # 过滤返回
             result = [
-                ls for ls in self._leases.values()
-                if bound_to is None or ls.bound_to == bound_to
+                ls for ls in self._leases.values() if bound_to is None or ls.bound_to == bound_to
             ]
             return result
 
@@ -276,23 +278,19 @@ class LeaseManager:
         """主动清理所有过期租约,返回清理数。"""
         now = time.time()
         with self._lock:
-            expired = [
-                lid for lid, ls in self._leases.items() if ls.expires_at <= now
-            ]
+            expired = [lid for lid, ls in self._leases.items() if ls.expires_at <= now]
             for lid in expired:
                 del self._leases[lid]
             # 同时清理过期 cubbyhole
-            expired_cb = [
-                tok for tok, ct in self._cubbyholes.items()
-                if ct.expires_at <= now
-            ]
+            expired_cb = [tok for tok, ct in self._cubbyholes.items() if ct.expires_at <= now]
             for tok in expired_cb:
                 del self._cubbyholes[tok]
         total = len(expired) + len(expired_cb)
         if total > 0:
             logger.info(
                 "[leases] 清理 %d 个过期租约 + %d 个过期 cubbyhole",
-                len(expired), len(expired_cb),
+                len(expired),
+                len(expired_cb),
             )
         return total
 
@@ -327,7 +325,9 @@ class LeaseManager:
             self._cubbyholes[token] = ct
         logger.debug(
             "[leases] 创建 Cubbyhole(task=%s, ttl=%ds, keys=%s)",
-            task_id, ttl, list(secrets.keys()),
+            task_id,
+            ttl,
+            list(secrets.keys()),
         )
         return ct
 
@@ -387,7 +387,7 @@ class LeaseManager:
         if self._persist_path is None or not os.path.exists(self._persist_path):
             return 0
         try:
-            with open(self._persist_path, "r", encoding="utf-8") as f:
+            with open(self._persist_path, encoding="utf-8") as f:
                 data = json.load(f)
             now = time.time()
             count = 0
@@ -410,11 +410,9 @@ class LeaseManager:
         """惰性删除过期租约(调用方需持锁)。"""
         self._leases.pop(lease_id, None)
 
-
 # ---------------------------------------------------------------------------
 # 后台定时清理(可选,需调用方启动线程)
 # ---------------------------------------------------------------------------
-
 
 class LeaseCleaner:
     """租约后台清理器(定时调用 cleanup_expired)。
@@ -433,7 +431,7 @@ class LeaseCleaner:
     ) -> None:
         self._manager = manager
         self._interval = interval
-        self._thread: Optional[threading.Thread] = None
+        self._thread: threading.Thread | None = None
         self._stop_event = threading.Event()
 
     def start(self) -> None:
@@ -442,7 +440,9 @@ class LeaseCleaner:
             return
         self._stop_event.clear()
         self._thread = threading.Thread(
-            target=self._run, daemon=True, name="lease-cleaner",
+            target=self._run,
+            daemon=True,
+            name="lease-cleaner",
         )
         self._thread.start()
         logger.info("[leases] 后台清理线程已启动(interval=%ds)", self._interval)

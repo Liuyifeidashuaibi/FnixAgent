@@ -18,17 +18,22 @@ Embedding 模型封装。
   - 结果缓存:相同文本直接命中缓存,避免重复哈希
   - 批量化:embed_batch 逐条调用 embed,但缓存可减少跨批次重复计算
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import abc
 import hashlib
 import struct
 from collections import OrderedDict
-from typing import Sequence
 
 from fnixagent.core.mathops import (
     batch_cosine_similarity,
-    cosine_similarity,
     l2_normalize,
     top_k_with_scores,
 )
@@ -38,7 +43,6 @@ Vector = list[float]
 
 # Embedding 缓存默认上限(条),超出按 LRU 淘汰
 DEFAULT_CACHE_SIZE: int = 1024
-
 
 class BaseEmbedder(abc.ABC):
     """Embedding 模型抽象基类。
@@ -98,7 +102,6 @@ class BaseEmbedder(abc.ABC):
     def clear_cache(self) -> None:
         """清空 embedding 缓存。"""
         self._cache.clear()
-
 
 class HashingEmbedder(BaseEmbedder):
     """
@@ -170,7 +173,6 @@ class HashingEmbedder(BaseEmbedder):
     def embed_batch(self, texts: list[str]) -> list[Vector]:
         """批量编码(逐条调用 embed, 命中 LRU 缓存以减少重复哈希)。"""
         return [self.embed(t) for t in texts]
-
 
 # ---------------------------------------------------------------------------
 # 检索便捷函数

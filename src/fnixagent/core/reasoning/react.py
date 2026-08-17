@@ -23,11 +23,18 @@
     追加 observation 提示并终止循环(避免空转耗尽 max_iterations)
   - 达到 max_iterations → 追加"未完成"步骤后返回(不抛异常,保留 trace)
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import json
 import re
-from typing import Any, Optional
+from typing import Any
 
 from fnixagent.core.reasoning.base import ReasoningContext, ReasoningEngine
 from fnixagent.core.types import (
@@ -38,7 +45,6 @@ from fnixagent.core.types import (
     ThoughtStep,
     ToolCall,
 )
-
 
 class ReActEngine(ReasoningEngine):
     """ReAct 推理引擎。
@@ -79,11 +85,13 @@ class ReActEngine(ReasoningEngine):
 
             # 步骤 3a: 命中 Final Answer → 任务完成,直接返回
             if final_answer:
-                trace.steps.append(ThoughtStep(
-                    thought=thought or final_answer,
-                    action=None,
-                    observation=None,
-                ))
+                trace.steps.append(
+                    ThoughtStep(
+                        thought=thought or final_answer,
+                        action=None,
+                        observation=None,
+                    )
+                )
                 return trace
 
             # 步骤 3b: 命中 Action → 执行工具,记录 Observation
@@ -105,45 +113,55 @@ class ReActEngine(ReasoningEngine):
                 trace.steps.append(step)
 
                 # 将本轮 LLM 输出 + 工具结果加入 scratchpad,供下一轮 LLM 参考
-                scratchpad.append(Message(
-                    role=MessageRole.ASSISTANT,
-                    content=raw,
-                ))
-                scratchpad.append(Message(
-                    role=MessageRole.TOOL,
-                    content=json.dumps(
-                        {
-                            "tool": action,
-                            "result": str(result.output),
-                            "status": result.status.value,
-                        },
-                        ensure_ascii=False,
-                    ),
-                    name=action,
-                ))
+                scratchpad.append(
+                    Message(
+                        role=MessageRole.ASSISTANT,
+                        content=raw,
+                    )
+                )
+                scratchpad.append(
+                    Message(
+                        role=MessageRole.TOOL,
+                        content=json.dumps(
+                            {
+                                "tool": action,
+                                "result": str(result.output),
+                                "status": result.status.value,
+                            },
+                            ensure_ascii=False,
+                        ),
+                        name=action,
+                    )
+                )
                 continue
 
             # 步骤 3c: LLM 仅输出 Thought,无 Action 也无 Final Answer
             # BUG 修复:原实现只追加 raw 后继续循环,可能让 LLM 反复空转耗尽迭代
             # 现追加显式提示并终止循环,保留已完成的 trace 供上层决策
-            trace.steps.append(ThoughtStep(
-                thought=thought or raw or "LLM 未输出 Action/Final Answer",
-                action=None,
-                observation=None,
-            ))
-            scratchpad.append(Message(
-                role=MessageRole.ASSISTANT,
-                content=raw,
-            ))
+            trace.steps.append(
+                ThoughtStep(
+                    thought=thought or raw or "LLM 未输出 Action/Final Answer",
+                    action=None,
+                    observation=None,
+                )
+            )
+            scratchpad.append(
+                Message(
+                    role=MessageRole.ASSISTANT,
+                    content=raw,
+                )
+            )
             # 终止循环:LLM 卡在思考,继续重试无意义
             break
 
         # 循环耗尽 max_iterations 仍未得到 Final Answer
         # 不抛异常,保留 trace 供上层(反思/重规划)决策
         if not trace.steps or trace.steps[-1].action is not None:
-            trace.steps.append(ThoughtStep(
-                thought="达到最大迭代次数,未能完成任务",
-            ))
+            trace.steps.append(
+                ThoughtStep(
+                    thought="达到最大迭代次数,未能完成任务",
+                )
+            )
         return trace
 
     # -- Prompt 构建 -------------------------------------------------------
@@ -155,12 +173,11 @@ class ReActEngine(ReasoningEngine):
             role=MessageRole.SYSTEM,
             content=(
                 "你是一个智能助手,通过工具完成任务。\n"
-                "可用工具:\n" +
-                "\n".join(
-                    f"- {t['function']['name']}: {t['function']['description']}"
-                    for t in tool_desc
-                ) +
-                "\n\n请按以下格式回复:\n"
+                "可用工具:\n"
+                + "\n".join(
+                    f"- {t['function']['name']}: {t['function']['description']}" for t in tool_desc
+                )
+                + "\n\n请按以下格式回复:\n"
                 "Thought: 你的思考\n"
                 "Action: 工具名\n"
                 'Action Input: {"参数": "值"}\n\n'
@@ -172,9 +189,7 @@ class ReActEngine(ReasoningEngine):
 
     # -- 输出解析 ----------------------------------------------------------
 
-    def _parse(
-        self, raw: str
-    ) -> tuple[Optional[str], Optional[str], Optional[dict[str, Any]], Optional[str]]:
+    def _parse(self, raw: str) -> tuple[str | None, str | None, dict[str, Any] | None, str | None]:
         """解析 LLM 的 ReAct 格式输出。
 
         Returns:
@@ -187,10 +202,10 @@ class ReActEngine(ReasoningEngine):
         if not raw:
             return None, None, None, None
 
-        thought: Optional[str] = None
-        action: Optional[str] = None
-        action_input: Optional[dict[str, Any]] = None
-        final_answer: Optional[str] = None
+        thought: str | None = None
+        action: str | None = None
+        action_input: dict[str, Any] | None = None
+        final_answer: str | None = None
 
         # Thought: 非贪婪匹配到下一个 "首字母大写标签" 行或文末
         m = re.search(r"Thought:\s*(.+?)(?=\n[A-Z]|\Z)", raw, re.DOTALL)

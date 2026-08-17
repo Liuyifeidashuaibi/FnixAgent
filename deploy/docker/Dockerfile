@@ -1,33 +1,27 @@
-# FnixAgent 部署配置
-
+# FnixAgent production image
 FROM python:3.11-slim
 
-# 设置工作目录
 WORKDIR /app
 
-# 安装系统依赖
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
-# 复制依赖文件
 COPY pyproject.toml requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt \
+    && pip install --no-cache-dir -e . || pip install --no-cache-dir .
 
-# 安装Python依赖
-RUN pip install --no-cache-dir -r requirements.txt
-
-# 复制应用代码
 COPY src/ ./src/
 COPY config/ ./config/
 COPY scripts/ ./scripts/
 
-# 设置环境变量
 ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app/src
 ENV SERVICE_ENV=production
+ENV SERVICE_DEBUG=false
+ENV FNIXAGENT_MODE=legacy
 
-# 暴露端口
 EXPOSE 8000
 
-# 启动命令
-CMD ["python", "src/fnixagent/main.py"]
+CMD ["python", "-m", "fnixagent.main", "serve", "--host", "0.0.0.0", "--port", "8000", "--no-reload"]

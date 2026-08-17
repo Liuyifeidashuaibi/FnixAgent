@@ -1,4 +1,4 @@
-﻿"""
+"""
 技能-拓扑突触协议 (STP) 模块单元测试公共夹具。
 
 提供以下 fixtures:
@@ -10,6 +10,13 @@
     - feedback_handler:   SkillFeedbackHandler 实例
     - sample_path:        一条 TopologyPath(L2→L3→L4)
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 import os
 import sys
 
@@ -31,13 +38,12 @@ from fnixagent.core.types import (
     SkillLevel,
     TopologyLayer,
     TopologyPath,
-    ToolPermission,
 )
-
 
 # ---------------------------------------------------------------------------
 # 拓扑图(包含 L1→L2→L3→L4 完整层级,L2 节点已绑定技能)
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def sample_graph() -> TopologyGraph:
@@ -106,18 +112,15 @@ def sample_graph() -> TopologyGraph:
 
     graph.add_edge("L1:goal1", "L2:concept1", EdgeType.CONTAINS, edge_id="e1")
     graph.add_edge("L1:goal1", "L2:concept2", EdgeType.CONTAINS, edge_id="e2")
-    graph.add_edge(
-        "L2:concept1", "L3:rule1", EdgeType.DEPENDS_ON, weight=0.6, edge_id="e3"
-    )
-    graph.add_edge(
-        "L3:rule1", "L4:fact1", EdgeType.DEPENDS_ON, weight=0.7, edge_id="e4"
-    )
+    graph.add_edge("L2:concept1", "L3:rule1", EdgeType.DEPENDS_ON, weight=0.6, edge_id="e3")
+    graph.add_edge("L3:rule1", "L4:fact1", EdgeType.DEPENDS_ON, weight=0.7, edge_id="e4")
     return graph
 
 
 # ---------------------------------------------------------------------------
 # 工具注册中心(注册 4 个测试工具,覆盖三种 skill_level)
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def sample_registry() -> ToolRegistry:
@@ -181,6 +184,7 @@ def sample_registry() -> ToolRegistry:
 # STP 组件实例
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def binding_protocol(sample_graph: TopologyGraph) -> SkillBindingProtocol:
     """返回基于 sample_graph 的 SkillBindingProtocol 实例。"""
@@ -216,6 +220,7 @@ def feedback_handler(sample_graph: TopologyGraph) -> SkillFeedbackHandler:
 # ---------------------------------------------------------------------------
 # 推理路径(L2→L3→L4)
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def sample_path() -> TopologyPath:

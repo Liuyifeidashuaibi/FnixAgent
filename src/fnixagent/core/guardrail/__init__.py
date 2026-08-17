@@ -21,8 +21,22 @@
     ctx = GuardrailContext(tool_name="delete_file", tool_arguments={...})
     results = registry.run_execution(ctx)
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
+from fnixagent.core.guardrail.builtin import (
+    HighRiskOperationGuardrail,
+    OutputFormatGuardrail,
+    SensitiveOutputGuardrail,
+    ToolParameterGuardrail,
+    ToolPermissionGuardrail,
+)
 from fnixagent.core.guardrail.registry import (
     BaseGuardrailGate,
     ExecutionGuardrail,
@@ -35,13 +49,6 @@ from fnixagent.core.guardrail.registry import (
     OutputGuardrailGate,
     get_guardrail_registry,
     reset_guardrail_registry,
-)
-from fnixagent.core.guardrail.builtin import (
-    HighRiskOperationGuardrail,
-    OutputFormatGuardrail,
-    SensitiveOutputGuardrail,
-    ToolParameterGuardrail,
-    ToolPermissionGuardrail,
 )
 
 __all__ = [

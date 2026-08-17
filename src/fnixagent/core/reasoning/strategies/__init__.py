@@ -18,22 +18,29 @@ ReasoningSelector 改造为策略模式:
   - 旧版 select(goal, tools) → ReasoningMode(保留向后兼容)
   - 新版 select_strategy(...) → BaseStrategy
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from fnixagent.core.reasoning.strategies.base import (
     BaseStrategy,
     StrategyContext,
     StrategyType,
 )
-from fnixagent.core.reasoning.strategies.fast import FastStrategy
 from fnixagent.core.reasoning.strategies.cheap import CheapStrategy
-from fnixagent.core.reasoning.strategies.precise import PreciseStrategy
 from fnixagent.core.reasoning.strategies.compliance import ComplianceStrategy
+from fnixagent.core.reasoning.strategies.fast import FastStrategy
+from fnixagent.core.reasoning.strategies.precise import PreciseStrategy
 
 __all__ = [
     "BaseStrategy",
+    "CheapStrategy",
+    "ComplianceStrategy",
+    "FastStrategy",
+    "PreciseStrategy",
     "StrategyContext",
     "StrategyType",
-    "FastStrategy",
-    "CheapStrategy",
-    "PreciseStrategy",
-    "ComplianceStrategy",
 ]

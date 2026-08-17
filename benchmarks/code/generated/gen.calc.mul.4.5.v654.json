@@ -1,0 +1,42 @@
+{
+  "id": "gen.calc.mul.4.5.v654",
+  "title": "calc mul (4,5)",
+  "prompt": "Implement `calc(a, b)` in `calc.py` for integer mul. Make tests pass.",
+  "capability": [
+    "write",
+    "edit"
+  ],
+  "difficulty": 1,
+  "language": "python",
+  "tags": [
+    "generated",
+    "calc",
+    "mul",
+    "full"
+  ],
+  "timeout_s": 120,
+  "setup": {
+    "files": {
+      "calc.py": "def calc(a, b):\n    return a * b\n",
+      "test_calc.py": "from calc import calc\n\n\ndef test_op():\n    assert calc(4, 5) == 20\n"
+    }
+  },
+  "checks": [
+    {
+      "function": "compile_ok",
+      "args": {
+        "path": "calc.py"
+      }
+    },
+    {
+      "function": "pytest_passes",
+      "args": {
+        "path": "test_calc.py"
+      }
+    },
+    {
+      "function": "no_stub_content",
+      "args": {}
+    }
+  ]
+}

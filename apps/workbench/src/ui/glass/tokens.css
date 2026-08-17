@@ -1,0 +1,869 @@
+/**
+ * Fnix Glass Kit — ChatGPT / Codex light frost.
+ * Scope: .fnix-glass 根节点。无 blur 时降级为不透明浅底。
+ */
+
+.fnix-glass {
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-bg-strong: rgba(255, 255, 255, 0.88);
+  --glass-bg-soft: rgba(247, 247, 248, 0.82);
+  --glass-bg-inset: rgba(244, 244, 244, 0.9);
+  --glass-blur: 18px;
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --glass-border-2: rgba(0, 0, 0, 0.12);
+  --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  --glass-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  --glass-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.1);
+  --glass-text: #0d0d0d;
+  --glass-muted: #5d5d5d;
+  --glass-faint: #8e8e8e;
+  --glass-ok: #17663a;
+  --glass-danger: #b42318;
+  --glass-accent: #10a37f;
+  --glass-accent-code: #7c3aed;
+  --glass-r-sm: 10px;
+  --glass-r-md: 14px;
+  --glass-r-lg: 24px;
+  --glass-r-pill: 999px;
+  --glass-font: ui-sans-serif, -apple-system, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --glass-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  color: var(--glass-text);
+  font-family: var(--glass-font);
+  -webkit-font-smoothing: antialiased;
+}
+
+.fnix-glass .glass-surface,
+.fnix-glass .glass-float,
+.fnix-glass .glass-inset {
+  border: 1px solid var(--glass-border);
+  color: var(--glass-text);
+  box-shadow: var(--glass-highlight), var(--glass-shadow);
+  background: var(--glass-bg-strong);
+}
+
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .fnix-glass .glass-surface,
+  .fnix-glass .glass-float {
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.2);
+    backdrop-filter: blur(var(--glass-blur)) saturate(1.2);
+  }
+  .fnix-glass .glass-inset {
+    background: var(--glass-bg-soft);
+    -webkit-backdrop-filter: blur(12px) saturate(1.1);
+    backdrop-filter: blur(12px) saturate(1.1);
+  }
+}
+
+.fnix-glass .glass-surface {
+  border-radius: var(--glass-r-md);
+}
+
+.fnix-glass .glass-float {
+  border-radius: var(--glass-r-lg);
+  box-shadow: var(--glass-highlight), var(--glass-shadow-lg);
+  border-color: var(--glass-border-2);
+}
+
+.fnix-glass .glass-inset {
+  border-radius: var(--glass-r-md);
+  box-shadow: var(--glass-highlight);
+}
+
+.fnix-glass .glass-hairline {
+  border: 1px solid var(--glass-border);
+}
+
+/* ── Icon button ── */
+.fnix-glass .glass-ibtn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--glass-r-sm);
+  background: transparent;
+  color: var(--glass-muted);
+  display: inline-grid;
+  place-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.fnix-glass .glass-ibtn:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--glass-text);
+}
+.fnix-glass .glass-ibtn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.fnix-glass .glass-ibtn:focus-visible,
+.fnix-glass .glass-seg button:focus-visible,
+.fnix-glass .glass-pill:focus-visible,
+.fnix-glass .glass-send:focus-visible,
+.fnix-glass .glass-capsule-main:focus-visible,
+.fnix-glass .glass-capsule-diff:focus-visible,
+.fnix-glass .glass-goal-btn:focus-visible,
+.fnix-glass .glass-process-diff:focus-visible {
+  outline: 2px solid rgba(0, 122, 255, 0.42);
+  outline-offset: 2px;
+}
+.fnix-glass .glass-ibtn.sm {
+  width: 28px;
+  height: 28px;
+}
+.fnix-glass .glass-ibtn.round {
+  border-radius: var(--glass-r-pill);
+  background: var(--glass-bg-inset);
+}
+.fnix-glass .glass-ibtn.round:hover:not(:disabled) {
+  background: #ebebeb;
+}
+
+/* ── Segment ── */
+.fnix-glass .glass-seg {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg-inset);
+  gap: 2px;
+}
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .fnix-glass .glass-seg {
+    background: rgba(244, 244, 244, 0.75);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+  }
+}
+.fnix-glass .glass-seg button {
+  height: 28px;
+  min-width: 64px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--glass-muted);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 550;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, box-shadow 0.12s ease;
+}
+.fnix-glass .glass-seg button.on {
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--glass-text);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), var(--glass-highlight);
+}
+.fnix-glass .glass-seg button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* ── Panel ── */
+.fnix-glass .glass-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  border-left: 1px solid var(--glass-border);
+  background: var(--glass-bg-strong);
+}
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .fnix-glass .glass-panel {
+    background: rgba(250, 250, 250, 0.78);
+    -webkit-backdrop-filter: blur(16px) saturate(1.15);
+    backdrop-filter: blur(16px) saturate(1.15);
+  }
+}
+.fnix-glass .glass-panel-h {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--glass-border);
+  font-size: 13px;
+  font-weight: 650;
+}
+.fnix-glass .glass-panel-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+.fnix-glass .glass-panel-footer {
+  flex-shrink: 0;
+}
+
+/* ── Composer ── */
+.fnix-glass .glass-composer {
+  width: min(768px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 14px 10px;
+  border-radius: 28px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: var(--glass-highlight), 0 4px 24px rgba(0, 0, 0, 0.06);
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .fnix-glass .glass-composer {
+    background: rgba(255, 255, 255, 0.7);
+    -webkit-backdrop-filter: blur(20px) saturate(1.25);
+    backdrop-filter: blur(20px) saturate(1.25);
+  }
+}
+.fnix-glass .glass-composer:focus-within {
+  border-color: rgba(0, 0, 0, 0.16);
+  box-shadow: var(--glass-highlight), 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+.fnix-glass .glass-composer.compact {
+  width: 100%;
+  border-radius: 24px;
+  padding: 12px 12px 10px 14px;
+  gap: 12px;
+}
+.fnix-glass .glass-composer.with-modes .glass-comp-modes {
+  margin-bottom: 2px;
+}
+
+/* ---- 上传附件：composer 内预览 chips + 用户消息内渲染 ---- */
+.fnix-glass .oai-attach-input { display: none; }
+.fnix-glass .oai-attach-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.fnix-glass .oai-attach-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 230px;
+  padding: 6px 8px 6px 6px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(247, 247, 248, 0.92);
+  color: #1c1c1e;
+}
+.fnix-glass .oai-attach-chip.is-image .oai-attach-thumb {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex: 0 0 auto;
+}
+.fnix-glass .oai-attach-fileico { font-size: 20px; line-height: 1; }
+.fnix-glass .oai-attach-meta { display: flex; flex-direction: column; min-width: 0; }
+.fnix-glass .oai-attach-name {
+  font-size: 12.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+}
+.fnix-glass .oai-attach-size { font-size: 11px; color: #8a8a8e; }
+.fnix-glass .oai-attach-x {
+  border: none;
+  background: transparent;
+  color: #8a8a8e;
+  cursor: pointer;
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 50%;
+}
+.fnix-glass .oai-attach-x:hover { background: rgba(0, 0, 0, 0.06); color: #1c1c1e; }
+.fnix-glass .oai-msg-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.fnix-glass .oai-msg-att {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 240px;
+  text-decoration: none;
+  color: inherit;
+}
+.fnix-glass .oai-msg-att.is-image { flex-direction: column; align-items: flex-start; }
+.fnix-glass .oai-msg-att.is-image img {
+  width: 160px;
+  max-height: 160px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+.fnix-glass .oai-msg-att-name {
+  font-size: 12px;
+  color: #6b6b70;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+.fnix-glass .oai-msg-att-ico { font-size: 18px; }
+.fnix-glass .glass-composer textarea {
+  width: 100%;
+  border: none;
+  outline: none;
+  resize: none;
+  background: transparent;
+  font: inherit;
+  font-size: 16px;
+  min-height: 28px;
+  max-height: 160px;
+  color: var(--glass-text);
+}
+.fnix-glass .glass-composer textarea::placeholder {
+  color: var(--glass-faint);
+}
+.fnix-glass .glass-comp-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+.fnix-glass .glass-comp-l,
+.fnix-glass .glass-comp-r {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+  flex-shrink: 1;
+  min-width: 0;
+}
+.fnix-glass .glass-comp-r {
+  justify-content: flex-end;
+  overflow: hidden;
+}
+.fnix-glass .glass-pill {
+  height: 28px;
+  padding: 0 10px;
+  border-radius: var(--glass-r-pill);
+  border: 1px solid var(--glass-border);
+  background: rgba(247, 247, 248, 0.9);
+  color: var(--glass-muted);
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  font: inherit;
+  white-space: nowrap;
+  max-width: 200px;
+  overflow: hidden;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+.fnix-glass .glass-pill > span,
+.fnix-glass .oai-pill > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fnix-glass .glass-pill:hover {
+  background: #ebebeb;
+  border-color: rgba(0, 0, 0, 0.14);
+  color: var(--glass-text);
+}
+.fnix-glass .glass-send {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--glass-r-pill);
+  border: none;
+  background: #0d0d0d;
+  color: #fff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+.fnix-glass .glass-send:not(:disabled):hover {
+  transform: scale(1.04);
+}
+.fnix-glass .glass-send.stop {
+  background: #0d0d0d;
+}
+.fnix-glass .glass-send:disabled {
+  opacity: 0.22;
+  cursor: default;
+}
+
+/* ── Capsule ── */
+.fnix-glass .glass-capsule {
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  background: rgba(250, 250, 250, 0.85);
+  overflow: hidden;
+  box-shadow: var(--glass-highlight);
+}
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .fnix-glass .glass-capsule {
+    background: rgba(255, 255, 255, 0.55);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+}
+.fnix-glass .glass-capsule-h {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px 4px 4px;
+}
+.fnix-glass .glass-capsule-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--glass-text);
+  text-align: left;
+}
+.fnix-glass .glass-capsule-main:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+.fnix-glass .glass-capsule-main .t {
+  flex: 1;
+  font-weight: 550;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fnix-glass .glass-capsule-main .m {
+  color: var(--glass-faint);
+  font-size: 11.5px;
+  font-family: var(--glass-mono);
+}
+.fnix-glass .glass-capsule-main .ok-ico {
+  color: var(--glass-ok);
+}
+.fnix-glass .glass-capsule-diff {
+  flex-shrink: 0;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--glass-text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 550;
+  cursor: pointer;
+}
+.fnix-glass .glass-capsule-diff:hover {
+  background: #f0f0f0;
+}
+.fnix-glass .glass-capsule-body {
+  margin: 0;
+  padding: 0 12px 10px;
+  font-family: var(--glass-mono);
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--glass-muted);
+  white-space: pre-wrap;
+  max-height: 160px;
+  overflow: auto;
+}
+
+/* ── Goal row ── */
+.fnix-glass .glass-goal-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--glass-r-md);
+  background: rgba(250, 250, 250, 0.9);
+  box-shadow: var(--glass-highlight);
+}
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .fnix-glass .glass-goal-row {
+    background: rgba(255, 255, 255, 0.58);
+    -webkit-backdrop-filter: blur(14px) saturate(1.15);
+    backdrop-filter: blur(14px) saturate(1.15);
+  }
+}
+.fnix-glass .glass-goal-row.live {
+  border-color: rgba(0, 0, 0, 0.1);
+}
+.fnix-glass .glass-goal-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+.fnix-glass .glass-goal-dot {
+  width: 8px;
+  height: 8px;
+  margin-top: 5px;
+  border-radius: 50%;
+  background: #b0b0b0;
+  flex-shrink: 0;
+}
+.fnix-glass .glass-goal-dot.run {
+  background: var(--glass-ok);
+  animation: glass-goal-pulse 1.6s ease-out infinite;
+}
+@keyframes glass-goal-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(23, 102, 58, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(23, 102, 58, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(23, 102, 58, 0);
+  }
+}
+.fnix-glass .glass-goal-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.fnix-glass .glass-goal-title {
+  font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fnix-glass .glass-goal-meta {
+  font-size: 11.5px;
+  color: var(--glass-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fnix-glass .glass-goal-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.fnix-glass .glass-goal-btn {
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--glass-text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 550;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+}
+.fnix-glass .glass-goal-btn:hover:not(:disabled) {
+  background: #f5f5f5;
+}
+.fnix-glass .glass-goal-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* ── Process list (Spec 2 新中式宋韵风) ── */
+/*
+ * 设计语言：
+ *  - 青灰 #4a6fa5 主色（细线轴、图标、思考链）
+ *  - 竹青 #5a7a5a 表示完成
+ *  - 赭石 #a85751 表示错误（不用刺眼红）
+ *  - 茶白 #f8f6f0 / 留白底
+ *  - 思源宋体作为时间线正文，呼应宋韵
+ *  - 细线轴：左侧 2px 竖线 + 节点圆点（轴极细，节奏由留白给）
+ */
+.fnix-glass .glass-process {
+  --gp-accent: #4a6fa5;          /* 青灰 */
+  --gp-accent-soft: rgba(74, 111, 165, 0.10);
+  --gp-ok: #5a7a5a;              /* 竹青 */
+  --gp-err: #a85751;             /* 赭石 */
+  --gp-ink: #1f2937;             /* 墨色（标题/正文） */
+  --gp-muted: #6b7280;           /* 远山灰（meta/time） */
+  --gp-faint: #9ca3af;           /* 浅灰 */
+  --gp-paper: #f8f6f0;           /* 茶白（细节背景） */
+  --gp-line: rgba(31, 41, 55, 0.08); /* 细线 */
+  --gp-font-song: "Songti SC", "STSong", "Source Han Serif SC", "Noto Serif CJK SC", "SimSun", ui-serif, Georgia, serif;
+
+  position: relative;
+  border: 1px solid var(--gp-line);
+  border-radius: var(--glass-r-md);
+  background: rgba(255, 255, 255, 0.92);
+  overflow: hidden;
+  box-shadow: var(--glass-highlight);
+}
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .fnix-glass .glass-process {
+    background: rgba(255, 255, 255, 0.62);
+    -webkit-backdrop-filter: blur(14px) saturate(1.1);
+    backdrop-filter: blur(14px) saturate(1.1);
+  }
+}
+.fnix-glass .glass-process.compact .glass-process-item {
+  padding: 9px 14px;
+}
+.fnix-glass .glass-process-h {
+  padding: 14px 16px 8px;
+  font-family: var(--gp-font-song);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.18em;  /* 字距放开，宋韵 */
+  color: var(--gp-muted);
+  border-bottom: 1px solid var(--gp-line);
+}
+.fnix-glass .glass-process-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0 8px;
+  position: relative;
+}
+/* 细线轴：左 22px 处垂直贯穿 */
+.fnix-glass .glass-process-list::before {
+  content: "";
+  position: absolute;
+  left: 24px;
+  top: 8px;
+  bottom: 8px;
+  width: 1px;
+  background: var(--gp-line);
+  pointer-events: none;
+}
+.fnix-glass .glass-process-item {
+  display: flex;
+  gap: 12px;
+  padding: 10px 16px;
+  position: relative;
+}
+.fnix-glass .glass-process-ico {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1px solid var(--gp-line);
+  color: var(--gp-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+  position: relative;
+  z-index: 1;
+}
+.fnix-glass .glass-process-item.running .glass-process-ico {
+  color: var(--gp-accent);
+  border-color: var(--gp-accent);
+  background: var(--gp-accent-soft);
+}
+.fnix-glass .glass-process-item.error .glass-process-ico {
+  color: var(--gp-err);
+  background: rgba(168, 87, 81, 0.08);
+  border-color: rgba(168, 87, 81, 0.32);
+}
+.fnix-glass .glass-process-item.kind-think .glass-process-ico {
+  color: var(--gp-accent);
+  border-color: rgba(74, 111, 165, 0.32);
+}
+.fnix-glass .glass-process-item.kind-mission .glass-process-ico {
+  color: var(--gp-accent);
+  border-color: var(--gp-accent);
+}
+.fnix-glass .glass-process-ico .spin {
+  animation: glass-spin 0.9s linear infinite;
+}
+@keyframes glass-spin {
+  to { transform: rotate(360deg); }
+}
+.fnix-glass .glass-process-body {
+  min-width: 0;
+  flex: 1;
+}
+.fnix-glass .glass-process-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-family: var(--gp-font-song);
+  color: var(--gp-ink);
+}
+.fnix-glass .glass-process-row .t {
+  flex: 1;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fnix-glass .glass-process-row .m {
+  color: var(--gp-muted);
+  font-size: 11.5px;
+  font-family: var(--glass-mono);
+  letter-spacing: 0.02em;
+}
+.fnix-glass .glass-process-row .time {
+  color: var(--gp-faint);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+.fnix-glass .glass-process-row .ok {
+  color: var(--gp-ok);
+  flex-shrink: 0;
+}
+.fnix-glass .glass-process-path {
+  margin-top: 3px;
+  font-size: 11.5px;
+  color: var(--gp-muted);
+  font-family: var(--glass-mono);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fnix-glass .glass-process-detail-toggle {
+  margin-top: 6px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--gp-accent);
+  font: inherit;
+  font-family: var(--gp-font-song);
+  font-size: 11.5px;
+  cursor: pointer;
+  letter-spacing: 0.06em;
+  transition: opacity 0.15s ease;
+}
+.fnix-glass .glass-process-detail-toggle:hover {
+  opacity: 0.65;
+}
+.fnix-glass .glass-process-detail-preview {
+  margin-top: 4px;
+  font-family: var(--gp-font-song);
+  font-size: 12px;
+  color: var(--gp-muted);
+  line-height: 1.6;
+  font-style: italic;
+  opacity: 0.85;
+}
+.fnix-glass .glass-process-detail {
+  margin: 6px 0 0;
+  padding: 10px 12px;
+  border-left: 2px solid var(--gp-accent);
+  background: var(--gp-paper);
+  border-radius: 0 6px 6px 0;
+  font-family: var(--glass-mono);
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--gp-ink);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 240px;
+  overflow: auto;
+}
+.fnix-glass .glass-process-diff {
+  margin-top: 8px;
+  height: 26px;
+  padding: 0 12px;
+  border: 1px solid var(--gp-line);
+  border-radius: 4px;  /* 接近宋韵直角 */
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--gp-ink);
+  font: inherit;
+  font-family: var(--gp-font-song);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  letter-spacing: 0.06em;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.fnix-glass .glass-process-diff:hover {
+  border-color: var(--gp-accent);
+  color: var(--gp-accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fnix-glass *,
+  .fnix-glass *::before,
+  .fnix-glass *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Reduced transparency / low-power: opaque surfaces */
+@media (prefers-reduced-transparency: reduce) {
+  .fnix-glass {
+    --glass-bg: #ffffff;
+    --glass-bg-strong: #ffffff;
+    --glass-bg-soft: #f7f7f8;
+    --glass-blur: 0px;
+  }
+  .fnix-glass .glass-surface,
+  .fnix-glass .glass-float,
+  .fnix-glass .glass-inset {
+    background: var(--glass-bg-strong) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}
+
+/* High contrast: stronger borders and text */
+@media (prefers-contrast: more) {
+  .fnix-glass {
+    --glass-border: rgba(0, 0, 0, 0.55);
+    --glass-border-2: rgba(0, 0, 0, 0.75);
+    --glass-text: #000000;
+    --glass-muted: #1a1a1a;
+    --glass-faint: #333333;
+  }
+  .fnix-glass .glass-surface,
+  .fnix-glass .glass-float,
+  .fnix-glass .glass-inset,
+  .fnix-glass .glass-hairline {
+    border-width: 2px;
+  }
+  .fnix-glass .glass-ibtn:focus-visible,
+  .fnix-glass button:focus-visible {
+    outline: 3px solid #0000ee;
+    outline-offset: 2px;
+  }
+}
+
+/* Dark glass under shell theme */
+.fnix-glass.theme-dark {
+  --glass-bg: rgba(40, 40, 40, 0.78);
+  --glass-bg-strong: rgba(47, 47, 47, 0.92);
+  --glass-bg-soft: rgba(36, 36, 36, 0.88);
+  --glass-bg-inset: rgba(30, 30, 30, 0.92);
+  --glass-border: rgba(255, 255, 255, 0.10);
+  --glass-border-2: rgba(255, 255, 255, 0.16);
+  --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+  --glass-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.45);
+  --glass-text: #ececec;
+  --glass-muted: #b4b4b4;
+  --glass-faint: #8e8e8e;
+}
+
+@media (prefers-contrast: more) {
+  .fnix-glass.theme-dark {
+    --glass-border: rgba(255, 255, 255, 0.55);
+    --glass-border-2: rgba(255, 255, 255, 0.75);
+    --glass-text: #ffffff;
+    --glass-muted: #e0e0e0;
+    --glass-faint: #c0c0c0;
+  }
+}

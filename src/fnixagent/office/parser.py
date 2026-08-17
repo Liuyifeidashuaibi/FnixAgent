@@ -26,23 +26,29 @@
   - ParseOptions: 替代散落的布尔参数,集中表达解析选项。
   - cached_property: word_count/char_count 等派生属性惰性计算。
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import functools
 import os
 import re
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from functools import cached_property
-from typing import Any, Callable, Optional
+from typing import Any
 
 from fnixagent.office.base import BaseExpert, ExpertError, ExpertResult
-
 
 # ---------------------------------------------------------------------------
 # 统一 Element 模型(借鉴 Unstructured)
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class Element:
@@ -87,14 +93,12 @@ class Element:
     def __hash__(self) -> int:
         return hash((self.category, self.text))
 
-
 class Title(Element):
     """标题元素(Heading 1/2/3 等)。"""
 
     @property
     def category(self) -> str:
         return "Title"
-
 
 class NarrativeText(Element):
     """正文叙述文本。"""
@@ -103,14 +107,12 @@ class NarrativeText(Element):
     def category(self) -> str:
         return "NarrativeText"
 
-
 class ListItem(Element):
     """列表项。"""
 
     @property
     def category(self) -> str:
         return "ListItem"
-
 
 class Table(Element):
     """表格元素。
@@ -121,8 +123,9 @@ class Table(Element):
 
     rows: list[list[str]] = field(default_factory=list)
 
-    def __init__(self, rows: Optional[list[list[str]]] = None,
-                 text: str = "", metadata: Optional[dict] = None) -> None:
+    def __init__(
+        self, rows: list[list[str]] | None = None, text: str = "", metadata: dict | None = None
+    ) -> None:
         super().__init__(text=text or "", metadata=metadata or {})
         self.rows = rows or []
         # 自动序列化 text(便于全文检索)
@@ -148,14 +151,12 @@ class Table(Element):
         d["column_count"] = self.column_count
         return d
 
-
 class Image(Element):
     """图片元素(占位,不抽取图像内容)。"""
 
     @property
     def category(self) -> str:
         return "Image"
-
 
 class Header(Element):
     """页眉元素。"""
@@ -164,7 +165,6 @@ class Header(Element):
     def category(self) -> str:
         return "Header"
 
-
 class Footer(Element):
     """页脚元素。"""
 
@@ -172,22 +172,19 @@ class Footer(Element):
     def category(self) -> str:
         return "Footer"
 
-
 class PageBreak(Element):
     """分页符元素(text 为空)。"""
 
-    def __init__(self, metadata: Optional[dict] = None) -> None:
+    def __init__(self, metadata: dict | None = None) -> None:
         super().__init__(text="", metadata=metadata or {})
 
     @property
     def category(self) -> str:
         return "PageBreak"
 
-
 # ---------------------------------------------------------------------------
 # 自描述 FileType 枚举(借鉴 Unstructured)
 # ---------------------------------------------------------------------------
-
 
 class FileType(Enum):
     """文件类型枚举,每个值携带能力描述与扩展名映射。
@@ -196,28 +193,33 @@ class FileType(Enum):
     标志决定是否支持表格抽取/元数据抽取,避免散落的 if-elif 链。
     """
 
-    DOCX = "docx"   # Word
-    XLSX = "xlsx"   # Excel
+    DOCX = "docx"  # Word
+    XLSX = "xlsx"  # Excel
     PDF = "pdf"
     HTML = "html"
-    TEXT = "text"   # txt/md
+    TEXT = "text"  # txt/md
     CSV = "csv"
     JSON = "json"
-    PPTX = "pptx"   # PowerPoint
+    PPTX = "pptx"  # PowerPoint
     UNKNOWN = "unknown"
 
     # -- 能力标志(自描述) -------------------------------------------------
     @property
     def supports_tables(self) -> bool:
         """该类型是否原生支持表格抽取。"""
-        return self in (FileType.DOCX, FileType.XLSX, FileType.HTML,
-                        FileType.CSV, FileType.PDF, FileType.PPTX)
+        return self in (
+            FileType.DOCX,
+            FileType.XLSX,
+            FileType.HTML,
+            FileType.CSV,
+            FileType.PDF,
+            FileType.PPTX,
+        )
 
     @property
     def supports_metadata(self) -> bool:
         """该类型是否支持元数据抽取。"""
-        return self in (FileType.DOCX, FileType.XLSX, FileType.PDF,
-                        FileType.HTML, FileType.PPTX)
+        return self in (FileType.DOCX, FileType.XLSX, FileType.PDF, FileType.HTML, FileType.PPTX)
 
     @property
     def extensions(self) -> tuple[str, ...]:
@@ -235,7 +237,7 @@ class FileType(Enum):
         }[self]
 
     @classmethod
-    def from_extension(cls, ext: str) -> "FileType":
+    def from_extension(cls, ext: str) -> FileType:
         """由扩展名派发到枚举值;未识别返回 UNKNOWN。
 
         Args:
@@ -250,11 +252,9 @@ class FileType(Enum):
                 return ft
         return cls.UNKNOWN
 
-
 # ---------------------------------------------------------------------------
 # ParseOptions(替代散落的布尔参数)
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class ParseOptions:
@@ -271,14 +271,12 @@ class ParseOptions:
     extract_tables: bool = True
     extract_metadata: bool = True
     include_images: bool = False
-    chunking_strategy: Optional[str] = None
+    chunking_strategy: str | None = None
     chunk_size: int = 1200
-
 
 # ---------------------------------------------------------------------------
 # 装饰器栈(借鉴 Unstructured 的 @apply_metadata / @add_chunking_strategy)
 # ---------------------------------------------------------------------------
-
 
 def apply_metadata(func: Callable) -> Callable:
     """装饰器:为 parser 返回的 Element 列表统一注入文件级元数据。
@@ -288,8 +286,7 @@ def apply_metadata(func: Callable) -> Callable:
     """
 
     @functools.wraps(func)
-    def wrapper(self: "ParserExpert", path: str,
-                options: ParseOptions) -> list[Element]:
+    def wrapper(self: ParserExpert, path: str, options: ParseOptions) -> list[Element]:
         elements = func(self, path, options)
         file_type = os.path.splitext(path)[1].lstrip(".").lower()
         for el in elements:
@@ -299,7 +296,6 @@ def apply_metadata(func: Callable) -> Callable:
         return elements
 
     return wrapper
-
 
 def add_chunking_strategy(func: Callable) -> Callable:
     """装饰器:按 options.chunking_strategy 对 Element 列表分块。
@@ -311,8 +307,7 @@ def add_chunking_strategy(func: Callable) -> Callable:
     """
 
     @functools.wraps(func)
-    def wrapper(self: "ParserExpert", path: str,
-                options: ParseOptions) -> list[Element]:
+    def wrapper(self: ParserExpert, path: str, options: ParseOptions) -> list[Element]:
         elements = func(self, path, options)
         if options.chunking_strategy is None:
             return elements
@@ -324,7 +319,6 @@ def add_chunking_strategy(func: Callable) -> Callable:
 
     return wrapper
 
-
 def _chunk_basic(elements: list[Element], chunk_size: int) -> list[Element]:
     """basic 分块:合并相邻 NarrativeText 直至达到 chunk_size。"""
     if chunk_size <= 0:
@@ -335,30 +329,35 @@ def _chunk_basic(elements: list[Element], chunk_size: int) -> list[Element]:
     for el in elements:
         if isinstance(el, NarrativeText):
             if buffer_size + len(el.text) > chunk_size and buffer:
-                result.append(NarrativeText(
-                    text="\n\n".join(buffer),
-                    metadata={"chunk_index": len(result)},
-                ))
+                result.append(
+                    NarrativeText(
+                        text="\n\n".join(buffer),
+                        metadata={"chunk_index": len(result)},
+                    )
+                )
                 buffer = []
                 buffer_size = 0
             buffer.append(el.text)
             buffer_size += len(el.text)
         else:
             if buffer:
-                result.append(NarrativeText(
-                    text="\n\n".join(buffer),
-                    metadata={"chunk_index": len(result)},
-                ))
+                result.append(
+                    NarrativeText(
+                        text="\n\n".join(buffer),
+                        metadata={"chunk_index": len(result)},
+                    )
+                )
                 buffer = []
                 buffer_size = 0
             result.append(el)
     if buffer:
-        result.append(NarrativeText(
-            text="\n\n".join(buffer),
-            metadata={"chunk_index": len(result)},
-        ))
+        result.append(
+            NarrativeText(
+                text="\n\n".join(buffer),
+                metadata={"chunk_index": len(result)},
+            )
+        )
     return result
-
 
 def _chunk_by_page(elements: list[Element]) -> list[Element]:
     """by_page 分块:按 page_number 分组合并同类型元素。"""
@@ -375,11 +374,9 @@ def _chunk_by_page(elements: list[Element]) -> list[Element]:
         result.extend(grouped[page])
     return result
 
-
 # ---------------------------------------------------------------------------
 # ParserExpert
 # ---------------------------------------------------------------------------
-
 
 class ParserExpert(BaseExpert):
     """文档解析专家。
@@ -448,7 +445,7 @@ class ParserExpert(BaseExpert):
             result = handler(path, extract_tables, extract_metadata)
             result.metadata["file_type"] = ft.value
             return result
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"parse IO failed: {e}")
         except Exception as e:
             return self._failure(f"parse failed: {e}")
@@ -460,7 +457,7 @@ class ParserExpert(BaseExpert):
     def parse_elements(
         self,
         path: str,
-        options: Optional[ParseOptions] = None,
+        options: ParseOptions | None = None,
     ) -> ExpertResult:
         """根据扩展名自动选择解析器,返回 Element 列表(Unstructured 风格)。
 
@@ -520,7 +517,7 @@ class ParserExpert(BaseExpert):
                 },
                 element_count=len(elements),
             )
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"parse_elements IO failed: {e}")
         except Exception as e:
             return self._failure(f"parse_elements failed: {e}")
@@ -539,9 +536,7 @@ class ParserExpert(BaseExpert):
         return sep.join(e.text for e in elements if not isinstance(e, PageBreak))
 
     @staticmethod
-    def filter_by_category(
-        elements: list[Element], category: str
-    ) -> list[Element]:
+    def filter_by_category(elements: list[Element], category: str) -> list[Element]:
         """按类别过滤元素(如 "Title"/"Table"/"NarrativeText")。
 
         Args:
@@ -560,7 +555,7 @@ class ParserExpert(BaseExpert):
     def parse_table(
         self,
         path: str,
-        sheet_name: Optional[str] = None,
+        sheet_name: str | None = None,
         table_index: int = 0,
     ) -> ExpertResult:
         """专门抽取表格数据。
@@ -591,7 +586,7 @@ class ParserExpert(BaseExpert):
                 return self._parse_pdf_table(path, table_index)
             else:
                 return self._failure(f"table extraction not supported for .{ext}")
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"parse_table IO failed: {e}")
         except Exception as e:
             return self._failure(f"parse_table failed: {e}")
@@ -603,7 +598,7 @@ class ParserExpert(BaseExpert):
     def parse_form(
         self,
         path: str,
-        field_patterns: Optional[dict[str, str]] = None,
+        field_patterns: dict[str, str] | None = None,
     ) -> ExpertResult:
         """抽取表单字段(基于正则匹配键值对)。
 
@@ -635,7 +630,7 @@ class ParserExpert(BaseExpert):
             return text_result
         text = text_result.output
 
-        fields: dict[str, Optional[str]] = {}
+        fields: dict[str, str | None] = {}
         for fname, pattern in field_patterns.items():
             try:
                 match = re.search(pattern, text)
@@ -680,16 +675,18 @@ class ParserExpert(BaseExpert):
                 return self._detect_pptx_layout(path)
             else:
                 # 纯文本类型
-                return self._success({
-                    "layout_type": "plain_text",
-                    "has_table": False,
-                    "has_image": False,
-                    "has_header": False,
-                    "sections": 1,
-                    "paragraph_count": 1,
-                    "table_count": 0,
-                })
-        except (PermissionError, IOError) as e:
+                return self._success(
+                    {
+                        "layout_type": "plain_text",
+                        "has_table": False,
+                        "has_image": False,
+                        "has_header": False,
+                        "sections": 1,
+                        "paragraph_count": 1,
+                        "table_count": 0,
+                    }
+                )
+        except (OSError, PermissionError) as e:
             return self._failure(f"detect_layout IO failed: {e}")
         except Exception as e:
             return self._failure(f"detect_layout failed: {e}")
@@ -698,9 +695,7 @@ class ParserExpert(BaseExpert):
     # 内部解析器:docx
     # ------------------------------------------------------------------
 
-    def _parse_docx(
-        self, path: str, extract_tables: bool, extract_metadata: bool
-    ) -> ExpertResult:
+    def _parse_docx(self, path: str, extract_tables: bool, extract_metadata: bool) -> ExpertResult:
         try:
             self._require_lib("docx")
             from docx import Document
@@ -711,10 +706,12 @@ class ParserExpert(BaseExpert):
         paragraphs = []
         for p in doc.paragraphs:
             if p.text.strip():
-                paragraphs.append({
-                    "text": p.text,
-                    "style": p.style.name if p.style else "Normal",
-                })
+                paragraphs.append(
+                    {
+                        "text": p.text,
+                        "style": p.style.name if p.style else "Normal",
+                    }
+                )
         tables = []
         if extract_tables:
             for tbl in doc.tables:
@@ -774,28 +771,29 @@ class ParserExpert(BaseExpert):
         has_image = False
         try:
             from docx.oxml.ns import qn
+
             # w:drawing 是 drawingML 图片的容器
             has_image = bool(doc.element.body.findall(f".//{qn('w:drawing')}"))
         except Exception:
             pass
         layout_type = "structured" if (doc.tables or has_header) else "plain"
-        return self._success({
-            "layout_type": layout_type,
-            "has_table": len(doc.tables) > 0,
-            "has_image": has_image,
-            "has_header": has_header,
-            "sections": sum(1 for p in doc.paragraphs if p.style and "Heading" in p.style.name),
-            "paragraph_count": len(doc.paragraphs),
-            "table_count": len(doc.tables),
-        })
+        return self._success(
+            {
+                "layout_type": layout_type,
+                "has_table": len(doc.tables) > 0,
+                "has_image": has_image,
+                "has_header": has_header,
+                "sections": sum(1 for p in doc.paragraphs if p.style and "Heading" in p.style.name),
+                "paragraph_count": len(doc.paragraphs),
+                "table_count": len(doc.tables),
+            }
+        )
 
     # ------------------------------------------------------------------
     # 内部解析器:xlsx
     # ------------------------------------------------------------------
 
-    def _parse_xlsx(
-        self, path: str, extract_tables: bool, extract_metadata: bool
-    ) -> ExpertResult:
+    def _parse_xlsx(self, path: str, extract_tables: bool, extract_metadata: bool) -> ExpertResult:
         try:
             self._require_lib("openpyxl")
             from openpyxl import load_workbook
@@ -808,11 +806,13 @@ class ParserExpert(BaseExpert):
             for sname in wb.sheetnames:
                 ws = wb[sname]
                 rows = list(ws.iter_rows(values_only=True))
-                sheets.append({
-                    "name": sname,
-                    "rows": rows,
-                    "row_count": len(rows),
-                })
+                sheets.append(
+                    {
+                        "name": sname,
+                        "rows": rows,
+                        "row_count": len(rows),
+                    }
+                )
             metadata = {"sheet_count": len(sheets)} if extract_metadata else {}
             return self._success(
                 output={
@@ -829,7 +829,7 @@ class ParserExpert(BaseExpert):
                 except Exception:
                     pass
 
-    def _parse_xlsx_table(self, path: str, sheet_name: Optional[str]) -> ExpertResult:
+    def _parse_xlsx_table(self, path: str, sheet_name: str | None) -> ExpertResult:
         try:
             self._require_lib("openpyxl")
             from openpyxl import load_workbook
@@ -869,19 +869,20 @@ class ParserExpert(BaseExpert):
             for i, row in enumerate(ws.iter_rows(values_only=True)):
                 row_count += 1
                 if i == 0 and all(
-                    v is not None and not str(v).isdigit()
-                    for v in row if v is not None
+                    v is not None and not str(v).isdigit() for v in row if v is not None
                 ):
                     has_header = True
-            return self._success({
-                "layout_type": "spreadsheet",
-                "has_table": row_count > 0,
-                "has_image": False,
-                "has_header": has_header,
-                "sections": 1,
-                "paragraph_count": 0,
-                "table_count": 1 if row_count > 0 else 0,
-            })
+            return self._success(
+                {
+                    "layout_type": "spreadsheet",
+                    "has_table": row_count > 0,
+                    "has_image": False,
+                    "has_header": has_header,
+                    "sections": 1,
+                    "paragraph_count": 0,
+                    "table_count": 1 if row_count > 0 else 0,
+                }
+            )
         finally:
             if wb is not None:
                 try:
@@ -893,9 +894,7 @@ class ParserExpert(BaseExpert):
     # 内部解析器:pdf
     # ------------------------------------------------------------------
 
-    def _parse_pdf(
-        self, path: str, extract_tables: bool, extract_metadata: bool
-    ) -> ExpertResult:
+    def _parse_pdf(self, path: str, extract_tables: bool, extract_metadata: bool) -> ExpertResult:
         # 简单实现:用 pypdf 抽文本,不抽表格(需要 pdfplumber)
         try:
             self._require_lib("pypdf")
@@ -965,29 +964,29 @@ class ParserExpert(BaseExpert):
             page_count = len(reader.pages)
             sample_text = reader.pages[0].extract_text() if page_count else ""
         has_image = page_count > 0  # 简化:多页 PDF 通常含图
-        return self._success({
-            "layout_type": "document",
-            "has_table": False,  # 需要 pdfplumber 才能准确检测
-            "has_image": has_image,
-            "has_header": False,
-            "sections": page_count,
-            "paragraph_count": sample_text.count("\n\n") + 1 if sample_text else 0,
-            "table_count": 0,
-        })
+        return self._success(
+            {
+                "layout_type": "document",
+                "has_table": False,  # 需要 pdfplumber 才能准确检测
+                "has_image": has_image,
+                "has_header": False,
+                "sections": page_count,
+                "paragraph_count": sample_text.count("\n\n") + 1 if sample_text else 0,
+                "table_count": 0,
+            }
+        )
 
     # ------------------------------------------------------------------
     # 内部解析器:html
     # ------------------------------------------------------------------
 
-    def _parse_html(
-        self, path: str, extract_tables: bool, extract_metadata: bool
-    ) -> ExpertResult:
+    def _parse_html(self, path: str, extract_tables: bool, extract_metadata: bool) -> ExpertResult:
         try:
             self._require_lib("bs4")
             from bs4 import BeautifulSoup
         except ExpertError as e:
             return self._failure(str(e))
-        with open(path, "r", encoding="utf-8", errors="ignore") as f:
+        with open(path, encoding="utf-8", errors="ignore") as f:
             soup = BeautifulSoup(f, "html.parser")
         paragraphs = []
         for tag in soup.find_all(["p", "h1", "h2", "h3", "h4", "h5", "h6", "li"]):
@@ -1023,25 +1022,25 @@ class ParserExpert(BaseExpert):
             from bs4 import BeautifulSoup
         except ExpertError as e:
             return self._failure(str(e))
-        with open(path, "r", encoding="utf-8", errors="ignore") as f:
+        with open(path, encoding="utf-8", errors="ignore") as f:
             soup = BeautifulSoup(f, "html.parser")
-        return self._success({
-            "layout_type": "web",
-            "has_table": bool(soup.find("table")),
-            "has_image": bool(soup.find("img")),
-            "has_header": bool(soup.find(["h1", "h2", "h3"])),
-            "sections": len(soup.find_all(["h1", "h2", "h3"])),
-            "paragraph_count": len(soup.find_all("p")),
-            "table_count": len(soup.find_all("table")),
-        })
+        return self._success(
+            {
+                "layout_type": "web",
+                "has_table": bool(soup.find("table")),
+                "has_image": bool(soup.find("img")),
+                "has_header": bool(soup.find(["h1", "h2", "h3"])),
+                "sections": len(soup.find_all(["h1", "h2", "h3"])),
+                "paragraph_count": len(soup.find_all("p")),
+                "table_count": len(soup.find_all("table")),
+            }
+        )
 
     # ------------------------------------------------------------------
     # 内部解析器:pptx
     # ------------------------------------------------------------------
 
-    def _parse_pptx(
-        self, path: str, extract_tables: bool, extract_metadata: bool
-    ) -> ExpertResult:
+    def _parse_pptx(self, path: str, extract_tables: bool, extract_metadata: bool) -> ExpertResult:
         try:
             self._require_lib("pptx")
             from pptx import Presentation
@@ -1071,15 +1070,15 @@ class ParserExpert(BaseExpert):
                 paragraphs.append({"text": title, "style": "Title"})
                 raw_parts.append(title)
             for shape in slide.shapes:
-                if title_shape_id is not None and getattr(shape, "shape_id", None) == title_shape_id:
+                if (
+                    title_shape_id is not None
+                    and getattr(shape, "shape_id", None) == title_shape_id
+                ):
                     continue
                 if getattr(shape, "has_table", False) and extract_tables:
                     try:
                         tbl = shape.table
-                        rows = [
-                            [cell.text for cell in row.cells]
-                            for row in tbl.rows
-                        ]
+                        rows = [[cell.text for cell in row.cells] for row in tbl.rows]
                         tables.append(rows)
                         for row in rows:
                             raw_parts.append("\t".join(row))
@@ -1154,24 +1153,24 @@ class ParserExpert(BaseExpert):
                     if (shape.text_frame.text or "").strip():
                         paragraph_count += 1
         layout_type = "slides" if slide_count > 0 else "empty"
-        return self._success({
-            "layout_type": layout_type,
-            "has_table": has_table,
-            "has_image": has_image,
-            "has_header": has_header,
-            "sections": slide_count,
-            "paragraph_count": paragraph_count,
-            "table_count": table_count,
-        })
+        return self._success(
+            {
+                "layout_type": layout_type,
+                "has_table": has_table,
+                "has_image": has_image,
+                "has_header": has_header,
+                "sections": slide_count,
+                "paragraph_count": paragraph_count,
+                "table_count": table_count,
+            }
+        )
 
     # ------------------------------------------------------------------
     # 简单格式
     # ------------------------------------------------------------------
 
-    def _parse_text(
-        self, path: str, extract_tables: bool, extract_metadata: bool
-    ) -> ExpertResult:
-        with open(path, "r", encoding="utf-8", errors="ignore") as f:
+    def _parse_text(self, path: str, extract_tables: bool, extract_metadata: bool) -> ExpertResult:
+        with open(path, encoding="utf-8", errors="ignore") as f:
             text = f.read()
         paragraphs = [{"text": p, "style": "Normal"} for p in text.split("\n\n") if p.strip()]
         return self._success(
@@ -1185,11 +1184,10 @@ class ParserExpert(BaseExpert):
             paragraph_count=len(paragraphs),
         )
 
-    def _parse_csv(
-        self, path: str, extract_tables: bool, extract_metadata: bool
-    ) -> ExpertResult:
+    def _parse_csv(self, path: str, extract_tables: bool, extract_metadata: bool) -> ExpertResult:
         import csv
-        with open(path, "r", encoding="utf-8", errors="ignore") as f:
+
+        with open(path, encoding="utf-8", errors="ignore") as f:
             reader = csv.reader(f)
             rows = list(reader)
         headers = rows[0] if rows else []
@@ -1205,7 +1203,8 @@ class ParserExpert(BaseExpert):
 
     def _parse_csv_table(self, path: str) -> ExpertResult:
         import csv
-        with open(path, "r", encoding="utf-8", errors="ignore") as f:
+
+        with open(path, encoding="utf-8", errors="ignore") as f:
             reader = csv.reader(f)
             rows = list(reader)
         headers = rows[0] if rows else []
@@ -1214,11 +1213,10 @@ class ParserExpert(BaseExpert):
             rows=len(rows),
         )
 
-    def _parse_json(
-        self, path: str, extract_tables: bool, extract_metadata: bool
-    ) -> ExpertResult:
+    def _parse_json(self, path: str, extract_tables: bool, extract_metadata: bool) -> ExpertResult:
         import json
-        with open(path, "r", encoding="utf-8") as f:
+
+        with open(path, encoding="utf-8") as f:
             data = json.load(f)
         return self._success(
             output={
@@ -1244,9 +1242,9 @@ class ParserExpert(BaseExpert):
         ext = os.path.splitext(path)[1].lstrip(".").lower()
         if ext in ("txt", "md"):
             try:
-                with open(path, "r", encoding="utf-8", errors="ignore") as f:
+                with open(path, encoding="utf-8", errors="ignore") as f:
                     return self._success(f.read())
-            except (PermissionError, IOError) as e:
+            except (OSError, PermissionError) as e:
                 return self._failure(f"read text failed: {e}")
         # 其他格式走 parse() 取 raw_text
         r = self.parse(path, extract_tables=False, extract_metadata=False)
@@ -1260,9 +1258,7 @@ class ParserExpert(BaseExpert):
 
     @apply_metadata
     @add_chunking_strategy
-    def _parse_docx_elements(
-        self, path: str, options: ParseOptions
-    ) -> list[Element]:
+    def _parse_docx_elements(self, path: str, options: ParseOptions) -> list[Element]:
         """解析 docx 为 Element 列表。
 
         元素映射:
@@ -1284,7 +1280,7 @@ class ParserExpert(BaseExpert):
             from docx import Document
             from docx.oxml.ns import qn
         except ExpertError as e:
-            raise IOError(f"dependency missing: {e}") from e
+            raise OSError(f"dependency missing: {e}") from e
 
         doc = Document(path)
         elements: list[Element] = []
@@ -1306,35 +1302,45 @@ class ParserExpert(BaseExpert):
                     continue
                 style_name = p.style.name if p.style else "Normal"
                 if "Heading" in style_name or style_name.startswith("Title"):
-                    elements.append(Title(
-                        text=text,
-                        metadata={"style": style_name, "paragraph_index": para_idx - 1},
-                    ))
+                    elements.append(
+                        Title(
+                            text=text,
+                            metadata={"style": style_name, "paragraph_index": para_idx - 1},
+                        )
+                    )
                 elif "List" in style_name:
-                    elements.append(ListItem(
-                        text=text,
-                        metadata={"style": style_name, "paragraph_index": para_idx - 1},
-                    ))
+                    elements.append(
+                        ListItem(
+                            text=text,
+                            metadata={"style": style_name, "paragraph_index": para_idx - 1},
+                        )
+                    )
                 else:
-                    elements.append(NarrativeText(
-                        text=text,
-                        metadata={"style": style_name, "paragraph_index": para_idx - 1},
-                    ))
+                    elements.append(
+                        NarrativeText(
+                            text=text,
+                            metadata={"style": style_name, "paragraph_index": para_idx - 1},
+                        )
+                    )
             elif tag == qn("w:tbl") and options.extract_tables:
                 if table_idx >= len(tables):
                     continue
                 tbl = tables[table_idx]
                 table_idx += 1
                 rows = [[cell.text for cell in row.cells] for row in tbl.rows]
-                elements.append(Table(
-                    rows=rows,
-                    metadata={"table_index": table_idx - 1},
-                ))
+                elements.append(
+                    Table(
+                        rows=rows,
+                        metadata={"table_index": table_idx - 1},
+                    )
+                )
             elif tag == qn("w:drawing") and options.include_images:
-                elements.append(Image(
-                    text="",
-                    metadata={"paragraph_index": para_idx - 1},
-                ))
+                elements.append(
+                    Image(
+                        text="",
+                        metadata={"paragraph_index": para_idx - 1},
+                    )
+                )
         # 元数据
         if options.extract_metadata:
             cp = doc.core_properties
@@ -1351,15 +1357,13 @@ class ParserExpert(BaseExpert):
 
     @apply_metadata
     @add_chunking_strategy
-    def _parse_xlsx_elements(
-        self, path: str, options: ParseOptions
-    ) -> list[Element]:
+    def _parse_xlsx_elements(self, path: str, options: ParseOptions) -> list[Element]:
         """解析 xlsx 为 Element 列表(每个 sheet 一个 Table 元素)。"""
         try:
             self._require_lib("openpyxl")
             from openpyxl import load_workbook
         except ExpertError as e:
-            raise IOError(f"dependency missing: {e}") from e
+            raise OSError(f"dependency missing: {e}") from e
         wb = None
         try:
             wb = load_workbook(path, read_only=True, data_only=True)
@@ -1372,13 +1376,15 @@ class ParserExpert(BaseExpert):
                 ]
                 if not rows:
                     continue
-                elements.append(Table(
-                    rows=rows,
-                    metadata={
-                        "sheet_name": sname,
-                        "sheet_index": sheet_idx,
-                    },
-                ))
+                elements.append(
+                    Table(
+                        rows=rows,
+                        metadata={
+                            "sheet_name": sname,
+                            "sheet_index": sheet_idx,
+                        },
+                    )
+                )
             return elements
         finally:
             if wb is not None:
@@ -1389,15 +1395,13 @@ class ParserExpert(BaseExpert):
 
     @apply_metadata
     @add_chunking_strategy
-    def _parse_pdf_elements(
-        self, path: str, options: ParseOptions
-    ) -> list[Element]:
+    def _parse_pdf_elements(self, path: str, options: ParseOptions) -> list[Element]:
         """解析 pdf 为 Element 列表(按页码标注 metadata.page_number)。"""
         try:
             self._require_lib("pypdf")
             import pypdf
         except ExpertError as e:
-            raise IOError(f"dependency missing: {e}") from e
+            raise OSError(f"dependency missing: {e}") from e
         elements: list[Element] = []
         with open(path, "rb") as f:
             reader = pypdf.PdfReader(f)
@@ -1408,14 +1412,14 @@ class ParserExpert(BaseExpert):
                     para = para.strip()
                     if not para:
                         continue
-                    elements.append(NarrativeText(
-                        text=para,
-                        metadata={"page_number": page_idx + 1},
-                    ))
+                    elements.append(
+                        NarrativeText(
+                            text=para,
+                            metadata={"page_number": page_idx + 1},
+                        )
+                    )
                 # 分页符标记(include_images=False 时也保留,作为页边界)
-                elements.append(PageBreak(
-                    metadata={"page_number": page_idx + 1}
-                ))
+                elements.append(PageBreak(metadata={"page_number": page_idx + 1}))
             # 元数据
             if options.extract_metadata and reader.metadata:
                 md = reader.metadata
@@ -1430,16 +1434,14 @@ class ParserExpert(BaseExpert):
 
     @apply_metadata
     @add_chunking_strategy
-    def _parse_html_elements(
-        self, path: str, options: ParseOptions
-    ) -> list[Element]:
+    def _parse_html_elements(self, path: str, options: ParseOptions) -> list[Element]:
         """解析 html 为 Element 列表。"""
         try:
             self._require_lib("bs4")
             from bs4 import BeautifulSoup
         except ExpertError as e:
-            raise IOError(f"dependency missing: {e}") from e
-        with open(path, "r", encoding="utf-8", errors="ignore") as f:
+            raise OSError(f"dependency missing: {e}") from e
+        with open(path, encoding="utf-8", errors="ignore") as f:
             soup = BeautifulSoup(f, "html.parser")
         elements: list[Element] = []
         # 标题
@@ -1447,10 +1449,12 @@ class ParserExpert(BaseExpert):
             for tag in soup.find_all(tag_name):
                 text = tag.get_text(strip=True)
                 if text:
-                    elements.append(Title(
-                        text=text,
-                        metadata={"tag": tag_name},
-                    ))
+                    elements.append(
+                        Title(
+                            text=text,
+                            metadata={"tag": tag_name},
+                        )
+                    )
         # 列表项
         for tag in soup.find_all("li"):
             text = tag.get_text(strip=True)
@@ -1466,15 +1470,14 @@ class ParserExpert(BaseExpert):
             for tbl_idx, tbl in enumerate(soup.find_all("table")):
                 rows = []
                 for tr in tbl.find_all("tr"):
-                    rows.append([
-                        td.get_text(strip=True)
-                        for td in tr.find_all(["td", "th"])
-                    ])
+                    rows.append([td.get_text(strip=True) for td in tr.find_all(["td", "th"])])
                 if rows:
-                    elements.append(Table(
-                        rows=rows,
-                        metadata={"table_index": tbl_idx},
-                    ))
+                    elements.append(
+                        Table(
+                            rows=rows,
+                            metadata={"table_index": tbl_idx},
+                        )
+                    )
         # 图片
         if options.include_images:
             for img in soup.find_all("img"):
@@ -1484,11 +1487,9 @@ class ParserExpert(BaseExpert):
 
     @apply_metadata
     @add_chunking_strategy
-    def _parse_text_elements(
-        self, path: str, options: ParseOptions
-    ) -> list[Element]:
+    def _parse_text_elements(self, path: str, options: ParseOptions) -> list[Element]:
         """解析 txt/md 为 Element 列表(按双换行切段)。"""
-        with open(path, "r", encoding="utf-8", errors="ignore") as f:
+        with open(path, encoding="utf-8", errors="ignore") as f:
             text = f.read()
         elements: list[Element] = []
         # Markdown 简单识别: # 开头为 Title,- * 开头为 ListItem
@@ -1499,15 +1500,19 @@ class ParserExpert(BaseExpert):
             if stripped.startswith("#"):
                 # Markdown 标题
                 level = len(stripped) - len(stripped.lstrip("#"))
-                elements.append(Title(
-                    text=stripped.lstrip("# ").strip(),
-                    metadata={"markdown_heading_level": level},
-                ))
+                elements.append(
+                    Title(
+                        text=stripped.lstrip("# ").strip(),
+                        metadata={"markdown_heading_level": level},
+                    )
+                )
             elif stripped.startswith(("- ", "* ", "+ ")):
-                elements.append(ListItem(
-                    text=stripped[2:].strip(),
-                    metadata={"markdown_list": True},
-                ))
+                elements.append(
+                    ListItem(
+                        text=stripped[2:].strip(),
+                        metadata={"markdown_list": True},
+                    )
+                )
         # 双换行切段(作为 NarrativeText 补充)
         for para in text.split("\n\n"):
             para = para.strip()
@@ -1518,12 +1523,11 @@ class ParserExpert(BaseExpert):
 
     @apply_metadata
     @add_chunking_strategy
-    def _parse_csv_elements(
-        self, path: str, options: ParseOptions
-    ) -> list[Element]:
+    def _parse_csv_elements(self, path: str, options: ParseOptions) -> list[Element]:
         """解析 csv 为单个 Table 元素。"""
         import csv
-        with open(path, "r", encoding="utf-8", errors="ignore") as f:
+
+        with open(path, encoding="utf-8", errors="ignore") as f:
             reader = csv.reader(f)
             rows = [list(r) for r in reader]
         if not rows:
@@ -1532,23 +1536,22 @@ class ParserExpert(BaseExpert):
 
     @apply_metadata
     @add_chunking_strategy
-    def _parse_json_elements(
-        self, path: str, options: ParseOptions
-    ) -> list[Element]:
+    def _parse_json_elements(self, path: str, options: ParseOptions) -> list[Element]:
         """解析 json 为 NarrativeText(序列化文本)。"""
         import json
-        with open(path, "r", encoding="utf-8") as f:
+
+        with open(path, encoding="utf-8") as f:
             data = json.load(f)
-        return [NarrativeText(
-            text=json.dumps(data, ensure_ascii=False, indent=2),
-            metadata={"json_type": type(data).__name__},
-        )]
+        return [
+            NarrativeText(
+                text=json.dumps(data, ensure_ascii=False, indent=2),
+                metadata={"json_type": type(data).__name__},
+            )
+        ]
 
     @apply_metadata
     @add_chunking_strategy
-    def _parse_pptx_elements(
-        self, path: str, options: ParseOptions
-    ) -> list[Element]:
+    def _parse_pptx_elements(self, path: str, options: ParseOptions) -> list[Element]:
         """解析 pptx 为 Element 列表(保留幻灯片顺序)。
 
         元素映射:
@@ -1563,7 +1566,7 @@ class ParserExpert(BaseExpert):
             self._require_lib("pptx")
             from pptx import Presentation
         except ExpertError as e:
-            raise IOError(f"dependency missing: {e}") from e
+            raise OSError(f"dependency missing: {e}") from e
         prs = Presentation(path)
         total = len(prs.slides)
         elements: list[Element] = []
@@ -1598,35 +1601,41 @@ class ParserExpert(BaseExpert):
                 except Exception:
                     title_text = ""
                 if title_text:
-                    elements.append(Title(
-                        text=title_text,
-                        metadata=dict(slide_meta),
-                    ))
+                    elements.append(
+                        Title(
+                            text=title_text,
+                            metadata=dict(slide_meta),
+                        )
+                    )
             # 其余 shapes(保留幻灯片内顺序)
             for shape in slide.shapes:
-                if title_shape_id is not None and getattr(shape, "shape_id", None) == title_shape_id:
+                if (
+                    title_shape_id is not None
+                    and getattr(shape, "shape_id", None) == title_shape_id
+                ):
                     continue
                 if getattr(shape, "has_table", False) and options.extract_tables:
                     try:
                         tbl = shape.table
-                        rows = [
-                            [cell.text for cell in row.cells]
-                            for row in tbl.rows
-                        ]
-                        elements.append(Table(
-                            rows=rows,
-                            metadata=dict(slide_meta),
-                        ))
+                        rows = [[cell.text for cell in row.cells] for row in tbl.rows]
+                        elements.append(
+                            Table(
+                                rows=rows,
+                                metadata=dict(slide_meta),
+                            )
+                        )
                     except Exception:
                         pass
                     continue
                 if shape.has_text_frame:
                     txt = shape.text_frame.text
                     if txt and txt.strip():
-                        elements.append(NarrativeText(
-                            text=txt.strip(),
-                            metadata=dict(slide_meta),
-                        ))
+                        elements.append(
+                            NarrativeText(
+                                text=txt.strip(),
+                                metadata=dict(slide_meta),
+                            )
+                        )
             # 幻灯片边界(与 _parse_pdf_elements 一致,每页末尾插入)
             elements.append(PageBreak(metadata=dict(slide_meta)))
         return elements

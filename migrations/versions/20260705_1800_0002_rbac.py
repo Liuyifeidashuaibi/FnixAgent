@@ -15,6 +15,7 @@ Phase 2.1 RBAC 细粒度权限 + 组织架构:
     - 内置角色/权限通过 is_builtin=True 标记,后续不可删除
     - 部门自引用(parent_id → departments.id)在表创建后单独添加
 """
+from datetime import datetime
 from typing import Sequence, Union
 
 import sqlalchemy as sa
@@ -42,7 +43,7 @@ def upgrade() -> None:
         sa.Column("action", sa.String(length=32), nullable=False),
         sa.Column("description", sa.String(length=512), server_default=""),
         sa.Column("is_builtin", sa.Boolean(), nullable=False, server_default=sa.true()),
-        sa.Column("created_at", sa.TIMESTAMP(), nullable=False, server_default=sa.func.now()),
+        sa.Column("created_at", sa.TIMESTAMP(), nullable=False, server_default=sa.text("now()")),
         sa.UniqueConstraint("code", name="uq_permission_code"),
     )
     op.create_index("ix_permissions_code", "permissions", ["code"])
@@ -60,8 +61,8 @@ def upgrade() -> None:
         sa.Column("is_builtin", sa.Boolean(), nullable=False, server_default=sa.false()),
         sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.true()),
         sa.Column("sort_order", sa.SmallInteger(), nullable=False, server_default="0"),
-        sa.Column("created_at", sa.TIMESTAMP(), nullable=False, server_default=sa.func.now()),
-        sa.Column("updated_at", sa.TIMESTAMP(), nullable=False, server_default=sa.func.now()),
+        sa.Column("created_at", sa.TIMESTAMP(), nullable=False, server_default=sa.text("now()")),
+        sa.Column("updated_at", sa.TIMESTAMP(), nullable=False, server_default=sa.text("now()")),
         sa.UniqueConstraint("tenant_id", "code", name="uq_tenant_role_code"),
     )
 
@@ -79,8 +80,8 @@ def upgrade() -> None:
         sa.Column("sort_order", sa.SmallInteger(), nullable=False, server_default="0"),
         sa.Column("description", sa.String(length=512), server_default=""),
         sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.true()),
-        sa.Column("created_at", sa.TIMESTAMP(), nullable=False, server_default=sa.func.now()),
-        sa.Column("updated_at", sa.TIMESTAMP(), nullable=False, server_default=sa.func.now()),
+        sa.Column("created_at", sa.TIMESTAMP(), nullable=False, server_default=sa.text("now()")),
+        sa.Column("updated_at", sa.TIMESTAMP(), nullable=False, server_default=sa.text("now()")),
         sa.UniqueConstraint("tenant_id", "code", name="uq_tenant_dept_code"),
         sa.ForeignKeyConstraint(["parent_id"], ["departments.id"], ondelete="SET NULL"),
     )
@@ -99,8 +100,8 @@ def upgrade() -> None:
         sa.Column("description", sa.String(length=512), server_default=""),
         sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.true()),
         sa.Column("sort_order", sa.SmallInteger(), nullable=False, server_default="0"),
-        sa.Column("created_at", sa.TIMESTAMP(), nullable=False, server_default=sa.func.now()),
-        sa.Column("updated_at", sa.TIMESTAMP(), nullable=False, server_default=sa.func.now()),
+        sa.Column("created_at", sa.TIMESTAMP(), nullable=False, server_default=sa.text("now()")),
+        sa.Column("updated_at", sa.TIMESTAMP(), nullable=False, server_default=sa.text("now()")),
         sa.UniqueConstraint("tenant_id", "code", name="uq_tenant_position_code"),
     )
 
@@ -136,7 +137,7 @@ def upgrade() -> None:
         "user_roles",
         sa.Column("user_id", sa.BigInteger(), sa.ForeignKey("users.id", ondelete="CASCADE"), primary_key=True),
         sa.Column("role_id", sa.BigInteger(), sa.ForeignKey("roles.id", ondelete="CASCADE"), primary_key=True),
-        sa.Column("granted_at", sa.TIMESTAMP(), nullable=False, server_default=sa.func.now()),
+        sa.Column("granted_at", sa.TIMESTAMP(), nullable=False, server_default=sa.text("now()")),
         sa.Column("granted_by", sa.BigInteger(), nullable=True),
     )
     op.create_index("ix_user_roles_user_id", "user_roles", ["user_id"])
@@ -212,7 +213,7 @@ def upgrade() -> None:
                 "action": action,
                 "description": "",
                 "is_builtin": True,
-                "created_at": sa.func.now(),
+                "created_at": datetime(2026, 7, 5, 18, 0, 0),
             }
             for code, name, resource, action in _BUILTIN_PERMISSIONS
         ],
@@ -244,8 +245,8 @@ def upgrade() -> None:
                 "is_builtin": True,
                 "is_active": True,
                 "sort_order": 0,
-                "created_at": sa.func.now(),
-                "updated_at": sa.func.now(),
+                "created_at": datetime(2026, 7, 5, 18, 0, 0),
+                "updated_at": datetime(2026, 7, 5, 18, 0, 0),
             },
             {
                 "tenant_id": 1,
@@ -255,8 +256,8 @@ def upgrade() -> None:
                 "is_builtin": True,
                 "is_active": True,
                 "sort_order": 1,
-                "created_at": sa.func.now(),
-                "updated_at": sa.func.now(),
+                "created_at": datetime(2026, 7, 5, 18, 0, 0),
+                "updated_at": datetime(2026, 7, 5, 18, 0, 0),
             },
             {
                 "tenant_id": 1,
@@ -266,8 +267,8 @@ def upgrade() -> None:
                 "is_builtin": True,
                 "is_active": True,
                 "sort_order": 2,
-                "created_at": sa.func.now(),
-                "updated_at": sa.func.now(),
+                "created_at": datetime(2026, 7, 5, 18, 0, 0),
+                "updated_at": datetime(2026, 7, 5, 18, 0, 0),
             },
             {
                 "tenant_id": 1,
@@ -277,8 +278,8 @@ def upgrade() -> None:
                 "is_builtin": True,
                 "is_active": True,
                 "sort_order": 3,
-                "created_at": sa.func.now(),
-                "updated_at": sa.func.now(),
+                "created_at": datetime(2026, 7, 5, 18, 0, 0),
+                "updated_at": datetime(2026, 7, 5, 18, 0, 0),
             },
         ],
     )

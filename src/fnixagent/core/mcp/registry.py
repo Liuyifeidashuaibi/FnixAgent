@@ -14,22 +14,24 @@
   - 工具名冲突解决:加上 server_id 前缀(如 "feishu.send_message")
   - 工具列表为快照,server 端变化需显式 sync_tools
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import threading
-import time
-from typing import Any, Callable, Optional
+from typing import Any
 
 from fnixagent.core.mcp.client import (
     MCPClient,
-    MCPClientError,
-    MCPConnectionError,
     MCPToolExecutionError,
 )
 from fnixagent.core.mcp.types import (
-    MCPErrorCode,
     MCPRequest,
-    MCPResponse,
     MCPServerInfo,
     MCPServerStatus,
     MCPToolDef,
@@ -38,32 +40,25 @@ from fnixagent.core.mcp.types import (
 from fnixagent.core.tools.protocol import ToolFunc, ToolMetadata
 from fnixagent.core.types import ToolPermission
 
-
 # ---------------------------------------------------------------------------
 # 异常
 # ---------------------------------------------------------------------------
 
-
 class MCPRegistryError(Exception):
     """MCP 注册表基础异常。"""
-
 
 class MCPServerNotFoundError(MCPRegistryError):
     """server_id 不存在。"""
 
-
 class MCPServerAlreadyExistsError(MCPRegistryError):
     """server_id 已存在。"""
-
 
 class MCPToolNotFoundError(MCPRegistryError):
     """工具名在所有 server 中找不到。"""
 
-
 # ---------------------------------------------------------------------------
 # MCPToolRegistry
 # ---------------------------------------------------------------------------
-
 
 class MCPToolRegistry:
     """MCP 工具注册表:管理多 server + 多工具。
@@ -96,11 +91,11 @@ class MCPToolRegistry:
         self,
         server_id: str,
         transport: MCPTransport = MCPTransport.STDIO,
-        command: Optional[str] = None,
-        args: Optional[list[str]] = None,
-        env: Optional[dict[str, str]] = None,
-        url: Optional[str] = None,
-        headers: Optional[dict[str, str]] = None,
+        command: str | None = None,
+        args: list[str] | None = None,
+        env: dict[str, str] | None = None,
+        url: str | None = None,
+        headers: dict[str, str] | None = None,
         description: str = "",
         auto_connect: bool = True,
     ) -> MCPServerInfo:
@@ -120,11 +115,23 @@ class MCPToolRegistry:
         """
         if not server_id or not isinstance(server_id, str):
             raise ValueError("server_id must be a non-empty string")
+
+        # Trust ledger fail-closed (Beta): approve before connect
+        from fnixagent.core.mcp.trust import McpTrustError, assert_trusted_for_connect
+
+        try:
+            assert_trusted_for_connect(
+                server_id,
+                command=command,
+                args=list(args or []),
+                remote_url=url or "",
+            )
+        except McpTrustError:
+            raise
+
         with self._lock:
             if server_id in self._servers:
-                raise MCPServerAlreadyExistsError(
-                    f"MCP server '{server_id}' already registered"
-                )
+                raise MCPServerAlreadyExistsError(f"MCP server '{server_id}' already registered")
             server_info = MCPServerInfo(
                 server_id=server_id,
                 name=server_id,
@@ -157,17 +164,14 @@ class MCPToolRegistry:
         with self._lock:
             client = self._servers.get(server_id)
             if client is None:
-                raise MCPServerNotFoundError(
-                    f"MCP server '{server_id}' not registered"
-                )
+                raise MCPServerNotFoundError(f"MCP server '{server_id}' not registered")
             try:
                 client.disconnect_sync()
             except Exception:
                 pass
             # 移除该 server 全部工具
             tools_to_remove = [
-                name for name, sid in self._tool_to_server.items()
-                if sid == server_id
+                name for name, sid in self._tool_to_server.items() if sid == server_id
             ]
             for name in tools_to_remove:
                 self._tools.pop(name, None)
@@ -180,7 +184,7 @@ class MCPToolRegistry:
         with self._lock:
             return [c.server_info for c in self._servers.values()]
 
-    def get_server(self, server_id: str) -> Optional[MCPClient]:
+    def get_server(self, server_id: str) -> MCPClient | None:
         """按 ID 获取 MCPClient(不存在返回 None)。"""
         with self._lock:
             return self._servers.get(server_id)
@@ -190,9 +194,7 @@ class MCPToolRegistry:
         with self._lock:
             client = self._servers.get(server_id)
             if client is None:
-                raise MCPServerNotFoundError(
-                    f"MCP server '{server_id}' not registered"
-                )
+                raise MCPServerNotFoundError(f"MCP server '{server_id}' not registered")
             try:
                 client.disconnect_sync()
             except Exception:
@@ -211,9 +213,7 @@ class MCPToolRegistry:
         with self._lock:
             client = self._servers.get(server_id)
             if client is None:
-                raise MCPServerNotFoundError(
-                    f"MCP server '{server_id}' not registered"
-                )
+                raise MCPServerNotFoundError(f"MCP server '{server_id}' not registered")
             if not client.is_connected:
                 client.connect_sync()
             return self._refresh_server_tools(server_id)
@@ -238,10 +238,7 @@ class MCPToolRegistry:
         """从 client 拉取工具列表,加上 server_id 前缀后写入索引。"""
         client = self._servers[server_id]
         # 先清理旧工具
-        old_tools = [
-            name for name, sid in self._tool_to_server.items()
-            if sid == server_id
-        ]
+        old_tools = [name for name, sid in self._tool_to_server.items() if sid == server_id]
         for name in old_tools:
             self._tools.pop(name, None)
             self._tool_to_server.pop(name, None)
@@ -279,7 +276,7 @@ class MCPToolRegistry:
         with self._lock:
             return [self.to_tool_metadata(t) for t in self._tools.values()]
 
-    def get_tool(self, tool_name: str) -> Optional[MCPToolDef]:
+    def get_tool(self, tool_name: str) -> MCPToolDef | None:
         """按全局工具名获取 MCPToolDef。"""
         with self._lock:
             return self._tools.get(tool_name)
@@ -297,7 +294,7 @@ class MCPToolRegistry:
         if is_destructive:
             skill_level = "reasoning"  # 破坏性操作需确认
         elif is_readonly:
-            skill_level = "basic"      # 只读操作自动调用
+            skill_level = "basic"  # 只读操作自动调用
         else:
             skill_level = "reasoning"  # 默认需确认
         return ToolMetadata(
@@ -322,9 +319,7 @@ class MCPToolRegistry:
         内部封装:args → MCPRequest → client.call_tool → MCPResponse.result
         """
         if tool_name not in self._tools:
-            raise MCPToolNotFoundError(
-                f"MCP tool '{tool_name}' not found in registry"
-            )
+            raise MCPToolNotFoundError(f"MCP tool '{tool_name}' not found in registry")
 
         def executor(args: dict[str, Any]) -> Any:
             return self.call(tool_name, args)
@@ -360,9 +355,7 @@ class MCPToolRegistry:
         with self._lock:
             server_id = self._tool_to_server.get(tool_name)
             if server_id is None:
-                raise MCPToolNotFoundError(
-                    f"MCP tool '{tool_name}' not found"
-                )
+                raise MCPToolNotFoundError(f"MCP tool '{tool_name}' not found")
             client = self._servers[server_id]
         # 去掉 server_id 前缀,还原原始工具名
         original_name = tool_name
@@ -379,9 +372,7 @@ class MCPToolRegistry:
         )
         response = client.call_tool_sync(request)
         if not response.success:
-            raise MCPToolExecutionError(
-                f"MCP tool '{tool_name}' failed: {response.error}"
-            )
+            raise MCPToolExecutionError(f"MCP tool '{tool_name}' failed: {response.error}")
         return response.result
 
     async def call_async(
@@ -402,9 +393,7 @@ class MCPToolRegistry:
         with self._lock:
             server_id = self._tool_to_server.get(tool_name)
             if server_id is None:
-                raise MCPToolNotFoundError(
-                    f"MCP tool '{tool_name}' not found"
-                )
+                raise MCPToolNotFoundError(f"MCP tool '{tool_name}' not found")
             client = self._servers[server_id]
         original_name = tool_name
         if tool_name.startswith(f"{server_id}."):
@@ -417,9 +406,7 @@ class MCPToolRegistry:
         )
         response = await client.call_tool(request)
         if not response.success:
-            raise MCPToolExecutionError(
-                f"MCP tool '{tool_name}' failed: {response.error}"
-            )
+            raise MCPToolExecutionError(f"MCP tool '{tool_name}' failed: {response.error}")
         return response.result
 
     # ------------------------------------------------------------------
@@ -464,7 +451,5 @@ class MCPToolRegistry:
                 "servers": len(servers),
                 "tools": len(self._tools),
                 "by_status": by_status,
-                "connected": sum(
-                    1 for s in servers if s.is_connected
-                ),
+                "connected": sum(1 for s in servers if s.is_connected),
             }

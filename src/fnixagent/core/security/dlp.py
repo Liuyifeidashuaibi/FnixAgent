@@ -18,6 +18,13 @@ DLP 出口拦截 (Data Loss Prevention Gateway) - P2 安全模块。
   - 文件检查:支持文本类文件,二进制文件跳过
   - 所有异常不外泄,捕获后返回 ALLOW(避免阻断业务)
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import logging
@@ -25,23 +32,20 @@ import os
 import re
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional
 
 logger = logging.getLogger(__name__)
-
 
 # ---------------------------------------------------------------------------
 # 数据结构
 # ---------------------------------------------------------------------------
 
-
 class DLPAction(Enum):
     """DLP 策略动作。"""
+
     ALLOW = "allow"
     BLOCK = "block"
     REDACT = "redact"
     WARN = "warn"
-
 
 @dataclass
 class DLPPolicy:
@@ -56,6 +60,7 @@ class DLPPolicy:
         action: 命中后的动作
         min_confidence: 最小置信度阈值(低于此值忽略)
     """
+
     name: str
     channel: str
     enabled: bool = True
@@ -68,7 +73,6 @@ class DLPPolicy:
     action: DLPAction = DLPAction.WARN
     min_confidence: float = 0.7
 
-
 @dataclass
 class DLPDetection:
     """单次检测结果。
@@ -80,12 +84,12 @@ class DLPDetection:
         confidence: 置信度(0.0-1.0)
         severity: 严重程度(info/low/medium/high)
     """
+
     pattern_name: str
     matched_text: str
     position: tuple[int, int]
     confidence: float
     severity: str
-
 
 @dataclass
 class DLPResult:
@@ -98,17 +102,16 @@ class DLPResult:
         sanitized_output: 脱敏后的内容(REDACT 动作时填充)
         reason: 判定原因
     """
+
     allowed: bool
     action: DLPAction
     detections: list[DLPDetection]
-    sanitized_output: Optional[str] = None
+    sanitized_output: str | None = None
     reason: str = ""
-
 
 # ---------------------------------------------------------------------------
 # DLPGateway
 # ---------------------------------------------------------------------------
-
 
 class DLPGateway:
     """DLP 出口拦截网关。
@@ -128,16 +131,14 @@ class DLPGateway:
     # 内置 PII 正则(类级预编译,避免重复编译开销)
     PII_PATTERNS: dict[str, str] = {
         "email": r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}",
-        "phone": r"1[3-9]\d{9}",            # 中国手机号
-        "id_card": r"\d{17}[\dXx]",         # 身份证(18 位)
-        "bank_card": r"\d{16,19}",          # 银行卡(16-19 位)
-        "passport": r"[A-Z]\d{8}",          # 护照
+        "phone": r"1[3-9]\d{9}",  # 中国手机号
+        "id_card": r"\d{17}[\dXx]",  # 身份证(18 位)
+        "bank_card": r"\d{16,19}",  # 银行卡(16-19 位)
+        "passport": r"[A-Z]\d{8}",  # 护照
     }
 
     # 预编译正则
-    _COMPILED: dict[str, re.Pattern] = {
-        name: re.compile(pat) for name, pat in PII_PATTERNS.items()
-    }
+    _COMPILED: dict[str, re.Pattern] = {name: re.compile(pat) for name, pat in PII_PATTERNS.items()}
 
     # 模式 → 默认严重程度
     _SEVERITY: dict[str, str] = {
@@ -154,7 +155,7 @@ class DLPGateway:
     # 单文件检查大小上限(10 MB,防止 OOM)
     _MAX_FILE_SIZE = 10 * 1024 * 1024
 
-    def __init__(self, policies: Optional[list[DLPPolicy]] = None) -> None:
+    def __init__(self, policies: list[DLPPolicy] | None = None) -> None:
         self._policies: list[DLPPolicy] = list(policies) if policies else []
         # 未配置策略时注册默认策略
         if not self._policies:
@@ -171,23 +172,29 @@ class DLPGateway:
         """
         if not content:
             return DLPResult(
-                allowed=True, action=DLPAction.ALLOW, detections=[], reason="空内容",
+                allowed=True,
+                action=DLPAction.ALLOW,
+                detections=[],
+                reason="空内容",
             )
         policy = self._match_policy(channel)
         if policy is None or not policy.enabled:
             return DLPResult(
-                allowed=True, action=DLPAction.ALLOW, detections=[], reason="无匹配策略或已禁用",
+                allowed=True,
+                action=DLPAction.ALLOW,
+                detections=[],
+                reason="无匹配策略或已禁用",
             )
         # 检测 PII + 关键词
         detections = self._detect_pii(content, policy.pii_patterns)
         detections.extend(self._detect_keywords(content, policy.sensitive_keywords))
         # 过滤低置信度
-        detections = [
-            d for d in detections if d.confidence >= policy.min_confidence
-        ]
+        detections = [d for d in detections if d.confidence >= policy.min_confidence]
         if not detections:
             return DLPResult(
-                allowed=True, action=DLPAction.ALLOW, detections=[],
+                allowed=True,
+                action=DLPAction.ALLOW,
+                detections=[],
                 reason="未命中敏感内容",
             )
         # 按策略动作处理
@@ -203,28 +210,36 @@ class DLPGateway:
         try:
             if not os.path.exists(file_path) or not os.path.isfile(file_path):
                 return DLPResult(
-                    allowed=True, action=DLPAction.ALLOW, detections=[],
+                    allowed=True,
+                    action=DLPAction.ALLOW,
+                    detections=[],
                     reason="文件不存在",
                 )
             ext = os.path.splitext(file_path)[1].lower()
             if ext not in self._TEXT_EXTS:
                 return DLPResult(
-                    allowed=True, action=DLPAction.ALLOW, detections=[],
+                    allowed=True,
+                    action=DLPAction.ALLOW,
+                    detections=[],
                     reason=f"非文本文件({ext}),跳过检查",
                 )
             size = os.path.getsize(file_path)
             if size > self._MAX_FILE_SIZE:
                 return DLPResult(
-                    allowed=True, action=DLPAction.ALLOW, detections=[],
+                    allowed=True,
+                    action=DLPAction.ALLOW,
+                    detections=[],
                     reason=f"文件过大({size} bytes),跳过检查",
                 )
-            with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+            with open(file_path, encoding="utf-8", errors="replace") as f:
                 content = f.read()
             return self.inspect(content, channel=channel)
         except Exception as exc:
             logger.warning("[dlp] 文件检查异常 %s: %s", file_path, exc)
             return DLPResult(
-                allowed=True, action=DLPAction.ALLOW, detections=[],
+                allowed=True,
+                action=DLPAction.ALLOW,
+                detections=[],
                 reason=f"检查异常: {exc}",
             )
 
@@ -273,13 +288,15 @@ class DLPGateway:
                         if before.isalpha() or after.isalpha():
                             continue
                     confidence = self._score_confidence(name, matched)
-                    detections.append(DLPDetection(
-                        pattern_name=name,
-                        matched_text=self._mask_segment(name, matched),
-                        position=(m.start(), m.end()),
-                        confidence=confidence,
-                        severity=self._SEVERITY.get(name, "medium"),
-                    ))
+                    detections.append(
+                        DLPDetection(
+                            pattern_name=name,
+                            matched_text=self._mask_segment(name, matched),
+                            position=(m.start(), m.end()),
+                            confidence=confidence,
+                            severity=self._SEVERITY.get(name, "medium"),
+                        )
+                    )
             except Exception:
                 continue
         return detections
@@ -297,13 +314,15 @@ class DLPGateway:
                 idx = lower.find(kw_lower, start)
                 if idx < 0:
                     break
-                detections.append(DLPDetection(
-                    pattern_name=f"keyword:{kw}",
-                    matched_text=kw,
-                    position=(idx, idx + len(kw)),
-                    confidence=0.9,
-                    severity="high",
-                ))
+                detections.append(
+                    DLPDetection(
+                        pattern_name=f"keyword:{kw}",
+                        matched_text=kw,
+                        position=(idx, idx + len(kw)),
+                        confidence=0.9,
+                        severity="high",
+                    )
+                )
                 start = idx + len(kw)
         return detections
 
@@ -367,7 +386,7 @@ class DLPGateway:
 
     # -- 内部:策略匹配与动作 ---------------------------------------------
 
-    def _match_policy(self, channel: str) -> Optional[DLPPolicy]:
+    def _match_policy(self, channel: str) -> DLPPolicy | None:
         """匹配通道对应的策略(第一个匹配的 enabled 策略)。"""
         for p in self._policies:
             if p.channel == channel and p.enabled:
@@ -379,12 +398,17 @@ class DLPGateway:
         return None
 
     def _apply_action(
-        self, content: str, action: DLPAction, detections: list[DLPDetection],
+        self,
+        content: str,
+        action: DLPAction,
+        detections: list[DLPDetection],
     ) -> DLPResult:
         """根据动作生成 DLPResult。"""
         if action == DLPAction.ALLOW:
             return DLPResult(
-                allowed=True, action=action, detections=detections,
+                allowed=True,
+                action=action,
+                detections=detections,
                 reason="策略允许通过",
             )
         if action == DLPAction.WARN:
@@ -394,23 +418,30 @@ class DLPGateway:
                 [d.pattern_name for d in detections][:5],
             )
             return DLPResult(
-                allowed=True, action=action, detections=detections,
+                allowed=True,
+                action=action,
+                detections=detections,
                 reason=f"命中 {len(detections)} 处敏感内容,已告警",
             )
         if action == DLPAction.REDACT:
             sanitized = self.redact(content, detections)
             return DLPResult(
-                allowed=True, action=action, detections=detections,
+                allowed=True,
+                action=action,
+                detections=detections,
                 sanitized_output=sanitized,
                 reason=f"已脱敏 {len(detections)} 处敏感内容",
             )
         # BLOCK
         logger.warning(
-            "[dlp] 内容被阻断(BLOCK),命中 %d 处敏感内容", len(detections),
+            "[dlp] 内容被阻断(BLOCK),命中 %d 处敏感内容",
+            len(detections),
         )
         self._audit_block(detections)
         return DLPResult(
-            allowed=False, action=action, detections=detections,
+            allowed=False,
+            action=action,
+            detections=detections,
             reason=f"内容被 DLP 阻断(命中 {len(detections)} 处敏感内容)",
         )
 
@@ -419,6 +450,7 @@ class DLPGateway:
         """将 DLP 阻断事件写入审计日志(失败不影响主流程)。"""
         try:
             from fnixagent.core.audit import AuditLogger
+
             AuditLogger().log(
                 action="dlp.blocked",
                 detail={

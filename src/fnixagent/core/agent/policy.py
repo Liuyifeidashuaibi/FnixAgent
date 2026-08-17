@@ -24,24 +24,32 @@ PolicyEngine - 权限与能力模型 (Policy Engine & Capability Model)
   - admin 短路: admin 能力不再绕过 deny 规则
   - 默认拒绝矛盾: 开发/生产模式显式切换
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import fnmatch
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable
+
+# SyscallRequest 前向引用 (避免循环导入)
+from typing import TYPE_CHECKING, Any
 
 from fnixagent.core.agent.syscall import (
-    HIGH_RISK_SYSCALLS, HIGH_RISK_REQUIRED_CAPS, SyscallType, check_capability,
+    HIGH_RISK_REQUIRED_CAPS,
+    HIGH_RISK_SYSCALLS,
+    check_capability,
 )
 from fnixagent.core.agent.types import PolicyBackend
 
-
-# SyscallRequest 前向引用 (避免循环导入)
-from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from fnixagent.core.agent.process import AgentProcess
     from fnixagent.core.agent.syscall import SyscallRequest
-
 
 @dataclass
 class PolicyRule:
@@ -56,6 +64,7 @@ class PolicyRule:
         priority: 规则优先级 (高优先级先评估, 默认 0)
         description: 规则描述 (用于审计)
     """
+
     action: str = "*"
     resource: str = "*"
     subject: str = "*"
@@ -63,7 +72,6 @@ class PolicyRule:
     condition: Callable[[dict[str, Any]], bool] | None = None
     priority: int = 0
     description: str = ""
-
 
 class PolicyEngine:
     """策略引擎 (类比 OS 权限 / capability model)。
@@ -189,8 +197,11 @@ class PolicyEngine:
             return True
         # 从 args 提取资源 (path / tool / target / memory_id)
         resource = str(
-            args.get("path") or args.get("tool") or
-            args.get("target") or args.get("memory_id") or ""
+            args.get("path")
+            or args.get("tool")
+            or args.get("target")
+            or args.get("memory_id")
+            or ""
         )
         if not resource:
             return pattern == "*"
@@ -253,8 +264,7 @@ class PolicyEngine:
         # 4. 后端策略评估 (OPA / Cedar)
         if self._backend:
             resource = str(
-                req.args.get("path") or req.args.get("tool") or
-                req.args.get("target") or ""
+                req.args.get("path") or req.args.get("tool") or req.args.get("target") or ""
             )
             allowed, reason = await self._backend.evaluate(
                 action=syscall.value,
@@ -286,6 +296,5 @@ class PolicyEngine:
             "has_backend": self._backend is not None,
             "tracked_pids": len(self._pid_roles),
         }
-
 
 __all__ = ["PolicyEngine", "PolicyRule"]

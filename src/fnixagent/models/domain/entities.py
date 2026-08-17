@@ -3,9 +3,16 @@
 
 用于业务逻辑层,不直接依赖 SQLAlchemy。
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 
 @dataclass
@@ -26,7 +33,7 @@ class User:
     id: int
     tenant_id: int
     username: str
-    email: Optional[str] = None
+    email: str | None = None
     role: str = "user"  # user/admin
     profile: dict = field(default_factory=dict)
     created_at: datetime = field(default_factory=datetime.utcnow)
@@ -39,7 +46,7 @@ class Session:
     id: int
     tenant_id: int
     user_id: int
-    title: Optional[str] = None
+    title: str | None = None
     context: dict = field(default_factory=dict)
     status: str = "active"  # active/closed/archived
     created_at: datetime = field(default_factory=datetime.utcnow)
@@ -55,11 +62,11 @@ class Message:
     role: str  # user/assistant/system/tool
     content: str
     content_type: str = "text"  # text/json/tool_call/thought
-    parent_id: Optional[int] = None
-    token_input: Optional[int] = None
-    token_output: Optional[int] = None
-    model: Optional[str] = None
-    trace_id: Optional[str] = None
+    parent_id: int | None = None
+    token_input: int | None = None
+    token_output: int | None = None
+    model: str | None = None
+    trace_id: str | None = None
     metadata: dict = field(default_factory=dict)
     created_at: datetime = field(default_factory=datetime.utcnow)
 
@@ -71,14 +78,14 @@ class Task:
     id: int
     session_id: int
     user_id: int
-    intent: Optional[str] = None
+    intent: str | None = None
     reasoning_mode: str = "react"  # react/plan_execute/self_reflect
     status: str = "pending"  # pending/running/succeeded/failed
     plan: dict = field(default_factory=dict)
-    result: Optional[dict] = None
-    error: Optional[str] = None
-    started_at: Optional[datetime] = None
-    finished_at: Optional[datetime] = None
+    result: dict | None = None
+    error: str | None = None
+    started_at: datetime | None = None
+    finished_at: datetime | None = None
     created_at: datetime = field(default_factory=datetime.utcnow)
 
 
@@ -90,11 +97,11 @@ class TaskStep:
     task_id: int
     step_no: int
     description: str
-    tool_name: Optional[str] = None
+    tool_name: str | None = None
     status: str = "pending"
     depends_on: list[int] = field(default_factory=list)
-    started_at: Optional[datetime] = None
-    finished_at: Optional[datetime] = None
+    started_at: datetime | None = None
+    finished_at: datetime | None = None
 
 
 @dataclass
@@ -102,16 +109,16 @@ class ToolExecution:
     """工具执行记录领域对象。"""
 
     id: int
-    task_id: Optional[int] = None
-    step_id: Optional[int] = None
+    task_id: int | None = None
+    step_id: int | None = None
     tool_name: str
-    tool_version: Optional[str] = None
+    tool_version: str | None = None
     arguments: dict = field(default_factory=dict)
-    result: Optional[dict] = None
+    result: dict | None = None
     status: str = "success"  # success/failed/timeout
-    error: Optional[str] = None
-    duration_ms: Optional[int] = None
-    sandbox_id: Optional[str] = None
+    error: str | None = None
+    duration_ms: int | None = None
+    sandbox_id: str | None = None
     permission_level: str = "low"
     created_at: datetime = field(default_factory=datetime.utcnow)
 
@@ -126,9 +133,9 @@ class Document:
     name: str
     doc_type: str  # paper/docx/pdf/markdown/chart
     source: str  # upload/generated/search
-    object_key: Optional[str] = None
-    mime_type: Optional[str] = None
-    size_bytes: Optional[int] = None
+    object_key: str | None = None
+    mime_type: str | None = None
+    size_bytes: int | None = None
     metadata: dict = field(default_factory=dict)
     created_at: datetime = field(default_factory=datetime.utcnow)
 
@@ -139,7 +146,7 @@ class Entity:
 
     id: int
     tenant_id: int
-    user_id: Optional[int] = None
+    user_id: int | None = None
     entity_type: str  # user_profile/paper/project/note
     name: str
     attributes: dict = field(default_factory=dict)
@@ -158,7 +165,7 @@ class BillingRecord:
     token_input: int
     token_output: int
     cost: float
-    trace_id: Optional[str] = None
+    trace_id: str | None = None
     created_at: datetime = field(default_factory=datetime.utcnow)
 
 

@@ -21,6 +21,13 @@
 线程安全:SkillMarket 内部用 RLock 保护,可被多线程 API 调用。
 持久化:本实现为内存版;生产环境可由子类重写 _load/_persist 接入 DB。
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import re
@@ -28,7 +35,7 @@ import threading
 import uuid
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -37,11 +44,9 @@ _SKILL_NAME_PATTERN = re.compile(r"^[A-Za-z0-9_\-]{1,64}$")
 # 版本号语义化版本(semver)宽松匹配
 _VERSION_PATTERN = re.compile(r"^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.\-]+)?$")
 
-
 # ---------------------------------------------------------------------------
 # 枚举
 # ---------------------------------------------------------------------------
-
 
 class SkillStatus(str, Enum):
     """技能生命周期状态。
@@ -52,12 +57,11 @@ class SkillStatus(str, Enum):
         PUBLISHED ──deprecate──→ DEPRECATED
     """
 
-    DRAFT = "draft"                  # 草稿(创建者可编辑)
+    DRAFT = "draft"  # 草稿(创建者可编辑)
     PENDING_REVIEW = "pending_review"  # 待审核
-    PUBLISHED = "published"          # 已发布(可被安装)
-    REJECTED = "rejected"            # 审核拒绝(可改回 DRAFT 修改)
-    DEPRECATED = "deprecated"        # 已弃用(不可安装,已安装可继续用)
-
+    PUBLISHED = "published"  # 已发布(可被安装)
+    REJECTED = "rejected"  # 审核拒绝(可改回 DRAFT 修改)
+    DEPRECATED = "deprecated"  # 已弃用(不可安装,已安装可继续用)
 
 # 允许的状态转换(用于校验)。
 # 状态机设计原则:严格线性流转,禁止跳过 PENDING_REVIEW 直接进入 PUBLISHED。
@@ -80,11 +84,9 @@ _VALID_TRANSITIONS: dict[SkillStatus, set[SkillStatus]] = {
     SkillStatus.DEPRECATED: {SkillStatus.DRAFT},  # 重新上架需走草稿流程
 }
 
-
 # ---------------------------------------------------------------------------
 # Pydantic 模型
 # ---------------------------------------------------------------------------
-
 
 class SkillVersion(BaseModel):
     """技能版本。
@@ -110,7 +112,6 @@ class SkillVersion(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     created_by: str = Field("", description="创建者用户 ID")
 
-
 class SkillMarketEntry(BaseModel):
     """技能市场条目。
 
@@ -124,57 +125,48 @@ class SkillMarketEntry(BaseModel):
     description: str = Field("", description="技能描述")
     category: str = Field("general", description="分类标签")
     tags: list[str] = Field(default_factory=list)
-    icon_url: Optional[str] = None
+    icon_url: str | None = None
     owner_id: str = Field("", description="所有者用户 ID")
     status: SkillStatus = SkillStatus.DRAFT
     versions: list[SkillVersion] = Field(default_factory=list)
-    latest_version: Optional[str] = None
+    latest_version: str | None = None
     install_count: int = 0
-    rating: float = 0.0              # 0.0-5.0
+    rating: float = 0.0  # 0.0-5.0
     rating_count: int = 0
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
-    published_at: Optional[datetime] = None
-    deprecated_at: Optional[datetime] = None
+    published_at: datetime | None = None
+    deprecated_at: datetime | None = None
     # 审核相关
     reviewer_id: str = ""
     review_comment: str = ""
-    reviewed_at: Optional[datetime] = None
-
+    reviewed_at: datetime | None = None
 
 # ---------------------------------------------------------------------------
 # 异常
 # ---------------------------------------------------------------------------
 
-
 class SkillMarketError(Exception):
     """技能市场基础异常。"""
-
 
 class SkillNotFoundError(SkillMarketError):
     """技能不存在。"""
 
-
 class SkillVersionNotFoundError(SkillMarketError):
     """技能版本不存在。"""
-
 
 class SkillStatusError(SkillMarketError):
     """状态转换非法(如 DRAFT 直接 PUBLISHED)。"""
 
-
 class SkillAlreadyExistsError(SkillMarketError):
     """技能名已存在(同租户内唯一)。"""
-
 
 class SkillReviewError(SkillMarketError):
     """审核操作非法(如非 PENDING_REVIEW 状态调 approve)。"""
 
-
 # ---------------------------------------------------------------------------
 # SkillMarket
 # ---------------------------------------------------------------------------
-
 
 class SkillMarket:
     """组织内技能市场。
@@ -205,10 +197,10 @@ class SkillMarket:
         display_name: str = "",
         description: str = "",
         category: str = "general",
-        tags: Optional[list[str]] = None,
+        tags: list[str] | None = None,
         owner_id: str = "",
-        icon_url: Optional[str] = None,
-        initial_version: Optional[SkillVersion] = None,
+        icon_url: str | None = None,
+        initial_version: SkillVersion | None = None,
     ) -> SkillMarketEntry:
         """创建技能草稿。
 
@@ -228,7 +220,7 @@ class SkillMarket:
         self._validate_skill_name(name)
         with self._lock:
             key = self._name_key(tenant_id, name)
-            if key in self._name_index and self._name_index[key]:
+            if self._name_index.get(key):
                 raise SkillAlreadyExistsError(
                     f"Skill '{name}' already exists in tenant '{tenant_id}'"
                 )
@@ -250,9 +242,7 @@ class SkillMarket:
             self._name_index.setdefault(key, set()).add(entry.id)
             return entry
 
-    def submit_for_review(
-        self, entry_id: str, reviewer_id: str = ""
-    ) -> SkillMarketEntry:
+    def submit_for_review(self, entry_id: str, reviewer_id: str = "") -> SkillMarketEntry:
         """提交审核(DRAFT → PENDING_REVIEW)。
 
         Args:
@@ -267,9 +257,7 @@ class SkillMarket:
             entry = self._get_or_raise(entry_id)
             self._check_transition(entry, SkillStatus.PENDING_REVIEW)
             if not entry.versions:
-                raise SkillStatusError(
-                    f"Cannot submit skill '{entry.name}': no version added"
-                )
+                raise SkillStatusError(f"Cannot submit skill '{entry.name}': no version added")
             entry.status = SkillStatus.PENDING_REVIEW
             entry.reviewer_id = reviewer_id
             entry.updated_at = datetime.utcnow()
@@ -295,9 +283,7 @@ class SkillMarket:
         with self._lock:
             entry = self._get_or_raise(entry_id)
             if entry.status != SkillStatus.PENDING_REVIEW:
-                raise SkillReviewError(
-                    f"Cannot approve skill in status {entry.status.value}"
-                )
+                raise SkillReviewError(f"Cannot approve skill in status {entry.status.value}")
             entry.status = SkillStatus.PUBLISHED
             entry.reviewer_id = reviewer_id
             entry.review_comment = comment
@@ -322,9 +308,7 @@ class SkillMarket:
         with self._lock:
             entry = self._get_or_raise(entry_id)
             if entry.status != SkillStatus.PENDING_REVIEW:
-                raise SkillReviewError(
-                    f"Cannot reject skill in status {entry.status.value}"
-                )
+                raise SkillReviewError(f"Cannot reject skill in status {entry.status.value}")
             entry.status = SkillStatus.REJECTED
             entry.reviewer_id = reviewer_id
             entry.review_comment = comment
@@ -384,8 +368,7 @@ class SkillMarket:
             entry = self._get_or_raise(entry_id)
             if entry.status not in (SkillStatus.DRAFT, SkillStatus.REJECTED):
                 raise SkillStatusError(
-                    f"Cannot add version in status {entry.status.value}; "
-                    "reactivate to DRAFT first"
+                    f"Cannot add version in status {entry.status.value}; reactivate to DRAFT first"
                 )
             existing_versions = {v.version for v in entry.versions}
             if version.version in existing_versions:
@@ -410,7 +393,7 @@ class SkillMarket:
     def get_version(
         self,
         entry_id: str,
-        version: Optional[str] = None,
+        version: str | None = None,
     ) -> SkillVersion:
         """获取指定版本;version=None 返回 latest_version。
 
@@ -420,9 +403,7 @@ class SkillMarket:
         with self._lock:
             entry = self._get_or_raise(entry_id)
             if not entry.versions:
-                raise SkillVersionNotFoundError(
-                    f"Skill '{entry.name}' has no versions"
-                )
+                raise SkillVersionNotFoundError(f"Skill '{entry.name}' has no versions")
             if version is None:
                 target = entry.latest_version
                 if target is None:
@@ -440,7 +421,7 @@ class SkillMarket:
     # 检索
     # ------------------------------------------------------------------
 
-    def get_entry(self, entry_id: str) -> Optional[SkillMarketEntry]:
+    def get_entry(self, entry_id: str) -> SkillMarketEntry | None:
         """按 ID 获取技能条目(不存在返回 None)。"""
         with self._lock:
             return self._entries.get(entry_id)
@@ -449,7 +430,7 @@ class SkillMarket:
         self,
         name: str,
         tenant_id: str = "",
-    ) -> Optional[SkillMarketEntry]:
+    ) -> SkillMarketEntry | None:
         """按 name + tenant_id 获取技能条目。"""
         with self._lock:
             key = self._name_key(tenant_id, name)
@@ -466,9 +447,9 @@ class SkillMarket:
 
     def list_entries(
         self,
-        tenant_id: Optional[str] = None,
-        status: Optional[SkillStatus] = None,
-        category: Optional[str] = None,
+        tenant_id: str | None = None,
+        status: SkillStatus | None = None,
+        category: str | None = None,
         limit: int = 100,
         offset: int = 0,
     ) -> list[SkillMarketEntry]:
@@ -494,7 +475,7 @@ class SkillMarket:
     def search(
         self,
         query: str,
-        tenant_id: Optional[str] = None,
+        tenant_id: str | None = None,
         top_k: int = 20,
     ) -> list[SkillMarketEntry]:
         """全文检索(名称/描述/标签/分类)。
@@ -628,8 +609,7 @@ class SkillMarket:
             raise SkillMarketError("version must be a non-empty string")
         if not _VERSION_PATTERN.match(version):
             raise SkillMarketError(
-                f"Invalid version '{version}': expected semver format "
-                "(e.g. '1.0.0')"
+                f"Invalid version '{version}': expected semver format (e.g. '1.0.0')"
             )
 
     # ------------------------------------------------------------------
@@ -646,8 +626,6 @@ class SkillMarket:
             return {
                 "total": len(entries),
                 "by_status": by_status,
-                "published": sum(
-                    1 for e in entries if e.status == SkillStatus.PUBLISHED
-                ),
+                "published": sum(1 for e in entries if e.status == SkillStatus.PUBLISHED),
                 "total_installs": sum(e.install_count for e in entries),
             }

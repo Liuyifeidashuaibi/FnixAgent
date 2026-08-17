@@ -17,6 +17,13 @@ PostgreSQL 持久化存储层(Phase 0.8)。
   工厂函数 get_user_store() 等会自动切换到 Pg 实现。
   未设置 DATABASE_URL 时,回退到内存 Store(开发/测试零依赖)。
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import hashlib
@@ -24,8 +31,7 @@ import os
 import secrets
 import threading
 import time
-from datetime import datetime, timedelta
-from typing import Any, Optional
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy.orm import Session as SASession
 
@@ -33,7 +39,6 @@ from fnixagent.adapters.db.postgres import DatabaseAdapter
 from fnixagent.models.db.models import (
     APICredential,
     Document,
-    KnowledgeChunk,
     Task,
     TaskStep,
     Tenant,
@@ -42,8 +47,8 @@ from fnixagent.models.db.models import (
 from fnixagent.services.storage import (
     ALLOWED_FILE_EXTENSIONS,
     LOGIN_LOCKOUT_SECONDS,
-    MAX_LOGIN_ATTEMPTS,
     MAX_LIST_LIMIT,
+    MAX_LOGIN_ATTEMPTS,
     MAX_UPLOAD_SIZE_BYTES,
     StoredApiKey,
     StoredDocument,
@@ -59,7 +64,6 @@ from fnixagent.services.storage import (
 _DEFAULT_TENANT_ID: int = 1
 _DEFAULT_TENANT_NAME: str = "default"
 
-
 def _ensure_default_tenant(session: SASession) -> None:
     """确保默认租户存在(幂等)。"""
     tenant = session.get(Tenant, _DEFAULT_TENANT_ID)
@@ -73,11 +77,9 @@ def _ensure_default_tenant(session: SASession) -> None:
         session.add(tenant)
         session.flush()
 
-
 # ---------------------------------------------------------------------------
 # ORM ↔ Dataclass 转换函数
 # ---------------------------------------------------------------------------
-
 
 def _user_to_stored(u: User) -> StoredUser:
     """User ORM → StoredUser dataclass。quota 信息从 profile JSON 提取。"""
@@ -94,7 +96,6 @@ def _user_to_stored(u: User) -> StoredUser:
         created_at=u.created_at,
     )
 
-
 def _cred_to_stored(c: APICredential, plaintext: str = "") -> StoredApiKey:
     """APICredential ORM → StoredApiKey dataclass。"""
     return StoredApiKey(
@@ -107,7 +108,6 @@ def _cred_to_stored(c: APICredential, plaintext: str = "") -> StoredApiKey:
         expires_at=c.expires_at,
         revoked=bool(c.revoked_at),
     )
-
 
 def _doc_to_stored(d: Document) -> StoredDocument:
     """Document ORM → StoredDocument dataclass。"""
@@ -125,7 +125,6 @@ def _doc_to_stored(d: Document) -> StoredDocument:
         created_at=d.created_at,
         deleted=bool(d.deleted_at),
     )
-
 
 def _task_to_stored(t: Task, steps: list[TaskStep]) -> StoredTask:
     """Task ORM + TaskStep 列表 → StoredTask dataclass。"""
@@ -157,11 +156,9 @@ def _task_to_stored(t: Task, steps: list[TaskStep]) -> StoredTask:
         finished_at=t.finished_at,
     )
 
-
 # ---------------------------------------------------------------------------
 # PgUserStore
 # ---------------------------------------------------------------------------
-
 
 class PgUserStore:
     """PostgreSQL 持久化 UserStore(接口与 UserStore 一致)。"""
@@ -177,13 +174,15 @@ class PgUserStore:
 
     def create(
         self, username: str, email: str, password: str, role: str = "user"
-    ) -> tuple[Optional[StoredUser], str]:
+    ) -> tuple[StoredUser | None, str]:
         """创建用户。返回 (user, error_msg)。"""
         with self._db.session() as session:
             # 检查用户名唯一
-            existing = session.query(User).filter_by(
-                tenant_id=_DEFAULT_TENANT_ID, username=username
-            ).first()
+            existing = (
+                session.query(User)
+                .filter_by(tenant_id=_DEFAULT_TENANT_ID, username=username)
+                .first()
+            )
             if existing:
                 return None, "用户名已存在"
             # 检查邮箱唯一
@@ -204,21 +203,23 @@ class PgUserStore:
             session.flush()
             return _user_to_stored(user), ""
 
-    def get_by_id(self, user_id: int) -> Optional[StoredUser]:
+    def get_by_id(self, user_id: int) -> StoredUser | None:
         """根据 ID 获取用户。"""
         with self._db.session() as session:
             user = session.get(User, user_id)
             return _user_to_stored(user) if user else None
 
-    def get_by_username(self, username: str) -> Optional[StoredUser]:
+    def get_by_username(self, username: str) -> StoredUser | None:
         """根据用户名获取用户。"""
         with self._db.session() as session:
-            user = session.query(User).filter_by(
-                tenant_id=_DEFAULT_TENANT_ID, username=username
-            ).first()
+            user = (
+                session.query(User)
+                .filter_by(tenant_id=_DEFAULT_TENANT_ID, username=username)
+                .first()
+            )
             return _user_to_stored(user) if user else None
 
-    def get_by_email(self, email: str) -> Optional[StoredUser]:
+    def get_by_email(self, email: str) -> StoredUser | None:
         """根据邮箱获取用户(用于 LDAP 用户按邮箱映射)。"""
         if not email:
             return None
@@ -226,7 +227,7 @@ class PgUserStore:
             user = session.query(User).filter_by(email=email).first()
             return _user_to_stored(user) if user else None
 
-    def get_by_phone(self, phone: str) -> Optional[StoredUser]:
+    def get_by_phone(self, phone: str) -> StoredUser | None:
         """根据手机号获取用户(用于手机号验证码登录)。
 
         手机号存储在 profile JSON 字段的 phone 子键中。
@@ -236,12 +237,10 @@ class PgUserStore:
             return None
         with self._db.session() as session:
             # profile 是 JSON 列,使用 ->> 操作符提取 phone 字段
-            user = session.query(User).filter(
-                User.profile["phone"].astext == phone
-            ).first()
+            user = session.query(User).filter(User.profile["phone"].astext == phone).first()
             return _user_to_stored(user) if user else None
 
-    def authenticate(self, username: str, password: str) -> Optional[StoredUser]:
+    def authenticate(self, username: str, password: str) -> StoredUser | None:
         """验证用户名+密码,返回用户或 None。
 
         安全:登录失败次数追踪,超过阈值后锁定。
@@ -286,7 +285,7 @@ class PgUserStore:
                 if attempt[0] >= MAX_LOGIN_ATTEMPTS:
                     attempt[2] = now + LOGIN_LOCKOUT_SECONDS
 
-    def update_profile(self, user_id: int, profile: dict) -> Optional[StoredUser]:
+    def update_profile(self, user_id: int, profile: dict) -> StoredUser | None:
         """更新用户画像字段。"""
         with self._db.session() as session:
             user = session.get(User, user_id)
@@ -322,7 +321,7 @@ class PgUserStore:
             profile["quota_used"] = profile.get("quota_used", 0) + tokens
             user.profile = profile
 
-    def get_quota(self, user_id: int) -> Optional[dict]:
+    def get_quota(self, user_id: int) -> dict | None:
         """获取用户 Token 配额信息。"""
         user = self.get_by_id(user_id)
         if not user:
@@ -338,16 +337,14 @@ class PgUserStore:
         self,
         limit: int = 50,
         offset: int = 0,
-        search: Optional[str] = None,
+        search: str | None = None,
     ) -> tuple[list[StoredUser], int]:
         """列出用户(支持搜索 + 分页)。返回 (users, total)。"""
         with self._db.session() as session:
             q = session.query(User).filter_by(tenant_id=_DEFAULT_TENANT_ID)
             if search:
                 like = f"%{search}%"
-                q = q.filter(
-                    (User.username.like(like)) | (User.email.like(like))
-                )
+                q = q.filter((User.username.like(like)) | (User.email.like(like)))
             total = q.count()
             users = (
                 q.order_by(User.id.desc())
@@ -385,11 +382,12 @@ class PgUserStore:
     def soft_delete_user(self, user_id: int, retention_days: int = 30) -> bool:
         """软删除用户(标记为待删除 + 禁用登录)。"""
         from datetime import datetime, timedelta
+
         with self._db.session() as session:
             user = session.get(User, user_id)
             if not user:
                 return False
-            now = datetime.utcnow()
+            now = datetime.now(UTC)
             hard_delete_at = now + timedelta(days=retention_days)
             profile = dict(user.profile or {})
             profile["deleted_at"] = now.isoformat()
@@ -423,27 +421,17 @@ class PgUserStore:
     def get_soft_deleted_users(self) -> list:
         """获取所有已软删除的用户。"""
         with self._db.session() as session:
-            users = (
-                session.query(User)
-                .filter_by(tenant_id=_DEFAULT_TENANT_ID)
-                .all()
-            )
-            return [
-                _user_to_stored(u) for u in users
-                if u.profile and u.profile.get("deleted_at")
-            ]
+            users = session.query(User).filter_by(tenant_id=_DEFAULT_TENANT_ID).all()
+            return [_user_to_stored(u) for u in users if u.profile and u.profile.get("deleted_at")]
 
     def get_users_to_hard_delete(self, before=None) -> list:
         """获取已过保留期、待硬删除的用户。"""
         from datetime import datetime
+
         if before is None:
-            before = datetime.utcnow()
+            before = datetime.now(UTC)
         with self._db.session() as session:
-            users = (
-                session.query(User)
-                .filter_by(tenant_id=_DEFAULT_TENANT_ID)
-                .all()
-            )
+            users = session.query(User).filter_by(tenant_id=_DEFAULT_TENANT_ID).all()
             result = []
             for u in users:
                 if not u.profile:
@@ -483,11 +471,9 @@ class PgUserStore:
         with self._db.session() as session:
             return session.query(User).filter_by(tenant_id=_DEFAULT_TENANT_ID).count()
 
-
 # ---------------------------------------------------------------------------
 # PgApiKeyStore
 # ---------------------------------------------------------------------------
-
 
 class PgApiKeyStore:
     """PostgreSQL 持久化 ApiKeyStore。"""
@@ -497,7 +483,7 @@ class PgApiKeyStore:
         self._lock = threading.RLock()
 
     def create(
-        self, user_id: int, scopes: Optional[list] = None, expires_days: int = 365
+        self, user_id: int, scopes: list | None = None, expires_days: int = 365
     ) -> StoredApiKey:
         """为用户创建 API Key。明文 key 只返回一次。"""
         with self._lock, self._db.session() as session:
@@ -507,7 +493,7 @@ class PgApiKeyStore:
                 user_id=user_id,
                 api_key_hash=key_hash,
                 scopes=scopes or ["chat"],
-                expires_at=datetime.utcnow() + timedelta(days=expires_days),
+                expires_at=datetime.now(UTC) + timedelta(days=expires_days),
             )
             session.add(cred)
             session.flush()
@@ -519,7 +505,7 @@ class PgApiKeyStore:
             cred = session.get(APICredential, key_id)
             if not cred or cred.user_id != user_id or cred.revoked_at:
                 return False
-            cred.revoked_at = datetime.utcnow()
+            cred.revoked_at = datetime.now(UTC)
             return True
 
     def list_by_user(self, user_id: int) -> list[StoredApiKey]:
@@ -533,21 +519,20 @@ class PgApiKeyStore:
             )
             return [_cred_to_stored(c) for c in creds]
 
-
 # ---------------------------------------------------------------------------
 # PgDocumentStore
 # ---------------------------------------------------------------------------
 
-
 class PgDocumentStore:
     """PostgreSQL 持久化 DocumentStore(文件落盘 + 元数据入库)。"""
 
-    def __init__(self, db: DatabaseAdapter, storage_dir: Optional[str] = None):
+    def __init__(self, db: DatabaseAdapter, storage_dir: str | None = None):
         self._db = db
         self._lock = threading.RLock()
         self._storage_dir = storage_dir or os.path.join(
             os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))),
-            "data", "uploads",
+            "data",
+            "uploads",
         )
         os.makedirs(self._storage_dir, exist_ok=True)
 
@@ -561,10 +546,15 @@ class PgDocumentStore:
         ext = os.path.splitext(filename)[1].lower().lstrip(".")
         mapping = {
             "pdf": "pdf",
-            "docx": "docx", "doc": "docx",
-            "txt": "markdown", "md": "markdown",
-            "png": "chart", "jpg": "chart", "jpeg": "chart",
-            "csv": "table", "xlsx": "table",
+            "docx": "docx",
+            "doc": "docx",
+            "txt": "markdown",
+            "md": "markdown",
+            "png": "chart",
+            "jpg": "chart",
+            "jpeg": "chart",
+            "csv": "table",
+            "xlsx": "table",
         }
         return mapping.get(ext, "unknown")
 
@@ -574,9 +564,13 @@ class PgDocumentStore:
         mimes = {
             "pdf": "application/pdf",
             "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            "txt": "text/plain", "md": "text/markdown",
-            "png": "image/png", "jpg": "image/jpeg", "jpeg": "image/jpeg",
-            "csv": "text/csv", "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "txt": "text/plain",
+            "md": "text/markdown",
+            "png": "image/png",
+            "jpg": "image/jpeg",
+            "jpeg": "image/jpeg",
+            "csv": "text/csv",
+            "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         }
         return mimes.get(ext, "application/octet-stream")
 
@@ -592,7 +586,7 @@ class PgDocumentStore:
         filename: str,
         content: bytes,
         user_id: int = 0,
-        metadata: Optional[dict] = None,
+        metadata: dict | None = None,
     ) -> StoredDocument:
         """保存上传文件,返回文档记录。
 
@@ -600,18 +594,14 @@ class PgDocumentStore:
         路径穿越检查优先于扩展名检查(安全优先,拒绝可疑文件名再处理)。
         """
         if len(content) > MAX_UPLOAD_SIZE_BYTES:
-            raise ValueError(
-                f"文件大小 {len(content)} 字节超过上限 {MAX_UPLOAD_SIZE_BYTES} 字节"
-            )
+            raise ValueError(f"文件大小 {len(content)} 字节超过上限 {MAX_UPLOAD_SIZE_BYTES} 字节")
         # 安全校验:路径穿越检测(优先于扩展名检查)
         # 原始文件名中含 ".." 或路径分隔符即视为攻击,直接拒绝
         if ".." in filename or filename.startswith("/") or filename.startswith("\\"):
             raise ValueError("非法文件名")
         ext = os.path.splitext(filename)[1].lower().lstrip(".")
         if ext not in ALLOWED_FILE_EXTENSIONS:
-            raise ValueError(
-                f"不支持的文件类型 '.{ext}',允许: {sorted(ALLOWED_FILE_EXTENSIONS)}"
-            )
+            raise ValueError(f"不支持的文件类型 '.{ext}',允许: {sorted(ALLOWED_FILE_EXTENSIONS)}")
         safe_name = os.path.basename(filename).replace(os.sep, "_").replace("..", "_")
         if not safe_name or safe_name.startswith("."):
             raise ValueError("非法文件名")
@@ -643,7 +633,7 @@ class PgDocumentStore:
         doc_type: str,
         content: bytes,
         user_id: int = 0,
-        metadata: Optional[dict] = None,
+        metadata: dict | None = None,
     ) -> StoredDocument:
         """Agent 生成的文档。"""
         with self._lock, self._db.session() as session:
@@ -665,7 +655,7 @@ class PgDocumentStore:
             self._save_file(doc.object_key, content)
             return _doc_to_stored(doc)
 
-    def get(self, doc_id: int) -> Optional[StoredDocument]:
+    def get(self, doc_id: int) -> StoredDocument | None:
         """根据 ID 获取未删除的文档。"""
         with self._db.session() as session:
             doc = session.get(Document, doc_id)
@@ -673,7 +663,7 @@ class PgDocumentStore:
                 return None
             return _doc_to_stored(doc)
 
-    def get_file_path(self, doc_id: int) -> Optional[str]:
+    def get_file_path(self, doc_id: int) -> str | None:
         """获取文档落盘文件的绝对路径,文件缺失返回 None。"""
         doc = self.get(doc_id)
         if not doc:
@@ -683,8 +673,8 @@ class PgDocumentStore:
 
     def list(
         self,
-        user_id: Optional[int] = None,
-        doc_type: Optional[str] = None,
+        user_id: int | None = None,
+        doc_type: str | None = None,
         limit: int = 50,
     ) -> list[StoredDocument]:
         """查询文档列表,支持按用户/类型过滤。"""
@@ -704,7 +694,7 @@ class PgDocumentStore:
             doc = session.get(Document, doc_id)
             if not doc or doc.deleted_at:
                 return False
-            doc.deleted_at = datetime.utcnow()
+            doc.deleted_at = datetime.now(UTC)
             return True
 
     @property
@@ -713,11 +703,9 @@ class PgDocumentStore:
         with self._db.session() as session:
             return session.query(Document).filter(Document.deleted_at.is_(None)).count()
 
-
 # ---------------------------------------------------------------------------
 # PgTaskStore
 # ---------------------------------------------------------------------------
-
 
 class PgTaskStore:
     """PostgreSQL 持久化 TaskStore。"""
@@ -772,7 +760,7 @@ class PgTaskStore:
             session.flush()
             return _task_to_stored(task, [])
 
-    def get(self, task_id: int) -> Optional[StoredTask]:
+    def get(self, task_id: int) -> StoredTask | None:
         """根据 ID 获取任务(含步骤)。"""
         with self._db.session() as session:
             task = session.get(Task, task_id)
@@ -781,19 +769,19 @@ class PgTaskStore:
             steps = session.query(TaskStep).filter_by(task_id=task_id).all()
             return _task_to_stored(task, steps)
 
-    def start(self, task_id: int) -> Optional[StoredTask]:
+    def start(self, task_id: int) -> StoredTask | None:
         """标记任务开始执行。"""
         with self._lock, self._db.session() as session:
             task = session.get(Task, task_id)
             if not task:
                 return None
             task.status = "running"
-            task.started_at = datetime.utcnow()
+            task.started_at = datetime.now(UTC)
             return _task_to_stored(task, session.query(TaskStep).filter_by(task_id=task_id).all())
 
     def add_step(
         self, task_id: int, description: str, tool_name: str = ""
-    ) -> Optional[StoredTaskStep]:
+    ) -> StoredTaskStep | None:
         """为任务追加一个步骤,返回新增步骤。"""
         with self._lock, self._db.session() as session:
             task = session.get(Task, task_id)
@@ -829,49 +817,45 @@ class PgTaskStore:
         task_id: int,
         step_no: int,
         status: str,
-        result: Optional[dict] = None,
+        result: dict | None = None,
         error: str = "",
     ) -> bool:
         """更新指定步骤的状态/结果,自动维护起止时间。"""
         with self._lock, self._db.session() as session:
-            step = (
-                session.query(TaskStep)
-                .filter_by(task_id=task_id, step_no=step_no)
-                .first()
-            )
+            step = session.query(TaskStep).filter_by(task_id=task_id, step_no=step_no).first()
             if not step:
                 return False
             step.status = status
             if status == "running" and not step.started_at:
-                step.started_at = datetime.utcnow()
+                step.started_at = datetime.now(UTC)
             if status in ("success", "failed") and not step.finished_at:
-                step.finished_at = datetime.utcnow()
+                step.finished_at = datetime.now(UTC)
             return True
 
-    def complete(self, task_id: int, result: Optional[dict] = None) -> Optional[StoredTask]:
+    def complete(self, task_id: int, result: dict | None = None) -> StoredTask | None:
         """标记任务成功完成。"""
         with self._lock, self._db.session() as session:
             task = session.get(Task, task_id)
             if not task:
                 return None
             task.status = "succeeded"
-            task.finished_at = datetime.utcnow()
+            task.finished_at = datetime.now(UTC)
             if result is not None:
                 task.result = result
             return _task_to_stored(task, session.query(TaskStep).filter_by(task_id=task_id).all())
 
-    def fail(self, task_id: int, error: str) -> Optional[StoredTask]:
+    def fail(self, task_id: int, error: str) -> StoredTask | None:
         """标记任务失败并记录错误信息。"""
         with self._lock, self._db.session() as session:
             task = session.get(Task, task_id)
             if not task:
                 return None
             task.status = "failed"
-            task.finished_at = datetime.utcnow()
+            task.finished_at = datetime.now(UTC)
             task.error = error
             return _task_to_stored(task, session.query(TaskStep).filter_by(task_id=task_id).all())
 
-    def cancel(self, task_id: int) -> Optional[StoredTask]:
+    def cancel(self, task_id: int) -> StoredTask | None:
         """取消任务(仅未完成的任务可取消)。"""
         with self._lock, self._db.session() as session:
             task = session.get(Task, task_id)
@@ -880,10 +864,10 @@ class PgTaskStore:
             if task.status in ("succeeded", "failed", "cancelled"):
                 return None
             task.status = "cancelled"
-            task.finished_at = datetime.utcnow()
+            task.finished_at = datetime.now(UTC)
             return _task_to_stored(task, session.query(TaskStep).filter_by(task_id=task_id).all())
 
-    def retry(self, task_id: int) -> Optional[StoredTask]:
+    def retry(self, task_id: int) -> StoredTask | None:
         """重置任务状态为 pending,允许重新执行。"""
         with self._lock, self._db.session() as session:
             task = session.get(Task, task_id)
@@ -903,8 +887,8 @@ class PgTaskStore:
 
     def list(
         self,
-        user_id: Optional[int] = None,
-        status: Optional[str] = None,
+        user_id: int | None = None,
+        status: str | None = None,
         limit: int = 50,
     ) -> list[StoredTask]:
         """查询任务列表,支持按用户/状态过滤,按创建时间倒序。"""
@@ -922,7 +906,7 @@ class PgTaskStore:
                 result.append(_task_to_stored(t, steps))
             return result
 
-    def get_status(self, task_id: int) -> Optional[dict]:
+    def get_status(self, task_id: int) -> dict | None:
         """获取任务状态摘要(进度/当前步骤/总步骤数)。"""
         with self._db.session() as session:
             task = session.get(Task, task_id)
@@ -947,17 +931,14 @@ class PgTaskStore:
         with self._db.session() as session:
             return session.query(Task).count()
 
-
 # ---------------------------------------------------------------------------
 # 工厂函数(根据 DATABASE_URL 选择实现)
 # ---------------------------------------------------------------------------
 
-
-_db_adapter: Optional[DatabaseAdapter] = None
+_db_adapter: DatabaseAdapter | None = None
 _db_adapter_lock = threading.Lock()
 
-
-def get_db_adapter() -> Optional[DatabaseAdapter]:
+def get_db_adapter() -> DatabaseAdapter | None:
     """获取 DatabaseAdapter 单例。
 
     优先级:
@@ -973,7 +954,6 @@ def get_db_adapter() -> Optional[DatabaseAdapter]:
                     return None
                 _db_adapter = DatabaseAdapter(url)
     return _db_adapter
-
 
 def reset_db_adapter() -> None:
     """重置 DatabaseAdapter 单例(用于测试)。"""

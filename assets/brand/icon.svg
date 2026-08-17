@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="FnixAgent Icon">
+  <title>FnixAgent Icon</title>
+  <desc>Isometric cube icon for app/dock/favicon.</desc>
+
+  <defs>
+    <linearGradient id="iTop" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F0F0F0"/>
+      <stop offset="100%" stop-color="#B0B0B0"/>
+    </linearGradient>
+    <linearGradient id="iLeft" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#888"/>
+      <stop offset="100%" stop-color="#3D3D3D"/>
+    </linearGradient>
+    <linearGradient id="iRight" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#666"/>
+      <stop offset="100%" stop-color="#1F1F1F"/>
+    </linearGradient>
+    <radialGradient id="iGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- 居中立方体(为 icon 缩进 64px,留白充足) -->
+  <g transform="translate(64,64)">
+    <!-- 顶面 -->
+    <polygon points="192,72 312,132 192,192 72,132" fill="url(#iTop)" stroke="#0A0A0A" stroke-width="2" stroke-linejoin="round"/>
+    <!-- 左面 -->
+    <polygon points="72,132 192,192 192,312 72,252" fill="url(#iLeft)" stroke="#0A0A0A" stroke-width="2" stroke-linejoin="round"/>
+    <!-- 右面 -->
+    <polygon points="192,192 312,132 312,252 192,312" fill="url(#iRight)" stroke="#0A0A0A" stroke-width="2" stroke-linejoin="round"/>
+
+    <!-- 神经节点连线 -->
+    <g stroke="#FFFFFF" stroke-width="2.5" fill="none" stroke-opacity="0.95" stroke-linecap="round">
+      <path d="M 312,132 L 384,96"/>
+      <path d="M 312,252 L 384,288"/>
+      <path d="M 192,72 L 192,16"/>
+      <path d="M 72,132 L 0,96"/>
+    </g>
+
+    <!-- 外延节点 -->
+    <circle cx="384" cy="96" r="9" fill="#FFFFFF"/>
+    <circle cx="384" cy="96" r="16" fill="url(#iGlow)"/>
+    <circle cx="384" cy="288" r="9" fill="#FFFFFF"/>
+    <circle cx="384" cy="288" r="16" fill="url(#iGlow)"/>
+    <circle cx="192" cy="16" r="9" fill="#FFFFFF"/>
+    <circle cx="192" cy="16" r="16" fill="url(#iGlow)"/>
+    <circle cx="0" cy="96" r="9" fill="#FFFFFF"/>
+    <circle cx="0" cy="96" r="16" fill="url(#iGlow)"/>
+
+    <!-- 立方体顶点 -->
+    <circle cx="192" cy="72" r="6" fill="#FFFFFF"/>
+    <circle cx="312" cy="132" r="6" fill="#FFFFFF"/>
+    <circle cx="192" cy="192" r="6" fill="#FFFFFF"/>
+    <circle cx="72" cy="132" r="6" fill="#FFFFFF"/>
+    <circle cx="72" cy="252" r="6" fill="#FFFFFF"/>
+    <circle cx="312" cy="252" r="6" fill="#FFFFFF"/>
+    <circle cx="192" cy="312" r="6" fill="#FFFFFF"/>
+  </g>
+</svg>

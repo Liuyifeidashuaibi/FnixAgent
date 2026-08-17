@@ -1,4 +1,4 @@
-﻿"""类型化消息 + Handoff 协议 —— P3-1。
+"""类型化消息 + Handoff 协议 —— P3-1。
 
 借鉴:
   - OpenAI Agents SDK:Handoff 作为 Agent 配置项,声明可移交的目标 Agent
@@ -22,23 +22,29 @@
             # 继续主循环(目标 Agent 接管)
             continue
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import copy
 import logging
 import threading
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable, Optional
+from typing import Any
 
 from fnixagent.core.messages import Msg
 
 logger = logging.getLogger(__name__)
 
-
 # ---------------------------------------------------------------------------
 # Handoff 输入 / 输出(运行时契约)
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class HandoffInput:
@@ -73,7 +79,6 @@ class HandoffInput:
             "context_keys": list(self.context.keys()),
         }
 
-
 @dataclass
 class HandoffOutput:
     """Handoff 输出(由接收方返回)。
@@ -88,15 +93,15 @@ class HandoffOutput:
     accepted: bool
     receiving_agent: str
     message: str = ""
-    new_context: Optional[dict[str, Any]] = None
+    new_context: dict[str, Any] | None = None
 
     @classmethod
-    def accept(cls, agent: str, message: str = "") -> "HandoffOutput":
+    def accept(cls, agent: str, message: str = "") -> HandoffOutput:
         """便捷构造:接受移交。"""
         return cls(accepted=True, receiving_agent=agent, message=message)
 
     @classmethod
-    def reject(cls, agent: str, message: str) -> "HandoffOutput":
+    def reject(cls, agent: str, message: str) -> HandoffOutput:
         """便捷构造:拒绝移交。"""
         return cls(accepted=False, receiving_agent=agent, message=message)
 
@@ -113,11 +118,9 @@ class HandoffOutput:
             "has_new_context": self.new_context is not None,
         }
 
-
 # ---------------------------------------------------------------------------
 # Handoff 声明(Agent 配置项)
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class Handoff:
@@ -141,27 +144,20 @@ class Handoff:
 
     target_agent: str
     description: str = ""
-    input_filter: Optional[Callable[[list[Msg]], list[Msg]]] = None
+    input_filter: Callable[[list[Msg]], list[Msg]] | None = None
     max_depth: int = 5
-    on_handoff: Optional[Callable[[HandoffInput], HandoffOutput]] = None
+    on_handoff: Callable[[HandoffInput], HandoffOutput] | None = None
 
     def __post_init__(self) -> None:
         # 校验 target_agent:必须是非空字符串,否则 handoff 无法路由
         if not isinstance(self.target_agent, str):
-            raise TypeError(
-                f"target_agent must be str, got {type(self.target_agent).__name__}"
-            )
+            raise TypeError(f"target_agent must be str, got {type(self.target_agent).__name__}")
         if not self.target_agent.strip():
             raise ValueError("target_agent must not be empty or whitespace-only")
         if not isinstance(self.max_depth, int):
-            raise TypeError(
-                f"max_depth must be int, got {type(self.max_depth).__name__}"
-            )
+            raise TypeError(f"max_depth must be int, got {type(self.max_depth).__name__}")
         if self.max_depth < 1:
-            raise ValueError(
-                f"Handoff.max_depth must be >= 1, got {self.max_depth}"
-            )
-
+            raise ValueError(f"Handoff.max_depth must be >= 1, got {self.max_depth}")
 
 def make_handoff(target: str, **kwargs: Any) -> Handoff:
     """便捷工厂:构造 Handoff 声明。
@@ -178,11 +174,9 @@ def make_handoff(target: str, **kwargs: Any) -> Handoff:
     """
     return Handoff(target_agent=target, **kwargs)
 
-
 # ---------------------------------------------------------------------------
 # HandoffRegistry(Agent → 可用 Handoff 列表)
 # ---------------------------------------------------------------------------
-
 
 class HandoffRegistry:
     """Handoff 注册表:管理每个 Agent 的可移交目标。
@@ -220,15 +214,11 @@ class HandoffRegistry:
             ValueError: agent_name 为空
         """
         if not isinstance(agent_name, str):
-            raise TypeError(
-                f"agent_name must be str, got {type(agent_name).__name__}"
-            )
+            raise TypeError(f"agent_name must be str, got {type(agent_name).__name__}")
         if not agent_name.strip():
             raise ValueError("agent_name must not be empty or whitespace-only")
         if not isinstance(handoff, Handoff):
-            raise TypeError(
-                f"handoff must be Handoff, got {type(handoff).__name__}"
-            )
+            raise TypeError(f"handoff must be Handoff, got {type(handoff).__name__}")
         with self._lock:
             handoffs = self._handoffs.setdefault(agent_name, [])
             # 去重:同 target 替换
@@ -286,7 +276,7 @@ class HandoffRegistry:
         self,
         agent_name: str,
         target_agent: str,
-    ) -> Optional[Handoff]:
+    ) -> Handoff | None:
         """查找指定 handoff 声明,未找到返回 None。
 
         Args:
@@ -314,11 +304,9 @@ class HandoffRegistry:
         """
         return self.find(agent_name, target_agent) is not None
 
-
 # ---------------------------------------------------------------------------
 # 默认 input_filter 实现
 # ---------------------------------------------------------------------------
-
 
 def default_input_filter(history: list[Msg], max_messages: int = 20) -> list[Msg]:
     """默认 input_filter:保留最近 max_messages 条消息。
@@ -338,13 +326,9 @@ def default_input_filter(history: list[Msg], max_messages: int = 20) -> list[Msg
         ValueError: max_messages < 1
     """
     if not isinstance(history, list):
-        raise TypeError(
-            f"history must be list[Msg], got {type(history).__name__}"
-        )
+        raise TypeError(f"history must be list[Msg], got {type(history).__name__}")
     if not isinstance(max_messages, int):
-        raise TypeError(
-            f"max_messages must be int, got {type(max_messages).__name__}"
-        )
+        raise TypeError(f"max_messages must be int, got {type(max_messages).__name__}")
     if max_messages < 1:
         raise ValueError(f"max_messages must be >= 1, got {max_messages}")
     if not history:
@@ -352,7 +336,6 @@ def default_input_filter(history: list[Msg], max_messages: int = 20) -> list[Msg
     if len(history) <= max_messages:
         return list(history)
     return list(history[-max_messages:])
-
 
 def filter_by_role(
     history: list[Msg],
@@ -371,30 +354,23 @@ def filter_by_role(
         TypeError: history 不是 list 或 keep_roles 不是 tuple
     """
     if not isinstance(history, list):
-        raise TypeError(
-            f"history must be list[Msg], got {type(history).__name__}"
-        )
+        raise TypeError(f"history must be list[Msg], got {type(history).__name__}")
     if not isinstance(keep_roles, tuple):
-        raise TypeError(
-            f"keep_roles must be tuple, got {type(keep_roles).__name__}"
-        )
+        raise TypeError(f"keep_roles must be tuple, got {type(keep_roles).__name__}")
     return [m for m in history if m.role in keep_roles]
-
 
 # ---------------------------------------------------------------------------
 # Runner 集成:AgentRunner._exec_handoff
 # ---------------------------------------------------------------------------
 
-
 class HandoffError(Exception):
     """Handoff 执行错误。"""
-
 
 def build_handoff_context(
     state: Any,
     handoff: Handoff,
     depth: int,
-    extra: Optional[dict[str, Any]] = None,
+    extra: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """从 AgentState 构造 HandoffInput.context。
 
@@ -420,9 +396,7 @@ def build_handoff_context(
     """
     # 参数校验(public API 入口)
     if not isinstance(handoff, Handoff):
-        raise TypeError(
-            f"handoff must be Handoff, got {type(handoff).__name__}"
-        )
+        raise TypeError(f"handoff must be Handoff, got {type(handoff).__name__}")
     if not isinstance(depth, int):
         raise TypeError(f"depth must be int, got {type(depth).__name__}")
 
@@ -461,7 +435,6 @@ def build_handoff_context(
             context.setdefault(k, v)
     return context
 
-
 def exec_handoff(
     *,
     from_agent: str,
@@ -470,10 +443,10 @@ def exec_handoff(
     registry: HandoffRegistry,
     state: Any,
     depth: int = 0,
-    extra_context: Optional[dict[str, Any]] = None,
-    agents: Optional[dict[str, Any]] = None,
-    tracer: Optional[Any] = None,
-) -> tuple[HandoffOutput, Optional[Any]]:
+    extra_context: dict[str, Any] | None = None,
+    agents: dict[str, Any] | None = None,
+    tracer: Any | None = None,
+) -> tuple[HandoffOutput, Any | None]:
     """执行一次 Handoff(供 AgentRunner._exec_handoff 调用)。
 
     流程:
@@ -505,28 +478,20 @@ def exec_handoff(
     """
     # 参数校验(public API 入口)
     if not isinstance(from_agent, str):
-        raise TypeError(
-            f"from_agent must be str, got {type(from_agent).__name__}"
-        )
+        raise TypeError(f"from_agent must be str, got {type(from_agent).__name__}")
     if not from_agent.strip():
         raise ValueError("from_agent must not be empty or whitespace-only")
     if not isinstance(target_agent, str):
-        raise TypeError(
-            f"target_agent must be str, got {type(target_agent).__name__}"
-        )
+        raise TypeError(f"target_agent must be str, got {type(target_agent).__name__}")
     if not target_agent.strip():
         raise ValueError("target_agent must not be empty or whitespace-only")
     if not isinstance(registry, HandoffRegistry):
-        raise TypeError(
-            f"registry must be HandoffRegistry, got {type(registry).__name__}"
-        )
+        raise TypeError(f"registry must be HandoffRegistry, got {type(registry).__name__}")
 
     # 1. 查找 handoff 声明
     handoff = registry.find(from_agent, target_agent)
     if handoff is None:
-        raise HandoffError(
-            f"no handoff declared from '{from_agent}' to '{target_agent}'"
-        )
+        raise HandoffError(f"no handoff declared from '{from_agent}' to '{target_agent}'")
 
     # 2. 深度校验(防死循环)
     if depth >= handoff.max_depth:
@@ -555,6 +520,7 @@ def exec_handoff(
     if tracer is not None:
         try:
             from fnixagent.core.observability.tracing.span import HandoffSpanData
+
             span_cm = tracer.start_span(
                 "handoff",
                 HandoffSpanData(
@@ -610,7 +576,6 @@ def exec_handoff(
 
     return output, target_instance
 
-
 def apply_handoff_to_state(
     state: Any,
     output: HandoffOutput,
@@ -637,13 +602,9 @@ def apply_handoff_to_state(
     """
     # 参数校验(public API 入口)
     if not isinstance(output, HandoffOutput):
-        raise TypeError(
-            f"output must be HandoffOutput, got {type(output).__name__}"
-        )
+        raise TypeError(f"output must be HandoffOutput, got {type(output).__name__}")
     if not isinstance(handoff_input, HandoffInput):
-        raise TypeError(
-            f"handoff_input must be HandoffInput, got {type(handoff_input).__name__}"
-        )
+        raise TypeError(f"handoff_input must be HandoffInput, got {type(handoff_input).__name__}")
 
     try:
         new_state = copy.deepcopy(state)
@@ -694,17 +655,16 @@ def apply_handoff_to_state(
 
     return new_state
 
-
 __all__ = [
+    "Handoff",
+    "HandoffError",
     "HandoffInput",
     "HandoffOutput",
-    "Handoff",
     "HandoffRegistry",
-    "HandoffError",
-    "make_handoff",
-    "default_input_filter",
-    "filter_by_role",
-    "build_handoff_context",
-    "exec_handoff",
     "apply_handoff_to_state",
+    "build_handoff_context",
+    "default_input_filter",
+    "exec_handoff",
+    "filter_by_role",
+    "make_handoff",
 ]

@@ -43,7 +43,7 @@ def upgrade() -> None:
         sa.Column("name", sa.String(length=128), nullable=False),
         sa.Column("plan", sa.String(length=32), nullable=False, server_default="free"),
         sa.Column("quota_tokens", sa.BigInteger(), nullable=False, server_default="0"),
-        sa.Column("created_at", sa.TIMESTAMP(), nullable=False, server_default=sa.func.now()),
+        sa.Column("created_at", sa.TIMESTAMP(), nullable=False, server_default=sa.text("now()")),
     )
 
     # ------------------------------------------------------------------
@@ -58,7 +58,7 @@ def upgrade() -> None:
         sa.Column("password_hash", sa.String(length=255)),
         sa.Column("role", sa.String(length=32), nullable=False, server_default="user"),
         sa.Column("profile", sa.JSON(), nullable=False, server_default=sa.text("'{}'::json")),
-        sa.Column("created_at", sa.TIMESTAMP(), nullable=False, server_default=sa.func.now()),
+        sa.Column("created_at", sa.TIMESTAMP(), nullable=False, server_default=sa.text("now()")),
         sa.UniqueConstraint("tenant_id", "username", name="uq_tenant_username"),
     )
 
@@ -72,7 +72,7 @@ def upgrade() -> None:
         sa.Column("api_key_hash", sa.String(length=255), nullable=False),
         sa.Column("scopes", sa.ARRAY(sa.TEXT()), nullable=False, server_default=sa.text("'{}'")),
         sa.Column("expires_at", sa.TIMESTAMP()),
-        sa.Column("created_at", sa.TIMESTAMP(), nullable=False, server_default=sa.func.now()),
+        sa.Column("created_at", sa.TIMESTAMP(), nullable=False, server_default=sa.text("now()")),
         sa.Column("revoked_at", sa.TIMESTAMP()),
     )
 
@@ -87,12 +87,12 @@ def upgrade() -> None:
         sa.Column("title", sa.String(length=255)),
         sa.Column("context", sa.JSON(), nullable=False, server_default=sa.text("'{}'::json")),
         sa.Column("status", sa.String(length=32), nullable=False, server_default="active"),
-        sa.Column("created_at", sa.TIMESTAMP(), nullable=False, server_default=sa.func.now()),
+        sa.Column("created_at", sa.TIMESTAMP(), nullable=False, server_default=sa.text("now()")),
         sa.Column(
             "updated_at",
             sa.TIMESTAMP(),
             nullable=False,
-            server_default=sa.func.now(),
+            server_default=sa.text("now()"),
         ),
     )
     op.create_index("idx_sessions_user", "sessions", ["user_id", "status"])
@@ -113,7 +113,7 @@ def upgrade() -> None:
         sa.Column("model", sa.String(length=64)),
         sa.Column("trace_id", sa.String(length=64)),
         sa.Column("metadata", sa.JSON(), nullable=False, server_default=sa.text("'{}'::json")),
-        sa.Column("created_at", sa.TIMESTAMP(), nullable=False, server_default=sa.func.now()),
+        sa.Column("created_at", sa.TIMESTAMP(), nullable=False, server_default=sa.text("now()")),
     )
     op.create_index("idx_messages_session", "messages", ["session_id", "created_at"])
 
@@ -133,7 +133,7 @@ def upgrade() -> None:
         sa.Column("error", sa.TEXT()),
         sa.Column("started_at", sa.TIMESTAMP()),
         sa.Column("finished_at", sa.TIMESTAMP()),
-        sa.Column("created_at", sa.TIMESTAMP(), nullable=False, server_default=sa.func.now()),
+        sa.Column("created_at", sa.TIMESTAMP(), nullable=False, server_default=sa.text("now()")),
     )
     op.create_index("idx_tasks_user_status", "tasks", ["user_id", "status"])
 
@@ -180,7 +180,7 @@ def upgrade() -> None:
         sa.Column("duration_ms", sa.SmallInteger()),
         sa.Column("sandbox_id", sa.String(length=64)),
         sa.Column("permission_level", sa.String(length=32), server_default="low"),
-        sa.Column("created_at", sa.TIMESTAMP(), nullable=False, server_default=sa.func.now()),
+        sa.Column("created_at", sa.TIMESTAMP(), nullable=False, server_default=sa.text("now()")),
     )
     op.create_index("idx_tool_exec_task", "tool_executions", ["task_id"])
     op.create_index("idx_tool_exec_name_time", "tool_executions", ["tool_name", "created_at"])
@@ -201,7 +201,7 @@ def upgrade() -> None:
         sa.Column("rate_limit", sa.SmallInteger()),
         sa.Column("enabled", sa.Boolean(), nullable=False, server_default=sa.true()),
         sa.Column("version", sa.String(length=32), nullable=False, server_default="1.0.0"),
-        sa.Column("created_at", sa.TIMESTAMP(), nullable=False, server_default=sa.func.now()),
+        sa.Column("created_at", sa.TIMESTAMP(), nullable=False, server_default=sa.text("now()")),
     )
 
     # ------------------------------------------------------------------
@@ -220,7 +220,7 @@ def upgrade() -> None:
         sa.Column("size_bytes", sa.BigInteger()),
         sa.Column("checksum", sa.String(length=64)),
         sa.Column("metadata", sa.JSON(), nullable=False, server_default=sa.text("'{}'::json")),
-        sa.Column("created_at", sa.TIMESTAMP(), nullable=False, server_default=sa.func.now()),
+        sa.Column("created_at", sa.TIMESTAMP(), nullable=False, server_default=sa.text("now()")),
         sa.Column("deleted_at", sa.TIMESTAMP()),
     )
     op.create_index("idx_docs_user_type", "documents", ["user_id", "doc_type"])
@@ -242,7 +242,7 @@ def upgrade() -> None:
         sa.Column("vector_id", sa.String(length=128)),
         sa.Column("token_count", sa.SmallInteger()),
         sa.Column("metadata", sa.JSON(), nullable=False, server_default=sa.text("'{}'::json")),
-        sa.Column("created_at", sa.TIMESTAMP(), nullable=False, server_default=sa.func.now()),
+        sa.Column("created_at", sa.TIMESTAMP(), nullable=False, server_default=sa.text("now()")),
     )
     op.create_index("idx_chunks_doc", "knowledge_chunks", ["document_id"])
 
@@ -257,12 +257,12 @@ def upgrade() -> None:
         sa.Column("entity_type", sa.String(length=64), nullable=False),
         sa.Column("name", sa.String(length=255), nullable=False),
         sa.Column("attributes", sa.JSON(), nullable=False, server_default=sa.text("'{}'::json")),
-        sa.Column("created_at", sa.TIMESTAMP(), nullable=False, server_default=sa.func.now()),
+        sa.Column("created_at", sa.TIMESTAMP(), nullable=False, server_default=sa.text("now()")),
         sa.Column(
             "updated_at",
             sa.TIMESTAMP(),
             nullable=False,
-            server_default=sa.func.now(),
+            server_default=sa.text("now()"),
         ),
         sa.UniqueConstraint("tenant_id", "entity_type", "name", name="uq_tenant_entity"),
     )
@@ -303,7 +303,7 @@ def upgrade() -> None:
         sa.Column("passed", sa.Boolean(), nullable=False),
         sa.Column("reason", sa.TEXT()),
         sa.Column("suggestion", sa.TEXT()),
-        sa.Column("created_at", sa.TIMESTAMP(), nullable=False, server_default=sa.func.now()),
+        sa.Column("created_at", sa.TIMESTAMP(), nullable=False, server_default=sa.text("now()")),
     )
 
     # ------------------------------------------------------------------
@@ -317,7 +317,7 @@ def upgrade() -> None:
         sa.Column("action", sa.String(length=64), nullable=False),
         sa.Column("detail", sa.JSON(), nullable=False, server_default=sa.text("'{}'::json")),
         sa.Column("trace_id", sa.String(length=64)),
-        sa.Column("created_at", sa.TIMESTAMP(), nullable=False, server_default=sa.func.now()),
+        sa.Column("created_at", sa.TIMESTAMP(), nullable=False, server_default=sa.text("now()")),
     )
 
     # ------------------------------------------------------------------
@@ -331,7 +331,7 @@ def upgrade() -> None:
         sa.Column("layer", sa.String(length=32), nullable=False),
         sa.Column("content", sa.TEXT(), nullable=False),
         sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.false()),
-        sa.Column("created_at", sa.TIMESTAMP(), nullable=False, server_default=sa.func.now()),
+        sa.Column("created_at", sa.TIMESTAMP(), nullable=False, server_default=sa.text("now()")),
         sa.UniqueConstraint("name", "version", name="uq_prompt_template"),
     )
 
@@ -348,7 +348,7 @@ def upgrade() -> None:
         sa.Column("token_output", sa.SmallInteger(), nullable=False),
         sa.Column("cost", sa.Numeric(precision=12, scale=6), nullable=False),
         sa.Column("trace_id", sa.String(length=64)),
-        sa.Column("created_at", sa.TIMESTAMP(), nullable=False, server_default=sa.func.now()),
+        sa.Column("created_at", sa.TIMESTAMP(), nullable=False, server_default=sa.text("now()")),
     )
 
     # ------------------------------------------------------------------
@@ -362,7 +362,7 @@ def upgrade() -> None:
         sa.Column("rating", sa.SmallInteger(), nullable=False),
         sa.Column("comment", sa.TEXT()),
         sa.Column("tags", sa.ARRAY(sa.TEXT())),
-        sa.Column("created_at", sa.TIMESTAMP(), nullable=False, server_default=sa.func.now()),
+        sa.Column("created_at", sa.TIMESTAMP(), nullable=False, server_default=sa.text("now()")),
     )
 
 

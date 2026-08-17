@@ -1,0 +1,19 @@
+{
+  "name": "fnixagent-icon-generator",
+  "version": "1.0.0",
+  "description": "Generate all platform icons from single SVG source",
+  "private": true,
+  "scripts": {
+    "generate": "python3 generator/generate.py",
+    "generate:tauri": "python3 generator/generate.py --platforms tauri",
+    "generate:android": "python3 generator/generate.py --platforms android",
+    "generate:ios": "python3 generator/generate.py --platforms ios",
+    "deps:install": "pip install pillow cairosvg"
+  },
+  "dependencies": {
+    "cairosvg": "*",
+    "pillow": "*"
+  },
+  "license": "All Rights Reserved",
+  "author": "fnixagent"
+}

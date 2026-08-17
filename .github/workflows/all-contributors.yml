@@ -1,0 +1,47 @@
+name: All Contributors Bot
+on:
+  issue_comment:
+    types: [created]
+  push:
+    branches: [main]
+
+jobs:
+  all-contributors:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npx all-contributors-cli check
+      - run: npx all-contributors-cli generate
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "docs(contributors): update contributors list"
+          file_pattern: "README.md .all-contributorsrc"
+
+  acknowledge-comment:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'issue_comment' }}
+    steps:
+      - name: Parse comment
+        id: parse
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const comment = context.payload.comment.body;
+            const match = comment.match(/^@all-contributors\s+add\s+(\S+)\s+(\S+)/);
+            if (!match) return;
+            const [, username, contribution] = match;
+            core.setOutput('username', username);
+            core.setOutput('contribution', contribution);
+      - name: Add contributor
+        if: steps.parse.outputs.username
+        run: |
+          npx all-contributors-cli add ${{ steps.parse.outputs.username }} ${{ steps.parse.outputs.contribution }}
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "docs(contributors): add @${{ steps.parse.outputs.username }} as ${{ steps.parse.outputs.contribution }}"

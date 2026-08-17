@@ -19,23 +19,28 @@
   - 题库为空时直接跳过 L1
   - LLMRouter 未注入时 _llm_solve 返回 None,自动降级到 L3
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import hashlib
 import re
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 from fnixagent.office.base import BaseExpert, ExpertResult
 
-
 __all__ = [
-    "GarbageReport",
-    "GarbageDetector",
-    "ResolveResult",
     "AnswerResolver",
+    "GarbageDetector",
+    "GarbageReport",
+    "ResolveResult",
 ]
-
 
 # ---------------------------------------------------------------------------
 # 正则模式
@@ -43,9 +48,7 @@ __all__ = [
 
 # NAME{X}CONTENT{Y} 拼接模式,匹配 NAMEACONTENTxxxNAMEBCONTENTyyy 形式
 # 使用前瞻 (?=NAME[A-Z]CONTENT|$) 定位下一个选项的起始位置
-_NAME_CONTENT_PATTERN = re.compile(
-    r"NAME([A-Z])CONTENT(.+?)(?=NAME[A-Z]CONTENT|$)"
-)
+_NAME_CONTENT_PATTERN = re.compile(r"NAME([A-Z])CONTENT(.+?)(?=NAME[A-Z]CONTENT|$)")
 
 # 编码乱码:连续的 Latin-1 补充字符(Âè Ã¦ 等)或 Unicode 替换符 \ufffd
 _ENCODING_GARBLE_PATTERN = re.compile(r"[\u00c0-\u00ff]{2,}|\ufffd")
@@ -71,11 +74,9 @@ _CONFIDENCE_THRESHOLD = 0.7
 # 题干指纹取前 N 个字符
 _FINGERPRINT_HEAD_LEN = 50
 
-
 # ---------------------------------------------------------------------------
 # 乱码检测报告
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class GarbageReport:
@@ -99,11 +100,9 @@ class GarbageReport:
     parsed_options: list[tuple[str, str]] = field(default_factory=list)
     raw_text: str = ""
 
-
 # ---------------------------------------------------------------------------
 # 乱码检测器
 # ---------------------------------------------------------------------------
-
 
 class GarbageDetector(BaseExpert):
     """乱码检测器。
@@ -195,11 +194,9 @@ class GarbageDetector(BaseExpert):
             pairs.append((letter, content))
         return pairs
 
-
 # ---------------------------------------------------------------------------
 # 答案恢复结果
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class ResolveResult:
@@ -214,16 +211,14 @@ class ResolveResult:
     """
 
     question_num: str = ""
-    answer: Optional[str] = None
+    answer: str | None = None
     confidence: float = 0.0
     source: str = "none"
     needs_manual: bool = True
 
-
 # ---------------------------------------------------------------------------
 # 答案恢复器
 # ---------------------------------------------------------------------------
-
 
 class AnswerResolver(BaseExpert):
     """答案恢复器(多级策略链)。
@@ -240,7 +235,7 @@ class AnswerResolver(BaseExpert):
     注入。未注入时 _llm_solve 直接返回 None,不影响 L1/L3 正常工作。
     """
 
-    def __init__(self, llm_router: Optional[Any] = None) -> None:
+    def __init__(self, llm_router: Any | None = None) -> None:
         """初始化答案恢复器。
 
         Args:
@@ -369,9 +364,7 @@ class AnswerResolver(BaseExpert):
     # L1: 题库指纹匹配
     # ------------------------------------------------------------------
 
-    def _match_question_bank(
-        self, stem: str
-    ) -> Optional[tuple[str, float]]:
+    def _match_question_bank(self, stem: str) -> tuple[str, float] | None:
         """指纹匹配题库。
 
         从题干中提取年份(4位数字)+题干指纹,在题库中查找。
@@ -408,9 +401,7 @@ class AnswerResolver(BaseExpert):
     # L2: LLM 解题
     # ------------------------------------------------------------------
 
-    def _llm_solve(
-        self, stem: str, options: list[str]
-    ) -> Optional[tuple[str, float]]:
+    def _llm_solve(self, stem: str, options: list[str]) -> tuple[str, float] | None:
         """调用 LLM 解题。
 
         构造选择题 prompt,调用 LLMRouter,解析返回提取字母与置信度。
@@ -445,7 +436,7 @@ class AnswerResolver(BaseExpert):
         prompt = (
             f"题干: {stem}\n"
             f"选项:\n" + "\n".join(option_lines) + "\n\n"
-            f"请只返回答案字母(如 B)。如果不确定,返回 uncertain。"
+            "请只返回答案字母(如 B)。如果不确定,返回 uncertain。"
         )
 
         try:
@@ -472,7 +463,7 @@ class AnswerResolver(BaseExpert):
         return self._parse_llm_response(text)
 
     @staticmethod
-    def _parse_llm_response(text: str) -> Optional[tuple[str, float]]:
+    def _parse_llm_response(text: str) -> tuple[str, float] | None:
         """解析 LLM 返回,提取答案字母与置信度。
 
         Args:

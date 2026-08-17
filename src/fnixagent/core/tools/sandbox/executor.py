@@ -15,20 +15,25 @@
 注意: 纯 Python 沙箱无法做到 100% 安全(存在逃逸路径),
 生产环境应配合 Docker/gVisor 容器隔离使用。
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import io
+import threading
 import time
 import tracemalloc
-import threading
-from contextlib import redirect_stdout, redirect_stderr
+from contextlib import redirect_stderr, redirect_stdout
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 from fnixagent.core.config import ToolConfig
-from fnixagent.core.exceptions import ToolSandboxError
 from fnixagent.core.tools.sandbox.policy import SandboxPolicy
-
 
 @dataclass
 class SandboxResult:
@@ -45,6 +50,7 @@ class SandboxResult:
         timed_out: 是否超时
         memory_exceeded: 是否内存超限
     """
+
     success: bool
     output: Any = None
     error: str = ""
@@ -54,7 +60,6 @@ class SandboxResult:
     violations: list[str] = field(default_factory=list)
     timed_out: bool = False
     memory_exceeded: bool = False
-
 
 class CodeSandbox:
     """受限代码执行沙箱。
@@ -74,25 +79,55 @@ class CodeSandbox:
     # 安全的内置函数白名单
     _SAFE_BUILTINS = {
         # 数学
-        "abs": abs, "min": min, "max": max, "sum": sum, "round": round,
-        "pow": pow, "divmod": divmod,
+        "abs": abs,
+        "min": min,
+        "max": max,
+        "sum": sum,
+        "round": round,
+        "pow": pow,
+        "divmod": divmod,
         # 类型
-        "int": int, "float": float, "str": str, "bool": bool,
-        "list": list, "dict": dict, "tuple": tuple, "set": set,
-        "frozenset": frozenset, "bytes": bytes, "bytearray": bytearray,
+        "int": int,
+        "float": float,
+        "str": str,
+        "bool": bool,
+        "list": list,
+        "dict": dict,
+        "tuple": tuple,
+        "set": set,
+        "frozenset": frozenset,
+        "bytes": bytes,
+        "bytearray": bytearray,
         "complex": complex,
         # 序列
-        "len": len, "range": range, "enumerate": enumerate, "zip": zip,
-        "sorted": sorted, "reversed": reversed, "filter": filter, "map": map,
-        "any": any, "all": all,
+        "len": len,
+        "range": range,
+        "enumerate": enumerate,
+        "zip": zip,
+        "sorted": sorted,
+        "reversed": reversed,
+        "filter": filter,
+        "map": map,
+        "any": any,
+        "all": all,
         # 类型检查
-        "isinstance": isinstance, "issubclass": issubclass,
-        "type": type, "id": id, "hash": hash,
+        "isinstance": isinstance,
+        "issubclass": issubclass,
+        "type": type,
+        "id": id,
+        "hash": hash,
         # 字符串格式化
-        "format": format, "repr": repr, "chr": chr, "ord": ord,
-        "hex": hex, "oct": oct, "bin": bin, "ascii": ascii,
+        "format": format,
+        "repr": repr,
+        "chr": chr,
+        "ord": ord,
+        "hex": hex,
+        "oct": oct,
+        "bin": bin,
+        "ascii": ascii,
         # 迭代器
-        "iter": iter, "next": next,
+        "iter": iter,
+        "next": next,
         # 排序
         "slice": slice,
         # 数学函数(通过 math 模块)
@@ -101,15 +136,27 @@ class CodeSandbox:
 
     # 需要从 builtins 移除的危险函数(双重保险,即便白名单已排除)
     _DANGEROUS_BUILTINS = (
-        "open", "exec", "eval", "compile", "__import__",
-        "globals", "locals", "vars", "dir", "input",
-        "breakpoint", "exit", "quit", "help", "copyright",
+        "open",
+        "exec",
+        "eval",
+        "compile",
+        "__import__",
+        "globals",
+        "locals",
+        "vars",
+        "dir",
+        "input",
+        "breakpoint",
+        "exit",
+        "quit",
+        "help",
+        "copyright",
     )
 
     def __init__(
         self,
-        policy: Optional[SandboxPolicy] = None,
-        config: Optional[ToolConfig] = None,
+        policy: SandboxPolicy | None = None,
+        config: ToolConfig | None = None,
     ) -> None:
         self._policy = policy or SandboxPolicy()
         self._config = config or ToolConfig()
@@ -117,8 +164,8 @@ class CodeSandbox:
     def execute(
         self,
         code: str,
-        env: Optional[dict] = None,
-        timeout: Optional[float] = None,
+        env: dict | None = None,
+        timeout: float | None = None,
     ) -> SandboxResult:
         """在受限环境中执行代码。
 
@@ -169,7 +216,6 @@ class CodeSandbox:
         max_mem = self._config.sandbox_max_memory_mb * 1024 * 1024  # bytes
 
         result = SandboxResult(success=False)
-        memory_exceeded = False
         peak_mem = 0
 
         # 用 daemon 线程执行,主线程通过 join(timeout) 控制超时
@@ -178,7 +224,7 @@ class CodeSandbox:
             nonlocal result
             try:
                 with redirect_stdout(stdout_buf), redirect_stderr(stderr_buf):
-                    exec(code, sandbox_globals)  # noqa: S102 — 沙箱核心,已做静态检查
+                    exec(code, sandbox_globals)
                 # 成功:尝试获取 result 变量(约定: 代码最后赋值给 result)
                 result.success = True
                 result.output = sandbox_globals.get("result")
@@ -210,11 +256,9 @@ class CodeSandbox:
             result.success = False
         elif peak_mem > max_mem:
             # 内存超限检查
-            memory_exceeded = True
             result.memory_exceeded = True
             result.error = (
-                f"内存超限: {peak_mem / 1024 / 1024:.1f}MB > "
-                f"{max_mem / 1024 / 1024:.0f}MB"
+                f"内存超限: {peak_mem / 1024 / 1024:.1f}MB > {max_mem / 1024 / 1024:.0f}MB"
             )
             result.success = False
 

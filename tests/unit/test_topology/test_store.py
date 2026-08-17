@@ -1,4 +1,4 @@
-﻿"""
+"""
 知识拓扑图 (KTG) 存储后端单元测试。
 
 测试模块: fnixagent.core.topology.store
@@ -8,12 +8,18 @@
     - JSONFileStore: JSONL 文件存储(使用 tmp_path fixture)
     - TopologyStoreManager: 图与存储同步管理器
 """
-import json
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 import os
 
 import pytest
 
-from fnixagent.core.exceptions import SnapshotError, TopologyError
+from fnixagent.core.exceptions import SnapshotError
 from fnixagent.core.topology.graph import TopologyGraph
 from fnixagent.core.topology.store import (
     JSONFileStore,
@@ -29,10 +35,10 @@ from fnixagent.core.types import (
     TopologyNode,
 )
 
-
 # ---------------------------------------------------------------------------
 # 辅助函数
 # ---------------------------------------------------------------------------
+
 
 def _make_node(node_id="L1:g1", name="目标"):
     """创建测试用节点。"""
@@ -58,6 +64,7 @@ def _make_edge(edge_id="e1", source="L1:g1", target="L2:c1"):
 # ---------------------------------------------------------------------------
 # TopologyStore 抽象基类
 # ---------------------------------------------------------------------------
+
 
 class TestTopologyStoreAbstract:
     """测试 TopologyStore 抽象基类。"""
@@ -108,6 +115,7 @@ class TestTopologyStoreAbstract:
 # ---------------------------------------------------------------------------
 # MemoryStore
 # ---------------------------------------------------------------------------
+
 
 class TestMemoryStore:
     """测试 MemoryStore 内存存储。"""
@@ -193,6 +201,7 @@ class TestMemoryStore:
 # ---------------------------------------------------------------------------
 # JSONFileStore
 # ---------------------------------------------------------------------------
+
 
 class TestJSONFileStore:
     """测试 JSONFileStore 文件存储(使用 tmp_path fixture)。"""
@@ -346,14 +355,13 @@ class TestJSONFileStore:
         """保存快照后 snapshots/<name>.json 文件应存在。"""
         store = JSONFileStore(str(tmp_path))
         store.save_snapshot({"nodes": [], "edges": []}, name="my_snap")
-        assert os.path.isfile(
-            os.path.join(str(tmp_path), "snapshots", "my_snap.json")
-        )
+        assert os.path.isfile(os.path.join(str(tmp_path), "snapshots", "my_snap.json"))
 
 
 # ---------------------------------------------------------------------------
 # TopologyStoreManager
 # ---------------------------------------------------------------------------
+
 
 class TestTopologyStoreManager:
     """测试 TopologyStoreManager 存储管理器。"""

@@ -14,6 +14,13 @@
   - 所有审计记录写入审计日志(操作者/时间/参数/风险等级/决策)
   - 审计失败不阻断主流程,但降级为 deny(保守策略)
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import logging
@@ -22,7 +29,6 @@ import re
 import threading
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -34,11 +40,12 @@ logger = logging.getLogger(__name__)
 
 def _audit_tool_call(
     action: str,
-    detail: Optional[dict] = None,
+    detail: dict | None = None,
 ) -> None:
     """将工具审计决策写入审计日志(异常吞掉)。"""
     try:
         from fnixagent.core.audit import AuditLogger
+
         AuditLogger().log(action=action, detail=detail or {})
     except Exception:
         pass
@@ -62,11 +69,12 @@ class AuditRecord:
         reason: 决策原因
         operator: 操作者(默认 system)
     """
+
     timestamp: str
     tool_name: str
     params: dict
     risk_level: str  # "low"/"medium"/"high"/"critical"
-    decision: str    # "allow"/"deny"/"confirm"
+    decision: str  # "allow"/"deny"/"confirm"
     reason: str
     operator: str = "system"
 
@@ -82,11 +90,12 @@ class AuditReport:
         need_confirm: 是否需要人工确认
         confirm_reason: 需确认原因
     """
+
     allowed: bool
     risk_level: str
     records: list[AuditRecord] = field(default_factory=list)
     need_confirm: bool = False
-    confirm_reason: Optional[str] = None
+    confirm_reason: str | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -121,13 +130,25 @@ class ToolAuditor:
 
     # 破坏性操作关键词(扫描 params 字符串值)
     DESTRUCTIVE_KEYWORDS: tuple[str, ...] = (
-        "delete", "remove", "drop", "truncate", "overwrite",
-        "rm", "rmdir", "format", "wipe", "purge",
+        "delete",
+        "remove",
+        "drop",
+        "truncate",
+        "overwrite",
+        "rm",
+        "rmdir",
+        "format",
+        "wipe",
+        "purge",
     )
 
     # 批量操作关键词(触发 critical)
     BATCH_KEYWORDS: tuple[str, ...] = (
-        "all", "batch", "bulk", "recursive", "*",
+        "all",
+        "batch",
+        "bulk",
+        "recursive",
+        "*",
     )
 
     # 风险等级排序(便于取最高)
@@ -135,7 +156,7 @@ class ToolAuditor:
 
     def __init__(
         self,
-        workspace_root: Optional[str] = None,
+        workspace_root: str | None = None,
     ) -> None:
         self._workspace_root = os.path.realpath(workspace_root) if workspace_root else None
         self._sensitive_tools: dict[str, str] = {}  # tool_name → risk_level
@@ -148,7 +169,7 @@ class ToolAuditor:
         self,
         tool_name: str,
         params: dict,
-        schema: Optional[dict] = None,
+        schema: dict | None = None,
     ) -> AuditReport:
         """审计单次工具调用。
 
@@ -164,17 +185,21 @@ class ToolAuditor:
         now = datetime.utcnow().isoformat()
         risk = "low"
         need_confirm = False
-        confirm_reason: Optional[str] = None
+        confirm_reason: str | None = None
 
         # 1. 工具级敏感标记
         if tool_name in self._sensitive_tools:
             risk = self._max_risk(risk, self._sensitive_tools[tool_name])
-            records.append(AuditRecord(
-                timestamp=now, tool_name=tool_name,
-                params=self._safe_params(params),
-                risk_level=risk, decision="confirm",
-                reason=f"工具 {tool_name} 标记为敏感({risk})",
-            ))
+            records.append(
+                AuditRecord(
+                    timestamp=now,
+                    tool_name=tool_name,
+                    params=self._safe_params(params),
+                    risk_level=risk,
+                    decision="confirm",
+                    reason=f"工具 {tool_name} 标记为敏感({risk})",
+                )
+            )
             if risk in ("high", "critical"):
                 need_confirm = True
                 confirm_reason = f"敏感工具:{tool_name}"
@@ -187,13 +212,20 @@ class ToolAuditor:
                 risk = self._max_risk(risk, finding.risk_level)
                 # 路径越界直接拒绝,不允许确认放行
                 report = AuditReport(
-                    allowed=False, risk_level=risk, records=records,
-                    need_confirm=False, confirm_reason=finding.reason,
+                    allowed=False,
+                    risk_level=risk,
+                    records=records,
+                    need_confirm=False,
+                    confirm_reason=finding.reason,
                 )
                 self._append_log(report)
-                _audit_tool_call("tool.audit.deny", detail={
-                    "tool": tool_name, "reason": finding.reason,
-                })
+                _audit_tool_call(
+                    "tool.audit.deny",
+                    detail={
+                        "tool": tool_name,
+                        "reason": finding.reason,
+                    },
+                )
                 return report
 
         # 3. 破坏性关键词检测
@@ -214,34 +246,52 @@ class ToolAuditor:
                 if finding.decision == "deny":
                     risk = self._max_risk(risk, finding.risk_level)
                     report = AuditReport(
-                        allowed=False, risk_level=risk, records=records,
-                        need_confirm=False, confirm_reason=finding.reason,
+                        allowed=False,
+                        risk_level=risk,
+                        records=records,
+                        need_confirm=False,
+                        confirm_reason=finding.reason,
                     )
                     self._append_log(report)
-                    _audit_tool_call("tool.audit.deny", detail={
-                        "tool": tool_name, "reason": finding.reason,
-                    })
+                    _audit_tool_call(
+                        "tool.audit.deny",
+                        detail={
+                            "tool": tool_name,
+                            "reason": finding.reason,
+                        },
+                    )
                     return report
 
         # 5. 综合决策
         allowed = not need_confirm
         decision = "allow" if allowed else "confirm"
         if not records:
-            records.append(AuditRecord(
-                timestamp=now, tool_name=tool_name,
-                params=self._safe_params(params),
-                risk_level=risk, decision=decision,
-                reason="无风险命中,默认放行",
-            ))
+            records.append(
+                AuditRecord(
+                    timestamp=now,
+                    tool_name=tool_name,
+                    params=self._safe_params(params),
+                    risk_level=risk,
+                    decision=decision,
+                    reason="无风险命中,默认放行",
+                )
+            )
         report = AuditReport(
-            allowed=allowed, risk_level=risk, records=records,
-            need_confirm=need_confirm, confirm_reason=confirm_reason,
+            allowed=allowed,
+            risk_level=risk,
+            records=records,
+            need_confirm=need_confirm,
+            confirm_reason=confirm_reason,
         )
         self._append_log(report)
-        _audit_tool_call("tool.audit", detail={
-            "tool": tool_name, "risk": risk,
-            "decision": decision,
-        })
+        _audit_tool_call(
+            "tool.audit",
+            detail={
+                "tool": tool_name,
+                "risk": risk,
+                "decision": decision,
+            },
+        )
         return report
 
     def audit_batch(self, calls: list[dict]) -> AuditReport:
@@ -256,7 +306,7 @@ class ToolAuditor:
         all_records: list[AuditRecord] = []
         overall_risk = "low"
         need_confirm = False
-        confirm_reason: Optional[str] = None
+        confirm_reason: str | None = None
         blocked = False
 
         for call in calls:
@@ -279,8 +329,11 @@ class ToolAuditor:
 
         allowed = not blocked and not need_confirm
         return AuditReport(
-            allowed=allowed, risk_level=overall_risk, records=all_records,
-            need_confirm=need_confirm, confirm_reason=confirm_reason,
+            allowed=allowed,
+            risk_level=overall_risk,
+            records=all_records,
+            need_confirm=need_confirm,
+            confirm_reason=confirm_reason,
         )
 
     def register_sensitive_tool(
@@ -319,32 +372,44 @@ class ToolAuditor:
                 continue
             # 检测 .. 越界
             if ".." in val.replace("\\", "/").split("/"):
-                findings.append(AuditRecord(
-                    timestamp=now, tool_name=tool_name,
-                    params={key: val}, risk_level="high",
-                    decision="deny",
-                    reason=f"参数 {key} 含 '..' 路径越界: {val}",
-                ))
+                findings.append(
+                    AuditRecord(
+                        timestamp=now,
+                        tool_name=tool_name,
+                        params={key: val},
+                        risk_level="high",
+                        decision="deny",
+                        reason=f"参数 {key} 含 '..' 路径越界: {val}",
+                    )
+                )
                 continue
             # 检测绝对路径越出 workspace
             if self._workspace_root and os.path.isabs(val):
                 try:
                     rel = os.path.relpath(rp, self._workspace_root)
                     if rel.startswith(".."):
-                        findings.append(AuditRecord(
-                            timestamp=now, tool_name=tool_name,
-                            params={key: val}, risk_level="high",
-                            decision="deny",
-                            reason=f"参数 {key} 越出 workspace: {val}",
-                        ))
+                        findings.append(
+                            AuditRecord(
+                                timestamp=now,
+                                tool_name=tool_name,
+                                params={key: val},
+                                risk_level="high",
+                                decision="deny",
+                                reason=f"参数 {key} 越出 workspace: {val}",
+                            )
+                        )
                 except ValueError:
                     # Windows 跨盘符 relpath 抛 ValueError
-                    findings.append(AuditRecord(
-                        timestamp=now, tool_name=tool_name,
-                        params={key: val}, risk_level="high",
-                        decision="deny",
-                        reason=f"参数 {key} 跨盘符访问: {val}",
-                    ))
+                    findings.append(
+                        AuditRecord(
+                            timestamp=now,
+                            tool_name=tool_name,
+                            params={key: val},
+                            risk_level="high",
+                            decision="deny",
+                            reason=f"参数 {key} 跨盘符访问: {val}",
+                        )
+                    )
         return findings
 
     # -- 内部:破坏性关键词检测 -------------------------------------------
@@ -368,15 +433,17 @@ class ToolAuditor:
                 is_batch = any(b in low for b in self.BATCH_KEYWORDS)
                 risk = "critical" if is_batch else "high"
                 decision = "confirm"
-                reason = (
-                    f"参数 {key} 含破坏性关键词 '{kw}'"
-                    + ("(批量)" if is_batch else "")
+                reason = f"参数 {key} 含破坏性关键词 '{kw}'" + ("(批量)" if is_batch else "")
+                findings.append(
+                    AuditRecord(
+                        timestamp=now,
+                        tool_name=tool_name,
+                        params={key: val},
+                        risk_level=risk,
+                        decision=decision,
+                        reason=reason,
+                    )
                 )
-                findings.append(AuditRecord(
-                    timestamp=now, tool_name=tool_name,
-                    params={key: val}, risk_level=risk,
-                    decision=decision, reason=reason,
-                ))
                 break  # 单参数只记录一次最高风险
         return findings
 
@@ -410,23 +477,30 @@ class ToolAuditor:
                 continue
             # bool 是 int 的子类,需特殊处理
             if json_type == "integer" and isinstance(val, bool):
-                findings.append(AuditRecord(
-                    timestamp=now, tool_name=tool_name,
-                    params={name: val}, risk_level="medium",
-                    decision="deny",
-                    reason=f"参数 {name} 期望 integer,实际 boolean",
-                ))
+                findings.append(
+                    AuditRecord(
+                        timestamp=now,
+                        tool_name=tool_name,
+                        params={name: val},
+                        risk_level="medium",
+                        decision="deny",
+                        reason=f"参数 {name} 期望 integer,实际 boolean",
+                    )
+                )
                 continue
             if not isinstance(val, expected_types):
-                findings.append(AuditRecord(
-                    timestamp=now, tool_name=tool_name,
-                    params={name: val}, risk_level="medium",
-                    decision="deny",
-                    reason=(
-                        f"参数 {name} 类型不匹配: 期望 {json_type},"
-                        f"实际 {type(val).__name__}"
-                    ),
-                ))
+                findings.append(
+                    AuditRecord(
+                        timestamp=now,
+                        tool_name=tool_name,
+                        params={name: val},
+                        risk_level="medium",
+                        decision="deny",
+                        reason=(
+                            f"参数 {name} 类型不匹配: 期望 {json_type},实际 {type(val).__name__}"
+                        ),
+                    )
+                )
         return findings
 
     # -- 辅助 -------------------------------------------------------------
@@ -441,10 +515,10 @@ class ToolAuditor:
         """对参数做脱敏(避免敏感值进入审计日志)。"""
         try:
             from fnixagent.core.security.desensitize import Desensitizer
+
             desensitizer = Desensitizer()
             return {
-                k: desensitizer.mask_all(v) if isinstance(v, str) else v
-                for k, v in params.items()
+                k: desensitizer.mask_all(v) if isinstance(v, str) else v for k, v in params.items()
             }
         except Exception:
             # 脱敏失败返回 key 列表(不暴露值)

@@ -1,0 +1,8 @@
+{
+  "id": "landing_site",
+  "prompt": "做一个迷你落地页：在 .fnix/artifacts/landing/ 下写入 index.html、style.css、script.js。标题 Fnix Landing，按钮点击可改文案。",
+  "work_mode": "craft",
+  "expect_glob": ".fnix/artifacts/landing/**/*.{html,css,js}",
+  "expect_min_files": 2,
+  "timeout_s": 240
+}

@@ -1,0 +1,28 @@
+name: Sync Labels
+
+# Sync the labels in this repo to match .github/labels.yml.
+# https://github.com/micnncim/github-label-sync
+
+on:
+  push:
+    branches: [main]
+    paths: [.github/labels.yml]
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  sync-labels:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sync labels
+        uses: micnncim/github-label-sync-action@v1.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          config-file: .github/labels.yml
+          dry-run: false
+          delete-other-labels: false

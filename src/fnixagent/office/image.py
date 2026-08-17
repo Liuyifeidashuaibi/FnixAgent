@@ -16,10 +16,16 @@
   - _validate_path 前置(扩展名/存在性/大小/穿越)
   - 零硬编码:参数均可配置
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import os
-from typing import Optional
 
 import numpy as np
 
@@ -61,10 +67,10 @@ class ImageExpert(BaseExpert):
     def extract_grid_cells(
         self,
         image_path: str,
-        rows: Optional[int] = None,
-        cols: Optional[int] = None,
+        rows: int | None = None,
+        cols: int | None = None,
         expected_count: int = 24,
-        output_dir: Optional[str] = None,
+        output_dir: str | None = None,
         filename_prefix: str = "shot_",
         auto_crop_text: bool = False,
         crop_text_ratio: float = 0.0,
@@ -91,14 +97,14 @@ class ImageExpert(BaseExpert):
         """
         # -- 参数校验 --------------------------------------------------
         err = self._validate_path(
-            image_path, must_exist=True,
-            allowed_exts=_SUPPORTED_EXTS, max_size=_MAX_IMAGE_SIZE,
+            image_path,
+            must_exist=True,
+            allowed_exts=_SUPPORTED_EXTS,
+            max_size=_MAX_IMAGE_SIZE,
         )
         if err:
             return self._failure(err)
-        cerr = self._validate_int(
-            expected_count, "expected_count", min_value=1, max_value=10000
-        )
+        cerr = self._validate_int(expected_count, "expected_count", min_value=1, max_value=10000)
         if cerr:
             return self._failure(cerr)
         if rows is not None:
@@ -110,12 +116,11 @@ class ImageExpert(BaseExpert):
             if cerr2:
                 return self._failure(cerr2)
         if not 0.0 <= crop_text_ratio <= 0.5:
-            return self._failure(
-                f"crop_text_ratio must be in [0.0, 0.5], got {crop_text_ratio}"
-            )
+            return self._failure(f"crop_text_ratio must be in [0.0, 0.5], got {crop_text_ratio}")
 
         # -- 读取图像 --------------------------------------------------
         from PIL import Image
+
         try:
             with Image.open(image_path) as im:
                 img_arr = np.array(im.convert("RGB"))
@@ -127,7 +132,8 @@ class ImageExpert(BaseExpert):
         if output_dir is None:
             stem = os.path.splitext(os.path.basename(image_path))[0]
             output_dir = os.path.join(
-                os.path.dirname(os.path.abspath(image_path)), f"{stem}_cells",
+                os.path.dirname(os.path.abspath(image_path)),
+                f"{stem}_cells",
             )
         try:
             os.makedirs(output_dir, exist_ok=True)
@@ -148,8 +154,7 @@ class ImageExpert(BaseExpert):
             r_final, c_final = self._resolve_grid(rows, cols, expected_count)
             if r_final is None or c_final is None:
                 return self._failure(
-                    f"cannot resolve grid: rows={rows} cols={cols} "
-                    f"expected_count={expected_count}"
+                    f"cannot resolve grid: rows={rows} cols={cols} expected_count={expected_count}"
                 )
             tile_h = img_h // r_final
             tile_w = img_w // c_final
@@ -164,7 +169,7 @@ class ImageExpert(BaseExpert):
         idx = 1
         for ry1, ry2 in row_regions:
             for cx1, cx2 in col_regions:
-                frame = img_arr[ry1:ry2 + 1, cx1:cx2 + 1]
+                frame = img_arr[ry1 : ry2 + 1, cx1 : cx2 + 1]
                 crop_y = frame.shape[0]
 
                 if auto_crop_text:
@@ -190,9 +195,7 @@ class ImageExpert(BaseExpert):
                 idx += 1
 
         if len(out_paths) != expected_count:
-            warnings.append(
-                f"only {len(out_paths)}/{expected_count} cells saved"
-            )
+            warnings.append(f"only {len(out_paths)}/{expected_count} cells saved")
 
         return self._success(
             output=out_paths,
@@ -212,8 +215,8 @@ class ImageExpert(BaseExpert):
 
     @staticmethod
     def _resolve_grid(
-        rows: Optional[int], cols: Optional[int], expected_count: int
-    ) -> tuple[Optional[int], Optional[int]]:
+        rows: int | None, cols: int | None, expected_count: int
+    ) -> tuple[int | None, int | None]:
         """根据 rows/cols/expected_count 推断最终网格。"""
         if rows is not None and cols is not None:
             return rows, cols
@@ -325,7 +328,7 @@ class ImageExpert(BaseExpert):
             return h
 
         # 4. 文字带内平均 std 足够高
-        if row_std[text_top:text_bottom + 1].mean() < 35:
+        if row_std[text_top : text_bottom + 1].mean() < 35:
             return h
 
         # 返回文字带顶部,保证同行一致

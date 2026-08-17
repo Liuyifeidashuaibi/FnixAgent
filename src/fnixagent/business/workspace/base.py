@@ -19,18 +19,23 @@ StubProvider 降级策略:
   - StubProvider.is_available() 恒为 True,保证本地开发零配置可用
   - StubProvider 返回值统一通过 _stub_result() 构造,metadata.stub=True 标记
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import abc
 import threading
 from dataclasses import dataclass, field
-from typing import Any, Optional
-
+from typing import Any
 
 # ---------------------------------------------------------------------------
 # 统一返回结构
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class ConnectorResult:
@@ -43,14 +48,12 @@ class ConnectorResult:
 
     success: bool = True
     data: Any = None
-    error: Optional[str] = None
+    error: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
-
 
 # ---------------------------------------------------------------------------
 # 配置
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class ConnectorConfig:
@@ -59,18 +62,16 @@ class ConnectorConfig:
     Note: api_token/api_secret 为敏感字段,日志/异常中不得直接打印明文。
     """
 
-    provider: str = "stub"          # stub / feishu / wechat_work / dingtalk / exchange / gmail / ...
+    provider: str = "stub"  # stub / feishu / wechat_work / dingtalk / exchange / gmail / ...
     api_url: str = ""
-    api_token: str = ""             # 敏感:日志脱敏
-    api_secret: str = ""            # 敏感:日志脱敏
+    api_token: str = ""  # 敏感:日志脱敏
+    api_secret: str = ""  # 敏感:日志脱敏
     user_id: str = ""
     extra: dict[str, Any] = field(default_factory=dict)
-
 
 # ---------------------------------------------------------------------------
 # 抽象 Provider(具体厂商实现此接口)
 # ---------------------------------------------------------------------------
-
 
 class BaseProvider(abc.ABC):
     """具体厂商 Provider 抽象基类。
@@ -104,11 +105,9 @@ class BaseProvider(abc.ABC):
         """
         return None
 
-
 # ---------------------------------------------------------------------------
 # Connector 抽象基类
 # ---------------------------------------------------------------------------
-
 
 class WorkspaceConnector(abc.ABC):
     """办公生态 Connector 抽象基类。
@@ -127,11 +126,11 @@ class WorkspaceConnector(abc.ABC):
       - is_connected() 持锁读取,避免并发 disconnect 中途读到中间态
     """
 
-    def __init__(self, config: Optional[ConnectorConfig] = None) -> None:
+    def __init__(self, config: ConnectorConfig | None = None) -> None:
         self._config = config or ConnectorConfig()
         self._connected = False
         self._providers: dict[str, BaseProvider] = {}
-        self._active_provider: Optional[BaseProvider] = None
+        self._active_provider: BaseProvider | None = None
         # 全局锁:保护连接状态/Provider 注册表的并发访问
         self._lock = threading.Lock()
         # 注册内置 stub provider(降级策略:零配置即可用)
@@ -166,7 +165,7 @@ class WorkspaceConnector(abc.ABC):
                 return ConnectorResult(
                     success=False,
                     error=f"provider '{provider_name}' is not available "
-                          f"(check config/credentials/network)",
+                    f"(check config/credentials/network)",
                 )
             # 旧 provider 资源释放(若切换到不同 provider)
             old = self._active_provider
@@ -228,7 +227,7 @@ class WorkspaceConnector(abc.ABC):
         with self._lock:
             return list(self._providers.keys())
 
-    def get_provider(self, name: Optional[str] = None) -> Optional[BaseProvider]:
+    def get_provider(self, name: str | None = None) -> BaseProvider | None:
         """获取指定 provider;None 返回当前 active。"""
         with self._lock:
             if name is None:
@@ -254,7 +253,7 @@ class WorkspaceConnector(abc.ABC):
             f"{self.__class__.__name__} must implement _register_default_stub()",
         )
 
-    def _ensure_connected(self) -> Optional[ConnectorResult]:
+    def _ensure_connected(self) -> ConnectorResult | None:
         """检查连接状态,未连接返回失败 ConnectorResult。
 
         Returns:
@@ -271,11 +270,9 @@ class WorkspaceConnector(abc.ABC):
         # 不打印 token/secret,避免敏感信息泄露到日志
         return f"<{self.__class__.__name__} name={self.name} provider={self._config.provider}>"
 
-
 # ---------------------------------------------------------------------------
 # StubProvider 基类(本地开发默认实现)
 # ---------------------------------------------------------------------------
-
 
 class StubProvider(BaseProvider):
     """默认 stub provider:不调用真实 API,返回占位数据。

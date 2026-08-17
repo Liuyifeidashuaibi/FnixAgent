@@ -1,0 +1,35 @@
+# ────────────────────────────────────────────────────────────────────────
+# Conventional Commits (subject), 50/72 wrapping, body explains "why".
+# Reference: https://www.conventionalcommits.org/
+# ────────────────────────────────────────────────────────────────────────
+#
+# <type>(<optional scope>): <subject in imperative mood, ≤ 50 chars>
+#
+# <body — wrap at 72 chars; explain WHAT and WHY, not HOW>
+#
+# <footer — "BREAKING CHANGE: …" / "Refs: #123" / "Co-authored-by: …">
+#
+# ─── Types ────────────────────────────────────────────────────────────
+#   feat:     a new feature for the user
+#   fix:      a bug fix for the user
+#   docs:     documentation only
+#   style:    formatting, no code change
+#   refactor: code change that neither fixes a bug nor adds a feature
+#   perf:     performance improvement
+#   test:     adding or fixing tests
+#   build:    build system, CI, packaging
+#   ci:       CI configuration
+#   chore:    tooling, deps, non-user-facing
+#   revert:   revert a previous commit
+#   security: security fix
+#   i18n:     translation
+# ─── Scopes (use the subsystem) ──────────────────────────────────────
+#   workbench · agentd · fnix-local · mcp · desktop-tauri
+#   protocol · sdk · docs · ci · security · deps · release
+# ─── Examples ────────────────────────────────────────────────────────
+#   feat(workbench): add diff preview accept-all shortcut
+#   fix(agentd): correct retry on transient 502 from upstream LLM
+#   docs: clarify BYOK keychain storage on Windows
+#   perf(agentd): cache Markdown memory index (1.4s → 90ms)
+#   BREAKING CHANGE: rename /v1/work to /v1/sessions/{id}/messages
+# ────────────────────────────────────────────────────────────────────────

@@ -18,6 +18,13 @@ MFA 多因素认证(Phase 2.4)。
 
 依赖:pyotp>=2.9
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import base64
@@ -30,41 +37,32 @@ import string
 import time
 from dataclasses import dataclass, field
 from email.mime.text import MIMEText
-from typing import Optional
 from urllib.parse import quote, urlencode
 
 logger = logging.getLogger(__name__)
-
 
 # ---------------------------------------------------------------------------
 # 异常
 # ---------------------------------------------------------------------------
 
-
 class MFAError(Exception):
     """MFA 操作异常基类。"""
-
 
 class MFANotInstalledError(MFAError):
     """所需依赖库未安装(pyotp / 短信 SDK 等)。"""
 
-
 class MFAConfigError(MFAError):
     """MFA 配置错误(缺字段 / factor_type 未知)。"""
-
 
 class MFAVerificationError(MFAError):
     """MFA 验证失败(code 无效 / 已过期 / 已使用)。"""
 
-
 class MFARateLimitError(MFAError):
     """MFA 频率超限(短信/邮箱发送过频 / 验证尝试过多)。"""
-
 
 # ---------------------------------------------------------------------------
 # 常量
 # ---------------------------------------------------------------------------
-
 
 # 支持的因子类型
 FACTOR_TOTP: str = "totp"
@@ -73,96 +71,96 @@ FACTOR_EMAIL: str = "email"
 FACTOR_RECOVERY: str = "recovery"
 
 ALL_FACTOR_TYPES: tuple[str, ...] = (
-    FACTOR_TOTP, FACTOR_SMS, FACTOR_EMAIL, FACTOR_RECOVERY,
+    FACTOR_TOTP,
+    FACTOR_SMS,
+    FACTOR_EMAIL,
+    FACTOR_RECOVERY,
 )
 
 # TOTP 配置
-TOTP_ISSUER: str = "fnixagent"
+TOTP_ISSUER: str = "FnixAgent"
 TOTP_DIGITS: int = 6
-TOTP_INTERVAL: int = 30        # 30s 一个时间步
-TOTP_VALID_WINDOW: int = 1     # 容忍前后 1 个时间窗(±30s)
+TOTP_INTERVAL: int = 30  # 30s 一个时间步
+TOTP_VALID_WINDOW: int = 1  # 容忍前后 1 个时间窗(±30s)
 
 # 一次性验证码(短信/邮箱)配置
 OTP_DIGITS: int = 6
-OTP_TTL_SECONDS: int = 5 * 60           # 5 分钟有效
-OTP_RESEND_COOLDOWN_SECONDS: int = 60    # 60s 内不可重发
-OTP_MAX_ATTEMPTS: int = 5                # 最多 5 次验证尝试
+OTP_TTL_SECONDS: int = 5 * 60  # 5 分钟有效
+OTP_RESEND_COOLDOWN_SECONDS: int = 60  # 60s 内不可重发
+OTP_MAX_ATTEMPTS: int = 5  # 最多 5 次验证尝试
 
 # 备用恢复码配置
 RECOVERY_CODE_COUNT: int = 10
-RECOVERY_CODE_LENGTH: int = 16           # 16 字符(不含分隔符)
-RECOVERY_CODE_GROUP_LEN: int = 4         # 4-4-4-4 分组
+RECOVERY_CODE_LENGTH: int = 16  # 16 字符(不含分隔符)
+RECOVERY_CODE_GROUP_LEN: int = 4  # 4-4-4-4 分组
 
 # MFA Challenge Token(登录中签发的临时 token)
 MFA_CHALLENGE_TTL_SECONDS: int = 5 * 60  # 5 分钟
-
 
 # ---------------------------------------------------------------------------
 # 数据结构
 # ---------------------------------------------------------------------------
 
-
 @dataclass
 class TOTPConfig:
     """TOTP 因子配置。"""
-    secret: str                       # Base32 编码的密钥
+
+    secret: str  # Base32 编码的密钥
     issuer: str = TOTP_ISSUER
-    account_name: str = ""            # 通常为用户邮箱或用户名
+    account_name: str = ""  # 通常为用户邮箱或用户名
     digits: int = TOTP_DIGITS
     interval: int = TOTP_INTERVAL
-
 
 @dataclass
 class SMSConfig:
     """短信发送配置(阿里云/腾讯云通用)。"""
-    provider: str = "aliyun"          # "aliyun" / "tencent" / "mock"
+
+    provider: str = "aliyun"  # "aliyun" / "tencent" / "mock"
     access_key_id: str = ""
     access_key_secret: str = ""
-    sign_name: str = ""               # 短信签名
-    template_code: str = ""           # 短信模板 ID
-    sdk_app_id: str = ""              # 腾讯云特有
-
+    sign_name: str = ""  # 短信签名
+    template_code: str = ""  # 短信模板 ID
+    sdk_app_id: str = ""  # 腾讯云特有
 
 @dataclass
 class EmailConfig:
     """邮件发送配置(SMTP)。"""
+
     smtp_host: str = ""
     smtp_port: int = 465
     smtp_user: str = ""
     smtp_password: str = ""
     from_addr: str = ""
-    use_tls: bool = True              # True=SSL(465), False=STARTTLS(587)
+    use_tls: bool = True  # True=SSL(465), False=STARTTLS(587)
     subject: str = "[fnixagent] 您的登录验证码"
-
 
 @dataclass
 class OTPChallenge:
     """一次性验证码挑战(短信/邮箱)。"""
+
     challenge_id: str
     user_id: int
-    factor_type: str                  # "sms" / "email"
-    target: str                       # 手机号或邮箱(掩码后存储)
-    code_hash: str                    # SHA256(code)
-    expires_at: float                 # Unix timestamp
+    factor_type: str  # "sms" / "email"
+    target: str  # 手机号或邮箱(掩码后存储)
+    code_hash: str  # SHA256(code)
+    expires_at: float  # Unix timestamp
     attempts: int = 0
     consumed: bool = False
     created_at: float = field(default_factory=time.time)
 
-
 @dataclass
 class OTPSendResult:
     """OTP 发送结果。"""
+
     success: bool
     challenge_id: str = ""
-    target: str = ""                  # 掩码后的目标(用于前端展示)
+    target: str = ""  # 掩码后的目标(用于前端展示)
     expires_in: int = OTP_TTL_SECONDS
     error: str = ""
-
 
 # ---------------------------------------------------------------------------
 # TOTP 客户端
 # ---------------------------------------------------------------------------
-
 
 class TOTPClient:
     """TOTP 客户端(Google Authenticator 兼容)。
@@ -176,7 +174,8 @@ class TOTPClient:
     def _import_pyotp(self):
         """延迟导入 pyotp。"""
         try:
-            import pyotp  # noqa: F401
+            import pyotp
+
             return pyotp
         except ImportError as e:
             raise MFANotInstalledError(f"pyotp 库未安装: {e}")
@@ -187,10 +186,13 @@ class TOTPClient:
         return base64.b32encode(secrets.token_bytes(32)).decode("ascii").rstrip("=")
 
     @staticmethod
-    def build_provisioning_uri(secret: str, account_name: str,
-                                issuer: str = TOTP_ISSUER,
-                                digits: int = TOTP_DIGITS,
-                                interval: int = TOTP_INTERVAL) -> str:
+    def build_provisioning_uri(
+        secret: str,
+        account_name: str,
+        issuer: str = TOTP_ISSUER,
+        digits: int = TOTP_DIGITS,
+        interval: int = TOTP_INTERVAL,
+    ) -> str:
         """构建 otpauth:// URI(供二维码扫描)。
 
         格式:
@@ -199,13 +201,15 @@ class TOTPClient:
         客户端(Google Authenticator / Microsoft Authenticator)扫描后即可添加。
         """
         label = f"{issuer}:{account_name}"
-        params = urlencode({
-            "secret": secret,
-            "issuer": issuer,
-            "algorithm": "SHA1",
-            "digits": digits,
-            "period": interval,
-        })
+        params = urlencode(
+            {
+                "secret": secret,
+                "issuer": issuer,
+                "algorithm": "SHA1",
+                "digits": digits,
+                "period": interval,
+            }
+        )
         return f"otpauth://totp/{quote(label)}?{params}"
 
     def generate_uri(self) -> str:
@@ -247,11 +251,9 @@ class TOTPClient:
         )
         return totp.now()
 
-
 # ---------------------------------------------------------------------------
 # 备用恢复码
 # ---------------------------------------------------------------------------
-
 
 class RecoveryCodeClient:
     """备用恢复码生成与校验。
@@ -262,16 +264,18 @@ class RecoveryCodeClient:
     """
 
     # 易混淆字符:0/O/1/I/L
-    _ALPHABET = "".join(c for c in (string.ascii_uppercase + string.digits)
-                        if c not in "0O1IL")
+    _ALPHABET = "".join(c for c in (string.ascii_uppercase + string.digits) if c not in "0O1IL")
 
     @staticmethod
     def _generate_one() -> str:
         """生成单个恢复码(16 字符,4-4-4-4 分组)。"""
-        raw = "".join(secrets.choice(RecoveryCodeClient._ALPHABET)
-                      for _ in range(RECOVERY_CODE_LENGTH))
-        return "-".join(raw[i:i + RECOVERY_CODE_GROUP_LEN]
-                        for i in range(0, RECOVERY_CODE_LENGTH, RECOVERY_CODE_GROUP_LEN))
+        raw = "".join(
+            secrets.choice(RecoveryCodeClient._ALPHABET) for _ in range(RECOVERY_CODE_LENGTH)
+        )
+        return "-".join(
+            raw[i : i + RECOVERY_CODE_GROUP_LEN]
+            for i in range(0, RECOVERY_CODE_LENGTH, RECOVERY_CODE_GROUP_LEN)
+        )
 
     @staticmethod
     def generate(count: int = RECOVERY_CODE_COUNT) -> list[str]:
@@ -292,11 +296,9 @@ class RecoveryCodeClient:
         actual = RecoveryCodeClient.hash_code(code)
         return hmac.compare_digest(actual, code_hash)
 
-
 # ---------------------------------------------------------------------------
 # OTP(短信/邮箱)
 # ---------------------------------------------------------------------------
-
 
 class OTPClient:
     """一次性验证码客户端(短信/邮箱通用)。
@@ -307,15 +309,16 @@ class OTPClient:
     - 最多 5 次验证尝试
     """
 
-    def __init__(self, sms_config: Optional[SMSConfig] = None,
-                 email_config: Optional[EmailConfig] = None):
+    def __init__(
+        self, sms_config: SMSConfig | None = None, email_config: EmailConfig | None = None
+    ):
         self.sms_config = sms_config
         self.email_config = email_config
 
     @staticmethod
     def generate_code() -> str:
         """生成 6 位数字验证码。"""
-        return f"{secrets.randbelow(10 ** OTP_DIGITS):0{OTP_DIGITS}d}"
+        return f"{secrets.randbelow(10**OTP_DIGITS):0{OTP_DIGITS}d}"
 
     @staticmethod
     def hash_code(code: str) -> str:
@@ -354,8 +357,7 @@ class OTPClient:
 
         provider = self.sms_config.provider
         if provider == "mock":
-            logger.info("[MOCK SMS] 发送验证码到 %s: %s",
-                        self.mask_target(phone, FACTOR_SMS), code)
+            logger.info("[MOCK SMS] 发送验证码到 %s: %s", self.mask_target(phone, FACTOR_SMS), code)
             return True
 
         if provider == "aliyun":
@@ -367,10 +369,11 @@ class OTPClient:
     def _send_aliyun_sms(self, phone: str, code: str) -> bool:
         """阿里云短信发送(延迟导入 aliyun-python-sdk-dysmsapi)。"""
         try:
-            from aliyunsdkcore.client import AcsClient
-            from aliyunsdkcore.acs_exception.exceptions import ServerException  # noqa: F401
-            from aliyunsdkdysmsapi.request.v20170525 import SendSmsRequest
             import json as _json
+
+            from aliyunsdkcore.acs_exception.exceptions import ServerException  # noqa: F401
+            from aliyunsdkcore.client import AcsClient  # noqa: F401
+            from aliyunsdkdysmsapi.request.v20170525 import SendSmsRequest  # noqa: F401
         except ImportError as e:
             raise MFANotInstalledError(
                 "阿里云短信 SDK 未安装,请 pip install aliyun-python-sdk-dysmsapi: " + str(e)
@@ -400,7 +403,7 @@ class OTPClient:
             from tencentcloud.common import credential  # noqa: F401
             from tencentcloud.common.profile.client_profile import ClientProfile  # noqa: F401
             from tencentcloud.common.profile.http_profile import HttpProfile  # noqa: F401
-            from tencentcloud.sms.v20210111 import sms_client, models  # noqa: F401
+            from tencentcloud.sms.v20210111 import models, sms_client  # noqa: F401
         except ImportError as e:
             raise MFANotInstalledError(
                 "腾讯云短信 SDK 未安装,请 pip install tencentcloud-sdk-python: " + str(e)
@@ -452,15 +455,13 @@ class OTPClient:
             logger.error("邮件发送失败(to=%s): %s", to_addr, e)
             return False
 
-
 # ---------------------------------------------------------------------------
 # MFA Challenge Token(登录中签发的临时 token,用于完成 MFA 验证)
 # ---------------------------------------------------------------------------
 
-
-def create_mfa_challenge_token(user_id: int, username: str,
-                                factors: list[str],
-                                secret_key: Optional[str] = None) -> str:
+def create_mfa_challenge_token(
+    user_id: int, username: str, factors: list[str], secret_key: str | None = None
+) -> str:
     """创建 MFA Challenge Token(短期 JWT,5 分钟有效)。
 
     此 Token 不携带访问权限,只用于标识「该用户已通过密码校验,需完成 MFA」。
@@ -477,11 +478,13 @@ def create_mfa_challenge_token(user_id: int, username: str,
     """
     import json
     import uuid
-    from fnixagent.core.security.auth.token import (
-        JWT_ALGORITHM, JWT_SECRET_KEY, _b64url_encode, _jwt_sign,
-    )
 
-    key = secret_key or JWT_SECRET_KEY
+    from fnixagent.core.security.auth.token import (
+        JWT_ALGORITHM,
+        _b64url_encode,
+        _jwt_sign,
+    )  # noqa: F401
+
     header = {"alg": JWT_ALGORITHM, "typ": "JWT"}
     now = int(time.time())
     payload = {
@@ -499,25 +502,27 @@ def create_mfa_challenge_token(user_id: int, username: str,
 
     # 复用主 JWT 密钥签名(若 secret_key 指定则用它)
     if secret_key:
-        sig = hmac.new(secret_key.encode("utf-8"),
-                       signing_input.encode("utf-8"),
-                       hashlib.sha256).digest()
+        sig = hmac.new(
+            secret_key.encode("utf-8"), signing_input.encode("utf-8"), hashlib.sha256
+        ).digest()
         signature = _b64url_encode(sig)
     else:
         signature = _jwt_sign(signing_input)
     return f"{signing_input}.{signature}"
 
-
-def verify_mfa_challenge_token(token: str,
-                                secret_key: Optional[str] = None) -> dict:
+def verify_mfa_challenge_token(token: str, secret_key: str | None = None) -> dict:
     """校验 MFA Challenge Token,返回 payload。
 
     Raises:
         ValueError: 校验失败(签名无效 / 已过期 / 类型不匹配)
     """
     import json
+
     from fnixagent.core.security.auth.token import (
-        JWT_ALGORITHM, JWT_SECRET_KEY, _b64url_decode, _b64url_encode, _jwt_sign,
+        JWT_ALGORITHM,
+        _b64url_decode,
+        _b64url_encode,
+        _jwt_sign,
     )
 
     parts = token.split(".")
@@ -529,9 +534,9 @@ def verify_mfa_challenge_token(token: str,
     # 校验签名
     if secret_key:
         expected_sig = _b64url_encode(
-            hmac.new(secret_key.encode("utf-8"),
-                     signing_input.encode("utf-8"),
-                     hashlib.sha256).digest()
+            hmac.new(
+                secret_key.encode("utf-8"), signing_input.encode("utf-8"), hashlib.sha256
+            ).digest()
         )
     else:
         expected_sig = _jwt_sign(signing_input)

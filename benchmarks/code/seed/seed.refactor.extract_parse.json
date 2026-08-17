@@ -1,0 +1,24 @@
+{
+  "id": "seed.refactor.extract_parse",
+  "title": "Extract parse_int from main",
+  "prompt": "Refactor main.py: extract parse_int(s) into parsers.py without changing CLI behavior. `python main.py 42` must still print `42`.",
+  "capability": ["refactor", "multi_file"],
+  "difficulty": 3,
+  "language": "python",
+  "tags": ["seed"],
+  "timeout_s": 180,
+  "setup": {
+    "files": {
+      "main.py": "import sys\n\n\ndef parse_int(s):\n    return int(s)\n\n\nif __name__ == '__main__':\n    print(parse_int(sys.argv[1]))\n"
+    }
+  },
+  "checks": [
+    { "function": "file_exists", "args": { "path": "parsers.py" } },
+    { "function": "file_contains", "args": { "path": "parsers.py", "pattern": "def parse_int" } },
+    {
+      "function": "stdout_equals",
+      "args": { "command": ["python", "main.py", "42"], "expected": "42" }
+    },
+    { "function": "no_stub_content", "args": {} }
+  ]
+}

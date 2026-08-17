@@ -1,0 +1,16 @@
+categories:
+  - name: 📣 Announcements
+    description: Read-only project updates from the FnixAgent team.
+    position: 1
+  - name: 💡 Ideas
+    description: Propose and brainstorm new features and directions.
+    position: 2
+  - name: 🙏 Q&A
+    description: Get help from the community.
+    position: 3
+  - name: 🎨 Show and tell
+    description: Share what you've built with Fnix Harness.
+    position: 4
+  - name: 🗳️ Polls
+    description: Community polls for prioritization.
+    position: 5

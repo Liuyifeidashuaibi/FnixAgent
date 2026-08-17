@@ -9,9 +9,16 @@
     - 所有操作捕获 RedisError, 不向上抛(降级返回 None/False)
     - close() 显式关闭连接池, 避免连接泄漏
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 import json
 import logging
-from typing import Any, Optional
+from typing import Any
 
 import redis
 from redis.exceptions import RedisError
@@ -54,7 +61,7 @@ class CacheAdapter:
         self,
         host: str = "localhost",
         port: int = 6379,
-        password: Optional[str] = None,
+        password: str | None = None,
         db: int = 0,
         max_connections: int = 50,
     ):
@@ -75,9 +82,7 @@ class CacheAdapter:
         if not isinstance(db, int) or db < 0:
             raise ValueError(f"db 必须为非负 int, 收到 {db!r}")
         if not isinstance(max_connections, int) or max_connections <= 0:
-            raise ValueError(
-                f"max_connections 必须为正 int, 收到 {max_connections!r}"
-            )
+            raise ValueError(f"max_connections 必须为正 int, 收到 {max_connections!r}")
 
         # 连接参数(脱敏保存, 仅 host/port/db 用于 __repr__)
         self._host = host
@@ -96,12 +101,9 @@ class CacheAdapter:
 
     def __repr__(self) -> str:
         """脱敏 repr: 不暴露密码。"""
-        return (
-            f"CacheAdapter(host={self._host!r}, port={self._port}, "
-            f"db={self._db}, password=***)"
-        )
+        return f"CacheAdapter(host={self._host!r}, port={self._port}, db={self._db}, password=***)"
 
-    def set(self, key: str, value: Any, ttl: Optional[int] = None) -> bool:
+    def set(self, key: str, value: Any, ttl: int | None = None) -> bool:
         """设置缓存。
 
         Args:
@@ -122,7 +124,7 @@ class CacheAdapter:
             logger.warning("Redis set 失败 key=%s: %s", key, e)
             return False
 
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         """获取缓存。
 
         Args:
@@ -179,7 +181,7 @@ class CacheAdapter:
             logger.warning("Redis expire 失败 key=%s: %s", key, e)
             return False
 
-    def ttl(self, key: str) -> Optional[int]:
+    def ttl(self, key: str) -> int | None:
         """获取键剩余过期时间。
 
         Args:
@@ -255,7 +257,7 @@ class CacheAdapter:
             logger.warning("Redis hset 失败 key=%s field=%s: %s", key, field, e)
             return False
 
-    def hget(self, key: str, field: str) -> Optional[Any]:
+    def hget(self, key: str, field: str) -> Any | None:
         """获取 Hash 字段。"""
         try:
             value = self.client.hget(key, field)

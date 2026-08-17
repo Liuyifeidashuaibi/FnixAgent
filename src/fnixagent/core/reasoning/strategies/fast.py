@@ -13,6 +13,13 @@
   原实现直接修改 ctx.max_iterations,导致同一 ctx 被多次 execute 时迭代数
   被反复截断。现通过 max_iterations_override 在 ReasoningContext 副本上生效。
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 from typing import Any

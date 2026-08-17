@@ -9,6 +9,12 @@
 设计原则: 纯标准库实现,零外部依赖,解析简洁的 YAML-like 格式。
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import fnmatch
@@ -17,10 +23,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import ClassVar
 
-
 # ---------------------------------------------------------------------------
 # 规则数据模型
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class Rule:
@@ -31,6 +37,7 @@ class Rule:
         description: 规则描述文本
         globs: 文件匹配模式列表 (仅 manual 类型使用)
     """
+
     type: str
     description: str
     globs: list[str] = field(default_factory=list)
@@ -39,6 +46,7 @@ class Rule:
 # ---------------------------------------------------------------------------
 # 规则解析器
 # ---------------------------------------------------------------------------
+
 
 class RuleParser:
     """解析 .fnixrules 文件的 YAML-like 格式。
@@ -81,11 +89,13 @@ class RuleParser:
             """将当前收集到的字段组装为 Rule 并清空暂存。"""
             nonlocal current_type, current_description, current_globs
             if current_type is not None and current_description is not None:
-                rules.append(Rule(
-                    type=current_type.strip(),
-                    description=current_description.strip(),
-                    globs=list(current_globs),
-                ))
+                rules.append(
+                    Rule(
+                        type=current_type.strip(),
+                        description=current_description.strip(),
+                        globs=list(current_globs),
+                    )
+                )
             current_type = None
             current_description = None
             current_globs = []
@@ -114,11 +124,7 @@ class RuleParser:
             globs_match = cls._GLOBS_RE.match(line)
             if globs_match:
                 raw = globs_match.group(1)
-                current_globs = [
-                    g.strip().strip("\"'")
-                    for g in raw.split(",")
-                    if g.strip()
-                ]
+                current_globs = [g.strip().strip("\"'") for g in raw.split(",") if g.strip()]
                 continue
 
         _flush()  # 保存最后一条规则
@@ -128,6 +134,7 @@ class RuleParser:
 # ---------------------------------------------------------------------------
 # Rules 引擎
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class RulesEngine:
@@ -146,7 +153,7 @@ class RulesEngine:
     project_root: Path
 
     @classmethod
-    def load(cls, project_root: str | Path) -> "RulesEngine":
+    def load(cls, project_root: str | Path) -> RulesEngine:
         """从项目根目录加载 .fnixrules 文件。
 
         如果文件不存在,返回空规则引擎。

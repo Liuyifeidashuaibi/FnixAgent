@@ -29,35 +29,38 @@
         elif next_step.kind == ERROR:
             return error_result
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import time
 import uuid
+from collections.abc import AsyncGenerator
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, AsyncGenerator, Optional
+from typing import Any
 
 from fnixagent.core.orchestrator.state import (
-    AgentState,
-    EngineRefs,
     OrchestratorContext,
 )
-
 
 # ---------------------------------------------------------------------------
 # NextStep 联合类型
 # ---------------------------------------------------------------------------
 
-
 class StepKind(str, Enum):
     """主循环每步的动作类型。"""
 
-    RUN_NODE = "run_node"        # 执行图节点
-    HANDOFF = "handoff"          # Agent 间移交(P3-1)
-    FINAL = "final"              # 完成,返回最终答案
-    INTERRUPT = "interrupt"      # 中断(等待人工审核/外部输入)
-    ERROR = "error"              # 错误,终止
-
+    RUN_NODE = "run_node"  # 执行图节点
+    HANDOFF = "handoff"  # Agent 间移交(P3-1)
+    FINAL = "final"  # 完成,返回最终答案
+    INTERRUPT = "interrupt"  # 中断(等待人工审核/外部输入)
+    ERROR = "error"  # 错误,终止
 
 @dataclass
 class NextStep:
@@ -68,7 +71,6 @@ class NextStep:
 
     kind: StepKind
 
-
 @dataclass
 class NextStepRunNode(NextStep):
     """执行图节点。"""
@@ -76,7 +78,6 @@ class NextStepRunNode(NextStep):
     kind: StepKind = StepKind.RUN_NODE
     node_name: str = ""
     inputs: dict = field(default_factory=dict)
-
 
 @dataclass
 class NextStepHandoff(NextStep):
@@ -86,15 +87,13 @@ class NextStepHandoff(NextStep):
     target_agent: str = ""
     reason: str = ""
 
-
 @dataclass
 class NextStepFinal(NextStep):
     """完成,返回最终答案。"""
 
     kind: StepKind = StepKind.FINAL
     answer: str = ""
-    usage: Optional[Any] = None  # Usage(P1-5)
-
+    usage: Any | None = None  # Usage(P1-5)
 
 @dataclass
 class NextStepInterrupt(NextStep):
@@ -103,8 +102,7 @@ class NextStepInterrupt(NextStep):
     kind: StepKind = StepKind.INTERRUPT
     reason: str = ""
     interrupt_id: str = ""
-    resume_payload: Optional[dict] = None
-
+    resume_payload: dict | None = None
 
 @dataclass
 class NextStepError(NextStep):
@@ -114,11 +112,9 @@ class NextStepError(NextStep):
     error: str = ""
     error_type: str = ""
 
-
 # ---------------------------------------------------------------------------
 # RunConfig / RunResult
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class RunConfig:
@@ -138,12 +134,11 @@ class RunConfig:
     max_steps: int = 50
     thread_id: str = ""
     checkpoint_enabled: bool = False
-    resume_from: Optional[str] = None
+    resume_from: str | None = None
     stream: bool = False
     user_id: str = ""
     session_id: str = ""
     trace_id: str = ""
-
 
 @dataclass
 class RunResult:
@@ -167,11 +162,11 @@ class RunResult:
     error: str = ""
     trace_id: str = ""
     thread_id: str = ""
-    usage: Optional[Any] = None
-    execution_trace: Optional[dict] = None
+    usage: Any | None = None
+    execution_trace: dict | None = None
     duration_ms: float = 0.0
     steps_taken: int = 0
-    final_step: Optional[NextStep] = None
+    final_step: NextStep | None = None
 
     def to_dict(self) -> dict:
         """转为字典(用于 API 响应/日志)。"""
@@ -189,11 +184,9 @@ class RunResult:
             "final_step_kind": self.final_step.kind.value if self.final_step else None,
         }
 
-
 # ---------------------------------------------------------------------------
 # AgentRunner
 # ---------------------------------------------------------------------------
-
 
 class AgentRunner:
     """单一 Runner 入口(P1-4)。
@@ -215,8 +208,8 @@ class AgentRunner:
     def __init__(
         self,
         ctx: OrchestratorContext,
-        graph: Optional[Any] = None,
-        checkpointer: Optional[Any] = None,
+        graph: Any | None = None,
+        checkpointer: Any | None = None,
     ) -> None:
         """初始化 Runner。
 
@@ -229,7 +222,7 @@ class AgentRunner:
         self._graph = graph
         self._checkpointer = checkpointer
         # P3-1 Handoff 支持
-        self._handoff_registry: Optional[Any] = None  # HandoffRegistry
+        self._handoff_registry: Any | None = None  # HandoffRegistry
         self._agents: dict[str, Any] = {}  # name → Agent 实例(多 Agent 阶段填充)
         self._current_agent_name: str = "fnix-agent"  # 当前活跃 Agent 名
         self._handoff_depth: int = 0  # 当前 handoff 深度
@@ -238,7 +231,7 @@ class AgentRunner:
     def run(
         self,
         user_input: str,
-        config: Optional[RunConfig] = None,
+        config: RunConfig | None = None,
     ) -> RunResult:
         """同步执行。
 
@@ -254,9 +247,7 @@ class AgentRunner:
             ValueError: user_input 为空字符串
         """
         if not isinstance(user_input, str):
-            raise TypeError(
-                f"user_input must be str, got {type(user_input).__name__}"
-            )
+            raise TypeError(f"user_input must be str, got {type(user_input).__name__}")
         if not user_input.strip():
             raise ValueError("user_input must not be empty or whitespace-only")
         config = config or RunConfig()
@@ -282,7 +273,7 @@ class AgentRunner:
     async def arun(
         self,
         user_input: str,
-        config: Optional[RunConfig] = None,
+        config: RunConfig | None = None,
     ) -> RunResult:
         """异步执行(默认委托给同步,子类可覆盖)。"""
         return self.run(user_input, config)
@@ -290,7 +281,7 @@ class AgentRunner:
     async def astream(
         self,
         user_input: str,
-        config: Optional[RunConfig] = None,
+        config: RunConfig | None = None,
     ) -> AsyncGenerator[NextStep, None]:
         """流式执行,yield 每个 NextStep。
 
@@ -309,7 +300,7 @@ class AgentRunner:
     def resume(
         self,
         thread_id: str,
-        resume_payload: Optional[dict] = None,
+        resume_payload: dict | None = None,
     ) -> RunResult:
         """从 Checkpoint 恢复执行。
 
@@ -353,6 +344,7 @@ class AgentRunner:
                 AgentSpanData,
                 get_provider,
             )
+
             provider = get_provider()
             trace = provider.start_trace(
                 "agent_run",
@@ -369,7 +361,7 @@ class AgentRunner:
                 with trace.start_span(
                     "agent",
                     AgentSpanData(agent_name="fnixagent", reasoning_mode=config.mode),
-                ) as agent_span:
+                ):
                     result = self._dispatch_mode(user_input, config)
                     return result
             return self._dispatch_mode(user_input, config)
@@ -423,7 +415,8 @@ class AgentRunner:
             thread_id=config.thread_id,
             execution_trace=(
                 pipeline_result.execution_trace.__dict__
-                if pipeline_result.execution_trace and hasattr(pipeline_result.execution_trace, "__dict__")
+                if pipeline_result.execution_trace
+                and hasattr(pipeline_result.execution_trace, "__dict__")
                 else None
             ),
             steps_taken=1,  # Legacy 模式算 1 步
@@ -486,12 +479,12 @@ class AgentRunner:
 
     # -- 便捷方法 -----------------------------------------------------------
     @property
-    def graph(self) -> Optional[Any]:
+    def graph(self) -> Any | None:
         """已编译的 LangGraph(若有)。"""
         return self._graph
 
     @property
-    def checkpointer(self) -> Optional[Any]:
+    def checkpointer(self) -> Any | None:
         """Checkpointer 实例(若有)。"""
         return self._checkpointer
 
@@ -548,9 +541,9 @@ class AgentRunner:
 
     def _exec_handoff(
         self,
-        step: "NextStepHandoff",
-        config: "RunConfig",
-    ) -> "NextStep":
+        step: NextStepHandoff,
+        config: RunConfig,
+    ) -> NextStep:
         """执行 Handoff(P3-1)。
 
         主循环在遇到 NextStepHandoff 时调用本方法,完成:
@@ -591,6 +584,7 @@ class AgentRunner:
         tracer = None
         try:
             from fnixagent.core.observability.tracing import get_provider
+
             provider = get_provider()
             tracer = provider  # provider 提供 start_span / start_trace
         except Exception:
@@ -622,9 +616,7 @@ class AgentRunner:
         # handoff 成功:构造 HandoffInput(用于 apply_handoff_to_state)
         from fnixagent.core.handoff import HandoffInput, build_handoff_context
 
-        handoff_decl = self._handoff_registry.find(
-            self._current_agent_name, target
-        )
+        handoff_decl = self._handoff_registry.find(self._current_agent_name, target)
         context = build_handoff_context(
             state=self._ctx.state,
             handoff=handoff_decl,

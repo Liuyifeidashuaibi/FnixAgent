@@ -15,9 +15,16 @@ Excel 工作簿创建/读取/公式/数据透视/图表/合并/条件格式/CSV 
   - 大文件读用 read_only 模式,IO 后及时 close()
   - 路径穿越/扩展名/大小限制 → _validate_path 拦截
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 from fnixagent.office.base import BaseExpert, ExpertError, ExpertResult
 
@@ -44,9 +51,9 @@ class ExcelExpert(BaseExpert):
     def create(
         self,
         output_path: str,
-        sheets: Optional[list[dict]] = None,
+        sheets: list[dict] | None = None,
         sheet_name: str = "Sheet1",
-        data: Optional[list[list[Any]]] = None,
+        data: list[list[Any]] | None = None,
     ) -> ExpertResult:
         """创建 Excel 工作簿。
 
@@ -78,7 +85,7 @@ class ExcelExpert(BaseExpert):
 
             if sheets:
                 for spec in sheets:
-                    ws = wb.create_sheet(title=spec.get("name", f"Sheet{len(wb.sheetnames)+1}"))
+                    ws = wb.create_sheet(title=spec.get("name", f"Sheet{len(wb.sheetnames) + 1}"))
                     headers = spec.get("headers")
                     rows = spec.get("data", [])
                     if headers:
@@ -95,7 +102,7 @@ class ExcelExpert(BaseExpert):
                 wb.create_sheet(title="Sheet1")
             wb.save(output_path)
             return self._success(output_path, sheets=len(wb.sheetnames))
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"create excel IO failed: {e}")
         except Exception as e:
             return self._failure(f"create excel failed: {e}")
@@ -110,8 +117,8 @@ class ExcelExpert(BaseExpert):
     def read(
         self,
         path: str,
-        sheet_name: Optional[str] = None,
-        max_rows: Optional[int] = None,
+        sheet_name: str | None = None,
+        max_rows: int | None = None,
         with_header: bool = True,
     ) -> ExpertResult:
         """读取 Excel 内容为二维列表。
@@ -125,9 +132,7 @@ class ExcelExpert(BaseExpert):
         Returns:
             ExpertResult(output={headers, rows, sheet_names})
         """
-        err = self._validate_path(
-            path, must_exist=True, allowed_exts=("xlsx",)
-        )
+        err = self._validate_path(path, must_exist=True, allowed_exts=("xlsx",))
         if err:
             return self._failure(err)
         if max_rows is not None:
@@ -159,7 +164,7 @@ class ExcelExpert(BaseExpert):
             )
         except KeyError as e:
             return self._failure(f"sheet not found: {e}")
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"read excel IO failed: {e}")
         except Exception as e:
             return self._failure(f"read excel failed: {e}")
@@ -179,7 +184,7 @@ class ExcelExpert(BaseExpert):
         path: str,
         cell: str,
         formula: str,
-        sheet_name: Optional[str] = None,
+        sheet_name: str | None = None,
     ) -> ExpertResult:
         """向指定单元格写入公式。
 
@@ -192,9 +197,7 @@ class ExcelExpert(BaseExpert):
         Returns:
             ExpertResult(output=cell)
         """
-        err = self._validate_path(
-            path, must_exist=True, allowed_exts=("xlsx",)
-        )
+        err = self._validate_path(path, must_exist=True, allowed_exts=("xlsx",))
         if err:
             return self._failure(err)
         err = self._validate_string(cell, "cell")
@@ -219,7 +222,7 @@ class ExcelExpert(BaseExpert):
             return self._success(cell, formula=formula, sheet=ws.title)
         except KeyError as e:
             return self._failure(f"sheet not found: {e}")
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"set formula IO failed: {e}")
         except Exception as e:
             return self._failure(f"set formula failed: {e}")
@@ -238,10 +241,10 @@ class ExcelExpert(BaseExpert):
         self,
         path: str,
         output_path: str,
-        source_sheet: Optional[str],
+        source_sheet: str | None,
         rows: list[str],
         values: list[str],
-        cols: Optional[list[str]] = None,
+        cols: list[str] | None = None,
         agg_func: str = "sum",
     ) -> ExpertResult:
         """生成数据透视表(基于 pandas)。
@@ -258,9 +261,7 @@ class ExcelExpert(BaseExpert):
         Returns:
             ExpertResult(output=output_path)
         """
-        err = self._validate_path(
-            path, must_exist=True, allowed_exts=("xlsx",)
-        )
+        err = self._validate_path(path, must_exist=True, allowed_exts=("xlsx",))
         if err:
             return self._failure(err)
         err = self._validate_path(output_path, allowed_exts=("xlsx",))
@@ -287,7 +288,7 @@ class ExcelExpert(BaseExpert):
                 cols=len(pt.columns),
                 agg_func=agg_func,
             )
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"pivot_table IO failed: {e}")
         except Exception as e:
             return self._failure(f"pivot_table failed: {e}")
@@ -299,7 +300,7 @@ class ExcelExpert(BaseExpert):
     def chart(
         self,
         path: str,
-        sheet_name: Optional[str],
+        sheet_name: str | None,
         chart_type: str,
         data_range: str,
         title: str = "",
@@ -318,9 +319,7 @@ class ExcelExpert(BaseExpert):
         Returns:
             ExpertResult(output=anchor)
         """
-        err = self._validate_path(
-            path, must_exist=True, allowed_exts=("xlsx",)
-        )
+        err = self._validate_path(path, must_exist=True, allowed_exts=("xlsx",))
         if err:
             return self._failure(err)
         err = self._validate_string(data_range, "data_range")
@@ -333,7 +332,7 @@ class ExcelExpert(BaseExpert):
         try:
             self._require_lib("openpyxl")
             from openpyxl import load_workbook
-            from openpyxl.chart import BarChart, LineChart, PieChart, ScatterChart, Reference
+            from openpyxl.chart import BarChart, LineChart, PieChart, Reference, ScatterChart
         except ExpertError as e:
             return self._failure(str(e))
 
@@ -343,8 +342,11 @@ class ExcelExpert(BaseExpert):
             ws = wb[sheet_name] if sheet_name else wb.active
             # 解析 data_range,如 "A1:B10" → min_col=1, max_col=2, min_row=1, max_row=10
             from openpyxl.utils import range_boundaries
+
             min_col, min_row, max_col, max_row = range_boundaries(data_range)
-            data_ref = Reference(ws, min_col=min_col, min_row=min_row, max_col=max_col, max_row=max_row)
+            data_ref = Reference(
+                ws, min_col=min_col, min_row=min_row, max_col=max_col, max_row=max_row
+            )
 
             ct = chart_type.lower()
             if ct == "bar":
@@ -365,7 +367,7 @@ class ExcelExpert(BaseExpert):
             return self._success(anchor, chart_type=ct)
         except KeyError as e:
             return self._failure(f"sheet not found: {e}")
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"insert chart IO failed: {e}")
         except Exception as e:
             return self._failure(f"insert chart failed: {e}")
@@ -384,7 +386,7 @@ class ExcelExpert(BaseExpert):
         self,
         paths: list[str],
         output_path: str,
-        sheet_names: Optional[list[str]] = None,
+        sheet_names: list[str] | None = None,
     ) -> ExpertResult:
         """合并多个 Excel 文件为一个多 sheet 工作簿。
 
@@ -399,9 +401,7 @@ class ExcelExpert(BaseExpert):
         if not paths:
             return self._failure("paths is empty")
         for p in paths:
-            err = self._validate_path(
-                p, must_exist=True, allowed_exts=("xlsx",)
-            )
+            err = self._validate_path(p, must_exist=True, allowed_exts=("xlsx",))
             if err:
                 return self._failure(err)
         err = self._validate_path(output_path, allowed_exts=("xlsx",))
@@ -422,8 +422,11 @@ class ExcelExpert(BaseExpert):
             for idx, p in enumerate(paths):
                 src_wb = load_workbook(p, read_only=True)
                 src_ws = src_wb.active
-                name = (sheet_names[idx] if sheet_names and idx < len(sheet_names)
-                        else f"Sheet{idx+1}")
+                name = (
+                    sheet_names[idx]
+                    if sheet_names and idx < len(sheet_names)
+                    else f"Sheet{idx + 1}"
+                )
                 # sheet 名最长 31 字符(Excel 限制)
                 dst_ws = merged.create_sheet(title=name[:31])
                 for row in src_ws.iter_rows(values_only=True):
@@ -434,7 +437,7 @@ class ExcelExpert(BaseExpert):
                 merged.create_sheet(title="Sheet1")
             merged.save(output_path)
             return self._success(output_path, sheets=len(merged.sheetnames))
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"merge excel IO failed: {e}")
         except Exception as e:
             return self._failure(f"merge excel failed: {e}")
@@ -460,7 +463,7 @@ class ExcelExpert(BaseExpert):
         path: str,
         cell_range: str,
         rule_type: str,
-        sheet_name: Optional[str] = None,
+        sheet_name: str | None = None,
         value: Any = None,
         color: str = "FFC7CE",
     ) -> ExpertResult:
@@ -477,9 +480,7 @@ class ExcelExpert(BaseExpert):
         Returns:
             ExpertResult(output=cell_range)
         """
-        err = self._validate_path(
-            path, must_exist=True, allowed_exts=("xlsx",)
-        )
+        err = self._validate_path(path, must_exist=True, allowed_exts=("xlsx",))
         if err:
             return self._failure(err)
         err = self._validate_string(cell_range, "cell_range")
@@ -527,14 +528,20 @@ class ExcelExpert(BaseExpert):
                 rule = CellIsRule(operator=op, formula=[val_num], fill=fill)
             elif rt == "color_scale":
                 rule = ColorScaleRule(
-                    start_type="min", start_color="63BE7B",
-                    mid_type="percentile", mid_value=50, mid_color="FFEB84",
-                    end_type="max", end_color="F8696B",
+                    start_type="min",
+                    start_color="63BE7B",
+                    mid_type="percentile",
+                    mid_value=50,
+                    mid_color="FFEB84",
+                    end_type="max",
+                    end_color="F8696B",
                 )
             elif rt == "data_bar":
                 rule = DataBarRule(start_type="min", end_type="max", color=color)
             elif rt == "top":
-                rule = Rule(type="top10", rank=int(value or 10), percent=False, bottom=False, dxf=None)
+                rule = Rule(
+                    type="top10", rank=int(value or 10), percent=False, bottom=False, dxf=None
+                )
             else:
                 return self._failure(f"unsupported rule_type: {rule_type}")
             ws.conditional_formatting.add(cell_range, rule)
@@ -542,7 +549,7 @@ class ExcelExpert(BaseExpert):
             return self._success(cell_range, rule_type=rt)
         except KeyError as e:
             return self._failure(f"sheet not found: {e}")
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"conditional_format IO failed: {e}")
         except Exception as e:
             return self._failure(f"conditional_format failed: {e}")
@@ -561,7 +568,7 @@ class ExcelExpert(BaseExpert):
         self,
         path: str,
         output_path: str,
-        sheet_name: Optional[str] = None,
+        sheet_name: str | None = None,
         encoding: str = "utf-8-sig",
     ) -> ExpertResult:
         """将 Excel sheet 导出为 CSV。
@@ -575,9 +582,7 @@ class ExcelExpert(BaseExpert):
         Returns:
             ExpertResult(output=output_path)
         """
-        err = self._validate_path(
-            path, must_exist=True, allowed_exts=("xlsx",)
-        )
+        err = self._validate_path(path, must_exist=True, allowed_exts=("xlsx",))
         if err:
             return self._failure(err)
         err = self._validate_path(output_path, allowed_exts=("csv",), max_size=None)
@@ -587,6 +592,7 @@ class ExcelExpert(BaseExpert):
         try:
             self._require_lib("openpyxl")
             import csv
+
             from openpyxl import load_workbook
         except ExpertError as e:
             return self._failure(str(e))
@@ -605,7 +611,7 @@ class ExcelExpert(BaseExpert):
             return self._success(output_path, rows=row_count, encoding=encoding)
         except KeyError as e:
             return self._failure(f"sheet not found: {e}")
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"to_csv IO failed: {e}")
         except Exception as e:
             return self._failure(f"to_csv failed: {e}")

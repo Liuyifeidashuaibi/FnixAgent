@@ -1,0 +1,81 @@
+# release-drafter configuration
+# https://github.com/release-drafter/release-drafter#configuration
+
+name-template: "v$RESOLVED_VERSION"
+tag-template: "v$RESOLVED_VERSION"
+version-template: "$MAJOR.$MINOR.$PATCH"
+include-pre-releases: false
+exclude-labels:
+  - "skip-changelog"
+  - "duplicate"
+  - "invalid"
+  - "question"
+  - "discussion"
+
+categories:
+  - title: "🚨 Breaking Changes"
+    labels:
+      - "breaking"
+    order: 0
+  - title: "🚀 Features"
+    labels:
+      - "feature"
+      - "enhancement"
+    order: 1
+  - title: "🐛 Bug Fixes"
+    labels:
+      - "bug"
+      - "fix"
+    order: 2
+  - title: "⚡ Performance"
+    labels:
+      - "perf"
+      - "performance"
+    order: 3
+  - title: "🔒 Security"
+    labels:
+      - "security"
+    order: 4
+  - title: "📝 Documentation"
+    labels:
+      - "docs"
+      - "documentation"
+    order: 5
+  - title: "🌐 Internationalization"
+    labels:
+      - "i18n"
+      - "l10n"
+      - "translation"
+    order: 6
+  - title: "🔧 Maintenance"
+    labels:
+      - "chore"
+      - "dependencies"
+      - "ci"
+      - "build"
+      - "refactor"
+      - "test"
+    order: 7
+  - title: "🧪 Other Changes"
+    labels:
+      - "*"
+    order: 99
+
+change-template: "- $TITLE (#$NUMBER) @$AUTHOR"
+template: |
+  ## What's Changed
+
+  $CHANGES
+
+  ---
+
+  **Full Changelog**: https://github.com/$OWNER/$REPOSITORY/compare/$PREVIOUS_TAG...v$RESOLVED_VERSION
+
+  ## Contributors
+
+  $CONTRIBUTORS
+
+  Thank you to everyone who contributed! 🎉
+
+  ---
+  🤖 _This release was drafted automatically by [release-drafter](https://github.com/release-drafter/release-drafter)._

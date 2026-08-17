@@ -10,15 +10,22 @@ Refresh Token 的撤销也通过黑名单实现:
     - /auth/refresh 接口换发新 Token 时,旧 Refresh Token 的 jti 写入黑名单
     - 防止 Refresh Token 被盗后无限换发
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import threading
 import time
-from typing import Optional
 
 # 尝试导入 Redis 适配器(可选,开发环境可能无 Redis)
 try:
     import redis as _redis_lib
+
     _HAS_REDIS = True
 except ImportError:
     _HAS_REDIS = False
@@ -41,9 +48,9 @@ class TokenBlacklist:
 
     def __init__(
         self,
-        redis_host: Optional[str] = None,
+        redis_host: str | None = None,
         redis_port: int = 6379,
-        redis_password: Optional[str] = None,
+        redis_password: str | None = None,
         redis_db: int = 0,
     ):
         """初始化黑名单。
@@ -55,7 +62,7 @@ class TokenBlacklist:
             redis_db: Redis 数据库编号
         """
         self._redis = None
-        self._memory: dict[str, float] = {}    # jti -> expire_at
+        self._memory: dict[str, float] = {}  # jti -> expire_at
         self._lock = threading.RLock()
         self._use_memory = True
 
@@ -214,14 +221,14 @@ class TokenBlacklist:
 # ---------------------------------------------------------------------------
 
 
-_blacklist_instance: Optional[TokenBlacklist] = None
+_blacklist_instance: TokenBlacklist | None = None
 _blacklist_lock = threading.Lock()
 
 
 def get_blacklist(
-    redis_host: Optional[str] = None,
+    redis_host: str | None = None,
     redis_port: int = 6379,
-    redis_password: Optional[str] = None,
+    redis_password: str | None = None,
     redis_db: int = 0,
 ) -> TokenBlacklist:
     """获取全局 Token 黑名单单例(懒加载)。

@@ -15,13 +15,20 @@
 
 P0-04 新增。
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import asyncio
 import dataclasses
 import logging
 import threading
-from typing import Any, Optional
+from typing import Any
 
 from fnixagent.core.reflection.base import (
     ReflectionConfig,
@@ -90,10 +97,10 @@ class ReflectionManager:
 
     def __init__(
         self,
-        config: Optional[ReflectionConfig] = None,
-        weights: Optional[dict[str, float]] = None,
+        config: ReflectionConfig | None = None,
+        weights: dict[str, float] | None = None,
         llm: Any = None,
-        evaluators: Optional[list[BaseEvaluator]] = None,
+        evaluators: list[BaseEvaluator] | None = None,
     ) -> None:
         """初始化反思管理器。
 
@@ -114,9 +121,7 @@ class ReflectionManager:
         self._lock = threading.Lock()
         # 评估器实例(构造时创建,后续只读访问)
         if evaluators is not None:
-            self._evaluators: dict[str, BaseEvaluator] = {
-                e.name: e for e in evaluators
-            }
+            self._evaluators: dict[str, BaseEvaluator] = {e.name: e for e in evaluators}
         else:
             self._evaluators = self._build_default_evaluators(llm)
         # 自定义评估器可能引入不在 _DEFAULT_WEIGHTS 中的名字,
@@ -144,8 +149,8 @@ class ReflectionManager:
     async def evaluate(
         self,
         content: str,
-        context: Optional[dict[str, Any]] = None,
-        config: Optional[ReflectionConfig] = None,
+        context: dict[str, Any] | None = None,
+        config: ReflectionConfig | None = None,
     ) -> ReflectionResult:
         """评估内容质量 - 并行执行所有启用的评估器。
 
@@ -184,23 +189,15 @@ class ReflectionManager:
         content_len = len(content) if content else 0
         if content_len < 50:
             result.score = 0.2
-            result.sub_scores = {name: 0.2 for name in self._evaluators}
+            result.sub_scores = dict.fromkeys(self._evaluators, 0.2)
             result.add_issue(
                 evaluator="length",
                 severity="critical",
-                message=(
-                    f"内容过短(仅 {content_len} 字符),"
-                    f"无法构成完整回答"
-                ),
-                suggestion=(
-                    "请补充更多内容,确保覆盖目标要求的核心信息"
-                    "(建议至少 200 字符)"
-                ),
+                message=(f"内容过短(仅 {content_len} 字符),无法构成完整回答"),
+                suggestion=("请补充更多内容,确保覆盖目标要求的核心信息(建议至少 200 字符)"),
                 score_impact=0.8,
             )
-            result.should_reflect = self.should_reflect(
-                result, 0, cfg.max_reflections
-            )
+            result.should_reflect = self.should_reflect(result, 0, cfg.max_reflections)
             result.feedback_message = self._build_feedback(result)
             return result
 
@@ -213,9 +210,7 @@ class ReflectionManager:
             return result
 
         # 3. 并行执行评估器
-        sub_scores = await self._run_evaluators_parallel(
-            content, ctx, cfg, enabled_names
-        )
+        sub_scores = await self._run_evaluators_parallel(content, ctx, cfg, enabled_names)
         result.sub_scores = sub_scores
 
         # 4. 权重归一化 + 加权计算总分
@@ -225,9 +220,7 @@ class ReflectionManager:
         self._add_issues_for_low_scores(result, sub_scores)
 
         # 6. 决策是否反思
-        result.should_reflect = self.should_reflect(
-            result, 0, cfg.max_reflections
-        )
+        result.should_reflect = self.should_reflect(result, 0, cfg.max_reflections)
 
         # 7. 构建反馈消息
         result.feedback_message = self._build_feedback(result)
@@ -256,9 +249,7 @@ class ReflectionManager:
             if evaluator is None:
                 continue
             names_in_order.append(name)
-            tasks.append(
-                self._safe_eval_one(evaluator, content, context, config)
-            )
+            tasks.append(self._safe_eval_one(evaluator, content, context, config))
         if not tasks:
             return {}
         # 并行执行,return_exceptions=True 保证单失败不阻塞其他
@@ -270,7 +261,9 @@ class ReflectionManager:
                 # 评估器抛异常 → 返回 1.0(不拖累总分,记录日志)
                 logger.warning(
                     "评估器 %s 执行异常: %s: %s",
-                    name, type(raw).__name__, raw,
+                    name,
+                    type(raw).__name__,
+                    raw,
                 )
                 sub_scores[name] = 1.0
             elif isinstance(raw, (int, float)):
@@ -295,15 +288,14 @@ class ReflectionManager:
         """
         try:
             score = await asyncio.wait_for(
-                asyncio.to_thread(
-                    evaluator.evaluate, content, context, config
-                ),
+                asyncio.to_thread(evaluator.evaluate, content, context, config),
                 timeout=self._EVALUATOR_TIMEOUT,
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning(
                 "评估器 %s 超时(>%ss),返回 1.0",
-                evaluator.name, self._EVALUATOR_TIMEOUT,
+                evaluator.name,
+                self._EVALUATOR_TIMEOUT,
             )
             return 1.0
         # 评估器内部异常透传(gather 的 return_exceptions 会捕获)
@@ -317,7 +309,7 @@ class ReflectionManager:
         self,
         result: ReflectionResult,
         reflection_count: int = 0,
-        max_reflections: Optional[int] = None,
+        max_reflections: int | None = None,
     ) -> bool:
         """决策是否触发反思重做。
 
@@ -343,9 +335,7 @@ class ReflectionManager:
         if reflection_count >= max_refl:
             return False
         # critical 问题强制反思
-        has_critical = any(
-            issue.severity == "critical" for issue in result.issues
-        )
+        has_critical = any(issue.severity == "critical" for issue in result.issues)
         if has_critical:
             return True
         # 总分低于阈值
@@ -380,12 +370,8 @@ class ReflectionManager:
                 result.add_issue(
                     evaluator=name,
                     severity=severity,
-                    message=messages_map.get(
-                        name, f"{name} 评估分数偏低: {score:.2f}"
-                    ),
-                    suggestion=suggestions_map.get(
-                        name, f"建议改进 {name} 维度"
-                    ),
+                    message=messages_map.get(name, f"{name} 评估分数偏低: {score:.2f}"),
+                    suggestion=suggestions_map.get(name, f"建议改进 {name} 维度"),
                     score_impact=impact,
                 )
 
@@ -407,17 +393,12 @@ class ReflectionManager:
           请根据以上反馈修正内容。
         """
         if not result.issues:
-            return (
-                f"【反思反馈】总分 {result.score:.2f},"
-                f"未发现明显问题,内容质量达标。"
-            )
+            return f"【反思反馈】总分 {result.score:.2f},未发现明显问题,内容质量达标。"
         parts: list[str] = []
         parts.append("【反思反馈】")
         threshold = self._config.min_score_threshold
         status = "低于阈值,需反思" if result.should_reflect else "达标"
-        parts.append(
-            f"总分: {result.score:.2f} (阈值 {threshold:.2f}, {status})"
-        )
+        parts.append(f"总分: {result.score:.2f} (阈值 {threshold:.2f}, {status})")
         if result.sub_scores:
             parts.append("子分数:")
             for name, score in result.sub_scores.items():
@@ -429,9 +410,7 @@ class ReflectionManager:
             key=lambda i: (0 if i.severity == "critical" else 1, -i.score_impact),
         )
         for issue in sorted_issues:
-            parts.append(
-                f"  [{issue.severity}] [{issue.evaluator}] {issue.message}"
-            )
+            parts.append(f"  [{issue.severity}] [{issue.evaluator}] {issue.message}")
             parts.append(f"    建议: {issue.suggestion}")
         parts.append("请根据以上反馈修正内容。")
         return "\n".join(parts)
@@ -505,9 +484,7 @@ class ReflectionManager:
             current = self._config
             # 过滤掉非配置字段的 kwarg(避免 TypeError)
             valid_fields = {f.name for f in dataclasses.fields(current)}
-            filtered = {
-                k: v for k, v in kwargs.items() if k in valid_fields
-            }
+            filtered = {k: v for k, v in kwargs.items() if k in valid_fields}
             if not filtered:
                 return
             self._config = dataclasses.replace(current, **filtered)
@@ -552,11 +529,11 @@ class ReflectionManager:
 # ---------------------------------------------------------------------------
 
 _singleton_lock = threading.Lock()
-_singleton_manager: Optional[ReflectionManager] = None
+_singleton_manager: ReflectionManager | None = None
 
 
 def get_reflection_manager(
-    config: Optional[ReflectionConfig] = None,
+    config: ReflectionConfig | None = None,
     llm: Any = None,
 ) -> ReflectionManager:
     """获取全局 ReflectionManager 单例。

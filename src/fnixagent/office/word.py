@@ -22,32 +22,46 @@ Word 文档创建/编辑/样式/目录/合并/比较/脱敏/表格/批注/报告
   - 中文字体: 宋体/黑体/楷体/仿宋, 英文字体: Times New Roman/Arial
   - 行距: 单倍=1.0, 1.5倍=1.5, 双倍=2.0
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import contextlib
 import os
 import re
 import tempfile
-from typing import Any, Optional
+from typing import Any
 
 from fnixagent.office.base import BaseExpert, ExpertError, ExpertResult
 
-
 # 中文字号 → 磅值映射
 FONT_SIZE_CN: dict[str, float] = {
-    "初号": 42, "小初": 36,
-    "一号": 26, "小一": 24,
-    "二号": 22, "小二": 18,
-    "三号": 16, "小三": 15,
-    "四号": 14, "小四": 12,
-    "五号": 10.5, "小五": 9,
+    "初号": 42,
+    "小初": 36,
+    "一号": 26,
+    "小一": 24,
+    "二号": 22,
+    "小二": 18,
+    "三号": 16,
+    "小三": 15,
+    "四号": 14,
+    "小四": 12,
+    "五号": 10.5,
+    "小五": 9,
 }
 
 # 对齐方式映射
 ALIGNMENT_MAP: dict[str, int] = {
-    "left": 0, "center": 1, "right": 2, "justify": 3,
+    "left": 0,
+    "center": 1,
+    "right": 2,
+    "justify": 3,
 }
-
 
 class WordExpert(BaseExpert):
     """Word 文档专家。
@@ -73,7 +87,7 @@ class WordExpert(BaseExpert):
         output_path: str,
         title: str = "",
         content: str = "",
-        paragraphs: Optional[list[dict]] = None,
+        paragraphs: list[dict] | None = None,
     ) -> ExpertResult:
         """创建 Word 文档。
 
@@ -97,7 +111,6 @@ class WordExpert(BaseExpert):
         try:
             self._require_lib("docx")
             from docx import Document
-            from docx.shared import Pt
         except ExpertError as e:
             return self._failure(str(e))
 
@@ -118,7 +131,7 @@ class WordExpert(BaseExpert):
                             run.italic = p.get("italic", False)
             doc.save(output_path)
             return self._success(output_path, paragraph_count=len(paragraphs or []))
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"create Word IO failed: {e}")
         except Exception as e:
             return self._failure(f"create Word failed: {e}")
@@ -127,7 +140,7 @@ class WordExpert(BaseExpert):
         self,
         file_path: str,
         edits: list[dict],
-        output_path: Optional[str] = None,
+        output_path: str | None = None,
     ) -> ExpertResult:
         """编辑现有 Word 文档(查找替换/插入段落/删除段落)。
 
@@ -143,9 +156,7 @@ class WordExpert(BaseExpert):
             ExpertResult(output=save_path)
         """
         # 输入路径校验:必须存在且为 docx
-        err = self._validate_path(
-            file_path, must_exist=True, allowed_exts=("docx",)
-        )
+        err = self._validate_path(file_path, must_exist=True, allowed_exts=("docx",))
         if err:
             return self._failure(err)
         if output_path:
@@ -172,7 +183,7 @@ class WordExpert(BaseExpert):
             save_path = output_path or file_path
             doc.save(save_path)
             return self._success(save_path, edits_applied=len(edits))
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"edit Word IO failed: {e}")
         except Exception as e:
             return self._failure(f"edit Word failed: {e}")
@@ -182,7 +193,7 @@ class WordExpert(BaseExpert):
         file_path: str,
         style_name: str,
         target: str = "all",
-        output_path: Optional[str] = None,
+        output_path: str | None = None,
     ) -> ExpertResult:
         """应用样式(标题/正文/强调 等)。
 
@@ -195,9 +206,7 @@ class WordExpert(BaseExpert):
         Returns:
             ExpertResult(output=save_path)
         """
-        err = self._validate_path(
-            file_path, must_exist=True, allowed_exts=("docx",)
-        )
+        err = self._validate_path(file_path, must_exist=True, allowed_exts=("docx",))
         if err:
             return self._failure(err)
         err = self._validate_string(style_name, "style_name")
@@ -218,14 +227,14 @@ class WordExpert(BaseExpert):
             save_path = output_path or file_path
             doc.save(save_path)
             return self._success(save_path, style=style_name)
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"apply_style IO failed: {e}")
         except KeyError as e:
             return self._failure(f"style not found: {e}")
         except Exception as e:
             return self._failure(f"apply_style failed: {e}")
 
-    def generate_toc(self, file_path: str, output_path: Optional[str] = None) -> ExpertResult:
+    def generate_toc(self, file_path: str, output_path: str | None = None) -> ExpertResult:
         """生成目录(TOC)。
 
         Args:
@@ -238,17 +247,15 @@ class WordExpert(BaseExpert):
         Note:
             TOC 域插入后,用户首次在 Word 中打开按 F9 才会渲染。
         """
-        err = self._validate_path(
-            file_path, must_exist=True, allowed_exts=("docx",)
-        )
+        err = self._validate_path(file_path, must_exist=True, allowed_exts=("docx",))
         if err:
             return self._failure(err)
 
         try:
             self._require_lib("docx")
             from docx import Document
-            from docx.oxml.ns import qn
             from docx.oxml import OxmlElement
+            from docx.oxml.ns import qn
         except ExpertError as e:
             return self._failure(str(e))
 
@@ -270,7 +277,7 @@ class WordExpert(BaseExpert):
             save_path = output_path or file_path
             doc.save(save_path)
             return self._success(save_path)
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"generate_toc IO failed: {e}")
         except Exception as e:
             return self._failure(f"generate_toc failed: {e}")
@@ -292,9 +299,7 @@ class WordExpert(BaseExpert):
         if not file_paths:
             return self._failure("file_paths is empty")
         for fp in file_paths:
-            err = self._validate_path(
-                fp, must_exist=True, allowed_exts=("docx",)
-            )
+            err = self._validate_path(fp, must_exist=True, allowed_exts=("docx",))
             if err:
                 return self._failure(err)
         err = self._validate_path(output_path, allowed_exts=("docx",))
@@ -315,7 +320,7 @@ class WordExpert(BaseExpert):
                     merged.add_paragraph(para.text)
             merged.save(output_path)
             return self._success(output_path, merged_count=len(file_paths))
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"merge IO failed: {e}")
         except Exception as e:
             return self._failure(f"merge failed: {e}")
@@ -324,7 +329,7 @@ class WordExpert(BaseExpert):
         self,
         file_a: str,
         file_b: str,
-        output_path: Optional[str] = None,
+        output_path: str | None = None,
     ) -> ExpertResult:
         """比较两个 Word 文档(返回差异列表)。
 
@@ -339,9 +344,7 @@ class WordExpert(BaseExpert):
             ExpertResult(output=[{op, text/old/new}, ...])
         """
         for fp in (file_a, file_b):
-            err = self._validate_path(
-                fp, must_exist=True, allowed_exts=("docx",)
-            )
+            err = self._validate_path(fp, must_exist=True, allowed_exts=("docx",))
             if err:
                 return self._failure(err)
 
@@ -358,7 +361,7 @@ class WordExpert(BaseExpert):
             texts_b = [p.text for p in doc_b.paragraphs]
             diffs = self._diff_lists(texts_a, texts_b)
             return self._success(diffs, file_a=file_a, file_b=file_b)
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"compare IO failed: {e}")
         except Exception as e:
             return self._failure(f"compare failed: {e}")
@@ -372,7 +375,7 @@ class WordExpert(BaseExpert):
         file_path: str,
         patterns: list[str],
         replacement: str = "***",
-        output_path: Optional[str] = None,
+        output_path: str | None = None,
     ) -> ExpertResult:
         """脱敏(按正则模式替换敏感信息)。
 
@@ -385,9 +388,7 @@ class WordExpert(BaseExpert):
         Returns:
             ExpertResult(output=save_path, redact_count=N)
         """
-        err = self._validate_path(
-            file_path, must_exist=True, allowed_exts=("docx",)
-        )
+        err = self._validate_path(file_path, must_exist=True, allowed_exts=("docx",))
         if err:
             return self._failure(err)
         if not patterns:
@@ -415,7 +416,7 @@ class WordExpert(BaseExpert):
             return self._success(save_path, redact_count=redact_count)
         except re.error as e:
             return self._failure(f"invalid regex pattern: {e}")
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"redact IO failed: {e}")
         except Exception as e:
             return self._failure(f"redact failed: {e}")
@@ -429,9 +430,7 @@ class WordExpert(BaseExpert):
         Returns:
             ExpertResult(output=[[row_cells], ...], table_count=N)
         """
-        err = self._validate_path(
-            file_path, must_exist=True, allowed_exts=("docx",)
-        )
+        err = self._validate_path(file_path, must_exist=True, allowed_exts=("docx",))
         if err:
             return self._failure(err)
 
@@ -450,7 +449,7 @@ class WordExpert(BaseExpert):
                     rows.append([cell.text for cell in row.cells])
                 tables.append(rows)
             return self._success(tables, table_count=len(tables))
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"extract_tables IO failed: {e}")
         except Exception as e:
             return self._failure(f"extract_tables failed: {e}")
@@ -459,7 +458,7 @@ class WordExpert(BaseExpert):
         self,
         file_path: str,
         enable: bool = True,
-        output_path: Optional[str] = None,
+        output_path: str | None = None,
     ) -> ExpertResult:
         """启用/关闭修订模式(track changes)。
 
@@ -473,9 +472,7 @@ class WordExpert(BaseExpert):
         Returns:
             ExpertResult(output=save_path, track_changes=bool)
         """
-        err = self._validate_path(
-            file_path, must_exist=True, allowed_exts=("docx",)
-        )
+        err = self._validate_path(file_path, must_exist=True, allowed_exts=("docx",))
         if err:
             return self._failure(err)
 
@@ -499,7 +496,7 @@ class WordExpert(BaseExpert):
             save_path = output_path or file_path
             doc.save(save_path)
             return self._success(save_path, track_changes=enable)
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"track_changes IO failed: {e}")
         except Exception as e:
             return self._failure(f"track_changes failed: {e}")
@@ -574,11 +571,11 @@ class WordExpert(BaseExpert):
         try:
             self._require_lib("docx")
             from docx import Document
-            from docx.shared import Pt, Inches, Cm, Emu
-            from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_LINE_SPACING
             from docx.enum.section import WD_SECTION
-            from docx.oxml.ns import qn, nsdecls
+            from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_LINE_SPACING
             from docx.oxml import parse_xml
+            from docx.oxml.ns import nsdecls, qn
+            from docx.shared import Cm, Inches, Pt
         except ExpertError as e:
             return self._failure(str(e))
 
@@ -600,7 +597,7 @@ class WordExpert(BaseExpert):
             rfonts = rpr.find(qn("w:rFonts"))
             if rfonts is None:
                 rfonts = parse_xml(
-                    f'<w:rFonts {nsdecls("w")} '
+                    f"<w:rFonts {nsdecls('w')} "
                     f'w:ascii="Times New Roman" w:hAnsi="Times New Roman" '
                     f'w:eastAsia="宋体" w:cs="Times New Roman"/>'
                 )
@@ -621,9 +618,15 @@ class WordExpert(BaseExpert):
             self._add_page_number(sec, enable=False)
 
             # ---- 配置标题样式 ----
-            self._configure_heading_style(doc, "Heading 1", "黑体", FONT_SIZE_CN["四号"], True, True)
-            self._configure_heading_style(doc, "Heading 2", "宋体", FONT_SIZE_CN["四号"], True, True)
-            self._configure_heading_style(doc, "Heading 3", "宋体", FONT_SIZE_CN["小四"], True, True)
+            self._configure_heading_style(
+                doc, "Heading 1", "黑体", FONT_SIZE_CN["四号"], True, True
+            )
+            self._configure_heading_style(
+                doc, "Heading 2", "宋体", FONT_SIZE_CN["四号"], True, True
+            )
+            self._configure_heading_style(
+                doc, "Heading 3", "宋体", FONT_SIZE_CN["小四"], True, True
+            )
 
             # ---- 封面 ----
             self._build_cover(doc, cover)
@@ -711,7 +714,11 @@ class WordExpert(BaseExpert):
                         cap_para = doc.add_paragraph()
                         cap_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
                         cap_para.paragraph_format.first_line_indent = Pt(0)
-                        cap_text = f"图{chapter_idx}-{fig_idx} {caption}" if caption else f"图{chapter_idx}-{fig_idx}"
+                        cap_text = (
+                            f"图{chapter_idx}-{fig_idx} {caption}"
+                            if caption
+                            else f"图{chapter_idx}-{fig_idx}"
+                        )
                         run_cap = cap_para.add_run(cap_text)
                         self._set_run_font(run_cap, "宋体", FONT_SIZE_CN["五号"], bold=False)
                         word_count += len(caption)
@@ -724,7 +731,11 @@ class WordExpert(BaseExpert):
                         cap_para = doc.add_paragraph()
                         cap_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
                         cap_para.paragraph_format.first_line_indent = Pt(0)
-                        cap_text = f"表{chapter_idx}-{tbl_idx} {caption}" if caption else f"表{chapter_idx}-{tbl_idx}"
+                        cap_text = (
+                            f"表{chapter_idx}-{tbl_idx} {caption}"
+                            if caption
+                            else f"表{chapter_idx}-{tbl_idx}"
+                        )
                         run_cap = cap_para.add_run(cap_text)
                         self._set_run_font(run_cap, "宋体", FONT_SIZE_CN["五号"], bold=True)
                         word_count += len(caption)
@@ -763,7 +774,7 @@ class WordExpert(BaseExpert):
                 table_count=table_count,
                 warning=warning,
             )
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"create_report IO failed: {e}")
         except Exception as e:
             return self._failure(f"create_report failed: {e}")
@@ -772,10 +783,10 @@ class WordExpert(BaseExpert):
         self, doc, style_name: str, cn_font: str, size_pt: float, bold: bool, indent_zero: bool
     ) -> None:
         """配置标题样式:中文字体/英文字体/字号/加粗/行距。"""
-        from docx.shared import Pt
         from docx.enum.text import WD_LINE_SPACING
-        from docx.oxml.ns import qn, nsdecls
         from docx.oxml import parse_xml
+        from docx.oxml.ns import nsdecls, qn
+        from docx.shared import Pt
 
         style = doc.styles[style_name]
         style.font.name = "Times New Roman"
@@ -785,7 +796,7 @@ class WordExpert(BaseExpert):
         rfonts = rpr.find(qn("w:rFonts"))
         if rfonts is None:
             rfonts = parse_xml(
-                f'<w:rFonts {nsdecls("w")} '
+                f"<w:rFonts {nsdecls('w')} "
                 f'w:ascii="Times New Roman" w:hAnsi="Times New Roman" '
                 f'w:eastAsia="{cn_font}" w:cs="Times New Roman"/>'
             )
@@ -806,9 +817,9 @@ class WordExpert(BaseExpert):
     @staticmethod
     def _set_run_font(run, cn_font: str, size_pt: float, bold: bool = False) -> None:
         """设置 run 的字体(中文+英文分离)、字号、加粗。"""
-        from docx.shared import Pt
-        from docx.oxml.ns import qn, nsdecls
         from docx.oxml import parse_xml
+        from docx.oxml.ns import nsdecls, qn
+        from docx.shared import Pt
 
         run.font.name = "Times New Roman"
         run.font.size = Pt(size_pt)
@@ -817,7 +828,7 @@ class WordExpert(BaseExpert):
         rfonts = rpr.find(qn("w:rFonts"))
         if rfonts is None:
             rfonts = parse_xml(
-                f'<w:rFonts {nsdecls("w")} '
+                f"<w:rFonts {nsdecls('w')} "
                 f'w:ascii="Times New Roman" w:hAnsi="Times New Roman" '
                 f'w:eastAsia="{cn_font}" w:cs="Times New Roman"/>'
             )
@@ -836,11 +847,12 @@ class WordExpert(BaseExpert):
         未匹配的剩余字符默认宋体。
         """
         import re
+
         from docx.oxml.ns import qn
 
         pattern = re.compile(
-            r'([\u4e00-\u9fff\u3000-\u303f\uff00-\uffef]+)'
-            r'|([a-zA-Z0-9\s\.\,\;\:\!\?\(\)\[\]\{\}\<\>\/\\\|\-\+\=\*\&\^\%\$\#\@\!\`\~]+)'
+            r"([\u4e00-\u9fff\u3000-\u303f\uff00-\uffef]+)"
+            r"|([a-zA-Z0-9\s\.\,\;\:\!\?\(\)\[\]\{\}\<\>\/\\\|\-\+\=\*\&\^\%\$\#\@\!\`\~]+)"
         )
         pos = 0
         for m in pattern.finditer(text):
@@ -939,8 +951,8 @@ class WordExpert(BaseExpert):
             enable: True 添加页码,False 清除页码
             start: 起始页码
         """
-        from docx.oxml.ns import qn, nsdecls
         from docx.oxml import parse_xml
+        from docx.oxml.ns import nsdecls, qn
 
         footer = section.footer
         footer.is_linked_to_previous = False
@@ -965,7 +977,9 @@ class WordExpert(BaseExpert):
             run = p.add_run()
             fldChar1 = parse_xml(f'<w:fldChar {nsdecls("w")} w:fldCharType="begin"/>')
             run._r.append(fldChar1)
-            instrText = parse_xml(f'<w:instrText {nsdecls("w")} xml:space="preserve"> PAGE </w:instrText>')
+            instrText = parse_xml(
+                f'<w:instrText {nsdecls("w")} xml:space="preserve"> PAGE </w:instrText>'
+            )
             run._r.append(instrText)
             fldChar2 = parse_xml(f'<w:fldChar {nsdecls("w")} w:fldCharType="end"/>')
             run._r.append(fldChar2)
@@ -981,8 +995,8 @@ class WordExpert(BaseExpert):
 
     def _insert_toc_field(self, doc) -> None:
         """在当前位置插入 TOC 域(Word 打开时按 F9 可更新)。"""
-        from docx.oxml.ns import qn, nsdecls
         from docx.oxml import parse_xml
+        from docx.oxml.ns import nsdecls
 
         para = doc.add_paragraph()
         run = para.add_run()
@@ -1002,7 +1016,7 @@ class WordExpert(BaseExpert):
         run._r.append(fldChar3)
 
     @staticmethod
-    def _ensure_srgb_image(image_path: str, recolor: Optional[str] = None) -> str:
+    def _ensure_srgb_image(image_path: str, recolor: str | None = None) -> str:
         """图片预处理:色彩空间转换 + Recolor 着色。
 
         处理两个问题:
@@ -1025,9 +1039,10 @@ class WordExpert(BaseExpert):
             转换后生成临时 PNG 文件,调用方负责清理。
         """
         try:
-            from PIL import Image, ImageCms, ImageColor
             import io as _io
+
             import numpy as np
+            from PIL import Image, ImageCms, ImageColor
         except ImportError:
             return image_path
 
@@ -1082,9 +1097,7 @@ class WordExpert(BaseExpert):
                     unique_colors = len(set(map(tuple, quantized)))
 
                     # 单色或少色图片 + 透明背景 → Recolor 候选
-                    is_recolor_candidate = (
-                        unique_colors <= 3 and has_transparency
-                    )
+                    is_recolor_candidate = unique_colors <= 3 and has_transparency
 
                     if is_recolor_candidate and recolor:
                         # 主动着色:将所有不透明像素替换为目标颜色
@@ -1137,7 +1150,7 @@ class WordExpert(BaseExpert):
         """在指定文本后插入新段落。"""
         for para in doc.paragraphs:
             if after_text in para.text:
-                new_para = doc.add_paragraph(
+                doc.add_paragraph(
                     paragraph.get("text", ""),
                     paragraph.get("style", "Normal"),
                 )
@@ -1183,9 +1196,8 @@ class WordExpert(BaseExpert):
             是否成功
         """
         try:
-            from docx.oxml.shared import OxmlElement
-            from docx.oxml.ns import qn, nsdecls
             from docx.oxml import parse_xml
+            from docx.oxml.ns import nsdecls, qn
 
             tc_pr = cell._tc.get_or_add_tcPr()
             existing = tc_pr.find(qn("w:shd"))
@@ -1202,9 +1214,7 @@ class WordExpert(BaseExpert):
             return False
 
     @staticmethod
-    def _set_cell_border(
-        cell, val: str = "single", sz: str = "4", color: str = "000000"
-    ) -> bool:
+    def _set_cell_border(cell, val: str = "single", sz: str = "4", color: str = "000000") -> bool:
         """设置单元格四边边框。
 
         Args:
@@ -1217,8 +1227,8 @@ class WordExpert(BaseExpert):
             是否成功
         """
         try:
-            from docx.oxml.shared import OxmlElement
             from docx.oxml.ns import qn
+            from docx.oxml.shared import OxmlElement
 
             tc_pr = cell._tc.get_or_add_tcPr()
             tc_borders = tc_pr.find(qn("w:tcBorders"))
@@ -1241,9 +1251,7 @@ class WordExpert(BaseExpert):
             return False
 
     @staticmethod
-    def _set_cell_alignment(
-        cell, horizontal: str = "left", vertical: str = "top"
-    ) -> bool:
+    def _set_cell_alignment(cell, horizontal: str = "left", vertical: str = "top") -> bool:
         """设置单元格文本对齐方式。
 
         Args:
@@ -1255,9 +1263,9 @@ class WordExpert(BaseExpert):
             是否成功
         """
         try:
-            from docx.oxml.shared import OxmlElement
-            from docx.oxml.ns import qn
             from docx.enum.text import WD_ALIGN_PARAGRAPH
+            from docx.oxml.ns import qn
+            from docx.oxml.shared import OxmlElement
 
             align_map = {
                 "left": WD_ALIGN_PARAGRAPH.LEFT,
@@ -1280,9 +1288,7 @@ class WordExpert(BaseExpert):
             return False
 
     @staticmethod
-    def _merge_cells(
-        table, start_row: int, start_col: int, end_row: int, end_col: int
-    ) -> bool:
+    def _merge_cells(table, start_row: int, start_col: int, end_row: int, end_col: int) -> bool:
         """合并矩形区域内的单元格。
 
         Args:
@@ -1301,17 +1307,13 @@ class WordExpert(BaseExpert):
             for ri in range(start_row, end_row + 1):
                 if start_col < 0 or end_col >= len(table.rows[ri].cells):
                     return False
-            table.cell(start_row, start_col).merge(
-                table.cell(end_row, end_col)
-            )
+            table.cell(start_row, start_col).merge(table.cell(end_row, end_col))
             return True
         except Exception:
             return False
 
     @staticmethod
-    def _set_column_width(
-        table, col_index: int, width_pt: float, width_type: str = "dxa"
-    ) -> bool:
+    def _set_column_width(table, col_index: int, width_pt: float, width_type: str = "dxa") -> bool:
         """设置表格列宽。
 
         Args:
@@ -1324,8 +1326,8 @@ class WordExpert(BaseExpert):
             是否成功
         """
         try:
-            from docx.oxml.shared import OxmlElement
             from docx.oxml.ns import qn
+            from docx.oxml.shared import OxmlElement
 
             if col_index < 0 or col_index >= len(table.columns):
                 return False
@@ -1352,9 +1354,7 @@ class WordExpert(BaseExpert):
             return False
 
     @staticmethod
-    def _apply_alternating_rows(
-        table, color1: str = "FFFFFF", color2: str = "F2F2F2"
-    ) -> bool:
+    def _apply_alternating_rows(table, color1: str = "FFFFFF", color2: str = "F2F2F2") -> bool:
         """应用交替行底纹(提升可读性)。
 
         Args:
@@ -1449,11 +1449,7 @@ class WordExpert(BaseExpert):
             if alt_row_colors:
                 start = 1 if has_header else 0
                 for i in range(start, len(table.rows)):
-                    fill = (
-                        alt_row_colors[0]
-                        if (i - start) % 2 == 0
-                        else alt_row_colors[1]
-                    )
+                    fill = alt_row_colors[0] if (i - start) % 2 == 0 else alt_row_colors[1]
                     for cell in table.rows[i].cells:
                         WordExpert._set_cell_shading(cell, fill)
             return True

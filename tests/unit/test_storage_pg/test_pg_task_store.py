@@ -1,4 +1,4 @@
-﻿"""
+"""
 PgTaskStore 单元测试。
 
 验证:
@@ -9,6 +9,13 @@ PgTaskStore 单元测试。
   - get_status(进度计算)
   - 数据持久化
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 from fnixagent.services.storage_pg import PgTaskStore
@@ -29,7 +36,9 @@ class TestPgTaskStoreCreate:
 
     def test_create_with_custom_mode(self, db_adapter):
         store = PgTaskStore(db_adapter)
-        task = store.create(session_id=1, intent="edit_doc", reasoning_mode="plan_execute", user_id=1)
+        task = store.create(
+            session_id=1, intent="edit_doc", reasoning_mode="plan_execute", user_id=1
+        )
         assert task.reasoning_mode == "plan_execute"
 
     def test_count_starts_at_zero(self, db_adapter):

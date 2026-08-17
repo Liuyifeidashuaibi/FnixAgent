@@ -10,11 +10,17 @@
 停止方式:
     stop_cleanup_scheduler()   # 在应用关闭事件中调用
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import logging
 import threading
-from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +58,8 @@ def _run_cleanup() -> None:
                 logger.info("用户 %s (id=%d) 已硬删除", user.username, user.id)
                 # 写入审计日志
                 try:
-                    from fnixagent.core.audit import AuditLogger, AUDIT_ACCOUNT_HARD_DELETED
+                    from fnixagent.core.audit import AUDIT_ACCOUNT_HARD_DELETED, AuditLogger
+
                     AuditLogger().log(
                         action=AUDIT_ACCOUNT_HARD_DELETED,
                         user_id=user.id,

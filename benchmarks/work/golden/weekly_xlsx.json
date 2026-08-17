@@ -1,0 +1,7 @@
+{
+  "id": "weekly_xlsx",
+  "prompt": "请用 Craft 生成一份本周销售汇总 Excel：列包含日期、产品、金额。写入 .fnix/artifacts/weekly_sales/summary.xlsx（或 .xlsx）。",
+  "work_mode": "craft",
+  "expect_glob": ".fnix/artifacts/weekly_sales/**/*.{xlsx,xls,csv}",
+  "timeout_s": 180
+}

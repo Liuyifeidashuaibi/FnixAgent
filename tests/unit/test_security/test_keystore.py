@@ -1,4 +1,4 @@
-﻿"""
+"""
 keystore 模块单元测试。
 
 覆盖:
@@ -9,12 +9,16 @@ keystore 模块单元测试。
     - 从 RSA_PRIVATE_KEY_PATH 环境变量加载持久化密钥
     - 加载失败时回退到生成新密钥对
 """
-import os
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
 
 import pytest
 
 from fnixagent.core.security.auth.keystore import (
-    _keypair_instance,
     get_server_keypair,
     reset_server_keypair,
 )
@@ -24,13 +28,13 @@ from fnixagent.core.security.auth.rsa_crypto import (
     is_rsa_available,
 )
 
-
 _SKIP_REASON = "cryptography 库不可用,跳过 keystore 真实密钥测试"
 
 
 # ---------------------------------------------------------------------------
 # 单例行为
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.skipif(not is_rsa_available(), reason=_SKIP_REASON)
 class TestKeystoreSingleton:
@@ -65,6 +69,7 @@ class TestKeystoreSingleton:
 # ---------------------------------------------------------------------------
 # 从环境变量加载持久化密钥
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.skipif(not is_rsa_available(), reason=_SKIP_REASON)
 class TestKeystoreLoadFromEnv:
@@ -129,10 +134,12 @@ class TestKeystoreLoadFromEnv:
 # 集成:keystore 加载的密钥可解密客户端加密的密码
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.skipif(not is_rsa_available(), reason=_SKIP_REASON)
 def test_keystore_keypair_can_decrypt_client_encrypted_password():
     """从 keystore 获取的密钥对可解密客户端用其公钥加密的密码。"""
     import base64
+
     from cryptography.hazmat.backends import default_backend
     from cryptography.hazmat.primitives import hashes, serialization
     from cryptography.hazmat.primitives.asymmetric import padding as rsa_padding

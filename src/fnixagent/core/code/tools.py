@@ -36,6 +36,13 @@ Usage:
     # 运行测试
     result = await tools.test(["-x", "--tb=short"])
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import asyncio
@@ -46,11 +53,8 @@ from typing import Any
 from fnixagent.core.code.diff import (
     ChangeSet,
     ChangeSetBuilder,
-    ChangeType,
     DiffEngine,
-    FileChange,
 )
-
 
 # ============================================================================
 # 工具执行结果
@@ -67,6 +71,7 @@ class ToolResult:
         output: 成功时的输出数据 (类型随工具而异)
         error: 失败时的错误描述 (成功时为 None)
     """
+
     success: bool
     output: Any = None
     error: str | None = None
@@ -95,7 +100,6 @@ class ToolResult:
         """
         return cls(success=False, output=None, error=error)
 
-
 # ============================================================================
 # 代码操作工具集
 # ============================================================================
@@ -121,20 +125,39 @@ class CodeTools:
     """
 
     # Git 安全子命令白名单
-    _SAFE_GIT_SUBCOMMANDS: frozenset[str] = frozenset({
-        "status", "diff", "log", "add", "commit",
-        "checkout", "branch", "show", "stash",
-    })
+    _SAFE_GIT_SUBCOMMANDS: frozenset[str] = frozenset(
+        {
+            "status",
+            "diff",
+            "log",
+            "add",
+            "commit",
+            "checkout",
+            "branch",
+            "show",
+            "stash",
+        }
+    )
 
     # Git 禁止子命令 (破坏性或网络操作)
-    _FORBIDDEN_GIT_SUBCOMMANDS: frozenset[str] = frozenset({
-        "push", "pull", "reset", "clean", "rm",
-    })
+    _FORBIDDEN_GIT_SUBCOMMANDS: frozenset[str] = frozenset(
+        {
+            "push",
+            "pull",
+            "reset",
+            "clean",
+            "rm",
+        }
+    )
 
     # 危险标志 (即使子命令在白名单中也禁止, 如 reset --hard 中的 --hard)
-    _DANGEROUS_FLAGS: frozenset[str] = frozenset({
-        "--hard", "--force", "--force-with-lease",
-    })
+    _DANGEROUS_FLAGS: frozenset[str] = frozenset(
+        {
+            "--hard",
+            "--force",
+            "--force-with-lease",
+        }
+    )
 
     def __init__(
         self,
@@ -152,6 +175,8 @@ class CodeTools:
         self._root: Path = Path(project_root).resolve()
         self._diff: DiffEngine = diff_engine or DiffEngine(project_root)
         self._indexer = code_indexer  # 可选, 延迟初始化
+        # Cursor-style: True → DiffEngine dry_run (propose, don't write)
+        self.preview_mode: bool = False
 
     # ------------------------------------------------------------------------
     # 工具描述 (供 MCP 注册用)
@@ -261,7 +286,7 @@ class CodeTools:
                         "args": {
                             "type": "array",
                             "items": {"type": "string"},
-                            "description": "Git 子命令及参数 (如 [\"status\", \"--short\"])",
+                            "description": 'Git 子命令及参数 (如 ["status", "--short"])',
                         },
                     },
                     "required": ["args"],
@@ -371,16 +396,24 @@ class CodeTools:
         except ValueError as e:
             return ToolResult.err(str(e))
 
+        rel_path = full.relative_to(self._root).as_posix()
+        try:
+            from fnixagent.core.tools.workspace import _reject_stub_source
+
+            stub_err = _reject_stub_source(rel_path, content or "")
+            if stub_err:
+                return ToolResult.err(stub_err)
+        except Exception:
+            pass
+
         # 路径类型检查 (防止写入目录)
         if full.exists() and not full.is_file():
             return ToolResult.err(f"路径已存在且不是文件: {file_path}")
 
-        # 计算相对路径 (供 DiffEngine 使用, 统一用正斜杠)
-        rel_path = full.relative_to(self._root).as_posix()
-
-        # 根据文件是否存在选择 CREATE 或 MODIFY
+        action = "create"
+        old_content = ""
         if full.exists() and full.is_file():
-            # 已存在 → MODIFY: 读取原内容作为 old_content (冲突检测用)
+            action = "modify"
             try:
                 old_content = full.read_text(encoding="utf-8")
             except OSError as e:
@@ -391,22 +424,24 @@ class CodeTools:
                 .build()
             )
         else:
-            # 不存在 → CREATE
-            cs = (
-                ChangeSetBuilder(f"创建文件: {rel_path}")
-                .create_file(rel_path, content)
-                .build()
-            )
+            cs = ChangeSetBuilder(f"创建文件: {rel_path}").create_file(rel_path, content).build()
 
-        # 原子应用变更集
-        result = await self._diff.apply(cs)
+        # 原子应用变更集（preview_mode 时 dry_run，不落盘）
+        result = await self._diff.apply(cs, dry_run=self.preview_mode)
         if not result.success:
             return ToolResult.err(result.error or f"写入失败: {rel_path}")
 
-        return ToolResult.ok({
-            "path": rel_path,
-            "bytes": len(content.encode("utf-8")),
-        })
+        return ToolResult.ok(
+            {
+                "path": rel_path,
+                "bytes": len(content.encode("utf-8")),
+                "preview": self.preview_mode,
+                "content": content,
+                "old_content": old_content,
+                "diff": cs.to_diff(),
+                "action": action,
+            }
+        )
 
     # ------------------------------------------------------------------------
     # 工具: edit
@@ -467,11 +502,21 @@ class CodeTools:
             .modify_file(rel_path, content, new_content)
             .build()
         )
-        result = await self._diff.apply(cs)
+        result = await self._diff.apply(cs, dry_run=self.preview_mode)
         if not result.success:
             return ToolResult.err(result.error or f"编辑失败: {rel_path}")
 
-        return ToolResult.ok({"path": rel_path, "replaced": 1})
+        return ToolResult.ok(
+            {
+                "path": rel_path,
+                "replaced": 1,
+                "preview": self.preview_mode,
+                "content": new_content,
+                "old_content": content,
+                "diff": cs.to_diff(),
+                "action": "modify",
+            }
+        )
 
     # ------------------------------------------------------------------------
     # 工具: search
@@ -494,6 +539,7 @@ class CodeTools:
         if self._indexer is None:
             try:
                 from fnixagent.core.code.indexer import CodeIndexer
+
                 self._indexer = CodeIndexer()
                 await self._indexer.index_directory(str(self._root))
             except Exception as e:
@@ -542,6 +588,37 @@ class CodeTools:
     # 工具: test
     # ------------------------------------------------------------------------
 
+    async def compile_check(self, file_path: str | None = None) -> ToolResult:
+        """编译/语法检查（Python: py_compile / compileall）。
+
+        Args:
+            file_path: 相对路径；为空则 compileall 整个项目（跳过常见目录）。
+
+        Returns:
+            ToolResult — 成功表示无语法错误。
+        """
+        if file_path:
+            try:
+                full = self._resolve_path(file_path)
+            except ValueError as e:
+                return ToolResult.err(str(e))
+            if not full.is_file():
+                return ToolResult.err(f"文件不存在: {file_path}")
+            cmd = ["python", "-m", "py_compile", str(full)]
+            return await self._run_subprocess(cmd, timeout=60)
+
+        # 全项目：只编译 .py，排除噪音目录
+        cmd = [
+            "python",
+            "-m",
+            "compileall",
+            "-q",
+            "-x",
+            r"(?:[\\/])(?:\.fnix|node_modules|\.venv|venv|__pycache__|\.git)(?:[\\/])",
+            str(self._root),
+        ]
+        return await self._run_subprocess(cmd, timeout=120)
+
     async def test(self, args: list[str] | None = None) -> ToolResult:
         """运行测试 (pytest)。
 
@@ -551,7 +628,14 @@ class CodeTools:
         Returns:
             ToolResult, 成功时 output 为 pytest 的 stdout 输出,
             失败时 error 描述错误原因 (含退出码和 stderr)。
+
+        Notes:
+            - 仓库里没有任何测试文件时直接跳过（成功），避免静态站/空仓误杀。
+            - pytest 退出码 5 = no tests collected，同样视为跳过而非失败。
         """
+        if not self._has_pytest_targets():
+            return ToolResult.ok("跳过测试：未发现 pytest 用例（test_*.py / *_test.py / tests/）")
+
         # 默认参数: 首个失败即停止 + 简短回溯
         if args is None:
             args = ["-x", "--tb=short"]
@@ -559,7 +643,42 @@ class CodeTools:
         # 通过 python -m pytest 调用 (避免 Windows 上 pytest 脚本路径问题)
         cmd = ["python", "-m", "pytest"] + args
         # 测试可能耗时较长, 使用 300s 超时
-        return await self._run_subprocess(cmd, timeout=300)
+        result = await self._run_subprocess(cmd, timeout=300)
+        if result.success:
+            return result
+
+        # pytest exit code 5 = no tests collected
+        err = result.error or ""
+        if "退出码 5" in err or "no tests ran" in err.lower() or "collected 0 items" in err.lower():
+            return ToolResult.ok(f"跳过测试：未收集到用例\n{err}")
+        return result
+
+    def _has_pytest_targets(self) -> bool:
+        """是否存在可被 pytest 收集的测试文件。"""
+        root = self._root
+        skip_dirs = {
+            ".git",
+            ".fnix",
+            "node_modules",
+            ".venv",
+            "venv",
+            "__pycache__",
+            ".pytest_cache",
+            "dist",
+            "build",
+            "_references",
+        }
+        for path in root.rglob("*.py"):
+            try:
+                parts = set(path.relative_to(root).parts)
+            except ValueError:
+                continue
+            if parts & skip_dirs:
+                continue
+            name = path.name
+            if name.startswith("test_") or name.endswith("_test.py") or name == "conftest.py":
+                return True
+        return False
 
     # ------------------------------------------------------------------------
     # 内部: 子进程执行
@@ -599,10 +718,8 @@ class CodeTools:
 
         # 等待完成 (带超时)
         try:
-            stdout_bytes, stderr_bytes = await asyncio.wait_for(
-                proc.communicate(), timeout=timeout
-            )
-        except asyncio.TimeoutError:
+            stdout_bytes, stderr_bytes = await asyncio.wait_for(proc.communicate(), timeout=timeout)
+        except TimeoutError:
             # 超时: 强制终止进程, 避免僵尸进程
             try:
                 proc.kill()
@@ -619,9 +736,7 @@ class CodeTools:
         # 非零退出码视为失败
         if proc.returncode != 0:
             detail = stderr_text.strip() or stdout_text.strip()
-            return ToolResult.err(
-                f"命令失败 (退出码 {proc.returncode}): {detail}"
-            )
+            return ToolResult.err(f"命令失败 (退出码 {proc.returncode}): {detail}")
 
         return ToolResult.ok(stdout_text)
 
@@ -657,10 +772,7 @@ class CodeTools:
         try:
             full.relative_to(self._root)
         except ValueError:
-            raise ValueError(
-                f"路径越界: {file_path} 解析为 {full}, "
-                f"不在项目根目录 {self._root} 内"
-            )
+            raise ValueError(f"路径越界: {file_path} 解析为 {full}, 不在项目根目录 {self._root} 内")
 
         return full
 
@@ -708,5 +820,4 @@ class CodeTools:
 
         return True
 
-
-__all__ = ["ToolResult", "CodeTools"]
+__all__ = ["CodeTools", "ToolResult"]

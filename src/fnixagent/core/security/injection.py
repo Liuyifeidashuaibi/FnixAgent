@@ -12,12 +12,18 @@ Prompt 注入防护 (Injection Guard)。
 
 性能优化: 所有正则在模块级预编译一次,避免每次 check() 重复编译。
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import base64
 import re
 from dataclasses import dataclass, field
-
 
 # ---------------------------------------------------------------------------
 # 模块级预编译正则(避免每次 check() 重复编译,提升检测性能)
@@ -60,7 +66,11 @@ _B64_PATTERN: re.Pattern = re.compile(r"[A-Za-z0-9+/]{40,}={0,2}")
 _ZERO_WIDTH_PATTERN: re.Pattern = re.compile(r"[\u200b\u200c\u200d\ufeff]")
 # Base64 解码后检查的可疑关键词(小写匹配)
 _B64_SUSPICIOUS_KEYWORDS: tuple[str, ...] = (
-    "ignore", "system", "admin", "execute", "rm ",
+    "ignore",
+    "system",
+    "admin",
+    "execute",
+    "rm ",
 )
 
 # 策略5: 命令注入 — 试图执行系统命令(rm -rf / curl / eval / subprocess 等)
@@ -89,8 +99,9 @@ class InjectionCheckResult:
         reasons: 命中原因列表
         matched_patterns: 命中的策略名列表
     """
-    passed: bool                    # 是否通过(未检测到注入)
-    risk_score: float               # 综合风险评分 [0, 1]
+
+    passed: bool  # 是否通过(未检测到注入)
+    risk_score: float  # 综合风险评分 [0, 1]
     reasons: list[str] = field(default_factory=list)
     matched_patterns: list[str] = field(default_factory=list)
 
@@ -107,9 +118,7 @@ class InjectionGuard:
 
     def __init__(self, threshold: float = 0.5):
         if not (0.0 <= threshold <= 1.0):
-            raise ValueError(
-                f"threshold 必须在 [0.0, 1.0] 范围内, 实为 {threshold}"
-            )
+            raise ValueError(f"threshold 必须在 [0.0, 1.0] 范围内, 实为 {threshold}")
         self._threshold = threshold
 
     # -- 检测策略 ----------------------------------------------------------
@@ -160,9 +169,7 @@ class InjectionGuard:
         for m in matches:
             # 尝试解码,检查是否包含可疑关键词
             try:
-                decoded = base64.b64decode(m).decode(
-                    "utf-8", errors="ignore"
-                )
+                decoded = base64.b64decode(m).decode("utf-8", errors="ignore")
                 decoded_lower = decoded.lower()
                 if any(kw in decoded_lower for kw in _B64_SUSPICIOUS_KEYWORDS):
                     return (0.95, "Base64 隐藏指令: 解码含可疑关键词")

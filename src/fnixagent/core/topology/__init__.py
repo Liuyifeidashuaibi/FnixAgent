@@ -19,3 +19,10 @@ KTG 采用 4 层固定拓扑结构替代高维向量召回:
     - 所有写入操作幂等,支持快照与回滚
     - 节点不持有边引用,边不持有节点引用,避免循环引用
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+

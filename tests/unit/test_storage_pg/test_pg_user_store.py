@@ -1,4 +1,4 @@
-﻿"""
+"""
 PgUserStore 单元测试。
 
 验证:
@@ -9,14 +9,17 @@ PgUserStore 单元测试。
   - quota 累加
   - 数据持久化(新 adapter 读取已有数据)
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
-import time
-
-import pytest
-
+from fnixagent.services.storage import MAX_LOGIN_ATTEMPTS
 from fnixagent.services.storage_pg import PgUserStore
-from fnixagent.services.storage import MAX_LOGIN_ATTEMPTS, LOGIN_LOCKOUT_SECONDS
 
 
 class TestPgUserStoreCreate:

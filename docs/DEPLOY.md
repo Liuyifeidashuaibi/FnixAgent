@@ -1,6 +1,8 @@
-# fnixagent 部署手册
+# fnixagent 部署手册（Enterprise / cloud）
 
-> **目标**:新人在 30 分钟内于干净的 Linux 主机上一键部署 fnixagent,并通过桌面客户端完成登录 / 对话 / 文件上传全流程。
+> **轨道**：本文件描述 **Enterprise** 部署（`FNIXAGENT_PROFILE=cloud`）。  
+> **Community** 个人桌面请用 GitHub Release / `pnpm dev`，见 [`layers/COMMERCIAL.md`](./layers/COMMERCIAL.md)。  
+> **目标**：在 Linux 主机部署 agentd，供团队或私有连接使用。
 
 本手册覆盖三种部署形态:
 

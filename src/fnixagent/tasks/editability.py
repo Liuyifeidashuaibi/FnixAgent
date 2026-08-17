@@ -15,14 +15,19 @@
   - pptx: 文本框可编辑/形状可选择
   - pdf: 标记为只读(不可编辑,需提示)
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import os
 from dataclasses import dataclass, field
-from typing import Any, Optional
 
-from fnixagent.office.base import BaseExpert, ExpertResult
-
+from fnixagent.office.base import BaseExpert, ExpertError, ExpertResult
 
 # ---------------------------------------------------------------------------
 # 数据结构
@@ -158,9 +163,7 @@ class EditabilityGuard(BaseExpert):
             report.total_objects = len(paragraphs)
 
             # 统计有文本的段落(可编辑)
-            text_paragraphs = sum(
-                1 for p in paragraphs if p.text.strip()
-            )
+            text_paragraphs = sum(1 for p in paragraphs if p.text.strip())
             report.editable_objects = text_paragraphs
 
             # 检查是否图片过多(图片段落不可编辑文本)
@@ -168,28 +171,21 @@ class EditabilityGuard(BaseExpert):
             inline_shapes = doc.inline_shapes
             if len(inline_shapes) > 0 and text_paragraphs == 0:
                 report.image_only_objects = len(inline_shapes)
-                report.issues.append(
-                    f"文档仅含 {len(inline_shapes)} 个图片,无文本段落"
-                )
-                report.recommendations.append(
-                    "建议添加文本段落以保证可编辑性"
-                )
+                report.issues.append(f"文档仅含 {len(inline_shapes)} 个图片,无文本段落")
+                report.recommendations.append("建议添加文本段落以保证可编辑性")
                 report.editable = False
 
             # 检查文档保护(通过 XML 判断)
             try:
                 from docx.oxml.ns import qn
+
                 settings = doc.settings.element
                 protection = settings.find(qn("w:documentProtection"))
                 if protection is not None:
                     report.locked_objects = 1
                     edit_type = protection.get(qn("w:edit"))
-                    report.issues.append(
-                        f"文档已启用保护模式(edit={edit_type})"
-                    )
-                    report.recommendations.append(
-                        "如需编辑,请先取消文档保护"
-                    )
+                    report.issues.append(f"文档已启用保护模式(edit={edit_type})")
+                    report.recommendations.append("如需编辑,请先取消文档保护")
                     report.editable = False
             except Exception:
                 pass
@@ -197,13 +193,12 @@ class EditabilityGuard(BaseExpert):
             # 检查修订追踪
             try:
                 from docx.oxml.ns import qn
+
                 settings = doc.settings.element
                 track_changes = settings.find(qn("w:trackChanges"))
                 if track_changes is not None:
                     report.issues.append("文档启用了修订追踪")
-                    report.recommendations.append(
-                        "修订追踪下编辑会被记录,确认是否需要"
-                    )
+                    report.recommendations.append("修订追踪下编辑会被记录,确认是否需要")
             except Exception:
                 pass
 
@@ -236,14 +231,10 @@ class EditabilityGuard(BaseExpert):
             for ws in wb.worksheets:
                 if ws.protection and ws.protection.sheet:
                     report.locked_objects += 1
-                    report.issues.append(
-                        f"工作表 '{ws.title}' 已保护"
-                    )
+                    report.issues.append(f"工作表 '{ws.title}' 已保护")
 
             if report.locked_objects > 0:
-                report.recommendations.append(
-                    "如需编辑,请取消工作表保护"
-                )
+                report.recommendations.append("如需编辑,请取消工作表保护")
                 report.editable = False
 
             # 检查工作簿保护
@@ -291,12 +282,8 @@ class EditabilityGuard(BaseExpert):
 
             if text_slides == 0 and slide_count > 0:
                 report.image_only_objects = slide_count
-                report.issues.append(
-                    f"全部 {slide_count} 张幻灯片均无文本(纯图片)"
-                )
-                report.recommendations.append(
-                    "建议添加文本框以保证可编辑性"
-                )
+                report.issues.append(f"全部 {slide_count} 张幻灯片均无文本(纯图片)")
+                report.recommendations.append("建议添加文本框以保证可编辑性")
                 report.editable = False
 
         except ExpertError:
@@ -319,7 +306,5 @@ class EditabilityGuard(BaseExpert):
             editable_objects=0,
         )
         report.issues.append("PDF 格式不可直接编辑")
-        report.recommendations.append(
-            "如需编辑,建议转换为 docx/xlsx(用 ConverterExpert.convert)"
-        )
+        report.recommendations.append("如需编辑,建议转换为 docx/xlsx(用 ConverterExpert.convert)")
         return report

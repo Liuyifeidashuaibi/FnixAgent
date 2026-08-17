@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="FnixAgent Logo">
+  <title>FnixAgent Logo</title>
+  <desc>Isometric cube with neural node connections, representing modular agent architecture.</desc>
+
+  <defs>
+    <!-- 渐变高光 -->
+    <linearGradient id="cubeTop" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E8E8E8"/>
+      <stop offset="100%" stop-color="#A0A0A0"/>
+    </linearGradient>
+
+    <linearGradient id="cubeLeft" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#7A7A7A"/>
+      <stop offset="100%" stop-color="#3D3D3D"/>
+    </linearGradient>
+
+    <linearGradient id="cubeRight" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#5C5C5C"/>
+      <stop offset="100%" stop-color="#1F1F1F"/>
+    </linearGradient>
+
+    <!-- 神经节点光晕 -->
+    <radialGradient id="nodeGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="1"/>
+      <stop offset="40%" stop-color="#FFFFFF" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- 立方体主体:等距投影 -->
+  <!-- 顶面 (top) -->
+  <polygon points="256,96 416,176 256,256 96,176"
+           fill="url(#cubeTop)"
+           stroke="#0A0A0A"
+           stroke-width="2"
+           stroke-linejoin="round"/>
+
+  <!-- 左面 (left) -->
+  <polygon points="96,176 256,256 256,416 96,336"
+           fill="url(#cubeLeft)"
+           stroke="#0A0A0A"
+           stroke-width="2"
+           stroke-linejoin="round"/>
+
+  <!-- 右面 (right) -->
+  <polygon points="256,256 416,176 416,336 256,416"
+           fill="url(#cubeRight)"
+           stroke="#0A0A0A"
+           stroke-width="2"
+           stroke-linejoin="round"/>
+
+  <!-- 内部高光(模拟原 Logo 的明暗变化) -->
+  <line x1="256" y1="256" x2="256" y2="416"
+        stroke="#FFFFFF"
+        stroke-width="1.5"
+        stroke-opacity="0.18"
+        stroke-linecap="round"/>
+
+  <line x1="256" y1="96" x2="256" y2="256"
+        stroke="#FFFFFF"
+        stroke-width="1.5"
+        stroke-opacity="0.25"
+        stroke-linecap="round"/>
+
+  <!-- 神经节点连线(从立方体右上方延伸出去,模拟 AI 神经网络) -->
+  <g stroke="#FFFFFF" stroke-width="2" fill="none" stroke-opacity="0.9">
+    <path d="M 416,176 L 480,140" stroke-linecap="round"/>
+    <path d="M 416,336 L 480,360" stroke-linecap="round"/>
+    <path d="M 256,96 L 256,40" stroke-linecap="round"/>
+    <path d="M 96,176 L 32,140" stroke-linecap="round"/>
+    <path d="M 256,416 L 256,472" stroke-linecap="round"/>
+  </g>
+
+  <!-- 神经节点 -->
+  <g>
+    <!-- 外延节点 -->
+    <circle cx="480" cy="140" r="8" fill="#FFFFFF"/>
+    <circle cx="480" cy="140" r="14" fill="url(#nodeGlow)"/>
+
+    <circle cx="480" cy="360" r="8" fill="#FFFFFF"/>
+    <circle cx="480" cy="360" r="14" fill="url(#nodeGlow)"/>
+
+    <circle cx="256" cy="40" r="8" fill="#FFFFFF"/>
+    <circle cx="256" cy="40" r="14" fill="url(#nodeGlow)"/>
+
+    <circle cx="32" cy="140" r="8" fill="#FFFFFF"/>
+    <circle cx="32" cy="140" r="14" fill="url(#nodeGlow)"/>
+
+    <circle cx="256" cy="472" r="8" fill="#FFFFFF"/>
+    <circle cx="256" cy="472" r="14" fill="url(#nodeGlow)"/>
+
+    <!-- 立方体顶点节点 -->
+    <circle cx="256" cy="96" r="5" fill="#FFFFFF"/>
+    <circle cx="416" cy="176" r="5" fill="#FFFFFF"/>
+    <circle cx="256" cy="256" r="5" fill="#FFFFFF"/>
+    <circle cx="96" cy="176" r="5" fill="#FFFFFF"/>
+    <circle cx="96" cy="336" r="5" fill="#FFFFFF"/>
+    <circle cx="416" cy="336" r="5" fill="#FFFFFF"/>
+    <circle cx="256" cy="416" r="5" fill="#FFFFFF"/>
+  </g>
+</svg>

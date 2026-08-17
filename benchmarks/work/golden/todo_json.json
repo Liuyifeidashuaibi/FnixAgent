@@ -1,0 +1,7 @@
+{
+  "id": "todo_json",
+  "prompt": "用 write_file 写一个待办 JSON 数组（至少 2 项，字段 title/done）到 .fnix/artifacts/todos/list.json",
+  "work_mode": "craft",
+  "expect_glob": ".fnix/artifacts/todos/**/*.json",
+  "timeout_s": 120
+}

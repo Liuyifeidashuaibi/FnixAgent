@@ -3,7 +3,12 @@ Skill: 代码审查 (Code Review)
 ================================
 审查代码变更, 检查安全/性能/风格问题。
 """
-import json
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
 
 SKILL_NAME = "code_review"
 SKILL_DESCRIPTION = "审查代码变更, 检查安全/性能/风格问题"
@@ -23,6 +28,7 @@ async def handler(kernel, args):
 
     # 读取文件内容
     from fnixagent.core.agent.syscall import SyscallRequest, SyscallType
+
     req = SyscallRequest(
         syscall=SyscallType.FS_READ,
         args={"path": f"/workspace/{file_path}"},
@@ -51,19 +57,27 @@ async def handler(kernel, args):
     for i, line in enumerate(lines, 1):
         for name, pattern, severity, category in checks:
             if pattern and pattern in line:
-                issues.append({
-                    "line": i, "severity": severity,
-                    "category": category, "issue": name,
-                    "snippet": line.strip()[:80],
-                })
+                issues.append(
+                    {
+                        "line": i,
+                        "severity": severity,
+                        "category": category,
+                        "issue": name,
+                        "snippet": line.strip()[:80],
+                    }
+                )
 
     # 函数长度检查
     if len(lines) > 200:
-        issues.append({
-            "line": 1, "severity": "medium",
-            "category": "可维护性", "issue": f"文件过长 ({len(lines)} 行)",
-            "snippet": "",
-        })
+        issues.append(
+            {
+                "line": 1,
+                "severity": "medium",
+                "category": "可维护性",
+                "issue": f"文件过长 ({len(lines)} 行)",
+                "snippet": "",
+            }
+        )
 
     return {
         "file": file_path,

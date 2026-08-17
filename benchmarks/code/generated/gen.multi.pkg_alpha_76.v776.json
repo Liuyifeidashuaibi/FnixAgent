@@ -1,0 +1,46 @@
+{
+  "id": "gen.multi.pkg_alpha_76.v776",
+  "title": "package pkg_alpha_76",
+  "prompt": "Create package `pkg_alpha_76` with `__init__.py` exporting `run()` and `pkg_alpha_76/core.py` implementing `run()` returning 'pkg_alpha_76-ok'.",
+  "capability": [
+    "multi_file",
+    "write"
+  ],
+  "difficulty": 3,
+  "language": "python",
+  "tags": [
+    "generated",
+    "multi_file"
+  ],
+  "timeout_s": 180,
+  "setup": {
+    "files": {
+      "README.md": "# pkg_alpha_76\n"
+    }
+  },
+  "checks": [
+    {
+      "function": "file_exists",
+      "args": {
+        "path": "pkg_alpha_76/__init__.py"
+      }
+    },
+    {
+      "function": "file_exists",
+      "args": {
+        "path": "pkg_alpha_76/core.py"
+      }
+    },
+    {
+      "function": "stdout_equals",
+      "args": {
+        "command": [
+          "python",
+          "-c",
+          "from pkg_alpha_76 import run; print(run())"
+        ],
+        "expected": "pkg_alpha_76-ok"
+      }
+    }
+  ]
+}

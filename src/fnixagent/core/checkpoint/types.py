@@ -26,12 +26,18 @@ Channel + Version 模型说明:
     (MemoryCheckpointer 用 RLock,PostgresCheckpointer 用行锁/事务),
     否则并发节点执行会出现"丢失更新"竞态。
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Any, Optional
-
+from typing import Any
 
 # 敏感字段名匹配模式(不区分大小写):序列化前据此脱敏
 _SENSITIVE_KEY_PATTERN = re.compile(
@@ -40,13 +46,11 @@ _SENSITIVE_KEY_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
-
 def _mask_sensitive_value(value: Any) -> Any:
     """脱敏单个值:字符串替换为固定掩码,非字符串原样返回。"""
     if isinstance(value, str) and value:
         return "***REDACTED***"
     return value
-
 
 def _filter_sensitive(data: dict) -> dict:
     """递归过滤字典中的敏感字段(深度优先)。
@@ -67,13 +71,11 @@ def _filter_sensitive(data: dict) -> dict:
             filtered[k] = _filter_sensitive(v)
         elif isinstance(v, list):
             filtered[k] = [
-                _filter_sensitive(item) if isinstance(item, dict) else item
-                for item in v
+                _filter_sensitive(item) if isinstance(item, dict) else item for item in v
             ]
         else:
             filtered[k] = v
     return filtered
-
 
 @dataclass
 class CheckpointMetadata:
@@ -93,7 +95,7 @@ class CheckpointMetadata:
     source: str = "loop"  # loop/input/update/interrupt
     step: int = -1
     writes: dict = field(default_factory=dict)
-    score: Optional[float] = None
+    score: float | None = None
 
     def to_dict(self) -> dict:
         """转为字典(用于持久化)。
@@ -109,14 +111,13 @@ class CheckpointMetadata:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "CheckpointMetadata":
+    def from_dict(cls, data: dict) -> CheckpointMetadata:
         return cls(
             source=data.get("source", "loop"),
             step=data.get("step", -1),
             writes=dict(data.get("writes", {})),
             score=data.get("score"),
         )
-
 
 @dataclass
 class Checkpoint:
@@ -149,7 +150,7 @@ class Checkpoint:
         }
 
     @classmethod
-    def from_serializable(cls, data: dict) -> "Checkpoint":
+    def from_serializable(cls, data: dict) -> Checkpoint:
         """从序列化字典重建。"""
         return cls(
             channel_values=dict(data.get("channel_values", {})),
@@ -157,7 +158,6 @@ class Checkpoint:
             versions_seen=dict(data.get("versions_seen", {})),
             metadata=CheckpointMetadata.from_dict(data.get("metadata", {})),
         )
-
 
 @dataclass
 class CheckpointTuple:
@@ -173,7 +173,7 @@ class CheckpointTuple:
     config: dict
     checkpoint: Checkpoint
     metadata: CheckpointMetadata
-    parent_config: Optional[dict] = None
+    parent_config: dict | None = None
 
     @property
     def thread_id(self) -> str:

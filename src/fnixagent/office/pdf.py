@@ -19,24 +19,28 @@ PDF 创建/合并/拆分/文本抽取/图片抽取/水印/加密/OCR。
   - PDF 加密密钥长度强制校验(40/128/256 位)
   - OCR 单页图片大小限制,防止 OOM
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import contextlib
-import io
 import os
 import shutil
-from typing import Any, Optional
+from typing import Any
 
 from fnixagent.office.base import BaseExpert, ExpertError, ExpertResult
-
 
 # OCR 单页图片大小上限(20 MB),防止 pdf2image 渲染大图 OOM
 _MAX_OCR_IMAGE_SIZE = 20 * 1024 * 1024
 # PDF 加密允许的密钥长度(位)
 _ALLOWED_PDF_KEY_LENGTHS = (40, 128, 256)
 
-
-def _import_pdf_lib() -> tuple[Any, Optional[str]]:
+def _import_pdf_lib() -> tuple[Any, str | None]:
     """优先 pypdf,其次 PyPDF2。
 
     Returns:
@@ -44,15 +48,16 @@ def _import_pdf_lib() -> tuple[Any, Optional[str]]:
     """
     try:
         import pypdf  # type: ignore
+
         return pypdf, "pypdf"
     except ImportError:
         pass
     try:
         import PyPDF2  # type: ignore
+
         return PyPDF2, "PyPDF2"
     except ImportError:
         return None, None
-
 
 class PDFExpert(BaseExpert):
     """PDF 文档专家。
@@ -79,7 +84,7 @@ class PDFExpert(BaseExpert):
         text: str = "",
         title: str = "",
         author: str = "",
-        pages: Optional[list[str]] = None,
+        pages: list[str] | None = None,
     ) -> ExpertResult:
         """创建简单 PDF(基于 reportlab)。
 
@@ -100,9 +105,9 @@ class PDFExpert(BaseExpert):
         try:
             self._require_lib("reportlab")
             from reportlab.lib.pagesizes import A4
-            from reportlab.pdfgen import canvas
             from reportlab.pdfbase import pdfmetrics
             from reportlab.pdfbase.ttfonts import TTFont
+            from reportlab.pdfgen import canvas
         except ExpertError as e:
             return self._failure(str(e))
 
@@ -132,6 +137,7 @@ class PDFExpert(BaseExpert):
 
             text_pages = pages if pages else ([text] if text else [""])
             from reportlab.lib.units import cm
+
             for page_text in text_pages:
                 c.setFont(font_name, 11)
                 # 简单换行处理
@@ -157,7 +163,7 @@ class PDFExpert(BaseExpert):
                 c.showPage()
             c.save()
             return self._success(output_path, pages=len(text_pages))
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"create pdf IO failed: {e}")
         except Exception as e:
             return self._failure(f"create pdf failed: {e}")
@@ -186,9 +192,7 @@ class PDFExpert(BaseExpert):
         if not paths:
             return self._failure("paths is empty")
         for p in paths:
-            err = self._validate_path(
-                p, must_exist=True, allowed_exts=("pdf",)
-            )
+            err = self._validate_path(p, must_exist=True, allowed_exts=("pdf",))
             if err:
                 return self._failure(err)
         err = self._validate_path(output_path, allowed_exts=("pdf",))
@@ -198,8 +202,7 @@ class PDFExpert(BaseExpert):
         lib, lib_name = _import_pdf_lib()
         if lib is None:
             return self._failure(
-                "'pypdf' or 'PyPDF2' is required for pdf expert, "
-                "please install: pip install pypdf",
+                "'pypdf' or 'PyPDF2' is required for pdf expert, please install: pip install pypdf",
             )
 
         try:
@@ -227,7 +230,7 @@ class PDFExpert(BaseExpert):
                 else:
                     writer.write(f)
             return self._success(output_path, pages=total_pages)
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"merge pdf IO failed: {e}")
         except Exception as e:
             return self._failure(f"merge pdf failed: {e}")
@@ -240,7 +243,7 @@ class PDFExpert(BaseExpert):
         self,
         path: str,
         output_dir: str,
-        page_ranges: Optional[list[tuple[int, int]]] = None,
+        page_ranges: list[tuple[int, int]] | None = None,
     ) -> ExpertResult:
         """拆分 PDF 为多份。
 
@@ -252,9 +255,7 @@ class PDFExpert(BaseExpert):
         Returns:
             ExpertResult(output=[file_paths])
         """
-        err = self._validate_path(
-            path, must_exist=True, allowed_exts=("pdf",)
-        )
+        err = self._validate_path(path, must_exist=True, allowed_exts=("pdf",))
         if err:
             return self._failure(err)
         if not output_dir or not isinstance(output_dir, str):
@@ -263,15 +264,12 @@ class PDFExpert(BaseExpert):
         if page_ranges is not None:
             for idx, (start, end) in enumerate(page_ranges):
                 if start < 1 or end < start:
-                    return self._failure(
-                        f"invalid page_range[{idx}]: ({start}, {end})"
-                    )
+                    return self._failure(f"invalid page_range[{idx}]: ({start}, {end})")
 
         lib, lib_name = _import_pdf_lib()
         if lib is None:
             return self._failure(
-                "'pypdf' or 'PyPDF2' is required for pdf expert, "
-                "please install: pip install pypdf",
+                "'pypdf' or 'PyPDF2' is required for pdf expert, please install: pip install pypdf",
             )
 
         try:
@@ -286,7 +284,7 @@ class PDFExpert(BaseExpert):
                         for i in range(total):
                             writer = lib.PdfWriter()
                             writer.add_page(reader.pages[i])
-                            out_file = os.path.join(output_dir, f"{base}_p{i+1}.pdf")
+                            out_file = os.path.join(output_dir, f"{base}_p{i + 1}.pdf")
                             with open(out_file, "wb") as of:
                                 writer.write(of)
                             output_files.append(out_file)
@@ -295,7 +293,7 @@ class PDFExpert(BaseExpert):
                             writer = lib.PdfWriter()
                             for i in range(start - 1, min(end, total)):
                                 writer.add_page(reader.pages[i])
-                            out_file = os.path.join(output_dir, f"{base}_part{idx+1}.pdf")
+                            out_file = os.path.join(output_dir, f"{base}_part{idx + 1}.pdf")
                             with open(out_file, "wb") as of:
                                 writer.write(of)
                             output_files.append(out_file)
@@ -306,7 +304,7 @@ class PDFExpert(BaseExpert):
                         for i in range(total):
                             writer = lib.PdfFileWriter()
                             writer.addPage(reader.getPage(i))
-                            out_file = os.path.join(output_dir, f"{base}_p{i+1}.pdf")
+                            out_file = os.path.join(output_dir, f"{base}_p{i + 1}.pdf")
                             with open(out_file, "wb") as of:
                                 writer.write(of)
                             output_files.append(out_file)
@@ -315,12 +313,12 @@ class PDFExpert(BaseExpert):
                             writer = lib.PdfFileWriter()
                             for i in range(start - 1, min(end, total)):
                                 writer.addPage(reader.getPage(i))
-                            out_file = os.path.join(output_dir, f"{base}_part{idx+1}.pdf")
+                            out_file = os.path.join(output_dir, f"{base}_part{idx + 1}.pdf")
                             with open(out_file, "wb") as of:
                                 writer.write(of)
                             output_files.append(out_file)
             return self._success(output_files, count=len(output_files))
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"split pdf IO failed: {e}")
         except Exception as e:
             return self._failure(f"split pdf failed: {e}")
@@ -332,7 +330,7 @@ class PDFExpert(BaseExpert):
     def extract_text(
         self,
         path: str,
-        page_range: Optional[tuple[int, int]] = None,
+        page_range: tuple[int, int] | None = None,
     ) -> ExpertResult:
         """抽取 PDF 文本。
 
@@ -343,23 +341,18 @@ class PDFExpert(BaseExpert):
         Returns:
             ExpertResult(output={pages: [{page, text}], full_text})
         """
-        err = self._validate_path(
-            path, must_exist=True, allowed_exts=("pdf",)
-        )
+        err = self._validate_path(path, must_exist=True, allowed_exts=("pdf",))
         if err:
             return self._failure(err)
         if page_range is not None:
             start, end = page_range
             if start < 1 or end < start:
-                return self._failure(
-                    f"invalid page_range: ({start}, {end})"
-                )
+                return self._failure(f"invalid page_range: ({start}, {end})")
 
         lib, lib_name = _import_pdf_lib()
         if lib is None:
             return self._failure(
-                "'pypdf' or 'PyPDF2' is required for pdf expert, "
-                "please install: pip install pypdf",
+                "'pypdf' or 'PyPDF2' is required for pdf expert, please install: pip install pypdf",
             )
 
         try:
@@ -369,7 +362,7 @@ class PDFExpert(BaseExpert):
                 if lib_name == "pypdf":
                     reader = lib.PdfReader(f)
                     total = len(reader.pages)
-                    start, end = (page_range if page_range else (1, total))
+                    start, end = page_range if page_range else (1, total)
                     for i in range(start - 1, min(end, total)):
                         text = reader.pages[i].extract_text() or ""
                         pages_out.append({"page": i + 1, "text": text})
@@ -377,7 +370,7 @@ class PDFExpert(BaseExpert):
                 else:
                     reader = lib.PdfFileReader(f)
                     total = reader.getNumPages()
-                    start, end = (page_range if page_range else (1, total))
+                    start, end = page_range if page_range else (1, total)
                     for i in range(start - 1, min(end, total)):
                         text = reader.getPage(i).extractText() or ""
                         pages_out.append({"page": i + 1, "text": text})
@@ -386,7 +379,7 @@ class PDFExpert(BaseExpert):
                 output={"pages": pages_out, "full_text": "\n".join(full_text_parts)},
                 pages_extracted=len(pages_out),
             )
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"extract_text IO failed: {e}")
         except Exception as e:
             return self._failure(f"extract_text failed: {e}")
@@ -409,9 +402,7 @@ class PDFExpert(BaseExpert):
         Returns:
             ExpertResult(output=[image_paths])
         """
-        err = self._validate_path(
-            path, must_exist=True, allowed_exts=("pdf",)
-        )
+        err = self._validate_path(path, must_exist=True, allowed_exts=("pdf",))
         if err:
             return self._failure(err)
         if not output_dir or not isinstance(output_dir, str):
@@ -437,13 +428,13 @@ class PDFExpert(BaseExpert):
                     image_bytes = base_image["image"]
                     ext = base_image.get("ext", "png")
                     out_file = os.path.join(
-                        output_dir, f"page{page_idx+1}_img{img_idx+1}.{ext}"
+                        output_dir, f"page{page_idx + 1}_img{img_idx + 1}.{ext}"
                     )
                     with open(out_file, "wb") as f:
                         f.write(image_bytes)
                     image_paths.append(out_file)
             return self._success(image_paths, count=len(image_paths))
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"extract_images IO failed: {e}")
         except Exception as e:
             return self._failure(f"extract_images failed: {e}")
@@ -481,9 +472,7 @@ class PDFExpert(BaseExpert):
         Returns:
             ExpertResult(output=output_path)
         """
-        err = self._validate_path(
-            path, must_exist=True, allowed_exts=("pdf",)
-        )
+        err = self._validate_path(path, must_exist=True, allowed_exts=("pdf",))
         if err:
             return self._failure(err)
         err = self._validate_path(output_path, allowed_exts=("pdf",))
@@ -499,9 +488,9 @@ class PDFExpert(BaseExpert):
             self._require_lib("reportlab")
             self._require_lib("fitz")
             import fitz
+            from reportlab.lib.colors import Color
             from reportlab.lib.pagesizes import A4
             from reportlab.pdfgen import canvas
-            from reportlab.lib.colors import Color
         except ExpertError as e:
             return self._failure(str(e))
 
@@ -534,7 +523,7 @@ class PDFExpert(BaseExpert):
                     page.show_pdf_page(page.rect, wm_doc, 0)
                 doc.save(output_path)
                 return self._success(output_path, watermark_text=text)
-            except (PermissionError, IOError) as e:
+            except (OSError, PermissionError) as e:
                 return self._failure(f"watermark IO failed: {e}")
             except Exception as e:
                 return self._failure(f"watermark failed: {e}")
@@ -552,7 +541,7 @@ class PDFExpert(BaseExpert):
                         pass
 
     @staticmethod
-    def _safe_remove(path: Optional[str]) -> None:
+    def _safe_remove(path: str | None) -> None:
         """安全删除临时文件,忽略不存在/权限错误。"""
         if not path:
             return
@@ -586,9 +575,7 @@ class PDFExpert(BaseExpert):
         Raises:
             无(失败统一返回 ExpertResult(success=False))
         """
-        err = self._validate_path(
-            path, must_exist=True, allowed_exts=("pdf",)
-        )
+        err = self._validate_path(path, must_exist=True, allowed_exts=("pdf",))
         if err:
             return self._failure(err)
         err = self._validate_path(output_path, allowed_exts=("pdf",))
@@ -596,12 +583,9 @@ class PDFExpert(BaseExpert):
             return self._failure(err)
         # 至少一个密码非空;密码长度无强校验,但提示推荐 >= 4 字符
         if not user_password and not owner_password:
-            return self._failure(
-                "at least one of user_password/owner_password must be non-empty"
-            )
+            return self._failure("at least one of user_password/owner_password must be non-empty")
         # PDF 标准要求 user_password 长度 >= 1,推荐 >= 4;这里仅警告式校验
-        for pwd_name, pwd in (("user_password", user_password),
-                              ("owner_password", owner_password)):
+        for pwd_name, pwd in (("user_password", user_password), ("owner_password", owner_password)):
             if pwd and len(pwd) < 4:
                 return self._failure(
                     f"{pwd_name} too short (recommend >= 4 chars for PDF encryption)"
@@ -610,8 +594,7 @@ class PDFExpert(BaseExpert):
         lib, lib_name = _import_pdf_lib()
         if lib is None:
             return self._failure(
-                "'pypdf' or 'PyPDF2' is required for pdf expert, "
-                "please install: pip install pypdf",
+                "'pypdf' or 'PyPDF2' is required for pdf expert, please install: pip install pypdf",
             )
 
         try:
@@ -641,7 +624,7 @@ class PDFExpert(BaseExpert):
                     with open(output_path, "wb") as of:
                         writer.write(of)
             return self._success(output_path, encrypted=True)
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"encrypt IO failed: {e}")
         except Exception as e:
             return self._failure(f"encrypt failed: {e}")
@@ -653,9 +636,9 @@ class PDFExpert(BaseExpert):
     def ocr(
         self,
         path: str,
-        output_path: Optional[str] = None,
+        output_path: str | None = None,
         lang: str = "chi_sim+eng",
-        page_range: Optional[tuple[int, int]] = None,
+        page_range: tuple[int, int] | None = None,
     ) -> ExpertResult:
         """对 PDF 进行 OCR(需 pytesseract + pdf2image + Tesseract OCR)。
 
@@ -668,9 +651,7 @@ class PDFExpert(BaseExpert):
         Returns:
             ExpertResult(output=full_text)
         """
-        err = self._validate_path(
-            path, must_exist=True, allowed_exts=("pdf",)
-        )
+        err = self._validate_path(path, must_exist=True, allowed_exts=("pdf",))
         if err:
             return self._failure(err)
         if page_range is not None:
@@ -688,9 +669,10 @@ class PDFExpert(BaseExpert):
 
         try:
             # 检查 Tesseract 是否可用
-            if not (shutil.which("tesseract") or os.path.exists(
-                r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-            )):
+            if not (
+                shutil.which("tesseract")
+                or os.path.exists(r"C:\Program Files\Tesseract-OCR\tesseract.exe")
+            ):
                 return self._failure(
                     "Tesseract OCR binary not found. Install Tesseract OCR first.",
                 )
@@ -698,7 +680,7 @@ class PDFExpert(BaseExpert):
             # 渲染整本 PDF 为图片;大文件可能 OOM,靠源 PDF 大小限制兜底
             images = convert_from_path(path)
             total = len(images)
-            start, end = (page_range if page_range else (1, total))
+            start, end = page_range if page_range else (1, total)
             text_parts = []
             for i in range(start - 1, min(end, total)):
                 img = images[i]
@@ -709,12 +691,11 @@ class PDFExpert(BaseExpert):
                     img_bytes = 0
                 if img_bytes > _MAX_OCR_IMAGE_SIZE:
                     text_parts.append(
-                        f"--- Page {i+1} skipped: image too large "
-                        f"({img_bytes} bytes) ---"
+                        f"--- Page {i + 1} skipped: image too large ({img_bytes} bytes) ---"
                     )
                     continue
                 text = pytesseract.image_to_string(img, lang=lang)
-                text_parts.append(f"--- Page {i+1} ---\n{text}")
+                text_parts.append(f"--- Page {i + 1} ---\n{text}")
             full_text = "\n\n".join(text_parts)
 
             if output_path:
@@ -722,7 +703,7 @@ class PDFExpert(BaseExpert):
                     f.write(full_text)
                 return self._success(output_path, pages=min(end, total) - start + 1)
             return self._success(full_text, pages=min(end, total) - start + 1)
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"ocr IO failed: {e}")
         except Exception as e:
             return self._failure(f"ocr failed: {e}")

@@ -38,12 +38,18 @@ DB 表结构(生产环境):
         metadata JSONB
     );
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import threading
 import uuid
 from datetime import datetime
-from typing import Any, Optional
 
 from fnixagent.core.project.models import (
     AssetPermission,
@@ -55,14 +61,11 @@ from fnixagent.core.project.models import (
     ProjectStatus,
 )
 
-
 class ProjectPermissionError(Exception):
     """项目权限不足。"""
 
-
 class ProjectNotFoundError(Exception):
     """项目不存在。"""
-
 
 class ProjectService:
     """项目服务层。
@@ -89,8 +92,8 @@ class ProjectService:
         name: str,
         owner_id: str,
         description: str = "",
-        settings: Optional[dict] = None,
-        tags: Optional[list[str]] = None,
+        settings: dict | None = None,
+        tags: list[str] | None = None,
     ) -> Project:
         """创建项目(自动将 owner 加为 OWNER 成员)。
 
@@ -132,7 +135,7 @@ class ProjectService:
             self._assets[project_id] = []
         return project
 
-    def get_project(self, project_id: str) -> Optional[Project]:
+    def get_project(self, project_id: str) -> Project | None:
         """获取项目(不存在返回 None)。"""
         with self._lock:
             return self._projects.get(project_id)
@@ -141,10 +144,10 @@ class ProjectService:
         self,
         project_id: str,
         *,
-        name: Optional[str] = None,
-        description: Optional[str] = None,
-        settings: Optional[dict] = None,
-        tags: Optional[list[str]] = None,
+        name: str | None = None,
+        description: str | None = None,
+        settings: dict | None = None,
+        tags: list[str] | None = None,
         updated_by: str = "",
     ) -> Project:
         """更新项目(需 ADMIN+ 权限)。"""
@@ -190,8 +193,8 @@ class ProjectService:
 
     def list_projects(
         self,
-        tenant_id: Optional[str] = None,
-        user_id: Optional[str] = None,
+        tenant_id: str | None = None,
+        user_id: str | None = None,
         include_archived: bool = False,
     ) -> list[Project]:
         """列出项目(可按租户/用户过滤)。
@@ -296,7 +299,7 @@ class ProjectService:
         self,
         project_id: str,
         user_id: str,
-    ) -> Optional[ProjectRole]:
+    ) -> ProjectRole | None:
         """获取用户在项目中的角色(非成员返回 None)。"""
         with self._lock:
             for m in self._members.get(project_id, []):
@@ -313,7 +316,7 @@ class ProjectService:
         name: str,
         added_by: str,
         permission: AssetPermission = AssetPermission.READ,
-        metadata: Optional[dict] = None,
+        metadata: dict | None = None,
     ) -> ProjectAsset:
         """添加资产(需 EDITOR+ 权限)。"""
         with self._lock:
@@ -348,9 +351,7 @@ class ProjectService:
                 if a.id == asset_id:
                     # ADMIN 或添加者可删除
                     role = self.get_member_role(project_id, removed_by)
-                    if (
-                        role and role.can_manage_members
-                    ) or a.added_by == removed_by:
+                    if (role and role.can_manage_members) or a.added_by == removed_by:
                         assets.pop(i)
                         return True
                     raise ProjectPermissionError("仅管理员或资产添加者可移除资产")
@@ -359,7 +360,7 @@ class ProjectService:
     def list_assets(
         self,
         project_id: str,
-        asset_type: Optional[AssetType] = None,
+        asset_type: AssetType | None = None,
     ) -> list[ProjectAsset]:
         """列出项目资产(可按类型过滤)。"""
         with self._lock:
@@ -407,6 +408,4 @@ class ProjectService:
             need_admin=need_admin,
             need_owner=need_owner,
         ):
-            raise ProjectPermissionError(
-                f"用户 {user_id} 在项目 {project_id} 中权限不足"
-            )
+            raise ProjectPermissionError(f"用户 {user_id} 在项目 {project_id} 中权限不足")

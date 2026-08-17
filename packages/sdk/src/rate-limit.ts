@@ -1,4 +1,11 @@
 /**
+ * Copyright (C) 2026 FnixAgent. All rights reserved.
+ * Software Name: FnixAgent 智能工作台系统 V1.0
+ * This software and its source code are proprietary and confidential.
+ * Unauthorized copying, modification, distribution, or use is strictly prohibited.
+ */
+
+/**
  * fnixagent 速率限制感知重试拦截器 — Phase P2-01
  *
  * 功能:

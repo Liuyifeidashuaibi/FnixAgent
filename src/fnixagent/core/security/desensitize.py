@@ -11,6 +11,13 @@
 
 性能优化: 所有正则在类级预编译一次(模块加载时),避免每次脱敏重复编译。
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import re
@@ -59,12 +66,14 @@ class Desensitizer:
         Returns:
             脱敏后文本(如 "a***@example.com")
         """
+
         def _replace(m: re.Match) -> str:
             name = m.group(1)
             domain = m.group(2)
             if len(name) <= 1:
                 return name + domain
             return name[0] + "*" * (len(name) - 1) + domain
+
         return self._EMAIL.sub(_replace, text)
 
     def mask_id_card(self, text: str) -> str:
@@ -98,8 +107,10 @@ class Desensitizer:
         Returns:
             脱敏后文本(如 "192.***.***.1")
         """
+
         def _replace(m: re.Match) -> str:
             return f"{m.group(1)}.***.***.{m.group(4)}"
+
         return self._IP.sub(_replace, text)
 
     def mask_all(self, text: str) -> str:

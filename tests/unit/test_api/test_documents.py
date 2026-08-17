@@ -1,4 +1,4 @@
-﻿"""
+"""
 documents 路由单元测试。
 
 覆盖:
@@ -11,6 +11,13 @@ documents 路由单元测试。
   - 下载(成功/文件不存在)
   - 元数据查询
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 import io
 
 import pytest
@@ -78,9 +85,9 @@ class TestUpload:
 
     def test_upload_rejects_oversized_file(self, client):
         """安全:超过 50MB 的文件应被拒绝(模拟大文件)。"""
-        from fnixagent.services.storage import MAX_UPLOAD_SIZE_BYTES
         # 构造刚好超限的内容(不实际生成 50MB,而是临时调小常量)
         import fnixagent.services.storage as storage_mod
+
         original = storage_mod.MAX_UPLOAD_SIZE_BYTES
         storage_mod.MAX_UPLOAD_SIZE_BYTES = 10  # 临时设为 10 字节
         try:

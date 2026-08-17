@@ -26,19 +26,26 @@ fnixagent 任务引擎的批量执行层:支持多文件并行处理、任务模
   - 仅派发已注册的 handler,未知 handler 返回 _failure
   - 拓扑排序检测环依赖,有环则整体失败
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import os
 import threading
 import time
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
-from typing import Any, Callable, Optional
+from typing import Any
 
 from fnixagent.office.base import BaseExpert, ExpertResult
 from fnixagent.tasks.dsl import TaskRequest, TaskResult, TaskStep
 from fnixagent.tasks.router import TaskRouter
-
 
 __all__ = [
     "BatchConfig",
@@ -46,11 +53,9 @@ __all__ = [
     "Pipeline",
 ]
 
-
 # ---------------------------------------------------------------------------
 # 批量配置
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class BatchConfig:
@@ -74,16 +79,14 @@ class BatchConfig:
     retry_count: int = 1
     retry_delay: float = 1.0
     continue_on_error: bool = True
-    output_dir: Optional[str] = None
+    output_dir: str | None = None
     keep_filename: bool = True
     suffix: str = "_processed"
-    progress_callback: Optional[Callable[[str, float], None]] = None
-
+    progress_callback: Callable[[str, float], None] | None = None
 
 # ---------------------------------------------------------------------------
 # 批量结果
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class BatchResult:
@@ -117,11 +120,9 @@ class BatchResult:
             "total_duration_ms": round(self.total_duration_ms, 2),
         }
 
-
 # ---------------------------------------------------------------------------
 # 批量处理管道
 # ---------------------------------------------------------------------------
-
 
 class Pipeline(BaseExpert):
     """批量处理管道:多文件并行 + 任务模板 + 失败重试 + 进度回调。
@@ -151,7 +152,7 @@ class Pipeline(BaseExpert):
     def name(self) -> str:
         return "pipeline"
 
-    def __init__(self, config: Optional[BatchConfig] = None) -> None:
+    def __init__(self, config: BatchConfig | None = None) -> None:
         """初始化批量处理管道。
 
         Args:
@@ -178,7 +179,7 @@ class Pipeline(BaseExpert):
         self,
         file_paths: list[str],
         task_desc: str,
-        config: Optional[BatchConfig] = None,
+        config: BatchConfig | None = None,
     ) -> BatchResult:
         """批量处理多文件。
 
@@ -304,10 +305,7 @@ class Pipeline(BaseExpert):
         if not template_steps:
             err = f"template not found: {template_name}"
             failed = [(fp, err) for fp in file_paths]
-            fail_results = [
-                TaskResult(task_id="", success=False, error=err)
-                for _ in file_paths
-            ]
+            fail_results = [TaskResult(task_id="", success=False, error=err) for _ in file_paths]
             return BatchResult(
                 total=total,
                 succeeded=0,
@@ -395,7 +393,7 @@ class Pipeline(BaseExpert):
 
         失败时按 cfg.retry_count 重试,sleep(retry_delay) 后重试。
         """
-        last_error: Optional[str] = None
+        last_error: str | None = None
         attempts = cfg.retry_count + 1  # 首次 + 重试次数
 
         for attempt in range(attempts):
@@ -431,7 +429,7 @@ class Pipeline(BaseExpert):
         cfg: BatchConfig,
     ) -> TaskResult:
         """用预定义步骤处理单个文件(模板模式,含重试)。"""
-        last_error: Optional[str] = None
+        last_error: str | None = None
         attempts = cfg.retry_count + 1
 
         for attempt in range(attempts):
@@ -453,9 +451,7 @@ class Pipeline(BaseExpert):
             error=last_error or "unknown error",
         )
 
-    def _compute_output_path(
-        self, file_path: str, cfg: BatchConfig
-    ) -> Optional[str]:
+    def _compute_output_path(self, file_path: str, cfg: BatchConfig) -> str | None:
         """根据配置计算单个文件的输出路径。
 
         - output_dir 为 None:返回 None(原地或由处理器决定)
@@ -549,9 +545,7 @@ class Pipeline(BaseExpert):
                 if isinstance(result.output, str) and os.path.exists(result.output):
                     output_files.append(result.output)
                 elif isinstance(result.output, dict):
-                    out = result.output.get("output") or result.output.get(
-                        "save_path"
-                    )
+                    out = result.output.get("output") or result.output.get("save_path")
                     if isinstance(out, str) and os.path.exists(out):
                         output_files.append(out)
                 # 收集待确认项(metadata 中的 pending)
@@ -572,15 +566,11 @@ class Pipeline(BaseExpert):
                     )
 
         # 整体成功:所有步骤成功(或失败但 continue_on_error=True 且无致命错误)
-        has_failure = any(
-            not s["success"] for s in step_stats.values()
-        )
+        has_failure = any(not s["success"] for s in step_stats.values())
         success = not has_failure
-        error_msg: Optional[str] = None
+        error_msg: str | None = None
         if has_failure:
-            failed_steps = [
-                f"{s['name']}" for s in step_stats.values() if not s["success"]
-            ]
+            failed_steps = [f"{s['name']}" for s in step_stats.values() if not s["success"]]
             error_msg = (
                 f"completed with failures: {', '.join(failed_steps)}"
                 if cfg.continue_on_error
@@ -602,7 +592,7 @@ class Pipeline(BaseExpert):
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _topo_sort(steps: list[TaskStep]) -> Optional[list[TaskStep]]:
+    def _topo_sort(steps: list[TaskStep]) -> list[TaskStep] | None:
         """按 depends_on 拓扑排序。
 
         Returns:
@@ -639,9 +629,7 @@ class Pipeline(BaseExpert):
     # 单步骤执行(handler 派发)
     # ------------------------------------------------------------------
 
-    def _execute_step(
-        self, step: TaskStep, context: dict[str, Any]
-    ) -> ExpertResult:
+    def _execute_step(self, step: TaskStep, context: dict[str, Any]) -> ExpertResult:
         """执行单个步骤,根据 step.handler 派发到对应处理器。
 
         处理器实例化延迟到此处,避免 __init__ 时触发依赖加载。
@@ -683,9 +671,7 @@ class Pipeline(BaseExpert):
                 from fnixagent.office.format_spec import FormatNormalizer
 
                 expert = FormatNormalizer()
-                return expert.normalize(
-                    path=file_path, output_path=output_path
-                )
+                return expert.normalize(path=file_path, output_path=output_path)
 
             # ----------------------------------------------------------
             # run_editor: Run 级编辑
@@ -694,19 +680,13 @@ class Pipeline(BaseExpert):
                 from fnixagent.office.run_editor import EditOp, RunEditor
 
                 expert = RunEditor()
-                ops = params.get("ops") or params.get("params", {}).get(
-                    "ops", []
-                )
+                ops = params.get("ops") or params.get("params", {}).get("ops", [])
                 # dict 形式转换为 EditOp
                 if ops and isinstance(ops[0], dict):
                     ops = [EditOp(**o) for o in ops]
                 if not ops:
-                    return self._failure(
-                        f"step '{step.name}': ops must be a non-empty list"
-                    )
-                return expert.edit(
-                    path=file_path, ops=ops, output_path=output_path
-                )
+                    return self._failure(f"step '{step.name}': ops must be a non-empty list")
+                return expert.edit(path=file_path, ops=ops, output_path=output_path)
 
             # ----------------------------------------------------------
             # validator: 题库验证(返回 ValidationReport,包装为 ExpertResult)
@@ -740,11 +720,7 @@ class Pipeline(BaseExpert):
                 from fnixagent.tasks.resolver import GarbageDetector
 
                 expert = GarbageDetector()
-                text = (
-                    params.get("answer_text")
-                    or context.get("answer_text")
-                    or ""
-                )
+                text = params.get("answer_text") or context.get("answer_text") or ""
                 report = expert.detect(answer_text=text)
                 return ExpertResult(
                     success=True,
@@ -785,9 +761,7 @@ class Pipeline(BaseExpert):
                         "source": result.source,
                         "needs_manual": result.needs_manual,
                         "pending_items": (
-                            [{"question": result.question_num}]
-                            if result.needs_manual
-                            else []
+                            [{"question": result.question_num}] if result.needs_manual else []
                         ),
                     },
                 )
@@ -805,9 +779,7 @@ class Pipeline(BaseExpert):
     # 任务模板管理(内存态)
     # ------------------------------------------------------------------
 
-    def save_template(
-        self, name: str, steps: list[TaskStep]
-    ) -> ExpertResult:
+    def save_template(self, name: str, steps: list[TaskStep]) -> ExpertResult:
         """保存任务模板(内存态)。
 
         Args:

@@ -21,6 +21,13 @@ Trust Store:
   - agent_id → public_key 映射
   - 持久化到 config/security/a2a_trust_store.json
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import base64
@@ -29,9 +36,8 @@ import logging
 import os
 import threading
 from collections import deque
-from dataclasses import asdict, dataclass, field
-from datetime import datetime, timedelta, timezone
-from typing import Optional
+from dataclasses import asdict, dataclass
+from datetime import UTC, datetime
 
 from fnixagent.core.security.crypto_provider import (
     CryptoProvider,
@@ -40,25 +46,22 @@ from fnixagent.core.security.crypto_provider import (
 
 logger = logging.getLogger(__name__)
 
-
 # ---------------------------------------------------------------------------
 # 审计钩子
 # ---------------------------------------------------------------------------
 
-
-def _audit_a2a(action: str, detail: Optional[dict] = None) -> None:
+def _audit_a2a(action: str, detail: dict | None = None) -> None:
     """将 A2A 通信安全事件写入审计日志。"""
     try:
         from fnixagent.core.audit import AuditLogger
+
         AuditLogger().log(action=action, detail=detail or {})
     except Exception:
         pass
 
-
 # ---------------------------------------------------------------------------
 # 数据结构
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class SignedEnvelope:
@@ -73,14 +76,14 @@ class SignedEnvelope:
         signature: base64 签名
         algorithm: 签名算法(默认 "SM2")
     """
-    payload: str           # 原始消息内容(JSON)
-    from_agent: str        # 发送方 Agent ID
-    to_agent: str          # 接收方 Agent ID
-    nonce: str             # 随机数(防 replay)
-    timestamp: str         # ISO 时间戳
-    signature: str         # base64 签名
-    algorithm: str = "SM2" # 签名算法
 
+    payload: str  # 原始消息内容(JSON)
+    from_agent: str  # 发送方 Agent ID
+    to_agent: str  # 接收方 Agent ID
+    nonce: str  # 随机数(防 replay)
+    timestamp: str  # ISO 时间戳
+    signature: str  # base64 签名
+    algorithm: str = "SM2"  # 签名算法
 
 @dataclass
 class AgentIdentity:
@@ -91,10 +94,10 @@ class AgentIdentity:
         public_key: 公钥(PEM 格式字节)
         registered_at: 注册时间(ISO 8601)
     """
-    agent_id: str
-    public_key: bytes      # PEM 格式
-    registered_at: str
 
+    agent_id: str
+    public_key: bytes  # PEM 格式
+    registered_at: str
 
 # ---------------------------------------------------------------------------
 # 常量
@@ -107,11 +110,9 @@ _NONCE_CACHE_SIZE = 1000
 # 默认 trust store 路径(相对于项目根)
 _DEFAULT_TRUST_STORE = os.path.join("config", "security", "a2a_trust_store.json")
 
-
 # ---------------------------------------------------------------------------
 # A2ASigner
 # ---------------------------------------------------------------------------
-
 
 class A2ASigner:
     """A2A 通信签名器。
@@ -128,8 +129,8 @@ class A2ASigner:
 
     def __init__(
         self,
-        crypto_provider: Optional[CryptoProvider] = None,
-        trust_store_path: Optional[str] = None,
+        crypto_provider: CryptoProvider | None = None,
+        trust_store_path: str | None = None,
     ) -> None:
         self._crypto = crypto_provider or get_crypto_provider()
         self._trust_store_path = trust_store_path or _DEFAULT_TRUST_STORE
@@ -166,16 +167,12 @@ class A2ASigner:
             ValueError: from_agent 的私钥未加载
         """
         if from_agent not in self._private_keys:
-            raise ValueError(
-                f"Agent '{from_agent}' 的私钥未加载,请先调用 set_local_agent"
-            )
+            raise ValueError(f"Agent '{from_agent}' 的私钥未加载,请先调用 set_local_agent")
         # 生成 nonce 和 timestamp
         nonce = os.urandom(16).hex()
-        timestamp = datetime.now(timezone.utc).isoformat()
+        timestamp = datetime.now(UTC).isoformat()
         # 构建待签名内容
-        message = self._build_signing_message(
-            payload, from_agent, to_agent, nonce, timestamp
-        )
+        message = self._build_signing_message(payload, from_agent, to_agent, nonce, timestamp)
         # 签名
         private_key = self._private_keys[from_agent]
         signature_bytes = self._crypto.sign(message, private_key)
@@ -209,39 +206,47 @@ class A2ASigner:
         try:
             # 1. 检查发送方是否可信
             if not self.is_trusted(envelope.from_agent):
-                _audit_a2a("a2a.verification_failed", detail={
-                    "from_agent": envelope.from_agent,
-                    "to_agent": envelope.to_agent,
-                    "reason": "untrusted_agent",
-                })
-                logger.warning(
-                    "[a2a] 验签失败: 不可信 Agent '%s'", envelope.from_agent
+                _audit_a2a(
+                    "a2a.verification_failed",
+                    detail={
+                        "from_agent": envelope.from_agent,
+                        "to_agent": envelope.to_agent,
+                        "reason": "untrusted_agent",
+                    },
                 )
+                logger.warning("[a2a] 验签失败: 不可信 Agent '%s'", envelope.from_agent)
                 return False
 
             # 2. 检查时间戳(5 分钟内有效)
             if not self._check_timestamp(envelope.timestamp):
-                _audit_a2a("a2a.verification_failed", detail={
-                    "from_agent": envelope.from_agent,
-                    "to_agent": envelope.to_agent,
-                    "reason": "timestamp_expired",
-                    "timestamp": envelope.timestamp,
-                })
+                _audit_a2a(
+                    "a2a.verification_failed",
+                    detail={
+                        "from_agent": envelope.from_agent,
+                        "to_agent": envelope.to_agent,
+                        "reason": "timestamp_expired",
+                        "timestamp": envelope.timestamp,
+                    },
+                )
                 logger.warning(
                     "[a2a] 验签失败: 时间戳过期(agent=%s, ts=%s)",
-                    envelope.from_agent, envelope.timestamp,
+                    envelope.from_agent,
+                    envelope.timestamp,
                 )
                 return False
 
             # 3. 检查 nonce(防 replay)
             with self._lock:
                 if envelope.nonce in self._nonce_set:
-                    _audit_a2a("a2a.verification_failed", detail={
-                        "from_agent": envelope.from_agent,
-                        "to_agent": envelope.to_agent,
-                        "reason": "nonce_replay",
-                        "nonce": envelope.nonce,
-                    })
+                    _audit_a2a(
+                        "a2a.verification_failed",
+                        detail={
+                            "from_agent": envelope.from_agent,
+                            "to_agent": envelope.to_agent,
+                            "reason": "nonce_replay",
+                            "nonce": envelope.nonce,
+                        },
+                    )
                     logger.warning(
                         "[a2a] 验签失败: nonce 重复(replay 攻击, agent=%s)",
                         envelope.from_agent,
@@ -250,20 +255,24 @@ class A2ASigner:
 
             # 4. 验证签名
             message = self._build_signing_message(
-                envelope.payload, envelope.from_agent, envelope.to_agent,
-                envelope.nonce, envelope.timestamp,
+                envelope.payload,
+                envelope.from_agent,
+                envelope.to_agent,
+                envelope.nonce,
+                envelope.timestamp,
             )
             signature_bytes = base64.b64decode(envelope.signature)
             public_key = self._trust_store[envelope.from_agent].public_key
             if not self._crypto.verify(message, signature_bytes, public_key):
-                _audit_a2a("a2a.verification_failed", detail={
-                    "from_agent": envelope.from_agent,
-                    "to_agent": envelope.to_agent,
-                    "reason": "signature_invalid",
-                })
-                logger.warning(
-                    "[a2a] 验签失败: 签名无效(agent=%s)", envelope.from_agent
+                _audit_a2a(
+                    "a2a.verification_failed",
+                    detail={
+                        "from_agent": envelope.from_agent,
+                        "to_agent": envelope.to_agent,
+                        "reason": "signature_invalid",
+                    },
                 )
+                logger.warning("[a2a] 验签失败: 签名无效(agent=%s)", envelope.from_agent)
                 return False
 
             # 验签通过,记录 nonce(防 replay)
@@ -280,10 +289,13 @@ class A2ASigner:
 
             return True
         except Exception as exc:
-            _audit_a2a("a2a.verification_failed", detail={
-                "from_agent": envelope.from_agent,
-                "reason": f"verify_error:{type(exc).__name__}",
-            })
+            _audit_a2a(
+                "a2a.verification_failed",
+                detail={
+                    "from_agent": envelope.from_agent,
+                    "reason": f"verify_error:{type(exc).__name__}",
+                },
+            )
             logger.error("[a2a] 验签异常: %s", exc)
             return False
 
@@ -293,7 +305,7 @@ class A2ASigner:
         self,
         agent_id: str,
         private_key: bytes,
-        public_key: Optional[bytes] = None,
+        public_key: bytes | None = None,
     ) -> bool:
         """设置本地 Agent 身份(私钥用于签名,公钥注册到 trust store)。
 
@@ -324,7 +336,7 @@ class A2ASigner:
             identity = AgentIdentity(
                 agent_id=agent_id,
                 public_key=public_key,
-                registered_at=datetime.now(timezone.utc).isoformat(),
+                registered_at=datetime.now(UTC).isoformat(),
             )
             with self._lock:
                 self._trust_store[agent_id] = identity
@@ -415,8 +427,8 @@ class A2ASigner:
             # 解析 ISO 8601 时间戳(兼容带/不带时区)
             ts = datetime.fromisoformat(timestamp_str)
             if ts.tzinfo is None:
-                ts = ts.replace(tzinfo=timezone.utc)
-            now = datetime.now(timezone.utc)
+                ts = ts.replace(tzinfo=UTC)
+            now = datetime.now(UTC)
             # 检查是否在 5 分钟内(允许未来时间偏差 30 秒,防时钟漂移)
             delta = abs((now - ts).total_seconds())
             return delta <= _MESSAGE_TTL_SECONDS
@@ -427,7 +439,7 @@ class A2ASigner:
         """从磁盘加载 trust store。"""
         try:
             if os.path.exists(self._trust_store_path):
-                with open(self._trust_store_path, "r", encoding="utf-8") as f:
+                with open(self._trust_store_path, encoding="utf-8") as f:
                     data = json.load(f)
                 for agent_id, entry in data.items():
                     self._trust_store[agent_id] = AgentIdentity(
@@ -435,9 +447,7 @@ class A2ASigner:
                         public_key=entry["public_key"].encode("utf-8"),
                         registered_at=entry.get("registered_at", ""),
                     )
-                logger.info(
-                    "[a2a] 已加载 trust store(%d 个 Agent)", len(self._trust_store)
-                )
+                logger.info("[a2a] 已加载 trust store(%d 个 Agent)", len(self._trust_store))
         except Exception as exc:
             logger.warning("[a2a] 加载 trust store 失败: %s", exc)
 
@@ -459,18 +469,15 @@ class A2ASigner:
         except Exception as exc:
             logger.error("[a2a] 保存 trust store 失败: %s", exc)
 
-
 # ---------------------------------------------------------------------------
 # 全局单例(懒加载)
 # ---------------------------------------------------------------------------
 
-
-_a2a_signer_instance: Optional[A2ASigner] = None
+_a2a_signer_instance: A2ASigner | None = None
 _a2a_signer_lock = threading.Lock()
 
-
 def get_a2a_signer(
-    crypto_provider: Optional[CryptoProvider] = None,
+    crypto_provider: CryptoProvider | None = None,
 ) -> A2ASigner:
     """获取全局 A2ASigner 单例。"""
     global _a2a_signer_instance
@@ -479,7 +486,6 @@ def get_a2a_signer(
             if _a2a_signer_instance is None:
                 _a2a_signer_instance = A2ASigner(crypto_provider)
     return _a2a_signer_instance
-
 
 def reset_a2a_signer() -> None:
     """重置单例(主要用于测试)。"""

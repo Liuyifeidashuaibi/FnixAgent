@@ -21,19 +21,24 @@ QuestionBankScenario)通过 MCP(Model Context Protocol)暴露给外部 Agent 调
   - 借鉴 Office-Word-MCP-Server 的 readOnlyHint/destructiveHint 注解
   - 所有异常不外泄,统一转 _failure
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import dataclasses
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 from fnixagent.office.base import BaseExpert, ExpertResult
-
 
 # ---------------------------------------------------------------------------
 # 数据结构
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class ToolAnnotations:
@@ -51,7 +56,6 @@ class ToolAnnotations:
     read_only_hint: bool = True
     destructive_hint: bool = False
     idempotent_hint: bool = False
-
 
 @dataclass
 class ToolDef:
@@ -88,7 +92,6 @@ class ToolDef:
         """是否破坏性(等价于 annotations.destructive_hint)。"""
         return self.annotations.destructive_hint
 
-
 @dataclass
 class ToolInvocation:
     """工具调用。
@@ -105,11 +108,9 @@ class ToolInvocation:
     caller: str = "external"
     request_id: str = ""
 
-
 # ---------------------------------------------------------------------------
 # OfficeMCPServer
 # ---------------------------------------------------------------------------
-
 
 class OfficeMCPServer(BaseExpert):
     """MCP 文档操作服务器:把 fnixagent 能力暴露给外部 Agent。
@@ -397,7 +398,7 @@ class OfficeMCPServer(BaseExpert):
                 annotations=ToolAnnotations(read_only_hint=False, destructive_hint=False),
                 category="office",
             ),
-            ]
+        ]
         for tool in defaults:
             self._tools[tool.name] = tool
 
@@ -426,7 +427,7 @@ class OfficeMCPServer(BaseExpert):
     # 工具查询
     # ------------------------------------------------------------------
 
-    def list_tools(self, category: Optional[str] = None) -> list[ToolDef]:
+    def list_tools(self, category: str | None = None) -> list[ToolDef]:
         """列出工具(可按分类过滤)。
 
         Args:
@@ -439,7 +440,7 @@ class OfficeMCPServer(BaseExpert):
             return list(self._tools.values())
         return [t for t in self._tools.values() if t.category == category]
 
-    def get_tool_schema(self, name: str) -> Optional[dict]:
+    def get_tool_schema(self, name: str) -> dict | None:
         """获取工具参数 schema。
 
         Args:
@@ -500,9 +501,7 @@ class OfficeMCPServer(BaseExpert):
         Returns:
             ExpertResult
         """
-        return self.invoke(
-            ToolInvocation(tool_name=tool_name, params=dict(params))
-        )
+        return self.invoke(ToolInvocation(tool_name=tool_name, params=dict(params)))
 
     # ------------------------------------------------------------------
     # MCP 清单
@@ -623,7 +622,7 @@ class OfficeMCPServer(BaseExpert):
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _validate_required(tool: ToolDef, params: dict) -> Optional[str]:
+    def _validate_required(tool: ToolDef, params: dict) -> str | None:
         """校验必填参数是否齐全。
 
         Args:
@@ -699,9 +698,7 @@ class OfficeMCPServer(BaseExpert):
                 page_range = params.get("page_range")
                 if page_range is not None:
                     page_range = tuple(page_range)
-                return inst.extract_text(
-                    path=params["path"], page_range=page_range
-                )
+                return inst.extract_text(path=params["path"], page_range=page_range)
 
             elif tool_name == "office.convert":
                 inst = self._get_instance("converter")
@@ -764,7 +761,7 @@ class OfficeMCPServer(BaseExpert):
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _build_edit_ops(ops_raw: Any) -> tuple[list, Optional[str]]:
+    def _build_edit_ops(ops_raw: Any) -> tuple[list, str | None]:
         """把 dict 列表转为 EditOp 列表。
 
         Args:

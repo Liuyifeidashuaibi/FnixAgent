@@ -15,20 +15,27 @@
   - 重试时 attempts += 1,transition_to(EXECUTING)
   - 达到 max_attempts 仍失败 → transition_to(CANCELLED)
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import asyncio
 import functools
 import random
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable, Optional, TypeVar
+from typing import Any, TypeVar
 
 from fnixagent.core.exceptions import fnixagentError
 from fnixagent.core.types import ToolCallState
 
 T = TypeVar("T")
-
 
 # ---------------------------------------------------------------------------
 # 错误分类
@@ -39,16 +46,16 @@ class RetryableError(fnixagentError):
 
     重试策略:指数退避 + 抖动,最多 max_attempts 次。
     """
-    pass
 
+    pass
 
 class NonRetryableError(fnixagentError):
     """不可重试错误(参数校验/权限拒绝/逻辑错误等永久故障)。
 
     重试策略:立即失败,不重试。
     """
-    pass
 
+    pass
 
 # ---------------------------------------------------------------------------
 # RetryPolicy
@@ -70,6 +77,7 @@ class RetryPolicy:
         delay = min(initial_delay * (backoff_factor ** (attempt - 1)), max_delay)
         delay *= (1 ± jitter * random)
     """
+
     max_attempts: int = 3
     initial_delay: float = 0.5
     max_delay: float = 10.0
@@ -86,9 +94,7 @@ class RetryPolicy:
             ValueError: max_attempts < 1 或参数非法
         """
         if not isinstance(self.max_attempts, int) or self.max_attempts < 1:
-            raise ValueError(
-                f"max_attempts 必须为 >= 1 的整数, 实为 {self.max_attempts}"
-            )
+            raise ValueError(f"max_attempts 必须为 >= 1 的整数, 实为 {self.max_attempts}")
         if self.initial_delay < 0:
             raise ValueError("initial_delay 不能为负")
         if self.max_delay < 0:
@@ -138,7 +144,6 @@ class RetryPolicy:
         # 其他异常默认不重试(避免对未知错误盲目重试)
         return False
 
-
 # ---------------------------------------------------------------------------
 # 预定义策略
 # ---------------------------------------------------------------------------
@@ -170,7 +175,6 @@ NO_RETRY_POLICY = RetryPolicy(
     retryable_exceptions=(),
 )
 
-
 # ---------------------------------------------------------------------------
 # with_retry 通用重试函数
 # ---------------------------------------------------------------------------
@@ -179,7 +183,7 @@ def with_retry(
     func: Callable[..., T],
     *args: Any,
     policy: RetryPolicy = DEFAULT_RETRY_POLICY,
-    on_retry: Optional[Callable[[int, Exception], None]] = None,
+    on_retry: Callable[[int, Exception], None] | None = None,
     **kwargs: Any,
 ) -> T:
     """同步重试执行函数。
@@ -197,7 +201,7 @@ def with_retry(
     Raises:
         最后一次尝试的异常(如果全部失败)
     """
-    last_error: Optional[Exception] = None
+    last_error: Exception | None = None
     for attempt in range(1, policy.max_attempts + 1):
         try:
             return func(*args, **kwargs)
@@ -215,12 +219,11 @@ def with_retry(
         raise last_error
     raise RuntimeError("with_retry: unreachable")
 
-
 async def async_with_retry(
     func: Callable[..., Any],
     *args: Any,
     policy: RetryPolicy = DEFAULT_RETRY_POLICY,
-    on_retry: Optional[Callable[[int, Exception], None]] = None,
+    on_retry: Callable[[int, Exception], None] | None = None,
     **kwargs: Any,
 ) -> Any:
     """异步重试执行函数。
@@ -238,7 +241,7 @@ async def async_with_retry(
     Raises:
         最后一次尝试的异常
     """
-    last_error: Optional[Exception] = None
+    last_error: Exception | None = None
     for attempt in range(1, policy.max_attempts + 1):
         try:
             result = func(*args, **kwargs)
@@ -258,14 +261,13 @@ async def async_with_retry(
         raise last_error
     raise RuntimeError("async_with_retry: unreachable")
 
-
 # ---------------------------------------------------------------------------
 # 装饰器形式
 # ---------------------------------------------------------------------------
 
 def retryable(
     policy: RetryPolicy = DEFAULT_RETRY_POLICY,
-    on_retry: Optional[Callable[[int, Exception], None]] = None,
+    on_retry: Callable[[int, Exception], None] | None = None,
 ) -> Callable[[Callable[..., T]], Callable[..., T]]:
     """重试装饰器(同步函数)。
 
@@ -274,17 +276,19 @@ def retryable(
         def call_api(url):
             return requests.get(url)
     """
+
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         @functools.wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> T:
             return with_retry(func, *args, policy=policy, on_retry=on_retry, **kwargs)
-        return wrapper
-    return decorator
 
+        return wrapper
+
+    return decorator
 
 def async_retryable(
     policy: RetryPolicy = DEFAULT_RETRY_POLICY,
-    on_retry: Optional[Callable[[int, Exception], None]] = None,
+    on_retry: Callable[[int, Exception], None] | None = None,
 ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """重试装饰器(异步函数)。
 
@@ -293,13 +297,15 @@ def async_retryable(
         async def call_api(url):
             return await client.get(url)
     """
+
     def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         @functools.wraps(func)
         async def wrapper(*args: Any, **kwargs: Any) -> Any:
             return await async_with_retry(func, *args, policy=policy, on_retry=on_retry, **kwargs)
-        return wrapper
-    return decorator
 
+        return wrapper
+
+    return decorator
 
 # ---------------------------------------------------------------------------
 # 工具调用专用重试(与 ToolCallState 配合)
@@ -309,7 +315,7 @@ def execute_with_retry(
     tool_call: Any,
     execute_fn: Callable[[Any], T],
     policy: RetryPolicy = DEFAULT_RETRY_POLICY,
-    on_retry: Optional[Callable[[int, Exception], None]] = None,
+    on_retry: Callable[[int, Exception], None] | None = None,
 ) -> T:
     """工具调用专用重试(同步,与 ToolCallState 状态机配合)。
 
@@ -337,7 +343,7 @@ def execute_with_retry(
     if tool_call.state in (ToolCallState.CREATED, ToolCallState.APPROVED, ToolCallState.FAILED):
         tool_call.transition_to(ToolCallState.EXECUTING)
 
-    last_error: Optional[Exception] = None
+    last_error: Exception | None = None
     for attempt in range(1, policy.max_attempts + 1):
         try:
             result = execute_fn(tool_call)

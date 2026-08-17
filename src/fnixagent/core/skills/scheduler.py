@@ -9,9 +9,14 @@
 
 调度逻辑独立于 LangGraph,定义为纯 Python 接口,可迁移至任意编排框架。
 """
-from __future__ import annotations
 
-from typing import Optional
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
+from __future__ import annotations
 
 from fnixagent.core.skills.levels import SkillPermissionPolicy
 from fnixagent.core.skills.protocol import SkillBindingProtocol
@@ -32,7 +37,7 @@ class SkillScheduler:
         self,
         registry: ToolRegistry,
         binding_protocol: SkillBindingProtocol,
-        permission_policy: Optional[SkillPermissionPolicy] = None,
+        permission_policy: SkillPermissionPolicy | None = None,
     ) -> None:
         """初始化技能调度器。
 
@@ -51,9 +56,9 @@ class SkillScheduler:
 
     def select_skills(
         self,
-        path: Optional[TopologyPath] = None,
+        path: TopologyPath | None = None,
         top_k: int = 5,
-        category: Optional[str] = None,
+        category: str | None = None,
         auto_invoke_only: bool = False,
     ) -> list[ToolMetadata]:
         """根据拓扑权重优先级选择 Top-K 技能。
@@ -87,9 +92,7 @@ class SkillScheduler:
             skill_level = self._parse_skill_level(tool.skill_level)
 
             # 权限检查
-            allowed, reason = self._policy.check_invoke_permission(
-                tool.name, skill_level
-            )
+            allowed, reason = self._policy.check_invoke_permission(tool.name, skill_level)
             if not allowed:
                 if auto_invoke_only or reason == "forbidden":
                     continue
@@ -181,28 +184,28 @@ class SkillScheduler:
 
     def describe_schedule(
         self,
-        path: Optional[TopologyPath] = None,
+        path: TopologyPath | None = None,
         top_k: int = 5,
     ) -> list[dict]:
         """返回调度详情(调试用)。"""
         all_tools = self._registry.list_tools()
         info = []
-        for tool in all_tools[:top_k * 2]:  # 多取一些用于排序
+        for tool in all_tools[: top_k * 2]:  # 多取一些用于排序
             skill_level = self._parse_skill_level(tool.skill_level)
-            allowed, reason = self._policy.check_invoke_permission(
-                tool.name, skill_level
-            )
+            allowed, reason = self._policy.check_invoke_permission(tool.name, skill_level)
             priority = self._binding.compute_priority(tool.name, path)
-            info.append({
-                "name": tool.name,
-                "skill_level": skill_level.value,
-                "priority": round(priority, 4),
-                "allowed": allowed,
-                "reason": reason,
-                "bound_concepts": [
-                    c.node_id for c in self._binding.get_bound_concepts(tool.name)
-                ],
-            })
+            info.append(
+                {
+                    "name": tool.name,
+                    "skill_level": skill_level.value,
+                    "priority": round(priority, 4),
+                    "allowed": allowed,
+                    "reason": reason,
+                    "bound_concepts": [
+                        c.node_id for c in self._binding.get_bound_concepts(tool.name)
+                    ],
+                }
+            )
         info.sort(key=lambda x: x["priority"], reverse=True)
         return info[:top_k]
 

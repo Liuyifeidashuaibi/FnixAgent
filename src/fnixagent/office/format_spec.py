@@ -17,28 +17,42 @@
   - 跳过空 run(无文本),避免引入无意义 rPr
   - 返回 FormatReport 统计(total/modified/skipped + details)
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import os
 import re
 from dataclasses import asdict, dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 from fnixagent.office.base import BaseExpert, ExpertError, ExpertResult
 
-
 # 等宽代码字体集合(用于代码块识别)
-_CODE_FONTS: frozenset[str] = frozenset({
-    "Consolas", "Courier New", "Courier", "Monaco", "Menlo",
-    "Source Code Pro", "JetBrains Mono", "DejaVu Sans Mono",
-    "Ubuntu Mono", "Fira Code", "Cascadia Code",
-})
-
+_CODE_FONTS: frozenset[str] = frozenset(
+    {
+        "Consolas",
+        "Courier New",
+        "Courier",
+        "Monaco",
+        "Menlo",
+        "Source Code Pro",
+        "JetBrains Mono",
+        "DejaVu Sans Mono",
+        "Ubuntu Mono",
+        "Fira Code",
+        "Cascadia Code",
+    }
+)
 
 # ---------------------------------------------------------------------------
 # 数据结构
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class FormatSpec:
@@ -61,7 +75,7 @@ class FormatSpec:
     body_font: str = "宋体"
     body_size_pt: float = 12.0  # 小四
     body_bold: bool = False
-    body_color: Optional[str] = None  # 十六进制如 "000000"
+    body_color: str | None = None  # 十六进制如 "000000"
     title_font: str = "宋体"
     title_size_pt: float = 12.0
     title_bold: bool = True
@@ -75,7 +89,6 @@ class FormatSpec:
     )
     normalize_whitespace: bool = True  # 是否合并多余空白
     preserve_code_blocks: bool = True  # 代码块保留等宽字体
-
 
 @dataclass
 class FormatReport:
@@ -93,11 +106,9 @@ class FormatReport:
     skipped_runs: int = 0
     details: list[dict] = field(default_factory=list)
 
-
 # ---------------------------------------------------------------------------
 # 格式统一器
 # ---------------------------------------------------------------------------
-
 
 class FormatNormalizer(BaseExpert):
     """格式统一器(Phase 5.6)。
@@ -122,8 +133,8 @@ class FormatNormalizer(BaseExpert):
     def normalize(
         self,
         path: str,
-        spec: Optional[FormatSpec] = None,
-        output_path: Optional[str] = None,
+        spec: FormatSpec | None = None,
+        output_path: str | None = None,
     ) -> ExpertResult:
         """按扩展名派发到对应文档类型的统一方法。
 
@@ -142,15 +153,13 @@ class FormatNormalizer(BaseExpert):
             return self.normalize_excel(path, spec, output_path)
         if ext == "pptx":
             return self.normalize_ppt(path, spec, output_path)
-        return self._failure(
-            f"unsupported extension: .{ext}, allowed: docx/xlsx/pptx"
-        )
+        return self._failure(f"unsupported extension: .{ext}, allowed: docx/xlsx/pptx")
 
     def normalize_word(
         self,
         path: str,
-        spec: Optional[FormatSpec] = None,
-        output_path: Optional[str] = None,
+        spec: FormatSpec | None = None,
+        output_path: str | None = None,
     ) -> ExpertResult:
         """统一 Word 文档格式。
 
@@ -169,9 +178,7 @@ class FormatNormalizer(BaseExpert):
             ExpertResult(output=save_path, metadata={"report": FormatReport dict})
         """
         spec = spec or FormatSpec()
-        err = self._validate_path(
-            path, must_exist=True, allowed_exts=("docx",)
-        )
+        err = self._validate_path(path, must_exist=True, allowed_exts=("docx",))
         if err:
             return self._failure(err)
         if output_path:
@@ -196,14 +203,12 @@ class FormatNormalizer(BaseExpert):
             for table in doc.tables:
                 for row in table.rows:
                     for cell in row.cells:
-                        self._normalize_paragraphs(
-                            cell.paragraphs, spec, report
-                        )
+                        self._normalize_paragraphs(cell.paragraphs, spec, report)
 
             save_path = output_path or path
             doc.save(save_path)
             return self._success(save_path, report=asdict(report))
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"normalize_word IO failed: {e}")
         except Exception as e:
             return self._failure(f"normalize_word failed: {e}")
@@ -211,8 +216,8 @@ class FormatNormalizer(BaseExpert):
     def normalize_excel(
         self,
         path: str,
-        spec: Optional[FormatSpec] = None,
-        output_path: Optional[str] = None,
+        spec: FormatSpec | None = None,
+        output_path: str | None = None,
     ) -> ExpertResult:
         """统一 Excel 字体字号。
 
@@ -228,9 +233,7 @@ class FormatNormalizer(BaseExpert):
             ExpertResult(output=save_path, metadata={"report": FormatReport dict})
         """
         spec = spec or FormatSpec()
-        err = self._validate_path(
-            path, must_exist=True, allowed_exts=("xlsx",)
-        )
+        err = self._validate_path(path, must_exist=True, allowed_exts=("xlsx",))
         if err:
             return self._failure(err)
         if output_path:
@@ -276,7 +279,7 @@ class FormatNormalizer(BaseExpert):
             save_path = output_path or path
             wb.save(save_path)
             return self._success(save_path, report=asdict(report))
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"normalize_excel IO failed: {e}")
         except Exception as e:
             return self._failure(f"normalize_excel failed: {e}")
@@ -284,8 +287,8 @@ class FormatNormalizer(BaseExpert):
     def normalize_ppt(
         self,
         path: str,
-        spec: Optional[FormatSpec] = None,
-        output_path: Optional[str] = None,
+        spec: FormatSpec | None = None,
+        output_path: str | None = None,
     ) -> ExpertResult:
         """统一 PPT 字体。
 
@@ -301,9 +304,7 @@ class FormatNormalizer(BaseExpert):
             ExpertResult(output=save_path, metadata={"report": FormatReport dict})
         """
         spec = spec or FormatSpec()
-        err = self._validate_path(
-            path, must_exist=True, allowed_exts=("pptx",)
-        )
+        err = self._validate_path(path, must_exist=True, allowed_exts=("pptx",))
         if err:
             return self._failure(err)
         if output_path:
@@ -348,7 +349,7 @@ class FormatNormalizer(BaseExpert):
             save_path = output_path or path
             prs.save(save_path)
             return self._success(save_path, report=asdict(report))
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"normalize_ppt IO failed: {e}")
         except Exception as e:
             return self._failure(f"normalize_ppt failed: {e}")
@@ -363,7 +364,7 @@ class FormatNormalizer(BaseExpert):
         font: str,
         size_pt: float,
         bold: bool,
-        color: Optional[str] = None,
+        color: str | None = None,
     ) -> None:
         """应用格式到单个 run(设置 font.name + eastAsia + size + bold + color)。
 
@@ -378,9 +379,9 @@ class FormatNormalizer(BaseExpert):
             bold: 是否加粗
             color: 十六进制颜色(如 "000000" 或 "#000000");None 不修改
         """
-        from docx.shared import Pt, RGBColor
-        from docx.oxml.ns import qn, nsdecls
         from docx.oxml import parse_xml
+        from docx.oxml.ns import nsdecls, qn
+        from docx.shared import Pt, RGBColor
 
         # ASCII 字体设为 Times New Roman,中文用 font 参数
         run.font.name = "Times New Roman"
@@ -405,7 +406,7 @@ class FormatNormalizer(BaseExpert):
         rfonts = rpr.find(qn("w:rFonts"))
         if rfonts is None:
             rfonts = parse_xml(
-                f'<w:rFonts {nsdecls("w")} '
+                f"<w:rFonts {nsdecls('w')} "
                 f'w:ascii="Times New Roman" w:hAnsi="Times New Roman" '
                 f'w:eastAsia="{font}" w:cs="Times New Roman"/>'
             )
@@ -510,9 +511,7 @@ class FormatNormalizer(BaseExpert):
         # 短标题启发式
         if (
             len(t) < 30
-            and not t.endswith(
-                ("。", ".", "!", "?", "！", "？", ";", "；")
-            )
+            and not t.endswith(("。", ".", "!", "?", "！", "？", ";", "；"))
             and ("，" not in t and "," not in t)
         ):
             return True

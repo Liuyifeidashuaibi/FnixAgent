@@ -25,12 +25,18 @@ tripwire 语义(借鉴 OpenAI SDK):
   - SecurityEngine 新增 guardrail_pipeline 属性,委托 GuardrailPipeline
   - 现有 check_input/review_output 保留兼容,内部改为调用 pipeline
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import abc
 from dataclasses import dataclass, field
-from typing import Any, Optional
-
+from typing import Any
 
 # ---------------------------------------------------------------------------
 # 结果与异常
@@ -49,6 +55,7 @@ class GuardrailResult:
         risk_score: 风险评分 0~1(0=安全,1=高危)
         details: 额外详情(命中词/违规类型等)
     """
+
     guardrail_name: str
     passed: bool = True
     tripwire_triggered: bool = False
@@ -56,7 +63,6 @@ class GuardrailResult:
     sanitized_text: str = ""
     risk_score: float = 0.0
     details: dict[str, Any] = field(default_factory=dict)
-
 
 @dataclass
 class GuardrailPipelineResult:
@@ -70,13 +76,13 @@ class GuardrailPipelineResult:
         results: 各 Guardrail 的详细结果
         risk_score: 最大风险评分
     """
+
     passed: bool = True
     tripwire_triggered: bool = False
     blocked_reason: str = ""
     sanitized_text: str = ""
     results: list[GuardrailResult] = field(default_factory=list)
     risk_score: float = 0.0
-
 
 class GuardrailTripwireError(Exception):
     """Guardrail tripwire 触发异常(严重违规,需短路 + 审计)。
@@ -86,10 +92,7 @@ class GuardrailTripwireError(Exception):
 
     def __init__(self, result: GuardrailResult) -> None:
         self.result = result
-        super().__init__(
-            f"Guardrail '{result.guardrail_name}' tripwire: {result.blocked_reason}"
-        )
-
+        super().__init__(f"Guardrail '{result.guardrail_name}' tripwire: {result.blocked_reason}")
 
 # ---------------------------------------------------------------------------
 # BaseGuardrail 抽象基类
@@ -144,22 +147,21 @@ class BaseGuardrail(abc.ABC):
         """子类实现具体检查逻辑。"""
         ...
 
-
 class InputGuardrail(BaseGuardrail):
     """输入方向 Guardrail 基类(LLM 调用前)。
 
     典型子类:注入检测 / 敏感词检测 / 输入内容审核
     """
-    pass
 
+    pass
 
 class OutputGuardrail(BaseGuardrail):
     """输出方向 Guardrail 基类(LLM 调用后)。
 
     典型子类:输出内容审核 / PII 脱敏
     """
-    pass
 
+    pass
 
 # ---------------------------------------------------------------------------
 # 5 个适配类(包装现有 security 模块)
@@ -179,14 +181,13 @@ class InputInjectionGuardrail(InputGuardrail):
             passed=result.passed,
             tripwire_triggered=not result.passed and result.risk_score >= 0.7,
             blocked_reason=(
-                f"Prompt 注入风险(risk={result.risk_score}): "
-                f"{'; '.join(result.reasons)}"
-                if not result.passed else ""
+                f"Prompt 注入风险(risk={result.risk_score}): {'; '.join(result.reasons)}"
+                if not result.passed
+                else ""
             ),
             risk_score=result.risk_score,
             details={"reasons": result.reasons},
         )
-
 
 class InputSensitiveGuardrail(InputGuardrail):
     """输入敏感词检测 Guardrail(包装 SensitiveDetector)。"""
@@ -209,7 +210,6 @@ class InputSensitiveGuardrail(InputGuardrail):
             details={"hits": words},
         )
 
-
 class InputModerationGuardrail(InputGuardrail):
     """输入内容审核 Guardrail(包装 ContentModerator,输入方向)。"""
 
@@ -227,7 +227,6 @@ class InputModerationGuardrail(InputGuardrail):
             risk_score=0.8 if not result.passed else 0.0,
             details={"issues": result.issues},
         )
-
 
 class OutputModerationGuardrail(OutputGuardrail):
     """输出内容审核 Guardrail(包装 ContentModerator,输出方向)。"""
@@ -248,7 +247,6 @@ class OutputModerationGuardrail(OutputGuardrail):
             details={"issues": result.issues, "pii_hits": result.pii_hits},
         )
 
-
 class OutputDesensitizeGuardrail(OutputGuardrail):
     """输出 PII 脱敏 Guardrail(包装 Desensitizer)。"""
 
@@ -267,7 +265,6 @@ class OutputDesensitizeGuardrail(OutputGuardrail):
             risk_score=0.0,
             details={"modified": modified},
         )
-
 
 # ---------------------------------------------------------------------------
 # GuardrailPipeline 管道
@@ -301,18 +298,18 @@ class GuardrailPipeline:
 
     def __init__(
         self,
-        input_guardrails: Optional[list[InputGuardrail]] = None,
-        output_guardrails: Optional[list[OutputGuardrail]] = None,
+        input_guardrails: list[InputGuardrail] | None = None,
+        output_guardrails: list[OutputGuardrail] | None = None,
     ) -> None:
         self._input_guardrails: list[InputGuardrail] = list(input_guardrails or [])
         self._output_guardrails: list[OutputGuardrail] = list(output_guardrails or [])
 
-    def add_input(self, guardrail: InputGuardrail) -> "GuardrailPipeline":
+    def add_input(self, guardrail: InputGuardrail) -> GuardrailPipeline:
         """追加输入 Guardrail(返回 self,链式调用)。"""
         self._input_guardrails.append(guardrail)
         return self
 
-    def add_output(self, guardrail: OutputGuardrail) -> "GuardrailPipeline":
+    def add_output(self, guardrail: OutputGuardrail) -> GuardrailPipeline:
         """追加输出 Guardrail(返回 self,链式调用)。"""
         self._output_guardrails.append(guardrail)
         return self
@@ -401,7 +398,6 @@ class GuardrailPipeline:
                 break
 
         return result
-
 
 # ---------------------------------------------------------------------------
 # 便捷工厂:从现有 SecurityEngine 组件构建管道

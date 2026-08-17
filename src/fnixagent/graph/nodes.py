@@ -11,11 +11,17 @@ LangGraph 图节点定义。
 每个节点函数签名: (state: GraphState) -> dict(部分字段更新)
 LangGraph 会将返回的 dict 合并到全局 State。
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import time
 import uuid
-from typing import Any
 
 from fnixagent.core.tools.protocol import validate_arguments
 from fnixagent.graph.state import GraphState
@@ -76,6 +82,7 @@ def make_search_node(search_engine, llm_router=None):
     Returns:
         节点函数
     """
+
     def search_node(state: GraphState) -> dict:
         """检索节点: KTG 路径搜索,匹配 L2 概念节点。"""
         query = state.get("current_goal", state.get("user_input", ""))
@@ -133,6 +140,7 @@ def make_skill_select_node(scheduler, binding_protocol=None):
     Returns:
         节点函数
     """
+
     def skill_select_node(state: GraphState) -> dict:
         """技能选择节点: STP 调度,基于拓扑权重选择 Top-K 技能。"""
         from fnixagent.core.types import TopologyPath
@@ -191,6 +199,7 @@ def make_execute_node(registry, executor=None):
     Returns:
         节点函数
     """
+
     def execute_node(state: GraphState) -> dict:
         """执行节点: 调用选中的技能(工具)。
 
@@ -206,11 +215,13 @@ def make_execute_node(registry, executor=None):
 
         for skill_name in selected_skills:
             if not registry.has(skill_name):
-                tool_results.append({
-                    "name": skill_name,
-                    "status": "failed",
-                    "error": f"技能 {skill_name} 未注册",
-                })
+                tool_results.append(
+                    {
+                        "name": skill_name,
+                        "status": "failed",
+                        "error": f"技能 {skill_name} 未注册",
+                    }
+                )
                 continue
 
             tool = registry.get(skill_name)
@@ -218,11 +229,13 @@ def make_execute_node(registry, executor=None):
             # 入参校验
             valid, errors = validate_arguments(tool.metadata, {})
             if not valid:
-                tool_results.append({
-                    "name": skill_name,
-                    "status": "failed",
-                    "error": f"入参校验失败: {errors}",
-                })
+                tool_results.append(
+                    {
+                        "name": skill_name,
+                        "status": "failed",
+                        "error": f"入参校验失败: {errors}",
+                    }
+                )
                 continue
 
             # 执行工具
@@ -231,29 +244,37 @@ def make_execute_node(registry, executor=None):
                     result = executor.execute(skill_name, {})
                 else:
                     result = tool.func({})
-                tool_results.append({
-                    "name": skill_name,
-                    "status": "success",
-                    "output": result,
-                    "duration_ms": 0.0,
-                })
-                tool_calls.append({
-                    "name": skill_name,
-                    "args": {},
-                    "status": "success",
-                })
+                tool_results.append(
+                    {
+                        "name": skill_name,
+                        "status": "success",
+                        "output": result,
+                        "duration_ms": 0.0,
+                    }
+                )
+                tool_calls.append(
+                    {
+                        "name": skill_name,
+                        "args": {},
+                        "status": "success",
+                    }
+                )
             except Exception as e:
-                tool_results.append({
-                    "name": skill_name,
-                    "status": "failed",
-                    "error": str(e),
-                })
-                tool_calls.append({
-                    "name": skill_name,
-                    "args": {},
-                    "status": "failed",
-                    "error": str(e),
-                })
+                tool_results.append(
+                    {
+                        "name": skill_name,
+                        "status": "failed",
+                        "error": str(e),
+                    }
+                )
+                tool_calls.append(
+                    {
+                        "name": skill_name,
+                        "args": {},
+                        "status": "failed",
+                        "error": str(e),
+                    }
+                )
 
         # 更新轨迹
         trace = state.get("trace", {})
@@ -281,7 +302,7 @@ def reflect_node(state: GraphState) -> dict:
 
     # 检查工具执行结果
     all_success = all(r.get("status") == "success" for r in tool_results) if tool_results else False
-    has_error = any(r.get("status") == "failed" for r in tool_results)
+    any(r.get("status") == "failed" for r in tool_results)
 
     if all_success:
         # 全部成功 → 生成答案,停止循环

@@ -34,6 +34,13 @@
         ctx = WorkflowContext.from_dict(entry.state)
         await engine.run(ctx)
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from fnixagent.core.checkpoint.base import BaseCheckpointer
 from fnixagent.core.checkpoint.manager import (
     CheckpointEntry,
@@ -66,7 +73,16 @@ __all__ = [
 
 # PostgresCheckpointer 按需导入(psycopg 可能未安装)
 try:
-    from fnixagent.core.checkpoint.postgres import PostgresCheckpointer
+    from fnixagent.core.checkpoint.postgres import PostgresCheckpointer  # noqa: F401
+
     __all__.append("PostgresCheckpointer")
+except ImportError:
+    pass
+
+# SqliteCheckpointer 按需导入(sqlite3 是标准库,通常可用;此 try 仅为防御性)
+try:
+    from fnixagent.core.checkpoint.sqlite import SqliteCheckpointer  # noqa: F401
+
+    __all__.append("SqliteCheckpointer")
 except ImportError:
     pass

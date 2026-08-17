@@ -1,4 +1,4 @@
-﻿"""
+"""
 版本快照管理测试。
 
 覆盖:
@@ -9,6 +9,13 @@
     - 清理过期快照(cleanup_old_snapshots)
     - 不可变性(同名快照不能覆盖)
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 import json
 import os
 import time
@@ -18,10 +25,10 @@ import pytest
 from fnixagent.assets.snapshot import SnapshotManager
 from fnixagent.core.exceptions import SnapshotError
 
-
 # ---------------------------------------------------------------------------
 # 创建快照
 # ---------------------------------------------------------------------------
+
 
 class TestCreateSnapshot:
     """create_snapshot 测试。"""
@@ -57,7 +64,7 @@ class TestCreateSnapshot:
             edge_count=1,
         )
         path = os.path.join(str(tmp_path), "snapshots", "fmt_snap.json")
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             data = json.load(f)
         assert data["name"] == "fmt_snap"
         assert "timestamp" in data
@@ -83,6 +90,7 @@ class TestCreateSnapshot:
 # ---------------------------------------------------------------------------
 # 恢复快照
 # ---------------------------------------------------------------------------
+
 
 class TestRestoreSnapshot:
     """restore_snapshot 测试。"""
@@ -126,6 +134,7 @@ class TestRestoreSnapshot:
 # 列举快照
 # ---------------------------------------------------------------------------
 
+
 class TestListSnapshots:
     """list_snapshots 测试。"""
 
@@ -166,6 +175,7 @@ class TestListSnapshots:
 # 删除快照
 # ---------------------------------------------------------------------------
 
+
 class TestDeleteSnapshot:
     """delete_snapshot 测试。"""
 
@@ -195,6 +205,7 @@ class TestDeleteSnapshot:
 # ---------------------------------------------------------------------------
 # 清理过期快照
 # ---------------------------------------------------------------------------
+
 
 class TestCleanupOldSnapshots:
     """cleanup_old_snapshots 测试。"""
@@ -230,10 +241,23 @@ class TestCleanupOldSnapshots:
         """超出 daily 但在 weekly 范围内,保留每周最新一个。"""
         mgr = SnapshotManager(str(tmp_path), max_daily=3, max_weekly=4)
         now = time.time()
-        # 同一周内两个快照(10 天前和 8 天前,都在第 2 周内)
-        # 注意: 10 天前 = 864000 秒前
-        self._create_snapshot_with_ts(tmp_path, "w2_a", now - 10 * 86400)
-        self._create_snapshot_with_ts(tmp_path, "w2_b", now - 8 * 86400)
+        # 用对齐到 7 天窗口的时间戳,确保两个快照明确落在同一个 week_index 内
+        # 修复原测试 bug: 原用 now-10d 和 now-8d 假设"在同一周",但固定 7 天
+        # 窗口分桶 (int(ts // 604800)) 不保证这点,取决于 now 的值。
+        week_unit = 7 * 86400
+        current_week = int(now // week_unit)
+        # 同一周内两个快照 (当前周的早些时候 + 当前周的晚些时候)
+        # 但要超出 max_daily=3 天的范围,所以用上一周
+        prev_week_start = (current_week - 1) * week_unit
+        ts_a = prev_week_start + 86400  # 上一周第 1 天
+        ts_b = prev_week_start + 5 * 86400  # 上一周第 5 天
+        # 确保两个时间戳在同一 week_index 内
+        assert int(ts_a // week_unit) == int(ts_b // week_unit)
+        # 确保超出 daily 范围 (3 天)
+        assert (now - ts_a) > 3 * 86400
+        assert (now - ts_b) > 3 * 86400
+        self._create_snapshot_with_ts(tmp_path, "w2_a", ts_a)
+        self._create_snapshot_with_ts(tmp_path, "w2_b", ts_b)
         deleted = mgr.cleanup_old_snapshots()
         # 应保留较新的 w2_b,删除 w2_a
         assert deleted == 1

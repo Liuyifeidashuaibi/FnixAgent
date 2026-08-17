@@ -14,4 +14,11 @@ fnixagent Core Engine
 - 向量检索 (Embedding / 混合检索)
 - 调度中枢 (生命周期编排)
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 __version__ = "1.0.0"

@@ -20,6 +20,13 @@
     STALE_USE_COUNT         = 5      且 use_count 低于此值才降权
     STALE_PENALTY_FACTOR    = 0.95   stale 节点权重衰减因子
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import time
@@ -46,7 +53,6 @@ STALE_FRESHNESS: float = 0.3
 STALE_USE_COUNT: int = 5
 STALE_PENALTY_FACTOR: float = 0.95
 
-
 # ---------------------------------------------------------------------------
 # 权重操作(纯函数,不修改原对象,返回新值)
 # ---------------------------------------------------------------------------
@@ -55,36 +61,29 @@ def clamp_weight(weight: float) -> float:
     """将权重钳制到 [MIN_WEIGHT, MAX_WEIGHT] 范围内。"""
     return max(MIN_WEIGHT, min(MAX_WEIGHT, weight))
 
-
 def reinforce(weight: float, increment: float = SINGLE_INCREMENT) -> float:
     """强化权重(命中/成功时调用)。"""
     return clamp_weight(weight + increment)
-
 
 def penalize(weight: float, penalty: float = FAILURE_PENALTY) -> float:
     """惩罚权重(失败时调用)。"""
     return clamp_weight(weight + penalty)  # FAILURE_PENALTY 为负数
 
-
 def decay(weight: float, factor: float = DAILY_DECAY) -> float:
     """衰减权重(每日调用)。"""
     return clamp_weight(weight * factor)
-
 
 def should_deprecate(weight: float) -> bool:
     """判断权重是否低于废弃阈值。"""
     return weight < DEPRECATE_THRESHOLD
 
-
 def apply_success_bonus(weight: float) -> float:
     """技能执行成功的权重奖励。"""
     return clamp_weight(weight + SUCCESS_BONUS)
 
-
 def apply_failure_penalty(weight: float) -> float:
     """技能执行失败的权重惩罚。"""
     return clamp_weight(weight + FAILURE_PENALTY)
-
 
 # ---------------------------------------------------------------------------
 # 节点权重操作(返回修改后的节点,原节点不变)
@@ -106,7 +105,6 @@ def node_on_hit(node: TopologyNode) -> TopologyNode:
     node.last_used_at = time.time()
     return node
 
-
 def node_daily_decay(node: TopologyNode) -> TopologyNode:
     """节点每日衰减(freshness 衰减,权重按 stale 规则调整)。
 
@@ -122,12 +120,10 @@ def node_daily_decay(node: TopologyNode) -> TopologyNode:
         node.weight = DEPRECATED_WEIGHT
     return node
 
-
 def node_on_skill_success(node: TopologyNode) -> TopologyNode:
     """绑定的技能执行成功时的权重奖励。"""
     node.weight = apply_success_bonus(node.weight)
     return node
-
 
 def node_on_skill_failure(node: TopologyNode) -> TopologyNode:
     """绑定的技能执行失败时的权重惩罚。"""
@@ -136,7 +132,6 @@ def node_on_skill_failure(node: TopologyNode) -> TopologyNode:
         node.deprecated = True
         node.weight = DEPRECATED_WEIGHT
     return node
-
 
 # ---------------------------------------------------------------------------
 # 边权重操作
@@ -152,7 +147,6 @@ def edge_on_path_hit(edge: TopologyEdge) -> TopologyEdge:
     edge.weight = reinforce(edge.weight, SINGLE_INCREMENT)
     return edge
 
-
 def edge_on_failure(edge: TopologyEdge) -> TopologyEdge:
     """边所在路径执行失败时的权重惩罚。"""
     if abs(edge.weight) < 1e-9 and edge.edge_type.value == "mutex":
@@ -161,7 +155,6 @@ def edge_on_failure(edge: TopologyEdge) -> TopologyEdge:
         return edge
     edge.weight = penalize(edge.weight, -0.03)  # 失败时边权重 -0.03
     return edge
-
 
 def edge_daily_decay(edge: TopologyEdge) -> TopologyEdge:
     """边每日衰减。"""

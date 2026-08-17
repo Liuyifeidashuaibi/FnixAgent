@@ -3,29 +3,34 @@
 
 对应架构文档第四章的表结构。
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 import json
 from datetime import datetime
-from typing import Optional
 
 from sqlalchemy import (
     ARRAY,
+    JSON,
+    TEXT,
+    TIMESTAMP,
     BigInteger,
     Boolean,
+    Column,
+    ForeignKey,
+    Index,
     Integer,
-    JSON,
     Numeric,
     SmallInteger,
     String,
     Table,
-    TEXT,
-    TIMESTAMP,
-    Column,
-    ForeignKey,
-    Index,
     TypeDecorator,
     UniqueConstraint,
 )
-
 
 # PostgreSQL 上用 64 位 BigInteger,SQLite 上用 Integer 以支持 autoincrement。
 # 这样生产环境享受 PG 大整数 ID,测试环境可用 SQLite 零依赖运行。
@@ -36,6 +41,7 @@ from sqlalchemy.orm import DeclarativeBase, relationship
 
 class Base(DeclarativeBase):
     """SQLAlchemy 2.0 声明式基类。"""
+
     pass
 
 
@@ -45,6 +51,7 @@ class StringArray(TypeDecorator):
     PostgreSQL 上使用原生 ARRAY(TEXT),其他数据库(SQLite/MySQL)用 JSON。
     这样生产环境享受 PG 原生数组性能,测试环境可用 SQLite 零依赖运行。
     """
+
     impl = TEXT
     cache_ok = True
 
@@ -77,6 +84,7 @@ class SmallIntArray(TypeDecorator):
 
     PostgreSQL 上使用原生 ARRAY(SmallInteger),其他数据库用 JSON。
     """
+
     impl = SmallInteger
     cache_ok = True
 
@@ -133,7 +141,9 @@ class User(Base):
     username = Column(String(64), nullable=False)
     email = Column(String(128), unique=True)
     password_hash = Column(String(255))
-    role = Column(String(32), nullable=False, default="user")  # user/admin(向后兼容,RBAC 细粒度权限走 user_roles)
+    role = Column(
+        String(32), nullable=False, default="user"
+    )  # user/admin(向后兼容,RBAC 细粒度权限走 user_roles)
     profile = Column(JSON, nullable=False, default=dict)  # 偏好/学科领域
     created_at = Column(TIMESTAMP, nullable=False, default=datetime.utcnow)
 
@@ -185,7 +195,9 @@ class Session(Base):
     context = Column(JSON, nullable=False, default=dict)  # 当前任务上下文
     status = Column(String(32), nullable=False, default="active")  # active/closed/archived
     created_at = Column(TIMESTAMP, nullable=False, default=datetime.utcnow)
-    updated_at = Column(TIMESTAMP, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = Column(
+        TIMESTAMP, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
 
     # 关系
     user = relationship("User", back_populates="sessions")
@@ -235,7 +247,9 @@ class Task(Base):
     user_id = Column(BigInteger, ForeignKey("users.id"), nullable=False)
     intent = Column(String(128))  # 意图: search_paper/edit_word/...
     reasoning_mode = Column(String(32), nullable=False)  # react/plan_execute/self_reflect
-    status = Column(String(32), nullable=False, default="pending")  # pending/running/succeeded/failed
+    status = Column(
+        String(32), nullable=False, default="pending"
+    )  # pending/running/succeeded/failed
     plan = Column(JSON, nullable=False, default=dict)  # 规划引擎产出
     result = Column(JSON)  # 最终结果
     error = Column(TEXT)
@@ -395,7 +409,9 @@ class Entity(Base):
     name = Column(String(255), nullable=False)
     attributes = Column(JSON, nullable=False, default=dict)  # 结构化属性
     created_at = Column(TIMESTAMP, nullable=False, default=datetime.utcnow)
-    updated_at = Column(TIMESTAMP, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = Column(
+        TIMESTAMP, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
 
     # 关系
     source_relations = relationship(
@@ -414,7 +430,9 @@ class EntityRelation(Base):
     """实体关系(知识图谱式)。"""
 
     __tablename__ = "entity_relations"
-    __table_args__ = (UniqueConstraint("source_id", "target_id", "relation", name="uq_entity_relation"),)
+    __table_args__ = (
+        UniqueConstraint("source_id", "target_id", "relation", name="uq_entity_relation"),
+    )
 
     id = Column(BigIntPK, primary_key=True)
     source_id = Column(BigInteger, ForeignKey("entities.id", ondelete="CASCADE"), nullable=False)
@@ -458,10 +476,10 @@ class AuditLog(Base):
     action = Column(String(64), nullable=False)  # login.success / mfa.enable / permission.denied 等
     detail = Column(JSON, nullable=False)
     trace_id = Column(String(64))
-    ip_address = Column(String(64))           # Phase 2.5: 客户端 IP
-    user_agent = Column(String(256))           # Phase 2.5: 客户端 User-Agent
-    prev_hash = Column(String(64))             # Phase 2.5: 哈希链 — 上一条的 hash
-    entry_hash = Column(String(64))            # Phase 2.5: 哈希链 — 本条 hash
+    ip_address = Column(String(64))  # Phase 2.5: 客户端 IP
+    user_agent = Column(String(256))  # Phase 2.5: 客户端 User-Agent
+    prev_hash = Column(String(64))  # Phase 2.5: 哈希链 — 上一条的 hash
+    entry_hash = Column(String(64))  # Phase 2.5: 哈希链 — 本条 hash
     created_at = Column(TIMESTAMP, nullable=False, default=datetime.utcnow)
 
 
@@ -525,7 +543,12 @@ role_permissions = Table(
     "role_permissions",
     Base.metadata,
     Column("role_id", BigInteger, ForeignKey("roles.id", ondelete="CASCADE"), primary_key=True),
-    Column("permission_id", BigInteger, ForeignKey("permissions.id", ondelete="CASCADE"), primary_key=True),
+    Column(
+        "permission_id",
+        BigInteger,
+        ForeignKey("permissions.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
     Index("ix_role_permissions_role_id", "role_id"),
     Index("ix_role_permissions_permission_id", "permission_id"),
 )
@@ -563,7 +586,9 @@ class Role(Base):
     is_active = Column(Boolean, nullable=False, default=True)
     sort_order = Column(SmallInteger, nullable=False, default=0)
     created_at = Column(TIMESTAMP, nullable=False, default=datetime.utcnow)
-    updated_at = Column(TIMESTAMP, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = Column(
+        TIMESTAMP, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
 
     # 关系
     permissions = relationship("Permission", secondary=role_permissions, back_populates="roles")
@@ -613,7 +638,9 @@ class Department(Base):
     description = Column(String(512), default="")
     is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(TIMESTAMP, nullable=False, default=datetime.utcnow)
-    updated_at = Column(TIMESTAMP, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = Column(
+        TIMESTAMP, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
 
     # 关系
     parent = relationship("Department", remote_side=[id], back_populates="children")
@@ -639,7 +666,9 @@ class Position(Base):
     is_active = Column(Boolean, nullable=False, default=True)
     sort_order = Column(SmallInteger, nullable=False, default=0)
     created_at = Column(TIMESTAMP, nullable=False, default=datetime.utcnow)
-    updated_at = Column(TIMESTAMP, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = Column(
+        TIMESTAMP, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
 
     # 关系
     users = relationship("User", back_populates="position", foreign_keys="User.position_id")

@@ -15,10 +15,18 @@ Guardrail - 护栏 (Guardrails)
   - 原版仅覆盖 LLM_COMPLETE/LLM_STREAM, 工具调用无护栏
   - 原版无 MODIFY 动作
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any
 
 from fnixagent.core.agent.types import GuardrailAction, GuardrailLayer, utcnow_iso
 
@@ -37,6 +45,7 @@ class GuardrailContext:
         args: syscall 参数
         metadata: 额外元数据 (trace_id 等)
     """
+
     layer: GuardrailLayer
     syscall: str = ""
     caller_pid: str = ""
@@ -60,6 +69,7 @@ class GuardrailContext:
 @dataclass
 class GuardrailResult:
     """护栏检查结果 (对标 Guardrails AI ValidationResult)。"""
+
     action: GuardrailAction = GuardrailAction.PASS
     message: str = ""
     modified_content: Any = None
@@ -72,18 +82,17 @@ class GuardrailResult:
 
     @classmethod
     def warn(cls, message: str, risk_score: float = 0.0) -> GuardrailResult:
-        return cls(action=GuardrailAction.WARN, message=message,
-                   risk_score=risk_score)
+        return cls(action=GuardrailAction.WARN, message=message, risk_score=risk_score)
 
     @classmethod
     def block(cls, message: str, risk_score: float = 1.0) -> GuardrailResult:
-        return cls(action=GuardrailAction.BLOCK, message=message,
-                   risk_score=risk_score)
+        return cls(action=GuardrailAction.BLOCK, message=message, risk_score=risk_score)
 
     @classmethod
     def modify(cls, modified_content: Any, message: str = "") -> GuardrailResult:
-        return cls(action=GuardrailAction.MODIFY, message=message,
-                   modified_content=modified_content)
+        return cls(
+            action=GuardrailAction.MODIFY, message=message, modified_content=modified_content
+        )
 
     @property
     def passed(self) -> bool:
@@ -114,6 +123,7 @@ GuardrailFunc = Callable[[GuardrailContext], GuardrailResult]
 @dataclass
 class GuardrailEntry:
     """护栏注册项。"""
+
     name: str
     func: GuardrailFunc
     layer: GuardrailLayer
@@ -147,14 +157,24 @@ class GuardrailManager:
     def __init__(self):
         self._guardrails: list[GuardrailEntry] = []
 
-    def register(self, name: str, func: GuardrailFunc,
-                 layer: GuardrailLayer, priority: int = 0,
-                 description: str = "") -> None:
+    def register(
+        self,
+        name: str,
+        func: GuardrailFunc,
+        layer: GuardrailLayer,
+        priority: int = 0,
+        description: str = "",
+    ) -> None:
         """注册护栏。"""
-        self._guardrails.append(GuardrailEntry(
-            name=name, func=func, layer=layer, priority=priority,
-            description=description,
-        ))
+        self._guardrails.append(
+            GuardrailEntry(
+                name=name,
+                func=func,
+                layer=layer,
+                priority=priority,
+                description=description,
+            )
+        )
         # 按优先级降序
         self._guardrails.sort(key=lambda g: -g.priority)
 
@@ -253,8 +273,10 @@ class GuardrailManager:
             entries = [g for g in entries if g.layer == layer]
         return [
             {
-                "name": g.name, "layer": g.layer.value,
-                "priority": g.priority, "enabled": g.enabled,
+                "name": g.name,
+                "layer": g.layer.value,
+                "priority": g.priority,
+                "enabled": g.enabled,
                 "description": g.description,
             }
             for g in entries
@@ -274,9 +296,12 @@ class GuardrailManager:
 
 # --- 内置护栏 ---
 
-def length_limit_guardrail(max_length: int = 100000,
-                           layer: GuardrailLayer = GuardrailLayer.INPUT) -> GuardrailEntry:
+
+def length_limit_guardrail(
+    max_length: int = 100000, layer: GuardrailLayer = GuardrailLayer.INPUT
+) -> GuardrailEntry:
     """内置护栏: 长度限制 (防止 context window 爆炸)。"""
+
     def func(ctx: GuardrailContext) -> GuardrailResult:
         content = str(ctx.content or "")
         if len(content) > max_length:
@@ -285,15 +310,20 @@ def length_limit_guardrail(max_length: int = 100000,
                 risk_score=0.8,
             )
         return GuardrailResult.pass_()
+
     return GuardrailEntry(
-        name="length_limit", func=func, layer=layer,
-        priority=10, description=f"限制内容长度 ≤ {max_length}",
+        name="length_limit",
+        func=func,
+        layer=layer,
+        priority=10,
+        description=f"限制内容长度 ≤ {max_length}",
     )
 
 
 def sensitive_data_guardrail(patterns: list[str] | None = None) -> GuardrailEntry:
     """内置护栏: 敏感数据检测 (PII / 密钥)。"""
     import re
+
     default_patterns = [
         r"\b\d{15,18}[Xx]?\b",  # 身份证
         r"\b1[3-9]\d{9}\b",  # 手机号
@@ -314,15 +344,22 @@ def sensitive_data_guardrail(patterns: list[str] | None = None) -> GuardrailEntr
                     masked, f"检测到敏感数据, 已脱敏 ({pattern.pattern[:30]})"
                 )
         return GuardrailResult.pass_()
+
     return GuardrailEntry(
-        name="sensitive_data", func=func,
-        layer=GuardrailLayer.OUTPUT, priority=20,
+        name="sensitive_data",
+        func=func,
+        layer=GuardrailLayer.OUTPUT,
+        priority=20,
         description="检测并脱敏 PII/密钥",
     )
 
 
 __all__ = [
-    "GuardrailManager", "GuardrailContext", "GuardrailResult", "GuardrailEntry",
+    "GuardrailContext",
+    "GuardrailEntry",
     "GuardrailFunc",
-    "length_limit_guardrail", "sensitive_data_guardrail",
+    "GuardrailManager",
+    "GuardrailResult",
+    "length_limit_guardrail",
+    "sensitive_data_guardrail",
 ]

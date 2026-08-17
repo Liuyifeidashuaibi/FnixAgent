@@ -1,0 +1,34 @@
+# FnixAgent 可选依赖（企业 / 云 / 高级集成）
+# --------------------------------------------------------------------------
+# Standalone（开源默认）无需本文件即可运行：pnpm setup 只安装 requirements.txt。
+# 仅当启用 cloud / local-stack profile、或需要 LDAP/SSO/MFA/向量库/对象存储时安装：
+#   pip install -r requirements-optional.txt
+#
+# 拆分原因：python3-saml 在 Windows 需 libxml2/libxslt 系统库，psycopg2-binary /
+# pymilvus 等体积大，对「下载即用」的 standalone 用户是无谓负担且易装失败。
+# 这些包在源码中均为延迟导入（standalone 启动路径不触发），缺失不影响 Desktop/CLI。
+# --------------------------------------------------------------------------
+
+# PostgreSQL（cloud / local-stack profile 的关系型存储）
+psycopg2-binary==2.9.9
+
+# Redis（缓存适配器，cloud / local-stack 可选）
+redis==5.0.1
+
+# Elasticsearch（全文检索，cloud 可选）
+elasticsearch==8.10.0
+
+# MinIO（对象存储，cloud 可选）
+minio==7.2.0
+
+# Milvus 向量数据库（长期记忆语义检索，cloud 可选）
+pymilvus==2.3.0
+
+# LDAP / AD 域集成（Phase 2.2，cloud 企业 SSO）
+ldap3==2.9.1
+
+# SAML 2.0 SP（Phase 2.3 单点登录；Windows 需 libxml2/libxslt）
+python3-saml==1.16.0; python_version >= "3.8"
+
+# MFA TOTP（Phase 2.4 多因素认证；standalone 无账号体系不需要）
+pyotp==2.9.0

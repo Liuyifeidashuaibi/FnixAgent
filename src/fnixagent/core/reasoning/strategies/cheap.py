@@ -15,6 +15,13 @@
   不再修改 ctx.max_iterations / ctx.extra,通过 override 透传给
   ReasoningContext 副本(同一 ctx 可被多次 execute)。
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 from typing import Any

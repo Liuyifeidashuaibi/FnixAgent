@@ -25,23 +25,27 @@
   - ExpertError:统一异常(底层库不可用时抛出,提示安装)
   - BaseExpert:抽象基类,提供 _require_lib / _validate_* 工具方法
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import abc
 import importlib
 import os
 from dataclasses import dataclass, field
-from typing import Any, Optional
-
+from typing import Any
 
 # 默认文件大小上限(100 MB),防止 OOM
 DEFAULT_MAX_FILE_SIZE = 100 * 1024 * 1024
 
-
 # ---------------------------------------------------------------------------
 # 返回结构
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class ExpertResult:
@@ -56,16 +60,14 @@ class ExpertResult:
     """
 
     success: bool = True
-    output: Any = None               # 文件路径/数据结构/文本 等
-    error: Optional[str] = None
+    output: Any = None  # 文件路径/数据结构/文本 等
+    error: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
     duration_ms: float = 0.0
-
 
 # ---------------------------------------------------------------------------
 # 异常
 # ---------------------------------------------------------------------------
-
 
 class ExpertError(Exception):
     """Expert 基础异常。
@@ -74,15 +76,13 @@ class ExpertError(Exception):
         missing_lib: 缺失的第三方库名(用于上层提示安装)
     """
 
-    def __init__(self, message: str, missing_lib: Optional[str] = None) -> None:
+    def __init__(self, message: str, missing_lib: str | None = None) -> None:
         super().__init__(message)
         self.missing_lib = missing_lib
-
 
 # ---------------------------------------------------------------------------
 # BaseExpert
 # ---------------------------------------------------------------------------
-
 
 class BaseExpert(abc.ABC):
     """Office Expert 抽象基类。
@@ -153,10 +153,10 @@ class BaseExpert(abc.ABC):
         path: str,
         *,
         must_exist: bool = False,
-        allowed_exts: Optional[tuple[str, ...]] = None,
-        max_size: Optional[int] = DEFAULT_MAX_FILE_SIZE,
-        allow_root: Optional[str] = None,
-    ) -> Optional[str]:
+        allowed_exts: tuple[str, ...] | None = None,
+        max_size: int | None = DEFAULT_MAX_FILE_SIZE,
+        allow_root: str | None = None,
+    ) -> str | None:
         """校验文件路径,返回失败原因字符串;None 表示通过。
 
         Args:
@@ -198,7 +198,7 @@ class BaseExpert(abc.ABC):
         return None
 
     @staticmethod
-    def _validate_string(value: str, name: str) -> Optional[str]:
+    def _validate_string(value: str, name: str) -> str | None:
         """校验字符串参数:strip 后非空。
 
         Args:
@@ -219,9 +219,9 @@ class BaseExpert(abc.ABC):
         value: int,
         name: str,
         *,
-        min_value: Optional[int] = None,
-        max_value: Optional[int] = None,
-    ) -> Optional[str]:
+        min_value: int | None = None,
+        max_value: int | None = None,
+    ) -> str | None:
         """校验整数范围。
 
         Args:

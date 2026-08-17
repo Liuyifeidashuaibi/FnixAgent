@@ -18,19 +18,26 @@ AgentScheduler - 进程调度器 (Process Scheduler)
   - 无后台调度循环: 已实现 _scheduler_loop
   - 无资源监控: 已实现 _resource_monitor_loop
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import asyncio
 import json
 import time
-from collections import deque
 from typing import Any
 
 from fnixagent.core.agent.process import AgentProcess
 from fnixagent.core.agent.types import (
-    AgentPriority, AgentState, StorageBackend, utcnow_iso,
+    AgentPriority,
+    AgentState,
+    StorageBackend,
 )
-
 
 class AgentScheduler:
     """Agent 调度器 (类比 OS Scheduler)。
@@ -174,9 +181,7 @@ class AgentScheduler:
             if not self._ready_queue:
                 return None
             # 排序: 优先级降序, cpu_time 升序 (公平)
-            self._ready_queue.sort(
-                key=lambda p: (-p.priority, p.cpu_time_ms)
-            )
+            self._ready_queue.sort(key=lambda p: (-p.priority, p.cpu_time_ms))
             proc = self._ready_queue.pop(0)
             proc.transition(AgentState.RUNNING)
             proc.last_scheduled = time.monotonic()
@@ -238,9 +243,11 @@ class AgentScheduler:
             terminated_pids.add(current_pid)
 
             async with self._lock:
-                proc = (self._running.pop(current_pid, None)
-                        or self._blocked.pop(current_pid, None)
-                        or self._suspended.pop(current_pid, None))
+                proc = (
+                    self._running.pop(current_pid, None)
+                    or self._blocked.pop(current_pid, None)
+                    or self._suspended.pop(current_pid, None)
+                )
                 if proc is None:
                     for i, p in enumerate(self._ready_queue):
                         if p.pid == current_pid:
@@ -259,9 +266,7 @@ class AgentScheduler:
             # 将子进程加入待终止队列
             for child_pid in list(proc.child_pids):
                 if child_pid not in terminated_pids:
-                    to_terminate.append(
-                        (child_pid, f"父进程 {current_pid} 终止")
-                    )
+                    to_terminate.append((child_pid, f"父进程 {current_pid} 终止"))
 
     async def suspend(self, pid: str) -> dict[str, Any] | None:
         """挂起 Agent 并保存检查点 (Durable Execution)。
@@ -269,8 +274,7 @@ class AgentScheduler:
         修复原版 bug: str(dict) 非 JSON, resume 从未反序列化。
         """
         async with self._lock:
-            proc = (self._running.pop(pid, None)
-                    or self._blocked.pop(pid, None))
+            proc = self._running.pop(pid, None) or self._blocked.pop(pid, None)
             if proc is None:
                 for i, p in enumerate(self._ready_queue):
                     if p.pid == pid:
@@ -314,8 +318,7 @@ class AgentScheduler:
     async def checkpoint(self, pid: str) -> dict[str, Any] | None:
         """保存检查点但不挂起 (类比 fsync)。"""
         async with self._lock:
-            proc = (self._running.get(pid) or self._blocked.get(pid)
-                    or self._suspended.get(pid))
+            proc = self._running.get(pid) or self._blocked.get(pid) or self._suspended.get(pid)
         if proc is None:
             for p in self._ready_queue:
                 if p.pid == pid:
@@ -336,8 +339,10 @@ class AgentScheduler:
         async with self._lock:
             to_preempt: list[AgentProcess] = []
             for running_pid, running_proc in list(self._running.items()):
-                if (new_proc.priority > running_proc.priority
-                        and running_proc.priority != AgentPriority.REALTIME):
+                if (
+                    new_proc.priority > running_proc.priority
+                    and running_proc.priority != AgentPriority.REALTIME
+                ):
                     to_preempt.append(running_proc)
             for proc in to_preempt:
                 self._running.pop(proc.pid, None)
@@ -351,8 +356,7 @@ class AgentScheduler:
 
     def get_process_state(self, pid: str) -> AgentState | None:
         """查询进程状态。"""
-        for collection in (self._running, self._blocked,
-                           self._suspended, self._terminated):
+        for collection in (self._running, self._blocked, self._suspended, self._terminated):
             if pid in collection:
                 return collection[pid].state
         for p in self._ready_queue:
@@ -396,6 +400,5 @@ class AgentScheduler:
             "scheduler_running": self._scheduler_task is not None,
             "monitor_running": self._monitor_task is not None,
         }
-
 
 __all__ = ["AgentScheduler"]

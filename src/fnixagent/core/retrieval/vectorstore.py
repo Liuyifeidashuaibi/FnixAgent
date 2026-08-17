@@ -16,16 +16,22 @@
   - 检索复杂度 O(n*dim + n log k),n 为候选集大小
   - 对万级以下数据足够;更大规模请用 Milvus/FAISS
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import abc
 import threading
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 from fnixagent.core.mathops import batch_cosine_similarity, top_k_with_scores
 from fnixagent.core.types import MemoryItem
-
 
 @dataclass
 class _VectorRecord:
@@ -34,10 +40,10 @@ class _VectorRecord:
     vector 用 list[float] 存储以兼容 mathops 的 Sequence 接口;
     若需进一步压缩内存可改用 array.array('f', ...)。
     """
+
     id: str
     vector: list[float]
     metadata: dict[str, Any] = field(default_factory=dict)
-
 
 class BaseVectorStore(abc.ABC):
     """向量库抽象基类。"""
@@ -72,7 +78,6 @@ class BaseVectorStore(abc.ABC):
         """返回总条数。"""
         ...
 
-
 class InMemoryVectorStore(BaseVectorStore):
     """
     内存向量库 — Milvus/FAISS 的轻量平替。
@@ -91,7 +96,7 @@ class InMemoryVectorStore(BaseVectorStore):
         self._records: list[_VectorRecord] = []
         self._id_index: dict[str, int] = {}  # id -> records 中的索引
         # 维度记录:首条入库向量决定,后续入库校验一致性
-        self._dim: Optional[int] = None
+        self._dim: int | None = None
         self._lock = threading.RLock()
 
     def _check_dim(self, vector: list[float], *, allow_init: bool = True) -> None:
@@ -112,9 +117,7 @@ class InMemoryVectorStore(BaseVectorStore):
                 self._dim = v_len
             return
         if v_len != self._dim:
-            raise ValueError(
-                f"向量维度不一致: got {v_len}, expected {self._dim}"
-            )
+            raise ValueError(f"向量维度不一致: got {v_len}, expected {self._dim}")
 
     def add(
         self,
@@ -143,9 +146,7 @@ class InMemoryVectorStore(BaseVectorStore):
                     self._records[idx] = _VectorRecord(rid, list(vec), dict(meta))
                 else:
                     self._id_index[rid] = len(self._records)
-                    self._records.append(
-                        _VectorRecord(rid, list(vec), dict(meta))
-                    )
+                    self._records.append(_VectorRecord(rid, list(vec), dict(meta)))
                 inserted += 1
             return inserted
 
@@ -172,13 +173,13 @@ class InMemoryVectorStore(BaseVectorStore):
             if self._dim is not None:
                 if len(query_vector) != self._dim:
                     raise ValueError(
-                        f"query_vector 维度不一致: got {len(query_vector)}, "
-                        f"expected {self._dim}"
+                        f"query_vector 维度不一致: got {len(query_vector)}, expected {self._dim}"
                     )
             # 过滤候选集(在锁内快照,避免迭代时被并发修改)
             if filter:
                 candidates = [
-                    r for r in self._records
+                    r
+                    for r in self._records
                     if all(r.metadata.get(k) == v for k, v in filter.items())
                 ]
             else:
@@ -229,7 +230,7 @@ class InMemoryVectorStore(BaseVectorStore):
         with self._lock:
             return len(self._records)
 
-    def get_by_id(self, rid: str) -> Optional[_VectorRecord]:
+    def get_by_id(self, rid: str) -> _VectorRecord | None:
         """按 id 查单条。"""
         with self._lock:
             idx = self._id_index.get(rid)
@@ -238,7 +239,7 @@ class InMemoryVectorStore(BaseVectorStore):
             return self._records[idx]
 
     @property
-    def dim(self) -> Optional[int]:
+    def dim(self) -> int | None:
         """库内向量维度(空库时为 None)。"""
         with self._lock:
             return self._dim
@@ -251,7 +252,6 @@ class InMemoryVectorStore(BaseVectorStore):
             self._id_index.clear()
             self._dim = None
             return n
-
 
 # 便捷别名:默认内存向量库实现
 VectorStore = InMemoryVectorStore

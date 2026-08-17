@@ -12,23 +12,28 @@
 
 可选依赖:无(纯 Python)
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import re
 from typing import Any
 
 from fnixagent.office.parser import (
-    Element,
-    Title,
-    NarrativeText,
-    ListItem,
-    Table,
-    Image,
-    Header,
     Footer,
+    Header,
+    Image,
+    ListItem,
+    NarrativeText,
     PageBreak,
+    Table,
+    Title,
 )
-
 
 # 中英文加空格正则:
 #   ([a-zA-Z0-9])(CJK)  →  \1 \2
@@ -169,12 +174,7 @@ class MarkdownRenderer:
         优先从 metadata 取 src/path;缺失时输出空占位。
         """
         meta = getattr(element, "metadata", {}) or {}
-        src = (
-            meta.get("src")
-            or meta.get("path")
-            or meta.get("image_path")
-            or ""
-        )
+        src = meta.get("src") or meta.get("path") or meta.get("image_path") or ""
         alt = meta.get("alt") or meta.get("name") or "image"
         if not src:
             return ""

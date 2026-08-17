@@ -15,16 +15,23 @@ Exporter 协议:
   - set_provider(p):   替换全局 Provider(用于测试)
   - reset_provider():  重置为默认 Provider
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import contextvars
 import threading
 import uuid
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from typing import Any
 
 from fnixagent.core.observability.tracing.span import Span
 from fnixagent.core.observability.tracing.trace import TraceImpl
-
 
 # ---------------------------------------------------------------------------
 # Exporter 类型
@@ -33,11 +40,9 @@ from fnixagent.core.observability.tracing.trace import TraceImpl
 SpanExporter = Callable[[Span], None]
 TraceExporter = Callable[[TraceImpl], None]
 
-
 # ---------------------------------------------------------------------------
 # TracingProvider
 # ---------------------------------------------------------------------------
-
 
 class TracingProvider:
     """顶层 Tracing Provider。
@@ -56,8 +61,8 @@ class TracingProvider:
         self._exporters_lock = threading.Lock()
         # 当前上下文的 Trace(基于 contextvars,每个线程/协程独立隔离)
         # 支持嵌套 Trace:外层 Trace 完成后自动恢复外层引用
-        self._current_trace: contextvars.ContextVar[Optional[TraceImpl]] = (
-            contextvars.ContextVar("fnixagent_current_trace", default=None)
+        self._current_trace: contextvars.ContextVar[TraceImpl | None] = contextvars.ContextVar(
+            "fnixagent_current_trace", default=None
         )
 
     # -- Exporter 注册 ------------------------------------------------------
@@ -99,7 +104,7 @@ class TracingProvider:
     def start_trace(
         self,
         name: str,
-        trace_id: Optional[str] = None,
+        trace_id: str | None = None,
         **attributes: Any,
     ) -> TraceImpl:
         """启动一个新 Trace。
@@ -162,7 +167,7 @@ class TracingProvider:
         return trace
 
     # -- 查询 ---------------------------------------------------------------
-    def get_current_trace(self) -> Optional[TraceImpl]:
+    def get_current_trace(self) -> TraceImpl | None:
         """获取当前上下文的 Trace(若有)。"""
         return self._current_trace.get()
 
@@ -178,16 +183,13 @@ class TracingProvider:
         with self._exporters_lock:
             return len(self._trace_exporters)
 
-
 # ---------------------------------------------------------------------------
 # 全局 Provider 管理
 # ---------------------------------------------------------------------------
 
-
-_global_provider: Optional[TracingProvider] = None
+_global_provider: TracingProvider | None = None
 # 单例初始化锁:保证多线程下 get_provider 只创建一个实例(线程安全单例)
 _provider_lock = threading.Lock()
-
 
 def get_provider() -> TracingProvider:
     """获取全局 TracingProvider(惰性初始化,线程安全)。
@@ -203,7 +205,6 @@ def get_provider() -> TracingProvider:
                 _global_provider = TracingProvider()
     return _global_provider
 
-
 def set_provider(provider: TracingProvider) -> None:
     """替换全局 TracingProvider(用于测试或自定义配置)。
 
@@ -212,7 +213,6 @@ def set_provider(provider: TracingProvider) -> None:
     global _global_provider
     with _provider_lock:
         _global_provider = provider
-
 
 def reset_provider() -> None:
     """重置全局 Provider 为 None(下次 get_provider 重新创建)。

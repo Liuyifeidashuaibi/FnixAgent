@@ -1,4 +1,4 @@
-﻿"""Phase 2.2 LDAP/AD 域集成测试。
+"""Phase 2.2 LDAP/AD 域集成测试。
 
 覆盖:
     1. LDAP 配置存储 CRUD(InMemoryLDAPConfigStore)
@@ -8,9 +8,16 @@
     5. 用户同步逻辑(按邮箱映射)
     6. ldap3 未安装时的降级处理
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 import sys
 import types
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 from fastapi import FastAPI
@@ -20,8 +27,8 @@ from fastapi.testclient import TestClient
 @pytest.fixture(autouse=True)
 def _reset_stores():
     """每个测试前后重置存储,确保隔离。"""
-    from fnixagent.services.storage_ldap import reset_ldap_config_store
     from fnixagent.services.storage import reset_stores
+    from fnixagent.services.storage_ldap import reset_ldap_config_store
 
     reset_ldap_config_store()
     reset_stores()
@@ -47,7 +54,6 @@ class MockLDAPEntry:
 
     def __getitem__(self, key):
         # 返回带 .value 属性的对象(模拟 ldap3 Attribute)
-        from unittest.mock import MagicMock
         m = MagicMock()
         m.value = self._attrs.get(key, "")
         return m
@@ -237,8 +243,11 @@ class TestLDAPClient:
         from fnixagent.core.security.auth.ldap import LDAPClient, LDAPConfig
 
         config = LDAPConfig(
-            id=1, name="AD", server_url="ldap://dc:389",
-            bind_dn="CN=svc,DC=co,DC=com", bind_password="pw",
+            id=1,
+            name="AD",
+            server_url="ldap://dc:389",
+            bind_dn="CN=svc,DC=co,DC=com",
+            bind_password="pw",
             user_search_base="OU=Users,DC=co,DC=com",
         )
         client = LDAPClient(config)
@@ -248,8 +257,11 @@ class TestLDAPClient:
         from fnixagent.core.security.auth.ldap import LDAPClient, LDAPConfig
 
         config = LDAPConfig(
-            id=1, name="AD", server_url="ldap://dc:389",
-            bind_dn="CN=svc,DC=co,DC=com", bind_password="wrong",
+            id=1,
+            name="AD",
+            server_url="ldap://dc:389",
+            bind_dn="CN=svc,DC=co,DC=com",
+            bind_password="wrong",
             user_search_base="OU=Users,DC=co,DC=com",
         )
         client = LDAPClient(config)
@@ -264,8 +276,11 @@ class TestLDAPClient:
         from fnixagent.core.security.auth.ldap import LDAPClient, LDAPConfig
 
         config = LDAPConfig(
-            id=1, name="AD", server_url="ldap://dc:389",
-            bind_dn="CN=svc,DC=co,DC=com", bind_password="pw",
+            id=1,
+            name="AD",
+            server_url="ldap://dc:389",
+            bind_dn="CN=svc,DC=co,DC=com",
+            bind_password="pw",
             user_search_base="OU=Users,DC=co,DC=com",
             username_attribute="sAMAccountName",
             email_attribute="mail",
@@ -275,14 +290,16 @@ class TestLDAPClient:
 
         # 预设搜索回调:返回 alice 用户
         def _search_cb(search_base, search_filter):
-            return [MockLDAPEntry(
-                dn="CN=alice,OU=Users,DC=co,DC=com",
-                attrs={
-                    "sAMAccountName": "alice",
-                    "mail": "alice@company.com",
-                    "displayName": "Alice Wang",
-                },
-            )]
+            return [
+                MockLDAPEntry(
+                    dn="CN=alice,OU=Users,DC=co,DC=com",
+                    attrs={
+                        "sAMAccountName": "alice",
+                        "mail": "alice@company.com",
+                        "displayName": "Alice Wang",
+                    },
+                )
+            ]
 
         mock_ldap3.Connection._search_callback = _search_cb
 
@@ -296,8 +313,11 @@ class TestLDAPClient:
         from fnixagent.core.security.auth.ldap import LDAPClient, LDAPConfig
 
         config = LDAPConfig(
-            id=1, name="AD", server_url="ldap://dc:389",
-            bind_dn="CN=svc,DC=co,DC=com", bind_password="pw",
+            id=1,
+            name="AD",
+            server_url="ldap://dc:389",
+            bind_dn="CN=svc,DC=co,DC=com",
+            bind_password="pw",
             user_search_base="OU=Users,DC=co,DC=com",
         )
         client = LDAPClient(config)
@@ -309,11 +329,18 @@ class TestLDAPClient:
         assert user is None
 
     def test_authenticate_empty_password_raises(self, mock_ldap3):
-        from fnixagent.core.security.auth.ldap import LDAPClient, LDAPConfig, LDAPAuthenticationError
+        from fnixagent.core.security.auth.ldap import (
+            LDAPAuthenticationError,
+            LDAPClient,
+            LDAPConfig,
+        )
 
         config = LDAPConfig(
-            id=1, name="AD", server_url="ldap://dc:389",
-            bind_dn="CN=svc,DC=co,DC=com", bind_password="pw",
+            id=1,
+            name="AD",
+            server_url="ldap://dc:389",
+            bind_dn="CN=svc,DC=co,DC=com",
+            bind_password="pw",
             user_search_base="OU=Users,DC=co,DC=com",
         )
         client = LDAPClient(config)
@@ -328,8 +355,11 @@ class TestLDAPClient:
         old = sys.modules.pop("ldap3", None)
         try:
             config = LDAPConfig(
-                id=1, name="AD", server_url="ldap://dc:389",
-                bind_dn="CN=svc,DC=co,DC=com", bind_password="pw",
+                id=1,
+                name="AD",
+                server_url="ldap://dc:389",
+                bind_dn="CN=svc,DC=co,DC=com",
+                bind_password="pw",
                 user_search_base="OU=Users,DC=co,DC=com",
             )
             client = LDAPClient(config)
@@ -359,11 +389,13 @@ class TestLDAPUserSync:
 
     def test_sync_user_to_local_creates_new(self, mock_ldap3):
         from fnixagent.core.security.auth.ldap import LDAPClient, LDAPConfig, LDAPUser
-        from fnixagent.services.storage import get_user_store
 
         config = LDAPConfig(
-            id=1, name="AD", server_url="ldap://dc:389",
-            bind_dn="CN=svc,DC=co,DC=com", bind_password="pw",
+            id=1,
+            name="AD",
+            server_url="ldap://dc:389",
+            bind_dn="CN=svc,DC=co,DC=com",
+            bind_password="pw",
             user_search_base="OU=Users,DC=co,DC=com",
         )
         client = LDAPClient(config)
@@ -390,8 +422,11 @@ class TestLDAPUserSync:
         store.create(username="bob", email="bob@company.com", password="Pass1234")
 
         config = LDAPConfig(
-            id=1, name="AD", server_url="ldap://dc:389",
-            bind_dn="CN=svc,DC=co,DC=com", bind_password="pw",
+            id=1,
+            name="AD",
+            server_url="ldap://dc:389",
+            bind_dn="CN=svc,DC=co,DC=com",
+            bind_password="pw",
             user_search_base="OU=Users,DC=co,DC=com",
         )
         client = LDAPClient(config)
@@ -413,11 +448,13 @@ class TestLDAPUserSync:
 
     def test_sync_users_batch(self, mock_ldap3):
         from fnixagent.core.security.auth.ldap import LDAPClient, LDAPConfig
-        from fnixagent.services.storage import get_user_store
 
         config = LDAPConfig(
-            id=1, name="AD", server_url="ldap://dc:389",
-            bind_dn="CN=svc,DC=co,DC=com", bind_password="pw",
+            id=1,
+            name="AD",
+            server_url="ldap://dc:389",
+            bind_dn="CN=svc,DC=co,DC=com",
+            bind_password="pw",
             user_search_base="OU=Users,DC=co,DC=com",
         )
         client = LDAPClient(config)
@@ -425,12 +462,22 @@ class TestLDAPUserSync:
         # 预设搜索回调:返回 alice 和 bob
         def _search_cb(search_base, search_filter):
             return [
-                MockLDAPEntry("CN=alice", {
-                    "sAMAccountName": "alice", "mail": "alice@co.com", "displayName": "Alice",
-                }),
-                MockLDAPEntry("CN=bob", {
-                    "sAMAccountName": "bob", "mail": "bob@co.com", "displayName": "Bob",
-                }),
+                MockLDAPEntry(
+                    "CN=alice",
+                    {
+                        "sAMAccountName": "alice",
+                        "mail": "alice@co.com",
+                        "displayName": "Alice",
+                    },
+                ),
+                MockLDAPEntry(
+                    "CN=bob",
+                    {
+                        "sAMAccountName": "bob",
+                        "mail": "bob@co.com",
+                        "displayName": "Bob",
+                    },
+                ),
             ]
 
         mock_ldap3.Connection._search_callback = _search_cb
@@ -470,15 +517,20 @@ class TestLDAPAPIEndpoints:
         from fnixagent.services.storage import get_user_store
 
         store = get_user_store()
-        user, _ = store.create(username="admin_ldap", email="admin@e.com", password="Pass1234", role="admin")
+        user, _ = store.create(
+            username="admin_ldap", email="admin@e.com", password="Pass1234", role="admin"
+        )
         return create_jwt_token(user_id=user.id, username=user.username), user.id
 
     def test_ldap_login_no_config_returns_503(self, client):
         """未配置 LDAP 时返回 503。"""
-        resp = client.post("/api/v1/auth/ldap/login", json={
-            "username": "alice",
-            "password": "pass",
-        })
+        resp = client.post(
+            "/api/v1/auth/ldap/login",
+            json={
+                "username": "alice",
+                "password": "pass",
+            },
+        )
         assert resp.status_code == 503
 
     def test_ldap_config_crud(self, client, admin_token):
@@ -487,14 +539,18 @@ class TestLDAPAPIEndpoints:
         headers = {"Authorization": f"Bearer {token}"}
 
         # 1. 创建
-        resp = client.post("/api/v1/admin/ldap/configs", json={
-            "name": "企业AD",
-            "server_url": "ldap://dc.company.com:389",
-            "bind_dn": "CN=svc,DC=company,DC=com",
-            "bind_password": "secret",
-            "user_search_base": "OU=Users,DC=company,DC=com",
-            "use_tls": False,
-        }, headers=headers)
+        resp = client.post(
+            "/api/v1/admin/ldap/configs",
+            json={
+                "name": "企业AD",
+                "server_url": "ldap://dc.company.com:389",
+                "bind_dn": "CN=svc,DC=company,DC=com",
+                "bind_password": "secret",
+                "user_search_base": "OU=Users,DC=company,DC=com",
+                "use_tls": False,
+            },
+            headers=headers,
+        )
         assert resp.status_code == 200
         cfg = resp.json()["data"]
         assert cfg["name"] == "企业AD"
@@ -507,9 +563,13 @@ class TestLDAPAPIEndpoints:
         assert len(resp.json()["data"]["items"]) == 1
 
         # 3. 更新
-        resp = client.put(f"/api/v1/admin/ldap/configs/{config_id}", json={
-            "name": "新名称",
-        }, headers=headers)
+        resp = client.put(
+            f"/api/v1/admin/ldap/configs/{config_id}",
+            json={
+                "name": "新名称",
+            },
+            headers=headers,
+        )
         assert resp.status_code == 200
         assert resp.json()["data"]["name"] == "新名称"
 
@@ -530,24 +590,34 @@ class TestLDAPAPIEndpoints:
         user, _ = store.create(username="normal", email="n@e.com", password="Pass1234", role="user")
         token = create_jwt_token(user_id=user.id, username=user.username)
 
-        resp = client.get("/api/v1/admin/ldap/configs", headers={
-            "Authorization": f"Bearer {token}",
-        })
+        resp = client.get(
+            "/api/v1/admin/ldap/configs",
+            headers={
+                "Authorization": f"Bearer {token}",
+            },
+        )
         assert resp.status_code == 403
 
     def test_ldap_config_create_validation(self, client, admin_token):
         """缺少必填字段返回 400。"""
         token, _ = admin_token
-        resp = client.post("/api/v1/admin/ldap/configs", json={
-            "name": "AD",
-            # 缺少 server_url, bind_dn, bind_password, user_search_base
-        }, headers={"Authorization": f"Bearer {token}"})
+        resp = client.post(
+            "/api/v1/admin/ldap/configs",
+            json={
+                "name": "AD",
+                # 缺少 server_url, bind_dn, bind_password, user_search_base
+            },
+            headers={"Authorization": f"Bearer {token}"},
+        )
         assert resp.status_code == 400
 
     def test_ldap_sync_no_configs_returns_404(self, client, admin_token):
         """无 LDAP 配置时触发同步返回 404。"""
         token, _ = admin_token
-        resp = client.post("/api/v1/admin/ldap/sync", headers={
-            "Authorization": f"Bearer {token}",
-        })
+        resp = client.post(
+            "/api/v1/admin/ldap/sync",
+            headers={
+                "Authorization": f"Bearer {token}",
+            },
+        )
         assert resp.status_code == 404

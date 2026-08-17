@@ -1,4 +1,4 @@
-﻿"""
+"""
 轨迹存储(TraceStore)单元测试。
 
 测试模块: fnixagent.core.flywheel.trace
@@ -12,18 +12,24 @@
     - stats(): 统计
     - clear(): 清空
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 import time
 
 import pytest
 
-from fnixagent.core.flywheel.stage1_perception import trace_from_dict, trace_to_dict
 from fnixagent.core.flywheel.trace import TraceStore
 from fnixagent.core.types import ReasoningMode, TraceRecord
-
 
 # ---------------------------------------------------------------------------
 # 辅助函数
 # ---------------------------------------------------------------------------
+
 
 def _make_trace(trace_id, goal="test", success=True, created_at=None, tokens=100, duration=500.0):
     """快速构造 TraceRecord。"""
@@ -45,6 +51,7 @@ def _make_trace(trace_id, goal="test", success=True, created_at=None, tokens=100
 # ---------------------------------------------------------------------------
 # append + load_all
 # ---------------------------------------------------------------------------
+
 
 class TestAppendAndLoadAll:
     """测试 append() 与 load_all()。"""
@@ -96,6 +103,7 @@ class TestAppendAndLoadAll:
 # load_recent
 # ---------------------------------------------------------------------------
 
+
 class TestLoadRecent:
     """测试 load_recent()。"""
 
@@ -136,6 +144,7 @@ class TestLoadRecent:
 # load_by_time_range
 # ---------------------------------------------------------------------------
 
+
 class TestLoadByTimeRange:
     """测试 load_by_time_range()。"""
 
@@ -169,6 +178,7 @@ class TestLoadByTimeRange:
 # load_by_success
 # ---------------------------------------------------------------------------
 
+
 class TestLoadBySuccess:
     """测试 load_by_success()。"""
 
@@ -201,6 +211,7 @@ class TestLoadBySuccess:
 # count
 # ---------------------------------------------------------------------------
 
+
 class TestCount:
     """测试 count() 方法。"""
 
@@ -221,6 +232,7 @@ class TestCount:
 # ---------------------------------------------------------------------------
 # stats
 # ---------------------------------------------------------------------------
+
 
 class TestStats:
     """测试 stats() 方法。"""
@@ -243,8 +255,13 @@ class TestStats:
         store.append(_make_trace("t1"))
         stats = store.stats()
         expected_keys = {
-            "total", "success_count", "failure_count", "success_rate",
-            "avg_duration_ms", "avg_tokens", "avg_reflection_score",
+            "total",
+            "success_count",
+            "failure_count",
+            "success_rate",
+            "avg_duration_ms",
+            "avg_tokens",
+            "avg_reflection_score",
         }
         assert expected_keys.issubset(set(stats.keys()))
 
@@ -280,6 +297,7 @@ class TestStats:
 # ---------------------------------------------------------------------------
 # clear
 # ---------------------------------------------------------------------------
+
 
 class TestClear:
     """测试 clear() 方法。"""
@@ -322,6 +340,7 @@ class TestClear:
 # 持久化隔离
 # ---------------------------------------------------------------------------
 
+
 class TestPersistence:
     """测试持久化行为(多实例共享同一文件)。"""
 
@@ -342,4 +361,5 @@ class TestPersistence:
         store = TraceStore(base_dir)
         store.append(_make_trace("t1"))
         import os
+
         assert os.path.exists(base_dir)

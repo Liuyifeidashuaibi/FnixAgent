@@ -32,6 +32,18 @@ fnixagent 任务引擎:从自然语言任务描述到执行结果的全链路调
   Phase 8.1 MCP:
     - mcp_server.OfficeMCPServer: MCP 协议暴露文档操作
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
+from fnixagent.tasks.confirmer import (
+    ConfirmationRequest,
+    HumanConfirmer,
+    RiskLevel,
+)
 from fnixagent.tasks.dsl import (
     Intent,
     TaskRequest,
@@ -39,33 +51,28 @@ from fnixagent.tasks.dsl import (
     TaskStep,
     TaskType,
 )
-from fnixagent.tasks.router import TaskRouter
+from fnixagent.tasks.editability import EditabilityGuard, EditabilityReport
+from fnixagent.tasks.pending_export import (
+    PendingExporter,
+    PendingItem,
+)
 from fnixagent.tasks.resolver import (
     AnswerResolver,
     GarbageDetector,
     GarbageReport,
     ResolveResult,
 )
-from fnixagent.tasks.validator import (
-    CheckItem,
-    TaskValidator,
-    ValidationReport,
-)
-from fnixagent.tasks.confirmer import (
-    ConfirmationRequest,
-    HumanConfirmer,
-    RiskLevel,
-)
-from fnixagent.tasks.pending_export import (
-    PendingExporter,
-    PendingItem,
-)
+from fnixagent.tasks.router import TaskRouter
 from fnixagent.tasks.scenarios import (
     ProcessOptions,
     QuestionBankScenario,
     QuestionInfo,
 )
-from fnixagent.tasks.editability import EditabilityGuard, EditabilityReport
+from fnixagent.tasks.validator import (
+    CheckItem,
+    TaskValidator,
+    ValidationReport,
+)
 
 __all__ = [
     # Phase 5.2 任务 DSL 与路由

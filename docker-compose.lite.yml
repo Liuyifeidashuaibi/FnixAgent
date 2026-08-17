@@ -1,0 +1,43 @@
+# 精简 Docker — 仅 PostgreSQL + Redis（local-stack 测试版）
+# 用法：docker compose -f docker-compose.lite.yml up -d
+# 然后：set FNIXAGENT_PROFILE=local-stack && python -m fnixagent.main serve
+
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: fnixagent-postgres-lite
+    environment:
+      POSTGRES_DB: fnixagent
+      POSTGRES_USER: fnixagent
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fnixagent-dev}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_lite_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fnixagent"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: fnixagent-redis-lite
+    command: redis-server --requirepass ${REDIS_PASSWORD:-fnixagent-dev}
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_lite_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-fnixagent-dev}", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  postgres_lite_data:
+  redis_lite_data:

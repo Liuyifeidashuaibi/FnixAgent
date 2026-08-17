@@ -15,12 +15,19 @@ SAML 2.0 Service Provider(SP)客户端(Phase 2.3)。
 
 依赖:python3-saml>=1.16(可选)
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import logging
 import secrets
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 from fnixagent.services.storage import get_user_store
 
@@ -56,30 +63,32 @@ class SAMLResponseError(SAMLError):
 @dataclass
 class SAMLConfig:
     """SAML SP 配置(与 storage_sso.SSOConfigDTO 对应)。"""
+
     id: int
-    provider_type: str               # "saml"
-    provider_code: str               # 自定义标识(如 azure_ad / okta)
-    name: str                        # 显示名
+    provider_type: str  # "saml"
+    provider_code: str  # 自定义标识(如 azure_ad / okta)
+    name: str  # 显示名
     # SP 端配置
-    sp_entity_id: str                # SP Entity ID(通常为 ACS URL)
-    acs_url: str                     # Assertion Consumer Service URL
+    sp_entity_id: str  # SP Entity ID(通常为 ACS URL)
+    acs_url: str  # Assertion Consumer Service URL
     # IdP 端配置
     idp_entity_id: str = ""
-    idp_sso_url: str = ""            # IdP Single Sign-On Service URL(用于重定向)
-    idp_x509_cert: str = ""          # IdP 公钥证书(用于验签,PEM 内容)
+    idp_sso_url: str = ""  # IdP Single Sign-On Service URL(用于重定向)
+    idp_x509_cert: str = ""  # IdP 公钥证书(用于验签,PEM 内容)
     # 用户信息字段映射(IdP claim → 标准字段)
     name_id_format: str = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
     field_mapping: dict[str, str] = field(default_factory=dict)
     is_active: bool = True
-    created_at: Optional[Any] = None
-    updated_at: Optional[Any] = None
+    created_at: Any | None = None
+    updated_at: Any | None = None
 
 
 @dataclass
 class SAMLUserInfo:
     """SAML 用户信息(标准化后)。"""
+
     provider_code: str
-    name_id: str                     # SAML NameID(通常为邮箱或用户名)
+    name_id: str  # SAML NameID(通常为邮箱或用户名)
     username: str = ""
     email: str = ""
     display_name: str = ""
@@ -113,6 +122,7 @@ class SAMLClient:
         try:
             from onelogin.saml2.auth import OneLogin_Saml2_Auth
             from onelogin.saml2.utils import OneLogin_Saml2_Utils
+
             return OneLogin_Saml2_Auth, OneLogin_Saml2_Utils
         except ImportError as e:
             raise SAMLNotInstalledError(
@@ -162,8 +172,9 @@ class SAMLClient:
         OneLogin_Saml2_Auth, _ = self._import_saml()
         return OneLogin_Saml2_Auth(request_dict, old_settings=self._build_settings())
 
-    def build_authn_request(self, request_dict: Optional[dict] = None,
-                             state: Optional[str] = None) -> dict:
+    def build_authn_request(
+        self, request_dict: dict | None = None, state: str | None = None
+    ) -> dict:
         """构建 SP 发起的 AuthnRequest,返回重定向信息。
 
         Returns:
@@ -173,8 +184,14 @@ class SAMLClient:
             }
         """
         if request_dict is None:
-            request_dict = {"https": False, "http_host": "", "server_port": 80,
-                             "script_name": "", "get_data": {}, "post_data": {}}
+            request_dict = {
+                "https": False,
+                "http_host": "",
+                "server_port": 80,
+                "script_name": "",
+                "get_data": {},
+                "post_data": {},
+            }
         if state is None:
             state = self.generate_state()
 
@@ -182,8 +199,7 @@ class SAMLClient:
         redirect_url = auth.login(return_to=state)
         return {"redirect_url": redirect_url, "state": state}
 
-    def parse_response(self, saml_response: str,
-                       request_dict: Optional[dict] = None) -> SAMLUserInfo:
+    def parse_response(self, saml_response: str, request_dict: dict | None = None) -> SAMLUserInfo:
         """解析 IdP POST 的 SAMLResponse,返回标准化用户信息。
 
         Args:
@@ -195,13 +211,15 @@ class SAMLClient:
         """
         if request_dict is None:
             request_dict = {
-                "https": False, "http_host": "", "server_port": 80,
-                "script_name": "", "get_data": {},
+                "https": False,
+                "http_host": "",
+                "server_port": 80,
+                "script_name": "",
+                "get_data": {},
                 "post_data": {"SAMLResponse": saml_response},
             }
         else:
-            request_dict = {**request_dict,
-                            "post_data": {"SAMLResponse": saml_response}}
+            request_dict = {**request_dict, "post_data": {"SAMLResponse": saml_response}}
 
         auth = self._make_auth(request_dict)
         try:
@@ -234,9 +252,7 @@ class SAMLClient:
             return ""
 
         email = _get_field("email") or (name_id if "@" in name_id else "")
-        username = _get_field("username") or (
-            email.split("@")[0] if email else name_id
-        )
+        username = _get_field("username") or (email.split("@")[0] if email else name_id)
         display_name = _get_field("display_name") or username
 
         return SAMLUserInfo(
@@ -271,16 +287,17 @@ class SAMLClient:
             if local_user is not None:
                 # 更新 profile(若需要)
                 profile = local_user.profile or {}
-                needs_update = (
-                    profile.get("display_name") != saml_user.display_name
-                )
+                needs_update = profile.get("display_name") != saml_user.display_name
                 if needs_update:
-                    user_store.update_profile(local_user.id, {
-                        **profile,
-                        "display_name": saml_user.display_name,
-                        "source": "saml",
-                        "saml_provider": saml_user.provider_code,
-                    })
+                    user_store.update_profile(
+                        local_user.id,
+                        {
+                            **profile,
+                            "display_name": saml_user.display_name,
+                            "source": "saml",
+                            "saml_provider": saml_user.provider_code,
+                        },
+                    )
                 return local_user
             else:
                 binding_store.delete(binding.id)
@@ -295,23 +312,24 @@ class SAMLClient:
                     provider_user_id=saml_user.name_id,
                 )
                 profile = local_user.profile or {}
-                user_store.update_profile(local_user.id, {
-                    **profile,
-                    "source": "saml",
-                    "saml_provider": saml_user.provider_code,
-                    "display_name": saml_user.display_name,
-                })
+                user_store.update_profile(
+                    local_user.id,
+                    {
+                        **profile,
+                        "source": "saml",
+                        "saml_provider": saml_user.provider_code,
+                        "display_name": saml_user.display_name,
+                    },
+                )
                 return local_user
 
         # 3. 创建新用户(随机密码)
         import secrets as _sec
         import string as _str
-        random_pw = "".join(
-            _sec.choice(_str.ascii_letters + _str.digits) for _ in range(32)
-        )
+
+        random_pw = "".join(_sec.choice(_str.ascii_letters + _str.digits) for _ in range(32))
         username = saml_user.username or (
-            saml_user.email.split("@")[0] if saml_user.email
-            else f"saml_{_sec.token_hex(4)}"
+            saml_user.email.split("@")[0] if saml_user.email else f"saml_{_sec.token_hex(4)}"
         )
         if user_store.get_by_username(username):
             username = f"{username}_{_sec.token_hex(3)}"
@@ -330,9 +348,12 @@ class SAMLClient:
             provider_code=saml_user.provider_code,
             provider_user_id=saml_user.name_id,
         )
-        user_store.update_profile(local_user.id, {
-            "source": "saml",
-            "saml_provider": saml_user.provider_code,
-            "display_name": saml_user.display_name,
-        })
+        user_store.update_profile(
+            local_user.id,
+            {
+                "source": "saml",
+                "saml_provider": saml_user.provider_code,
+                "display_name": saml_user.display_name,
+            },
+        )
         return local_user

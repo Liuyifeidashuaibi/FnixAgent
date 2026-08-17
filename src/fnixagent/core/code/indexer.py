@@ -1,7 +1,7 @@
 """
 CodeIndexer - 代码库语义索引器
 ================================
-对标 Aider RepoMap (tree-sitter 符号图) + Trae 全量索引 + Codex 语义搜索。
+仓库地图索引 (tree-sitter 符号图) + Trae 全量索引 + Codex 语义搜索。
 
 设计要点:
   - AST 解析 (Python 内置 ast 模块, 零依赖)
@@ -13,6 +13,13 @@ CodeIndexer - 代码库语义索引器
 
 零外部依赖: 仅 ast / re / hashlib / pathlib / os
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import ast
@@ -28,16 +35,18 @@ from typing import Any
 from fnixagent.core.retrieval.embedder import BaseEmbedder, HashingEmbedder
 from fnixagent.core.retrieval.hybrid import BM25Retriever
 from fnixagent.core.retrieval.vectorstore import (
-    BaseVectorStore, InMemoryVectorStore,
+    BaseVectorStore,
+    InMemoryVectorStore,
 )
-
 
 # ============================================================================
 # 数据结构
 # ============================================================================
 
+
 class SymbolKind(Enum):
     """符号类型 (类比 LSP SymbolKind)。"""
+
     FUNCTION = "function"
     CLASS = "class"
     METHOD = "method"
@@ -50,6 +59,7 @@ class SymbolKind(Enum):
 @dataclass
 class Location:
     """代码位置 (类比 LSP Location)。"""
+
     file: str
     start_line: int
     end_line: int
@@ -58,8 +68,10 @@ class Location:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "file": self.file, "start_line": self.start_line,
-            "end_line": self.end_line, "start_col": self.start_col,
+            "file": self.file,
+            "start_line": self.start_line,
+            "end_line": self.end_line,
+            "start_col": self.start_col,
             "end_col": self.end_col,
         }
 
@@ -67,19 +79,22 @@ class Location:
 @dataclass
 class SymbolInfo:
     """符号信息 (类比 LSP SymbolInformation)。"""
+
     name: str
     kind: SymbolKind
     location: Location
-    signature: str = ""           # 函数签名 / 类定义行
-    docstring: str = ""           # 文档字符串
-    parent: str = ""              # 父符号 (类名, 用于方法)
+    signature: str = ""  # 函数签名 / 类定义行
+    docstring: str = ""  # 文档字符串
+    parent: str = ""  # 父符号 (类名, 用于方法)
     references: list[Location] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "name": self.name, "kind": self.kind.value,
+            "name": self.name,
+            "kind": self.kind.value,
             "location": self.location.to_dict(),
-            "signature": self.signature, "docstring": self.docstring,
+            "signature": self.signature,
+            "docstring": self.docstring,
             "parent": self.parent,
             "reference_count": len(self.references),
         }
@@ -88,6 +103,7 @@ class SymbolInfo:
 @dataclass
 class CodeSlice:
     """代码切片 (一个完整的语义单元)。"""
+
     file: str
     symbol_name: str
     kind: SymbolKind
@@ -99,10 +115,13 @@ class CodeSlice:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "file": self.file, "symbol_name": self.symbol_name,
+            "file": self.file,
+            "symbol_name": self.symbol_name,
             "kind": self.kind.value,
-            "start_line": self.start_line, "end_line": self.end_line,
-            "content": self.content, "signature": self.signature,
+            "start_line": self.start_line,
+            "end_line": self.end_line,
+            "content": self.content,
+            "signature": self.signature,
             "docstring": self.docstring,
         }
 
@@ -110,6 +129,7 @@ class CodeSlice:
 @dataclass
 class IndexStats:
     """索引统计。"""
+
     total_files: int = 0
     total_symbols: int = 0
     total_slices: int = 0
@@ -134,6 +154,7 @@ class IndexStats:
 # Python AST 访问器 (提取符号 + 切片)
 # ============================================================================
 
+
 class _PythonSymbolVisitor(ast.NodeVisitor):
     """Python AST 访问器, 提取函数/类/方法符号。"""
 
@@ -147,9 +168,12 @@ class _PythonSymbolVisitor(ast.NodeVisitor):
     def _extract_docstring(self, node: ast.AST) -> str:
         """提取 docstring。"""
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
-            if (node.body and isinstance(node.body[0], ast.Expr)
-                    and isinstance(node.body[0].value, ast.Constant)
-                    and isinstance(node.body[0].value.value, str)):
+            if (
+                node.body
+                and isinstance(node.body[0], ast.Expr)
+                and isinstance(node.body[0].value, ast.Constant)
+                and isinstance(node.body[0].value.value, str)
+            ):
                 return node.body[0].value.value
         return ""
 
@@ -181,15 +205,22 @@ class _PythonSymbolVisitor(ast.NodeVisitor):
         sig = self._make_signature(node)
         doc = self._extract_docstring(node)
         loc = Location(
-            file=self.file, start_line=node.lineno,
+            file=self.file,
+            start_line=node.lineno,
             end_line=node.end_lineno or node.lineno,
             start_col=node.col_offset,
             end_col=getattr(node, "end_col_offset", 0) or 0,
         )
-        self.symbols.append(SymbolInfo(
-            name=node.name, kind=kind, location=loc,
-            signature=sig, docstring=doc, parent=parent,
-        ))
+        self.symbols.append(
+            SymbolInfo(
+                name=node.name,
+                kind=kind,
+                location=loc,
+                signature=sig,
+                docstring=doc,
+                parent=parent,
+            )
+        )
         # 递归访问函数体 (可能有嵌套函数)
         self._class_stack.append(node.name)
         self.generic_visit(node)
@@ -197,7 +228,8 @@ class _PythonSymbolVisitor(ast.NodeVisitor):
 
     def visit_ClassDef(self, node: ast.ClassDef) -> None:
         loc = Location(
-            file=self.file, start_line=node.lineno,
+            file=self.file,
+            start_line=node.lineno,
             end_line=node.end_lineno or node.lineno,
             start_col=node.col_offset,
             end_col=getattr(node, "end_col_offset", 0) or 0,
@@ -206,10 +238,15 @@ class _PythonSymbolVisitor(ast.NodeVisitor):
         bases = [ast.unparse(b) for b in node.bases]
         sig = f"class {node.name}({', '.join(bases)})" if bases else f"class {node.name}"
         doc = self._extract_docstring(node)
-        self.symbols.append(SymbolInfo(
-            name=node.name, kind=SymbolKind.CLASS, location=loc,
-            signature=sig, docstring=doc,
-        ))
+        self.symbols.append(
+            SymbolInfo(
+                name=node.name,
+                kind=SymbolKind.CLASS,
+                location=loc,
+                signature=sig,
+                docstring=doc,
+            )
+        )
         self._class_stack.append(node.name)
         self.generic_visit(node)
         self._class_stack.pop()
@@ -234,7 +271,12 @@ _REGEX_PATTERNS: dict[str, list[tuple[SymbolKind, re.Pattern[str]]]] = {
         (SymbolKind.CLASS, re.compile(r"^\s*(?:export\s+)?interface\s+(\w+)")),
     ],
     ".java": [
-        (SymbolKind.FUNCTION, re.compile(r"^\s*(?:public|private|protected)?\s*(?:static\s+)?[\w<>\[\],\s]+\s+(\w+)\s*\(")),
+        (
+            SymbolKind.FUNCTION,
+            re.compile(
+                r"^\s*(?:public|private|protected)?\s*(?:static\s+)?[\w<>\[\],\s]+\s+(\w+)\s*\("
+            ),
+        ),
         (SymbolKind.CLASS, re.compile(r"^\s*(?:public\s+)?(?:abstract\s+)?class\s+(\w+)")),
         (SymbolKind.CLASS, re.compile(r"^\s*(?:public\s+)?interface\s+(\w+)")),
     ],
@@ -266,18 +308,19 @@ def _parse_with_regex(file_path: str, source: str) -> list[SymbolInfo]:
                 # 估算结束行 (简单启发: 向下查找下一个同缩进定义)
                 end_line = i
                 for j in range(i, min(i + 200, len(lines))):
-                    if j > i and patterns and any(
-                        p.match(lines[j - 1]) for _, p in patterns
-                    ):
+                    if j > i and patterns and any(p.match(lines[j - 1]) for _, p in patterns):
                         end_line = j - 1
                         break
                 else:
                     end_line = min(i + 100, len(lines))
-                symbols.append(SymbolInfo(
-                    name=name, kind=kind,
-                    location=Location(file=file_path, start_line=i, end_line=end_line),
-                    signature=line.strip(),
-                ))
+                symbols.append(
+                    SymbolInfo(
+                        name=name,
+                        kind=kind,
+                        location=Location(file=file_path, start_line=i, end_line=end_line),
+                        signature=line.strip(),
+                    )
+                )
     return symbols
 
 
@@ -285,8 +328,9 @@ def _parse_with_regex(file_path: str, source: str) -> list[SymbolInfo]:
 # CodeIndexer 主类
 # ============================================================================
 
+
 class CodeIndexer:
-    """代码库语义索引器 (对标 Aider RepoMap + Trae 全量索引)。
+    """代码库语义索引器 (仓库地图索引 + Trae 全量索引)。
 
     功能:
       1. AST/正则解析 → 符号表 (定义位置)
@@ -305,16 +349,43 @@ class CodeIndexer:
     """
 
     # 默认忽略目录 (类比 .gitignore)
-    IGNORE_DIRS = frozenset({
-        "__pycache__", ".git", ".venv", "venv", "node_modules",
-        ".idea", ".vscode", "dist", "build", ".mypy_cache", ".ruff_cache",
-        ".pytest_cache", ".tox", ".eggs", "htmlcov", "_references",
-    })
+    IGNORE_DIRS = frozenset(
+        {
+            "__pycache__",
+            ".git",
+            ".venv",
+            "venv",
+            "node_modules",
+            ".idea",
+            ".vscode",
+            "dist",
+            "build",
+            ".mypy_cache",
+            ".ruff_cache",
+            ".pytest_cache",
+            ".tox",
+            ".eggs",
+            "htmlcov",
+            "_references",
+        }
+    )
     # 默认支持扩展名
-    SUPPORTED_EXTENSIONS = frozenset({
-        ".py", ".js", ".ts", ".tsx", ".jsx", ".java", ".go", ".rs",
-        ".c", ".cpp", ".h", ".hpp",
-    })
+    SUPPORTED_EXTENSIONS = frozenset(
+        {
+            ".py",
+            ".js",
+            ".ts",
+            ".tsx",
+            ".jsx",
+            ".java",
+            ".go",
+            ".rs",
+            ".c",
+            ".cpp",
+            ".h",
+            ".hpp",
+        }
+    )
     # 单文件最大字节数 (避免超大文件拖慢索引)
     MAX_FILE_SIZE = 512 * 1024  # 512KB
 
@@ -362,6 +433,7 @@ class CodeIndexer:
             IndexStats 索引统计
         """
         import time
+
         start = time.monotonic()
         stats = IndexStats()
         root_path = Path(root).resolve()
@@ -390,7 +462,7 @@ class CodeIndexer:
                     stats.indexed_files += 1
                 else:
                     stats.skipped_files += 1
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 stats.errors.append(f"{rel_path}: {type(e).__name__}: {e}")
                 stats.skipped_files += 1
 
@@ -406,7 +478,10 @@ class CodeIndexer:
         return stats
 
     async def _index_file(
-        self, file_path: Path, rel_path: str, incremental: bool,
+        self,
+        file_path: Path,
+        rel_path: str,
+        incremental: bool,
     ) -> bool:
         """索引单个文件, 返回是否实际重建。"""
         # 读取文件
@@ -445,11 +520,14 @@ class CodeIndexer:
             slice_content = self._extract_slice(source, sym)
             if slice_content:
                 cs = CodeSlice(
-                    file=rel_path, symbol_name=sym.name, kind=sym.kind,
+                    file=rel_path,
+                    symbol_name=sym.name,
+                    kind=sym.kind,
                     start_line=sym.location.start_line,
                     end_line=sym.location.end_line,
                     content=slice_content,
-                    signature=sym.signature, docstring=sym.docstring,
+                    signature=sym.signature,
+                    docstring=sym.docstring,
                 )
                 slice_id = f"{rel_path}:{sym.name}:{sym.location.start_line}"
                 self._slices[slice_id] = cs
@@ -459,10 +537,14 @@ class CodeIndexer:
                 vec = self._embedder.embed(text)
                 slice_ids.append(slice_id)
                 slice_vectors.append(vec)
-                slice_metas.append({
-                    "file": rel_path, "symbol": sym.name,
-                    "kind": sym.kind.value, "line": sym.location.start_line,
-                })
+                slice_metas.append(
+                    {
+                        "file": rel_path,
+                        "symbol": sym.name,
+                        "kind": sym.kind.value,
+                        "line": sym.location.start_line,
+                    }
+                )
                 self._bm25_docs.append((slice_id, text))
 
         # 批量写入向量库
@@ -485,7 +567,7 @@ class CodeIndexer:
         """从源码中提取符号对应的代码切片。"""
         lines = source.splitlines()
         start = sym.location.start_line - 1  # 0-indexed
-        end = sym.location.end_line           # exclusive
+        end = sym.location.end_line  # exclusive
         if start >= len(lines):
             return ""
         end = min(end, len(lines))
@@ -536,7 +618,7 @@ class CodeIndexer:
             scores[doc_id] += 1.0 / (rrf_k + rank + 1)
 
         # 取 top_k
-        ranked = sorted(scores.items(), key=lambda x: -x[1])[:top_k * 2]
+        ranked = sorted(scores.items(), key=lambda x: -x[1])[: top_k * 2]
 
         slices: list[CodeSlice] = []
         for slice_id, _score in ranked:
@@ -577,14 +659,18 @@ class CodeIndexer:
                 if re.search(rf"\b{re.escape(symbol)}\b", line):
                     # 排除定义行本身
                     is_def = any(
-                        s.location.file == rel_path and
-                        s.location.start_line <= i <= s.location.end_line
+                        s.location.file == rel_path
+                        and s.location.start_line <= i <= s.location.end_line
                         for s in defs
                     )
                     if not is_def:
-                        refs.append(Location(
-                            file=rel_path, start_line=i, end_line=i,
-                        ))
+                        refs.append(
+                            Location(
+                                file=rel_path,
+                                start_line=i,
+                                end_line=i,
+                            )
+                        )
         return refs
 
     def get_symbol_info(self, symbol: str) -> SymbolInfo | None:
@@ -594,11 +680,10 @@ class CodeIndexer:
 
     def get_file_symbols(self, file_path: str) -> list[SymbolInfo]:
         """获取文件中的所有符号 (类比 IDE Outline)。"""
-        return [s for syms in self._symbols.values() for s in syms
-                if s.location.file == file_path]
+        return [s for syms in self._symbols.values() for s in syms if s.location.file == file_path]
 
     def get_repo_map(self, max_tokens: int = 4096) -> str:
-        """生成仓库地图 (对标 Aider RepoMap)。
+        """生成仓库地图 (仓库地图索引)。
 
         输出格式:
           path/to/file.py
@@ -646,6 +731,10 @@ class CodeIndexer:
 
 
 __all__ = [
-    "CodeIndexer", "CodeSlice", "SymbolInfo", "SymbolKind", "IndexStats",
+    "CodeIndexer",
+    "CodeSlice",
+    "IndexStats",
     "Location",
+    "SymbolInfo",
+    "SymbolKind",
 ]

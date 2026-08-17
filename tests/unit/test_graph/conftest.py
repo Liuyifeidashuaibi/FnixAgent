@@ -1,4 +1,4 @@
-﻿"""
+"""
 LangGraph 编排层单元测试公共夹具。
 
 提供以下 fixtures:
@@ -10,6 +10,13 @@ LangGraph 编排层单元测试公共夹具。
     - sample_tool_metadata:  一个 ToolMetadata
     - sample_state:          初始化的 AgentState
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 import os
 import sys
 
@@ -23,10 +30,10 @@ from fnixagent.core.tools.registry import ToolRegistry
 from fnixagent.core.types import ToolPermission, TopologyPath
 from fnixagent.graph.state import AgentState, create_initial_state
 
-
 # ---------------------------------------------------------------------------
 # 模拟 TopologySearch
 # ---------------------------------------------------------------------------
+
 
 class FakeSearchEngine:
     """模拟 TopologySearch,记录调用并返回固定路径。"""
@@ -66,6 +73,7 @@ def mock_search(sample_path) -> FakeSearchEngine:
 # ---------------------------------------------------------------------------
 # 模拟 SkillScheduler
 # ---------------------------------------------------------------------------
+
 
 class FakeScheduler:
     """模拟 SkillScheduler,记录调用并返回固定 ToolMetadata 列表。"""
@@ -115,6 +123,7 @@ def mock_scheduler(sample_tool_metadata) -> FakeScheduler:
 # 模拟 SkillBindingProtocol
 # ---------------------------------------------------------------------------
 
+
 class FakeBindingProtocol:
     """模拟 SkillBindingProtocol。"""
 
@@ -141,6 +150,7 @@ def mock_binding_protocol() -> FakeBindingProtocol:
 # 真实 ToolRegistry(注册了测试工具)
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def mock_registry() -> ToolRegistry:
     """返回注册了测试工具的 ToolRegistry。"""
@@ -162,6 +172,7 @@ def mock_registry() -> ToolRegistry:
 # ---------------------------------------------------------------------------
 # AgentState fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def sample_state() -> AgentState:

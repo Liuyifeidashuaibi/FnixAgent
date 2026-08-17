@@ -17,19 +17,24 @@
   TaskRequest --classify--> TaskRouter --route--> list[TaskStep]
   TaskStep 逐步执行产出 ExpertResult,最终聚合为 TaskResult
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
-
+from typing import Any
 
 # ---------------------------------------------------------------------------
 # 任务类型与意图枚举
 # ---------------------------------------------------------------------------
-
 
 class TaskType(Enum):
     """任务类型枚举。
@@ -38,17 +43,16 @@ class TaskType(Enum):
     UNKNOWN 用于未能识别的任务,路由到最小步骤。
     """
 
-    QUESTION_BANK = "question_bank"        # 题库处理(填答案/统一格式/删题号)
+    QUESTION_BANK = "question_bank"  # 题库处理(填答案/统一格式/删题号)
     FORMAT_NORMALIZE = "format_normalize"  # 格式统一
-    DOCUMENT_EDIT = "document_edit"        # 文档编辑
-    TABLE_EXTRACT = "table_extract"        # 表格抽取
+    DOCUMENT_EDIT = "document_edit"  # 文档编辑
+    TABLE_EXTRACT = "table_extract"  # 表格抽取
     DOCUMENT_CONVERT = "document_convert"  # 格式转换
-    BATCH_PROCESS = "batch_process"        # 批量处理
-    DOCUMENT_REVIEW = "document_review"    # 文档审查
-    DATA_ANALYSIS = "data_analysis"        # 数据分析
-    REPORT_GENERATE = "report_generate"    # 报告生成
-    UNKNOWN = "unknown"                    # 未知/未能识别
-
+    BATCH_PROCESS = "batch_process"  # 批量处理
+    DOCUMENT_REVIEW = "document_review"  # 文档审查
+    DATA_ANALYSIS = "data_analysis"  # 数据分析
+    REPORT_GENERATE = "report_generate"  # 报告生成
+    UNKNOWN = "unknown"  # 未知/未能识别
 
 class Intent(Enum):
     """用户意图枚举(从自然语言描述中识别)。
@@ -56,20 +60,18 @@ class Intent(Enum):
     一个任务可命中多个意图(如"填答案并统一格式" → FILL_ANSWER + UNIFY_FORMAT)。
     """
 
-    FILL_ANSWER = "fill_answer"          # 填答案
-    FIX_GARBLED = "fix_garbled"          # 修复乱码
-    UNIFY_FORMAT = "unify_format"        # 统一格式
-    DELETE_NUMBER = "delete_number"      # 删除题号
+    FILL_ANSWER = "fill_answer"  # 填答案
+    FIX_GARBLED = "fix_garbled"  # 修复乱码
+    UNIFY_FORMAT = "unify_format"  # 统一格式
+    DELETE_NUMBER = "delete_number"  # 删除题号
     EXTRACT_CONTENT = "extract_content"  # 提取内容
-    CONVERT_FORMAT = "convert_format"    # 转换格式
-    MERGE_FILES = "merge_files"          # 合并文件
-    SPLIT_FILE = "split_file"            # 拆分文件
-
+    CONVERT_FORMAT = "convert_format"  # 转换格式
+    MERGE_FILES = "merge_files"  # 合并文件
+    SPLIT_FILE = "split_file"  # 拆分文件
 
 # ---------------------------------------------------------------------------
 # 任务请求 / 结果 / 步骤
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class TaskRequest:
@@ -91,14 +93,13 @@ class TaskRequest:
     task_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     description: str = ""
     file_paths: list[str] = field(default_factory=list)
-    output_path: Optional[str] = None
+    output_path: str | None = None
     task_type: TaskType = TaskType.UNKNOWN
     intents: list[Intent] = field(default_factory=list)
     params: dict[str, Any] = field(default_factory=dict)
     created_at: datetime = field(default_factory=datetime.now)
     priority: int = 0
     requires_confirmation: bool = False
-
 
 @dataclass
 class TaskResult:
@@ -119,7 +120,7 @@ class TaskResult:
     output_files: list[str] = field(default_factory=list)
     pending_items: list[dict[str, Any]] = field(default_factory=list)
     stats: dict[str, Any] = field(default_factory=dict)
-    error: Optional[str] = None
+    error: str | None = None
     duration_ms: float = 0.0
 
     def to_dict(self) -> dict[str, Any]:
@@ -133,7 +134,6 @@ class TaskResult:
             "error": self.error,
             "duration_ms": self.duration_ms,
         }
-
 
 @dataclass
 class TaskStep:

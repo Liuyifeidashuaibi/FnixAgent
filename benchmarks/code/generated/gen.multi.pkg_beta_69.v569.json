@@ -1,0 +1,46 @@
+{
+  "id": "gen.multi.pkg_beta_69.v569",
+  "title": "package pkg_beta_69",
+  "prompt": "Create package `pkg_beta_69` with `__init__.py` exporting `run()` and `pkg_beta_69/core.py` implementing `run()` returning 'pkg_beta_69-ok'.",
+  "capability": [
+    "multi_file",
+    "write"
+  ],
+  "difficulty": 3,
+  "language": "python",
+  "tags": [
+    "generated",
+    "multi_file"
+  ],
+  "timeout_s": 180,
+  "setup": {
+    "files": {
+      "README.md": "# pkg_beta_69\n"
+    }
+  },
+  "checks": [
+    {
+      "function": "file_exists",
+      "args": {
+        "path": "pkg_beta_69/__init__.py"
+      }
+    },
+    {
+      "function": "file_exists",
+      "args": {
+        "path": "pkg_beta_69/core.py"
+      }
+    },
+    {
+      "function": "stdout_equals",
+      "args": {
+        "command": [
+          "python",
+          "-c",
+          "from pkg_beta_69 import run; print(run())"
+        ],
+        "expected": "pkg_beta_69-ok"
+      }
+    }
+  ]
+}

@@ -16,23 +16,28 @@
   - SM4: GB/T 32907-2016(128 位分组密码,CBC/GCM 模式)
   - SM2: GB/T 32950-2016(椭圆曲线,本模块用 prime256v1 近似)
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
-import base64
 import hashlib
 import hmac
 import logging
 import os
 import struct
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
 # 可选依赖:gmssl(国密原生实现)
 try:
-    from gmssl import sm2, sm3, sm4  # type: ignore
+    from gmssl import sm2, sm3, sm4  # noqa: F401  # type: ignore
 
     _HAS_GMSSL = True
 except ImportError:  # pragma: no cover
@@ -42,39 +47,36 @@ except ImportError:  # pragma: no cover
 try:
     from cryptography.hazmat.backends import default_backend
     from cryptography.hazmat.primitives import hashes, serialization
-    from cryptography.hazmat.primitives.asymmetric import ec, padding as rsa_padding, rsa
+    from cryptography.hazmat.primitives.asymmetric import ec, rsa
+    from cryptography.hazmat.primitives.asymmetric import padding as rsa_padding
     from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
     _HAS_CRYPTO = True
 except ImportError:  # pragma: no cover
     _HAS_CRYPTO = False
 
-
 # ---------------------------------------------------------------------------
 # 审计钩子(失败不影响主流程)
 # ---------------------------------------------------------------------------
 
-
-def _audit_crypto(action: str, detail: Optional[dict] = None) -> None:
+def _audit_crypto(action: str, detail: dict | None = None) -> None:
     """将密码学操作写入审计日志(仅记录元信息,不记录密钥/明文)。"""
     try:
         from fnixagent.core.audit import AuditLogger
+
         AuditLogger().log(action=action, detail=detail or {})
     except Exception:
         pass
-
 
 # ---------------------------------------------------------------------------
 # 配置
 # ---------------------------------------------------------------------------
 
-
 class AlgorithmSuite(Enum):
     """算法栈枚举。"""
 
-    SM = "sm"              # 国密栈(SM2/SM3/SM4)
+    SM = "sm"  # 国密栈(SM2/SM3/SM4)
     INTERNATIONAL = "intl"  # 国际栈(RSA/SHA256/AES)
-
 
 @dataclass
 class CryptoConfig:
@@ -85,10 +87,10 @@ class CryptoConfig:
         sm_crypto: 是否启用国密
         fallback_to_intl: 国密不可用时是否降级到国际算法
     """
+
     suite: AlgorithmSuite = AlgorithmSuite.SM
     sm_crypto: bool = True
     fallback_to_intl: bool = True
-
 
 # ---------------------------------------------------------------------------
 # SM3 纯 Python 实现(GB/T 32905-2016)
@@ -96,21 +98,23 @@ class CryptoConfig:
 
 # SM3 初始值 IV
 _SM3_IV = (
-    0x7380166F, 0x4914B2B9, 0x172442D7, 0xDA8A0600,
-    0xA96F30BC, 0x163138AA, 0xE38DEE4D, 0xB0FB0E4E,
+    0x7380166F,
+    0x4914B2B9,
+    0x172442D7,
+    0xDA8A0600,
+    0xA96F30BC,
+    0x163138AA,
+    0xE38DEE4D,
+    0xB0FB0E4E,
 )
 
 # SM3 常量 T_j
-_SM3_T = tuple(
-    (0x79CC4519 if j < 16 else 0x7A879D8A) for j in range(64)
-)
-
+_SM3_T = tuple((0x79CC4519 if j < 16 else 0x7A879D8A) for j in range(64))
 
 def _sm3_rotl(x: int, n: int) -> int:
     """32 位循环左移。"""
     n &= 31
     return ((x << n) | (x >> (32 - n))) & 0xFFFFFFFF
-
 
 def _sm3_ff(j: int, x: int, y: int, z: int) -> int:
     """布尔函数 FF_j。"""
@@ -118,23 +122,19 @@ def _sm3_ff(j: int, x: int, y: int, z: int) -> int:
         return x ^ y ^ z
     return (x & y) | (x & z) | (y & z)
 
-
 def _sm3_gg(j: int, x: int, y: int, z: int) -> int:
     """布尔函数 GG_j。"""
     if j < 16:
         return x ^ y ^ z
     return (x & y) | ((~x & 0xFFFFFFFF) & z)
 
-
 def _sm3_p0(x: int) -> int:
     """置换函数 P_0。"""
     return x ^ _sm3_rotl(x, 9) ^ _sm3_rotl(x, 17)
 
-
 def _sm3_p1(x: int) -> int:
     """置换函数 P_1。"""
     return x ^ _sm3_rotl(x, 15) ^ _sm3_rotl(x, 23)
-
 
 def _sm3_pad(msg: bytes) -> bytes:
     """SM3 消息填充(类似 SHA-256,但长度域为 64 位大端)。"""
@@ -147,7 +147,6 @@ def _sm3_pad(msg: bytes) -> bytes:
     # 64 位大端长度(bit 长度)
     padded += struct.pack(">Q", length * 8)
     return padded
-
 
 def _sm3_compress(v: list, w: list) -> list:
     """SM3 压缩函数(单块)。"""
@@ -173,7 +172,6 @@ def _sm3_compress(v: list, w: list) -> list:
         e = _sm3_p0(tt2)
     return [a, b, c, d, e, f, g, h]
 
-
 def sm3_hash(data: bytes) -> bytes:
     """SM3 哈希(纯 Python 实现,GB/T 32905-2016)。
 
@@ -187,20 +185,19 @@ def sm3_hash(data: bytes) -> bytes:
     v = list(_SM3_IV)
     # 逐块处理:V_(i+1) = ABCDEFGH(compress 输出) ^ V_i
     for i in range(0, len(padded), 64):
-        block = padded[i:i + 64]
+        block = padded[i : i + 64]
         # 消息扩展 W[0..67]
         w = list(struct.unpack(">16I", block))
         for j in range(16, 68):
             w.append(
-                _sm3_p1(
-                    w[j - 16] ^ w[j - 9] ^ _sm3_rotl(w[j - 3], 15)
-                ) ^ _sm3_rotl(w[j - 13], 7) ^ w[j - 6]
+                _sm3_p1(w[j - 16] ^ w[j - 9] ^ _sm3_rotl(w[j - 3], 15))
+                ^ _sm3_rotl(w[j - 13], 7)
+                ^ w[j - 6]
             )
         # 压缩函数返回新的 ABCDEFGH,V_(i+1) = new_v ^ V_i
         new_v = _sm3_compress(v, w)
         v = [(v[k] ^ new_v[k]) for k in range(8)]
     return struct.pack(">8I", *v)
-
 
 # ---------------------------------------------------------------------------
 # SM4 纯 Python 实现(GB/T 32907-2016)
@@ -208,22 +205,262 @@ def sm3_hash(data: bytes) -> bytes:
 
 # SM4 S 盒
 _SM4_SBOX = (
-    0xD6, 0x90, 0xE9, 0xFE, 0xCC, 0xE1, 0x3D, 0xB7, 0x16, 0xB6, 0x14, 0xC2, 0x28, 0xFB, 0x2C, 0x05,
-    0x2B, 0x67, 0x9A, 0x76, 0x2A, 0xBE, 0x04, 0xC3, 0xAA, 0x44, 0x13, 0x26, 0x49, 0x86, 0x06, 0x99,
-    0x9C, 0x42, 0x50, 0xF4, 0x91, 0xEF, 0x98, 0x7A, 0x33, 0x54, 0x0B, 0x43, 0xED, 0xCF, 0xAC, 0x62,
-    0xE4, 0xB3, 0x1C, 0xA9, 0xC9, 0x08, 0xE8, 0x95, 0x80, 0xDF, 0x94, 0xFA, 0x75, 0x8F, 0x3F, 0xA6,
-    0x47, 0x07, 0xA7, 0xFC, 0xF3, 0x73, 0x17, 0xBA, 0x83, 0x59, 0x3C, 0x19, 0xE6, 0x85, 0x4F, 0xA8,
-    0x68, 0x6B, 0x81, 0xB2, 0x71, 0x64, 0xDA, 0x8B, 0xF8, 0xEB, 0x0F, 0x4B, 0x70, 0x56, 0x9D, 0x35,
-    0x1E, 0x24, 0x0E, 0x5E, 0x63, 0x58, 0xD1, 0xA2, 0x25, 0x22, 0x7C, 0x3B, 0x01, 0x21, 0x78, 0x87,
-    0xD4, 0x00, 0x46, 0x57, 0x9F, 0xD3, 0x27, 0x52, 0x4C, 0x36, 0x02, 0xE7, 0xA0, 0xC4, 0xC8, 0x9E,
-    0xEA, 0xBF, 0x8A, 0xD2, 0x40, 0xC7, 0x38, 0xB5, 0xA3, 0xF7, 0xF2, 0xCE, 0xF9, 0x61, 0x15, 0xA1,
-    0xE0, 0xAE, 0x5D, 0xA4, 0x9B, 0x34, 0x1A, 0x55, 0xAD, 0x93, 0x32, 0x30, 0xF5, 0x8C, 0xB1, 0xE3,
-    0x1D, 0xF6, 0xE2, 0x2E, 0x82, 0x66, 0xCA, 0x60, 0xC0, 0x29, 0x23, 0xAB, 0x0D, 0x53, 0x4E, 0x6F,
-    0xD5, 0xDB, 0x37, 0x45, 0xDE, 0xFD, 0x8E, 0x2F, 0x03, 0xFF, 0x6A, 0x72, 0x6D, 0x6C, 0x5B, 0x51,
-    0x8D, 0x1B, 0xAF, 0x92, 0xBB, 0xDD, 0xBC, 0x7F, 0x11, 0xD9, 0x5C, 0x41, 0x1F, 0x10, 0x5A, 0xD8,
-    0x0A, 0xC1, 0x31, 0x88, 0xA5, 0xCD, 0x7B, 0xBD, 0x2D, 0x74, 0xD0, 0x12, 0xB8, 0xE5, 0xB4, 0xB0,
-    0x89, 0x69, 0x97, 0x4A, 0x0C, 0x96, 0x77, 0x7E, 0x65, 0xB9, 0xF1, 0x09, 0xC5, 0x6E, 0xC6, 0x84,
-    0x18, 0xF0, 0x7D, 0xEC, 0x3A, 0xDC, 0x4D, 0x20, 0x79, 0xEE, 0x5F, 0x3E, 0xD7, 0xCB, 0x39, 0x48,
+    0xD6,
+    0x90,
+    0xE9,
+    0xFE,
+    0xCC,
+    0xE1,
+    0x3D,
+    0xB7,
+    0x16,
+    0xB6,
+    0x14,
+    0xC2,
+    0x28,
+    0xFB,
+    0x2C,
+    0x05,
+    0x2B,
+    0x67,
+    0x9A,
+    0x76,
+    0x2A,
+    0xBE,
+    0x04,
+    0xC3,
+    0xAA,
+    0x44,
+    0x13,
+    0x26,
+    0x49,
+    0x86,
+    0x06,
+    0x99,
+    0x9C,
+    0x42,
+    0x50,
+    0xF4,
+    0x91,
+    0xEF,
+    0x98,
+    0x7A,
+    0x33,
+    0x54,
+    0x0B,
+    0x43,
+    0xED,
+    0xCF,
+    0xAC,
+    0x62,
+    0xE4,
+    0xB3,
+    0x1C,
+    0xA9,
+    0xC9,
+    0x08,
+    0xE8,
+    0x95,
+    0x80,
+    0xDF,
+    0x94,
+    0xFA,
+    0x75,
+    0x8F,
+    0x3F,
+    0xA6,
+    0x47,
+    0x07,
+    0xA7,
+    0xFC,
+    0xF3,
+    0x73,
+    0x17,
+    0xBA,
+    0x83,
+    0x59,
+    0x3C,
+    0x19,
+    0xE6,
+    0x85,
+    0x4F,
+    0xA8,
+    0x68,
+    0x6B,
+    0x81,
+    0xB2,
+    0x71,
+    0x64,
+    0xDA,
+    0x8B,
+    0xF8,
+    0xEB,
+    0x0F,
+    0x4B,
+    0x70,
+    0x56,
+    0x9D,
+    0x35,
+    0x1E,
+    0x24,
+    0x0E,
+    0x5E,
+    0x63,
+    0x58,
+    0xD1,
+    0xA2,
+    0x25,
+    0x22,
+    0x7C,
+    0x3B,
+    0x01,
+    0x21,
+    0x78,
+    0x87,
+    0xD4,
+    0x00,
+    0x46,
+    0x57,
+    0x9F,
+    0xD3,
+    0x27,
+    0x52,
+    0x4C,
+    0x36,
+    0x02,
+    0xE7,
+    0xA0,
+    0xC4,
+    0xC8,
+    0x9E,
+    0xEA,
+    0xBF,
+    0x8A,
+    0xD2,
+    0x40,
+    0xC7,
+    0x38,
+    0xB5,
+    0xA3,
+    0xF7,
+    0xF2,
+    0xCE,
+    0xF9,
+    0x61,
+    0x15,
+    0xA1,
+    0xE0,
+    0xAE,
+    0x5D,
+    0xA4,
+    0x9B,
+    0x34,
+    0x1A,
+    0x55,
+    0xAD,
+    0x93,
+    0x32,
+    0x30,
+    0xF5,
+    0x8C,
+    0xB1,
+    0xE3,
+    0x1D,
+    0xF6,
+    0xE2,
+    0x2E,
+    0x82,
+    0x66,
+    0xCA,
+    0x60,
+    0xC0,
+    0x29,
+    0x23,
+    0xAB,
+    0x0D,
+    0x53,
+    0x4E,
+    0x6F,
+    0xD5,
+    0xDB,
+    0x37,
+    0x45,
+    0xDE,
+    0xFD,
+    0x8E,
+    0x2F,
+    0x03,
+    0xFF,
+    0x6A,
+    0x72,
+    0x6D,
+    0x6C,
+    0x5B,
+    0x51,
+    0x8D,
+    0x1B,
+    0xAF,
+    0x92,
+    0xBB,
+    0xDD,
+    0xBC,
+    0x7F,
+    0x11,
+    0xD9,
+    0x5C,
+    0x41,
+    0x1F,
+    0x10,
+    0x5A,
+    0xD8,
+    0x0A,
+    0xC1,
+    0x31,
+    0x88,
+    0xA5,
+    0xCD,
+    0x7B,
+    0xBD,
+    0x2D,
+    0x74,
+    0xD0,
+    0x12,
+    0xB8,
+    0xE5,
+    0xB4,
+    0xB0,
+    0x89,
+    0x69,
+    0x97,
+    0x4A,
+    0x0C,
+    0x96,
+    0x77,
+    0x7E,
+    0x65,
+    0xB9,
+    0xF1,
+    0x09,
+    0xC5,
+    0x6E,
+    0xC6,
+    0x84,
+    0x18,
+    0xF0,
+    0x7D,
+    0xEC,
+    0x3A,
+    0xDC,
+    0x4D,
+    0x20,
+    0x79,
+    0xEE,
+    0x5F,
+    0x3E,
+    0xD7,
+    0xCB,
+    0x39,
+    0x48,
 )
 
 # SM4 系统参数 FK
@@ -236,10 +473,10 @@ _SM4_CK = tuple(
         | ((4 * i + 1) * 7 % 256) << 16
         | ((4 * i + 2) * 7 % 256) << 8
         | ((4 * i + 3) * 7 % 256)
-    ) & 0xFFFFFFFF
+    )
+    & 0xFFFFFFFF
     for i in range(32)
 )
-
 
 def _sm4_tau(a: int) -> int:
     """SM4 非线性变换 τ(4 字节并行 S 盒替换)。"""
@@ -249,7 +486,6 @@ def _sm4_tau(a: int) -> int:
         | (_SM4_SBOX[(a >> 8) & 0xFF] << 8)
         | _SM4_SBOX[a & 0xFF]
     )
-
 
 def _sm4_t(x: int) -> int:
     """SM4 合成置换 T = L(τ(X))。"""
@@ -263,23 +499,18 @@ def _sm4_t(x: int) -> int:
         ^ ((b << 24) | (b >> 8)) & 0xFFFFFFFF
     ) & 0xFFFFFFFF
 
-
 def _sm4_t_prime(x: int) -> int:
     """SM4 合成置换 T'(密钥扩展用)= L'(τ(X))。"""
     b = _sm4_tau(x)
     # 线性变换 L': B ^ (B<<<13) ^ (B<<<23)
     return (
-        b
-        ^ ((b << 13) | (b >> 19)) & 0xFFFFFFFF
-        ^ ((b << 23) | (b >> 9)) & 0xFFFFFFFF
+        b ^ ((b << 13) | (b >> 19)) & 0xFFFFFFFF ^ ((b << 23) | (b >> 9)) & 0xFFFFFFFF
     ) & 0xFFFFFFFF
-
 
 def _sm4_rotl32(x: int, n: int) -> int:
     """32 位循环左移。"""
     n &= 31
     return ((x << n) | (x >> (32 - n))) & 0xFFFFFFFF
-
 
 def _sm4_key_expand(key: bytes) -> list:
     """SM4 密钥扩展,返回 32 个轮密钥。
@@ -297,7 +528,6 @@ def _sm4_key_expand(key: bytes) -> list:
         rk.append(new_k)
     return rk
 
-
 def _sm4_crypt_block(block: bytes, rk: list, decrypt: bool = False) -> bytes:
     """SM4 单块加密/解密(16 字节)。"""
     x = list(struct.unpack(">4I", block))
@@ -308,12 +538,10 @@ def _sm4_crypt_block(block: bytes, rk: list, decrypt: bool = False) -> bytes:
     # 反序变换 R
     return struct.pack(">4I", x[35], x[34], x[33], x[32])
 
-
 def _sm4_pkcs7_pad(data: bytes) -> bytes:
     """PKCS#7 填充到 16 字节倍数。"""
     pad_len = 16 - (len(data) % 16)
     return data + bytes([pad_len] * pad_len)
-
 
 def _sm4_pkcs7_unpad(data: bytes) -> bytes:
     """PKCS#7 去填充。"""
@@ -323,7 +551,6 @@ def _sm4_pkcs7_unpad(data: bytes) -> bytes:
     if pad_len < 1 or pad_len > 16:
         raise ValueError("无效的填充长度")
     return data[:-pad_len]
-
 
 def sm4_cbc_encrypt(plaintext: bytes, key: bytes, iv: bytes) -> bytes:
     """SM4-CBC 加密(纯 Python 实现)。
@@ -343,14 +570,13 @@ def sm4_cbc_encrypt(plaintext: bytes, key: bytes, iv: bytes) -> bytes:
     ciphertext = b""
     prev = iv
     for i in range(0, len(padded), 16):
-        block = padded[i:i + 16]
+        block = padded[i : i + 16]
         # XOR with previous ciphertext block (or IV)
         xored = bytes(a ^ b for a, b in zip(block, prev))
         encrypted = _sm4_crypt_block(xored, rk, decrypt=False)
         ciphertext += encrypted
         prev = encrypted
     return ciphertext
-
 
 def sm4_cbc_decrypt(ciphertext: bytes, key: bytes, iv: bytes) -> bytes:
     """SM4-CBC 解密(纯 Python 实现)。"""
@@ -362,12 +588,11 @@ def sm4_cbc_decrypt(ciphertext: bytes, key: bytes, iv: bytes) -> bytes:
     plaintext = b""
     prev = iv
     for i in range(0, len(ciphertext), 16):
-        block = ciphertext[i:i + 16]
+        block = ciphertext[i : i + 16]
         decrypted = _sm4_crypt_block(block, rk, decrypt=True)
         plaintext += bytes(a ^ b for a, b in zip(decrypted, prev))
         prev = block
     return _sm4_pkcs7_unpad(plaintext)
-
 
 def sm3_hmac(key: bytes, data: bytes) -> bytes:
     """HMAC-SM3(基于纯 Python SM3,参考 RFC 2104)。"""
@@ -380,11 +605,9 @@ def sm3_hmac(key: bytes, data: bytes) -> bytes:
     i_key_pad = bytes(k ^ 0x36 for k in key)
     return sm3_hash(o_key_pad + sm3_hash(i_key_pad + data))
 
-
 # ---------------------------------------------------------------------------
 # CryptoProvider
 # ---------------------------------------------------------------------------
-
 
 class CryptoProvider:
     """统一密码学接口(双栈)。
@@ -402,15 +625,12 @@ class CryptoProvider:
     _SM2_APPROXIMATE = True
     _SM2_CURVE = "prime256v1"
 
-    def __init__(self, config: Optional[CryptoConfig] = None) -> None:
+    def __init__(self, config: CryptoConfig | None = None) -> None:
         self.config = config or CryptoConfig()
         # 检测国密可用性
         self._sm_available = self._check_sm_availability()
         if not self._sm_available and self.config.fallback_to_intl:
-            logger.warning(
-                "[crypto] 国密栈不可用(gmssl 缺失且纯 Python 降级受限),"
-                "切换到国际算法栈"
-            )
+            logger.warning("[crypto] 国密栈不可用(gmssl 缺失且纯 Python 降级受限),切换到国际算法栈")
             self.config.suite = AlgorithmSuite.INTERNATIONAL
             self.config.sm_crypto = False
         # 缓存密钥对(内部使用)
@@ -481,10 +701,13 @@ class CryptoProvider:
             return self._verify_rsa(data, signature, public_key)
         except Exception as exc:
             logger.warning("[crypto] verify 失败: %s", exc)
-            _audit_crypto("crypto.verify_failed", detail={
-                "suite": self.get_suite_name(),
-                "reason": type(exc).__name__,
-            })
+            _audit_crypto(
+                "crypto.verify_failed",
+                detail={
+                    "suite": self.get_suite_name(),
+                    "reason": type(exc).__name__,
+                },
+            )
             return False
 
     def encrypt(self, plaintext: bytes, key: bytes) -> bytes:
@@ -544,9 +767,7 @@ class CryptoProvider:
             priv = serialization.load_pem_private_key(
                 private_key, password=None, backend=default_backend()
             )
-            peer_pub = serialization.load_pem_public_key(
-                peer_public_key, backend=default_backend()
-            )
+            peer_pub = serialization.load_pem_public_key(peer_public_key, backend=default_backend())
             shared_key = priv.exchange(ec.ECDH(), peer_pub)
             return shared_key
         except Exception as exc:
@@ -566,9 +787,7 @@ class CryptoProvider:
     def _use_sm(self) -> bool:
         """判断是否使用国密栈。"""
         return (
-            self.config.sm_crypto
-            and self.config.suite == AlgorithmSuite.SM
-            and self._sm_available
+            self.config.sm_crypto and self.config.suite == AlgorithmSuite.SM and self._sm_available
         )
 
     def _check_sm_availability(self) -> bool:
@@ -603,9 +822,7 @@ class CryptoProvider:
             return sm3_hmac(key, data)
 
         # 近似:用 EC prime256v1 + SHA256(cryptography 不支持自定义哈希)
-        priv = serialization.load_pem_private_key(
-            key, password=None, backend=default_backend()
-        )
+        priv = serialization.load_pem_private_key(key, password=None, backend=default_backend())
         # 对数据先做 SM3 哈希,再用 EC-SHA256 签名(双层近似)
         data_hash = self.hash(data)
         signature = priv.sign(
@@ -623,9 +840,7 @@ class CryptoProvider:
             expected = sm3_hmac(public_key, data)
             return hmac.compare_digest(expected, signature)
 
-        pub = serialization.load_pem_public_key(
-            public_key, backend=default_backend()
-        )
+        pub = serialization.load_pem_public_key(public_key, backend=default_backend())
         data_hash = self.hash(data)
         try:
             pub.verify(signature, data_hash, ec.ECDSA(hashes.SHA256()))
@@ -635,9 +850,7 @@ class CryptoProvider:
 
     def _generate_ec_keypair(self) -> tuple[bytes, bytes]:
         """生成 EC 密钥对(prime256v1,SM2 近似)。"""
-        priv = ec.generate_private_key(
-            ec.SECP256R1(), backend=default_backend()
-        )
+        priv = ec.generate_private_key(ec.SECP256R1(), backend=default_backend())
         priv_pem = priv.private_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PrivateFormat.PKCS8,
@@ -677,9 +890,7 @@ class CryptoProvider:
                 return False
             expected = hmac.new(public_key, data, hashlib.sha256).digest()
             return hmac.compare_digest(expected, signature)
-        pub = serialization.load_pem_public_key(
-            public_key, backend=default_backend()
-        )
+        pub = serialization.load_pem_public_key(public_key, backend=default_backend())
         try:
             pub.verify(
                 signature,
@@ -786,32 +997,27 @@ class CryptoProvider:
         nonce = data[:12]
         tag = data[12:28]
         ct = data[28:]
-        cipher = Cipher(
-            algorithms.AES(key), modes.GCM(nonce, tag), backend=default_backend()
-        )
+        cipher = Cipher(algorithms.AES(key), modes.GCM(nonce, tag), backend=default_backend())
         decryptor = cipher.decryptor()
         return decryptor.update(ct) + decryptor.finalize()
-
 
 # ---------------------------------------------------------------------------
 # 全局单例(懒加载)
 # ---------------------------------------------------------------------------
 
-
-_provider_instance: Optional[CryptoProvider] = None
+_provider_instance: CryptoProvider | None = None
 _provider_lock = None
-
 
 def _get_lock():
     """延迟导入 threading.Lock(避免模块加载时副作用)。"""
     global _provider_lock
     if _provider_lock is None:
         import threading
+
         _provider_lock = threading.Lock()
     return _provider_lock
 
-
-def get_crypto_provider(config: Optional[CryptoConfig] = None) -> CryptoProvider:
+def get_crypto_provider(config: CryptoConfig | None = None) -> CryptoProvider:
     """获取全局 CryptoProvider 单例。
 
     Args:
@@ -826,7 +1032,6 @@ def get_crypto_provider(config: Optional[CryptoConfig] = None) -> CryptoProvider
             if _provider_instance is None:
                 _provider_instance = CryptoProvider(config)
     return _provider_instance
-
 
 def reset_crypto_provider() -> None:
     """重置单例(主要用于测试)。"""

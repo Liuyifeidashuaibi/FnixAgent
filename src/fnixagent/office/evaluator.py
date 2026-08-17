@@ -25,20 +25,25 @@
   # result.soft_rate = 1.0  # 全部通过
   # result.hard_rate = 1.0  # 硬约束通过
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
-import hashlib
 import os
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable, Optional
+from typing import Any
 
 from fnixagent.office.base import BaseExpert, ExpertResult
-
 
 # ---------------------------------------------------------------------------
 # 数据结构
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class CheckResult:
@@ -53,7 +58,6 @@ class CheckResult:
     passed: bool
     function: str
     detail: str = ""
-
 
 @dataclass
 class TaskResult:
@@ -83,7 +87,6 @@ class TaskResult:
             self.soft_rate = self.passed_count / self.total_count
             self.hard_rate = 1.0 if self.passed_count == self.total_count else 0.0
 
-
 @dataclass
 class ScoreSummary:
     """评测汇总分数(借鉴 SpreadsheetBench 的 Soft/Hard 双指标)。
@@ -110,11 +113,9 @@ class ScoreSummary:
             self.soft_avg = sum(r.soft_rate for r in self.results) / self.total_tasks
             self.hard_rate = self.passed_tasks / self.total_tasks
 
-
 # ---------------------------------------------------------------------------
 # 评测器
 # ---------------------------------------------------------------------------
-
 
 class Evaluator(BaseExpert):
     """Fnix Agent 评测器。
@@ -221,9 +222,7 @@ class Evaluator(BaseExpert):
     # 内部:检查函数执行
     # ------------------------------------------------------------------
 
-    def _run_check(
-        self, output_dir: str, func_name: str, args: dict
-    ) -> CheckResult:
+    def _run_check(self, output_dir: str, func_name: str, args: dict) -> CheckResult:
         """执行单个检查项。"""
         func = self._check_functions.get(func_name)
         if func is None:
@@ -287,6 +286,7 @@ class Evaluator(BaseExpert):
         try:
             if ext == ".docx":
                 from docx import Document
+
                 doc = Document(filepath)
                 text = "\n".join(p.text for p in doc.paragraphs)
                 for tbl in doc.tables:
@@ -294,20 +294,19 @@ class Evaluator(BaseExpert):
                         for cell in row.cells:
                             text += "\n" + cell.text
             elif ext == ".txt":
-                with open(filepath, "r", encoding="utf-8") as f:
+                with open(filepath, encoding="utf-8") as f:
                     text = f.read()
             elif ext == ".pdf":
                 import fitz
+
                 doc = fitz.open(filepath)
                 text = "\n".join(page.get_text() for page in doc)
                 doc.close()
             else:
-                with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
+                with open(filepath, encoding="utf-8", errors="ignore") as f:
                     text = f.read()
         except Exception as e:
-            return CheckResult(
-                passed=False, function="text_contains", detail=f"read error: {e}"
-            )
+            return CheckResult(passed=False, function="text_contains", detail=f"read error: {e}")
 
         # 检查所有关键词
         missing = [kw for kw in keywords if kw not in text]
@@ -338,18 +337,17 @@ class Evaluator(BaseExpert):
         try:
             if ext == ".docx":
                 from docx import Document
+
                 doc = Document(filepath)
                 text = "\n".join(p.text for p in doc.paragraphs)
             elif ext == ".txt":
-                with open(filepath, "r", encoding="utf-8") as f:
+                with open(filepath, encoding="utf-8") as f:
                     text = f.read()
             else:
-                with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
+                with open(filepath, encoding="utf-8", errors="ignore") as f:
                     text = f.read()
         except Exception:
-            return CheckResult(
-                passed=False, function="text_not_contains", detail="read error"
-            )
+            return CheckResult(passed=False, function="text_not_contains", detail="read error")
 
         found = [kw for kw in keywords if kw in text]
         if not found:
@@ -366,7 +364,7 @@ class Evaluator(BaseExpert):
     def _check_excel_cell_value(output_dir: str, args: dict) -> CheckResult:
         """检查 Excel 单元格值(借鉴 SpreadsheetBench 的精确区域比对)。"""
         filename = args.get("filename", "")
-        sheet_name = args.get("sheet", None)
+        sheet_name = args.get("sheet")
         cell_ref = args.get("cell", "")  # 如 "A1" 或 "B3"
         expected = args.get("value", "")
         filepath = os.path.join(output_dir, filename)
@@ -378,6 +376,7 @@ class Evaluator(BaseExpert):
 
         try:
             from openpyxl import load_workbook
+
             wb = load_workbook(filepath, data_only=True)
             ws = wb[sheet_name] if sheet_name else wb.active
             actual = ws[cell_ref].value
@@ -396,24 +395,22 @@ class Evaluator(BaseExpert):
 
             if actual_n == expected_n:
                 return CheckResult(
-                    passed=True, function="excel_cell_value",
-                    detail=f"{cell_ref}={actual_n}"
+                    passed=True, function="excel_cell_value", detail=f"{cell_ref}={actual_n}"
                 )
             return CheckResult(
-                passed=False, function="excel_cell_value",
-                detail=f"{cell_ref}: expected={expected_n}, actual={actual_n}"
+                passed=False,
+                function="excel_cell_value",
+                detail=f"{cell_ref}: expected={expected_n}, actual={actual_n}",
             )
         except Exception as e:
-            return CheckResult(
-                passed=False, function="excel_cell_value", detail=f"error: {e}"
-            )
+            return CheckResult(passed=False, function="excel_cell_value", detail=f"error: {e}")
 
     @staticmethod
     def _check_word_heading_exists(output_dir: str, args: dict) -> CheckResult:
         """检查 Word 文档中是否存在指定标题。"""
         filename = args.get("filename", "")
         heading_text = args.get("text", "")
-        level = args.get("level", None)
+        level = args.get("level")
         filepath = os.path.join(output_dir, filename)
 
         if not os.path.exists(filepath):
@@ -423,23 +420,24 @@ class Evaluator(BaseExpert):
 
         try:
             from docx import Document
+
             doc = Document(filepath)
             for p in doc.paragraphs:
                 if p.style and p.style.name and p.style.name.startswith("Heading"):
                     if heading_text in p.text:
                         if level is None or p.style.name == f"Heading {level}":
                             return CheckResult(
-                                passed=True, function="word_heading_exists",
-                                detail=f"found: '{p.text}' ({p.style.name})"
+                                passed=True,
+                                function="word_heading_exists",
+                                detail=f"found: '{p.text}' ({p.style.name})",
                             )
             return CheckResult(
-                passed=False, function="word_heading_exists",
-                detail=f"heading '{heading_text}' not found"
+                passed=False,
+                function="word_heading_exists",
+                detail=f"heading '{heading_text}' not found",
             )
         except Exception as e:
-            return CheckResult(
-                passed=False, function="word_heading_exists", detail=f"error: {e}"
-            )
+            return CheckResult(passed=False, function="word_heading_exists", detail=f"error: {e}")
 
     @staticmethod
     def _check_word_count(output_dir: str, args: dict) -> CheckResult:
@@ -456,6 +454,7 @@ class Evaluator(BaseExpert):
 
         try:
             from docx import Document
+
             doc = Document(filepath)
             count = sum(len(p.text) for p in doc.paragraphs)
             for tbl in doc.tables:
@@ -474,9 +473,7 @@ class Evaluator(BaseExpert):
 
             return CheckResult(passed=ok, function="word_word_count", detail=detail)
         except Exception as e:
-            return CheckResult(
-                passed=False, function="word_word_count", detail=f"error: {e}"
-            )
+            return CheckResult(passed=False, function="word_word_count", detail=f"error: {e}")
 
     @staticmethod
     def _check_pdf_page_count(output_dir: str, args: dict) -> CheckResult:
@@ -492,18 +489,16 @@ class Evaluator(BaseExpert):
 
         try:
             import fitz
+
             doc = fitz.open(filepath)
             actual = len(doc)
             doc.close()
             ok = (actual == expected) if expected else True
             return CheckResult(
-                passed=ok, function="pdf_page_count",
-                detail=f"pages={actual}, expected={expected}"
+                passed=ok, function="pdf_page_count", detail=f"pages={actual}, expected={expected}"
             )
         except Exception as e:
-            return CheckResult(
-                passed=False, function="pdf_page_count", detail=f"error: {e}"
-            )
+            return CheckResult(passed=False, function="pdf_page_count", detail=f"error: {e}")
 
     @staticmethod
     def _check_file_extension(output_dir: str, args: dict) -> CheckResult:
@@ -513,8 +508,9 @@ class Evaluator(BaseExpert):
         actual_ext = os.path.splitext(filename)[1].lstrip(".").lower()
         ok = actual_ext == expected_ext
         return CheckResult(
-            passed=ok, function="file_extension",
-            detail=f"actual=.{actual_ext}, expected=.{expected_ext}"
+            passed=ok,
+            function="file_extension",
+            detail=f"actual=.{actual_ext}, expected=.{expected_ext}",
         )
 
     def register_check(self, name: str, func: Callable) -> None:

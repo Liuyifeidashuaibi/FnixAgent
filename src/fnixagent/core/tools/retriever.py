@@ -14,29 +14,32 @@
   - 线程安全:RLock 保护
   - 不依赖外部向量库:用 list + 余弦相似度(由 core.mathops 加速)
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import threading
-from typing import Any, Optional
+from typing import Any
 
-from fnixagent.core.mathops import batch_cosine_similarity, top_k_with_scores
+from fnixagent.core.mathops import batch_cosine_similarity
 from fnixagent.core.retrieval.embedder import BaseEmbedder, HashingEmbedder
 from fnixagent.core.tools.protocol import ToolLayer, ToolMetadata
-
 
 # ---------------------------------------------------------------------------
 # 异常
 # ---------------------------------------------------------------------------
 
-
 class ToolRetrieverError(Exception):
     """工具检索器基础异常。"""
-
 
 # ---------------------------------------------------------------------------
 # ToolRetriever
 # ---------------------------------------------------------------------------
-
 
 class ToolRetriever:
     """工具检索器:基于向量相似度 + L1 加权。
@@ -74,7 +77,7 @@ class ToolRetriever:
     def __init__(
         self,
         tool_registry: Any,
-        embedder: Optional[BaseEmbedder] = None,
+        embedder: BaseEmbedder | None = None,
         top_k: int = 5,
         min_score: float = 0.3,
         l1_boost: float = 0.15,
@@ -123,7 +126,7 @@ class ToolRetriever:
         with self._lock:
             return self._index.pop(name, None) is not None
 
-    def reembed(self, name: Optional[str] = None) -> int:
+    def reembed(self, name: str | None = None) -> int:
         """重新编码工具描述(描述变更后调用)。
 
         Args:
@@ -134,7 +137,9 @@ class ToolRetriever:
         """
         with self._lock:
             if name is not None:
-                tool = self._registry.get_tool(name) if hasattr(self._registry, "get_tool") else None
+                tool = (
+                    self._registry.get_tool(name) if hasattr(self._registry, "get_tool") else None
+                )
                 # ToolRegistry.get_tool 返回 RegisteredTool 或 None;list_tools 返回 [ToolMetadata]
                 if tool is None:
                     # 回退到 list_tools 查找
@@ -178,9 +183,9 @@ class ToolRetriever:
     def retrieve(
         self,
         query: str,
-        top_k: Optional[int] = None,
-        layer_filter: Optional[ToolLayer] = None,
-        min_score: Optional[float] = None,
+        top_k: int | None = None,
+        layer_filter: ToolLayer | None = None,
+        min_score: float | None = None,
     ) -> list[tuple[ToolMetadata, float]]:
         """向量检索:返回 [(metadata, score)] 列表(score 越高越相关)。
 
@@ -239,9 +244,9 @@ class ToolRetriever:
     def retrieve_with_fallback(
         self,
         query: str,
-        topology_path: Optional[list[str]] = None,
-        top_k: Optional[int] = None,
-        min_score: Optional[float] = None,
+        topology_path: list[str] | None = None,
+        top_k: int | None = None,
+        min_score: float | None = None,
     ) -> list[tuple[ToolMetadata, float]]:
         """带回退的检索:向量检索无结果时,用 topology_path 命中绑定工具。
 
@@ -253,9 +258,7 @@ class ToolRetriever:
             [(ToolMetadata, score)] 列表
         """
         # 1. 先做向量检索
-        results = self.retrieve(
-            query, top_k=top_k, min_score=min_score
-        )
+        results = self.retrieve(query, top_k=top_k, min_score=min_score)
         if results:
             return results
         # 2. 向量检索无结果,回退到拓扑路径
@@ -276,7 +279,7 @@ class ToolRetriever:
     # 索引查询
     # ------------------------------------------------------------------
 
-    def get_indexed_tool(self, name: str) -> Optional[ToolMetadata]:
+    def get_indexed_tool(self, name: str) -> ToolMetadata | None:
         """从索引获取工具(不存在返回 None)。"""
         with self._lock:
             entry = self._index.get(name)
@@ -284,7 +287,7 @@ class ToolRetriever:
 
     def list_indexed_tools(
         self,
-        layer: Optional[ToolLayer] = None,
+        layer: ToolLayer | None = None,
     ) -> list[ToolMetadata]:
         """列出索引中的工具(可选按层级过滤)。"""
         with self._lock:
@@ -299,9 +302,9 @@ class ToolRetriever:
 
     def set_params(
         self,
-        top_k: Optional[int] = None,
-        min_score: Optional[float] = None,
-        l1_boost: Optional[float] = None,
+        top_k: int | None = None,
+        min_score: float | None = None,
+        l1_boost: float | None = None,
     ) -> None:
         """更新检索参数(运行时调优)。"""
         with self._lock:

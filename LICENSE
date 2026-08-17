@@ -1,201 +1,141 @@
-                                 Apache License
-                           Version 2.0, January 2004
-                        http://www.apache.org/licenses/
+FnixAgent™ 智能工作台系统
+Copyright (C) 2024-2026 FnixAgent / 刘逸飞. All Rights Reserved.
 
-   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+================================================================================
+中文版 (Chinese Version)
+================================================================================
 
-   1. Definitions.
+本软件(包括但不限于源代码、目标代码、文档、图形、Logo、商标、设计稿、
+配置文件、模型权重、Skill 包、提示词模板、本文档及任何衍生作品,以下统称
+"本软件") 系著作权人 FnixAgent / 刘逸飞 依法享有著作权的专有作品。
 
-      "License" shall mean the terms and conditions for use, reproduction,
-      and distribution as defined by Sections 1 through 9 of this document.
+未经著作权人事先书面许可,**严禁**任何单位或个人:
 
-      "Licensor" shall mean the copyright owner or entity authorized by
-      the copyright owner that is granting the License.
+  1. 复制、转载、下载、镜像、抓取本软件的全部或任何部分;
+  2. 修改、改编、翻译、汇编、整理、再创作本软件的全部或任何部分;
+  3. 公开发布、公开展示、公开发行、传播本软件的全部或任何部分;
+  4. 将本软件的全部或任何部分用于任何商业目的,包括但不限于:
+     - 直接销售 / 收费 / 订阅
+     - 嵌入到商业产品 / SaaS 服务 / 商业项目
+     - 用于提供对外服务 (无论收费与否)
+     - 用于内部商业运营、培训、咨询、交付物
+  5. 基于本软件创作衍生作品 / 派生作品 / Fork 项目;
+  6. 将本软件的部分或全部反向工程、反编译、反汇编(在适用法律允许的
+     互操作性范围内除外);
+  7. 删除、遮掩、修改本软件上的任何版权标识、商标、水印;
+  8. 以"开源"、"免费"或其他名义诱导他人使用本软件的实质部分;
+  9. 将本软件的访问权或使用权再许可给第三方。
 
-      "Legal Entity" shall mean the union of the acting entity and all
-      other entities that control, are controlled by, or are under common
-      control with that entity. For the purposes of this definition,
-      "control" means (i) the power, direct or indirect, to cause the
-      direction or management of such entity, whether by contract or
-      otherwise, or (ii) ownership of fifty percent (50%) or more of the
-      outstanding shares, or (iii) beneficial ownership of such entity.
+**GitHub / Gitee / GitLab / 任何公开代码托管平台上的"公开浏览"行为**
+(如:个人阅读、在浏览器中查看单个文件、提交 GitHub Issue / Discussion
+作为参考性问题) 不被视为上述"分发"行为,但仍不得进行复制、下载、
+镜像、Fork、再分发等行为。
 
-      "You" (or "Your") shall mean an individual or Legal Entity
-      exercising permissions granted by this License.
+如仅为**学习目的**的个人性、非系统性、非商业性参考阅读(不含复制、
+不含下载至本地副本、不含商用),著作权人在此给予有限的、不可转让的、
+可撤销的、非排他性的**阅览许可 (View-Only License)**,该许可:
 
-      "Source" form shall mean the preferred form for making modifications,
-      including but not limited to software source code, documentation
-      source, and configuration files.
+  (a) 不构成对本软件著作权的放弃;
+  (b) 不允许以任何方式存储、复制、再传播本软件;
+  (c) 在任何情况下均不得用于商业用途;
+  (d) 不得将参考所得的设计、架构、算法、提示词等直接用于构建
+      与本软件实质相似的替代品。
 
-      "Object" form shall mean any form resulting from mechanical
-      transformation or translation of a Source form, including but
-      not limited to compiled object code, generated documentation,
-      and conversions to other media types.
+本软件按"现状" (AS IS) 提供,不提供任何明示或暗示的担保。在适用法律
+允许的最大范围内,著作权人不就因浏览、参考或试图使用本软件而产生的
+任何直接或间接损失承担责任。
 
-      "Work" shall mean the work of authorship, whether in Source or
-      Object form, made available under the License, as indicated by a
-      copyright notice that is included in or attached to the work
-      (an example is provided in the Appendix below).
+本软件涉及若干第三方开源组件,其各自的著作权归相应权利人所有,该等
+组件的清单、版本及原始许可证信息详见 NOTICE 文件及第三方依赖清单。
+该等第三方组件**仅作为本软件运行时所依赖的独立技术组件**,其许可证
+条款仅约束该等组件本身,不构成对本软件其他部分权利状态的变更。
 
-      "Derivative Works" shall mean any work, whether in Source or Object
-      form, that is based on (or derived from) the Work and for which the
-      editorial revisions, annotations, elaborations, or other modifications
-      represent, as a whole, an original work of authorship. For the purposes
-      of this License, Derivative Works shall not include works that remain
-      separable from, or merely link (or bind by name) to the interfaces of,
-      the Work and Derivative Works thereof.
+如需获得超出本声明范围的授权(包括但不限于商业许可、授权许可、
+学术合作、白盒审计、技术转让等),请联系:
 
-      "Contribution" shall mean any work of authorship, including
-      the original version of the Work and any modifications or additions
-      to that Work or Derivative Works thereof, that is intentionally
-      submitted to Licensor for inclusion in the Work by the copyright owner
-      or by an individual or Legal Entity authorized to submit on behalf of
-      the copyright owner. For the purposes of this definition, "submitted"
-      means any form of electronic, verbal, or written communication sent
-      to the Licensor or its representatives, including but not limited to
-      communication on electronic mailing lists, source code control systems,
-      and issue tracking systems that are managed by, or on behalf of, the
-      Licensor for the purpose of discussing and improving the Work, but
-      excluding communication that is conspicuously marked or otherwise
-      designated in writing by the copyright owner as "Not a Contribution."
+  ✉  Email : licensing@fnixagent.dev
+  🌐 Web   : https://fnixagent.dev/commercial
 
-      "Contributor" shall mean Licensor and any individual or Legal Entity
-      on behalf of whom a Contribution has been received by Licensor and
-      subsequently incorporated within the Work.
+================================================================================
+English Version
+================================================================================
 
-   2. Grant of Copyright License. Subject to the terms and conditions of
-      this License, each Contributor hereby grants to You a perpetual,
-      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
-      copyright license to reproduce, prepare Derivative Works of,
-      publicly display, publicly perform, sublicense, and distribute the
-      Work and such Derivative Works in Source or Object form.
+FnixAgent™ Intelligent Workbench System
+Copyright (C) 2024-2026 FnixAgent / Liu Yifei. All Rights Reserved.
 
-   3. Grant of Patent License. Subject to the terms and conditions of
-      this License, each Contributor hereby grants to You a perpetual,
-      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
-      (except as stated in this section) patent license to make, have made,
-      use, offer to sell, sell, import, and otherwise transfer the Work,
-      where such license applies only to those patent claims licensable
-      by such Contributor that are necessarily infringed by their
-      Contribution(s) alone or by combination of their Contribution(s)
-      with the Work to which such Contribution(s) was submitted. If You
-      institute patent litigation against any entity (including a
-      cross-claim or counterclaim in a lawsuit) alleging that the Work
-      or a Contribution incorporated within the Work constitutes direct
-      or contributory patent infringement, then any patent licenses
-      granted to You under this License for that Work shall terminate
-      as of the date such litigation is filed.
+This software (including but not limited to source code, object code,
+documentation, graphics, logos, trademarks, designs, configuration files,
+model weights, skill packages, prompt templates, this document, and any
+derivative works, collectively the "Software") is the proprietary work of
+the copyright holder FnixAgent / Liu Yifei, and is protected by applicable
+copyright law and international treaty.
 
-   4. Redistribution. You may reproduce and distribute copies of the
-      Work or Derivative Works thereof in any medium, with or without
-      modifications, and in Source or Object form, provided that You
-      meet the following conditions:
+Without the prior written permission of the copyright holder, NO entity or
+individual may:
 
-      (a) You must give any other recipients of the Work or
-          Derivative Works a copy of this License; and
+  1. Copy, reprint, download, mirror, scrape, or otherwise reproduce the
+     Software, in whole or in part;
+  2. Modify, adapt, translate, compile, arrange, or create derivative works
+     based on the Software, in whole or in part;
+  3. Publicly release, display, publish, distribute, or transmit the
+     Software, in whole or in part;
+  4. Use the Software for any commercial purpose, including but not limited
+     to: direct sale, charging fees, subscription; embedding in commercial
+     products, SaaS services, or commercial projects; providing services
+     to third parties (whether charged or free); internal commercial
+     operations, training, consulting, or deliverables;
+  5. Create derivative works, forks, or ports based on the Software;
+  6. Reverse engineer, decompile, or disassemble the Software (except to
+     the extent expressly permitted by applicable law for interoperability);
+  7. Remove, obscure, or alter any copyright notice, trademark, or
+     watermark on the Software;
+  8. Induce or assist third parties to use the Software under the guise
+     of "open source", "free", or other false pretenses;
+  9. Sublicense the access or usage rights of the Software to third parties.
 
-      (b) You must cause any modified files to carry prominent notices
-          stating that You changed the files; and
+"Public viewing" on a public code-hosting platform (such as GitHub, Gitee,
+GitLab) — including personal reading, viewing a single file in a browser,
+and submitting an issue or a question to a public discussion forum for
+referential purposes — is NOT considered "distribution" as defined above.
+However, copying, downloading, mirroring, forking, or redistributing the
+Software remains strictly prohibited.
 
-      (c) You must retain, in the Source form of any Derivative Works
-          that You distribute, all copyright, patent, trademark, and
-          attribution notices from the Source form of the Work,
-          excluding those notices that do not pertain to any part of
-          the Derivative Works; and
+For **personal, non-systematic, non-commercial reference reading for
+purely educational purposes** (excluding reproduction, downloading to a
+local copy, and any commercial use), the copyright holder hereby grants a
+limited, non-transferable, revocable, non-exclusive **View-Only License**,
+subject to the following conditions:
 
-      (d) If the Work includes a "NOTICE" text file as part of its
-          distribution, then any Derivative Works that You distribute must
-          include a readable copy of the attribution notices contained
-          within such NOTICE file, excluding those notices that do not
-          pertain to any part of the Derivative Works, in at least one
-          of the following places: within a NOTICE text file distributed
-          as part of the Derivative Works; within the Source form or
-          documentation, if provided along with the Derivative Works; or,
-          within a display generated by the Derivative Works, if and
-          wherever such third-party notices normally appear. The contents
-          of the NOTICE file are for informational purposes only and
-          do not modify the License. You may add Your own attribution
-          notices within Derivative Works that You distribute, alongside
-          or as an addendum to the NOTICE text from the Work, provided
-          that such additional attribution notices cannot be construed
-          as modifying the License.
+  (a) This View-Only License does NOT constitute a waiver of any copyright
+      or other intellectual property right in the Software;
+  (b) The licensee may NOT store, copy, or further distribute the
+      Software in any form;
+  (c) The licensee may NOT use the Software for any commercial purpose
+      under any circumstances;
+  (d) The licensee may NOT directly use any design, architecture,
+      algorithm, prompt template, or other element observed in the
+      Software to construct a substantially similar substitute.
 
-      You may add Your own copyright statement to Your modifications and
-      may provide additional or different license terms and conditions
-      for use, reproduction, or distribution of Your modifications, or
-      for any such Derivative Works as a whole, provided Your use,
-      reproduction, and distribution of the Work otherwise complies with
-      the conditions stated in this License.
+The Software is provided "AS IS" without warranty of any kind. To the
+maximum extent permitted by applicable law, the copyright holder shall not
+be liable for any direct or indirect damages arising from viewing,
+referencing, or attempting to use the Software.
 
-   5. Submission of Contributions. Unless You explicitly state otherwise,
-      any Contribution intentionally submitted for inclusion in the Work
-      by You to the Licensor shall be under the terms and conditions of
-      this License, without any additional terms or conditions.
-      Notwithstanding the above, nothing herein shall supersede or modify
-      the terms of any separate license agreement you may have executed
-      with Licensor regarding such Contributions.
+This Software incorporates third-party open-source components; their
+respective copyrights belong to their respective owners. A list of such
+components, their versions, and original licenses is available in the
+NOTICE file and the third-party dependency list. Said third-party
+components are **independent technological components upon which this
+Software depends at runtime**; their respective license terms govern only
+those components themselves, and do NOT alter the proprietary status of
+the rest of the Software.
 
-   6. Trademarks. This License does not grant permission to use the trade
-      names, trademarks, service marks, or product names of the Licensor,
-      except as required for reasonable and customary use in describing the
-      origin of the Work and reproducing the content of the NOTICE file.
+For any authorization beyond the scope of this notice (including but not
+limited to commercial licensing, academic collaboration, white-box audit,
+or technology transfer), please contact:
 
-   7. Disclaimer of Warranty. Unless required by applicable law or
-      agreed to in writing, Licensor provides the Work (and each
-      Contributor provides its Contributions) on an "AS IS" BASIS,
-      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
-      implied, including, without limitation, any warranties or conditions
-      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
-      PARTICULAR PURPOSE. You are solely responsible for determining the
-      appropriateness of using or redistributing the Work and assume any
-      risks associated with Your exercise of permissions under this License.
+  ✉  Email : licensing@fnixagent.dev
+  🌐 Web   : https://fnixagent.dev/commercial
 
-   8. Limitation of Liability. In no event and under no legal theory,
-      whether in tort (including negligence), contract, or otherwise,
-      unless required by applicable law (such as deliberate and grossly
-      negligent acts) or agreed to in writing, shall any Contributor be
-      liable to You for damages, including any direct, indirect, special,
-      incidental, or consequential damages of any character arising as a
-      result of this License or out of the use or inability to use the
-      Work (including but not limited to damages for loss of goodwill,
-      work stoppage, computer failure or malfunction, or any and all
-      other commercial damages or losses), even if such Contributor
-      has been advised of the possibility of such damages.
-
-   9. Accepting Warranty or Additional Liability. While redistributing
-      the Work or Derivative Works thereof, You may choose to offer,
-      and charge a fee for, acceptance of support, warranty, indemnity,
-      or other liability obligations and/or rights consistent with this
-      License. However, in accepting such obligations, You may act only
-      on Your own behalf and on Your sole responsibility, not on behalf
-      of any other Contributor, and only if You agree to indemnify,
-      defend, and hold each Contributor harmless for any liability
-      incurred by, or claims asserted against, such Contributor by reason
-      of your accepting any such warranty or additional liability.
-
-   END OF TERMS AND CONDITIONS
-
-   APPENDIX: How to apply the Apache License to your work.
-
-      To apply the Apache License to your work, attach the following
-      boilerplate notice, with the fields enclosed by brackets "[]"
-      replaced with your own identifying information. (Don't include
-      the brackets!)  The text should be enclosed in the appropriate
-      comment syntax for the file format. We also recommend that a
-      file or class name and description of purpose be included on the
-      same "printed page" as the copyright notice for easier
-      identification within third-party archives.
-
-   Copyright 2024-2026 FnixAgent Team
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
+================================================================================
+最后更新 / Last Updated: 2026-08-17

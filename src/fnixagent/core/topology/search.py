@@ -11,10 +11,14 @@
 
 冷启动兜底: 拓扑图空时,返回空路径(由上层回退到向量召回)。
 """
-from __future__ import annotations
 
-from collections import deque
-from typing import Optional
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
+from __future__ import annotations
 
 from fnixagent.core.topology.graph import TopologyGraph
 from fnixagent.core.types import (
@@ -77,23 +81,18 @@ class TopologySearch:
     def match_concepts(
         self,
         query: str,
-        keywords: Optional[list[str]] = None,
+        keywords: list[str] | None = None,
     ) -> list[TopologyNode]:
         """从用户查询匹配 L2 概念节点(按权重降序)。
 
         匹配策略:
             1. 若提供 keywords,用关键词匹配节点 name/content
-            2. 否则用 query 全文做子串匹配
+            2. 否则从 query 切分中英文词元 + 全文子串双向匹配
             3. 按 node.weight 降序排列
             4. 仅返回未废弃的 CONCEPT 节点
-
-        Args:
-            query: 用户查询文本
-            keywords: 可选的关键词列表(由 LLM 意图解析产出)
-
-        Returns:
-            匹配的 L2 概念节点列表(按权重降序)
         """
+        import re
+
         concepts = self._graph.list_nodes(
             layer=TopologyLayer.L2_CONCEPT,
             node_type=NodeType.CONCEPT,
@@ -102,20 +101,51 @@ class TopologySearch:
         if not concepts:
             return []
 
-        # 关键词列表优先,否则用 query 本身
-        search_terms = keywords if keywords else [query.lower()]
+        query_lower = (query or "").lower()
+        if keywords:
+            search_terms = [str(k).lower() for k in keywords if k]
+        else:
+            search_terms = [query_lower]
+            search_terms.extend(re.findall(r"[\u4e00-\u9fff]{2,}|[a-zA-Z0-9_]{2,}", query_lower))
+        # 去重保序
+        seen: set[str] = set()
+        terms: list[str] = []
+        for t in search_terms:
+            if t and t not in seen:
+                seen.add(t)
+                terms.append(t)
 
         matched = []
         for node in concepts:
             name_lower = node.name.lower()
             content_lower = node.content.lower()
-            for term in search_terms:
-                term_lower = term.lower()
-                if term_lower in name_lower or term_lower in content_lower:
-                    matched.append(node)
+            hit = False
+            for term in terms:
+                if (
+                    term in name_lower
+                    or term in content_lower
+                    or name_lower in query_lower
+                    or (len(name_lower) >= 2 and name_lower in term)
+                ):
+                    hit = True
                     break
+            # 办公别名：周报/Word → 文档编辑 等
+            aliases = {
+                "文档编辑": ("周报", "word", "docx", "文档", "摘要", "笔记"),
+                "表格分析": ("excel", "xlsx", "表格", "报表"),
+                "演示文稿": ("ppt", "pptx", "演示", "幻灯"),
+                "pdf 文档": ("pdf", "转换"),
+                "论文检索": ("论文", "arxiv", "文献", "检索"),
+                "学习辅助": ("学习", "教育", "概念"),
+            }
+            for alias_name, keys in aliases.items():
+                if alias_name in name_lower or name_lower in alias_name:
+                    if any(k in query_lower for k in keys):
+                        hit = True
+                        break
+            if hit:
+                matched.append(node)
 
-        # 按权重降序
         matched.sort(key=lambda n: n.weight, reverse=True)
         return matched
 
@@ -126,8 +156,8 @@ class TopologySearch:
     def search(
         self,
         query: str,
-        keywords: Optional[list[str]] = None,
-        top_k: Optional[int] = None,
+        keywords: list[str] | None = None,
+        top_k: int | None = None,
     ) -> list[TopologyPath]:
         """权重优先推理路径搜索。
 
@@ -179,12 +209,14 @@ class TopologySearch:
                     path_weight = edge_product * conf_sum
                     if has_mutex:
                         path_weight *= MUTEX_PENALTY
-                    paths.append(TopologyPath(
-                        nodes=list(node_ids),
-                        edges=list(edge_ids),
-                        total_weight=path_weight,
-                        depth=len(edge_ids),
-                    ))
+                    paths.append(
+                        TopologyPath(
+                            nodes=list(node_ids),
+                            edges=list(edge_ids),
+                            total_weight=path_weight,
+                            depth=len(edge_ids),
+                        )
+                    )
                 continue
 
             # 向下展开: 遍历出边
@@ -204,14 +236,16 @@ class TopologySearch:
                 new_conf_sum = conf_sum + target.confidence
                 new_has_mutex = has_mutex or (edge.edge_type == EdgeType.MUTEX)
 
-                stack.append((
-                    target,
-                    node_ids + [target.node_id],
-                    edge_ids + [edge.edge_id],
-                    new_edge_product,
-                    new_conf_sum,
-                    new_has_mutex,
-                ))
+                stack.append(
+                    (
+                        target,
+                        node_ids + [target.node_id],
+                        edge_ids + [edge.edge_id],
+                        new_edge_product,
+                        new_conf_sum,
+                        new_has_mutex,
+                    )
+                )
 
         return paths
 
@@ -222,7 +256,7 @@ class TopologySearch:
     def check_constraints(
         self,
         path: TopologyPath,
-        context: Optional[dict] = None,
+        context: dict | None = None,
     ) -> tuple[bool, str]:
         """检查路径上的 CONSTRAINT 节点是否满足。
 
@@ -272,7 +306,7 @@ class TopologySearch:
     # 统计
     # -----------------------------------------------------------------------
 
-    def search_stats(self, query: str, keywords: Optional[list[str]] = None) -> dict:
+    def search_stats(self, query: str, keywords: list[str] | None = None) -> dict:
         """返回搜索统计信息(调试用)。"""
         concepts = self.match_concepts(query, keywords)
         paths = self.search(query, keywords)

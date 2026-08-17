@@ -8,22 +8,29 @@ AgentOS 基础类型与协议接口 (Base Types & Protocols)
   - 类型完备: 枚举/数据类/协议/类型别名
   - 可被 mypy/pyright 严格检查
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import enum
 from collections.abc import AsyncIterator, Awaitable, Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, Protocol, runtime_checkable
-
 
 # ============================================================================
 # 基础工具
 # ============================================================================
 
+
 def utcnow() -> datetime:
     """UTC 当前时间 (统一入口, 便于测试 monkey-patch)。"""
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def utcnow_iso() -> str:
@@ -35,6 +42,7 @@ def utcnow_iso() -> str:
 # 优先级与状态枚举
 # ============================================================================
 
+
 class AgentPriority(enum.IntEnum):
     """Agent 优先级 (类比 nice 值, 数值越大优先级越高)。
 
@@ -45,6 +53,7 @@ class AgentPriority(enum.IntEnum):
       INTERACTIVE - 交互 (用户对话 / 实时编辑)
       REALTIME    - 实时 (流式响应 / 紧急告警), 最高, 可独占时间片
     """
+
     BACKGROUND = 1
     BATCH = 5
     NORMAL = 10
@@ -60,6 +69,7 @@ class AgentState(enum.Enum):
                     ↕        ↕
                  BLOCKED   SUSPENDED
     """
+
     CREATED = "created"
     READY = "ready"
     RUNNING = "running"
@@ -79,6 +89,7 @@ class MemoryLayer(enum.Enum):
       EPISODIC - 情节记忆: 历史对话事件 (Letta + Postgres, 自动摘要)
       SEMANTIC - 语义记忆: 知识图谱 / 向量库 (Milvus + cognee + GraphRAG)
     """
+
     SENSORY = "sensory"
     WORKING = "working"
     EPISODIC = "episodic"
@@ -87,42 +98,47 @@ class MemoryLayer(enum.Enum):
 
 class SyscallCategory(enum.Enum):
     """Syscall 分类 (8 类)。"""
-    FS = "fs"           # 文件系统 (ContextFS)
-    MEM = "mem"         # 记忆管理 (MemoryManager)
-    TOOL = "tool"       # 工具调用 (MCP)
-    IPC = "ipc"         # Agent 间通信 (A2A)
-    LLM = "llm"         # LLM 推理
+
+    FS = "fs"  # 文件系统 (ContextFS)
+    MEM = "mem"  # 记忆管理 (MemoryManager)
+    TOOL = "tool"  # 工具调用 (MCP)
+    IPC = "ipc"  # Agent 间通信 (A2A)
+    LLM = "llm"  # LLM 推理
     COMPUTER = "computer"  # 计算机使用 (高危)
-    WEB = "web"         # 网络
+    WEB = "web"  # 网络
     SCHEDULE = "schedule"  # 时间/调度
 
 
 class GuardrailAction(enum.Enum):
     """护栏动作 (对标 Guardrails AI)。"""
-    PASS = "pass"       # 通过
-    WARN = "warn"       # 警告但放行
-    BLOCK = "block"     # 阻止
-    MODIFY = "modify"   # 修改后放行
+
+    PASS = "pass"  # 通过
+    WARN = "warn"  # 警告但放行
+    BLOCK = "block"  # 阻止
+    MODIFY = "modify"  # 修改后放行
 
 
 class GuardrailLayer(enum.Enum):
     """护栏层级。"""
-    INPUT = "input"         # 输入层 (LLM 调用前)
+
+    INPUT = "input"  # 输入层 (LLM 调用前)
     EXECUTION = "execution"  # 执行层 (工具调用前)
-    OUTPUT = "output"       # 输出层 (LLM/工具返回后)
+    OUTPUT = "output"  # 输出层 (LLM/工具返回后)
 
 
 class SandboxLevel(enum.Enum):
     """沙箱隔离级别 (三档, 2026 安全共识)。"""
-    NONE = "none"           # 无沙箱 (开发模式)
-    DOCKER = "docker"       # Docker 容器隔离 (L1)
-    GVIsOR = "gvisor"       # gVisor 内核级隔离 (L2)  保留原拼写以向后兼容
+
+    NONE = "none"  # 无沙箱 (开发模式)
+    DOCKER = "docker"  # Docker 容器隔离 (L1)
+    GVIsOR = "gvisor"  # gVisor 内核级隔离 (L2)  保留原拼写以向后兼容
     FIRECRACKER = "firecracker"  # Firecracker microVM (L3, 最高)
 
 
 # ============================================================================
 # 可插拔后端协议 (Protocol, 依赖倒转)
 # ============================================================================
+
 
 @runtime_checkable
 class LLMBackend(Protocol):
@@ -131,6 +147,7 @@ class LLMBackend(Protocol):
     可由 core/llm/router.py 的 LLMRouter 适配实现。
     所有方法均为 async, 同步实现需用 asyncio.to_thread 包装。
     """
+
     async def complete(self, messages: list[dict[str, Any]], **kwargs: Any) -> str:
         """同步补全, 返回完整文本。"""
         ...
@@ -155,18 +172,22 @@ class MemoryBackend(Protocol):
     可由 core/memory/manager.py 的 MemoryManager 适配实现,
     或直接对接 Letta/Milvus/cognee。
     """
-    async def recall(self, query: str, top_k: int = 5,
-                     layer: MemoryLayer | None = None) -> list[dict[str, Any]]:
+
+    async def recall(
+        self, query: str, top_k: int = 5, layer: MemoryLayer | None = None
+    ) -> list[dict[str, Any]]:
         """召回相关记忆。"""
         ...
 
-    async def store(self, content: str, metadata: dict[str, Any],
-                    layer: MemoryLayer = MemoryLayer.EPISODIC) -> str:
+    async def store(
+        self, content: str, metadata: dict[str, Any], layer: MemoryLayer = MemoryLayer.EPISODIC
+    ) -> str:
         """存储记忆, 返回 memory_id。"""
         ...
 
-    async def search(self, query: str, top_k: int = 5,
-                     layer: MemoryLayer | None = None) -> list[dict[str, Any]]:
+    async def search(
+        self, query: str, top_k: int = 5, layer: MemoryLayer | None = None
+    ) -> list[dict[str, Any]]:
         """语义搜索。"""
         ...
 
@@ -178,6 +199,7 @@ class MemoryBackend(Protocol):
 @runtime_checkable
 class ToolBackend(Protocol):
     """工具后端协议 (可由 core/mcp/registry.py 的 MCPToolRegistry 适配)。"""
+
     async def list_tools(self) -> list[dict[str, Any]]:
         """列出所有可用工具。"""
         ...
@@ -190,6 +212,7 @@ class ToolBackend(Protocol):
 @runtime_checkable
 class StorageBackend(Protocol):
     """持久化后端协议 (可对接 Postgres/Redis/MinIO/本地 FS)。"""
+
     async def get(self, key: str) -> str | None:
         """读取键值, 不存在返回 None。"""
         ...
@@ -210,8 +233,10 @@ class StorageBackend(Protocol):
 @runtime_checkable
 class PolicyBackend(Protocol):
     """策略后端协议 (可对接 OPA/Cedar/Lambda authorizer)。"""
-    async def evaluate(self, action: str, resource: str, subject: str,
-                       context: dict[str, Any]) -> tuple[bool, str]:
+
+    async def evaluate(
+        self, action: str, resource: str, subject: str, context: dict[str, Any]
+    ) -> tuple[bool, str]:
         """评估策略, 返回 (是否允许, 拒绝原因)。"""
         ...
 
@@ -219,15 +244,24 @@ class PolicyBackend(Protocol):
 @runtime_checkable
 class AuditBackend(Protocol):
     """审计后端协议 (可对接 AuditLogger / SIEM / Langfuse)。"""
-    async def log(self, action: str, subject: str | None = None,
-                  detail: dict[str, Any] | None = None,
-                  trace_id: str | None = None) -> None:
+
+    async def log(
+        self,
+        action: str,
+        subject: str | None = None,
+        detail: dict[str, Any] | None = None,
+        trace_id: str | None = None,
+    ) -> None:
         """记录审计事件 (哈希链防篡改推荐)。"""
         ...
 
-    async def query(self, limit: int = 100, offset: int = 0,
-                    action: str | None = None,
-                    subject: str | None = None) -> list[dict[str, Any]]:
+    async def query(
+        self,
+        limit: int = 100,
+        offset: int = 0,
+        action: str | None = None,
+        subject: str | None = None,
+    ) -> list[dict[str, Any]]:
         """查询审计日志。"""
         ...
 
@@ -236,14 +270,16 @@ class AuditBackend(Protocol):
 # 通用数据类
 # ============================================================================
 
+
 @dataclass
 class Capability:
     """能力令牌 (类比 Linux capability)。
 
     Agent 持有的能力决定可执行的 syscall 范围。
     """
-    name: str                         # 能力名 (fs/memory/tool/llm/...)
-    syscalls: frozenset[str]          # 允许的 syscall 名集合
+
+    name: str  # 能力名 (fs/memory/tool/llm/...)
+    syscalls: frozenset[str]  # 允许的 syscall 名集合
     constraints: dict[str, Any] = field(default_factory=dict)  # 约束 (如资源上限)
 
 
@@ -253,11 +289,12 @@ class ResourceLimits:
 
     超出限制的 Agent 会被调度器自动终止。
     """
-    max_tokens: int = 1_000_000        # 最大 token 消耗
-    max_steps: int = 1000              # 最大步数 (syscall 调用次数)
-    max_duration_sec: int = 3600       # 最大运行时长 (秒)
-    max_memory_mb: int = 512           # 最大内存 (MB, ContextFS 占用)
-    max_child_processes: int = 10      # 最大子进程数
+
+    max_tokens: int = 1_000_000  # 最大 token 消耗
+    max_steps: int = 1000  # 最大步数 (syscall 调用次数)
+    max_duration_sec: int = 3600  # 最大运行时长 (秒)
+    max_memory_mb: int = 512  # 最大内存 (MB, ContextFS 占用)
+    max_child_processes: int = 10  # 最大子进程数
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -272,6 +309,7 @@ class ResourceLimits:
 @dataclass
 class TraceContext:
     """OTel trace 上下文 (分布式追踪)。"""
+
     trace_id: str = ""
     span_id: str = ""
     parent_span_id: str = ""
@@ -290,9 +328,11 @@ class TraceContext:
 # 通用结果类型
 # ============================================================================
 
+
 @dataclass
 class Result:
     """统一结果类型 (对标 Rust Result)。"""
+
     success: bool
     value: Any = None
     error: str | None = None
@@ -325,8 +365,9 @@ SyscallHandler = Callable[[Any], Awaitable[Any]]  # (SyscallRequest) -> SyscallR
 OTelHook = Callable[[str, dict[str, Any]], None]
 
 # 护栏检查函数签名: (syscall_name, args, context) -> (action, message, modified_args)
-GuardrailFunc = Callable[[str, dict[str, Any], dict[str, Any]],
-                         tuple[GuardrailAction, str, dict[str, Any]]]
+GuardrailFunc = Callable[
+    [str, dict[str, Any], dict[str, Any]], tuple[GuardrailAction, str, dict[str, Any]]
+]
 
 # 审计动作常量 (与 AuditLogger 对齐)
 AUDIT_SPAWN = "agent.spawn"
@@ -343,19 +384,41 @@ AUDIT_GUARDRAIL_BLOCK = "guardrail.block"
 
 __all__ = [
     # 工具
-    "utcnow", "utcnow_iso",
+    "utcnow",
+    "utcnow_iso",
     # 枚举
-    "AgentPriority", "AgentState", "MemoryLayer", "SyscallCategory",
-    "GuardrailAction", "GuardrailLayer", "SandboxLevel",
+    "AgentPriority",
+    "AgentState",
+    "MemoryLayer",
+    "SyscallCategory",
+    "GuardrailAction",
+    "GuardrailLayer",
+    "SandboxLevel",
     # 协议
-    "LLMBackend", "MemoryBackend", "ToolBackend", "StorageBackend",
-    "PolicyBackend", "AuditBackend",
+    "LLMBackend",
+    "MemoryBackend",
+    "ToolBackend",
+    "StorageBackend",
+    "PolicyBackend",
+    "AuditBackend",
     # 数据类
-    "Capability", "ResourceLimits", "TraceContext", "Result",
+    "Capability",
+    "ResourceLimits",
+    "TraceContext",
+    "Result",
     # 类型别名
-    "SyscallHandler", "OTelHook", "GuardrailFunc",
+    "SyscallHandler",
+    "OTelHook",
+    "GuardrailFunc",
     # 审计常量
-    "AUDIT_SPAWN", "AUDIT_KILL", "AUDIT_SYSCALL", "AUDIT_SYSCALL_DENIED",
-    "AUDIT_CHECKPOINT", "AUDIT_RESTORE", "AUDIT_BOOT", "AUDIT_SHUTDOWN",
-    "AUDIT_POLICY_VIOLATION", "AUDIT_GUARDRAIL_BLOCK",
+    "AUDIT_SPAWN",
+    "AUDIT_KILL",
+    "AUDIT_SYSCALL",
+    "AUDIT_SYSCALL_DENIED",
+    "AUDIT_CHECKPOINT",
+    "AUDIT_RESTORE",
+    "AUDIT_BOOT",
+    "AUDIT_SHUTDOWN",
+    "AUDIT_POLICY_VIOLATION",
+    "AUDIT_GUARDRAIL_BLOCK",
 ]

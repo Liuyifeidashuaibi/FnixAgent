@@ -15,12 +15,18 @@
   - JSON 解析 try-except(json.JSONDecodeError),失败时保留原 suggestion
   - replan_count 边界检查:在递增前判断,避免越界后仍生成新计划
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import json
 import re
 from dataclasses import dataclass, field
-from typing import Optional
 
 from fnixagent.core.exceptions import LLMError, ReasoningError
 from fnixagent.core.llm.router import LLMRouter
@@ -36,12 +42,13 @@ from fnixagent.core.types import (
 @dataclass
 class ReplanResult:
     """重规划结果。"""
+
     success: bool
-    new_goal: str = ""                   # 调整后的目标(含失败上下文)
-    suggestion: str = ""                 # 改进建议
+    new_goal: str = ""  # 调整后的目标(含失败上下文)
+    suggestion: str = ""  # 改进建议
     failed_tools: list[str] = field(default_factory=list)
     retry_steps: list[dict] = field(default_factory=list)  # 需重试的步骤
-    replan_strategy: str = "local"       # local / global / tool_swap
+    replan_strategy: str = "local"  # local / global / tool_swap
 
 
 class Replanner:
@@ -61,14 +68,12 @@ class Replanner:
 
     def __init__(
         self,
-        llm: Optional[LLMRouter] = None,
+        llm: LLMRouter | None = None,
         max_replans: int = 2,
     ):
         # 参数校验(public API 入口)
         if not isinstance(max_replans, int) or max_replans <= 0:
-            raise ValueError(
-                f"max_replans 必须为正整数,实际: {max_replans!r}"
-            )
+            raise ValueError(f"max_replans 必须为正整数,实际: {max_replans!r}")
         self._llm = llm
         self._max_replans = max_replans
         self._replan_count = 0
@@ -111,9 +116,7 @@ class Replanner:
         if not self.can_replan():
             return ReplanResult(
                 success=False,
-                suggestion=(
-                    f"已达最大重规划次数 {self._max_replans}"
-                ),
+                suggestion=(f"已达最大重规划次数 {self._max_replans}"),
             )
         self._replan_count += 1
 
@@ -128,9 +131,7 @@ class Replanner:
         retry_steps: list[dict] = []
         if self._llm:
             try:
-                suggestion, retry_steps = self._llm_replan(
-                    goal, trace, validation, strategy
-                )
+                suggestion, retry_steps = self._llm_replan(goal, trace, validation, strategy)
             except (LLMError, ReasoningError):
                 # LLM 调用失败:降级为规则重规划(保证 replan 不中断)
                 suggestion = self._rule_replan(trace, validation)
@@ -158,15 +159,11 @@ class Replanner:
         """找出执行失败的工具名。"""
         failed: list[str] = []
         for result in trace.tool_results:
-            if result.status in (
-                ToolExecutionStatus.FAILED, ToolExecutionStatus.TIMEOUT
-            ):
+            if result.status in (ToolExecutionStatus.FAILED, ToolExecutionStatus.TIMEOUT):
                 failed.append(result.name)
         return failed
 
-    def _choose_strategy(
-        self, trace: ExecutionTrace, validation: ValidationResult
-    ) -> str:
+    def _choose_strategy(self, trace: ExecutionTrace, validation: ValidationResult) -> str:
         """选择重规划策略:
         - 只有个别工具失败 → local(局部修复)
         - 多数工具失败 → global(全局重规划)
@@ -180,10 +177,7 @@ class Replanner:
         if fail_rate >= 0.5:
             return "global"
         # rule_failures 文本中包含"不存在"/"超时"关键词 → 换工具
-        if any(
-            ("不存在" in f) or ("超时" in f)
-            for f in validation.rule_failures
-        ):
+        if any(("不存在" in f) or ("超时" in f) for f in validation.rule_failures):
             return "tool_swap"
         return "local"
 
@@ -223,6 +217,7 @@ class Replanner:
         )
 
         from fnixagent.core.llm.base import LLMRequest
+
         request = LLMRequest(messages=[system_msg, user_msg], temperature=0.3)
         response = self._llm.chat(request)
         if response is None or not getattr(response, "content", None):
@@ -244,17 +239,13 @@ class Replanner:
                     suggestion = str(data.get("suggestion", suggestion))
                     raw_steps = data.get("retry_steps", [])
                     if isinstance(raw_steps, list):
-                        retry_steps = [
-                            s for s in raw_steps if isinstance(s, dict)
-                        ]
+                        retry_steps = [s for s in raw_steps if isinstance(s, dict)]
 
         return suggestion, retry_steps
 
     # -- 规则重规划(无LLM降级) -------------------------------------------
 
-    def _rule_replan(
-        self, trace: ExecutionTrace, validation: ValidationResult
-    ) -> str:
+    def _rule_replan(self, trace: ExecutionTrace, validation: ValidationResult) -> str:
         """无 LLM 时用规则生成简单建议。"""
         failed = self._find_failed_tools(trace)
         if failed:
@@ -265,25 +256,23 @@ class Replanner:
         """构建重试步骤(失败的工具重新执行)。"""
         steps: list[dict] = []
         for i, result in enumerate(trace.tool_results):
-            if result.status in (
-                ToolExecutionStatus.FAILED, ToolExecutionStatus.TIMEOUT
-            ):
+            if result.status in (ToolExecutionStatus.FAILED, ToolExecutionStatus.TIMEOUT):
                 # 找到原始调用参数
                 if i < len(trace.tool_calls):
                     call = trace.tool_calls[i]
-                    steps.append({
-                        "step_no": i + 1,
-                        "tool_name": call.name,
-                        "arguments": call.arguments,
-                        "reason": f"重试失败的工具 {call.name}",
-                    })
+                    steps.append(
+                        {
+                            "step_no": i + 1,
+                            "tool_name": call.name,
+                            "arguments": call.arguments,
+                            "reason": f"重试失败的工具 {call.name}",
+                        }
+                    )
         return steps
 
     # -- 辅助 --------------------------------------------------------------
 
-    def _build_new_goal(
-        self, goal: str, validation: ValidationResult, suggestion: str
-    ) -> str:
+    def _build_new_goal(self, goal: str, validation: ValidationResult, suggestion: str) -> str:
         """构建包含失败上下文的新目标。"""
         return (
             f"{goal}\n\n"
@@ -299,5 +288,5 @@ class Replanner:
             status = r.status.value if r.status else "?"
             out = str(r.output)[:150] if r.output else "空"
             err = f" (错误: {r.error})" if r.error else ""
-            parts.append(f"[{i+1}] {r.name}({status}): {out}{err}")
+            parts.append(f"[{i + 1}] {r.name}({status}): {out}{err}")
         return "\n".join(parts)

@@ -27,3 +27,10 @@ MFP 是自进化 Agent 的核心驱动引擎,四个飞轮循环执行形成自�
     - 飞轮 ④ 必须支持回滚,任何进化步骤失败不影响系统可用性
     - 进化是"试探性"的:小步快跑,每步可验证,失败即回滚
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+

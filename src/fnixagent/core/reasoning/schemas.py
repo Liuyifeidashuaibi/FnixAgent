@@ -16,13 +16,19 @@
   - 与 core/types.py 的 dataclass 保持字段名一致,便于互转
   - action_type 用 Literal 限定取值,避免 LLM 输出非法值后静默继续
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import json
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field, ValidationError, field_validator
-
 
 # ---------------------------------------------------------------------------
 # ReAct 单步决策
@@ -54,21 +60,17 @@ class ToolCallDecision(BaseModel):
     action_type: Literal["tool_call", "final_answer"] = Field(
         description="动作类型: tool_call(调用工具) 或 final_answer(给出最终答案)"
     )
-    tool_name: Optional[str] = Field(
-        default=None, description="工具名(action_type=tool_call 时必填)"
-    )
+    tool_name: str | None = Field(default=None, description="工具名(action_type=tool_call 时必填)")
     tool_arguments: dict[str, Any] = Field(
         default_factory=dict, description="工具参数(action_type=tool_call 时必填)"
     )
-    final_answer: Optional[str] = Field(
+    final_answer: str | None = Field(
         default=None, description="最终答案(action_type=final_answer 时必填)"
     )
 
     @field_validator("tool_name", "tool_arguments")
     @classmethod
-    def _validate_tool_call_fields(
-        cls, v: Any, info: Any
-    ) -> Any:
+    def _validate_tool_call_fields(cls, v: Any, info: Any) -> Any:
         """action_type=tool_call 时,tool_name 不能为空字符串。"""
         # info.context 在 pydantic v2 中不直接含其他字段,这里只做空串保护
         if isinstance(v, str) and v.strip() == "":
@@ -83,7 +85,6 @@ class ToolCallDecision(BaseModel):
         """是否为最终答案决策。"""
         return self.action_type == "final_answer"
 
-
 # ---------------------------------------------------------------------------
 # Plan&Execute 规划
 # ---------------------------------------------------------------------------
@@ -93,16 +94,12 @@ class PlanStepOutput(BaseModel):
 
     描述一个执行步骤,含步骤号/描述/工具/参数/依赖。
     """
+
     step_no: int = Field(description="步骤序号(从 1 开始)", ge=1)
     description: str = Field(description="步骤描述")
-    tool_name: Optional[str] = Field(
-        default=None, description="工具名(无工具则为纯推理步骤)"
-    )
+    tool_name: str | None = Field(default=None, description="工具名(无工具则为纯推理步骤)")
     arguments: dict[str, Any] = Field(default_factory=dict, description="工具参数")
-    depends_on: list[int] = Field(
-        default_factory=list, description="依赖的前置步骤号列表"
-    )
-
+    depends_on: list[int] = Field(default_factory=list, description="依赖的前置步骤号列表")
 
 class PlanOutput(BaseModel):
     """Plan&Execute 完整计划输出。
@@ -119,10 +116,10 @@ class PlanOutput(BaseModel):
     }
     ```
     """
+
     goal: str = Field(description="计划目标")
     steps: list[PlanStepOutput] = Field(description="步骤列表")
     reasoning: str = Field(default="", description="规划推理过程")
-
 
 # ---------------------------------------------------------------------------
 # 最终答案
@@ -134,21 +131,17 @@ class FinalAnswer(BaseModel):
     用于 Self-Reflect 模式反思后的结构化输出,
     或 ReAct 模式 action_type=final_answer 时的扩展校验。
     """
-    answer: str = Field(description="最终答案正文")
-    confidence: float = Field(
-        default=0.8, ge=0.0, le=1.0, description="置信度 0~1"
-    )
-    citations: list[str] = Field(
-        default_factory=list, description="引用来源列表(如论文 DOI/URL)"
-    )
-    summary: str = Field(default="", description="答案摘要(一句话总结)")
 
+    answer: str = Field(description="最终答案正文")
+    confidence: float = Field(default=0.8, ge=0.0, le=1.0, description="置信度 0~1")
+    citations: list[str] = Field(default_factory=list, description="引用来源列表(如论文 DOI/URL)")
+    summary: str = Field(default="", description="答案摘要(一句话总结)")
 
 # ---------------------------------------------------------------------------
 # 便捷校验函数
 # ---------------------------------------------------------------------------
 
-def validate_tool_call_decision(text: str) -> Optional[ToolCallDecision]:
+def validate_tool_call_decision(text: str) -> ToolCallDecision | None:
     """尝试从 LLM 输出文本解析并校验 ToolCallDecision。
 
     Args:
@@ -168,8 +161,7 @@ def validate_tool_call_decision(text: str) -> Optional[ToolCallDecision]:
     except ValidationError:
         return None
 
-
-def validate_plan_output(text: str) -> Optional[PlanOutput]:
+def validate_plan_output(text: str) -> PlanOutput | None:
     """尝试从 LLM 输出文本解析并校验 PlanOutput。
 
     Args:
@@ -189,8 +181,7 @@ def validate_plan_output(text: str) -> Optional[PlanOutput]:
     except ValidationError:
         return None
 
-
-def validate_final_answer(text: str) -> Optional[FinalAnswer]:
+def validate_final_answer(text: str) -> FinalAnswer | None:
     """尝试从 LLM 输出文本解析并校验 FinalAnswer。
 
     Args:

@@ -1,4 +1,4 @@
-﻿"""
+"""
 AgentState 与 create_initial_state 单元测试。
 
 测试模块: fnixagent.graph.state
@@ -7,6 +7,13 @@ AgentState 与 create_initial_state 单元测试。
     - create_initial_state 字段初始化
     - create_initial_state 消息历史
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from fnixagent.graph.state import AgentState, create_initial_state
 
 
@@ -74,9 +81,20 @@ class TestAgentStateTypedDict:
         """create_initial_state 产出的 state 应包含全部字段。"""
         state = create_initial_state("test")
         expected_keys = {
-            "messages", "user_input", "current_goal", "intent_keywords",
-            "concept_path", "topology_paths", "selected_skills",
-            "skill_priorities", "tool_calls", "tool_results", "trace",
-            "iteration", "should_continue", "final_answer", "error",
+            "messages",
+            "user_input",
+            "current_goal",
+            "intent_keywords",
+            "concept_path",
+            "topology_paths",
+            "selected_skills",
+            "skill_priorities",
+            "tool_calls",
+            "tool_results",
+            "trace",
+            "iteration",
+            "should_continue",
+            "final_answer",
+            "error",
         }
         assert expected_keys.issubset(set(state.keys()))

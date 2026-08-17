@@ -1,7 +1,7 @@
 """
 自进化飞轮调度 — 定时触发，采集→提炼→生成升级建议，形成闭环
 
-飞轮架构（借鉴自顶尖开源项目设计）：
+飞轮架构（借鉴自顶尖项目设计）：
 
 ```
 采集阶段 (Collector)
@@ -19,21 +19,27 @@
   - 每月: 会议论文 + 协议更新 + 领域全景
 """
 
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Optional
 
 from croniter import croniter
 from pydantic import BaseModel
 
 from .collector import IntelligenceCollector
-from .knowledge import KnowledgeExtractor, FlywheelKnowledgeBase
-from .upgrade import UpgradeEngine, UpgradeProposal
+from .knowledge import FlywheelKnowledgeBase, KnowledgeExtractor
+from .upgrade import UpgradeEngine
 
 logger = logging.getLogger(__name__)
 
@@ -42,10 +48,12 @@ logger = logging.getLogger(__name__)
 # 调度频率
 # ============================================================
 
+
 class ScheduleConfig(BaseModel):
     """飞轮调度配置"""
-    daily_cron: str = "0 6 * * *"      # 每天早上 6:00 UTC+8
-    weekly_cron: str = "0 8 * * 1"    # 每周一早上 8:00
+
+    daily_cron: str = "0 6 * * *"  # 每天早上 6:00 UTC+8
+    weekly_cron: str = "0 8 * * 1"  # 每周一早上 8:00
     monthly_cron: str = "0 10 1 * *"  # 每月第一天 10:00
     max_items_per_run: int = 50
     enabled: bool = True
@@ -54,6 +62,7 @@ class ScheduleConfig(BaseModel):
 # ============================================================
 # 飞轮状态
 # ============================================================
+
 
 class FlywheelState(str, Enum):
     IDLE = "idle"
@@ -69,22 +78,23 @@ class FlywheelState(str, Enum):
 # 主飞轮控制器
 # ============================================================
 
+
 class SelfEvolutionFlywheel:
     """自进化飞轮 — 持续收集情报 → 提炼知识 → 生成升级建议 → 闭环驱动"""
 
     def __init__(
         self,
-        config_path: Optional[str] = None,
-        config: Optional[ScheduleConfig] = None,
+        config_path: str | None = None,
+        config: ScheduleConfig | None = None,
     ):
         self.config = config or ScheduleConfig()
         self.state = FlywheelState.IDLE
-        self.last_run: Optional[str] = None
-        self.last_error: Optional[str] = None
-        self._collector: Optional[IntelligenceCollector] = None
-        self._extractor: Optional[KnowledgeExtractor] = None
-        self._kb: Optional[FlywheelKnowledgeBase] = None
-        self._upgrade_engine: Optional[UpgradeEngine] = None
+        self.last_run: str | None = None
+        self.last_error: str | None = None
+        self._collector: IntelligenceCollector | None = None
+        self._extractor: KnowledgeExtractor | None = None
+        self._kb: FlywheelKnowledgeBase | None = None
+        self._upgrade_engine: UpgradeEngine | None = None
 
     @property
     def kb(self) -> FlywheelKnowledgeBase:
@@ -127,30 +137,33 @@ class SelfEvolutionFlywheel:
             # 2. 提炼
             self.state = FlywheelState.EXTRACTING
             last_collect_file = self._get_latest_collect(frequency)
-            with open(last_collect_file, "r", encoding="utf-8") as f:
+            with open(last_collect_file, encoding="utf-8") as f:
                 collected = json.load(f)
             digest = self.extractor.extract_from_collection(collected)
             digest_path = self.extractor.save_digest(digest)
-            logger.info(f"Extracted digest: {digest.total_items} items, {digest.actionable_items} actionable")
+            logger.info(
+                f"Extracted digest: {digest.total_items} items, {digest.actionable_items} actionable"
+            )
 
             # 3. 生成升级建议
             self.state = FlywheelState.GENERATING_PROPOSALS
             pending = [
-                k for k in digest.critical_items + digest.high_items
-                if k.relevance_score >= 0.5
+                k for k in digest.critical_items + digest.high_items if k.relevance_score >= 0.5
             ]
             proposals = self.upgrade_engine.generate_batch(pending)
 
             # 完成
             self.state = FlywheelState.COMPLETED
-            self.last_run = datetime.now(timezone.utc).isoformat()
+            self.last_run = datetime.now(UTC).isoformat()
             result = {
                 "status": "completed",
                 "frequency": frequency,
                 "total_items_collected": total_items,
                 "total_items_relevant": digest.total_items,
                 "proposals_generated": len(proposals),
-                "critical_proposals": [p.proposal_id for p in proposals if p.impact.value == "critical"],
+                "critical_proposals": [
+                    p.proposal_id for p in proposals if p.impact.value == "critical"
+                ],
                 "digest_path": digest_path,
                 "proposals": [p.proposal_id for p in proposals],
                 "last_run": self.last_run,
@@ -175,7 +188,7 @@ class SelfEvolutionFlywheel:
         files = sorted(
             intelligence_dir.glob(f"intelligence_{frequency}_*.json"),
             reverse=True,
-            key=lambda p: p.stat().st_mtime
+            key=lambda p: p.stat().st_mtime,
         )
         return files[0]
 
@@ -189,9 +202,8 @@ class SelfEvolutionFlywheel:
             return True, "never run before"
 
         # 根据频率判断
-        import datetime as dt_module
         last_dt = datetime.fromisoformat(self.last_run)
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         delta = now - last_dt
 
         if delta < timedelta(hours=12):
@@ -207,9 +219,9 @@ class SelfEvolutionFlywheel:
 
         return False, f"last run {delta.total_seconds() / 3600:.1f}h ago"
 
-    def get_next_run_time(self, base_time: Optional[datetime] = None) -> datetime:
+    def get_next_run_time(self, base_time: datetime | None = None) -> datetime:
         """计算下次运行时间"""
-        base = base_time or datetime.now(timezone.utc)
+        base = base_time or datetime.now(UTC)
         next_times = []
 
         # daily
@@ -242,11 +254,15 @@ class SelfEvolutionFlywheel:
 # 入口
 # ============================================================
 
+
 async def main():
     """CLI 入口：手动触发一次飞轮"""
     import argparse
+
     parser = argparse.ArgumentParser(description="FnixAgent Self-Evolution Flywheel")
-    parser.add_argument("--frequency", "-f", default="daily", choices=["daily", "weekly", "monthly"])
+    parser.add_argument(
+        "--frequency", "-f", default="daily", choices=["daily", "weekly", "monthly"]
+    )
     args = parser.parse_args()
 
     flywheel = SelfEvolutionFlywheel()
@@ -256,4 +272,5 @@ async def main():
 
 if __name__ == "__main__":
     import asyncio
+
     asyncio.run(main())

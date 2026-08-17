@@ -1,4 +1,4 @@
-﻿"""
+"""
 技能反馈处理器 (SkillFeedbackHandler) 单元测试。
 
 测试模块: fnixagent.core.skills.feedback.SkillFeedbackHandler
@@ -12,41 +12,39 @@
     - 滑动窗口大小限制
     - 权重数值精确验证
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 import pytest
 
 from fnixagent.core.skills.feedback import SkillFeedbackHandler
 from fnixagent.core.topology import weights as weights_mod
 from fnixagent.core.topology.graph import TopologyGraph
 from fnixagent.core.types import (
-    NodeType,
-    SkillLevel,
-    TopologyLayer,
     ToolExecutionStatus,
     ToolResult,
 )
-
 
 # ---------------------------------------------------------------------------
 # on_skill_success
 # ---------------------------------------------------------------------------
 
+
 class TestOnSkillSuccess:
     """测试 on_skill_success() 方法。"""
 
-    def test_success_increases_node_weight_by_success_bonus(
-        self, feedback_handler, sample_graph
-    ):
+    def test_success_increases_node_weight_by_success_bonus(self, feedback_handler, sample_graph):
         """成功反馈后绑定概念节点权重应增加 SUCCESS_BONUS(+0.05)。"""
         initial_weight = sample_graph.get_node("L2:concept1").weight
         feedback_handler.on_skill_success("search_skill")
         new_weight = sample_graph.get_node("L2:concept1").weight
-        assert new_weight == pytest.approx(
-            initial_weight + weights_mod.SUCCESS_BONUS
-        )
+        assert new_weight == pytest.approx(initial_weight + weights_mod.SUCCESS_BONUS)
 
-    def test_success_increases_confidence(
-        self, feedback_handler, sample_graph
-    ):
+    def test_success_increases_confidence(self, feedback_handler, sample_graph):
         """成功反馈后概念节点置信度应增加 CONFIDENCE_INCREMENT(+0.02)。"""
         initial_confidence = sample_graph.get_node("L2:concept1").confidence
         feedback_handler.on_skill_success("search_skill")
@@ -62,18 +60,14 @@ class TestOnSkillSuccess:
         feedback_handler.on_skill_success("search_skill")
         assert node.confidence == pytest.approx(weights_mod.CONFIDENCE_MAX)
 
-    def test_success_records_success_count(
-        self, feedback_handler, sample_graph
-    ):
+    def test_success_records_success_count(self, feedback_handler, sample_graph):
         """成功反馈应在 metadata 中累计 success_count。"""
         feedback_handler.on_skill_success("search_skill")
         feedback_handler.on_skill_success("search_skill")
         node = sample_graph.get_node("L2:concept1")
         assert node.metadata["success_count"] == 2
 
-    def test_success_reinforces_path_edges(
-        self, feedback_handler, sample_graph, sample_path
-    ):
+    def test_success_reinforces_path_edges(self, feedback_handler, sample_graph, sample_path):
         """成功反馈后路径上的边权重应增加 SINGLE_INCREMENT(+0.02)。"""
         initial_e3 = sample_graph.get_edge("e3").weight
         initial_e4 = sample_graph.get_edge("e4").weight
@@ -85,22 +79,16 @@ class TestOnSkillSuccess:
 
     def test_success_returns_stats(self, feedback_handler, sample_path):
         """成功反馈应返回包含 concepts_reinforced 和 edges_reinforced 的统计。"""
-        stats = feedback_handler.on_skill_success(
-            "search_skill", path=sample_path
-        )
+        stats = feedback_handler.on_skill_success("search_skill", path=sample_path)
         assert stats["concepts_reinforced"] == 1
         assert stats["edges_reinforced"] == 2
 
-    def test_success_with_explicit_concept_node(
-        self, feedback_handler, sample_graph
-    ):
+    def test_success_with_explicit_concept_node(self, feedback_handler, sample_graph):
         """指定 concept_node_id 时应仅强化该节点。"""
         # search_skill 绑定 concept1,但显式指定 concept2
         initial_c1 = sample_graph.get_node("L2:concept1").weight
         initial_c2 = sample_graph.get_node("L2:concept2").weight
-        feedback_handler.on_skill_success(
-            "search_skill", concept_node_id="L2:concept2"
-        )
+        feedback_handler.on_skill_success("search_skill", concept_node_id="L2:concept2")
         # concept1 不变,concept2 强化
         assert sample_graph.get_node("L2:concept1").weight == pytest.approx(initial_c1)
         assert sample_graph.get_node("L2:concept2").weight == pytest.approx(
@@ -118,43 +106,32 @@ class TestOnSkillSuccess:
 # on_skill_failure
 # ---------------------------------------------------------------------------
 
+
 class TestOnSkillFailure:
     """测试 on_skill_failure() 方法。"""
 
-    def test_failure_decreases_node_weight_by_failure_penalty(
-        self, feedback_handler, sample_graph
-    ):
+    def test_failure_decreases_node_weight_by_failure_penalty(self, feedback_handler, sample_graph):
         """失败反馈后绑定概念节点权重应减少 FAILURE_PENALTY(-0.08)。"""
         initial_weight = sample_graph.get_node("L2:concept1").weight
         feedback_handler.on_skill_failure("search_skill")
         new_weight = sample_graph.get_node("L2:concept1").weight
         # FAILURE_PENALTY = -0.08
-        assert new_weight == pytest.approx(
-            initial_weight + weights_mod.FAILURE_PENALTY
-        )
+        assert new_weight == pytest.approx(initial_weight + weights_mod.FAILURE_PENALTY)
 
-    def test_failure_records_failure_count(
-        self, feedback_handler, sample_graph
-    ):
+    def test_failure_records_failure_count(self, feedback_handler, sample_graph):
         """失败反馈应在 metadata 中累计 failure_count。"""
         feedback_handler.on_skill_failure("search_skill")
         feedback_handler.on_skill_failure("search_skill")
         node = sample_graph.get_node("L2:concept1")
         assert node.metadata["failure_count"] == 2
 
-    def test_failure_records_error_message(
-        self, feedback_handler, sample_graph
-    ):
+    def test_failure_records_error_message(self, feedback_handler, sample_graph):
         """传入 error 时应在 metadata 中记录 last_error。"""
-        feedback_handler.on_skill_failure(
-            "search_skill", error="connection timeout"
-        )
+        feedback_handler.on_skill_failure("search_skill", error="connection timeout")
         node = sample_graph.get_node("L2:concept1")
         assert node.metadata["last_error"] == "connection timeout"
 
-    def test_failure_penalizes_path_edges(
-        self, feedback_handler, sample_graph, sample_path
-    ):
+    def test_failure_penalizes_path_edges(self, feedback_handler, sample_graph, sample_path):
         """失败反馈后路径上的边权重应减少 0.03。"""
         initial_e3 = sample_graph.get_edge("e3").weight
         feedback_handler.on_skill_failure("search_skill", path=sample_path)
@@ -163,9 +140,7 @@ class TestOnSkillFailure:
 
     def test_failure_returns_stats(self, feedback_handler, sample_path):
         """失败反馈应返回包含 concepts_penalized/edges_penalized/deprecated 的统计。"""
-        stats = feedback_handler.on_skill_failure(
-            "search_skill", path=sample_path
-        )
+        stats = feedback_handler.on_skill_failure("search_skill", path=sample_path)
         assert stats["concepts_penalized"] == 1
         assert stats["edges_penalized"] == 2
         assert stats["deprecated"] == 0
@@ -180,15 +155,11 @@ class TestOnSkillFailure:
         assert node.deprecated is True
         assert node.weight == pytest.approx(weights_mod.DEPRECATED_WEIGHT)
 
-    def test_failure_deprecation_stats(
-        self, feedback_handler, sample_path
-    ):
+    def test_failure_deprecation_stats(self, feedback_handler, sample_path):
         """废弃标记应在 stats['deprecated'] 中计数。"""
         # 连续失败 6 次,第 6 次触发废弃
         for i in range(6):
-            stats = feedback_handler.on_skill_failure(
-                "search_skill", path=sample_path
-            )
+            stats = feedback_handler.on_skill_failure("search_skill", path=sample_path)
         # 最后一次应有 deprecated 计数(节点 1 + 可能的边)
         assert stats["deprecated"] >= 1
 
@@ -197,12 +168,11 @@ class TestOnSkillFailure:
 # process_tool_result
 # ---------------------------------------------------------------------------
 
+
 class TestProcessToolResult:
     """测试 process_tool_result() 方法。"""
 
-    def test_process_success_result(
-        self, feedback_handler, sample_graph, sample_path
-    ):
+    def test_process_success_result(self, feedback_handler, sample_graph, sample_path):
         """SUCCESS 状态的 ToolResult 应触发成功反馈。"""
         initial_weight = sample_graph.get_node("L2:concept1").weight
         result = ToolResult(
@@ -211,19 +181,13 @@ class TestProcessToolResult:
             status=ToolExecutionStatus.SUCCESS,
             output={"data": "ok"},
         )
-        stats = feedback_handler.process_tool_result(
-            "search_skill", result, path=sample_path
-        )
+        stats = feedback_handler.process_tool_result("search_skill", result, path=sample_path)
         # 应触发成功反馈
         assert stats["concepts_reinforced"] == 1
         new_weight = sample_graph.get_node("L2:concept1").weight
-        assert new_weight == pytest.approx(
-            initial_weight + weights_mod.SUCCESS_BONUS
-        )
+        assert new_weight == pytest.approx(initial_weight + weights_mod.SUCCESS_BONUS)
 
-    def test_process_failed_result(
-        self, feedback_handler, sample_graph, sample_path
-    ):
+    def test_process_failed_result(self, feedback_handler, sample_graph, sample_path):
         """FAILED 状态的 ToolResult 应触发失败反馈。"""
         initial_weight = sample_graph.get_node("L2:concept1").weight
         result = ToolResult(
@@ -232,18 +196,12 @@ class TestProcessToolResult:
             status=ToolExecutionStatus.FAILED,
             error="something went wrong",
         )
-        stats = feedback_handler.process_tool_result(
-            "search_skill", result, path=sample_path
-        )
+        stats = feedback_handler.process_tool_result("search_skill", result, path=sample_path)
         assert stats["concepts_penalized"] == 1
         new_weight = sample_graph.get_node("L2:concept1").weight
-        assert new_weight == pytest.approx(
-            initial_weight + weights_mod.FAILURE_PENALTY
-        )
+        assert new_weight == pytest.approx(initial_weight + weights_mod.FAILURE_PENALTY)
 
-    def test_process_timeout_result(
-        self, feedback_handler, sample_graph, sample_path
-    ):
+    def test_process_timeout_result(self, feedback_handler, sample_graph, sample_path):
         """TIMEOUT 状态应按失败处理。"""
         initial_weight = sample_graph.get_node("L2:concept1").weight
         result = ToolResult(
@@ -252,18 +210,12 @@ class TestProcessToolResult:
             status=ToolExecutionStatus.TIMEOUT,
             error="execution timed out",
         )
-        stats = feedback_handler.process_tool_result(
-            "search_skill", result, path=sample_path
-        )
+        stats = feedback_handler.process_tool_result("search_skill", result, path=sample_path)
         assert stats["concepts_penalized"] == 1
         new_weight = sample_graph.get_node("L2:concept1").weight
-        assert new_weight == pytest.approx(
-            initial_weight + weights_mod.FAILURE_PENALTY
-        )
+        assert new_weight == pytest.approx(initial_weight + weights_mod.FAILURE_PENALTY)
 
-    def test_process_failed_records_error(
-        self, feedback_handler, sample_graph
-    ):
+    def test_process_failed_records_error(self, feedback_handler, sample_graph):
         """FAILED 状态的 ToolResult 应将 error 记录到节点 metadata。"""
         result = ToolResult(
             call_id="call-4",
@@ -279,6 +231,7 @@ class TestProcessToolResult:
 # ---------------------------------------------------------------------------
 # get_success_rate / get_feedback_history / get_all_success_rates
 # ---------------------------------------------------------------------------
+
 
 class TestFeedbackWindow:
     """测试反馈窗口查询方法。"""
@@ -371,6 +324,7 @@ class TestFeedbackWindow:
 # 边界条件
 # ---------------------------------------------------------------------------
 
+
 class TestEdgeCases:
     """测试边界条件。"""
 
@@ -396,9 +350,7 @@ class TestEdgeCases:
         assert stats["concepts_reinforced"] == 1
         assert stats["edges_reinforced"] == 0
         new_weight = sample_graph.get_node("L2:concept1").weight
-        assert new_weight == pytest.approx(
-            initial_weight + weights_mod.SUCCESS_BONUS
-        )
+        assert new_weight == pytest.approx(initial_weight + weights_mod.SUCCESS_BONUS)
 
     def test_failure_no_path(self, feedback_handler, sample_graph):
         """无路径时失败反馈应仅惩罚节点,不惩罚边。"""
@@ -407,9 +359,7 @@ class TestEdgeCases:
         assert stats["concepts_penalized"] == 1
         assert stats["edges_penalized"] == 0
         new_weight = sample_graph.get_node("L2:concept1").weight
-        assert new_weight == pytest.approx(
-            initial_weight + weights_mod.FAILURE_PENALTY
-        )
+        assert new_weight == pytest.approx(initial_weight + weights_mod.FAILURE_PENALTY)
 
     def test_weight_clamped_to_min(self, feedback_handler, sample_graph):
         """节点权重不应低于 MIN_WEIGHT(0.0)。"""

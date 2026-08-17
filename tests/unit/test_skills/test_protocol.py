@@ -1,4 +1,4 @@
-﻿"""
+"""
 技能-拓扑绑定协议 (SkillBindingProtocol) 单元测试。
 
 测试模块: fnixagent.core.skills.protocol.SkillBindingProtocol
@@ -12,6 +12,13 @@
     - compute_priority: 路径命中/兄弟/无路径/无绑定/多概念
     - compute_priorities: 批量计算与降序排列
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 import pytest
 
 from fnixagent.core.exceptions import SkillBindingError
@@ -23,17 +30,14 @@ from fnixagent.core.skills.protocol import (
 )
 from fnixagent.core.topology.graph import TopologyGraph
 from fnixagent.core.types import (
-    NodeType,
     SkillLevel,
     SkillRecord,
-    TopologyLayer,
-    TopologyPath,
 )
-
 
 # ---------------------------------------------------------------------------
 # 常量校验
 # ---------------------------------------------------------------------------
+
 
 class TestConstants:
     """测试路径命中系数常量。"""
@@ -49,6 +53,7 @@ class TestConstants:
 # bind
 # ---------------------------------------------------------------------------
 
+
 class TestBind:
     """测试 bind() 方法。"""
 
@@ -56,9 +61,7 @@ class TestBind:
         """正常绑定 L2 概念节点与技能应成功并返回更新后的节点。"""
         # 先解绑 concept3 原有的 chart_skill
         binding_protocol.unbind("L2:concept3")
-        node = binding_protocol.bind(
-            "L2:concept3", "new_skill", SkillLevel.REASONING
-        )
+        node = binding_protocol.bind("L2:concept3", "new_skill", SkillLevel.REASONING)
         assert node.skill_binding == "new_skill"
         assert node.metadata["skill_level"] == SkillLevel.REASONING.value
         # 图中节点应同步更新
@@ -100,6 +103,7 @@ class TestBind:
 # unbind
 # ---------------------------------------------------------------------------
 
+
 class TestUnbind:
     """测试 unbind() 方法。"""
 
@@ -121,6 +125,7 @@ class TestUnbind:
 # get_bound_skill
 # ---------------------------------------------------------------------------
 
+
 class TestGetBoundSkill:
     """测试 get_bound_skill() 方法。"""
 
@@ -141,6 +146,7 @@ class TestGetBoundSkill:
 # ---------------------------------------------------------------------------
 # get_bound_concepts
 # ---------------------------------------------------------------------------
+
 
 class TestGetBoundConcepts:
     """测试 get_bound_concepts() 反查方法。"""
@@ -169,6 +175,7 @@ class TestGetBoundConcepts:
 # ---------------------------------------------------------------------------
 # list_all_bindings
 # ---------------------------------------------------------------------------
+
 
 class TestListAllBindings:
     """测试 list_all_bindings() 方法。"""
@@ -206,6 +213,7 @@ class TestListAllBindings:
 # ---------------------------------------------------------------------------
 # compute_priority
 # ---------------------------------------------------------------------------
+
 
 class TestComputePriority:
     """测试 compute_priority() 方法。"""
@@ -259,6 +267,7 @@ class TestComputePriority:
 # compute_priorities
 # ---------------------------------------------------------------------------
 
+
 class TestComputePriorities:
     """测试 compute_priorities() 批量方法。"""
 
@@ -283,9 +292,7 @@ class TestComputePriorities:
 
     def test_batch_priorities_no_path(self, binding_protocol):
         """无路径时批量计算应全部使用权重(系数 1.0)。"""
-        result = binding_protocol.compute_priorities(
-            ["search_skill", "convert_skill"], path=None
-        )
+        result = binding_protocol.compute_priorities(["search_skill", "convert_skill"], path=None)
         # 两者权重均为 0.5,无路径 → 0.5 * 1.0 / 1 = 0.5
         assert len(result) == 2
         for _, priority in result:
@@ -293,7 +300,5 @@ class TestComputePriorities:
 
     def test_batch_priorities_unbound_skill(self, binding_protocol, sample_path):
         """未绑定的技能优先级应为 0.0。"""
-        result = binding_protocol.compute_priorities(
-            ["unbound_skill"], sample_path
-        )
+        result = binding_protocol.compute_priorities(["unbound_skill"], sample_path)
         assert result == [("unbound_skill", 0.0)]

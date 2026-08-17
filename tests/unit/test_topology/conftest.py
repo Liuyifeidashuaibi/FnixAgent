@@ -1,4 +1,4 @@
-﻿"""
+"""
 知识拓扑图 (KTG) 模块单元测试公共夹具。
 
 提供以下 fixtures:
@@ -7,6 +7,13 @@
     - sample_node:    一个 L2 CONCEPT 节点(独立对象,未加入图)
     - sample_edge:    一条 CONTAINS 边(独立对象,未加入图)
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 import os
 import sys
 
@@ -24,10 +31,10 @@ from fnixagent.core.types import (
     TopologyNode,
 )
 
-
 # ---------------------------------------------------------------------------
 # 空拓扑图
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def empty_graph() -> TopologyGraph:
@@ -38,6 +45,7 @@ def empty_graph() -> TopologyGraph:
 # ---------------------------------------------------------------------------
 # 包含 L1→L2→L3→L4 完整层级的示例图
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def sample_graph() -> TopologyGraph:
@@ -90,18 +98,15 @@ def sample_graph() -> TopologyGraph:
     graph.add_edge("L1:goal1", "L2:concept1", EdgeType.CONTAINS, edge_id="e1")
     graph.add_edge("L2:concept1", "L3:rule1", EdgeType.CONTAINS, edge_id="e2")
     graph.add_edge("L3:rule1", "L4:fact1", EdgeType.CONTAINS, edge_id="e3")
-    graph.add_edge(
-        "L2:concept1", "L3:rule1", EdgeType.DEPENDS_ON, weight=0.6, edge_id="e4"
-    )
-    graph.add_edge(
-        "L3:rule1", "L4:fact1", EdgeType.DEPENDS_ON, weight=0.7, edge_id="e5"
-    )
+    graph.add_edge("L2:concept1", "L3:rule1", EdgeType.DEPENDS_ON, weight=0.6, edge_id="e4")
+    graph.add_edge("L3:rule1", "L4:fact1", EdgeType.DEPENDS_ON, weight=0.7, edge_id="e5")
     return graph
 
 
 # ---------------------------------------------------------------------------
 # 独立的 L2 CONCEPT 节点(未加入图)
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def sample_node() -> TopologyNode:
@@ -126,6 +131,7 @@ def sample_node() -> TopologyNode:
 # ---------------------------------------------------------------------------
 # 独立的 CONTAINS 边(未加入图)
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def sample_edge() -> TopologyEdge:

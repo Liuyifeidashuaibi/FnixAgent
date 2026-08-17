@@ -6,11 +6,17 @@ Agent 调度中枢 (Agent Scheduler)。
 串联全部引擎的完整生命周期:
   输入 → 安全 → 记忆 → 推理 → 工具 → 反思 → 审核 → 回复 → 落库
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from typing import Optional
 
 from fnixagent.core.orchestrator.context import OrchestratorContext
 from fnixagent.core.orchestrator.lifecycle import Lifecycle
@@ -20,8 +26,9 @@ from fnixagent.core.types import ExecutionTrace
 @dataclass
 class AgentResponse:
     """Agent 响应。"""
+
     final_answer: str
-    trace: Optional[ExecutionTrace] = None
+    trace: ExecutionTrace | None = None
     security_input_passed: bool = True
     security_output_passed: bool = True
     sanitized: bool = False
@@ -73,15 +80,13 @@ class AgentScheduler:
         return AgentResponse(
             final_answer=result.final_answer,
             trace=result.execution_trace,
-            security_input_passed=(
-                result.security_input.passed if result.security_input else True
-            ),
+            security_input_passed=(result.security_input.passed if result.security_input else True),
             security_output_passed=(
                 result.security_output.passed if result.security_output else True
             ),
             sanitized=result.security_output is not None
-                and bool(result.security_output.sanitized_text)
-                and result.security_output.sanitized_text != result.original_answer,
+            and bool(result.security_output.sanitized_text)
+            and result.security_output.sanitized_text != result.original_answer,
             error=result.error,
             duration_ms=ms,
             stats=stats,

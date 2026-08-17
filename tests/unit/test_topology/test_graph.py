@@ -1,4 +1,4 @@
-﻿"""
+"""
 知识拓扑图 (KTG) 内存数据结构单元测试。
 
 测试模块: fnixagent.core.topology.graph.TopologyGraph
@@ -8,13 +8,20 @@
     - 权重更新: reinforce_node, reinforce_edge, penalize_edge, apply_daily_decay
     - 快照与统计: snapshot, restore, stats
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 import pytest
 
 from fnixagent.core.exceptions import (
     TopologyEdgeNotFoundError,
+    TopologyLayerViolationError,
     TopologyNodeNotFoundError,
     TopologyValidationError,
-    TopologyLayerViolationError,
 )
 from fnixagent.core.topology import weights as weights_mod
 from fnixagent.core.topology.graph import TopologyGraph
@@ -24,10 +31,10 @@ from fnixagent.core.types import (
     TopologyLayer,
 )
 
-
 # ---------------------------------------------------------------------------
 # 节点操作
 # ---------------------------------------------------------------------------
+
 
 class TestAddNode:
     """测试 add_node() 方法。"""
@@ -213,9 +220,7 @@ class TestListNodes:
 
     def test_list_by_layer_and_type(self, sample_graph):
         """同时按层级和类型列举。"""
-        nodes = sample_graph.list_nodes(
-            layer=TopologyLayer.L4_FACT, node_type=NodeType.FACT
-        )
+        nodes = sample_graph.list_nodes(layer=TopologyLayer.L4_FACT, node_type=NodeType.FACT)
         assert len(nodes) == 1
 
     def test_list_exclude_deprecated(self, sample_graph):
@@ -260,6 +265,7 @@ class TestDeprecateNode:
 # 边操作
 # ---------------------------------------------------------------------------
 
+
 class TestAddEdge:
     """测试 add_edge() 方法。"""
 
@@ -289,9 +295,7 @@ class TestAddEdge:
 
     def test_add_edge_default_weight_variable(self, sample_graph):
         """可变权重边默认权重为 INITIAL_WEIGHT=0.5。"""
-        edge = sample_graph.add_edge(
-            "L1:goal1", "L2:concept1", EdgeType.CAUSAL, edge_id="e:def"
-        )
+        edge = sample_graph.add_edge("L1:goal1", "L2:concept1", EdgeType.CAUSAL, edge_id="e:def")
         assert edge.weight == weights_mod.INITIAL_WEIGHT
 
     def test_add_edge_custom_weight_variable(self, sample_graph):
@@ -310,9 +314,7 @@ class TestAddEdge:
 
     def test_add_mutex_edge_fixed_weight(self, sample_graph):
         """MUTEX 边权重固定为 -1.0。"""
-        edge = sample_graph.add_edge(
-            "L3:rule1", "L3:rule1", EdgeType.MUTEX, edge_id="e:mx"
-        )
+        edge = sample_graph.add_edge("L3:rule1", "L3:rule1", EdgeType.MUTEX, edge_id="e:mx")
         # 注意: 自环也允许(MUTEX 不要求相邻层)
         assert edge.weight == -1.0
 
@@ -334,19 +336,13 @@ class TestAddEdge:
     def test_add_contains_non_adjacent(self, sample_graph):
         """CONTAINS 边跨非相邻层应抛 TopologyLayerViolationError。"""
         with pytest.raises(TopologyLayerViolationError):
-            sample_graph.add_edge(
-                "L1:goal1", "L3:rule1", EdgeType.CONTAINS, edge_id="e:bad"
-            )
+            sample_graph.add_edge("L1:goal1", "L3:rule1", EdgeType.CONTAINS, edge_id="e:bad")
 
     def test_add_parallel_edges(self, sample_graph):
         """同源同目标可新增平行边(不同 edge_id)。"""
         initial_count = len(sample_graph.list_edges())
-        sample_graph.add_edge(
-            "L1:goal1", "L2:concept1", EdgeType.CAUSAL, edge_id="e:parallel1"
-        )
-        sample_graph.add_edge(
-            "L1:goal1", "L2:concept1", EdgeType.CAUSAL, edge_id="e:parallel2"
-        )
+        sample_graph.add_edge("L1:goal1", "L2:concept1", EdgeType.CAUSAL, edge_id="e:parallel1")
+        sample_graph.add_edge("L1:goal1", "L2:concept1", EdgeType.CAUSAL, edge_id="e:parallel2")
         assert len(sample_graph.list_edges()) == initial_count + 2
 
     def test_add_edge_with_metadata(self, sample_graph):
@@ -386,9 +382,7 @@ class TestGetOutEdges:
 
     def test_get_out_edges_by_type(self, sample_graph):
         """按类型过滤出边。"""
-        contains_edges = sample_graph.get_out_edges(
-            "L2:concept1", edge_type=EdgeType.CONTAINS
-        )
+        contains_edges = sample_graph.get_out_edges("L2:concept1", edge_type=EdgeType.CONTAINS)
         assert len(contains_edges) == 1
         assert contains_edges[0].edge_type == EdgeType.CONTAINS
 
@@ -413,9 +407,7 @@ class TestGetInEdges:
 
     def test_get_in_edges_by_type(self, sample_graph):
         """按类型过滤入边。"""
-        contains_edges = sample_graph.get_in_edges(
-            "L3:rule1", edge_type=EdgeType.CONTAINS
-        )
+        contains_edges = sample_graph.get_in_edges("L3:rule1", edge_type=EdgeType.CONTAINS)
         assert len(contains_edges) == 1
 
     def test_get_in_edges_no_edges(self, sample_graph):
@@ -470,6 +462,7 @@ class TestDeprecateEdge:
 # ---------------------------------------------------------------------------
 # 权重更新
 # ---------------------------------------------------------------------------
+
 
 class TestReinforceNode:
     """测试 reinforce_node() 方法。"""
@@ -577,6 +570,7 @@ class TestApplyDailyDecay:
 # 快照与统计
 # ---------------------------------------------------------------------------
 
+
 class TestSnapshot:
     """测试 snapshot() 方法。"""
 
@@ -603,10 +597,21 @@ class TestSnapshot:
         snap = sample_graph.snapshot()
         node_data = snap["nodes"][0]
         required_fields = {
-            "node_id", "layer", "node_type", "name", "content",
-            "weight", "confidence", "use_count", "freshness",
-            "deprecated", "version", "metadata", "skill_binding",
-            "created_at", "last_used_at",
+            "node_id",
+            "layer",
+            "node_type",
+            "name",
+            "content",
+            "weight",
+            "confidence",
+            "use_count",
+            "freshness",
+            "deprecated",
+            "version",
+            "metadata",
+            "skill_binding",
+            "created_at",
+            "last_used_at",
         }
         assert required_fields.issubset(set(node_data.keys()))
 
@@ -615,8 +620,15 @@ class TestSnapshot:
         snap = sample_graph.snapshot()
         edge_data = snap["edges"][0]
         required_fields = {
-            "edge_id", "source_id", "target_id", "edge_type",
-            "weight", "version", "deprecated", "metadata", "created_at",
+            "edge_id",
+            "source_id",
+            "target_id",
+            "edge_type",
+            "weight",
+            "version",
+            "deprecated",
+            "metadata",
+            "created_at",
         }
         assert required_fields.issubset(set(edge_data.keys()))
 
@@ -715,7 +727,11 @@ class TestStats:
         """stats 应包含全部 6 个统计键。"""
         stats = sample_graph.stats()
         expected_keys = {
-            "total_nodes", "active_nodes", "deprecated_nodes",
-            "total_edges", "active_edges", "deprecated_edges",
+            "total_nodes",
+            "active_nodes",
+            "deprecated_nodes",
+            "total_edges",
+            "active_edges",
+            "deprecated_edges",
         }
         assert expected_keys.issubset(set(stats.keys()))

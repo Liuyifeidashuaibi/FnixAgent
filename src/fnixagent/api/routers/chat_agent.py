@@ -10,21 +10,29 @@
   - 鉴权: 复用 verify_jwt_token 依赖
   - router 前缀: /chat (由主流程在 main.py 注册时挂到 /api/v1 下)
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import json
 import os
-from typing import Any, AsyncGenerator, Optional
+import uuid
+from collections.abc import AsyncGenerator
+from typing import Any
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from fnixagent.api.routers.auth import verify_jwt_token
+from fnixagent.api.routers.auth import verify_jwt_token_optional
 from fnixagent.core.code.agent import (
     CodingAgent,
     CodingTask,
-    TaskStep,
 )
 from fnixagent.core.code.server import IDEServer
 
@@ -39,7 +47,7 @@ _server: IDEServer | None = None
 _server_workspace: str | None = None
 
 
-def get_server(workspace: Optional[str] = None) -> IDEServer:
+def get_server(workspace: str | None = None) -> IDEServer:
     """懒加载 IDEServer 单例。
 
     首次调用, 或请求的 workspace 与当前实例不一致时创建新实例;
@@ -63,9 +71,11 @@ def get_server(workspace: Optional[str] = None) -> IDEServer:
 # 请求模型
 # ============================================================================
 
+
 class ChatMessage(BaseModel):
     """聊天消息。"""
-    role: str   # "user" 或 "assistant"
+
+    role: str  # "user" 或 "assistant"
     content: str
 
 
@@ -75,14 +85,36 @@ class ChatAgentRequest(BaseModel):
     Attributes:
         messages: 对话消息列表, 每条消息包含 role 和 content。
         workspace: 可选的工作区路径, 指定 Agent 操作的代码项目根目录。
+        preview: True 时写操作 dry-run（Cursor 先审后写），由客户端 Accept 落盘。
+        session_id: Harness session ID（可选，用于持久化 Code 任务）。
+        llm: Desktop BYOK 请求级 LLM 覆盖。
     """
+
     messages: list[ChatMessage]
-    workspace: Optional[str] = None
+    workspace: str | None = None
+    preview: bool = True
+    session_id: str | None = None
+    llm: dict[str, Any] | None = None
+
+
+class _AdapterLLMBackend:
+    """Wrap LLMAdapter for CodingAgent._call_llm."""
+
+    def __init__(self, adapter: Any) -> None:
+        self._adapter = adapter
+
+    async def complete(self, payload: Any, **kwargs: Any) -> str:
+        messages = payload.get("messages", []) if isinstance(payload, dict) else payload
+        result = await self._adapter.chat(messages if isinstance(messages, list) else [])
+        choices = result.get("choices") or [{}]
+        message = choices[0].get("message") or {}
+        return str(message.get("content") or "")
 
 
 # ============================================================================
 # 流式响应辅助
 # ============================================================================
+
 
 def _ndjson_line(data: dict[str, Any]) -> str:
     """将字典序列化为一行 NDJSON 字符串。
@@ -100,10 +132,11 @@ def _ndjson_line(data: dict[str, Any]) -> str:
 # 流式 Agent 聊天端点
 # ============================================================================
 
+
 @router.post("/agent")
 async def chat_agent(
     req: ChatAgentRequest,
-    _payload: dict = Depends(verify_jwt_token),
+    _payload: dict = Depends(verify_jwt_token_optional),
 ):
     """Agent 流式聊天端点。
 
@@ -145,175 +178,273 @@ async def _stream_agent_response(
     """
     # 获取 IDEServer 并确保初始化
     server = get_server(req.workspace)
-    server._ensure_initialized()  # noqa: SLF001
-    agent: CodingAgent = server._agent  # type: ignore[assignment]  # noqa: SLF001
+    server._ensure_initialized()
+    agent: CodingAgent = server._agent  # type: ignore[assignment]
+
+    from fnixagent.services.llm_policy import api_only_mode, resolve_llm_for_request
+    from fnixagent.services.work_agent import adapter_from_llm_override
+
+    llm_raw = dict(req.llm or {})
+    llm_dict, llm_err = resolve_llm_for_request(
+        llm_raw,
+        is_admin=not api_only_mode(),
+    )
+    if llm_err:
+        yield _ndjson_line(
+            {
+                "type": "done",
+                "status": "failed",
+                "changes": [],
+                "error": llm_err,
+            }
+        )
+        return
+    if llm_dict is not None:
+        try:
+            agent._llm = _AdapterLLMBackend(adapter_from_llm_override(llm_dict))
+        except Exception as exc:
+            yield _ndjson_line(
+                {
+                    "type": "done",
+                    "status": "failed",
+                    "changes": [],
+                    "error": f"LLM 配置无效: {exc}",
+                }
+            )
+            return
+
+    # Cursor-style review-before-apply
+    if getattr(agent, "_tools", None) is not None:
+        agent._tools.preview_mode = bool(req.preview)
 
     # 提取用户最后一条消息作为任务描述
     user_messages = [m for m in req.messages if m.role == "user"]
     if not user_messages:
-        yield _ndjson_line({
-            "type": "done",
-            "status": "failed",
-            "changes": [],
-            "error": "未提供用户消息",
-        })
+        yield _ndjson_line(
+            {
+                "type": "done",
+                "status": "failed",
+                "changes": [],
+                "error": "未提供用户消息",
+            }
+        )
         return
 
     task_description = user_messages[-1].content
-    task = CodingTask(description=task_description)
+    workspace = req.workspace or os.getcwd()
+    sid = req.session_id or f"code-{uuid.uuid4().hex[:12]}"
 
-    # 注册到活跃任务表 (供 _review 中的 _collect_diff 使用)
-    agent._active_tasks[task.id] = task  # noqa: SLF001
-    agent._task_changesets[task.id] = []  # noqa: SLF001
-
-    changes: list[dict[str, Any]] = []
+    from fnixagent.harness.session import get_session_store
+    from fnixagent.harness.workspace import ensure_project_layout
 
     try:
-        # ================================================================
-        # 阶段 1: PLAN - 生成执行计划
-        # ================================================================
-        yield _ndjson_line({
-            "type": "thinking",
-            "content": "正在分析任务, 生成执行计划...",
-        })
+        ensure_project_layout(workspace)
+    except Exception:
+        pass
 
-        plan: list[TaskStep] = await agent._plan(task)  # noqa: SLF001
+    store = get_session_store()
+    title = task_description.splitlines()[0][:80] or "Code 任务"
+    if store.get(sid) is None:
+        store.create(
+            session_id=sid,
+            user_id="desktop",
+            workspace=workspace,
+            title=title,
+            description=task_description,
+            mode="code",
+        )
+    else:
+        store.update(sid, status="running", result="")
 
-        # 输出计划
-        plan_steps = [
-            {
-                "description": s.description,
-                "action": s.action,
-                "target": s.target,
-            }
-            for s in plan
-        ]
-        yield _ndjson_line({
-            "type": "plan",
-            "steps": plan_steps,
-        })
+    # fnix-local PDG 上下文（sidecar 离线时静默跳过）
+    local_prompt = ""
+    try:
+        from fnixagent.harness.local_context import local_context_prompt
 
-        # ================================================================
-        # 阶段 2: EXECUTE - 按计划执行步骤
-        # ================================================================
-        yield _ndjson_line({
-            "type": "thinking",
-            "content": "开始执行计划...",
-        })
+        local_prompt = local_context_prompt(workspace, query=task_description[:800])
+    except Exception:
+        local_prompt = ""
 
-        # 记录执行前的 DiffEngine 历史长度, 用于事后收集变更集
-        hist_before = len(agent._tools._diff.get_history())  # noqa: SLF001
+    if local_prompt:
+        task_description = f"{task_description}\n{local_prompt}"
 
-        for step in plan:
-            # 步骤开始
-            step_data = {
-                "id": step.id,
-                "description": step.description,
-                "action": step.action,
-                "target": step.target,
-            }
-            yield _ndjson_line({
-                "type": "step_start",
-                "step": step_data,
-            })
+    # Code 模式路径契约：工程文件写项目相对路径，勿进 Work artifacts
+    task_description = (
+        f"{task_description}\n\n"
+        "【Code 写盘规则】按任务指定文件名写入项目根/相对路径；"
+        "禁止写入 `.fnix/artifacts/`（除非用户明确要求）。"
+        "测试文件与实现文件须同级或可 import。"
+    )
 
-            try:
-                await agent._execute_step(step)  # noqa: SLF001
-                if step.status != "skipped":
-                    step.status = "done"
+    task = CodingTask(description=task_description)
 
-                # 如果是写操作, 产出 file_change 事件
-                action = step.action.strip().lower()
-                if action in ("write", "edit"):
-                    change_info = {
-                        "path": step.target,
-                        "action": "modify",
-                        "diff": step.result or "",
+    changes: list[dict[str, Any]] = []
+    session_status = "running"
+    session_result = ""
+
+    try:
+        # Unified RunEngine over CodingAgent.streaming_execute (Plan→Execute→Review→Heal).
+        from fnixagent.core.run import RunCheckpointStore, RunEngine
+        from fnixagent.core.run.engine import code_agent_source
+
+        engine = RunEngine(store=RunCheckpointStore())
+        async for event in engine.run_stream(
+            code_agent_source(agent, task),
+            channel="code",
+            session_id=sid,
+            # Spec 4: meta 持久化, resume 时用于恢复 workspace / llm
+            meta={
+                "user_input": task_description[:500],
+                "workspace": workspace,
+                "llm": llm_dict,
+            },
+        ):
+            if event.type == "file_change" and isinstance(event.data, dict):
+                changes.append(
+                    {
+                        "path": event.data.get("path"),
+                        "action": event.data.get("action"),
+                        "diff": event.data.get("diff"),
+                        "content": event.data.get("content"),
+                        "old_content": event.data.get("old_content"),
                     }
-                    changes.append(change_info)
-                    yield _ndjson_line({
-                        "type": "file_change",
-                        **change_info,
-                    })
+                )
+            line = event.to_code_ndjson()
+            if event.type == "done":
+                line["changes"] = changes
+                line["session_id"] = sid
+                if line.get("status") == "failed":
+                    session_status = "failed"
+                    session_result = str(line.get("error") or line.get("review_notes") or "")
+                else:
+                    session_status = "completed"
+                    session_result = "ok"
+            yield _ndjson_line(line)
 
-            except Exception as exc:  # noqa: BLE001
-                step.status = "failed"
-                step.error = str(exc)
-                # 步骤失败事件
-                step_data["status"] = "failed"
-                step_data["error"] = str(exc)
-                yield _ndjson_line({
-                    "type": "step_end",
-                    "step": step_data,
-                })
-                yield _ndjson_line({
-                    "type": "message",
-                    "content": f"步骤执行失败: {step.description[:80]} - {exc}",
-                })
-                yield _ndjson_line({
-                    "type": "done",
-                    "status": "failed",
-                    "changes": changes,
-                    "error": str(exc),
-                })
-                return
-
-            # 步骤完成
-            step_data["status"] = step.status
-            step_data["result"] = step.result
-            yield _ndjson_line({
-                "type": "step_end",
-                "step": step_data,
-            })
-
-        # 收集本次执行产生的变更集 ID (供 _review 中的 _collect_diff 使用)
-        history = agent._tools._diff.get_history()  # noqa: SLF001
-        new_ids = [cs.id for cs, _ in history[hist_before:]]
-        agent._task_changesets[task.id] = new_ids  # noqa: SLF001
-
-        # ================================================================
-        # 阶段 3: REVIEW - 审查变更
-        # ================================================================
-        yield _ndjson_line({
-            "type": "thinking",
-            "content": "正在审查变更...",
-        })
-
-        review_passed, review_notes = await agent._review(task, plan)  # noqa: SLF001
-
-        if review_notes:
-            yield _ndjson_line({
+    except Exception as exc:
+        session_status = "failed"
+        session_result = str(exc)
+        yield _ndjson_line(
+            {
                 "type": "message",
-                "content": review_notes,
-            })
-
-        if review_passed:
-            yield _ndjson_line({
-                "type": "done",
-                "status": "completed",
-                "changes": changes,
-            })
-        else:
-            yield _ndjson_line({
+                "content": f"Agent 执行异常: {type(exc).__name__}: {exc}",
+            }
+        )
+        yield _ndjson_line(
+            {
                 "type": "done",
                 "status": "failed",
                 "changes": changes,
-                "error": review_notes or "审查未通过",
-            })
-
-    except Exception as exc:  # noqa: BLE001
-        yield _ndjson_line({
-            "type": "message",
-            "content": f"Agent 执行异常: {type(exc).__name__}: {exc}",
-        })
-        yield _ndjson_line({
-            "type": "done",
-            "status": "failed",
-            "changes": changes,
-            "error": str(exc),
-        })
+                "error": str(exc),
+                "session_id": sid,
+            }
+        )
 
     finally:
+        try:
+            store.update(sid, status=session_status, result=session_result[:4000])
+        except Exception:
+            pass
         # 清理活跃任务
-        agent._active_tasks.pop(task.id, None)  # noqa: SLF001
-        agent._task_changesets.pop(task.id, None)  # noqa: SLF001
+        agent._active_tasks.pop(task.id, None)
+        agent._task_changesets.pop(task.id, None)
+
+
+# ============================================================================
+# Accept / Apply — Desktop Diff 验收后落盘
+# ============================================================================
+
+
+class AgentFileChange(BaseModel):
+    """单个文件变更（来自 file_change 事件）。"""
+
+    path: str
+    action: str = "modify"  # create | modify | delete
+    content: str | None = None
+    old_content: str | None = None
+
+
+class AgentApplyRequest(BaseModel):
+    """批量应用 Code Agent 预览变更。"""
+
+    workspace: str
+    changes: list[AgentFileChange]
+
+
+@router.post("/agent/apply")
+async def agent_apply_changes(
+    req: AgentApplyRequest,
+    _payload: dict = Depends(verify_jwt_token_optional),
+):
+    """将 preview 模式下的 file_change 真正写入 workspace。"""
+    from fnixagent.core.code.diff import ChangeSetBuilder, DiffEngine
+    from fnixagent.harness.changeset_journal import save_changeset
+
+    if not req.changes:
+        return {"ok": True, "applied": 0}
+
+    engine = DiffEngine(project_root=req.workspace)
+    builder = ChangeSetBuilder("Desktop accept")
+
+    for ch in req.changes:
+        action = (ch.action or "modify").strip().lower()
+        if action == "create":
+            builder.create_file(ch.path, ch.content or "")
+        elif action == "delete":
+            builder.delete_file(ch.path, ch.old_content or "")
+        else:
+            builder.modify_file(ch.path, ch.old_content or "", ch.content or "")
+
+    cs = builder.build()
+    result = await engine.apply(cs, dry_run=False)
+    if result.success:
+        try:
+            save_changeset(
+                req.workspace,
+                cs.id,
+                [
+                    {
+                        "path": ch.path,
+                        "action": (ch.action or "modify").strip().lower(),
+                        "content": ch.content,
+                        "old_content": ch.old_content,
+                    }
+                    for ch in req.changes
+                ],
+            )
+        except Exception:
+            pass
+    err = result.error or ""
+    conflict = (not result.success) and (
+        "冲突" in err
+        or "conflict" in err.lower()
+        or "并发编辑" in err
+        or "内容已变更" in err
+        or "文件已存在" in err
+    )
+    return {
+        "ok": result.success,
+        "applied": len(req.changes) if result.success else 0,
+        "error": err,
+        "conflict": conflict,
+        "failed_file": getattr(result, "failed_file", None),
+        "changeset_id": cs.id,
+    }
+
+
+class AgentRollbackRequest(BaseModel):
+    """撤销最近一次（或指定）Accept 变更。"""
+
+    workspace: str
+    changeset_id: str | None = None
+
+
+@router.post("/agent/rollback")
+async def agent_rollback_changes(
+    req: AgentRollbackRequest,
+    _payload: dict = Depends(verify_jwt_token_optional),
+):
+    """一键撤销已 Accept 的变更集（读 `{workspace}/.fnix/changesets`）。"""
+    from fnixagent.harness.changeset_journal import rollback_persisted_async
+
+    return await rollback_persisted_async(req.workspace, req.changeset_id)

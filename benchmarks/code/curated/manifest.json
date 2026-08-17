@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "name": "curated-fcs-seed",
+  "description": "World-class Beta curated Code gate — seed-only smoke tasks (no generated noise).",
+  "total": 9,
+  "seed_count": 9,
+  "generated_count": 0,
+  "min_hard_pass_live": 70,
+  "tasks": [
+    "seed.api.health",
+    "seed.bugfix.subtract",
+    "seed.cli.greet",
+    "seed.heal.syntax_error",
+    "seed.multi.calc_package",
+    "seed.refactor.extract_parse",
+    "seed.search.fix_helper",
+    "seed.test_gen.counter",
+    "seed.write.fibonacci"
+  ]
+}

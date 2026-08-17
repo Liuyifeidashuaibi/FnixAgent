@@ -13,11 +13,18 @@
 
 线程安全: 所有状态读写加锁。
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import threading
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from fnixagent.core.types import CircuitState
 
@@ -25,11 +32,12 @@ from fnixagent.core.types import CircuitState
 @dataclass
 class _BreakerState:
     """熔断器内部运行时状态。"""
+
     state: CircuitState = CircuitState.CLOSED
     consecutive_failures: int = 0
-    consecutive_successes: int = 0       # 半开态下的连续成功
-    last_failure_time: float = 0.0       # 最近一次失败的时间戳
-    opened_at: float = 0.0               # 进入 OPEN 的时间戳
+    consecutive_successes: int = 0  # 半开态下的连续成功
+    last_failure_time: float = 0.0  # 最近一次失败的时间戳
+    opened_at: float = 0.0  # 进入 OPEN 的时间戳
 
 
 class CircuitBreaker:

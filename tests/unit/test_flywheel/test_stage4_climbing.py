@@ -1,4 +1,4 @@
-﻿"""
+"""
 飞轮 ④ 爬坡进化环单元测试。
 
 测试模块: fnixagent.core.flywheel.stage4_climbing
@@ -14,17 +14,21 @@
     - run() 完整流程与快照
     - get_evolution_history()
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 import time
 
 import pytest
 
 from fnixagent.core.flywheel.stage4_climbing import (
     DEFAULT_EVOLUTION_INTERVAL,
-    PATTERN_FREQUENCY_THRESHOLD,
-    SKILL_COMBO_THRESHOLD,
     HillClimbingFlywheel,
 )
-from fnixagent.core.topology import weights as weights_mod
 from fnixagent.core.types import (
     FlywheelStage,
     NodeType,
@@ -33,10 +37,10 @@ from fnixagent.core.types import (
     TraceRecord,
 )
 
-
 # ---------------------------------------------------------------------------
 # 辅助函数
 # ---------------------------------------------------------------------------
+
 
 def _make_trace(goal, success=True, tool_calls=None, concept_path=None):
     """快速构造 TraceRecord。"""
@@ -58,6 +62,7 @@ def _make_trace(goal, success=True, tool_calls=None, concept_path=None):
 # ---------------------------------------------------------------------------
 # should_trigger
 # ---------------------------------------------------------------------------
+
 
 class TestStage4ShouldTrigger:
     """测试 should_trigger() 方法。"""
@@ -88,6 +93,7 @@ class TestStage4ShouldTrigger:
 # ---------------------------------------------------------------------------
 # 范式检测
 # ---------------------------------------------------------------------------
+
 
 class TestStage4DetectPatterns:
     """测试高频任务范式检测。"""
@@ -138,6 +144,7 @@ class TestStage4DetectPatterns:
 # 技能组合检测
 # ---------------------------------------------------------------------------
 
+
 class TestStage4DetectSkillCombos:
     """测试高频技能组合检测。"""
 
@@ -173,6 +180,7 @@ class TestStage4DetectSkillCombos:
 # ---------------------------------------------------------------------------
 # 常用推理链路
 # ---------------------------------------------------------------------------
+
 
 class TestStage4FindTopPaths:
     """测试常用推理链路查找。"""
@@ -210,6 +218,7 @@ class TestStage4FindTopPaths:
 # 薄弱链路修复
 # ---------------------------------------------------------------------------
 
+
 class TestStage4FixWeakLinks:
     """测试薄弱链路修复。"""
 
@@ -218,9 +227,7 @@ class TestStage4FixWeakLinks:
         node = sample_graph.get_node("L2:concept2")
         node.weight = 0.2  # 低于 0.3
         fw = HillClimbingFlywheel(sample_graph)
-        traces = [
-            _make_trace("g", concept_path=["L2:concept2"]) for _ in range(3)
-        ]
+        traces = [_make_trace("g", concept_path=["L2:concept2"]) for _ in range(3)]
         fixed = fw._fix_weak_links(traces)
         assert fixed >= 1
         assert node.weight > 0.2
@@ -231,9 +238,7 @@ class TestStage4FixWeakLinks:
         node.weight = 0.8  # 高于 0.3
         original = node.weight
         fw = HillClimbingFlywheel(sample_graph)
-        traces = [
-            _make_trace("g", concept_path=["L2:concept1"]) for _ in range(5)
-        ]
+        traces = [_make_trace("g", concept_path=["L2:concept1"]) for _ in range(5)]
         fixed = fw._fix_weak_links(traces)
         assert fixed == 0
 
@@ -250,6 +255,7 @@ class TestStage4FixWeakLinks:
 # ---------------------------------------------------------------------------
 # 技能优先级调整
 # ---------------------------------------------------------------------------
+
 
 class TestStage4AdjustSkillPriorities:
     """测试技能优先级调整。"""
@@ -271,9 +277,12 @@ class TestStage4AdjustSkillPriorities:
         """低成功率的技能不应被调整。"""
         fw = HillClimbingFlywheel(sample_graph)
         traces = [
-            _make_trace("g", tool_calls=[
-                {"name": "search_paper", "args": {}, "status": "failed"}
-            ], success=False) for _ in range(4)
+            _make_trace(
+                "g",
+                tool_calls=[{"name": "search_paper", "args": {}, "status": "failed"}],
+                success=False,
+            )
+            for _ in range(4)
         ]
         node = sample_graph.get_node("L2:concept1")
         original_weight = node.weight
@@ -291,47 +300,52 @@ class TestStage4AdjustSkillPriorities:
 # 范式固化
 # ---------------------------------------------------------------------------
 
+
 class TestStage4SolidifyPatterns:
     """测试范式固化为 L3 规则节点。"""
 
     def test_solidifies_high_success_pattern(self, sample_graph):
         """高成功率的范式应被固化为 L3 RULE 节点。"""
         fw = HillClimbingFlywheel(sample_graph)
-        patterns = [{
-            "signature": "撰写论文综述",
-            "count": 5,
-            "representative_goal": "撰写论文综述详细版",
-            "success_rate": 0.8,
-        }]
+        patterns = [
+            {
+                "signature": "撰写论文综述",
+                "count": 5,
+                "representative_goal": "撰写论文综述详细版",
+                "success_rate": 0.8,
+            }
+        ]
         solidified = fw._solidify_patterns(patterns)
         assert solidified >= 1
-        rules = sample_graph.list_nodes(
-            layer=TopologyLayer.L3_RULE, node_type=NodeType.RULE
-        )
+        rules = sample_graph.list_nodes(layer=TopologyLayer.L3_RULE, node_type=NodeType.RULE)
         names = [r.name for r in rules]
         assert any("pattern:" in n for n in names)
 
     def test_skips_low_success_pattern(self, sample_graph):
         """低成功率(< 0.5)的范式不应被固化。"""
         fw = HillClimbingFlywheel(sample_graph)
-        patterns = [{
-            "signature": "失败任务",
-            "count": 5,
-            "representative_goal": "失败任务详细",
-            "success_rate": 0.3,
-        }]
+        patterns = [
+            {
+                "signature": "失败任务",
+                "count": 5,
+                "representative_goal": "失败任务详细",
+                "success_rate": 0.3,
+            }
+        ]
         solidified = fw._solidify_patterns(patterns)
         assert solidified == 0
 
     def test_does_not_duplicate(self, sample_graph):
         """已固化的范式不应重复添加。"""
         fw = HillClimbingFlywheel(sample_graph)
-        patterns = [{
-            "signature": "撰写论文综述",
-            "count": 5,
-            "representative_goal": "撰写论文综述",
-            "success_rate": 0.9,
-        }]
+        patterns = [
+            {
+                "signature": "撰写论文综述",
+                "count": 5,
+                "representative_goal": "撰写论文综述",
+                "success_rate": 0.9,
+            }
+        ]
         fw._solidify_patterns(patterns)
         solidified = fw._solidify_patterns(patterns)
         assert solidified == 0
@@ -340,6 +354,7 @@ class TestStage4SolidifyPatterns:
 # ---------------------------------------------------------------------------
 # 全局衰减
 # ---------------------------------------------------------------------------
+
 
 class TestStage4GlobalDecay:
     """测试全局旧知识衰减。"""
@@ -376,6 +391,7 @@ class TestStage4GlobalDecay:
 # run() 完整流程
 # ---------------------------------------------------------------------------
 
+
 class TestStage4Run:
     """测试 run() 完整流程。"""
 
@@ -386,10 +402,17 @@ class TestStage4Run:
         )
         result = fw.run([sample_trace])
         expected_keys = {
-            "analyzed_traces", "patterns_detected", "top_paths",
-            "skill_combos", "weak_links_fixed", "skills_adjusted",
-            "patterns_solidified", "decayed_nodes", "stale_nodes",
-            "snapshot_created", "rolled_back",
+            "analyzed_traces",
+            "patterns_detected",
+            "top_paths",
+            "skill_combos",
+            "weak_links_fixed",
+            "skills_adjusted",
+            "patterns_solidified",
+            "decayed_nodes",
+            "stale_nodes",
+            "snapshot_created",
+            "rolled_back",
         }
         assert expected_keys.issubset(set(result.keys()))
 
@@ -401,9 +424,7 @@ class TestStage4Run:
 
     def test_run_creates_snapshots(self, sample_graph, sample_trace, fake_snapshot_manager):
         """有 snapshot_manager 时应创建快照。"""
-        fw = HillClimbingFlywheel(
-            sample_graph, snapshot_manager=fake_snapshot_manager
-        )
+        fw = HillClimbingFlywheel(sample_graph, snapshot_manager=fake_snapshot_manager)
         result = fw.run([sample_trace])
         assert result["snapshot_created"] is True
         # 应创建 pre 和 post 两个快照
@@ -439,9 +460,7 @@ class TestStage4Run:
     def test_run_detects_patterns(self, sample_graph):
         """run() 应检测到高频范式。"""
         fw = HillClimbingFlywheel(sample_graph)
-        traces = [
-            _make_trace("撰写论文综述版本", success=True) for _ in range(3)
-        ]
+        traces = [_make_trace("撰写论文综述版本", success=True) for _ in range(3)]
         result = fw.run(traces)
         assert result["patterns_detected"] >= 1
 
@@ -449,6 +468,7 @@ class TestStage4Run:
 # ---------------------------------------------------------------------------
 # get_evolution_history
 # ---------------------------------------------------------------------------
+
 
 class TestStage4EvolutionHistory:
     """测试 get_evolution_history() 方法。"""

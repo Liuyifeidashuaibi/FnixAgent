@@ -22,21 +22,25 @@ fnixagent 任务引擎的安全护栏:高风险操作(批量删除/覆盖原文�
   所有确认操作(创建/批准/拒绝/过期)均通过 print 输出审计日志,
   实际可替换为 fnixagent.core.audit.logger。
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Optional
 
 from fnixagent.office.base import BaseExpert, ExpertResult
-
 
 # ---------------------------------------------------------------------------
 # 风险等级
 # ---------------------------------------------------------------------------
-
 
 class RiskLevel(Enum):
     """操作风险等级。
@@ -44,11 +48,10 @@ class RiskLevel(Enum):
     数值越大风险越高(用于比较与阈值判断)。
     """
 
-    SAFE = "safe"        # 只读/新建文件
-    LOW = "low"          # 修改副本,不影响原文件
-    MEDIUM = "medium"    # 修改原文件但可撤销(如格式统一)
-    HIGH = "high"        # 不可逆操作(删除段落/批量删除/覆盖/加密)
-
+    SAFE = "safe"  # 只读/新建文件
+    LOW = "low"  # 修改副本,不影响原文件
+    MEDIUM = "medium"  # 修改原文件但可撤销(如格式统一)
+    HIGH = "high"  # 不可逆操作(删除段落/批量删除/覆盖/加密)
 
 # 风险等级→数值映射,数值越大风险越高
 _RISK_ORDER: dict[RiskLevel, int] = {
@@ -58,21 +61,40 @@ _RISK_ORDER: dict[RiskLevel, int] = {
     RiskLevel.HIGH: 3,
 }
 
-
 # 高风险关键词(小写匹配,命中即判 HIGH)
-_HIGH_RISK_KEYWORDS: frozenset[str] = frozenset({
-    "删除", "delete", "del", "remove", "rm",
-    "覆盖", "overwrite", "overwirte", "replace_file",
-    "加密", "encrypt", "encryption",
-    "清空", "clear", "truncate",
-    "格式化", "format",
-})
+_HIGH_RISK_KEYWORDS: frozenset[str] = frozenset(
+    {
+        "删除",
+        "delete",
+        "del",
+        "remove",
+        "rm",
+        "覆盖",
+        "overwrite",
+        "overwirte",
+        "replace_file",
+        "加密",
+        "encrypt",
+        "encryption",
+        "清空",
+        "clear",
+        "truncate",
+        "格式化",
+        "format",
+    }
+)
 
 # 批量关键词(命中提升一级风险,封顶 HIGH)
-_BATCH_KEYWORDS: frozenset[str] = frozenset({
-    "批量", "batch", "bulk", "all", "全部", "所有",
-})
-
+_BATCH_KEYWORDS: frozenset[str] = frozenset(
+    {
+        "批量",
+        "batch",
+        "bulk",
+        "all",
+        "全部",
+        "所有",
+    }
+)
 
 def _bump_up(level: RiskLevel) -> RiskLevel:
     """风险等级提升一级(封顶 HIGH)。"""
@@ -84,11 +106,9 @@ def _bump_up(level: RiskLevel) -> RiskLevel:
             return lvl
     return RiskLevel.HIGH
 
-
 # ---------------------------------------------------------------------------
 # 确认请求
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class ConfirmationRequest:
@@ -117,16 +137,14 @@ class ConfirmationRequest:
     irreversible: bool
     estimated_impact: str
     created_at: datetime
-    status: str = "pending"            # pending / approved / rejected / expired
-    decided_at: Optional[datetime] = None
-    decided_by: Optional[str] = None
-    reason: Optional[str] = None
-
+    status: str = "pending"  # pending / approved / rejected / expired
+    decided_at: datetime | None = None
+    decided_by: str | None = None
+    reason: str | None = None
 
 # ---------------------------------------------------------------------------
 # HumanConfirmer
 # ---------------------------------------------------------------------------
-
 
 class HumanConfirmer(BaseExpert):
     """人工确认节点。
@@ -320,17 +338,13 @@ class HumanConfirmer(BaseExpert):
             return self._failure(f"confirmation request not found: {request_id}")
         if req.status != "pending":
             return self._failure(
-                f"cannot approve: request {request_id} is in '{req.status}' state "
-                f"(终态,不可再转移)"
+                f"cannot approve: request {request_id} is in '{req.status}' state (终态,不可再转移)"
             )
         req.status = "approved"
         req.decided_at = datetime.now()
         req.decided_by = decided_by
         req.reason = reason
-        print(
-            f"[audit] confirmation approved: id={request_id} "
-            f"by={decided_by} reason={reason}"
-        )
+        print(f"[audit] confirmation approved: id={request_id} by={decided_by} reason={reason}")
         return self._success(
             request_id,
             status="approved",
@@ -361,17 +375,13 @@ class HumanConfirmer(BaseExpert):
             return self._failure(f"confirmation request not found: {request_id}")
         if req.status != "pending":
             return self._failure(
-                f"cannot reject: request {request_id} is in '{req.status}' state "
-                f"(终态,不可再转移)"
+                f"cannot reject: request {request_id} is in '{req.status}' state (终态,不可再转移)"
             )
         req.status = "rejected"
         req.decided_at = datetime.now()
         req.decided_by = decided_by
         req.reason = reason
-        print(
-            f"[audit] confirmation rejected: id={request_id} "
-            f"by={decided_by} reason={reason}"
-        )
+        print(f"[audit] confirmation rejected: id={request_id} by={decided_by} reason={reason}")
         return self._success(
             request_id,
             status="rejected",
@@ -383,7 +393,7 @@ class HumanConfirmer(BaseExpert):
         """列出所有待确认(status=pending)请求。"""
         return [r for r in self._pending.values() if r.status == "pending"]
 
-    def get_status(self, request_id: str) -> Optional[ConfirmationRequest]:
+    def get_status(self, request_id: str) -> ConfirmationRequest | None:
         """查询确认请求状态。
 
         Args:
@@ -410,7 +420,8 @@ class HumanConfirmer(BaseExpert):
         now = datetime.now()
         threshold = now - timedelta(minutes=timeout_minutes)
         expired_ids = [
-            rid for rid, r in self._pending.items()
+            rid
+            for rid, r in self._pending.items()
             if r.status == "pending" and r.created_at < threshold
         ]
         for rid in expired_ids:

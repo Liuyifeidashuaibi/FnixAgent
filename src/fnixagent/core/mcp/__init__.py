@@ -1,7 +1,7 @@
 """MCP(Model Context Protocol)模块(P2-3)。
 
 让 fnixagent 既能消费外部 MCP server(Feishu/WeChat Work/DingTalk 等办公生态),
-也能把自身工具暴露为 MCP server(供 Claude Desktop / 其他 agent 调用)。
+也能把自身工具暴露为 MCP server(供其他 Agent 工具调用)。
 
 子模块:
   - types:    数据模型(MCPToolDef/MCPRequest/MCPResponse/MCPServerInfo)
@@ -15,6 +15,42 @@
   - 异步优先(client 内部 async,提供同步包装)
   - 白名单模式(server 默认不暴露任何工具)
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
+from fnixagent.core.mcp.client import (
+    MCPClient,
+    MCPClientError,
+    MCPConnectionError,
+    MCPTimeoutError,
+    MCPToolExecutionError,
+)
+from fnixagent.core.mcp.registry import (
+    MCPRegistryError,
+    MCPServerAlreadyExistsError,
+    MCPServerNotFoundError,
+    MCPToolNotFoundError,
+    MCPToolRegistry,
+)
+from fnixagent.core.mcp.server import (
+    MCPServer,
+    MCPServerAlreadyRunningError,
+    MCPServerError,
+    MCPToolNotExposedError,
+)
+from fnixagent.core.mcp.trust import (
+    McpTrustEntry,
+    McpTrustError,
+    approve_server,
+    assert_trusted_for_connect,
+    deny_server,
+    generate_pkce_pair,
+    list_entries,
+)
 from fnixagent.core.mcp.types import (
     JSONRPCError,
     JSONRPCRequest,
@@ -26,26 +62,6 @@ from fnixagent.core.mcp.types import (
     MCPServerStatus,
     MCPToolDef,
     MCPTransport,
-)
-from fnixagent.core.mcp.client import (
-    MCPClient,
-    MCPClientError,
-    MCPConnectionError,
-    MCPTimeoutError,
-    MCPToolExecutionError,
-)
-from fnixagent.core.mcp.registry import (
-    MCPServerAlreadyExistsError,
-    MCPServerNotFoundError,
-    MCPRegistryError,
-    MCPToolNotFoundError,
-    MCPToolRegistry,
-)
-from fnixagent.core.mcp.server import (
-    MCPServer,
-    MCPServerAlreadyRunningError,
-    MCPServerError,
-    MCPToolNotExposedError,
 )
 
 __all__ = [
@@ -77,4 +93,12 @@ __all__ = [
     "MCPServerError",
     "MCPServerAlreadyRunningError",
     "MCPToolNotExposedError",
+    # trust / OAuth
+    "McpTrustEntry",
+    "McpTrustError",
+    "approve_server",
+    "assert_trusted_for_connect",
+    "deny_server",
+    "generate_pkce_pair",
+    "list_entries",
 ]

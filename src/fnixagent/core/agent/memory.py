@@ -18,6 +18,13 @@ MemoryManager - 四层记忆架构 (Four-Layer Memory Architecture)
   - 修复原版无后端时 working 记忆无法检索 bug
   - 完整的 store/recall/search/forget 四层路由
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import uuid
@@ -25,7 +32,6 @@ from collections import defaultdict, deque
 from typing import Any
 
 from fnixagent.core.agent.types import MemoryBackend, MemoryLayer, utcnow_iso
-
 
 class MemoryManager:
     """记忆管理器 (类比 OS 内存管理)。
@@ -57,25 +63,26 @@ class MemoryManager:
         self._episodic_backend = episodic_backend
         self._semantic_backend = semantic_backend or episodic_backend
         # 内存缓存 (感知 + 工作记忆)
-        self._sensory: dict[str, deque[dict]] = defaultdict(
-            lambda: deque(maxlen=max_sensory_items)
-        )
+        self._sensory: dict[str, deque[dict]] = defaultdict(lambda: deque(maxlen=max_sensory_items))
         self._working: dict[str, list[dict]] = defaultdict(list)
         self._max_working_items = max_working_items
         self._max_sensory_items = max_sensory_items
 
     # --- 感知记忆 (SENSORY) ---
 
-    def append_sensory(self, caller_pid: str, token_chunk: str,
-                       metadata: dict[str, Any] | None = None) -> str:
+    def append_sensory(
+        self, caller_pid: str, token_chunk: str, metadata: dict[str, Any] | None = None
+    ) -> str:
         """追加感知记忆 (LLM 流式 token, 类比 GPU KV Cache 写入)。"""
         memory_id = str(uuid.uuid4())
-        self._sensory[caller_pid].append({
-            "id": memory_id,
-            "content": token_chunk,
-            "metadata": {**(metadata or {}), "timestamp": utcnow_iso()},
-            "layer": MemoryLayer.SENSORY.value,
-        })
+        self._sensory[caller_pid].append(
+            {
+                "id": memory_id,
+                "content": token_chunk,
+                "metadata": {**(metadata or {}), "timestamp": utcnow_iso()},
+                "layer": MemoryLayer.SENSORY.value,
+            }
+        )
         return memory_id
 
     def get_sensory(self, caller_pid: str, last_n: int = 50) -> list[dict]:
@@ -85,8 +92,9 @@ class MemoryManager:
 
     # --- 工作记忆 (WORKING) ---
 
-    async def store_working(self, caller_pid: str, content: str,
-                            metadata: dict[str, Any] | None = None) -> str:
+    async def store_working(
+        self, caller_pid: str, content: str, metadata: dict[str, Any] | None = None
+    ) -> str:
         """存储工作记忆 (类比 context window 写入)。
 
         超限时自动卸载最旧条目到情节记忆 (eviction)。
@@ -95,9 +103,7 @@ class MemoryManager:
         item = {
             "id": memory_id,
             "content": content,
-            "metadata": {**(metadata or {}),
-                         "caller_pid": caller_pid,
-                         "timestamp": utcnow_iso()},
+            "metadata": {**(metadata or {}), "caller_pid": caller_pid, "timestamp": utcnow_iso()},
             "layer": MemoryLayer.WORKING.value,
         }
         self._working[caller_pid].append(item)
@@ -190,13 +196,9 @@ class MemoryManager:
         elif layer == MemoryLayer.WORKING:
             return await self.store_working(caller_pid, content, metadata)
         elif layer == MemoryLayer.EPISODIC and self._episodic_backend:
-            return await self._episodic_backend.store(
-                content, metadata, layer=MemoryLayer.EPISODIC
-            )
+            return await self._episodic_backend.store(content, metadata, layer=MemoryLayer.EPISODIC)
         elif layer == MemoryLayer.SEMANTIC and self._semantic_backend:
-            return await self._semantic_backend.store(
-                content, metadata, layer=MemoryLayer.SEMANTIC
-            )
+            return await self._semantic_backend.store(content, metadata, layer=MemoryLayer.SEMANTIC)
         # 无后端时, 降级到工作记忆
         return await self.store_working(caller_pid, content, metadata)
 
@@ -257,8 +259,7 @@ class MemoryManager:
         query_lower = query.lower()
         query_words = query_lower.split()
         scored = [
-            (item, sum(1 for w in query_words
-                       if w in item.get("content", "").lower()))
+            (item, sum(1 for w in query_words if w in item.get("content", "").lower()))
             for item in items
         ]
         scored.sort(key=lambda x: -x[1])
@@ -281,6 +282,5 @@ class MemoryManager:
         sensory_count = len(self._sensory.pop(caller_pid, deque()))
         working_count = len(self._working.pop(caller_pid, []))
         return {"sensory_cleared": sensory_count, "working_cleared": working_count}
-
 
 __all__ = ["MemoryManager"]

@@ -13,6 +13,13 @@
 
 不依赖官方 mcp SDK,避免安装负担;若需更完整能力,可子类化扩展。
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import asyncio
@@ -22,10 +29,12 @@ import os
 import threading
 import time
 import uuid
-from typing import Any, Optional
+from typing import Any
 from urllib.parse import urlparse
 
 from fnixagent.core.mcp.types import (
+    JSONRPCRequest,
+    JSONRPCResponse,
     MCPErrorCode,
     MCPRequest,
     MCPResponse,
@@ -33,10 +42,7 @@ from fnixagent.core.mcp.types import (
     MCPServerStatus,
     MCPToolDef,
     MCPTransport,
-    JSONRPCRequest,
-    JSONRPCResponse,
 )
-
 
 # ---------------------------------------------------------------------------
 # 异常
@@ -70,7 +76,7 @@ class _BaseTransport:
     async def send(self, request: JSONRPCRequest) -> None:
         raise NotImplementedError
 
-    async def recv(self) -> Optional[dict[str, Any]]:
+    async def recv(self) -> dict[str, Any] | None:
         """接收下一条消息;无消息返回 None,连接关闭抛 ConnectionError。"""
         raise NotImplementedError
 
@@ -81,11 +87,11 @@ class _BaseTransport:
 class _StdioTransport(_BaseTransport):
     """STDIO 传输:子进程的 stdin/stdout,每行一条 JSON-RPC 消息。"""
 
-    def __init__(self, command: str, args: list[str], env: Optional[dict] = None) -> None:
+    def __init__(self, command: str, args: list[str], env: dict | None = None) -> None:
         self._command = command
         self._args = list(args)
         self._env = env
-        self._proc: Optional[asyncio.subprocess.Process] = None
+        self._proc: asyncio.subprocess.Process | None = None
         self._lock = asyncio.Lock()
 
     async def start(self) -> None:
@@ -108,9 +114,7 @@ class _StdioTransport(_BaseTransport):
             ) from e
         except OSError as e:
             # 兜底网络/系统级错误(如命令不存在于 PATH)
-            raise MCPConnectionError(
-                f"OS error starting MCP server '{self._command}': {e}"
-            ) from e
+            raise MCPConnectionError(f"OS error starting MCP server '{self._command}': {e}") from e
 
     async def send(self, request: JSONRPCRequest) -> None:
         if self._proc is None or self._proc.stdin is None:
@@ -119,7 +123,7 @@ class _StdioTransport(_BaseTransport):
         self._proc.stdin.write(line.encode("utf-8"))
         await self._proc.stdin.drain()
 
-    async def recv(self) -> Optional[dict[str, Any]]:
+    async def recv(self) -> dict[str, Any] | None:
         if self._proc is None or self._proc.stdout is None:
             raise MCPConnectionError("STDIO transport not started")
         line = await self._proc.stdout.readline()
@@ -138,7 +142,7 @@ class _StdioTransport(_BaseTransport):
                 self._proc.stdin.close()
             try:
                 await asyncio.wait_for(self._proc.wait(), timeout=2.0)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 self._proc.kill()
                 await self._proc.wait()
         except Exception:
@@ -161,8 +165,8 @@ class _SSETransport(_BaseTransport):
     def __init__(
         self,
         url: str,
-        headers: Optional[dict] = None,
-        auth_token: Optional[str] = None,
+        headers: dict | None = None,
+        auth_token: str | None = None,
     ) -> None:
         # URL 合法性校验(防止 SSRF / 非 HTTP scheme)
         parsed = urlparse(url)
@@ -179,6 +183,7 @@ class _SSETransport(_BaseTransport):
             self._headers["Authorization"] = f"Bearer {auth_token}"
         # 用 urllib(避免引入 httpx/aiohttp 依赖)
         import urllib.request
+
         self._urllib = urllib.request
         # 连接池:复用 opener 以利用 HTTP/1.1 keep-alive
         self._opener = urllib.request.build_opener()
@@ -188,7 +193,7 @@ class _SSETransport(_BaseTransport):
         # 实际发送在 recv 中完成(因为 SSE 是单次请求-响应)
         self._pending_request = request
 
-    async def recv(self) -> Optional[dict[str, Any]]:
+    async def recv(self) -> dict[str, Any] | None:
         req = getattr(self, "_pending_request", None)
         if req is None:
             return None
@@ -227,9 +232,7 @@ class _SSETransport(_BaseTransport):
             # 非标准 SSE:直接返回 JSON
             return json.loads(content)
         except json.JSONDecodeError as e:
-            raise MCPConnectionError(
-                f"Invalid JSON in SSE response: {e}"
-            ) from e
+            raise MCPConnectionError(f"Invalid JSON in SSE response: {e}") from e
 
     async def close(self) -> None:
         pass  # 无状态连接
@@ -254,12 +257,12 @@ class MCPClient:
 
     def __init__(self, server_info: MCPServerInfo) -> None:
         self._info = server_info
-        self._transport: Optional[_BaseTransport] = None
+        self._transport: _BaseTransport | None = None
         self._tools_cache: list[MCPToolDef] = []
         self._connected = False
         self._lock = asyncio.Lock()
         self._sync_lock = threading.Lock()
-        self._loop: Optional[asyncio.AbstractEventLoop] = None
+        self._loop: asyncio.AbstractEventLoop | None = None
         self._pending: dict[str, asyncio.Future] = {}
         # JSON-RPC id 计数器(线程安全,防止并发请求 id 冲突)
         # 格式:"{uuid前8位}-{自增序号}",确保全局唯一
@@ -349,9 +352,7 @@ class MCPClient:
         if not self._connected:
             return False
         try:
-            response = await self._call_method(
-                "ping", {}, timeout_ms=timeout_ms
-            )
+            response = await self._call_method("ping", {}, timeout_ms=timeout_ms)
             return response is not None
         except Exception:
             return False
@@ -380,7 +381,7 @@ class MCPClient:
         ]
         return list(self._tools_cache)
 
-    async def get_tool(self, tool_name: str) -> Optional[MCPToolDef]:
+    async def get_tool(self, tool_name: str) -> MCPToolDef | None:
         """获取单个工具定义(从缓存查找)。"""
         for t in self._tools_cache:
             if t.name == tool_name:
@@ -488,9 +489,7 @@ class MCPClient:
     def _make_transport(self) -> _BaseTransport:
         if self._info.transport == MCPTransport.STDIO:
             if not self._info.command:
-                raise MCPConnectionError(
-                    "STDIO transport requires 'command' in server_info"
-                )
+                raise MCPConnectionError("STDIO transport requires 'command' in server_info")
             return _StdioTransport(
                 command=self._info.command,
                 args=self._info.args,
@@ -505,9 +504,7 @@ class MCPClient:
                 auth_token=self._info.auth_token,
             )
         else:
-            raise MCPConnectionError(
-                f"Unsupported transport: {self._info.transport}"
-            )
+            raise MCPConnectionError(f"Unsupported transport: {self._info.transport}")
 
     async def _initialize(self) -> None:
         """MCP 握手(initialize 请求)。"""
@@ -567,10 +564,8 @@ class MCPClient:
                 self._transport.recv(),
                 timeout=timeout_ms / 1000.0,
             )
-        except asyncio.TimeoutError as e:
-            raise MCPTimeoutError(
-                f"MCP call '{method}' timed out after {timeout_ms}ms"
-            ) from e
+        except TimeoutError as e:
+            raise MCPTimeoutError(f"MCP call '{method}' timed out after {timeout_ms}ms") from e
         if response_data is None:
             raise MCPConnectionError("MCP server closed connection")
         # JSON-RPC 响应
@@ -580,9 +575,7 @@ class MCPClient:
             message = response.error.get("message", "Unknown error")
             if code == MCPErrorCode.METHOD_NOT_FOUND:
                 raise MCPClientError(f"Method '{method}' not found: {message}")
-            raise MCPToolExecutionError(
-                f"MCP error [{code}]: {message}"
-            )
+            raise MCPToolExecutionError(f"MCP error [{code}]: {message}")
         return response.result or {}
 
     def _extract_result(self, response: Any) -> Any:

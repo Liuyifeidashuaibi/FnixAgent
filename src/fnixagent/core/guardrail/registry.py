@@ -24,6 +24,13 @@
   - security/guardrail.py 的 GuardrailPipeline 面向 LLM 调用粒度的输入/输出管道(细粒度)
   - 本模块面向 Agent 全链路的三层护栏(粗粒度,可插拔,含执行层)
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import abc
@@ -31,24 +38,23 @@ import logging
 import threading
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 __all__ = [
-    "GuardrailAction",
-    "GuardrailContext",
-    "GuardrailCheckResult",
     "BaseGuardrailGate",
-    "InputGuardrailGate",
-    "ExecutionGuardrailGate",
     "ExecutionGuardrail",
-    "OutputGuardrailGate",
+    "ExecutionGuardrailGate",
+    "GuardrailAction",
+    "GuardrailCheckResult",
+    "GuardrailContext",
     "GuardrailRegistry",
+    "InputGuardrailGate",
+    "OutputGuardrailGate",
     "get_guardrail_registry",
     "reset_guardrail_registry",
 ]
 
 _logger = logging.getLogger(__name__)
-
 
 # ---------------------------------------------------------------------------
 # 动作枚举
@@ -56,11 +62,11 @@ _logger = logging.getLogger(__name__)
 
 class GuardrailAction(str, Enum):
     """护栏执行结果动作。"""
-    PASS = "pass"       # 通过,继续执行
-    WARN = "warn"       # 警告,记录但继续
-    BLOCK = "block"     # 拦截,停止执行
-    MODIFY = "modify"   # 修改,使用修改后的数据继续
 
+    PASS = "pass"  # 通过,继续执行
+    WARN = "warn"  # 警告,记录但继续
+    BLOCK = "block"  # 拦截,停止执行
+    MODIFY = "modify"  # 修改,使用修改后的数据继续
 
 # ---------------------------------------------------------------------------
 # 上下文与结果
@@ -80,13 +86,13 @@ class GuardrailContext:
         content: 文本内容(输入/输出方向,MODIFY 可更新)
         metadata: 额外元数据(如 confirmed 标记、用户角色等)
     """
-    user_id: Optional[str] = None
-    session_id: Optional[str] = None
-    tool_name: Optional[str] = None
+
+    user_id: str | None = None
+    session_id: str | None = None
+    tool_name: str | None = None
     tool_arguments: dict[str, Any] = field(default_factory=dict)
     content: str = ""
     metadata: dict[str, Any] = field(default_factory=dict)
-
 
 @dataclass
 class GuardrailCheckResult:
@@ -101,13 +107,13 @@ class GuardrailCheckResult:
         risk_score: 风险评分 0~1(0=安全,1=高危)
         details: 额外详情
     """
+
     guardrail_name: str
     action: GuardrailAction = GuardrailAction.PASS
     message: str = ""
     modified_data: Any = None
     risk_score: float = 0.0
     details: dict[str, Any] = field(default_factory=dict)
-
 
 # ---------------------------------------------------------------------------
 # 护栏闸门基类
@@ -153,34 +159,32 @@ class BaseGuardrailGate(abc.ABC):
         """子类实现具体检查逻辑。"""
         ...
 
-
 class InputGuardrailGate(BaseGuardrailGate):
     """输入护栏基类 - 用户输入进入 Agent 前。
 
     典型子类: 注入检测 / 敏感词检测 / 输入内容审核 / 越权检测
     """
-    pass
 
+    pass
 
 class ExecutionGuardrailGate(BaseGuardrailGate):
     """执行护栏基类 - 工具调用执行前。
 
     典型子类: 工具权限检查 / 参数校验 / 高危操作确认
     """
-    pass
 
+    pass
 
 # 别名: 兼容 __init__ 导出的 ExecutionGuardrail 名称
 ExecutionGuardrail = ExecutionGuardrailGate
-
 
 class OutputGuardrailGate(BaseGuardrailGate):
     """输出护栏基类 - Agent 输出返回用户前。
 
     典型子类: 输出格式校验 / 敏感信息检测 / 合规审核 / 脱敏
     """
-    pass
 
+    pass
 
 # ---------------------------------------------------------------------------
 # 三层护栏注册中心
@@ -318,7 +322,7 @@ class GuardrailRegistry:
 
     # -- 查询 --------------------------------------------------------------
 
-    def list_guardrails(self, layer: Optional[str] = None) -> list[str]:
+    def list_guardrails(self, layer: str | None = None) -> list[str]:
         """列出护栏名称。
 
         Args:
@@ -360,9 +364,7 @@ class GuardrailRegistry:
 
     # -- 内部辅助 ----------------------------------------------------------
 
-    def _get_layer_list_locked(
-        self, guardrail: BaseGuardrailGate
-    ) -> list[BaseGuardrailGate]:
+    def _get_layer_list_locked(self, guardrail: BaseGuardrailGate) -> list[BaseGuardrailGate]:
         """根据护栏类型返回对应层列表(调用方需持锁)。"""
         if isinstance(guardrail, InputGuardrailGate):
             return self._input_guardrails  # type: ignore[return-value]
@@ -375,7 +377,7 @@ class GuardrailRegistry:
             "必须继承 InputGuardrailGate/ExecutionGuardrailGate/OutputGuardrailGate"
         )
 
-    def _find_locked(self, name: str) -> Optional[BaseGuardrailGate]:
+    def _find_locked(self, name: str) -> BaseGuardrailGate | None:
         """按名查找护栏(调用方需持锁)。"""
         for layer in (
             self._input_guardrails,
@@ -458,14 +460,10 @@ class GuardrailRegistry:
 
             # 处理动作
             if r.action == GuardrailAction.BLOCK:
-                _logger.warning(
-                    "[%s] 护栏 '%s' 拦截: %s", layer_name, g.name, r.message
-                )
+                _logger.warning("[%s] 护栏 '%s' 拦截: %s", layer_name, g.name, r.message)
                 break
             elif r.action == GuardrailAction.WARN:
-                _logger.warning(
-                    "[%s] 护栏 '%s' 警告: %s", layer_name, g.name, r.message
-                )
+                _logger.warning("[%s] 护栏 '%s' 警告: %s", layer_name, g.name, r.message)
             elif r.action == GuardrailAction.MODIFY:
                 self._apply_modify(ctx, r)
                 _logger.info("[%s] 护栏 '%s' 修改数据", layer_name, g.name)
@@ -485,14 +483,12 @@ class GuardrailRegistry:
         elif isinstance(result.modified_data, dict):
             ctx.tool_arguments = result.modified_data
 
-
 # ---------------------------------------------------------------------------
 # 模块级单例
 # ---------------------------------------------------------------------------
 
-_registry_singleton: Optional[GuardrailRegistry] = None
+_registry_singleton: GuardrailRegistry | None = None
 _singleton_lock = threading.Lock()
-
 
 def get_guardrail_registry() -> GuardrailRegistry:
     """获取全局护栏注册中心单例(惰性创建)。
@@ -505,7 +501,6 @@ def get_guardrail_registry() -> GuardrailRegistry:
         if _registry_singleton is None:
             _registry_singleton = GuardrailRegistry()
         return _registry_singleton
-
 
 def reset_guardrail_registry() -> None:
     """重置全局护栏注册中心单例(主要用于测试)。

@@ -13,12 +13,18 @@
     - 所有写操作通过 schema 校验,确保不违反固化规则
     - 软删除:deprecated 节点/边不物理移除,权重降至 0.01
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import time
 import uuid
 from collections import defaultdict
-from typing import Optional
 
 from fnixagent.core.exceptions import (
     TopologyEdgeNotFoundError,
@@ -57,9 +63,9 @@ class TopologyGraph:
         node_type: NodeType,
         name: str,
         content: str = "",
-        skill_binding: Optional[str] = None,
-        metadata: Optional[dict] = None,
-        node_id: Optional[str] = None,
+        skill_binding: str | None = None,
+        metadata: dict | None = None,
+        node_id: str | None = None,
     ) -> TopologyNode:
         """新增节点(永远 INSERT,不 UPDATE 已有节点)。
 
@@ -70,9 +76,7 @@ class TopologyGraph:
             # 自动生成 ID: 层级前缀 + 短 UUID
             node_id = f"{layer.value}:{uuid.uuid4().hex[:12]}"
         if node_id in self._nodes:
-            raise TopologyValidationError(
-                f"节点 {node_id} 已存在(只增不删不覆盖,请使用新 ID)"
-            )
+            raise TopologyValidationError(f"节点 {node_id} 已存在(只增不删不覆盖,请使用新 ID)")
         node = TopologyNode(
             node_id=node_id,
             layer=layer,
@@ -107,8 +111,8 @@ class TopologyGraph:
 
     def list_nodes(
         self,
-        layer: Optional[TopologyLayer] = None,
-        node_type: Optional[NodeType] = None,
+        layer: TopologyLayer | None = None,
+        node_type: NodeType | None = None,
         include_deprecated: bool = False,
     ) -> list[TopologyNode]:
         """按层级/类型列举节点。"""
@@ -139,9 +143,9 @@ class TopologyGraph:
         source_id: str,
         target_id: str,
         edge_type: EdgeType,
-        weight: Optional[float] = None,
-        metadata: Optional[dict] = None,
-        edge_id: Optional[str] = None,
+        weight: float | None = None,
+        metadata: dict | None = None,
+        edge_id: str | None = None,
     ) -> TopologyEdge:
         """新增边(永远 INSERT,同源同目标可新增平行边,不覆盖旧边)。
 
@@ -188,9 +192,7 @@ class TopologyGraph:
             raise TopologyEdgeNotFoundError(f"边不存在: {edge_id}")
         return edge
 
-    def get_out_edges(
-        self, node_id: str, edge_type: Optional[EdgeType] = None
-    ) -> list[TopologyEdge]:
+    def get_out_edges(self, node_id: str, edge_type: EdgeType | None = None) -> list[TopologyEdge]:
         """获取节点的出边(可选按类型过滤)。"""
         edge_ids = self._out_edges.get(node_id, [])
         edges = [self._edges[eid] for eid in edge_ids if eid in self._edges]
@@ -198,9 +200,7 @@ class TopologyGraph:
             edges = [e for e in edges if e.edge_type == edge_type]
         return edges
 
-    def get_in_edges(
-        self, node_id: str, edge_type: Optional[EdgeType] = None
-    ) -> list[TopologyEdge]:
+    def get_in_edges(self, node_id: str, edge_type: EdgeType | None = None) -> list[TopologyEdge]:
         """获取节点的入边。"""
         edge_ids = self._in_edges.get(node_id, [])
         edges = [self._edges[eid] for eid in edge_ids if eid in self._edges]
@@ -210,7 +210,7 @@ class TopologyGraph:
 
     def list_edges(
         self,
-        edge_type: Optional[EdgeType] = None,
+        edge_type: EdgeType | None = None,
         include_deprecated: bool = False,
     ) -> list[TopologyEdge]:
         """列举边。"""

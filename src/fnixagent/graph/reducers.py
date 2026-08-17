@@ -14,10 +14,16 @@ LangGraph 调用对应 reducer 合并,而非默认覆盖。
 
 设计原则:reducer 为纯函数,不修改入参,返回新对象。
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
-from typing import Any, Optional
-
+from typing import Any
 
 def last_value(left: Any, right: Any) -> Any:
     """覆盖语义:返回右值(最后写入胜出)。
@@ -27,16 +33,14 @@ def last_value(left: Any, right: Any) -> Any:
     """
     return right
 
-
-def add_int(left: Optional[int], right: int) -> int:
+def add_int(left: int | None, right: int) -> int:
     """累加语义:左值 + 右值。
 
     用于 iteration 计数字段,每次节点返回 1 表示递增一轮。
     """
     return (left or 0) + right
 
-
-def append_list(left: Optional[list], right: list) -> list:
+def append_list(left: list | None, right: list) -> list:
     """追加语义:左列表 + 右列表(允许重复)。
 
     用于 tool_calls / tool_results / topology_paths 等,
@@ -44,8 +48,7 @@ def append_list(left: Optional[list], right: list) -> list:
     """
     return (left or []) + list(right)
 
-
-def append_unique(left: Optional[list], right: list) -> list:
+def append_unique(left: list | None, right: list) -> list:
     """去重追加语义:合并去重(按值相等判断)。
 
     用于 intent_keywords / concept_path / selected_skills 等,
@@ -57,8 +60,7 @@ def append_unique(left: Optional[list], right: list) -> list:
             merged.append(item)
     return merged
 
-
-def add_messages(left: Optional[list[dict]], right: list[dict]) -> list[dict]:
+def add_messages(left: list[dict] | None, right: list[dict]) -> list[dict]:
     """消息去重追加:按 id 或 role+content 去重。
 
     用于 messages 字段。
@@ -89,8 +91,7 @@ def add_messages(left: Optional[list[dict]], right: list[dict]) -> list[dict]:
             merged.append(msg)
     return merged
 
-
-def merge_dict(left: Optional[dict], right: dict) -> dict:
+def merge_dict(left: dict | None, right: dict) -> dict:
     """字典合并语义:后者覆盖前者。
 
     用于 skill_priorities 等字典字段,
@@ -100,8 +101,7 @@ def merge_dict(left: Optional[dict], right: dict) -> dict:
     merged.update(right)
     return merged
 
-
-def merge_trace(left: Optional[dict], right: dict) -> dict:
+def merge_trace(left: dict | None, right: dict) -> dict:
     """trace 字段深合并:list 追加,dict 递归合并,其他覆盖。
 
     用于 trace 字段(执行轨迹,含 steps/tool_calls/reflections 等)。

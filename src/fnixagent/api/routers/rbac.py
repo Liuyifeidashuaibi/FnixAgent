@@ -14,20 +14,25 @@ API 路由 - RBAC 管理接口(Phase 2.1)。
     - 写类操作要求 :create / :update / :delete / :assign
     - 使用 core.security.rbac.require_permission 装饰器
 """
-from typing import Optional
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
+from fnixagent.api.routers.auth import _get_user_or_404
 from fnixagent.api.schemas.models import BaseResponse
 from fnixagent.core.security.rbac import (
     get_current_user_permissions,
     get_user_permissions,
-    require_permission,
     require_any_permission,
+    require_permission,
 )
 from fnixagent.services.storage_rbac import get_rbac_store
-from fnixagent.api.routers.auth import verify_jwt_token, _get_user_or_404
 
 router = APIRouter(prefix="/rbac", tags=["rbac"])
 
@@ -38,8 +43,13 @@ router = APIRouter(prefix="/rbac", tags=["rbac"])
 
 
 class RoleCreate(BaseModel):
-    code: str = Field(..., min_length=2, max_length=64, pattern=r"^[a-zA-Z0-9_]+$",
-                      description="角色代码:2-64位,字母/数字/下划线")
+    code: str = Field(
+        ...,
+        min_length=2,
+        max_length=64,
+        pattern=r"^[a-zA-Z0-9_]+$",
+        description="角色代码:2-64位,字母/数字/下划线",
+    )
     name: str = Field(..., min_length=1, max_length=128, description="显示名")
     description: str = Field("", max_length=512)
     permission_codes: list[str] = Field(default_factory=list, description="权限码列表")
@@ -47,10 +57,10 @@ class RoleCreate(BaseModel):
 
 
 class RoleUpdate(BaseModel):
-    name: Optional[str] = Field(None, min_length=1, max_length=128)
-    description: Optional[str] = Field(None, max_length=512)
-    is_active: Optional[bool] = None
-    sort_order: Optional[int] = Field(None, ge=0, le=1000)
+    name: str | None = Field(None, min_length=1, max_length=128)
+    description: str | None = Field(None, max_length=512)
+    is_active: bool | None = None
+    sort_order: int | None = Field(None, ge=0, le=1000)
 
 
 class RolePermissionsUpdate(BaseModel):
@@ -64,19 +74,19 @@ class UserRoleAssign(BaseModel):
 class DepartmentCreate(BaseModel):
     code: str = Field(..., min_length=1, max_length=64, pattern=r"^[a-zA-Z0-9_-]+$")
     name: str = Field(..., min_length=1, max_length=128)
-    parent_id: Optional[int] = Field(None, description="父部门 ID,顶层部门不传")
-    manager_id: Optional[int] = None
+    parent_id: int | None = Field(None, description="父部门 ID,顶层部门不传")
+    manager_id: int | None = None
     description: str = Field("", max_length=512)
     sort_order: int = Field(0, ge=0, le=1000)
 
 
 class DepartmentUpdate(BaseModel):
-    name: Optional[str] = Field(None, min_length=1, max_length=128)
-    parent_id: Optional[int] = None
-    manager_id: Optional[int] = None
-    description: Optional[str] = Field(None, max_length=512)
-    is_active: Optional[bool] = None
-    sort_order: Optional[int] = Field(None, ge=0, le=1000)
+    name: str | None = Field(None, min_length=1, max_length=128)
+    parent_id: int | None = None
+    manager_id: int | None = None
+    description: str | None = Field(None, max_length=512)
+    is_active: bool | None = None
+    sort_order: int | None = Field(None, ge=0, le=1000)
 
 
 class PositionCreate(BaseModel):
@@ -88,11 +98,11 @@ class PositionCreate(BaseModel):
 
 
 class PositionUpdate(BaseModel):
-    name: Optional[str] = Field(None, min_length=1, max_length=128)
-    level: Optional[int] = Field(None, ge=0, le=100)
-    description: Optional[str] = Field(None, max_length=512)
-    is_active: Optional[bool] = None
-    sort_order: Optional[int] = Field(None, ge=0, le=1000)
+    name: str | None = Field(None, min_length=1, max_length=128)
+    level: int | None = Field(None, ge=0, le=100)
+    description: str | None = Field(None, max_length=512)
+    is_active: bool | None = None
+    sort_order: int | None = Field(None, ge=0, le=1000)
 
 
 # ===========================================================================
@@ -102,13 +112,15 @@ class PositionUpdate(BaseModel):
 
 @router.get("/permissions")
 async def list_permissions(
-    resource: Optional[str] = Query(None, description="按资源过滤,如 user/document/chat"),
+    resource: str | None = Query(None, description="按资源过滤,如 user/document/chat"),
     _: dict = Depends(require_any_permission("role:read", "system:manage")),
 ):
     """列出全部权限(可按 resource 分组过滤)。"""
     store = get_rbac_store()
     perms = store.list_permissions(resource=resource)
-    return BaseResponse(success=True, data={"items": [p.to_dict() for p in perms], "total": len(perms)})
+    return BaseResponse(
+        success=True, data={"items": [p.to_dict() for p in perms], "total": len(perms)}
+    )
 
 
 @router.get("/permissions/grouped")
@@ -136,7 +148,9 @@ async def list_roles(
     """列出全部角色(含权限码)。"""
     store = get_rbac_store()
     roles = store.list_roles(include_permissions=True)
-    return BaseResponse(success=True, data={"items": [r.to_dict() for r in roles], "total": len(roles)})
+    return BaseResponse(
+        success=True, data={"items": [r.to_dict() for r in roles], "total": len(roles)}
+    )
 
 
 @router.get("/roles/{role_id}")
@@ -161,8 +175,11 @@ async def create_role(
     store = get_rbac_store()
     try:
         role = store.create_role(
-            code=body.code, name=body.name, description=body.description,
-            permission_codes=body.permission_codes, sort_order=body.sort_order,
+            code=body.code,
+            name=body.name,
+            description=body.description,
+            permission_codes=body.permission_codes,
+            sort_order=body.sort_order,
         )
     except Exception as e:
         # 唯一约束冲突等
@@ -179,8 +196,11 @@ async def update_role(
     """更新角色(名称/描述/状态/排序)。"""
     store = get_rbac_store()
     role = store.update_role(
-        role_id, name=body.name, description=body.description,
-        is_active=body.is_active, sort_order=body.sort_order,
+        role_id,
+        name=body.name,
+        description=body.description,
+        is_active=body.is_active,
+        sort_order=body.sort_order,
     )
     if not role:
         raise HTTPException(status_code=404, detail="角色不存在")
@@ -230,7 +250,9 @@ async def get_user_roles(
     """获取用户的角色列表。"""
     store = get_rbac_store()
     roles = store.get_user_roles(user_id)
-    return BaseResponse(success=True, data={"items": [r.to_dict() for r in roles], "total": len(roles)})
+    return BaseResponse(
+        success=True, data={"items": [r.to_dict() for r in roles], "total": len(roles)}
+    )
 
 
 @router.put("/users/{user_id}/roles")
@@ -249,7 +271,9 @@ async def set_user_roles(
     granted_by = payload.get("user_id")
     store.set_user_roles(user_id, body.role_ids, granted_by=granted_by)
     roles = store.get_user_roles(user_id)
-    return BaseResponse(success=True, data={"items": [r.to_dict() for r in roles], "total": len(roles)})
+    return BaseResponse(
+        success=True, data={"items": [r.to_dict() for r in roles], "total": len(roles)}
+    )
 
 
 @router.post("/users/{user_id}/roles/{role_id}")
@@ -316,7 +340,9 @@ async def list_departments(
     """列出全部部门(扁平)。"""
     store = get_rbac_store()
     depts = store.list_departments()
-    return BaseResponse(success=True, data={"items": [d.to_dict() for d in depts], "total": len(depts)})
+    return BaseResponse(
+        success=True, data={"items": [d.to_dict() for d in depts], "total": len(depts)}
+    )
 
 
 @router.get("/departments/tree")
@@ -338,8 +364,11 @@ async def create_department(
     store = get_rbac_store()
     try:
         dept = store.create_department(
-            code=body.code, name=body.name, parent_id=body.parent_id,
-            manager_id=body.manager_id, description=body.description,
+            code=body.code,
+            name=body.name,
+            parent_id=body.parent_id,
+            manager_id=body.manager_id,
+            description=body.description,
             sort_order=body.sort_order,
         )
     except Exception as e:
@@ -357,9 +386,13 @@ async def update_department(
     store = get_rbac_store()
     try:
         dept = store.update_department(
-            dept_id, name=body.name, parent_id=body.parent_id,
-            manager_id=body.manager_id, description=body.description,
-            is_active=body.is_active, sort_order=body.sort_order,
+            dept_id,
+            name=body.name,
+            parent_id=body.parent_id,
+            manager_id=body.manager_id,
+            description=body.description,
+            is_active=body.is_active,
+            sort_order=body.sort_order,
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -393,7 +426,9 @@ async def list_positions(
     """列出全部职位(按级别降序)。"""
     store = get_rbac_store()
     positions = store.list_positions()
-    return BaseResponse(success=True, data={"items": [p.to_dict() for p in positions], "total": len(positions)})
+    return BaseResponse(
+        success=True, data={"items": [p.to_dict() for p in positions], "total": len(positions)}
+    )
 
 
 @router.post("/positions")
@@ -405,8 +440,11 @@ async def create_position(
     store = get_rbac_store()
     try:
         pos = store.create_position(
-            code=body.code, name=body.name, level=body.level,
-            description=body.description, sort_order=body.sort_order,
+            code=body.code,
+            name=body.name,
+            level=body.level,
+            description=body.description,
+            sort_order=body.sort_order,
         )
     except Exception as e:
         raise HTTPException(status_code=409, detail=f"创建职位失败:{e}")
@@ -422,8 +460,11 @@ async def update_position(
     """更新职位。"""
     store = get_rbac_store()
     pos = store.update_position(
-        pos_id, name=body.name, level=body.level,
-        description=body.description, is_active=body.is_active,
+        pos_id,
+        name=body.name,
+        level=body.level,
+        description=body.description,
+        is_active=body.is_active,
         sort_order=body.sort_order,
     )
     if not pos:

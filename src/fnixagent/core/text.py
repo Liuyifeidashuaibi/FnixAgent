@@ -5,12 +5,19 @@
 服务于记忆分块、BM25 检索、prompt 预算控制等模块。
 不依赖任何第三方 NLP 库,保证内核独立。
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import re
 import unicodedata
 from collections import Counter
-from typing import Iterable
+from collections.abc import Iterable
 
 # ---------------------------------------------------------------------------
 # 中英文混合分词
@@ -18,17 +25,17 @@ from typing import Iterable
 
 # 连续英文/数字作为一词, 单个中日韩字符各为一词
 _CJK_RANGES = [
-    (0x4E00, 0x9FFF),    # CJK 统一汉字
-    (0x3400, 0x4DBF),    # CJK 扩展A
-    (0x3000, 0x303F),    # CJK 符号与标点
-    (0x3040, 0x309F),    # 平假名
-    (0x30A0, 0x30FF),    # 片假名
-    (0xFF00, 0xFFEF),    # 全角字符
+    (0x4E00, 0x9FFF),  # CJK 统一汉字
+    (0x3400, 0x4DBF),  # CJK 扩展A
+    (0x3000, 0x303F),  # CJK 符号与标点
+    (0x3040, 0x309F),  # 平假名
+    (0x30A0, 0x30FF),  # 片假名
+    (0xFF00, 0xFFEF),  # 全角字符
 ]
 
 # 预编译正则: 性能优化, 避免每次调用时重新编译
 # 句末标点(中英文)+ 换行, 用于 split_sentences
-_SENTENCE_SPLIT_RE = re.compile(r'(?<=[.!?。！？；;\n])\s*')
+_SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?。！？；;\n])\s*")
 
 
 def _is_cjk(ch: str) -> bool:
@@ -99,9 +106,8 @@ def split_sentences(text: str) -> list[str]:
 # 文本分块 (chunking) —— 记忆入库核心
 # ---------------------------------------------------------------------------
 
-def chunk_by_chars(
-    text: str, chunk_size: int = 512, overlap: int = 64
-) -> list[str]:
+
+def chunk_by_chars(text: str, chunk_size: int = 512, overlap: int = 64) -> list[str]:
     """
     按字符数滑动窗口分块。
     overlap 必须小于 chunk_size, 否则降级为 0。
@@ -149,9 +155,7 @@ def _join_sentences(sentences: list[str]) -> str:
     return "".join(sentences)
 
 
-def chunk_by_sentences(
-    text: str, max_chars: int = 512, overlap_sentences: int = 1
-) -> list[str]:
+def chunk_by_sentences(text: str, max_chars: int = 512, overlap_sentences: int = 1) -> list[str]:
     """按句子分块, 累积到接近 max_chars 时切分, 保留 overlap 句做衔接。
 
     Args:
@@ -188,6 +192,7 @@ def chunk_by_sentences(
 # n-gram (用于 BM25 / 关键词扩展)
 # ---------------------------------------------------------------------------
 
+
 def ngrams(tokens: Iterable[str], n: int) -> list[tuple[str, ...]]:
     """生成 n-gram。"""
     if n <= 0:
@@ -210,8 +215,8 @@ def char_ngrams(text: str, n: int = 3) -> list[str]:
 # ---------------------------------------------------------------------------
 
 # 经验比例: 中英文混合文本约 2.5 字符 ≈ 1 token (粗估, 用于预算控制)
-_TOKEN_RATIO_CN = 1.8     # 中文约 1.8 字符/token
-_TOKEN_RATIO_EN = 4.0     # 英文约 4 字符/token
+_TOKEN_RATIO_CN = 1.8  # 中文约 1.8 字符/token
+_TOKEN_RATIO_EN = 4.0  # 英文约 4 字符/token
 
 
 def estimate_tokens(text: str) -> int:
@@ -269,6 +274,7 @@ def truncate(text: str, max_chars: int, ellipsis: str = "...") -> str:
 # ---------------------------------------------------------------------------
 # 词频统计
 # ---------------------------------------------------------------------------
+
 
 def term_frequencies(tokens: Iterable[str]) -> Counter:
     """词频统计。"""

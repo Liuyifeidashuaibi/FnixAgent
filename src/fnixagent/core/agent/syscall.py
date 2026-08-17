@@ -9,6 +9,13 @@ Syscall 层 - 系统调用 (System Calls)
   - 请求/响应数据类, 含 trace_id 用于 OTel
   - 能力映射表: capability → 允许的 syscall 集合
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import enum
@@ -36,6 +43,7 @@ class SyscallType(enum.Enum):
       WEB - web.search/fetch
       SCHEDULE - sleep/schedule/checkpoint
     """
+
     # 文件系统 (ContextFS)
     FS_READ = "fs.read"
     FS_WRITE = "fs.write"
@@ -72,13 +80,15 @@ class SyscallType(enum.Enum):
 
 
 # 高危 syscall 集合 (需要特殊能力)
-HIGH_RISK_SYSCALLS: frozenset[SyscallType] = frozenset({
-    SyscallType.COMPUTER_USE,
-    SyscallType.SHELL_EXEC,
-    SyscallType.FS_DELETE,
-    SyscallType.MEM_FORGET,
-    SyscallType.IPC_BROADCAST,
-})
+HIGH_RISK_SYSCALLS: frozenset[SyscallType] = frozenset(
+    {
+        SyscallType.COMPUTER_USE,
+        SyscallType.SHELL_EXEC,
+        SyscallType.FS_DELETE,
+        SyscallType.MEM_FORGET,
+        SyscallType.IPC_BROADCAST,
+    }
+)
 
 
 # Syscall 分类映射
@@ -113,28 +123,49 @@ SYSCALL_CATEGORY: dict[SyscallType, SyscallCategory] = {
 
 # 能力 → syscall 映射 (高危 syscall 纳入对应能力, 由 HIGH_RISK 额外把关)
 CAPABILITY_SYSCALLS: dict[str, frozenset[SyscallType]] = {
-    "fs": frozenset({
-        SyscallType.FS_READ, SyscallType.FS_WRITE,
-        SyscallType.FS_LIST, SyscallType.FS_MKDIR, SyscallType.FS_DELETE,
-    }),
-    "memory": frozenset({
-        SyscallType.MEM_RECALL, SyscallType.MEM_STORE,
-        SyscallType.MEM_SEARCH, SyscallType.MEM_FORGET,
-    }),
+    "fs": frozenset(
+        {
+            SyscallType.FS_READ,
+            SyscallType.FS_WRITE,
+            SyscallType.FS_LIST,
+            SyscallType.FS_MKDIR,
+            SyscallType.FS_DELETE,
+        }
+    ),
+    "memory": frozenset(
+        {
+            SyscallType.MEM_RECALL,
+            SyscallType.MEM_STORE,
+            SyscallType.MEM_SEARCH,
+            SyscallType.MEM_FORGET,
+        }
+    ),
     "tool": frozenset({SyscallType.TOOL_INVOKE, SyscallType.TOOL_LIST}),
-    "ipc": frozenset({
-        SyscallType.IPC_SEND, SyscallType.IPC_SPAWN,
-        SyscallType.IPC_WAIT, SyscallType.IPC_BROADCAST,
-    }),
-    "llm": frozenset({
-        SyscallType.LLM_COMPLETE, SyscallType.LLM_STREAM, SyscallType.EMBED,
-    }),
+    "ipc": frozenset(
+        {
+            SyscallType.IPC_SEND,
+            SyscallType.IPC_SPAWN,
+            SyscallType.IPC_WAIT,
+            SyscallType.IPC_BROADCAST,
+        }
+    ),
+    "llm": frozenset(
+        {
+            SyscallType.LLM_COMPLETE,
+            SyscallType.LLM_STREAM,
+            SyscallType.EMBED,
+        }
+    ),
     "web": frozenset({SyscallType.WEB_SEARCH, SyscallType.WEB_FETCH}),
     "computer": frozenset({SyscallType.COMPUTER_USE}),
     "shell": frozenset({SyscallType.SHELL_EXEC}),
-    "schedule": frozenset({
-        SyscallType.SLEEP, SyscallType.SCHEDULE, SyscallType.CHECKPOINT,
-    }),
+    "schedule": frozenset(
+        {
+            SyscallType.SLEEP,
+            SyscallType.SCHEDULE,
+            SyscallType.CHECKPOINT,
+        }
+    ),
     # admin 拥有全部权限 (但 deny 规则仍生效)
     "admin": frozenset(SyscallType),
 }
@@ -162,6 +193,7 @@ class SyscallRequest:
         request_id: 请求 ID (UUID, 用于追踪)
         trace_id: OTel trace ID (可选, 用于分布式追踪)
     """
+
     syscall: SyscallType
     args: dict[str, Any] = field(default_factory=dict)
     caller_pid: str = ""
@@ -193,6 +225,7 @@ class SyscallResponse:
         tokens_used: 本次调用消耗的 token 数 (用于资源计量)
         audit_trace_id: 审计追踪 ID
     """
+
     success: bool
     result: Any = None
     error: str | None = None
@@ -202,20 +235,30 @@ class SyscallResponse:
     audit_trace_id: str = ""
 
     @classmethod
-    def ok(cls, result: Any = None, *, request_id: str = "",
-           duration_ms: float = 0.0, tokens_used: int = 0) -> SyscallResponse:
+    def ok(
+        cls,
+        result: Any = None,
+        *,
+        request_id: str = "",
+        duration_ms: float = 0.0,
+        tokens_used: int = 0,
+    ) -> SyscallResponse:
         """成功响应。"""
         return cls(
-            success=True, result=result, request_id=request_id,
-            duration_ms=duration_ms, tokens_used=tokens_used,
+            success=True,
+            result=result,
+            request_id=request_id,
+            duration_ms=duration_ms,
+            tokens_used=tokens_used,
         )
 
     @classmethod
-    def err(cls, error: str, *, request_id: str = "",
-            duration_ms: float = 0.0) -> SyscallResponse:
+    def err(cls, error: str, *, request_id: str = "", duration_ms: float = 0.0) -> SyscallResponse:
         """失败响应。"""
         return cls(
-            success=False, error=error, request_id=request_id,
+            success=False,
+            error=error,
+            request_id=request_id,
             duration_ms=duration_ms,
         )
 
@@ -255,9 +298,15 @@ def get_syscalls_for_capability(capability: str) -> frozenset[SyscallType]:
 
 
 __all__ = [
-    "SyscallType", "HIGH_RISK_SYSCALLS", "SYSCALL_CATEGORY",
-    "CAPABILITY_SYSCALLS", "HIGH_RISK_REQUIRED_CAPS",
-    "SyscallRequest", "SyscallResponse",
-    "is_high_risk", "get_required_caps", "check_capability",
+    "CAPABILITY_SYSCALLS",
+    "HIGH_RISK_REQUIRED_CAPS",
+    "HIGH_RISK_SYSCALLS",
+    "SYSCALL_CATEGORY",
+    "SyscallRequest",
+    "SyscallResponse",
+    "SyscallType",
+    "check_capability",
+    "get_required_caps",
     "get_syscalls_for_capability",
+    "is_high_risk",
 ]

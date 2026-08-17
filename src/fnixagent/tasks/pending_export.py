@@ -13,15 +13,21 @@
 
 依赖 openpyxl(可选,缺失时返回 ExpertError 提示安装)。
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import csv
 import uuid
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 from fnixagent.office.base import BaseExpert, ExpertError, ExpertResult
-
 
 # ---------------------------------------------------------------------------
 # 数据结构
@@ -52,11 +58,11 @@ class PendingItem:
     stem: str
     options: list[str]
     garbled_answer: str
-    suggested_answer: Optional[str]
+    suggested_answer: str | None
     confidence: float
     reason: str
-    status: str = "pending"                      # pending / confirmed / rejected
-    confirmed_answer: Optional[str] = None       # 人工确认的答案
+    status: str = "pending"  # pending / confirmed / rejected
+    confirmed_answer: str | None = None  # 人工确认的答案
 
 
 # ---------------------------------------------------------------------------
@@ -127,7 +133,7 @@ class PendingExporter(BaseExpert):
         stem: str,
         options: list[str],
         garbled_answer: str,
-        suggested_answer: Optional[str],
+        suggested_answer: str | None,
         confidence: float,
         reason: str,
     ) -> str:
@@ -150,7 +156,7 @@ class PendingExporter(BaseExpert):
             item_id=f"pi-{uuid.uuid4().hex[:12]}",
             task_id=task_id,
             question_num=question_num,
-            stem=(stem or "")[:100],              # 题干截断到 100 字
+            stem=(stem or "")[:100],  # 题干截断到 100 字
             options=list(options or []),
             garbled_answer=garbled_answer or "",
             suggested_answer=suggested_answer,
@@ -188,7 +194,7 @@ class PendingExporter(BaseExpert):
                 continue
         return count
 
-    def list_items(self, task_id: Optional[str] = None) -> list[PendingItem]:
+    def list_items(self, task_id: str | None = None) -> list[PendingItem]:
         """列出待确认项。
 
         Args:
@@ -211,7 +217,7 @@ class PendingExporter(BaseExpert):
         Returns:
             ExpertResult(output=item_id, metadata={status})
         """
-        target: Optional[PendingItem] = None
+        target: PendingItem | None = None
         for it in self._items:
             if it.item_id == item_id:
                 target = it
@@ -253,7 +259,7 @@ class PendingExporter(BaseExpert):
     def export_excel(
         self,
         output_path: str,
-        task_id: Optional[str] = None,
+        task_id: str | None = None,
     ) -> ExpertResult:
         """导出为 xlsx。
 
@@ -290,9 +296,7 @@ class PendingExporter(BaseExpert):
 
             # 表头样式:加粗 + 浅蓝背景 + 居中
             header_font = Font(bold=True)
-            header_fill = PatternFill(
-                start_color="D9E1F2", end_color="D9E1F2", fill_type="solid"
-            )
+            header_fill = PatternFill(start_color="D9E1F2", end_color="D9E1F2", fill_type="solid")
             header_align = Alignment(horizontal="center", vertical="center")
             for col_idx in range(1, len(headers) + 1):
                 cell = ws.cell(row=1, column=col_idx)
@@ -328,7 +332,7 @@ class PendingExporter(BaseExpert):
 
             wb.save(output_path)
             return self._success(output_path, rows=len(items))
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"export_excel IO failed: {e}")
         except Exception as e:
             return self._failure(f"export_excel failed: {e}")
@@ -342,7 +346,7 @@ class PendingExporter(BaseExpert):
     def export_csv(
         self,
         output_path: str,
-        task_id: Optional[str] = None,
+        task_id: str | None = None,
     ) -> ExpertResult:
         """导出为 CSV。
 
@@ -369,7 +373,7 @@ class PendingExporter(BaseExpert):
                 for item in items:
                     writer.writerow(self._row_of(item))
             return self._success(output_path, rows=len(items))
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"export_csv IO failed: {e}")
         except Exception as e:
             return self._failure(f"export_csv failed: {e}")
@@ -408,8 +412,8 @@ class PendingExporter(BaseExpert):
                 return self._success(output=[], rows=0, synced=0)
 
             # 定位"题号"与"确认答案"列(按表头名匹配)
-            qn_idx: Optional[int] = None
-            ans_idx: Optional[int] = None
+            qn_idx: int | None = None
+            ans_idx: int | None = None
             for i, h in enumerate(headers):
                 if h is None:
                     continue
@@ -419,9 +423,7 @@ class PendingExporter(BaseExpert):
                 elif hs == "确认答案":
                     ans_idx = i
             if qn_idx is None or ans_idx is None:
-                return self._failure(
-                    "xlsx missing required columns: '题号' and '确认答案'"
-                )
+                return self._failure("xlsx missing required columns: '题号' and '确认答案'")
 
             confirmed: list[dict] = []
             for row in rows_iter:
@@ -431,10 +433,12 @@ class PendingExporter(BaseExpert):
                 ans = row[ans_idx] if ans_idx < len(row) else None
                 if ans is None or str(ans).strip() == "":
                     continue
-                confirmed.append({
-                    "question_num": str(qn) if qn is not None else "",
-                    "answer": str(ans),
-                })
+                confirmed.append(
+                    {
+                        "question_num": str(qn) if qn is not None else "",
+                        "answer": str(ans),
+                    }
+                )
 
             # 同步到内存中的 items(按 question_num 匹配)
             qn_to_answer = {c["question_num"]: c["answer"] for c in confirmed}
@@ -450,7 +454,7 @@ class PendingExporter(BaseExpert):
                 rows=len(confirmed),
                 synced=synced,
             )
-        except (PermissionError, IOError) as e:
+        except (OSError, PermissionError) as e:
             return self._failure(f"import_confirmed IO failed: {e}")
         except Exception as e:
             return self._failure(f"import_confirmed failed: {e}")
@@ -474,9 +478,7 @@ class PendingExporter(BaseExpert):
         total = len(self._items)
         pending = sum(1 for it in self._items if it.status == "pending")
         confirmed = sum(1 for it in self._items if it.status == "confirmed")
-        avg_conf = (
-            sum(it.confidence for it in self._items) / total if total > 0 else 0.0
-        )
+        avg_conf = sum(it.confidence for it in self._items) / total if total > 0 else 0.0
         return {
             "total": total,
             "pending": pending,

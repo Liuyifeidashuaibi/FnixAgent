@@ -18,13 +18,19 @@ BUG 修复:
     会抛 AttributeError;改用 getattr 安全访问。
   - 原直接修改 ctx.max_iterations / ctx.extra,并发不安全;改用 override 透传。
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 from typing import Any
 
 from fnixagent.core.reasoning.strategies.base import BaseStrategy, StrategyContext
 from fnixagent.core.types import ExecutionTrace, ReasoningMode
-
 
 class ComplianceStrategy(BaseStrategy):
     """合规策略:Plan&Execute + 人工确认 + 强审计。"""
@@ -34,8 +40,17 @@ class ComplianceStrategy(BaseStrategy):
 
     # 敏感关键词(命中即视为合规任务)
     SENSITIVE_KEYWORDS: tuple[str, ...] = (
-        "删除", "永久", "对外", "发送邮件", "财务", "法务",
-        "合同", "公章", "转账", "审批", "授权",
+        "删除",
+        "永久",
+        "对外",
+        "发送邮件",
+        "财务",
+        "法务",
+        "合同",
+        "公章",
+        "转账",
+        "审批",
+        "授权",
     )
 
     @property
@@ -93,7 +108,7 @@ class ComplianceStrategy(BaseStrategy):
             # BUG 修复:用 getattr 安全访问 final_response
             reflect_final = getattr(reflect_trace, "final_response", None)
             if reflect_final:
-                setattr(trace, "final_response", reflect_final)
+                trace.final_response = reflect_final
 
         # 第三阶段:写入合规审计日志(简化实现,生产环境对接 audit/logger)
         # 审计失败不阻断主流程(fail-safe),但记录 stderr 便于排查

@@ -14,16 +14,21 @@
         - 错误路径: 标记 deprecated,权重降至 0.01(永久降级)
     4. 自动补充拓扑缺失知识节点(初始置信度 0.2)
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
-import time
-from typing import Any, Optional
+from typing import Any
 
 from fnixagent.core.flywheel.trace import TraceStore
 from fnixagent.core.topology import weights as weights_mod
 from fnixagent.core.topology.graph import TopologyGraph
 from fnixagent.core.types import (
-    EdgeType,
     NodeType,
     TopologyLayer,
     TraceRecord,
@@ -33,12 +38,12 @@ from fnixagent.core.types import (
 DEFAULT_TRIGGER_INTERVAL: int = 5
 
 # 评估阈值
-PATH_WEIGHT_LOW_THRESHOLD: float = 0.5     # 路径权重低于均值的 50% → 降权
+PATH_WEIGHT_LOW_THRESHOLD: float = 0.5  # 路径权重低于均值的 50% → 降权
 SKILL_SUCCESS_RATE_THRESHOLD: float = 0.6  # 技能成功率低于 60% → 调整优先级
 
 # 权重调节常量
-EFFECTIVE_PATH_BONUS: float = 0.03         # 有效路径强化
-INEFFECTIVE_PATH_PENALTY: float = -0.05    # 无效路径弱化
+EFFECTIVE_PATH_BONUS: float = 0.03  # 有效路径强化
+INEFFECTIVE_PATH_PENALTY: float = -0.05  # 无效路径弱化
 MISSING_KNOWLEDGE_CONFIDENCE: float = 0.2  # 补充节点的初始置信度(低于正常 0.3)
 
 
@@ -53,7 +58,7 @@ class MetaReflectionFlywheel:
     def __init__(
         self,
         graph: TopologyGraph,
-        trace_store: Optional[TraceStore] = None,
+        trace_store: TraceStore | None = None,
         llm_router: Any = None,
         trigger_interval: int = DEFAULT_TRIGGER_INTERVAL,
     ) -> None:
@@ -76,7 +81,7 @@ class MetaReflectionFlywheel:
         self._task_count += 1
         return self._task_count >= self._trigger_interval
 
-    def run(self, traces: Optional[list[TraceRecord]] = None) -> dict:
+    def run(self, traces: list[TraceRecord] | None = None) -> dict:
         """执行元反思。
 
         Args:
@@ -111,6 +116,10 @@ class MetaReflectionFlywheel:
         # Step 3: 补充缺失知识节点
         added_nodes = self._fill_knowledge_gaps(traces)
 
+        # Spec 7 fail-soft-with-signal 闭环: 统计 Critic skip_rate
+        # 消费 TraceRecord.critic_skipped 字段, 让 critic_skipped 事件不再是无消费方的孤儿信号
+        critic_skip_rate = self._compute_critic_skip_rate(traces)
+
         # 重置计数器
         self._task_count = 0
 
@@ -123,6 +132,9 @@ class MetaReflectionFlywheel:
             "strengthened_paths": strengthened,
             "deprecated_paths": deprecated,
             "added_nodes": added_nodes,
+            # Critic 健康度指标 (Spec 7 闭环): 高 skip_rate 表示 Critic 服务不稳定,
+            # 可作为运维告警信号; 也可反馈到 DAAO 降低 Critic 触发频率。
+            "critic_skip_rate": critic_skip_rate,
         }
 
     # -----------------------------------------------------------------------
@@ -140,7 +152,9 @@ class MetaReflectionFlywheel:
         success_traces = [t for t in traces if t.success]
         if not success_traces:
             return 0.0
-        avg_success_path_len = sum(len(t.concept_path) for t in success_traces) / len(success_traces)
+        avg_success_path_len = sum(len(t.concept_path) for t in success_traces) / len(
+            success_traces
+        )
         avg_all_path_len = sum(len(t.concept_path) for t in traces) / len(traces)
         if avg_all_path_len == 0:
             return 1.0
@@ -243,10 +257,15 @@ class MetaReflectionFlywheel:
                     node_type=NodeType.GOAL,
                     name=trace.goal[:50],  # 截断过长的目标
                     content=trace.goal,
-                    metadata={"source": "meta_reflection", "confidence": MISSING_KNOWLEDGE_CONFIDENCE},
+                    metadata={
+                        "source": "meta_reflection",
+                        "confidence": MISSING_KNOWLEDGE_CONFIDENCE,
+                    },
                 )
                 # 手动设置低置信度
-                node = self._graph.list_nodes(layer=TopologyLayer.L1_GOAL, node_type=NodeType.GOAL)[-1]
+                node = self._graph.list_nodes(layer=TopologyLayer.L1_GOAL, node_type=NodeType.GOAL)[
+                    -1
+                ]
                 node.confidence = MISSING_KNOWLEDGE_CONFIDENCE
                 added += 1
         return added
@@ -265,10 +284,31 @@ class MetaReflectionFlywheel:
         name: str,
         layer: TopologyLayer,
         node_type: NodeType,
-    ) -> Optional[Any]:
+    ) -> Any | None:
         """按名称查找节点。"""
         nodes = self._graph.list_nodes(layer=layer, node_type=node_type)
         for node in nodes:
             if node.name == name:
                 return node
         return None
+
+    # -----------------------------------------------------------------------
+    # Spec 7 fail-soft-with-signal 闭环: Critic 健康度统计
+    # -----------------------------------------------------------------------
+
+    def _compute_critic_skip_rate(self, traces: list[TraceRecord]) -> float:
+        """统计 Critic 审查跳过率 (Spec 7 闭环)。
+
+        消费 TraceRecord.critic_skipped 字段, 让 work_pipeline emit 的
+        critic_skipped 事件不再是无消费方的孤儿信号。
+
+        Returns:
+            0.0-1.0: 跳过率。高 skip_rate 表示 Critic 服务不稳定。
+        """
+        if not traces:
+            return 0.0
+        try:
+            skipped = sum(1 for t in traces if getattr(t, "critic_skipped", False))
+            return skipped / len(traces)
+        except Exception:
+            return 0.0

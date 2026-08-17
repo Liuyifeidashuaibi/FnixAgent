@@ -1,0 +1,7 @@
+{
+  "id": "hello_html",
+  "prompt": "创建一个简单 Hello 单页站：.fnix/artifacts/hello_site/index.html，页面标题 Hello Fnix，正文欢迎。",
+  "work_mode": "craft",
+  "expect_glob": ".fnix/artifacts/hello_site/**/*.html",
+  "timeout_s": 120
+}

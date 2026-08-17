@@ -17,18 +17,23 @@
   - LRU 缓存:embedder 内置缓存,相同 chunk 不重复编码
   - 加锁保护 _meta_index 与 _store 的一致性
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
-import time
 import threading
-from typing import Optional
+import time
 
 from fnixagent.core.config import MemoryConfig
 from fnixagent.core.retrieval.embedder import BaseEmbedder
 from fnixagent.core.retrieval.vectorstore import BaseVectorStore, InMemoryVectorStore
 from fnixagent.core.text import chunk_by_chars
 from fnixagent.core.types import MemoryItem
-
 
 class LongTermMemory:
     """
@@ -50,8 +55,8 @@ class LongTermMemory:
     def __init__(
         self,
         embedder: BaseEmbedder,
-        vector_store: Optional[BaseVectorStore] = None,
-        config: Optional[MemoryConfig] = None,
+        vector_store: BaseVectorStore | None = None,
+        config: MemoryConfig | None = None,
     ) -> None:
         self._embedder = embedder
         self._store = vector_store or InMemoryVectorStore()
@@ -66,7 +71,7 @@ class LongTermMemory:
         self,
         user_id: str,
         content: str,
-        metadata: Optional[dict] = None,
+        metadata: dict | None = None,
     ) -> int:
         """
         将内容分块、向量化后写入长期记忆。
@@ -105,7 +110,7 @@ class LongTermMemory:
         # 批量化 embedding:一次 embed_batch 多个 chunk,减少调用开销
         all_vectors: list[list[float]] = []
         for i in range(0, len(chunks), self._EMBED_BATCH_SIZE):
-            batch = chunks[i:i + self._EMBED_BATCH_SIZE]
+            batch = chunks[i : i + self._EMBED_BATCH_SIZE]
             try:
                 batch_vecs = self._embedder.embed_batch(batch)
             except Exception:
@@ -120,7 +125,7 @@ class LongTermMemory:
 
         # 组装 id 与 metadata
         for i, chunk in enumerate(chunks):
-            chunk_id = f"{user_id}_{int(now*1000)}_{i}"
+            chunk_id = f"{user_id}_{int(now * 1000)}_{i}"
             chunk_meta = dict(meta)
             chunk_meta["content"] = chunk
             chunk_meta["chunk_index"] = i
@@ -167,10 +172,7 @@ class LongTermMemory:
             return []
         # 相似度阈值过滤
         threshold = self._config.long_term_score_threshold
-        return [
-            m for m in results
-            if m.score >= threshold
-        ]
+        return [m for m in results if m.score >= threshold]
 
     # -- 过期清理 ----------------------------------------------------------
 
@@ -197,22 +199,19 @@ class LongTermMemory:
 
     # -- 统计 --------------------------------------------------------------
 
-    def count(self, user_id: Optional[str] = None) -> int:
+    def count(self, user_id: str | None = None) -> int:
         """记忆条数(可按 user_id 过滤)。"""
         with self._lock:
             if user_id:
-                return sum(
-                    1 for _, (uid, _) in self._meta_index.items()
-                    if uid == user_id
-                )
+                return sum(1 for _, (uid, _) in self._meta_index.items() if uid == user_id)
             return len(self._meta_index)
 
-    def clear(self, user_id: Optional[str] = None) -> int:
+    def clear(self, user_id: str | None = None) -> int:
         """清空记忆(可按 user_id)。"""
         with self._lock:
             if user_id is None:
                 count = len(self._meta_index)
-                if hasattr(self._store, 'clear'):
+                if hasattr(self._store, "clear"):
                     try:
                         self._store.clear()  # type: ignore[attr-defined]
                     except Exception:
@@ -220,10 +219,7 @@ class LongTermMemory:
                 self._meta_index.clear()
                 return count
             else:
-                ids = [
-                    cid for cid, (uid, _) in self._meta_index.items()
-                    if uid == user_id
-                ]
+                ids = [cid for cid, (uid, _) in self._meta_index.items() if uid == user_id]
                 if ids:
                     try:
                         self._store.delete(ids)

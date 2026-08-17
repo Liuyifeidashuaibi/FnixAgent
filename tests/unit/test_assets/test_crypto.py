@@ -1,4 +1,4 @@
-﻿"""
+"""
 资产加密测试。
 
 覆盖:
@@ -8,16 +8,23 @@
     - 每次加密密文不同(随机 salt + nonce)
     - 降级模式(cryptography 不可用时)
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 import os
 
 import pytest
 
 from fnixagent.assets.crypto import AssetEncryptor, is_encryption_available
 
-
 # ---------------------------------------------------------------------------
 # 前置条件
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.skipif(
     not is_encryption_available(),
@@ -139,6 +146,7 @@ class TestEncryptionAvailable:
 # ---------------------------------------------------------------------------
 # 不同密码实例的隔离性
 # ---------------------------------------------------------------------------
+
 
 def test_different_encryptors_same_password_compatible():
     """两个不同实例使用相同密码可互相解密(密钥派生可复现)。"""

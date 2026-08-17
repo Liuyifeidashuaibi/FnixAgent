@@ -1,4 +1,4 @@
-﻿"""
+"""
 device 模块单元测试(验收标准 ④ 设备指纹不匹配时拒绝 Refresh - 单元层)。
 
 覆盖:
@@ -14,9 +14,14 @@ device 模块单元测试(验收标准 ④ 设备指纹不匹配时拒绝 Refres
     - 旧 Token 无 device_fp 时放行(向后兼容)
     - is_valid_client_uuid 格式校验
 """
-import hashlib
 
-import pytest
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
+import hashlib
 
 from fnixagent.core.security.auth.device import (
     _extract_ip_segment,
@@ -25,10 +30,10 @@ from fnixagent.core.security.auth.device import (
     verify_device_fingerprint,
 )
 
-
 # ---------------------------------------------------------------------------
 # IP 段提取
 # ---------------------------------------------------------------------------
+
 
 class TestExtractIpSegment:
     """IP 段提取(避免 NAT/移动网络漂移)。"""
@@ -70,6 +75,7 @@ class TestExtractIpSegment:
 # ---------------------------------------------------------------------------
 # 指纹计算
 # ---------------------------------------------------------------------------
+
 
 class TestComputeDeviceFingerprint:
     """设备指纹计算。"""
@@ -138,13 +144,14 @@ class TestComputeDeviceFingerprint:
         assert isinstance(fp, str)
         assert len(fp) == 64
         # 与显式 "unknown" 等价
-        expected = hashlib.sha256("unknown|unknown|0.0.0.0/0".encode()).hexdigest()
+        expected = hashlib.sha256(b"unknown|unknown|0.0.0.0/0").hexdigest()
         assert fp == expected
 
 
 # ---------------------------------------------------------------------------
 # 指纹校验
 # ---------------------------------------------------------------------------
+
 
 class TestVerifyDeviceFingerprint:
     """设备指纹校验。"""
@@ -199,6 +206,7 @@ class TestVerifyDeviceFingerprint:
 # ---------------------------------------------------------------------------
 # UUID 格式校验
 # ---------------------------------------------------------------------------
+
 
 class TestIsValidClientUuid:
     """客户端 UUID 格式校验。"""

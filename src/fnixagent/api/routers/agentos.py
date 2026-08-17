@@ -14,6 +14,13 @@ API 路由 - AgentOS Shell HTTP 接口。
               避免 fs.write / llm 等含特殊字符内容时的引号问题
   - router 前缀: /agentos (由主流程在 main.py 注册时挂到 /api/v1 下)
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import json
@@ -26,9 +33,7 @@ from pydantic import BaseModel
 from fnixagent.api.routers.auth import verify_jwt_token
 from fnixagent.core.agent.shell import AgentShell, ShellResult, create_shell
 
-
 router = APIRouter(prefix="/agentos", tags=["agentos"])
-
 
 # ============================================================================
 # 统一响应模型
@@ -42,7 +47,6 @@ class AgentOSResponse(BaseModel):
     error: str | None = None
     duration_ms: int = 0
 
-
 # ============================================================================
 # 请求体模型
 # ============================================================================
@@ -53,93 +57,74 @@ class SpawnRequest(BaseModel):
     capabilities: list[str] | None = None
     parent_pid: str | None = None
 
-
 class KillRequest(BaseModel):
     pid: str
     reason: str | None = None
-
 
 class ExecRequest(BaseModel):
     syscall: str
     args: dict[str, Any] | None = None
     pid: str | None = None
 
-
 class LlmRequest(BaseModel):
     prompt: str
     pid: str | None = None
     system: str | None = None
 
-
 class FsReadRequest(BaseModel):
     path: str
-
 
 class FsWriteRequest(BaseModel):
     path: str
     content: str
 
-
 class FsListRequest(BaseModel):
     path: str | None = None
-
 
 class FsMkdirRequest(BaseModel):
     path: str
 
-
 class FsDeleteRequest(BaseModel):
     path: str
-
 
 class MemRecallRequest(BaseModel):
     query: str
     layers: list[str] | None = None
     top_k: int | None = None
 
-
 class MemStoreRequest(BaseModel):
     content: str
     layer: str | None = None
-
 
 class MemSearchRequest(BaseModel):
     query: str
     layer: str | None = None
     top_k: int | None = None
 
-
 class MemForgetRequest(BaseModel):
     memory_id: str
-
 
 class ToolInvokeRequest(BaseModel):
     tool_name: str
     args: dict[str, Any] | None = None
 
-
 class A2aDiscoverRequest(BaseModel):
     capability: str | None = None
-
 
 class A2aSendRequest(BaseModel):
     target: str
     content: str
     type: str | None = None
 
-
 class A2aBroadcastRequest(BaseModel):
     content: str
-
 
 class SkillLoadRequest(BaseModel):
     dir: str
 
-
 class SkillRunRequest(BaseModel):
     name: str
     args: dict[str, Any] | None = None
-
 
 class PolicyAddRequest(BaseModel):
     action: str
@@ -147,21 +132,17 @@ class PolicyAddRequest(BaseModel):
     subject: str | None = None
     priority: int | None = None
 
-
 class CheckpointRequest(BaseModel):
     pid: str
 
-
 class NaturalRequest(BaseModel):
     text: str
-
 
 # ============================================================================
 # Shell 单例管理
 # ============================================================================
 
 _shell: AgentShell | None = None
-
 
 async def _new_shell() -> AgentShell:
     """构造并启动一个新 Shell (内存后端)。
@@ -173,14 +154,12 @@ async def _new_shell() -> AgentShell:
     await shell.kernel.boot()
     return shell
 
-
 async def get_shell() -> AgentShell:
     """获取单例 Shell (懒加载, 首次调用自动 boot)。"""
     global _shell
     if _shell is None:
         _shell = await _new_shell()
     return _shell
-
 
 def _safe_output(out: Any) -> Any:
     """确保 output 可 JSON 序列化 (类比 ShellResult.format 的 default=str)。"""
@@ -190,7 +169,6 @@ def _safe_output(out: Any) -> Any:
         return json.loads(json.dumps(out, default=str, ensure_ascii=False))
     except (TypeError, ValueError):
         return str(out)
-
 
 def _to_response(result: ShellResult, start: float) -> AgentOSResponse:
     """ShellResult → AgentOSResponse。"""
@@ -202,24 +180,22 @@ def _to_response(result: ShellResult, start: float) -> AgentOSResponse:
         duration_ms=int(dur),
     )
 
-
 async def _dispatch(cmd: str, args: dict[str, Any]) -> AgentOSResponse:
     """直接调用 shell 命令处理器 (绕过命令行解析, 避免引号/换行问题)。"""
     shell = await get_shell()
-    handler = shell._commands.get(cmd)  # noqa: SLF001
+    handler = shell._commands.get(cmd)
     if handler is None:
         return AgentOSResponse(success=False, error=f"未知命令: {cmd}", duration_ms=0)
     start = time.monotonic()
     try:
         result = await handler(args)
         return _to_response(result, start)
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         return AgentOSResponse(
             success=False,
             error=f"命令执行异常: {type(e).__name__}: {e}",
             duration_ms=int((time.monotonic() - start) * 1000),
         )
-
 
 # ============================================================================
 # 内核生命周期
@@ -233,10 +209,9 @@ async def boot(_payload: dict = Depends(verify_jwt_token)):
         _shell = await _new_shell()
     return AgentOSResponse(
         success=True,
-        output={"booted": True, "shell_pid": _shell._shell_pid},  # noqa: SLF001
+        output={"booted": True, "shell_pid": _shell._shell_pid},
         duration_ms=0,
     )
-
 
 @router.post("/shutdown", response_model=AgentOSResponse)
 async def shutdown(_payload: dict = Depends(verify_jwt_token)):
@@ -248,7 +223,6 @@ async def shutdown(_payload: dict = Depends(verify_jwt_token)):
     if resp.success:
         _shell = None
     return resp
-
 
 # ============================================================================
 # 进程管理
@@ -266,7 +240,6 @@ async def spawn(req: SpawnRequest, _payload: dict = Depends(verify_jwt_token)):
         args["parent"] = req.parent_pid
     return await _dispatch("spawn", args)
 
-
 @router.post("/kill", response_model=AgentOSResponse)
 async def kill(req: KillRequest, _payload: dict = Depends(verify_jwt_token)):
     """终止 Agent 进程。"""
@@ -275,18 +248,15 @@ async def kill(req: KillRequest, _payload: dict = Depends(verify_jwt_token)):
         args["reason"] = req.reason
     return await _dispatch("kill", args)
 
-
 @router.get("/ps", response_model=AgentOSResponse)
 async def ps(_payload: dict = Depends(verify_jwt_token)):
     """列出所有进程。"""
     return await _dispatch("ps", {})
 
-
 @router.get("/info/{pid}", response_model=AgentOSResponse)
 async def info(pid: str, _payload: dict = Depends(verify_jwt_token)):
     """进程详情。"""
     return await _dispatch("info", {"_positional": [pid]})
-
 
 # ============================================================================
 # Syscall / LLM
@@ -302,7 +272,6 @@ async def exec_syscall(req: ExecRequest, _payload: dict = Depends(verify_jwt_tok
         args.update(req.args)
     return await _dispatch("exec", args)
 
-
 @router.post("/llm", response_model=AgentOSResponse)
 async def llm(req: LlmRequest, _payload: dict = Depends(verify_jwt_token)):
     """LLM 推理。"""
@@ -313,7 +282,6 @@ async def llm(req: LlmRequest, _payload: dict = Depends(verify_jwt_token)):
         args["system"] = req.system
     return await _dispatch("llm", args)
 
-
 # ============================================================================
 # 文件系统
 # ============================================================================
@@ -323,14 +291,10 @@ async def fs_read(req: FsReadRequest, _payload: dict = Depends(verify_jwt_token)
     """读取文件。"""
     return await _dispatch("fs.read", {"_positional": [req.path]})
 
-
 @router.post("/fs/write", response_model=AgentOSResponse)
 async def fs_write(req: FsWriteRequest, _payload: dict = Depends(verify_jwt_token)):
     """写入文件。"""
-    return await _dispatch(
-        "fs.write", {"_positional": [req.path], "content": req.content}
-    )
-
+    return await _dispatch("fs.write", {"_positional": [req.path], "content": req.content})
 
 @router.post("/fs/list", response_model=AgentOSResponse)
 async def fs_list(req: FsListRequest, _payload: dict = Depends(verify_jwt_token)):
@@ -340,18 +304,15 @@ async def fs_list(req: FsListRequest, _payload: dict = Depends(verify_jwt_token)
         args["_positional"] = [req.path]
     return await _dispatch("fs.list", args)
 
-
 @router.post("/fs/mkdir", response_model=AgentOSResponse)
 async def fs_mkdir(req: FsMkdirRequest, _payload: dict = Depends(verify_jwt_token)):
     """创建目录。"""
     return await _dispatch("fs.mkdir", {"_positional": [req.path]})
 
-
 @router.post("/fs/delete", response_model=AgentOSResponse)
 async def fs_delete(req: FsDeleteRequest, _payload: dict = Depends(verify_jwt_token)):
     """删除文件/目录。"""
     return await _dispatch("fs.delete", {"_positional": [req.path]})
-
 
 # ============================================================================
 # 记忆
@@ -367,7 +328,6 @@ async def mem_recall(req: MemRecallRequest, _payload: dict = Depends(verify_jwt_
         args["top_k"] = req.top_k
     return await _dispatch("mem.recall", args)
 
-
 @router.post("/mem/store", response_model=AgentOSResponse)
 async def mem_store(req: MemStoreRequest, _payload: dict = Depends(verify_jwt_token)):
     """存储记忆。"""
@@ -375,7 +335,6 @@ async def mem_store(req: MemStoreRequest, _payload: dict = Depends(verify_jwt_to
     if req.layer is not None:
         args["layer"] = req.layer
     return await _dispatch("mem.store", args)
-
 
 @router.post("/mem/search", response_model=AgentOSResponse)
 async def mem_search(req: MemSearchRequest, _payload: dict = Depends(verify_jwt_token)):
@@ -387,12 +346,10 @@ async def mem_search(req: MemSearchRequest, _payload: dict = Depends(verify_jwt_
         args["top_k"] = req.top_k
     return await _dispatch("mem.search", args)
 
-
 @router.post("/mem/forget", response_model=AgentOSResponse)
 async def mem_forget(req: MemForgetRequest, _payload: dict = Depends(verify_jwt_token)):
     """遗忘记忆。"""
     return await _dispatch("mem.forget", {"_positional": [req.memory_id]})
-
 
 # ============================================================================
 # 工具
@@ -409,32 +366,25 @@ async def tool_list(
         args["pid"] = pid
     return await _dispatch("tool.list", args)
 
-
 @router.post("/tool/invoke", response_model=AgentOSResponse)
-async def tool_invoke(
-    req: ToolInvokeRequest, _payload: dict = Depends(verify_jwt_token)
-):
+async def tool_invoke(req: ToolInvokeRequest, _payload: dict = Depends(verify_jwt_token)):
     """调用工具。"""
     args: dict[str, Any] = {"_positional": [req.tool_name]}
     if req.args is not None:
         args["args"] = req.args
     return await _dispatch("tool.invoke", args)
 
-
 # ============================================================================
 # A2A 通信
 # ============================================================================
 
 @router.post("/a2a/discover", response_model=AgentOSResponse)
-async def a2a_discover(
-    req: A2aDiscoverRequest, _payload: dict = Depends(verify_jwt_token)
-):
+async def a2a_discover(req: A2aDiscoverRequest, _payload: dict = Depends(verify_jwt_token)):
     """发现 Agent。"""
     args: dict[str, Any] = {}
     if req.capability is not None:
         args["capability"] = req.capability
     return await _dispatch("a2a.discover", args)
-
 
 @router.post("/a2a/send", response_model=AgentOSResponse)
 async def a2a_send(req: A2aSendRequest, _payload: dict = Depends(verify_jwt_token)):
@@ -444,14 +394,10 @@ async def a2a_send(req: A2aSendRequest, _payload: dict = Depends(verify_jwt_toke
         args["type"] = req.type
     return await _dispatch("a2a.send", args)
 
-
 @router.post("/a2a/broadcast", response_model=AgentOSResponse)
-async def a2a_broadcast(
-    req: A2aBroadcastRequest, _payload: dict = Depends(verify_jwt_token)
-):
+async def a2a_broadcast(req: A2aBroadcastRequest, _payload: dict = Depends(verify_jwt_token)):
     """广播 A2A 消息。"""
     return await _dispatch("a2a.broadcast", {"content": req.content})
-
 
 # ============================================================================
 # Skill
@@ -462,12 +408,10 @@ async def skill_list(_payload: dict = Depends(verify_jwt_token)):
     """列出 Skill。"""
     return await _dispatch("skill.list", {})
 
-
 @router.post("/skill/load", response_model=AgentOSResponse)
 async def skill_load(req: SkillLoadRequest, _payload: dict = Depends(verify_jwt_token)):
     """加载 Skill 目录。"""
     return await _dispatch("skill.load", {"_positional": [req.dir]})
-
 
 @router.post("/skill/run", response_model=AgentOSResponse)
 async def skill_run(req: SkillRunRequest, _payload: dict = Depends(verify_jwt_token)):
@@ -477,7 +421,6 @@ async def skill_run(req: SkillRunRequest, _payload: dict = Depends(verify_jwt_to
         args.update(req.args)
     return await _dispatch("skill.run", args)
 
-
 # ============================================================================
 # 策略 / 护栏 / 审计 / 统计
 # ============================================================================
@@ -486,7 +429,6 @@ async def skill_run(req: SkillRunRequest, _payload: dict = Depends(verify_jwt_to
 async def policy_list(_payload: dict = Depends(verify_jwt_token)):
     """列出策略。"""
     return await _dispatch("policy.list", {})
-
 
 @router.post("/policy/add", response_model=AgentOSResponse)
 async def policy_add(req: PolicyAddRequest, _payload: dict = Depends(verify_jwt_token)):
@@ -498,12 +440,10 @@ async def policy_add(req: PolicyAddRequest, _payload: dict = Depends(verify_jwt_
         args["priority"] = req.priority
     return await _dispatch("policy.add", args)
 
-
 @router.get("/guardrail/list", response_model=AgentOSResponse)
 async def guardrail_list(_payload: dict = Depends(verify_jwt_token)):
     """列出护栏。"""
     return await _dispatch("guardrail.list", {})
-
 
 @router.get("/audit", response_model=AgentOSResponse)
 async def audit(
@@ -519,20 +459,15 @@ async def audit(
         args["action"] = action
     return await _dispatch("audit", args)
 
-
 @router.get("/stats", response_model=AgentOSResponse)
 async def stats(_payload: dict = Depends(verify_jwt_token)):
     """内核统计。"""
     return await _dispatch("stats", {})
 
-
 @router.post("/checkpoint", response_model=AgentOSResponse)
-async def checkpoint(
-    req: CheckpointRequest, _payload: dict = Depends(verify_jwt_token)
-):
+async def checkpoint(req: CheckpointRequest, _payload: dict = Depends(verify_jwt_token)):
     """保存进程检查点。"""
     return await _dispatch("checkpoint", {"_positional": [req.pid]})
-
 
 # ============================================================================
 # 自然语言接口
@@ -546,13 +481,12 @@ async def natural(req: NaturalRequest, _payload: dict = Depends(verify_jwt_token
     try:
         result = await shell.natural_language(req.text)
         return _to_response(result, start)
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         return AgentOSResponse(
             success=False,
             error=f"自然语言处理异常: {type(e).__name__}: {e}",
             duration_ms=int((time.monotonic() - start) * 1000),
         )
-
 
 # ============================================================================
 # 帮助

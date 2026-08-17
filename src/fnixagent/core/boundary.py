@@ -21,43 +21,45 @@
   - 工具检索:assess_intent 接收 available_tools 列表,判断是否在能力范围内
   - 输出:generate_response 根据 assessment 生成给用户的回复文本
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import re
 import threading
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Optional
-
+from typing import Any
 
 # ---------------------------------------------------------------------------
 # 枚举
 # ---------------------------------------------------------------------------
 
-
 class BoundaryDecision(str, Enum):
     """边界评估决策。"""
 
-    WITHIN = "within"                    # 完全在能力范围内
-    PARTIAL = "partial"                  # 部分可做(某些子任务越界)
-    OUT_OF_SCOPE = "out_of_scope"        # 完全越界(不在能力范围)
-    NEEDS_HUMAN = "needs_human"          # 需要人工介入(敏感/低置信度)
-
+    WITHIN = "within"  # 完全在能力范围内
+    PARTIAL = "partial"  # 部分可做(某些子任务越界)
+    OUT_OF_SCOPE = "out_of_scope"  # 完全越界(不在能力范围)
+    NEEDS_HUMAN = "needs_human"  # 需要人工介入(敏感/低置信度)
 
 class ResponseStrategy(str, Enum):
     """响应策略(对应不同决策)。"""
 
-    REFUSE_POLITELY = "refuse_politely"          # 礼貌拒绝(OUT_OF_SCOPE)
+    REFUSE_POLITELY = "refuse_politely"  # 礼貌拒绝(OUT_OF_SCOPE)
     DEGRADE_AND_EXPLAIN = "degrade_and_explain"  # 降级并解释(PARTIAL)
-    TRANSFER_TO_HUMAN = "transfer_to_human"      # 转人工(NEEDS_HUMAN)
+    TRANSFER_TO_HUMAN = "transfer_to_human"  # 转人工(NEEDS_HUMAN)
     SUGGEST_ALTERNATIVE = "suggest_alternative"  # 建议替代方案(OUT_OF_SCOPE 但有替代)
-    DIRECT_ANSWER = "direct_answer"              # 直接作答(WITHIN)
-
+    DIRECT_ANSWER = "direct_answer"  # 直接作答(WITHIN)
 
 # ---------------------------------------------------------------------------
 # 数据模型
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class CapabilityDeclaration:
@@ -85,8 +87,7 @@ class CapabilityDeclaration:
     supported_file_types: list[str] = field(default_factory=list)
     known_limitations: list[str] = field(default_factory=list)
     sensitivity: str = "low"
-    fallback_capability: Optional[str] = None
-
+    fallback_capability: str | None = None
 
 @dataclass
 class IntentAssessment:
@@ -95,33 +96,28 @@ class IntentAssessment:
     由 CapabilityBoundary.assess_intent 返回,供 generate_response 使用。
     """
 
-    intent: str = ""                              # 识别出的意图(如 "word_editing")
+    intent: str = ""  # 识别出的意图(如 "word_editing")
     decision: BoundaryDecision = BoundaryDecision.WITHIN
-    confidence: float = 1.0                       # 0.0-1.0
-    matched_capability: Optional[CapabilityDeclaration] = None
-    reason: str = ""                              # 决策原因(可解释)
+    confidence: float = 1.0  # 0.0-1.0
+    matched_capability: CapabilityDeclaration | None = None
+    reason: str = ""  # 决策原因(可解释)
     suggested_strategy: ResponseStrategy = ResponseStrategy.DIRECT_ANSWER
     missing_sub_capabilities: list[str] = field(default_factory=list)  # PARTIAL 时列出缺失子能力
-    user_facing_explanation: str = ""             # 给用户看的解释(可中文)
-
+    user_facing_explanation: str = ""  # 给用户看的解释(可中文)
 
 # ---------------------------------------------------------------------------
 # 异常
 # ---------------------------------------------------------------------------
 
-
 class BoundaryError(Exception):
     """边界评估异常。"""
-
 
 class CapabilityNotFoundError(BoundaryError):
     """能力声明不存在。"""
 
-
 # ---------------------------------------------------------------------------
 # 默认能力声明(fnixagent 顶级 Office + 办公生态定位)
 # ---------------------------------------------------------------------------
-
 
 def _default_l1_office_capabilities() -> list[CapabilityDeclaration]:
     """L1 Office 顶级专家层默认能力声明。"""
@@ -182,7 +178,6 @@ def _default_l1_office_capabilities() -> list[CapabilityDeclaration]:
         ),
     ]
 
-
 def _default_l2_ecosystem_capabilities() -> list[CapabilityDeclaration]:
     """L2 办公生态层默认能力声明。"""
     return [
@@ -226,30 +221,41 @@ def _default_l2_ecosystem_capabilities() -> list[CapabilityDeclaration]:
         ),
     ]
 
-
 # ---------------------------------------------------------------------------
 # 明确越界的意图(任何能力都不支持)
 # ---------------------------------------------------------------------------
 
-
 _OUT_OF_SCOPE_INTENTS: list[str] = [
     # 实时性数据
-    "实时新闻", "股票行情", "天气预报", "航班动态", "汇率实时",
+    "实时新闻",
+    "股票行情",
+    "天气预报",
+    "航班动态",
+    "汇率实时",
     # 个人社交
-    "个人微信", "个人 QQ", "微博发帖", "朋友圈",
+    "个人微信",
+    "个人 QQ",
+    "微博发帖",
+    "朋友圈",
     # 违法违规
-    "破解密码", "网络攻击", "钓鱼", "木马", "爬取个人隐私",
+    "破解密码",
+    "网络攻击",
+    "钓鱼",
+    "木马",
+    "爬取个人隐私",
     # 医疗法律专业建议
-    "医疗诊断", "法律咨询", "投资建议",
+    "医疗诊断",
+    "法律咨询",
+    "投资建议",
     # 物理世界操作
-    "控制硬件", "打电话", "发短信",
+    "控制硬件",
+    "打电话",
+    "发短信",
 ]
-
 
 # ---------------------------------------------------------------------------
 # CapabilityBoundary
 # ---------------------------------------------------------------------------
-
 
 class CapabilityBoundary:
     """能力边界管理器。
@@ -272,7 +278,7 @@ class CapabilityBoundary:
 
     def __init__(
         self,
-        declarations: Optional[list[CapabilityDeclaration]] = None,
+        declarations: list[CapabilityDeclaration] | None = None,
         conservative_threshold: float = 0.5,
     ) -> None:
         """
@@ -281,13 +287,8 @@ class CapabilityBoundary:
             conservative_threshold: 置信度阈值(低于此值倾向 NEEDS_HUMAN)
         """
         if declarations is None:
-            declarations = (
-                _default_l1_office_capabilities()
-                + _default_l2_ecosystem_capabilities()
-            )
-        self._declarations: dict[str, CapabilityDeclaration] = {
-            d.name: d for d in declarations
-        }
+            declarations = _default_l1_office_capabilities() + _default_l2_ecosystem_capabilities()
+        self._declarations: dict[str, CapabilityDeclaration] = {d.name: d for d in declarations}
         self._conservative_threshold = conservative_threshold
         self._lock = threading.RLock()
 
@@ -308,7 +309,7 @@ class CapabilityBoundary:
     def declare_from_registry(
         self,
         tool_registry: Any,
-        layer_filter: Optional[str] = None,
+        layer_filter: str | None = None,
     ) -> int:
         """从 ToolRegistry 自动生成能力声明(按 category 分组)。
 
@@ -319,7 +320,6 @@ class CapabilityBoundary:
         Returns:
             新增能力声明数
         """
-        from fnixagent.core.tools.protocol import ToolLayer
 
         with self._lock:
             tools = tool_registry.list_tools()
@@ -349,7 +349,7 @@ class CapabilityBoundary:
                 added += 1
             return added
 
-    def get_declaration(self, name: str) -> Optional[CapabilityDeclaration]:
+    def get_declaration(self, name: str) -> CapabilityDeclaration | None:
         """按名获取能力声明。"""
         with self._lock:
             return self._declarations.get(name)
@@ -366,7 +366,7 @@ class CapabilityBoundary:
     def assess_intent(
         self,
         user_request: str,
-        available_tools: Optional[list[str]] = None,
+        available_tools: list[str] | None = None,
     ) -> IntentAssessment:
         """评估用户请求是否在能力范围内。
 
@@ -448,7 +448,7 @@ class CapabilityBoundary:
                     )
 
         # 3. 支持意图匹配
-        best_match: Optional[CapabilityDeclaration] = None
+        best_match: CapabilityDeclaration | None = None
         best_score = 0.0
         for decl in declarations:
             score = self._score_match(request_lower, decl)
@@ -465,8 +465,7 @@ class CapabilityBoundary:
                 suggested_strategy=ResponseStrategy.TRANSFER_TO_HUMAN,
                 user_facing_explanation=(
                     "我不太确定如何处理您的请求。"
-                    "请告诉我更多细节,或尝试以下能力:"
-                    + self._capability_summary(declarations)
+                    "请告诉我更多细节,或尝试以下能力:" + self._capability_summary(declarations)
                 ),
             )
 
@@ -480,8 +479,7 @@ class CapabilityBoundary:
                 reason=f"高敏感能力 {best_match.name} 但无可用工具,需人工确认",
                 suggested_strategy=ResponseStrategy.TRANSFER_TO_HUMAN,
                 user_facing_explanation=(
-                    f"您的请求涉及高敏感操作({best_match.name}),"
-                    "需要人工确认后才能执行。"
+                    f"您的请求涉及高敏感操作({best_match.name}),需要人工确认后才能执行。"
                 ),
             )
 
@@ -489,8 +487,7 @@ class CapabilityBoundary:
         # 检查请求是否包含多个子任务,其中某些可能越界
         sub_intents = self._extract_sub_intents(user_request, declarations)
         missing = [
-            s for s in sub_intents
-            if not any(s in d.supported_intents for d in declarations)
+            s for s in sub_intents if not any(s in d.supported_intents for d in declarations)
         ]
         if missing:
             return IntentAssessment(
@@ -644,21 +641,19 @@ class CapabilityBoundary:
         """
         if not decl.supported_intents:
             return 0.0
-        hits = sum(
-            1 for intent in decl.supported_intents
-            if intent.lower() in request_lower
-        )
+        hits = sum(1 for intent in decl.supported_intents if intent.lower() in request_lower)
         if hits == 0:
             return 0.0
         # 命中数 / 总意图数,但用 sqrt 缓和(单命中也给较高分)
         import math
+
         return min(math.sqrt(hits / max(len(decl.supported_intents), 1)) * 1.5, 1.0)
 
     def _find_fallback(
         self,
         intent: str,
         declarations: list[CapabilityDeclaration],
-    ) -> Optional[str]:
+    ) -> str | None:
         """为越界意图寻找 fallback 能力(简化实现:返回第一个 fallback_capability)。"""
         for d in declarations:
             if d.fallback_capability:
@@ -696,7 +691,11 @@ class CapabilityBoundary:
 
     def _degrade_and_explain(self, assessment: IntentAssessment) -> str:
         """降级并解释模板。"""
-        missing = ", ".join(assessment.missing_sub_capabilities) if assessment.missing_sub_capabilities else "部分子任务"
+        missing = (
+            ", ".join(assessment.missing_sub_capabilities)
+            if assessment.missing_sub_capabilities
+            else "部分子任务"
+        )
         return (
             f"我可以处理您请求中关于 {assessment.intent} 的部分,\n"
             f"但以下子任务超出我的能力:{missing}。\n\n"

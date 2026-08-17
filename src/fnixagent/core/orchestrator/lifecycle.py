@@ -10,10 +10,17 @@ Agent 生命周期编排 (Lifecycle)。
   6. 输出审核(内容审核 + 脱敏)
   7. 记忆更新 + 落库
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 from fnixagent.core.orchestrator.context import OrchestratorContext
 from fnixagent.core.reasoning.base import ReasoningContext
@@ -32,12 +39,13 @@ from fnixagent.core.types import (
 @dataclass
 class PipelineResult:
     """流水线结果。"""
-    security_input: Optional[SecurityCheckResult] = None
-    memory_context: Optional[dict] = None
-    reasoning_mode: Optional[ReasoningMode] = None
-    execution_trace: Optional[ExecutionTrace] = None
-    validation_result: Optional[Any] = None
-    security_output: Optional[SecurityCheckResult] = None
+
+    security_input: SecurityCheckResult | None = None
+    memory_context: dict | None = None
+    reasoning_mode: ReasoningMode | None = None
+    execution_trace: ExecutionTrace | None = None
+    validation_result: Any | None = None
+    security_output: SecurityCheckResult | None = None
     final_answer: str = ""
     original_answer: str = ""
     error: str = ""
@@ -71,6 +79,7 @@ class Lifecycle:
                 AgentSpanData,
                 get_provider,
             )
+
             trace = get_provider().get_current_trace()
         except Exception:
             pass
@@ -106,9 +115,7 @@ class Lifecycle:
             result.execution_trace = self._step4_reason(
                 user_input, result.memory_context, result.reasoning_mode
             )
-            result.validation_result = self._step5_validate(
-                user_input, result.execution_trace
-            )
+            result.validation_result = self._step5_validate(user_input, result.execution_trace)
             answer = self._extract_answer(result.execution_trace)
             result.original_answer = answer
             result.security_output = self._step6_output(answer)
@@ -130,21 +137,15 @@ class Lifecycle:
 
     def _step3_select(self, goal: str) -> ReasoningMode:
         """第 3 步: 选择推理模式。"""
-        return self._ctx.reasoning_selector.select(
-            goal, self._ctx.tool_registry.count
-        )
+        return self._ctx.reasoning_selector.select(goal, self._ctx.tool_registry.count)
 
-    def _step4_reason(
-        self, goal: str, mem_ctx: dict, mode: ReasoningMode
-    ) -> ExecutionTrace:
+    def _step4_reason(self, goal: str, mem_ctx: dict, mode: ReasoningMode) -> ExecutionTrace:
         """第 4 步: 构建推理上下文并执行选定模式的推理引擎。"""
         history = mem_ctx.get("short_term", [])
         long_term = mem_ctx.get("long_term", [])
         if long_term:
             mem_text = "\n".join(f"[记忆] {m.content}" for m in long_term)
-            history = history + [
-                Message(role=MessageRole.SYSTEM, content=mem_text)
-            ]
+            history = history + [Message(role=MessageRole.SYSTEM, content=mem_text)]
         rctx = ReasoningContext(
             goal=goal,
             llm=self._ctx.llm_router,

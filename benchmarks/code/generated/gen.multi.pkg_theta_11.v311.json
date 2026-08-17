@@ -1,0 +1,46 @@
+{
+  "id": "gen.multi.pkg_theta_11.v311",
+  "title": "package pkg_theta_11",
+  "prompt": "Create package `pkg_theta_11` with `__init__.py` exporting `run()` and `pkg_theta_11/core.py` implementing `run()` returning 'pkg_theta_11-ok'.",
+  "capability": [
+    "multi_file",
+    "write"
+  ],
+  "difficulty": 3,
+  "language": "python",
+  "tags": [
+    "generated",
+    "multi_file"
+  ],
+  "timeout_s": 180,
+  "setup": {
+    "files": {
+      "README.md": "# pkg_theta_11\n"
+    }
+  },
+  "checks": [
+    {
+      "function": "file_exists",
+      "args": {
+        "path": "pkg_theta_11/__init__.py"
+      }
+    },
+    {
+      "function": "file_exists",
+      "args": {
+        "path": "pkg_theta_11/core.py"
+      }
+    },
+    {
+      "function": "stdout_equals",
+      "args": {
+        "command": [
+          "python",
+          "-c",
+          "from pkg_theta_11 import run; print(run())"
+        ],
+        "expected": "pkg_theta_11-ok"
+      }
+    }
+  ]
+}

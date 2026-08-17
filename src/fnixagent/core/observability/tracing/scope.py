@@ -19,13 +19,18 @@ TracingScope 维护当前线程/协程的 Span 栈,支持嵌套 with 语义:
   - 跨线程传递 parent_id:子线程启动时应通过 contextvars 复制父上下文
     (copy_context().run(...)),否则子线程的栈为空,parent_id 为 None。
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import contextvars
-from typing import Optional
 
 from fnixagent.core.observability.tracing.span import SpanImpl
-
 
 # 全局 contextvar:存储当前协程/线程的 Span 栈(列表)
 # default=None 表示未初始化,避免使用可变默认值(列表共享导致跨上下文污染)
@@ -33,7 +38,6 @@ _current_stack: contextvars.ContextVar[list] = contextvars.ContextVar(
     "fnixagent_tracing_span_stack",
     default=None,
 )
-
 
 def _get_stack() -> list:
     """获取当前上下文的栈(惰性初始化,O(1) 取值)。
@@ -46,7 +50,6 @@ def _get_stack() -> list:
         stack = []
         _current_stack.set(stack)
     return stack
-
 
 class TracingScope:
     """Span 栈管理器(基于 contextvars,线程/协程隔离)。
@@ -72,7 +75,7 @@ class TracingScope:
             # contextvars 栈操作异常(LookupError 等)不应中断业务
             pass
 
-    def pop(self, expected: Optional[SpanImpl] = None) -> Optional[SpanImpl]:
+    def pop(self, expected: SpanImpl | None = None) -> SpanImpl | None:
         """弹出栈顶 Span。
 
         Args:
@@ -96,7 +99,7 @@ class TracingScope:
             return None
 
     @staticmethod
-    def current_span_id() -> Optional[str]:
+    def current_span_id() -> str | None:
         """获取当前栈顶 Span 的 ID(用作新 Span 的 parent_id,O(1))。"""
         try:
             stack = _get_stack()
@@ -107,7 +110,7 @@ class TracingScope:
             return None
 
     @staticmethod
-    def current_span() -> Optional[SpanImpl]:
+    def current_span() -> SpanImpl | None:
         """获取当前栈顶 Span 实例。"""
         try:
             stack = _get_stack()
@@ -137,17 +140,14 @@ class TracingScope:
         except Exception:
             pass
 
-
 # ---------------------------------------------------------------------------
 # 模块级便捷函数
 # ---------------------------------------------------------------------------
 
-
-def get_current_span() -> Optional[SpanImpl]:
+def get_current_span() -> SpanImpl | None:
     """获取当前激活的 Span(栈顶)。"""
     return TracingScope.current_span()
 
-
-def get_current_span_id() -> Optional[str]:
+def get_current_span_id() -> str | None:
     """获取当前激活的 Span ID。"""
     return TracingScope.current_span_id()

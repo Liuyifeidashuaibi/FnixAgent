@@ -5,13 +5,20 @@
 所有业务工具(论文检索/Word编辑/PDF生成等)均按此协议注册,
 引擎层只认 ToolMetadata + func,不感知具体业务实现。
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Callable, Optional
+from typing import TYPE_CHECKING, Any
 
-from fnixagent.core.exceptions import ToolValidationError
 from fnixagent.core.types import ToolCallState, ToolPermission
 
 if TYPE_CHECKING:
@@ -60,29 +67,30 @@ class ToolMetadata:
     STP 扩展字段(skill_level/topology_binding/priority)用于技能-拓扑绑定。
     P2-4 扩展字段(layer/source/cost_score/description_embedding)用于两层架构 + 检索。
     """
-    name: str                                    # 工具唯一名(如 "search_paper")
-    description: str                             # 功能描述(给 LLM 看)
-    category: str = "general"                    # 分类(search/word/pdf/chart/...)
-    input_schema: dict = field(default_factory=dict)   # JSON Schema 入参
+
+    name: str  # 工具唯一名(如 "search_paper")
+    description: str  # 功能描述(给 LLM 看)
+    category: str = "general"  # 分类(search/word/pdf/chart/...)
+    input_schema: dict = field(default_factory=dict)  # JSON Schema 入参
     output_schema: dict = field(default_factory=dict)  # JSON Schema 输出
     permission_level: ToolPermission = ToolPermission.LOW
-    timeout_ms: int = 30000                      # 超时毫秒
-    rate_limit: Optional[int] = None             # 每分钟调用上限
+    timeout_ms: int = 30000  # 超时毫秒
+    rate_limit: int | None = None  # 每分钟调用上限
     enabled: bool = True
     version: str = "1.0.0"
     # -- STP 扩展:技能-拓扑突触协议 -----------------------------------------
-    skill_level: str = "basic"                   # 技能级别: basic/reasoning/meta
-    topology_binding: Optional[str] = None       # 绑定的 L2 概念节点 ID
-    priority: float = 0.5                        # 调度优先级(由拓扑权重动态换算)
+    skill_level: str = "basic"  # 技能级别: basic/reasoning/meta
+    topology_binding: str | None = None  # 绑定的 L2 概念节点 ID
+    priority: float = 0.5  # 调度优先级(由拓扑权重动态换算)
     # -- P0-4 扩展:重试策略 + 并发安全 + 初始状态 ----------------------------
-    retry_policy: Optional["RetryPolicy"] = None  # 重试策略(None 表示用默认)
-    is_concurrency_safe: bool = True              # 是否线程安全(决定并行/串行执行)
+    retry_policy: RetryPolicy | None = None  # 重试策略(None 表示用默认)
+    is_concurrency_safe: bool = True  # 是否线程安全(决定并行/串行执行)
     initial_state: ToolCallState = ToolCallState.CREATED  # 工具调用初始状态
     # -- P2-4 扩展:两层架构 + 检索 ------------------------------------------
-    layer: Optional[ToolLayer] = None            # 工具层级(L1_OFFICE/L2_ECOSYSTEM/INFRA)
-    source: str = "builtin"                       # 来源:builtin(内置)/mcp(外部 MCP)/market(技能市场)
-    cost_score: float = 0.5                       # 成本评分(0.0-1.0,越低越便宜;影响 LLM 工具选择)
-    description_embedding: Optional[list[float]] = None  # 描述向量(由 ToolRetriever.build_index 计算)
+    layer: ToolLayer | None = None  # 工具层级(L1_OFFICE/L2_ECOSYSTEM/INFRA)
+    source: str = "builtin"  # 来源:builtin(内置)/mcp(外部 MCP)/market(技能市场)
+    cost_score: float = 0.5  # 成本评分(0.0-1.0,越低越便宜;影响 LLM 工具选择)
+    description_embedding: list[float] | None = None  # 描述向量(由 ToolRetriever.build_index 计算)
 
     def __post_init__(self) -> None:
         """构造后校验:工具名非空、超时为正、成本评分合法。"""
@@ -105,7 +113,8 @@ class ToolMetadata:
             "function": {
                 "name": self.name,
                 "description": self.description,
-                "parameters": self.input_schema or {
+                "parameters": self.input_schema
+                or {
                     "type": "object",
                     "properties": {},
                 },
@@ -116,6 +125,7 @@ class ToolMetadata:
 @dataclass
 class RegisteredTool:
     """已注册的工具: 元数据 + 执行函数。"""
+
     metadata: ToolMetadata
     func: ToolFunc
 
@@ -124,9 +134,8 @@ class RegisteredTool:
 # 入参校验
 # ---------------------------------------------------------------------------
 
-def validate_arguments(
-    metadata: ToolMetadata, arguments: dict[str, Any]
-) -> tuple[bool, list[str]]:
+
+def validate_arguments(metadata: ToolMetadata, arguments: dict[str, Any]) -> tuple[bool, list[str]]:
     """基于 input_schema 做轻量入参校验。
 
     检查项:
@@ -144,9 +153,7 @@ def validate_arguments(
         TypeError: arguments 不是 dict
     """
     if not isinstance(arguments, dict):
-        raise TypeError(
-            f"arguments 必须为 dict, 实为 {type(arguments).__name__}"
-        )
+        raise TypeError(f"arguments 必须为 dict, 实为 {type(arguments).__name__}")
     if not metadata.input_schema:
         return True, []
 
@@ -176,8 +183,7 @@ def validate_arguments(
                 continue
             if not isinstance(value, py_type):
                 errors.append(
-                    f"参数 '{field_name}' 应为 {expected_type},"
-                    f"实为 {type(value).__name__}"
+                    f"参数 '{field_name}' 应为 {expected_type},实为 {type(value).__name__}"
                 )
 
     return len(errors) == 0, errors

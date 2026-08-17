@@ -10,11 +10,18 @@
     - SQL 注入防护:全部使用 ORM filter_by(**dict) 参数化查询
     - 线程安全:session 创建加锁(SQLAlchemy session 非线程安全)
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 import logging
 import re
 import threading
 from contextlib import contextmanager
-from typing import Any, Optional
+from typing import Any
 from urllib.parse import urlparse
 
 from sqlalchemy import create_engine
@@ -67,9 +74,7 @@ def _validate_connection_url(url: str) -> None:
     # 网络型 DB(postgresql/mysql 等)必须有 host; sqlite 走文件路径, 无 host
     network_schemes = {"postgresql", "postgres", "mysql", "mariadb"}
     if parsed.scheme in network_schemes and not parsed.hostname:
-        raise ValueError(
-            f"{parsed.scheme} 连接必须包含 host, 收到 {url!r}"
-        )
+        raise ValueError(f"{parsed.scheme} 连接必须包含 host, 收到 {url!r}")
 
 
 class DatabaseAdapter:
@@ -106,9 +111,7 @@ class DatabaseAdapter:
         if not isinstance(pool_size, int) or pool_size <= 0:
             raise ValueError(f"pool_size 必须为正 int, 收到 {pool_size!r}")
         if not isinstance(max_overflow, int) or max_overflow < 0:
-            raise ValueError(
-                f"max_overflow 必须为非负 int, 收到 {max_overflow!r}"
-            )
+            raise ValueError(f"max_overflow 必须为非负 int, 收到 {max_overflow!r}")
 
         # 保存脱敏后的 url(用于 __repr__/日志, 不暴露密码)
         self._masked_url = _mask_connection_url(connection_url)
@@ -120,9 +123,7 @@ class DatabaseAdapter:
             max_overflow=max_overflow,
             echo=False,  # 不打印 SQL 语句(避免泄露敏感数据)
         )
-        self.SessionLocal = sessionmaker(
-            bind=self.engine, autocommit=False, autoflush=False
-        )
+        self.SessionLocal = sessionmaker(bind=self.engine, autocommit=False, autoflush=False)
 
     def __repr__(self) -> str:
         """脱敏 repr: 不暴露连接字符串中的密码。"""
@@ -201,7 +202,7 @@ class DatabaseAdapter:
             session.refresh(obj)
             return obj
 
-    def query(self, model: Any, filters: Optional[dict] = None) -> list[Any]:
+    def query(self, model: Any, filters: dict | None = None) -> list[Any]:
         """查询对象。
 
         SQL 注入防护: 使用 filter_by(**filters) 参数化查询, 不拼接 SQL。
@@ -220,7 +221,7 @@ class DatabaseAdapter:
                 query = query.filter_by(**filters)
             return query.all()
 
-    def get_by_id(self, model: Any, id: int) -> Optional[Any]:
+    def get_by_id(self, model: Any, id: int) -> Any | None:
         """根据 ID 获取对象。
 
         Args:
@@ -233,7 +234,7 @@ class DatabaseAdapter:
         with self.session() as session:
             return session.query(model).filter_by(id=id).first()
 
-    def update(self, model: Any, id: int, updates: dict) -> Optional[Any]:
+    def update(self, model: Any, id: int, updates: dict) -> Any | None:
         """更新对象。
 
         Args:

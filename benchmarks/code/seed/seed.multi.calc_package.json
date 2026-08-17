@@ -1,0 +1,19 @@
+{
+  "id": "seed.multi.calc_package",
+  "title": "Create calc package with add/multiply",
+  "prompt": "Create calc.py with add(a,b) and multiply(a,b). Create test_calc.py with assert tests for both functions.",
+  "capability": ["multi_file", "write"],
+  "difficulty": 2,
+  "language": "python",
+  "tags": ["seed", "smoke"],
+  "timeout_s": 240,
+  "setup": { "files": { "README.md": "# calc\n" } },
+  "checks": [
+    { "function": "file_exists", "args": { "path": "calc.py" } },
+    { "function": "file_exists", "args": { "path": "test_calc.py" } },
+    { "function": "file_contains", "args": { "path": "calc.py", "pattern": "def add" } },
+    { "function": "file_contains", "args": { "path": "calc.py", "pattern": "def multiply" } },
+    { "function": "pytest_passes", "args": { "path": "test_calc.py" }, "required": false, "weight": 2 },
+    { "function": "no_stub_content", "args": {} }
+  ]
+}

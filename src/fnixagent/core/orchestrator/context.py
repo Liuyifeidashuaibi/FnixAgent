@@ -14,23 +14,30 @@
 
 所有引擎通过此上下文注入,避免全局单例,便于测试和多租户隔离。
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 from fnixagent.core.config import CoreConfig
 from fnixagent.core.llm.router import LLMRouter
 from fnixagent.core.memory.manager import MemoryManager
 from fnixagent.core.prompt.manager import PromptManager
+from fnixagent.core.reasoning.selector import ReasoningSelector
 from fnixagent.core.reflection.replanner import Replanner
 from fnixagent.core.reflection.validator import ResultValidator
-from fnixagent.core.reasoning.selector import ReasoningSelector
 from fnixagent.core.security.engine import SecurityEngine
 from fnixagent.core.tools.executor import ToolExecutor
 from fnixagent.core.tools.registry import ToolRegistry
-from fnixagent.core.types import Message, MessageRole
+from fnixagent.core.types import Message
 
 
 @dataclass
@@ -62,16 +69,16 @@ class OrchestratorContext:
     # -- 运行时状态 --------------------------------------------------------
     current_goal: str = ""
     messages: list[Message] = field(default_factory=list)
-    reasoning_mode: Any = None     # 选定的推理模式
-    execution_trace: Any = None     # 执行轨迹
-    final_response: str = ""        # 最终回复
-    blocked: bool = False           # 是否被安全拦截
+    reasoning_mode: Any = None  # 选定的推理模式
+    execution_trace: Any = None  # 执行轨迹
+    final_response: str = ""  # 最终回复
+    blocked: bool = False  # 是否被安全拦截
     blocked_reason: str = ""
 
     # -- 记忆上下文 --------------------------------------------------------
     short_term_history: list[Message] = field(default_factory=list)
     long_term_memories: list[Any] = field(default_factory=list)
-    user_profile: Optional[Any] = None
+    user_profile: Any | None = None
 
     @property
     def has_security_engine(self) -> bool:
@@ -91,11 +98,7 @@ class OrchestratorContext:
             "session_id": self.session_id,
             "trace_id": self.trace_id,
             "goal": self.current_goal[:100],
-            "reasoning_mode": (
-                self.reasoning_mode.value
-                if self.reasoning_mode
-                else None
-            ),
+            "reasoning_mode": (self.reasoning_mode.value if self.reasoning_mode else None),
             "blocked": self.blocked,
             "blocked_reason": self.blocked_reason,
             "tool_count": tool_count,

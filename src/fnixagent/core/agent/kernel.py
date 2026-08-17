@@ -33,40 +33,61 @@ OS 概念映射:
   - 全局单例 import 创建: 改为延迟创建 (get_kernel())
   - 护栏覆盖不全: 现在覆盖全部 syscall (INPUT/EXECUTION/OUTPUT 三层)
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import asyncio
 import time
-import uuid
 from collections.abc import Awaitable, Callable
 from typing import Any
 
-from fnixagent.core.agent.messaging import A2ABus, AgentCard, A2AMessage
-from fnixagent.core.agent.vfs import ContextFS
-from fnixagent.core.agent.durable import DurableExecutionManager, JournalEntry
 from fnixagent.core.agent.guardrail import (
-    GuardrailContext, GuardrailLayer, GuardrailManager,
+    GuardrailContext,
+    GuardrailLayer,
+    GuardrailManager,
 )
 from fnixagent.core.agent.memory import MemoryManager
+from fnixagent.core.agent.messaging import A2ABus, A2AMessage, AgentCard
 from fnixagent.core.agent.observability import ObservabilityManager
 from fnixagent.core.agent.policy import PolicyEngine, PolicyRule
 from fnixagent.core.agent.process import AgentProcess
 from fnixagent.core.agent.sandbox import SandboxManager
 from fnixagent.core.agent.scheduler import AgentScheduler
 from fnixagent.core.agent.syscall import (
-    SyscallRequest, SyscallResponse, SyscallType,
+    SyscallRequest,
+    SyscallResponse,
+    SyscallType,
 )
 from fnixagent.core.agent.types import (
-    AUDIT_BOOT, AUDIT_CHECKPOINT, AUDIT_GUARDRAIL_BLOCK, AUDIT_KILL,
-    AUDIT_SHUTDOWN, AUDIT_SPAWN, AUDIT_SYSCALL, AUDIT_SYSCALL_DENIED,
-    AgentPriority, AuditBackend, LLMBackend, MemoryBackend, MemoryLayer,
-    PolicyBackend, ResourceLimits, StorageBackend, ToolBackend, utcnow_iso,
+    AUDIT_BOOT,
+    AUDIT_CHECKPOINT,
+    AUDIT_GUARDRAIL_BLOCK,
+    AUDIT_KILL,
+    AUDIT_SHUTDOWN,
+    AUDIT_SPAWN,
+    AUDIT_SYSCALL,
+    AUDIT_SYSCALL_DENIED,
+    AgentPriority,
+    AuditBackend,
+    LLMBackend,
+    MemoryBackend,
+    MemoryLayer,
+    PolicyBackend,
+    ResourceLimits,
+    StorageBackend,
+    ToolBackend,
+    utcnow_iso,
 )
-
+from fnixagent.core.agent.vfs import ContextFS
 
 # Syscall 处理器签名
 SyscallHandler = Callable[[SyscallRequest], Awaitable[SyscallResponse]]
-
 
 class AgentKernel:
     """Agent 操作系统内核 (类比 Linux Kernel)。
@@ -75,7 +96,7 @@ class AgentKernel:
       - E (Execution): AgentScheduler 进程调度
       - T (Tool): ToolBackend MCP 工具驱动
       - C (Context): ContextFS 上下文文件系统
-      - L (Lifecycle): DurableExecutionManager 持久化执行
+      - L (Lifecycle): RunCheckpointStore 持久化执行（SQLite WAL）
       - O (Observability): ObservabilityManager OTel + 审计
       - V (Verification): GuardrailManager 三层护栏
       - G (Governance): PolicyEngine 权限/能力模型
@@ -108,7 +129,6 @@ class AgentKernel:
         self.memory = MemoryManager(episodic_backend=memory_backend)
         self.policy = PolicyEngine(backend=policy_backend, mode=policy_mode)
         self.a2a_bus = A2ABus()
-        self.durable = DurableExecutionManager(storage=storage_backend)
         self.observability = ObservabilityManager()
         self.guardrail = GuardrailManager()
         self.sandbox = SandboxManager()
@@ -188,10 +208,13 @@ class AgentKernel:
         await self.scheduler.stop()
 
         # 3. 审计
-        await self._audit(AUDIT_SHUTDOWN, {
-            "suspended_count": len(alive_pids),
-            "shutdown_time": utcnow_iso(),
-        })
+        await self._audit(
+            AUDIT_SHUTDOWN,
+            {
+                "suspended_count": len(alive_pids),
+                "shutdown_time": utcnow_iso(),
+            },
+        )
 
         self._booted = False
         self._shutdown_event.set()
@@ -199,35 +222,47 @@ class AgentKernel:
     def _register_default_policies(self) -> None:
         """注册默认策略规则。"""
         # 高危操作默认拒绝 (低优先级进程)
-        self.policy.add_rule(PolicyRule(
-            action="shell.exec", subject="*", effect="deny",
-            condition=lambda args: args.get("priority", 99) <= int(AgentPriority.BACKGROUND),
-            priority=100,
-            description="后台进程禁止 shell.exec",
-        ))
-        self.policy.add_rule(PolicyRule(
-            action="computer.use", subject="*", effect="deny",
-            condition=lambda args: args.get("priority", 99) <= int(AgentPriority.BACKGROUND),
-            priority=100,
-            description="后台进程禁止 computer.use",
-        ))
+        self.policy.add_rule(
+            PolicyRule(
+                action="shell.exec",
+                subject="*",
+                effect="deny",
+                condition=lambda args: args.get("priority", 99) <= int(AgentPriority.BACKGROUND),
+                priority=100,
+                description="后台进程禁止 shell.exec",
+            )
+        )
+        self.policy.add_rule(
+            PolicyRule(
+                action="computer.use",
+                subject="*",
+                effect="deny",
+                condition=lambda args: args.get("priority", 99) <= int(AgentPriority.BACKGROUND),
+                priority=100,
+                description="后台进程禁止 computer.use",
+            )
+        )
 
     def _register_default_guardrails(self) -> None:
         """注册内置护栏。"""
         from fnixagent.core.agent.guardrail import (
-            length_limit_guardrail, sensitive_data_guardrail,
+            length_limit_guardrail,
+            sensitive_data_guardrail,
         )
+
         # 输入长度限制
         self.guardrail.register(
             "length_limit_input",
             length_limit_guardrail(max_length=100000, layer=GuardrailLayer.INPUT).func,
-            layer=GuardrailLayer.INPUT, priority=10,
+            layer=GuardrailLayer.INPUT,
+            priority=10,
         )
         # 输出敏感数据脱敏
         self.guardrail.register(
             "sensitive_data_output",
             sensitive_data_guardrail().func,
-            layer=GuardrailLayer.OUTPUT, priority=20,
+            layer=GuardrailLayer.OUTPUT,
+            priority=20,
         )
 
     # ========================================================================
@@ -276,8 +311,10 @@ class AgentKernel:
             parent_pid=parent_pid,
             priority=priority,
             capabilities=capabilities or {"fs", "llm"},
-            limits=limits or ResourceLimits(
-                max_tokens=max_tokens, max_steps=max_steps,
+            limits=limits
+            or ResourceLimits(
+                max_tokens=max_tokens,
+                max_steps=max_steps,
                 max_duration_sec=max_duration_sec,
             ),
         )
@@ -298,11 +335,16 @@ class AgentKernel:
         )
         await self.a2a_bus.register(card)
 
-        await self._audit(AUDIT_SPAWN, {
-            "pid": proc.pid, "name": name,
-            "parent": parent_pid, "priority": int(priority),
-            "capabilities": sorted(capabilities or []),
-        })
+        await self._audit(
+            AUDIT_SPAWN,
+            {
+                "pid": proc.pid,
+                "name": name,
+                "parent": parent_pid,
+                "priority": int(priority),
+                "capabilities": sorted(capabilities or []),
+            },
+        )
         return proc.pid
 
     async def kill(self, pid: str, reason: str = "") -> bool:
@@ -346,12 +388,15 @@ class AgentKernel:
         process = self._processes.get(req.caller_pid)
         allowed, reason = await self.policy.authorize(req, process)
         if not allowed:
-            await self._audit(AUDIT_SYSCALL_DENIED, {
-                "syscall": req.syscall.value,
-                "pid": req.caller_pid,
-                "reason": reason,
-                "request_id": req.request_id,
-            })
+            await self._audit(
+                AUDIT_SYSCALL_DENIED,
+                {
+                    "syscall": req.syscall.value,
+                    "pid": req.caller_pid,
+                    "reason": reason,
+                    "request_id": req.request_id,
+                },
+            )
             return SyscallResponse.err(
                 f"Permission denied: {reason}",
                 request_id=req.request_id,
@@ -369,10 +414,15 @@ class AgentKernel:
         )
         input_result = self.guardrail.evaluate(input_ctx)
         if input_result.blocked:
-            await self._audit(AUDIT_GUARDRAIL_BLOCK, {
-                "syscall": req.syscall.value, "pid": req.caller_pid,
-                "layer": "input", "message": input_result.message,
-            })
+            await self._audit(
+                AUDIT_GUARDRAIL_BLOCK,
+                {
+                    "syscall": req.syscall.value,
+                    "pid": req.caller_pid,
+                    "layer": "input",
+                    "message": input_result.message,
+                },
+            )
             return SyscallResponse.err(
                 f"Input blocked: {input_result.message}",
                 request_id=req.request_id,
@@ -409,8 +459,11 @@ class AgentKernel:
 
         try:
             # 执行层护栏 (仅 TOOL_INVOKE / SHELL_EXEC / COMPUTER_USE)
-            if req.syscall in (SyscallType.TOOL_INVOKE, SyscallType.SHELL_EXEC,
-                               SyscallType.COMPUTER_USE):
+            if req.syscall in (
+                SyscallType.TOOL_INVOKE,
+                SyscallType.SHELL_EXEC,
+                SyscallType.COMPUTER_USE,
+            ):
                 exec_ctx = GuardrailContext(
                     layer=GuardrailLayer.EXECUTION,
                     syscall=req.syscall.value,
@@ -421,10 +474,15 @@ class AgentKernel:
                 exec_result = self.guardrail.evaluate(exec_ctx)
                 if exec_result.blocked:
                     span.end("error", f"Execution blocked: {exec_result.message}")
-                    await self._audit(AUDIT_GUARDRAIL_BLOCK, {
-                        "syscall": req.syscall.value, "pid": req.caller_pid,
-                        "layer": "execution", "message": exec_result.message,
-                    })
+                    await self._audit(
+                        AUDIT_GUARDRAIL_BLOCK,
+                        {
+                            "syscall": req.syscall.value,
+                            "pid": req.caller_pid,
+                            "layer": "execution",
+                            "message": exec_result.message,
+                        },
+                    )
                     return SyscallResponse.err(
                         f"Execution blocked: {exec_result.message}",
                         request_id=req.request_id,
@@ -445,10 +503,15 @@ class AgentKernel:
                 output_result = self.guardrail.evaluate(output_ctx)
                 if output_result.blocked:
                     span.end("error", f"Output blocked: {output_result.message}")
-                    await self._audit(AUDIT_GUARDRAIL_BLOCK, {
-                        "syscall": req.syscall.value, "pid": req.caller_pid,
-                        "layer": "output", "message": output_result.message,
-                    })
+                    await self._audit(
+                        AUDIT_GUARDRAIL_BLOCK,
+                        {
+                            "syscall": req.syscall.value,
+                            "pid": req.caller_pid,
+                            "layer": "output",
+                            "message": output_result.message,
+                        },
+                    )
                     return SyscallResponse.err(
                         f"Output blocked: {output_result.message}",
                         request_id=req.request_id,
@@ -465,26 +528,20 @@ class AgentKernel:
                 if response.tokens_used > 0:
                     process.consume_tokens(response.tokens_used)
 
-            # L - Lifecycle: 记录 journal
-            await self.durable.append_journal(JournalEntry(
-                pid=req.caller_pid,
-                syscall=req.syscall.value,
-                args=dict(req.args),
-                result=response.result if response.success else None,
-                success=response.success,
-            ))
-
             # O - Observability: 结束 span
             span.end("ok" if response.success else "error", response.error or "")
 
             # 审计
-            await self._audit(AUDIT_SYSCALL, {
-                "syscall": req.syscall.value,
-                "pid": req.caller_pid,
-                "success": response.success,
-                "duration_ms": round(duration_ms, 3),
-                "tokens_used": response.tokens_used,
-            })
+            await self._audit(
+                AUDIT_SYSCALL,
+                {
+                    "syscall": req.syscall.value,
+                    "pid": req.caller_pid,
+                    "success": response.success,
+                    "duration_ms": round(duration_ms, 3),
+                    "tokens_used": response.tokens_used,
+                },
+            )
 
             return response
 
@@ -612,7 +669,7 @@ class AgentKernel:
             return SyscallResponse.ok(result)
         except ValueError as e:
             return SyscallResponse.err(str(e))
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             return SyscallResponse.err(f"工具执行异常: {type(e).__name__}: {e}")
 
     async def _handle_tool_list(self, req: SyscallRequest) -> SyscallResponse:
@@ -627,8 +684,10 @@ class AgentKernel:
         target = req.args.get("target", "")
         content = req.args.get("content")
         msg = A2AMessage(
-            source=req.caller_pid, target=target,
-            message_type="event", content=content,
+            source=req.caller_pid,
+            target=target,
+            message_type="event",
+            content=content,
         )
         await self.a2a_bus.send(target, msg)
         return SyscallResponse.ok({"sent": True})
@@ -637,11 +696,16 @@ class AgentKernel:
         name = req.args.get("name", "child")
         capabilities = set(req.args.get("capabilities", []))
         priority_str = req.args.get("priority", "normal")
-        priority = AgentPriority[priority_str.upper()] if isinstance(priority_str, str) \
+        priority = (
+            AgentPriority[priority_str.upper()]
+            if isinstance(priority_str, str)
             else AgentPriority(int(priority_str))
+        )
         pid = await self.spawn(
-            name=name, parent_pid=req.caller_pid,
-            capabilities=capabilities, priority=priority,
+            name=name,
+            parent_pid=req.caller_pid,
+            capabilities=capabilities,
+            priority=priority,
         )
         return SyscallResponse.ok({"pid": pid})
 
@@ -656,8 +720,10 @@ class AgentKernel:
     async def _handle_ipc_broadcast(self, req: SyscallRequest) -> SyscallResponse:
         content = req.args.get("content")
         msg = A2AMessage(
-            source=req.caller_pid, target="*",
-            message_type="event", content=content,
+            source=req.caller_pid,
+            target="*",
+            message_type="event",
+            content=content,
         )
         count = await self.a2a_bus.broadcast(msg, exclude=req.caller_pid)
         return SyscallResponse.ok({"delivered": count})
@@ -716,9 +782,9 @@ class AgentKernel:
         sandbox_level = req.args.get("sandbox", "none")
         from fnixagent.core.agent.sandbox import SandboxConfig
         from fnixagent.core.agent.types import SandboxLevel
+
         config = SandboxConfig(
-            level=SandboxLevel(sandbox_level) if isinstance(sandbox_level, str)
-            else sandbox_level,
+            level=SandboxLevel(sandbox_level) if isinstance(sandbox_level, str) else sandbox_level,
             timeout_sec=req.args.get("timeout", 30.0),
         )
         result = await self.sandbox.execute(command, config)
@@ -732,15 +798,11 @@ class AgentKernel:
 
     async def _handle_web_search(self, req: SyscallRequest) -> SyscallResponse:
         # 预留: 接入 Brave/Tavily/Jina 搜索 MCP
-        return SyscallResponse.err(
-            "web.search 需接入 Brave/Tavily 搜索 MCP (预留接口)"
-        )
+        return SyscallResponse.err("web.search 需接入 Brave/Tavily 搜索 MCP (预留接口)")
 
     async def _handle_web_fetch(self, req: SyscallRequest) -> SyscallResponse:
         # 预留: 接入 Jina Reader / Firecrawl
-        return SyscallResponse.err(
-            "web.fetch 需接入 Jina Reader / Firecrawl (预留接口)"
-        )
+        return SyscallResponse.err("web.fetch 需接入 Jina Reader / Firecrawl (预留接口)")
 
     # --- SCHEDULE 处理器 ---
 
@@ -751,10 +813,12 @@ class AgentKernel:
 
     async def _handle_schedule(self, req: SyscallRequest) -> SyscallResponse:
         # 预留: 定时任务调度 (类比 cron)
-        return SyscallResponse.ok({
-            "scheduled": False,
-            "message": "schedule syscall 预留接口 (未来支持 cron)",
-        })
+        return SyscallResponse.ok(
+            {
+                "scheduled": False,
+                "message": "schedule syscall 预留接口 (未来支持 cron)",
+            }
+        )
 
     async def _handle_checkpoint(self, req: SyscallRequest) -> SyscallResponse:
         pid = req.caller_pid
@@ -769,21 +833,22 @@ class AgentKernel:
     # 辅助方法
     # ========================================================================
 
-    async def _audit(self, action: str, detail: dict[str, Any] | None = None,
-                     subject: str | None = None) -> None:
+    async def _audit(
+        self, action: str, detail: dict[str, Any] | None = None, subject: str | None = None
+    ) -> None:
         """记录审计 (内存 + 可选后端)。"""
         self.observability.audit(action, detail, subject)
         if self._audit_backend:
             try:
                 await self._audit_backend.log(
-                    action=action, subject=subject,
+                    action=action,
+                    subject=subject,
                     detail=detail or {},
                 )
             except Exception:
                 pass
 
-    def get_audit_log(self, limit: int = 100,
-                      action: str | None = None) -> list[dict[str, Any]]:
+    def get_audit_log(self, limit: int = 100, action: str | None = None) -> list[dict[str, Any]]:
         """查询审计日志。"""
         return self.observability.get_audit_log(limit=limit, action=action)
 
@@ -799,7 +864,6 @@ class AgentKernel:
             "memory": self.memory.get_stats("kernel") if self._processes else {},
             "policy": self.policy.get_stats(),
             "a2a_bus": self.a2a_bus.get_stats(),
-            "durable": self.durable.get_stats(),
             "observability": self.observability.get_stats(),
             "guardrail": self.guardrail.get_stats(),
             "sandbox": self.sandbox.get_stats(),
@@ -811,13 +875,11 @@ class AgentKernel:
             "has_audit_backend": self._audit_backend is not None,
         }
 
-
 # ============================================================================
 # 全局内核实例 (延迟创建, 修复原版 import 即创建 bug)
 # ============================================================================
 
 _kernel_instance: AgentKernel | None = None
-
 
 def get_kernel() -> AgentKernel:
     """获取全局内核实例 (延迟创建)。
@@ -830,14 +892,14 @@ def get_kernel() -> AgentKernel:
         _kernel_instance = AgentKernel()
     return _kernel_instance
 
-
 def reset_kernel() -> None:
     """重置全局内核实例 (测试用)。"""
     global _kernel_instance
     _kernel_instance = None
 
-
 __all__ = [
-    "AgentKernel", "SyscallHandler",
-    "get_kernel", "reset_kernel",
+    "AgentKernel",
+    "SyscallHandler",
+    "get_kernel",
+    "reset_kernel",
 ]

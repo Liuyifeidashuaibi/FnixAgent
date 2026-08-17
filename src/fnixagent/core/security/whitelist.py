@@ -20,14 +20,19 @@
   - 最小权限:每个 task_type 仅暴露必要工具
   - 可审计:WhitelistDecision 含 matched_rule / grant 来源
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import fnmatch
 import threading
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
-from typing import Optional
-
+from dataclasses import dataclass
+from datetime import UTC, datetime, timedelta
 
 # ---------------------------------------------------------------------------
 # 默认任务-工具映射
@@ -36,8 +41,12 @@ from typing import Optional
 DEFAULT_TASK_TOOLS: dict[str, list[str]] = {
     # 题库任务:仅允许读取/解析/规范化,禁止 Shell
     "question_bank": [
-        "parser.*", "resolver.*", "run_editor.*", "format_normalizer.*",
-        "word.read", "word.edit",
+        "parser.*",
+        "resolver.*",
+        "run_editor.*",
+        "format_normalizer.*",
+        "word.read",
+        "word.edit",
     ],
     # 文档创建:全套 office 工具
     "document_create": ["word.*", "excel.*", "ppt.*", "pdf.*", "template.*"],
@@ -51,11 +60,9 @@ DEFAULT_TASK_TOOLS: dict[str, list[str]] = {
     "shell": [],
 }
 
-
 # ---------------------------------------------------------------------------
 # 数据结构
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class ToolGrant:
@@ -68,12 +75,12 @@ class ToolGrant:
         reason:       授权原因(审计用)
         granted_by:   授权者(user_id / "system")
     """
+
     tool_pattern: str
     granted_at: str
     expires_at: str
     reason: str
     granted_by: str
-
 
 @dataclass
 class WhitelistDecision:
@@ -85,16 +92,15 @@ class WhitelistDecision:
         matched_rule: 匹配的规则(allow/deny/grant)
         grant:        命中的临时授权(仅 grant 通过时非空)
     """
+
     allowed: bool
     reason: str
-    matched_rule: Optional[str] = None
-    grant: Optional[ToolGrant] = None
-
+    matched_rule: str | None = None
+    grant: ToolGrant | None = None
 
 # ---------------------------------------------------------------------------
 # ToolWhitelist
 # ---------------------------------------------------------------------------
-
 
 class ToolWhitelist:
     """任务粒度工具白名单。
@@ -109,7 +115,7 @@ class ToolWhitelist:
         grant = wl.grant("shell.exec", duration_minutes=60, reason="用户确认")
     """
 
-    def __init__(self, task_tools: Optional[dict[str, list[str]]] = None):
+    def __init__(self, task_tools: dict[str, list[str]] | None = None):
         # 深拷贝默认映射,避免修改模块级常量
         self._task_tools: dict[str, list[str]] = {
             k: list(v) for k, v in (task_tools or DEFAULT_TASK_TOOLS).items()
@@ -168,7 +174,7 @@ class ToolWhitelist:
                         )
 
                 # 4. grant 命中(过滤已过期)
-                now = datetime.now(timezone.utc)
+                now = datetime.now(UTC)
                 for grant in list(self._grants):
                     if self._is_expired(grant, now):
                         # 惰性清理过期 grant
@@ -190,8 +196,7 @@ class ToolWhitelist:
                 return WhitelistDecision(
                     allowed=False,
                     reason=(
-                        f"工具 {tool_name} 不在 task_type={task_type} "
-                        f"的允许列表 {allowed_tools}"
+                        f"工具 {tool_name} 不在 task_type={task_type} 的允许列表 {allowed_tools}"
                     ),
                     matched_rule=None,
                 )
@@ -203,9 +208,7 @@ class ToolWhitelist:
                 matched_rule=None,
             )
 
-    def check_batch(
-        self, calls: list[dict], task_type: str
-    ) -> dict[str, WhitelistDecision]:
+    def check_batch(self, calls: list[dict], task_type: str) -> dict[str, WhitelistDecision]:
         """批量检查工具调用(键为 tool_name,值为判定结果)。
 
         Args:
@@ -242,7 +245,7 @@ class ToolWhitelist:
         Returns:
             ToolGrant 实例
         """
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         expires = now + timedelta(minutes=max(1, duration_minutes))
         grant = ToolGrant(
             tool_pattern=tool_pattern,
@@ -266,19 +269,15 @@ class ToolWhitelist:
         """
         with self._lock:
             before = len(self._grants)
-            self._grants = [
-                g for g in self._grants if g.tool_pattern != tool_pattern
-            ]
+            self._grants = [g for g in self._grants if g.tool_pattern != tool_pattern]
             return len(self._grants) < before
 
     def list_grants(self) -> list[ToolGrant]:
         """列出当前所有有效授权(已过滤过期)。"""
         with self._lock:
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
             # 惰性清理
-            self._grants = [
-                g for g in self._grants if not self._is_expired(g, now)
-            ]
+            self._grants = [g for g in self._grants if not self._is_expired(g, now)]
             return list(self._grants)
 
     # -- 任务/规则管理 ----------------------------------------------------
@@ -312,7 +311,7 @@ class ToolWhitelist:
             expires = datetime.fromisoformat(grant.expires_at)
             # 处理 naive datetime(无时区信息时按 UTC 处理)
             if expires.tzinfo is None:
-                expires = expires.replace(tzinfo=timezone.utc)
+                expires = expires.replace(tzinfo=UTC)
             return now > expires
         except Exception:
             return True

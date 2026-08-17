@@ -33,3 +33,10 @@ LangGraph 编排层 (State Orchestration) 模块。
     本模块是新架构的状态编排层,逐步替代 orchestrator/scheduler。
     过渡期内两者并存,通过 services/service.py 工厂选择。
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+

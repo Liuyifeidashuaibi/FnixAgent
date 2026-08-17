@@ -1,4 +1,4 @@
-﻿"""
+"""
 飞轮 ③ 元反思修正环单元测试。
 
 测试模块: fnixagent.core.flywheel.stage3_reflection
@@ -8,16 +8,19 @@
     - 自动权重调节: 强化/弱化/废弃
     - 知识补充: 从失败轨迹补充 L1 目标节点
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 import pytest
 
 from fnixagent.core.flywheel.stage3_reflection import (
-    DEFAULT_TRIGGER_INTERVAL,
-    EFFECTIVE_PATH_BONUS,
-    INEFFECTIVE_PATH_PENALTY,
     MISSING_KNOWLEDGE_CONFIDENCE,
     MetaReflectionFlywheel,
 )
-from fnixagent.core.topology import weights as weights_mod
 from fnixagent.core.types import NodeType, ReasoningMode, TopologyLayer, TraceRecord
 
 
@@ -29,7 +32,7 @@ class TestStage3ShouldTrigger:
         fw = MetaReflectionFlywheel(sample_graph, trigger_interval=3)
         assert fw.should_trigger() is False  # count=1
         assert fw.should_trigger() is False  # count=2
-        assert fw.should_trigger() is True   # count=3
+        assert fw.should_trigger() is True  # count=3
 
     def test_not_triggered_before_interval(self, sample_graph):
         """未达触发间隔时应返回 False。"""
@@ -106,8 +109,11 @@ class TestStage3EvaluateSkillAccuracy:
         """无工具调用时应返回 1.0(无失败)。"""
         fw = MetaReflectionFlywheel(sample_graph)
         trace = TraceRecord(
-            trace_id="t1", task_id="tk1", goal="test",
-            mode=ReasoningMode.REACT, tool_calls=[],
+            trace_id="t1",
+            task_id="tk1",
+            goal="test",
+            mode=ReasoningMode.REACT,
+            tool_calls=[],
             success=True,
         )
         assert fw._evaluate_skill_accuracy([trace]) == 1.0
@@ -165,7 +171,9 @@ class TestStage3AdjustWeights:
         """concept_path 中不存在的节点应被跳过。"""
         fw = MetaReflectionFlywheel(sample_graph)
         trace = TraceRecord(
-            trace_id="t1", task_id="tk1", goal="test",
+            trace_id="t1",
+            task_id="tk1",
+            goal="test",
             mode=ReasoningMode.REACT,
             concept_path=["L2:nonexistent"],
             tool_calls=[{"name": "x", "args": {}, "status": "success"}],
@@ -186,9 +194,7 @@ class TestStage3FillKnowledgeGaps:
         added = fw._fill_knowledge_gaps([failed_trace])
         assert added >= 1
         # 验证新增了 L1 GOAL 节点
-        l1_nodes = sample_graph.list_nodes(
-            layer=TopologyLayer.L1_GOAL, node_type=NodeType.GOAL
-        )
+        l1_nodes = sample_graph.list_nodes(layer=TopologyLayer.L1_GOAL, node_type=NodeType.GOAL)
         goals = [n.name for n in l1_nodes]
         assert any("执行失败" in g for g in goals)
 
@@ -202,9 +208,7 @@ class TestStage3FillKnowledgeGaps:
         """补充的节点应具有低置信度(0.2)。"""
         fw = MetaReflectionFlywheel(sample_graph)
         fw._fill_knowledge_gaps([failed_trace])
-        l1_nodes = sample_graph.list_nodes(
-            layer=TopologyLayer.L1_GOAL, node_type=NodeType.GOAL
-        )
+        l1_nodes = sample_graph.list_nodes(layer=TopologyLayer.L1_GOAL, node_type=NodeType.GOAL)
         new_node = [n for n in l1_nodes if "执行失败" in n.name][0]
         assert new_node.confidence == MISSING_KNOWLEDGE_CONFIDENCE
 
@@ -212,8 +216,11 @@ class TestStage3FillKnowledgeGaps:
         """已有同名 L1 目标节点时不应重复添加。"""
         fw = MetaReflectionFlywheel(sample_graph)
         trace = TraceRecord(
-            trace_id="t1", task_id="tk1", goal="撰写论文综述",
-            mode=ReasoningMode.REACT, concept_path=[],
+            trace_id="t1",
+            task_id="tk1",
+            goal="撰写论文综述",
+            mode=ReasoningMode.REACT,
+            concept_path=[],
             tool_calls=[{"name": "x", "args": {}, "status": "failed"}],
             success=False,
         )
@@ -230,9 +237,14 @@ class TestStage3Run:
         fw = MetaReflectionFlywheel(sample_graph)
         result = fw.run([sample_trace, failed_trace])
         expected_keys = {
-            "evaluated_traces", "path_quality", "skill_accuracy",
-            "knowledge_completeness", "weakened_paths", "strengthened_paths",
-            "deprecated_paths", "added_nodes",
+            "evaluated_traces",
+            "path_quality",
+            "skill_accuracy",
+            "knowledge_completeness",
+            "weakened_paths",
+            "strengthened_paths",
+            "deprecated_paths",
+            "added_nodes",
         }
         assert expected_keys.issubset(set(result.keys()))
 

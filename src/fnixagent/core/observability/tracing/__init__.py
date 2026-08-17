@@ -28,23 +28,34 @@ Span 类型层级:
         ├── GuardrailSpan
         └── HandoffSpan
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from fnixagent.core.observability.tracing.provider import (
     TracingProvider,
     get_provider,
-    set_provider,
     reset_provider,
+    set_provider,
 )
-from fnixagent.core.observability.tracing.scope import TracingScope, get_current_span, get_current_span_id
+from fnixagent.core.observability.tracing.scope import (
+    TracingScope,
+    get_current_span,
+    get_current_span_id,
+)
 from fnixagent.core.observability.tracing.span import (
-    SpanStatus,
-    SpanData,
     AgentSpanData,
-    LLMSpanData,
-    ToolSpanData,
     GuardrailSpanData,
     HandoffSpanData,
+    LLMSpanData,
     Span,
+    SpanData,
     SpanImpl,
+    SpanStatus,
+    ToolSpanData,
 )
 from fnixagent.core.observability.tracing.trace import TraceImpl
 

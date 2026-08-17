@@ -22,23 +22,27 @@
   - 文件 IO 异常 → 捕获返回 error,不崩溃
   - 路径校验前置,避免无效 IO
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import os
 import re
 from collections import Counter
 from dataclasses import dataclass, field
-from typing import Any, Optional
 
-from fnixagent.office.base import BaseExpert, ExpertError, ExpertResult
-
+from fnixagent.office.base import BaseExpert, ExpertError
 
 __all__ = [
     "CheckItem",
-    "ValidationReport",
     "TaskValidator",
+    "ValidationReport",
 ]
-
 
 # ---------------------------------------------------------------------------
 # 正则模式
@@ -62,11 +66,9 @@ _ANSWER_LINE_PATTERN = re.compile(r"【答案】")
 # 格式组合数量阈值(超过则 warning)
 _FORMAT_COMBO_WARNING_THRESHOLD = 5
 
-
 # ---------------------------------------------------------------------------
 # 验证报告与检查项
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class CheckItem:
@@ -84,8 +86,7 @@ class CheckItem:
     passed: bool
     severity: str = "error"
     detail: str = ""
-    fix_suggestion: Optional[str] = None
-
+    fix_suggestion: str | None = None
 
 @dataclass
 class ValidationReport:
@@ -110,7 +111,7 @@ class ValidationReport:
     details: list[dict] = field(default_factory=list)
 
     @classmethod
-    def from_checks(cls, checks: list[CheckItem]) -> "ValidationReport":
+    def from_checks(cls, checks: list[CheckItem]) -> ValidationReport:
         """从 CheckItem 列表汇总生成报告。
 
         Args:
@@ -123,15 +124,9 @@ class ValidationReport:
         passed = sum(1 for c in checks if c.passed)
         failed = total - passed
         warnings = [
-            f"{c.name}: {c.detail}"
-            for c in checks
-            if not c.passed and c.severity == "warning"
+            f"{c.name}: {c.detail}" for c in checks if not c.passed and c.severity == "warning"
         ]
-        errors = [
-            f"{c.name}: {c.detail}"
-            for c in checks
-            if not c.passed and c.severity == "error"
-        ]
+        errors = [f"{c.name}: {c.detail}" for c in checks if not c.passed and c.severity == "error"]
         return cls(
             passed=len(errors) == 0,
             total_checks=total,
@@ -151,11 +146,9 @@ class ValidationReport:
             ],
         )
 
-
 # ---------------------------------------------------------------------------
 # TaskValidator
 # ---------------------------------------------------------------------------
-
 
 class TaskValidator(BaseExpert):
     """自我验证模块。
@@ -242,9 +235,7 @@ class TaskValidator(BaseExpert):
     # 通用声明式检查(借鉴 OfficeBench evaluate.py)
     # ------------------------------------------------------------------
 
-    def validate_general(
-        self, path: str, checks: list[dict]
-    ) -> ValidationReport:
+    def validate_general(self, path: str, checks: list[dict]) -> ValidationReport:
         """通用声明式检查。
 
         每个 check dict 支持的 function:
@@ -274,26 +265,30 @@ class TaskValidator(BaseExpert):
         items: list[CheckItem] = []
         for chk in checks:
             name = chk.get("name", chk.get("function", "unknown"))
-            func = chk.get("function", "")
+            chk.get("function", "")
             severity = chk.get("severity", "error")
             suggestion = chk.get("fix_suggestion")
             try:
                 passed, detail = self._run_decl_check(path, chk)
-                items.append(CheckItem(
-                    name=name,
-                    passed=passed,
-                    severity=severity,
-                    detail=detail,
-                    fix_suggestion=suggestion,
-                ))
+                items.append(
+                    CheckItem(
+                        name=name,
+                        passed=passed,
+                        severity=severity,
+                        detail=detail,
+                        fix_suggestion=suggestion,
+                    )
+                )
             except Exception as e:
-                items.append(CheckItem(
-                    name=name,
-                    passed=False,
-                    severity=severity,
-                    detail=f"检查执行异常: {e}",
-                    fix_suggestion=suggestion,
-                ))
+                items.append(
+                    CheckItem(
+                        name=name,
+                        passed=False,
+                        severity=severity,
+                        detail=f"检查执行异常: {e}",
+                        fix_suggestion=suggestion,
+                    )
+                )
         return ValidationReport.from_checks(items)
 
     def _run_decl_check(self, path: str, chk: dict) -> tuple[bool, str]:
@@ -365,19 +360,25 @@ class TaskValidator(BaseExpert):
         text = self._extract_text(path)
         if text is None:
             return CheckItem(
-                name=name, passed=False, severity="error",
+                name=name,
+                passed=False,
+                severity="error",
                 detail="无法读取文件(python-docx 不可用或文件损坏)",
                 fix_suggestion="安装 python-docx: pip install python-docx",
             )
         matches = _GARBLED_PATTERN.findall(text)
         if matches:
             return CheckItem(
-                name=name, passed=False, severity="error",
+                name=name,
+                passed=False,
+                severity="error",
                 detail=f"发现 {len(matches)} 处 NAMECONTENT 乱码残留",
                 fix_suggestion="检查答案恢复器(AnswerResolver)输出,重新处理乱码字段",
             )
         return CheckItem(
-            name=name, passed=True, severity="info",
+            name=name,
+            passed=True,
+            severity="info",
             detail="未发现乱码残留",
         )
 
@@ -397,7 +398,9 @@ class TaskValidator(BaseExpert):
         paragraphs = self._extract_paragraphs(path)
         if paragraphs is None:
             return CheckItem(
-                name=name, passed=False, severity="error",
+                name=name,
+                passed=False,
+                severity="error",
                 detail="无法读取文件(python-docx 不可用或文件损坏)",
                 fix_suggestion="安装 python-docx: pip install python-docx",
             )
@@ -410,19 +413,25 @@ class TaskValidator(BaseExpert):
                     unfilled.append(f"段落{i}")
         if choice_count == 0:
             return CheckItem(
-                name=name, passed=True, severity="info",
+                name=name,
+                passed=True,
+                severity="info",
                 detail="未发现选择题(无 【单选题】/【多选题】 标记)",
             )
         if unfilled:
             preview = ", ".join(unfilled[:5])
             suffix = " ..." if len(unfilled) > 5 else ""
             return CheckItem(
-                name=name, passed=False, severity="error",
+                name=name,
+                passed=False,
+                severity="error",
                 detail=f"{len(unfilled)}/{choice_count} 个选择题未填答案({preview}{suffix})",
                 fix_suggestion="在选择题题干末尾的括号中填入答案字母,如 （B）",
             )
         return CheckItem(
-            name=name, passed=True, severity="info",
+            name=name,
+            passed=True,
+            severity="info",
             detail=f"{choice_count} 个选择题均已填答案",
         )
 
@@ -441,7 +450,9 @@ class TaskValidator(BaseExpert):
         paragraphs = self._extract_paragraphs(path)
         if paragraphs is None:
             return CheckItem(
-                name=name, passed=False, severity="error",
+                name=name,
+                passed=False,
+                severity="error",
                 detail="无法读取文件(python-docx 不可用或文件损坏)",
                 fix_suggestion="安装 python-docx: pip install python-docx",
             )
@@ -453,12 +464,16 @@ class TaskValidator(BaseExpert):
             preview = ", ".join(remaining[:3])
             suffix = " ..." if len(remaining) > 3 else ""
             return CheckItem(
-                name=name, passed=False, severity="warning",
+                name=name,
+                passed=False,
+                severity="warning",
                 detail=f"发现 {len(remaining)} 处未删除题号({preview}{suffix})",
                 fix_suggestion="删除段落开头的题号(如 '11. '),保留 【单选题】 标记",
             )
         return CheckItem(
-            name=name, passed=True, severity="info",
+            name=name,
+            passed=True,
+            severity="info",
             detail="未发现未删除题号",
         )
 
@@ -477,7 +492,9 @@ class TaskValidator(BaseExpert):
         paragraphs = self._extract_paragraphs(path)
         if paragraphs is None:
             return CheckItem(
-                name=name, passed=False, severity="error",
+                name=name,
+                passed=False,
+                severity="error",
                 detail="无法读取文件(python-docx 不可用或文件损坏)",
                 fix_suggestion="安装 python-docx: pip install python-docx",
             )
@@ -489,12 +506,16 @@ class TaskValidator(BaseExpert):
             preview = ", ".join(remaining[:3])
             suffix = " ..." if len(remaining) > 3 else ""
             return CheckItem(
-                name=name, passed=False, severity="error",
+                name=name,
+                passed=False,
+                severity="error",
                 detail=f"发现 {len(remaining)} 处 【答案】 行残留({preview}{suffix})",
                 fix_suggestion="删除 【答案】 段落(答案已填入选题括号)",
             )
         return CheckItem(
-            name=name, passed=True, severity="info",
+            name=name,
+            passed=True,
+            severity="info",
             detail="未发现答案行残留",
         )
 
@@ -513,13 +534,17 @@ class TaskValidator(BaseExpert):
         runs_info = self._extract_runs_info(path)
         if runs_info is None:
             return CheckItem(
-                name=name, passed=False, severity="error",
+                name=name,
+                passed=False,
+                severity="error",
                 detail="无法读取文件(python-docx 不可用或文件损坏)",
                 fix_suggestion="安装 python-docx: pip install python-docx",
             )
         if not runs_info:
             return CheckItem(
-                name=name, passed=True, severity="info",
+                name=name,
+                passed=True,
+                severity="info",
                 detail="文档无有效 run(可能为空文档)",
             )
         counter: Counter = Counter()
@@ -528,7 +553,9 @@ class TaskValidator(BaseExpert):
         if len(counter) > _FORMAT_COMBO_WARNING_THRESHOLD:
             top = counter.most_common(1)[0]
             return CheckItem(
-                name=name, passed=False, severity="warning",
+                name=name,
+                passed=False,
+                severity="warning",
                 detail=(
                     f"发现 {len(counter)} 种字体/字号/粗细组合"
                     f"(超过 {_FORMAT_COMBO_WARNING_THRESHOLD} 种)"
@@ -536,7 +563,9 @@ class TaskValidator(BaseExpert):
                 fix_suggestion=f"建议统一为最多的组合: {top[0]}(出现 {top[1]} 次)",
             )
         return CheckItem(
-            name=name, passed=True, severity="info",
+            name=name,
+            passed=True,
+            severity="info",
             detail=f"格式统一,共 {len(counter)} 种组合",
         )
 
@@ -544,7 +573,7 @@ class TaskValidator(BaseExpert):
     # 文本抽取工具
     # ------------------------------------------------------------------
 
-    def _extract_text(self, path: str) -> Optional[str]:
+    def _extract_text(self, path: str) -> str | None:
         """从文件提取纯文本(支持 docx 和纯文本文件)。
 
         docx 文件用 python-docx 提取段落文本;其他文件(.txt/.md/.csv 等)
@@ -567,12 +596,12 @@ class TaskValidator(BaseExpert):
             return "\n".join(paragraphs)
         # 其他文件(txt/md/csv 等)直接读取为文本
         try:
-            with open(path, "r", encoding="utf-8", errors="ignore") as f:
+            with open(path, encoding="utf-8", errors="ignore") as f:
                 return f.read()
         except Exception:
             return None
 
-    def _extract_paragraphs(self, path: str) -> Optional[list[str]]:
+    def _extract_paragraphs(self, path: str) -> list[str] | None:
         """从 docx 提取段落文本列表。
 
         Args:
@@ -581,9 +610,7 @@ class TaskValidator(BaseExpert):
         Returns:
             段落文本列表;路径校验失败或读取异常返回 None
         """
-        err = self._validate_path(
-            path, must_exist=True, allowed_exts=("docx", "doc")
-        )
+        err = self._validate_path(path, must_exist=True, allowed_exts=("docx", "doc"))
         if err:
             return None
         try:
@@ -597,9 +624,7 @@ class TaskValidator(BaseExpert):
         except Exception:
             return None
 
-    def _extract_runs_info(
-        self, path: str
-    ) -> Optional[list[tuple[str, Optional[float], Optional[bool]]]]:
+    def _extract_runs_info(self, path: str) -> list[tuple[str, float | None, bool | None]] | None:
         """从 docx 提取 run 的(字体,字号,粗细)列表。
 
         仅提取非空文本的 run,用于格式统一检查。
@@ -620,9 +645,7 @@ class TaskValidator(BaseExpert):
         Returns:
             run 信息列表;路径校验失败或读取异常返回 None
         """
-        err = self._validate_path(
-            path, must_exist=True, allowed_exts=("docx", "doc")
-        )
+        err = self._validate_path(path, must_exist=True, allowed_exts=("docx", "doc"))
         if err:
             return None
         try:
@@ -633,7 +656,7 @@ class TaskValidator(BaseExpert):
             return None
         try:
             doc = Document(path)
-            runs_info: list[tuple[str, Optional[float], Optional[bool]]] = []
+            runs_info: list[tuple[str, float | None, bool | None]] = []
             for p in doc.paragraphs:
                 if not p.text.strip():
                     continue
@@ -652,11 +675,9 @@ class TaskValidator(BaseExpert):
                                     font_name = ea
                     except Exception:
                         pass
-                    font_size: Optional[float] = (
-                        run.font.size.pt if run.font.size else 12.0
-                    )
+                    font_size: float | None = run.font.size.pt if run.font.size else 12.0
                     # bold=None 归一化为 False
-                    bold: Optional[bool] = bool(run.font.bold) if run.font.bold is not None else False
+                    bold: bool | None = bool(run.font.bold) if run.font.bold is not None else False
                     runs_info.append((font_name, font_size, bold))
             return runs_info
         except Exception:

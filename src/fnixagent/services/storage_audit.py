@@ -7,15 +7,20 @@
 
 工厂函数 get_audit_store() 根据 DATABASE_URL 是否配置自动选择。
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import os
 import threading
 from datetime import datetime
-from typing import Optional
 
 from fnixagent.core.audit.logger import AuditLogDTO
-
 
 # ---------------------------------------------------------------------------
 # 内存实现
@@ -36,15 +41,15 @@ class InMemoryAuditStore:
     def create(
         self,
         tenant_id: int = 0,
-        user_id: Optional[int] = None,
+        user_id: int | None = None,
         action: str = "",
-        detail: Optional[dict] = None,
-        trace_id: Optional[str] = None,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None,
+        detail: dict | None = None,
+        trace_id: str | None = None,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
         prev_hash: str = "",
         entry_hash: str = "",
-        created_at: Optional[datetime] = None,
+        created_at: datetime | None = None,
     ) -> AuditLogDTO:
         with self._lock:
             lid = self._next_id
@@ -78,11 +83,11 @@ class InMemoryAuditStore:
         self,
         limit: int = 50,
         offset: int = 0,
-        user_id: Optional[int] = None,
-        action: Optional[str] = None,
-        start: Optional[str] = None,
-        end: Optional[str] = None,
-        ip_address: Optional[str] = None,
+        user_id: int | None = None,
+        action: str | None = None,
+        start: str | None = None,
+        end: str | None = None,
+        ip_address: str | None = None,
         tenant_id: int = 0,
     ) -> tuple[list[AuditLogDTO], int]:
         with self._lock:
@@ -100,22 +105,20 @@ class InMemoryAuditStore:
         if start:
             try:
                 start_dt = datetime.fromisoformat(start)
-                results = [r for r in results
-                           if r.created_at and r.created_at >= start_dt]
+                results = [r for r in results if r.created_at and r.created_at >= start_dt]
             except ValueError:
                 pass
         if end:
             try:
                 end_dt = datetime.fromisoformat(end)
-                results = [r for r in results
-                           if r.created_at and r.created_at <= end_dt]
+                results = [r for r in results if r.created_at and r.created_at <= end_dt]
             except ValueError:
                 pass
 
         # 按 id 降序(最新优先)
         results.sort(key=lambda x: x.id, reverse=True)
         total = len(results)
-        page = results[offset:offset + limit]
+        page = results[offset : offset + limit]
         return page, total
 
     def get_all_ordered(self, tenant_id: int = 0) -> list[AuditLogDTO]:
@@ -159,15 +162,15 @@ class PgAuditStore:
     def create(
         self,
         tenant_id: int = 0,
-        user_id: Optional[int] = None,
+        user_id: int | None = None,
         action: str = "",
-        detail: Optional[dict] = None,
-        trace_id: Optional[str] = None,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None,
+        detail: dict | None = None,
+        trace_id: str | None = None,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
         prev_hash: str = "",
         entry_hash: str = "",
-        created_at: Optional[datetime] = None,
+        created_at: datetime | None = None,
     ) -> AuditLogDTO:
         from fnixagent.models.db.models import AuditLog
 
@@ -217,11 +220,11 @@ class PgAuditStore:
         self,
         limit: int = 50,
         offset: int = 0,
-        user_id: Optional[int] = None,
-        action: Optional[str] = None,
-        start: Optional[str] = None,
-        end: Optional[str] = None,
-        ip_address: Optional[str] = None,
+        user_id: int | None = None,
+        action: str | None = None,
+        start: str | None = None,
+        end: str | None = None,
+        ip_address: str | None = None,
         tenant_id: int = 0,
     ) -> tuple[list[AuditLogDTO], int]:
         from fnixagent.models.db.models import AuditLog
@@ -247,12 +250,7 @@ class PgAuditStore:
                 except ValueError:
                     pass
             total = q.count()
-            logs = (
-                q.order_by(AuditLog.id.desc())
-                .limit(limit)
-                .offset(offset)
-                .all()
-            )
+            logs = q.order_by(AuditLog.id.desc()).limit(limit).offset(offset).all()
             results = [
                 AuditLogDTO(
                     id=log.id,
@@ -316,7 +314,7 @@ class PgAuditStore:
 # ---------------------------------------------------------------------------
 
 
-_audit_store: Optional[object] = None
+_audit_store: object | None = None
 _audit_store_lock = threading.Lock()
 
 
@@ -334,6 +332,7 @@ def get_audit_store():
                 if db_url:
                     try:
                         from fnixagent.services.storage_postgres import get_db_adapter
+
                         db = get_db_adapter()
                         if db is not None:
                             _audit_store = PgAuditStore(db)

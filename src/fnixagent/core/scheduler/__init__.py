@@ -20,6 +20,13 @@ P1-05: 提供 PriorityTaskQueue —— 优先级任务队列(借鉴 zhua Schedul
   - threading.Condition 实现阻塞 get,线程安全
   - 模块级惰性单例 get_priority_queue() / reset_priority_queue()
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from fnixagent.core.scheduler.autoscale import (
     AutoscaledPool,
     AutoscaledPoolConfig,
@@ -36,10 +43,10 @@ from fnixagent.core.scheduler.priority_queue import (
 __all__ = [
     "AutoscaledPool",
     "AutoscaledPoolConfig",
-    "get_autoscaled_pool",
-    "reset_autoscaled_pool",
     "PriorityTaskQueue",
     "ScheduleItem",
+    "get_autoscaled_pool",
     "get_priority_queue",
+    "reset_autoscaled_pool",
     "reset_priority_queue",
 ]

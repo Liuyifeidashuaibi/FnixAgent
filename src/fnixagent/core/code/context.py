@@ -1,7 +1,7 @@
 """
 ContextBuilder - 上下文工程引擎
 ================================
-对标 Trae Context Engineering 和 Codex 上下文组装。
+上下文工程 和 Codex 上下文组装。
 
 设计要点:
   - 优先级驱动的上下文组装 (系统 > 任务 > 约定 > 代码 > 依赖 > 历史 > 仓库地图)
@@ -9,7 +9,7 @@ ContextBuilder - 上下文工程引擎
   - 多源融合: CodeIndexer 语义切片 + 符号定义 + MemoryManager 历史 + 项目约定
   - 零外部依赖: 仅 Python stdlib (pathlib / re / tomllib)
 
-组装策略 (对标 Trae Context Engineering):
+组装策略 (上下文工程):
   1. 任务相关代码切片 (CodeIndexer.search_code)
   2. 依赖符号定义 (CodeIndexer.get_symbol_info)
   3. 历史上下文 (MemoryManager)
@@ -20,6 +20,13 @@ Usage:
     builder = ContextBuilder(indexer, memory_manager)
     ctx = await builder.build_context(task, token_budget=32000)
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import re
@@ -28,22 +35,21 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-
 # ============================================================================
 # 数据结构
 # ============================================================================
 
 class ContextPriority(Enum):
     """上下文优先级 (数值越小优先级越高)。"""
-    SYSTEM = 0          # 系统提示 (最高)
-    TASK = 1            # 任务描述
-    CONVENTIONS = 2     # 项目约定
-    RELEVANT_CODE = 3   # 相关代码切片
-    DEPENDENCIES = 4    # 依赖符号定义
-    HISTORY = 5         # 历史上下文
-    REPO_MAP = 6        # 仓库地图
-    EXTRA = 7           # 额外信息
 
+    SYSTEM = 0  # 系统提示 (最高)
+    TASK = 1  # 任务描述
+    CONVENTIONS = 2  # 项目约定
+    RELEVANT_CODE = 3  # 相关代码切片
+    DEPENDENCIES = 4  # 依赖符号定义
+    HISTORY = 5  # 历史上下文
+    REPO_MAP = 6  # 仓库地图
+    EXTRA = 7  # 额外信息
 
 @dataclass
 class ContextEntry:
@@ -56,12 +62,12 @@ class ContextEntry:
         token_estimate: 估算 token 数
         metadata: 附加元数据
     """
+
     priority: ContextPriority
     content: str
-    source: str = ""                        # 来源描述
-    token_estimate: int = 0                 # 估算 token 数
+    source: str = ""  # 来源描述
+    token_estimate: int = 0  # 估算 token 数
     metadata: dict[str, Any] = field(default_factory=dict)
-
 
 @dataclass
 class BuiltContext:
@@ -73,11 +79,11 @@ class BuiltContext:
         entries: 所有条目 (含被截断的, 便于调试)
         truncated: 是否因 token 预算被截断
     """
-    messages: list[dict[str, str]]          # LLM 消息列表
-    total_tokens: int                       # 总 token 估算
-    entries: list[ContextEntry]             # 所有条目
-    truncated: bool = False                 # 是否被截断
 
+    messages: list[dict[str, str]]  # LLM 消息列表
+    total_tokens: int  # 总 token 估算
+    entries: list[ContextEntry]  # 所有条目
+    truncated: bool = False  # 是否被截断
 
 # ============================================================================
 # ContextBuilder 主类
@@ -92,16 +98,14 @@ _DEFAULT_SYSTEM_PROMPT = (
 
 # CJK 统一表意文字范围 (用于 token 估算的中英文区分)
 _CJK_RANGE = re.compile(
-    "[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff"
-    "\U00020000-\U0002a6df\U0002a700-\U0002b73f]"
+    "[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff\U00020000-\U0002a6df\U0002a700-\U0002b73f]"
 )
 
 # 标识符提取正则 (CamelCase / snake_case, 长度 >= 3)
 _IDENTIFIER_RE = re.compile(r"\b[A-Za-z_][A-Za-z0-9_]{2,}\b")
 
-
 class ContextBuilder:
-    """上下文工程引擎 (对标 Trae Context Engineering)。
+    """上下文工程引擎 (上下文工程)。
 
     组装策略:
       1. 任务相关代码切片 (CodeIndexer.search_code)
@@ -175,88 +179,104 @@ class ContextBuilder:
         entries: list[ContextEntry] = []
 
         # 1. 系统提示 (优先级 0)
-        entries.append(ContextEntry(
-            priority=ContextPriority.SYSTEM,
-            content=sys_prompt,
-            source="system_prompt",
-            token_estimate=self._estimate_tokens(sys_prompt),
-        ))
+        entries.append(
+            ContextEntry(
+                priority=ContextPriority.SYSTEM,
+                content=sys_prompt,
+                source="system_prompt",
+                token_estimate=self._estimate_tokens(sys_prompt),
+            )
+        )
 
         # 2. 任务描述 (优先级 1)
         task_text = task.strip()
         if task_text:
-            entries.append(ContextEntry(
-                priority=ContextPriority.TASK,
-                content=task_text,
-                source="user_task",
-                token_estimate=self._estimate_tokens(task_text),
-            ))
+            entries.append(
+                ContextEntry(
+                    priority=ContextPriority.TASK,
+                    content=task_text,
+                    source="user_task",
+                    token_estimate=self._estimate_tokens(task_text),
+                )
+            )
 
         # 3. 项目约定 (优先级 2)
         conventions = self._read_conventions()
         if conventions:
-            entries.append(ContextEntry(
-                priority=ContextPriority.CONVENTIONS,
-                content=conventions,
-                source="project_conventions",
-                token_estimate=self._estimate_tokens(conventions),
-            ))
+            entries.append(
+                ContextEntry(
+                    priority=ContextPriority.CONVENTIONS,
+                    content=conventions,
+                    source="project_conventions",
+                    token_estimate=self._estimate_tokens(conventions),
+                )
+            )
 
         # 4. 相关代码切片 (优先级 3)
         relevant_slices: list[Any] = []
         try:
             relevant_slices = await self._indexer.search_code(task, top_k=10)
-        except Exception as exc:  # noqa: BLE001
-            entries.append(ContextEntry(
-                priority=ContextPriority.RELEVANT_CODE,
-                content=f"(代码切片检索失败: {type(exc).__name__}: {exc})",
-                source="CodeIndexer.search_code",
-                token_estimate=20,
-                metadata={"error": str(exc)},
-            ))
+        except Exception as exc:
+            entries.append(
+                ContextEntry(
+                    priority=ContextPriority.RELEVANT_CODE,
+                    content=f"(代码切片检索失败: {type(exc).__name__}: {exc})",
+                    source="CodeIndexer.search_code",
+                    token_estimate=20,
+                    metadata={"error": str(exc)},
+                )
+            )
         if relevant_slices:
             code_text = self._format_code_slices(relevant_slices)
-            entries.append(ContextEntry(
-                priority=ContextPriority.RELEVANT_CODE,
-                content=code_text,
-                source="CodeIndexer.search_code",
-                token_estimate=self._estimate_tokens(code_text),
-                metadata={"slice_count": len(relevant_slices)},
-            ))
+            entries.append(
+                ContextEntry(
+                    priority=ContextPriority.RELEVANT_CODE,
+                    content=code_text,
+                    source="CodeIndexer.search_code",
+                    token_estimate=self._estimate_tokens(code_text),
+                    metadata={"slice_count": len(relevant_slices)},
+                )
+            )
 
         # 5. 依赖符号定义 (优先级 4)
         deps_text = self._collect_dependency_definitions(task, relevant_slices)
         if deps_text:
-            entries.append(ContextEntry(
-                priority=ContextPriority.DEPENDENCIES,
-                content=deps_text,
-                source="CodeIndexer.get_symbol_info",
-                token_estimate=self._estimate_tokens(deps_text),
-            ))
+            entries.append(
+                ContextEntry(
+                    priority=ContextPriority.DEPENDENCIES,
+                    content=deps_text,
+                    source="CodeIndexer.get_symbol_info",
+                    token_estimate=self._estimate_tokens(deps_text),
+                )
+            )
 
         # 6. 历史上下文 (优先级 5)
         history_text = self._collect_history(task)
         if history_text:
-            entries.append(ContextEntry(
-                priority=ContextPriority.HISTORY,
-                content=history_text,
-                source="MemoryManager.load_context",
-                token_estimate=self._estimate_tokens(history_text),
-            ))
+            entries.append(
+                ContextEntry(
+                    priority=ContextPriority.HISTORY,
+                    content=history_text,
+                    source="MemoryManager.load_context",
+                    token_estimate=self._estimate_tokens(history_text),
+                )
+            )
 
         # 7. 仓库地图 (优先级 6)
         repo_map_text = ""
         try:
             repo_map_text = self._indexer.get_repo_map(max_tokens=2048)
-        except Exception:  # noqa: BLE001
+        except Exception:
             repo_map_text = ""
         if repo_map_text:
-            entries.append(ContextEntry(
-                priority=ContextPriority.REPO_MAP,
-                content=repo_map_text,
-                source="CodeIndexer.get_repo_map",
-                token_estimate=self._estimate_tokens(repo_map_text),
-            ))
+            entries.append(
+                ContextEntry(
+                    priority=ContextPriority.REPO_MAP,
+                    content=repo_map_text,
+                    source="CodeIndexer.get_repo_map",
+                    token_estimate=self._estimate_tokens(repo_map_text),
+                )
+            )
 
         # 8. Token 预算内按优先级排序, 超限截断
         kept_entries, truncated = self._truncate_by_budget(entries, token_budget)
@@ -342,9 +362,7 @@ class ContextBuilder:
         if pp_path.is_file():
             ruff_section = self._extract_ruff_section(pp_path)
             if ruff_section:
-                sections.append(
-                    f"### 代码风格 (pyproject.toml [tool.ruff])\n{ruff_section}"
-                )
+                sections.append(f"### 代码风格 (pyproject.toml [tool.ruff])\n{ruff_section}")
 
         return "\n\n".join(sections)
 
@@ -367,12 +385,13 @@ class ContextBuilder:
         # 优先使用 tomllib 精确解析
         try:
             import tomllib  # type: ignore[import-not-found]
+
             try:
                 data = tomllib.loads(raw)
                 ruff_cfg = data.get("tool", {}).get("ruff")
                 if ruff_cfg:
                     return self._format_ruff_config(ruff_cfg)
-            except Exception:  # noqa: BLE001
+            except Exception:
                 pass
         except ImportError:
             pass
@@ -484,7 +503,7 @@ class ContextBuilder:
                 break
             try:
                 sym = self._indexer.get_symbol_info(name)
-            except Exception:  # noqa: BLE001
+            except Exception:
                 sym = None
             if sym is None:
                 continue
@@ -540,7 +559,7 @@ class ContextBuilder:
             return ""
         try:
             ctx = self._memory.load_context(query=task, user_id="")
-        except Exception:  # noqa: BLE001
+        except Exception:
             return ""
         if not ctx:
             return ""
@@ -578,9 +597,7 @@ class ContextBuilder:
             attrs = getattr(entity, "attributes", {}) or {}
             if ent_name or attrs:
                 attr_str = ", ".join(f"{k}={v}" for k, v in attrs.items())
-                parts.append(
-                    f"#### 实体 ({ent_type}: {ent_name})\n{attr_str}"
-                )
+                parts.append(f"#### 实体 ({ent_type}: {ent_name})\n{attr_str}")
 
         return "\n\n".join(parts)
 
@@ -715,7 +732,9 @@ class ContextBuilder:
 
         return messages
 
-
 __all__ = [
-    "ContextBuilder", "BuiltContext", "ContextEntry", "ContextPriority",
+    "BuiltContext",
+    "ContextBuilder",
+    "ContextEntry",
+    "ContextPriority",
 ]

@@ -9,11 +9,18 @@
 
 核心特性: 有状态可回溯、可暂停、可重试;技能按需调用。
 """
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 from __future__ import annotations
 
 import time
 import uuid
-from typing import Any, Optional
+from typing import Any
 
 from fnixagent.core.types import ReasoningMode, TraceRecord
 from fnixagent.graph.state import GraphState, create_initial_state
@@ -44,8 +51,8 @@ class PerceptionFlywheel:
     def run(
         self,
         user_input: str,
-        session_id: Optional[str] = None,
-        config: Optional[dict] = None,
+        session_id: str | None = None,
+        config: dict | None = None,
     ) -> TraceRecord:
         """执行感知-执行环。
 
@@ -57,7 +64,7 @@ class PerceptionFlywheel:
         Returns:
             完整的执行轨迹(TraceRecord)
         """
-        start_time = time.time()
+        start_time = time.perf_counter()
 
         # 初始化状态
         initial_state = create_initial_state(user_input)
@@ -70,9 +77,7 @@ class PerceptionFlywheel:
             invoke_config.update(config)
 
         try:
-            final_state: GraphState = self._graph.invoke(
-                initial_state, config=invoke_config
-            )
+            final_state: GraphState = self._graph.invoke(initial_state, config=invoke_config)
             success = final_state.get("trace", {}).get("success", False)
             error = final_state.get("error")
         except Exception as e:
@@ -81,7 +86,7 @@ class PerceptionFlywheel:
             error = str(e)
 
         # 构建轨迹记录
-        duration_ms = (time.time() - start_time) * 1000
+        duration_ms = (time.perf_counter() - start_time) * 1000
         trace_data = final_state.get("trace", {})
 
         trace = TraceRecord(
@@ -106,7 +111,7 @@ class PerceptionFlywheel:
     def run_stream(
         self,
         user_input: str,
-        session_id: Optional[str] = None,
+        session_id: str | None = None,
     ) -> Any:
         """流式执行(逐节点产出状态更新)。
 

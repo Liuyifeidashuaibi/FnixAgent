@@ -1,4 +1,4 @@
-﻿"""
+"""
 LangGraph 图装配与编译单元测试。
 
 测试模块: fnixagent.graph.builder.GraphBuilder
@@ -7,7 +7,12 @@ LangGraph 图装配与编译单元测试。
     - GraphBuilder.build_with_checkpointer(): 带检查点的图
     - 图的 invoke 端到端执行(使用 mock 组件)
 """
-import pytest
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
 
 from fnixagent.graph.builder import GraphBuilder
 from fnixagent.graph.state import create_initial_state
@@ -44,26 +49,20 @@ class TestGraphBuilderInit:
 class TestGraphBuilderBuild:
     """测试 GraphBuilder.build() 方法。"""
 
-    def test_build_returns_compiled_graph(
-        self, mock_search, mock_scheduler, mock_registry
-    ):
+    def test_build_returns_compiled_graph(self, mock_search, mock_scheduler, mock_registry):
         """build() 应返回编译后的图实例(非 None)。"""
         builder = GraphBuilder(mock_search, mock_scheduler, mock_registry)
         graph = builder.build()
         assert graph is not None
 
-    def test_built_graph_has_invoke_method(
-        self, mock_search, mock_scheduler, mock_registry
-    ):
+    def test_built_graph_has_invoke_method(self, mock_search, mock_scheduler, mock_registry):
         """编译后的图应具有 invoke 方法。"""
         builder = GraphBuilder(mock_search, mock_scheduler, mock_registry)
         graph = builder.build()
         assert hasattr(graph, "invoke")
         assert callable(graph.invoke)
 
-    def test_built_graph_has_stream_method(
-        self, mock_search, mock_scheduler, mock_registry
-    ):
+    def test_built_graph_has_stream_method(self, mock_search, mock_scheduler, mock_registry):
         """编译后的图应具有 stream 方法。"""
         builder = GraphBuilder(mock_search, mock_scheduler, mock_registry)
         graph = builder.build()
@@ -73,9 +72,7 @@ class TestGraphBuilderBuild:
         self, mock_search, mock_scheduler, mock_registry, mock_binding_protocol
     ):
         """使用 mock 组件 invoke 应完成完整流水线(感知→检索→选技能→执行→反思)。"""
-        builder = GraphBuilder(
-            mock_search, mock_scheduler, mock_registry, mock_binding_protocol
-        )
+        builder = GraphBuilder(mock_search, mock_scheduler, mock_registry, mock_binding_protocol)
         graph = builder.build()
         initial_state = create_initial_state("搜索论文")
         result = graph.invoke(initial_state)
@@ -86,27 +83,21 @@ class TestGraphBuilderBuild:
         # 应执行了工具
         assert len(result.get("tool_results", [])) > 0
 
-    def test_invoke_calls_search_engine(
-        self, mock_search, mock_scheduler, mock_registry
-    ):
+    def test_invoke_calls_search_engine(self, mock_search, mock_scheduler, mock_registry):
         """invoke 应触发 search_engine.search 调用。"""
         builder = GraphBuilder(mock_search, mock_scheduler, mock_registry)
         graph = builder.build()
         graph.invoke(create_initial_state("搜索论文"))
         assert mock_search.call_count >= 1
 
-    def test_invoke_calls_scheduler(
-        self, mock_search, mock_scheduler, mock_registry
-    ):
+    def test_invoke_calls_scheduler(self, mock_search, mock_scheduler, mock_registry):
         """invoke 应触发 scheduler.select_skills 调用。"""
         builder = GraphBuilder(mock_search, mock_scheduler, mock_registry)
         graph = builder.build()
         graph.invoke(create_initial_state("搜索论文"))
         assert mock_scheduler.call_count >= 1
 
-    def test_invoke_executes_tool(
-        self, mock_search, mock_scheduler, mock_registry
-    ):
+    def test_invoke_executes_tool(self, mock_search, mock_scheduler, mock_registry):
         """invoke 应执行已注册的工具并产出 tool_results。"""
         builder = GraphBuilder(mock_search, mock_scheduler, mock_registry)
         graph = builder.build()
@@ -120,9 +111,7 @@ class TestGraphBuilderBuild:
 class TestGraphBuilderBuildWithCheckpointer:
     """测试 GraphBuilder.build_with_checkpointer() 方法。"""
 
-    def test_build_with_memory_checkpointer(
-        self, mock_search, mock_scheduler, mock_registry
-    ):
+    def test_build_with_memory_checkpointer(self, mock_search, mock_scheduler, mock_registry):
         """使用 MemorySaver 检查点应成功编译图。"""
         from langgraph.checkpoint.memory import MemorySaver
 
@@ -131,9 +120,7 @@ class TestGraphBuilderBuildWithCheckpointer:
         assert graph is not None
         assert hasattr(graph, "invoke")
 
-    def test_build_with_default_checkpointer(
-        self, mock_search, mock_scheduler, mock_registry
-    ):
+    def test_build_with_default_checkpointer(self, mock_search, mock_scheduler, mock_registry):
         """checkpointer=None 时应使用默认内存检查点。"""
         builder = GraphBuilder(mock_search, mock_scheduler, mock_registry)
         graph = builder.build_with_checkpointer(None)

@@ -21,21 +21,23 @@ API 路由 - 用户鉴权与管理接口(Phase 0.4 安全规范对齐)。
     - 旧客户端可继续用明文密码登录(is_password_encrypted=false)
     - 旧 Token(无 device_fp 字段)继续可用
 """
-import base64
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code are proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
 import hashlib
 import hmac
-import json
 import os
 import time
-from datetime import datetime
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from fnixagent.api.schemas.models import (
     BaseResponse,
-    ErrorResponse,
     LDAPLoginRequest,
     MFADisableRequest,
     MFAEnableRequest,
@@ -46,6 +48,7 @@ from fnixagent.api.schemas.models import (
     MFAVerifyRequest,
     OAuthAuthorizeRequest,
     OAuthCallbackRequest,
+    OwnerLoginRequest,
     PublicKeyResponse,
     RefreshTokenRequest,
     SAMLACSRequest,
@@ -62,9 +65,7 @@ from fnixagent.core.security.auth import (
 )
 from fnixagent.core.security.auth import (
     create_access_token,
-    create_refresh_token,
     create_token_pair,
-    decode_token_unsafe,
     get_server_keypair,
     needs_rehash,
     rsa_decrypt_password,
@@ -74,7 +75,6 @@ from fnixagent.core.security.auth.device import (
     compute_device_fingerprint,
     verify_device_fingerprint,
 )
-from fnixagent.core.security.auth.password import hash_password
 from fnixagent.services.storage import (
     get_apikey_store,
     get_user_store,
@@ -83,22 +83,22 @@ from fnixagent.services.storage import (
 # Phase 2.5: 审计日志动作常量(延迟导入避免循环依赖)
 _AUDIT = None
 
-
 def _get_audit_constants():
     """延迟导入审计动作常量(单例缓存)。"""
     global _AUDIT
     if _AUDIT is None:
         from fnixagent.core.audit import (
-            AUDIT_LOGIN_SUCCESS,
+            AUDIT_LDAP_LOGIN,
             AUDIT_LOGIN_FAILED,
+            AUDIT_LOGIN_SUCCESS,
             AUDIT_LOGOUT,
-            AUDIT_MFA_ENABLE,
-            AUDIT_MFA_DISABLE,
             AUDIT_MFA_CHALLENGE,
+            AUDIT_MFA_DISABLE,
+            AUDIT_MFA_ENABLE,
             AUDIT_MFA_VERIFY_FAILED,
             AUDIT_SSO_LOGIN,
-            AUDIT_LDAP_LOGIN,
         )
+
         _AUDIT = {
             "LOGIN_SUCCESS": AUDIT_LOGIN_SUCCESS,
             "LOGIN_FAILED": AUDIT_LOGIN_FAILED,
@@ -114,23 +114,26 @@ def _get_audit_constants():
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 security = HTTPBearer()
-
+security_optional = HTTPBearer(auto_error=False)
 
 def _audit_log(action: str, user_id=None, detail=None, http_request=None):
     """写入审计日志(失败不影响主流程)。"""
     try:
         from fnixagent.core.audit import AuditLogger
+
         ip = None
         ua = None
         if http_request:
             ua, ip = _get_request_context(http_request)
         AuditLogger().log(
-            action=action, user_id=user_id, detail=detail,
-            ip_address=ip, user_agent=ua,
+            action=action,
+            user_id=user_id,
+            detail=detail,
+            ip_address=ip,
+            user_agent=ua,
         )
     except Exception:
         pass
-
 
 def _audit(action_key: str, user_id=None, detail=None, http_request=None):
     """使用预定义动作常量写入审计日志(便捷封装)。"""
@@ -141,6 +144,7 @@ def _audit(action_key: str, user_id=None, detail=None, http_request=None):
         # Phase 2.10: 记录登录 Prometheus 指标
         try:
             from fnixagent.core.observability.metrics import record_login, record_mfa_challenge
+
             method = (detail or {}).get("method", "password") if detail else "password"
             if action_key == "LOGIN_SUCCESS":
                 record_login(success=True, method=method)
@@ -150,10 +154,7 @@ def _audit(action_key: str, user_id=None, detail=None, http_request=None):
                 record_login(success=True, method="ldap")
             elif action_key == "SSO_LOGIN":
                 record_login(success=True, method="sso")
-            elif action_key == "MFA_CHALLENGE":
-                factor_type = (detail or {}).get("factor_type", "totp") if detail else "totp"
-                record_mfa_challenge(factor_type=factor_type, success=False)
-            elif action_key == "MFA_VERIFY_FAILED":
+            elif action_key == "MFA_CHALLENGE" or action_key == "MFA_VERIFY_FAILED":
                 factor_type = (detail or {}).get("factor_type", "totp") if detail else "totp"
                 record_mfa_challenge(factor_type=factor_type, success=False)
         except Exception:
@@ -162,18 +163,10 @@ def _audit(action_key: str, user_id=None, detail=None, http_request=None):
         pass
 
 # 兼容旧代码:从 token 模块导出配置
-from fnixagent.core.security.auth.token import (
-    ACCESS_TOKEN_TTL,
-    REFRESH_TOKEN_TTL,
-    JWT_ALGORITHM,
-    JWT_SECRET_KEY,
-)
-
 
 # ===========================================================================
 # 向后兼容函数(供现有代码 / 测试直接导入)
 # ===========================================================================
-
 
 def create_jwt_token(user_id: int, username: str) -> str:
     """[向后兼容] 创建单 Access Token(无设备指纹)。
@@ -181,7 +174,6 @@ def create_jwt_token(user_id: int, username: str) -> str:
     Phase 0.4 起推荐使用 create_token_pair() 获取双 Token。
     """
     return create_access_token(user_id=user_id, username=username, role="user")
-
 
 def verify_jwt_token(
     credentials: HTTPAuthorizationCredentials = Depends(security),
@@ -208,6 +200,16 @@ def verify_jwt_token(
 
     return payload
 
+def verify_jwt_token_optional(
+    credentials: HTTPAuthorizationCredentials | None = Depends(security_optional),
+) -> dict:
+    """Desktop / standalone BYOK：无 Token 时放行本地会话；有 Token 则正常校验。"""
+    if credentials is None:
+        profile = (os.getenv("FNIXAGENT_PROFILE") or "standalone").strip().lower()
+        if profile in ("standalone", "desktop", "dev", "local"):
+            return {"sub": "desktop", "user_id": 0, "username": "desktop", "via": "dev"}
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    return verify_jwt_token(credentials)
 
 def _get_user_or_404(payload: dict):
     """根据 payload 从 UserStore 取用户,失败抛 404。"""
@@ -216,7 +218,6 @@ def _get_user_or_404(payload: dict):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
-
 
 def _get_request_context(request: Request) -> tuple[str, str]:
     """从 Request 提取 User-Agent 与客户端 IP。"""
@@ -230,11 +231,9 @@ def _get_request_context(request: Request) -> tuple[str, str]:
         ip = request.client.host if request.client else ""
     return user_agent, ip
 
-
 # ===========================================================================
 # 路由
 # ===========================================================================
-
 
 @router.get("/pubkey", response_model=PublicKeyResponse)
 async def get_public_key():
@@ -260,6 +259,7 @@ async def get_public_key():
     keypair = get_server_keypair()
     # key_id = 公钥指纹的前 16 字符(用于客户端感知密钥轮换)
     import hashlib as _hl
+
     key_id = _hl.sha256(keypair.public_pem.encode("utf-8")).hexdigest()[:16]
 
     return PublicKeyResponse(
@@ -269,7 +269,6 @@ async def get_public_key():
         expires_at=None,
     )
 
-
 @router.post("/register", response_model=UserResponse)
 async def register_user(request: UserCreate):
     """
@@ -277,13 +276,14 @@ async def register_user(request: UserCreate):
 
     - 用户名/邮箱唯一性校验
     - 密码使用 Argon2id 哈希存储(向后兼容 PBKDF2 老用户)
+    - 公开注册强制 role=user（管理员只能走所有者通道或后台提权）
     """
     store = get_user_store()
     user, err = store.create(
         username=request.username,
         email=request.email or "",
         password=request.password,
-        role=request.role,
+        role="user",
     )
     if err:
         raise HTTPException(status_code=409, detail=err)
@@ -296,6 +296,100 @@ async def register_user(request: UserCreate):
         created_at=user.created_at,
     )
 
+@router.post("/owner/login", response_model=TokenResponse)
+async def owner_login(request: OwnerLoginRequest, http_request: Request):
+    """所有者 / 管理员特殊通道。
+
+    安全边界:
+      - 必须携带与环境变量 FNIX_OWNER_TOKEN 一致的 owner_token
+      - 生产环境未配置 FNIX_OWNER_TOKEN 时直接关闭
+      - 跳过 MFA（专供本机所有者进入 Work / Admin）
+      - 成功后签发 role=admin 的双 Token
+    """
+    expected = (os.getenv("FNIX_OWNER_TOKEN") or "").strip()
+    if not expected:
+        # 仅开发环境提供可预测本地默认口令，生产必须显式配置
+        env = (os.getenv("SERVICE_ENV") or "development").lower()
+        debug = (os.getenv("SERVICE_DEBUG") or os.getenv("DEBUG") or "true").lower()
+        if env in ("development", "dev") and debug in ("1", "true", "yes", "on"):
+            expected = "fnix-owner-local-2026"
+        else:
+            raise HTTPException(
+                status_code=403,
+                detail="所有者通道未启用：请在服务端 .env 配置 FNIX_OWNER_TOKEN",
+            )
+    if not hmac.compare_digest(request.owner_token.strip(), expected):
+        _audit(
+            "LOGIN_FAILED",
+            detail={"username": request.username, "channel": "owner"},
+            http_request=http_request,
+        )
+        raise HTTPException(status_code=401, detail="所有者口令错误")
+
+    allowed_user = (os.getenv("FNIX_OWNER_USERNAME") or "admin").strip() or "admin"
+    if request.username.strip() != allowed_user:
+        raise HTTPException(
+            status_code=403,
+            detail=f"所有者通道仅允许账号: {allowed_user}",
+        )
+
+    store = get_user_store()
+    user = store.get_by_username(request.username.strip())
+
+    if user is None:
+        # 首次：创建管理员
+        user, err = store.create(
+            username=request.username.strip(),
+            email=os.getenv("FNIX_OWNER_EMAIL") or f"{allowed_user}@local.fnix",
+            password=request.password,
+            role="admin",
+        )
+        if err or user is None:
+            raise HTTPException(status_code=409, detail=err or "无法创建所有者账号")
+    else:
+        # 已存在：校验密码；若非 admin 则提权
+        auth_user = store.authenticate(request.username.strip(), request.password)
+        if not auth_user:
+            # 允许用所有者口令重置本地管理员密码（仅本通道）
+            try:
+                store.update_password(user.id, request.password)
+            except Exception:
+                raise HTTPException(status_code=401, detail="用户名或密码错误")
+            auth_user = store.get_by_username(request.username.strip())
+        if auth_user is None:
+            raise HTTPException(status_code=401, detail="用户名或密码错误")
+        user = auth_user
+        if user.role != "admin":
+            store.update_role(user.id, "admin")
+            user = store.get_by_username(request.username.strip()) or user
+
+    device_fp: str | None = None
+    if request.client_uuid:
+        user_agent, ip = _get_request_context(http_request)
+        device_fp = compute_device_fingerprint(
+            client_uuid=request.client_uuid,
+            user_agent=user_agent,
+            ip_address=ip,
+        )
+
+    token_pair = create_token_pair(
+        user_id=user.id,
+        username=user.username,
+        role="admin",
+        device_fp=device_fp,
+    )
+    _audit(
+        "LOGIN_SUCCESS",
+        user_id=user.id,
+        detail={"username": user.username, "channel": "owner"},
+        http_request=http_request,
+    )
+    return TokenResponse(
+        access_token=token_pair.access_token,
+        refresh_token=token_pair.refresh_token,
+        expires_in=token_pair.expires_in,
+        refresh_expires_in=token_pair.refresh_expires_in,
+    )
 
 @router.post("/login")
 async def login_user(request: UserLogin, http_request: Request):
@@ -331,7 +425,7 @@ async def login_user(request: UserLogin, http_request: Request):
         try:
             keypair = get_server_keypair()
             password_plain = rsa_decrypt_password(request.password, keypair)
-        except ValueError as e:
+        except ValueError:
             # 解密失败:不暴露具体原因,统一返回 401
             raise HTTPException(status_code=401, detail="密码解密失败")
 
@@ -351,15 +445,17 @@ async def login_user(request: UserLogin, http_request: Request):
 
     # 4. Phase 2.4:检测 MFA
     from fnixagent.services.storage_mfa import get_mfa_factor_store
+
     factor_store = get_mfa_factor_store()
     enabled_factors = factor_store.list_by_user(user.id, include_disabled=False)
 
     if enabled_factors:
         # 用户已启用 MFA,签发临时 Challenge Token
         from fnixagent.core.security.auth.mfa import (
-            create_mfa_challenge_token,
             FACTOR_RECOVERY,
+            create_mfa_challenge_token,
         )
+
         factor_types = [f.factor_type for f in enabled_factors]
         # 始终允许使用恢复码
         if FACTOR_RECOVERY not in factor_types:
@@ -369,8 +465,12 @@ async def login_user(request: UserLogin, http_request: Request):
             username=user.username,
             factors=factor_types,
         )
-        _audit("MFA_CHALLENGE", user_id=user.id,
-               detail={"factors": factor_types}, http_request=http_request)
+        _audit(
+            "MFA_CHALLENGE",
+            user_id=user.id,
+            detail={"factors": factor_types},
+            http_request=http_request,
+        )
         return MFALoginChallengeResponse(
             mfa_required=True,
             mfa_token=mfa_token,
@@ -379,7 +479,7 @@ async def login_user(request: UserLogin, http_request: Request):
         )
 
     # 5. 计算设备指纹(若提供 client_uuid)
-    device_fp: Optional[str] = None
+    device_fp: str | None = None
     if request.client_uuid:
         user_agent, ip = _get_request_context(http_request)
         device_fp = compute_device_fingerprint(
@@ -396,15 +496,18 @@ async def login_user(request: UserLogin, http_request: Request):
         device_fp=device_fp,
     )
 
-    _audit("LOGIN_SUCCESS", user_id=user.id,
-           detail={"username": user.username}, http_request=http_request)
+    _audit(
+        "LOGIN_SUCCESS",
+        user_id=user.id,
+        detail={"username": user.username},
+        http_request=http_request,
+    )
     return TokenResponse(
         access_token=token_pair.access_token,
         refresh_token=token_pair.refresh_token,
         expires_in=token_pair.expires_in,
         refresh_expires_in=token_pair.refresh_expires_in,
     )
-
 
 @router.post("/refresh", response_model=TokenResponse)
 async def refresh_token(request: RefreshTokenRequest, http_request: Request):
@@ -437,7 +540,7 @@ async def refresh_token(request: RefreshTokenRequest, http_request: Request):
     token_fp = payload.get("device_fp")
     if token_fp and request.client_uuid:
         user_agent, ip = _get_request_context(http_request)
-        current_fp = compute_device_fingerprint(
+        compute_device_fingerprint(
             client_uuid=request.client_uuid,
             user_agent=user_agent,
             ip_address=ip,
@@ -465,7 +568,7 @@ async def refresh_token(request: RefreshTokenRequest, http_request: Request):
         user_id=user.id,
         username=user.username,
         role=user.role,
-        device_fp=token_fp,        # 沿用原设备指纹
+        device_fp=token_fp,  # 沿用原设备指纹
     )
 
     return TokenResponse(
@@ -474,7 +577,6 @@ async def refresh_token(request: RefreshTokenRequest, http_request: Request):
         expires_in=new_pair.expires_in,
         refresh_expires_in=new_pair.refresh_expires_in,
     )
-
 
 @router.get("/me", response_model=UserResponse)
 async def get_current_user(payload: dict = Depends(verify_jwt_token)):
@@ -487,7 +589,6 @@ async def get_current_user(payload: dict = Depends(verify_jwt_token)):
         role=user.role,
         created_at=user.created_at,
     )
-
 
 @router.post("/logout")
 async def logout_user(
@@ -512,7 +613,6 @@ async def logout_user(
     _audit("LOGOUT", user_id=payload.get("user_id"), http_request=http_request)
     return BaseResponse(success=True, message="Logged out")
 
-
 @router.put("/profile", response_model=BaseResponse)
 async def update_profile(
     profile_data: dict,
@@ -525,7 +625,6 @@ async def update_profile(
         raise HTTPException(status_code=500, detail="更新失败")
     return BaseResponse(success=True, message="Profile updated", data=updated.profile)
 
-
 @router.get("/quota")
 async def get_user_quota(payload: dict = Depends(verify_jwt_token)):
     """获取用户 Token 配额。"""
@@ -534,7 +633,6 @@ async def get_user_quota(payload: dict = Depends(verify_jwt_token)):
     if not quota:
         raise HTTPException(status_code=404, detail="Quota not found")
     return quota
-
 
 @router.post("/apikey")
 async def create_api_key(payload: dict = Depends(verify_jwt_token)):
@@ -554,7 +652,6 @@ async def create_api_key(payload: dict = Depends(verify_jwt_token)):
         "expires_at": record.expires_at.isoformat() if record.expires_at else None,
     }
 
-
 @router.delete("/apikey/{key_id}")
 async def delete_api_key(key_id: int, payload: dict = Depends(verify_jwt_token)):
     """删除(吊销)API Key。"""
@@ -563,7 +660,6 @@ async def delete_api_key(key_id: int, payload: dict = Depends(verify_jwt_token))
     if not ok:
         raise HTTPException(status_code=404, detail="API Key 不存在或无权操作")
     return BaseResponse(success=True, message="API Key revoked")
-
 
 @router.get("/apikey/list")
 async def list_api_keys(payload: dict = Depends(verify_jwt_token)):
@@ -581,11 +677,9 @@ async def list_api_keys(payload: dict = Depends(verify_jwt_token)):
         for k in keys
     ]
 
-
 # ===========================================================================
 # Phase 2.2: LDAP/AD 域账号登录
 # ===========================================================================
-
 
 @router.post("/ldap/login", response_model=TokenResponse)
 async def ldap_login(request: LDAPLoginRequest, http_request: Request):
@@ -622,15 +716,21 @@ async def ldap_login(request: LDAPLoginRequest, http_request: Request):
     except LDAPNotInstalledError:
         raise HTTPException(status_code=503, detail="ldap3 库未安装,LDAP 登录不可用")
     except LDAPAuthenticationError:
-        _audit("LOGIN_FAILED", detail={"username": request.username, "method": "ldap"},
-               http_request=http_request)
+        _audit(
+            "LOGIN_FAILED",
+            detail={"username": request.username, "method": "ldap"},
+            http_request=http_request,
+        )
         raise HTTPException(status_code=401, detail="LDAP 认证失败:用户名或密码错误")
     except LDAPError as e:
         raise HTTPException(status_code=502, detail=f"LDAP 服务异常: {e}")
 
     if ldap_user is None:
-        _audit("LOGIN_FAILED", detail={"username": request.username, "method": "ldap"},
-               http_request=http_request)
+        _audit(
+            "LOGIN_FAILED",
+            detail={"username": request.username, "method": "ldap"},
+            http_request=http_request,
+        )
         raise HTTPException(status_code=401, detail="LDAP 认证失败:用户名或密码错误")
 
     # 3. 同步到本地(按邮箱查找或创建)
@@ -639,7 +739,7 @@ async def ldap_login(request: LDAPLoginRequest, http_request: Request):
         raise HTTPException(status_code=500, detail="LDAP 用户同步到本地失败")
 
     # 4. 签发双 Token
-    device_fp: Optional[str] = None
+    device_fp: str | None = None
     if request.client_uuid:
         user_agent, ip = _get_request_context(http_request)
         device_fp = compute_device_fingerprint(
@@ -655,8 +755,12 @@ async def ldap_login(request: LDAPLoginRequest, http_request: Request):
         device_fp=device_fp,
     )
 
-    _audit("LDAP_LOGIN", user_id=local_user.id,
-           detail={"username": local_user.username}, http_request=http_request)
+    _audit(
+        "LDAP_LOGIN",
+        user_id=local_user.id,
+        detail={"username": local_user.username},
+        http_request=http_request,
+    )
     return TokenResponse(
         access_token=token_pair.access_token,
         refresh_token=token_pair.refresh_token,
@@ -664,11 +768,9 @@ async def ldap_login(request: LDAPLoginRequest, http_request: Request):
         refresh_expires_in=token_pair.refresh_expires_in,
     )
 
-
 # ===========================================================================
 # Phase 2.3: SSO 单点登录(OAuth2.0 / SAML)
 # ===========================================================================
-
 
 @router.get("/sso/providers")
 async def list_sso_providers():
@@ -688,7 +790,6 @@ async def list_sso_providers():
         },
     )
 
-
 @router.post("/sso/oauth/authorize")
 async def oauth_authorize(request: OAuthAuthorizeRequest):
     """获取 OAuth 授权 URL(客户端跳转到此 URL 完成用户授权)。
@@ -705,7 +806,9 @@ async def oauth_authorize(request: OAuthAuthorizeRequest):
     store = get_sso_config_store()
     cfg = store.get_by_code(request.provider_code, provider_type="oauth")
     if cfg is None:
-        raise HTTPException(status_code=404, detail=f"OAuth provider {request.provider_code} 未配置或已禁用")
+        raise HTTPException(
+            status_code=404, detail=f"OAuth provider {request.provider_code} 未配置或已禁用"
+        )
 
     oauth_cfg = cfg.to_oauth_config()
     # 临时覆盖 redirect_uri(若客户端传入)
@@ -723,7 +826,6 @@ async def oauth_authorize(request: OAuthAuthorizeRequest):
         success=True,
         data={"authorization_url": url, "state": state, "provider_code": request.provider_code},
     )
-
 
 @router.post("/sso/oauth/callback", response_model=TokenResponse)
 async def oauth_callback(request: OAuthCallbackRequest, http_request: Request):
@@ -750,7 +852,9 @@ async def oauth_callback(request: OAuthCallbackRequest, http_request: Request):
     store = get_sso_config_store()
     cfg = store.get_by_code(request.provider_code, provider_type="oauth")
     if cfg is None:
-        raise HTTPException(status_code=404, detail=f"OAuth provider {request.provider_code} 未配置")
+        raise HTTPException(
+            status_code=404, detail=f"OAuth provider {request.provider_code} 未配置"
+        )
 
     client = OAuthClient(cfg.to_oauth_config())
 
@@ -778,7 +882,7 @@ async def oauth_callback(request: OAuthCallbackRequest, http_request: Request):
         raise HTTPException(status_code=500, detail="OAuth 用户同步到本地失败")
 
     # 5. 签发双 Token
-    device_fp: Optional[str] = None
+    device_fp: str | None = None
     if request.client_uuid:
         user_agent, ip = _get_request_context(http_request)
         device_fp = compute_device_fingerprint(
@@ -793,17 +897,22 @@ async def oauth_callback(request: OAuthCallbackRequest, http_request: Request):
         role=local_user.role,
         device_fp=device_fp,
     )
-    _audit("SSO_LOGIN", user_id=local_user.id,
-           detail={"username": local_user.username, "provider": request.provider_code,
-                   "provider_type": "oauth"},
-           http_request=http_request)
+    _audit(
+        "SSO_LOGIN",
+        user_id=local_user.id,
+        detail={
+            "username": local_user.username,
+            "provider": request.provider_code,
+            "provider_type": "oauth",
+        },
+        http_request=http_request,
+    )
     return TokenResponse(
         access_token=token_pair.access_token,
         refresh_token=token_pair.refresh_token,
         expires_in=token_pair.expires_in,
         refresh_expires_in=token_pair.refresh_expires_in,
     )
-
 
 @router.post("/sso/saml/{provider_code}/login")
 async def saml_login(provider_code: str, body: SAMLLoginRequest):
@@ -834,10 +943,12 @@ async def saml_login(provider_code: str, body: SAMLLoginRequest):
 
     return BaseResponse(
         success=True,
-        data={"redirect_url": result["redirect_url"], "state": result["state"],
-              "provider_code": provider_code},
+        data={
+            "redirect_url": result["redirect_url"],
+            "state": result["state"],
+            "provider_code": provider_code,
+        },
     )
-
 
 @router.post("/sso/saml/{provider_code}/acs", response_model=TokenResponse)
 async def saml_acs(provider_code: str, body: SAMLACSRequest, http_request: Request):
@@ -887,7 +998,7 @@ async def saml_acs(provider_code: str, body: SAMLACSRequest, http_request: Reque
         raise HTTPException(status_code=500, detail="SAML 用户同步到本地失败")
 
     # 4. 签发双 Token
-    device_fp: Optional[str] = None
+    device_fp: str | None = None
     if body.client_uuid:
         user_agent, ip = _get_request_context(http_request)
         device_fp = compute_device_fingerprint(
@@ -902,10 +1013,16 @@ async def saml_acs(provider_code: str, body: SAMLACSRequest, http_request: Reque
         role=local_user.role,
         device_fp=device_fp,
     )
-    _audit("SSO_LOGIN", user_id=local_user.id,
-           detail={"username": local_user.username, "provider": provider_code,
-                   "provider_type": "saml"},
-           http_request=http_request)
+    _audit(
+        "SSO_LOGIN",
+        user_id=local_user.id,
+        detail={
+            "username": local_user.username,
+            "provider": provider_code,
+            "provider_type": "saml",
+        },
+        http_request=http_request,
+    )
     return TokenResponse(
         access_token=token_pair.access_token,
         refresh_token=token_pair.refresh_token,
@@ -913,11 +1030,9 @@ async def saml_acs(provider_code: str, body: SAMLACSRequest, http_request: Reque
         refresh_expires_in=token_pair.refresh_expires_in,
     )
 
-
 # ===========================================================================
 # Phase 2.4: MFA 多因素认证
 # ===========================================================================
-
 
 @router.post("/mfa/setup", response_model=MFASetupResponse)
 async def mfa_setup(
@@ -973,7 +1088,6 @@ async def mfa_setup(
     else:
         raise HTTPException(status_code=400, detail=f"不支持的因子类型: {request.factor_type}")
 
-
 @router.post("/mfa/enable", response_model=BaseResponse)
 async def mfa_enable(
     request: MFAEnableRequest,
@@ -1008,10 +1122,12 @@ async def mfa_enable(
     if request.factor_type == FACTOR_TOTP:
         if not request.secret:
             raise HTTPException(status_code=400, detail="TOTP setup 需提供 secret")
-        totp_client = TOTPClient(TOTPConfig(
-            secret=request.secret,
-            account_name=user.email or user.username,
-        ))
+        totp_client = TOTPClient(
+            TOTPConfig(
+                secret=request.secret,
+                account_name=user.email or user.username,
+            )
+        )
         if not totp_client.verify(request.code):
             raise HTTPException(status_code=400, detail="TOTP 验证码错误,请重试")
         existing = factor_store.get_totp(user.id)
@@ -1054,14 +1170,17 @@ async def mfa_enable(
     store = get_user_store()
     store.update_profile(user.id, {"mfa_enabled": True})
 
-    _audit("MFA_ENABLE", user_id=user.id,
-           detail={"factor_type": request.factor_type}, http_request=http_request)
+    _audit(
+        "MFA_ENABLE",
+        user_id=user.id,
+        detail={"factor_type": request.factor_type},
+        http_request=http_request,
+    )
     return BaseResponse(
         success=True,
         message="MFA 因子已启用",
         data={"recovery_codes": codes} if codes else None,
     )
-
 
 @router.post("/mfa/disable", response_model=BaseResponse)
 async def mfa_disable(
@@ -1103,10 +1222,13 @@ async def mfa_disable(
         deleted = factor_store.delete_all_by_user(user.id)
         recovery_store.delete_all_by_user(user.id)
         store.update_profile(user.id, {"mfa_enabled": False})
-        _audit("MFA_DISABLE", user_id=user.id,
-               detail={"factor_id": None, "count": deleted}, http_request=http_request)
-        return BaseResponse(success=True,
-                            message=f"已禁用所有 MFA 因子(共 {deleted} 个)")
+        _audit(
+            "MFA_DISABLE",
+            user_id=user.id,
+            detail={"factor_id": None, "count": deleted},
+            http_request=http_request,
+        )
+        return BaseResponse(success=True, message=f"已禁用所有 MFA 因子(共 {deleted} 个)")
     else:
         ok = factor_store.delete(request.factor_id)
         if not ok:
@@ -1115,10 +1237,13 @@ async def mfa_disable(
         if not remaining:
             recovery_store.delete_all_by_user(user.id)
             store.update_profile(user.id, {"mfa_enabled": False})
-        _audit("MFA_DISABLE", user_id=user.id,
-               detail={"factor_id": request.factor_id}, http_request=http_request)
+        _audit(
+            "MFA_DISABLE",
+            user_id=user.id,
+            detail={"factor_id": request.factor_id},
+            http_request=http_request,
+        )
         return BaseResponse(success=True, message="MFA 因子已禁用")
-
 
 @router.get("/mfa/factors", response_model=BaseResponse)
 async def mfa_list_factors(payload: dict = Depends(verify_jwt_token)):
@@ -1143,7 +1268,6 @@ async def mfa_list_factors(payload: dict = Depends(verify_jwt_token)):
             "mfa_enabled": any(f.enabled for f in factors),
         },
     )
-
 
 @router.post("/mfa/recovery-codes/regenerate", response_model=BaseResponse)
 async def mfa_regenerate_recovery_codes(
@@ -1178,11 +1302,10 @@ async def mfa_regenerate_recovery_codes(
         data={"recovery_codes": codes},
     )
 
-
 @router.post("/mfa/send-code", response_model=BaseResponse)
 async def mfa_send_code(
     request: MFASendCodeRequest,
-    payload: Optional[dict] = Depends(verify_jwt_token),
+    payload: dict | None = Depends(verify_jwt_token),
 ):
     """发送 OTP 验证码(短信/邮箱)。
 
@@ -1195,10 +1318,10 @@ async def mfa_send_code(
     from fnixagent.core.security.auth.mfa import (
         FACTOR_EMAIL,
         FACTOR_SMS,
+        OTP_TTL_SECONDS,
         MFAConfigError,
         MFANotInstalledError,
         OTPClient,
-        OTP_TTL_SECONDS,
         SMSConfig,
         verify_mfa_challenge_token,
     )
@@ -1208,7 +1331,7 @@ async def mfa_send_code(
     )
 
     # 鉴权:Access Token 或 mfa_token 二选一
-    user_id: Optional[int] = None
+    user_id: int | None = None
     if payload is not None:
         user_id = payload.get("user_id")
     elif request.mfa_token:
@@ -1275,7 +1398,6 @@ async def mfa_send_code(
         },
     )
 
-
 @router.post("/mfa/verify", response_model=TokenResponse)
 async def mfa_verify(request: MFAVerifyRequest, http_request: Request):
     """MFA 验证(登录流程中完成 MFA,换取真正的双 Token)。
@@ -1312,7 +1434,7 @@ async def mfa_verify(request: MFAVerifyRequest, http_request: Request):
         raise HTTPException(status_code=401, detail=f"mfa_token 无效: {e}")
 
     user_id = challenge_payload.get("user_id")
-    username = challenge_payload.get("username", "")
+    challenge_payload.get("username", "")
     allowed_factors = challenge_payload.get("factors", [])
 
     store = get_user_store()
@@ -1321,8 +1443,9 @@ async def mfa_verify(request: MFAVerifyRequest, http_request: Request):
         raise HTTPException(status_code=401, detail="用户不存在")
 
     if request.factor_type not in allowed_factors:
-        raise HTTPException(status_code=400,
-                            detail=f"该用户的 MFA 不支持 {request.factor_type} 因子")
+        raise HTTPException(
+            status_code=400, detail=f"该用户的 MFA 不支持 {request.factor_type} 因子"
+        )
 
     factor_store = get_mfa_factor_store()
     otp_store = get_otp_challenge_store()
@@ -1333,14 +1456,19 @@ async def mfa_verify(request: MFAVerifyRequest, http_request: Request):
         totp_factor = factor_store.get_totp(user_id)
         if not totp_factor:
             raise HTTPException(status_code=400, detail="未绑定 TOTP 因子")
-        totp_client = TOTPClient(TOTPConfig(
-            secret=totp_factor.secret,
-            account_name=user.email or user.username,
-        ))
+        totp_client = TOTPClient(
+            TOTPConfig(
+                secret=totp_factor.secret,
+                account_name=user.email or user.username,
+            )
+        )
         if not totp_client.verify(request.code):
-            _audit("MFA_VERIFY_FAILED", user_id=user_id,
-                   detail={"factor_type": FACTOR_TOTP, "reason": "wrong_code"},
-                   http_request=http_request)
+            _audit(
+                "MFA_VERIFY_FAILED",
+                user_id=user_id,
+                detail={"factor_type": FACTOR_TOTP, "reason": "wrong_code"},
+                http_request=http_request,
+            )
             raise HTTPException(status_code=401, detail="TOTP 验证码错误")
 
     elif request.factor_type in (FACTOR_SMS, FACTOR_EMAIL):
@@ -1359,9 +1487,12 @@ async def mfa_verify(request: MFAVerifyRequest, http_request: Request):
         actual_hash = OTPClient.hash_code(request.code)
         if not hmac.compare_digest(actual_hash, challenge.code_hash):
             otp_store.increment_attempts(request.challenge_id)
-            _audit("MFA_VERIFY_FAILED", user_id=user_id,
-                   detail={"factor_type": request.factor_type, "reason": "wrong_code"},
-                   http_request=http_request)
+            _audit(
+                "MFA_VERIFY_FAILED",
+                user_id=user_id,
+                detail={"factor_type": request.factor_type, "reason": "wrong_code"},
+                http_request=http_request,
+            )
             raise HTTPException(status_code=401, detail="验证码错误")
 
         otp_store.consume(request.challenge_id)
@@ -1370,9 +1501,12 @@ async def mfa_verify(request: MFAVerifyRequest, http_request: Request):
         code_hash = RecoveryCodeClient.hash_code(request.code)
         record = recovery_store.find_unused_by_hash(user_id, code_hash)
         if record is None:
-            _audit("MFA_VERIFY_FAILED", user_id=user_id,
-                   detail={"factor_type": FACTOR_RECOVERY, "reason": "invalid_or_used"},
-                   http_request=http_request)
+            _audit(
+                "MFA_VERIFY_FAILED",
+                user_id=user_id,
+                detail={"factor_type": FACTOR_RECOVERY, "reason": "invalid_or_used"},
+                http_request=http_request,
+            )
             raise HTTPException(status_code=401, detail="恢复码无效或已使用")
         recovery_store.mark_used(record.id)
 
@@ -1380,7 +1514,7 @@ async def mfa_verify(request: MFAVerifyRequest, http_request: Request):
         raise HTTPException(status_code=400, detail=f"不支持的因子类型: {request.factor_type}")
 
     # 3. 签发双 Token(完成登录)
-    device_fp: Optional[str] = None
+    device_fp: str | None = None
     if request.client_uuid:
         user_agent, ip = _get_request_context(http_request)
         device_fp = compute_device_fingerprint(
@@ -1395,17 +1529,18 @@ async def mfa_verify(request: MFAVerifyRequest, http_request: Request):
         role=user.role,
         device_fp=device_fp,
     )
-    _audit("LOGIN_SUCCESS", user_id=user.id,
-           detail={"username": user.username, "method": "mfa",
-                   "factor_type": request.factor_type},
-           http_request=http_request)
+    _audit(
+        "LOGIN_SUCCESS",
+        user_id=user.id,
+        detail={"username": user.username, "method": "mfa", "factor_type": request.factor_type},
+        http_request=http_request,
+    )
     return TokenResponse(
         access_token=token_pair.access_token,
         refresh_token=token_pair.refresh_token,
         expires_in=token_pair.expires_in,
         refresh_expires_in=token_pair.refresh_expires_in,
     )
-
 
 # ============================================================================
 # Phase 3.0: 手机号验证码独立登录(国内)
@@ -1427,10 +1562,8 @@ async def mfa_verify(request: MFAVerifyRequest, http_request: Request):
 #   - 手机号未注册时返回相同响应(防用户枚举)
 # ============================================================================
 
-
 # SMS 登录专用 factor_type(与 MFA 的 sms 区分)
 _SMS_LOGIN_FACTOR = "sms_login"
-
 
 def _get_sms_login_otp_client():
     """获取 OTP 客户端(复用 MFA 的 SMS 配置)。
@@ -1447,22 +1580,25 @@ def _get_sms_login_otp_client():
     provider = os.getenv("SMS_PROVIDER", "mock")
     if provider == "mock":
         # 开发/测试环境:不实际发短信,验证码记录在日志中
-        return OTPClient(sms_config=SMSConfig(
-            provider="mock",
-            access_key_id="",
-            access_key_secret="",
-            sign_name="",
-            template_code="",
-        ))
+        return OTPClient(
+            sms_config=SMSConfig(
+                provider="mock",
+                access_key_id="",
+                access_key_secret="",
+                sign_name="",
+                template_code="",
+            )
+        )
 
-    return OTPClient(sms_config=SMSConfig(
-        provider=provider,
-        access_key_id=os.getenv("SMS_ACCESS_KEY", ""),
-        access_key_secret=os.getenv("SMS_ACCESS_SECRET", ""),
-        sign_name=os.getenv("SMS_SIGN_NAME", ""),
-        template_code=os.getenv("SMS_TEMPLATE_CODE", ""),
-    ))
-
+    return OTPClient(
+        sms_config=SMSConfig(
+            provider=provider,
+            access_key_id=os.getenv("SMS_ACCESS_KEY", ""),
+            access_key_secret=os.getenv("SMS_ACCESS_SECRET", ""),
+            sign_name=os.getenv("SMS_SIGN_NAME", ""),
+            template_code=os.getenv("SMS_TEMPLATE_CODE", ""),
+        )
+    )
 
 @router.post("/sms/send-code")
 async def sms_send_code(request: SmsSendCodeRequest, http_request: Request):
@@ -1526,7 +1662,6 @@ async def sms_send_code(request: SmsSendCodeRequest, http_request: Request):
         "message": "验证码已发送",
     }
 
-
 @router.post("/sms/login", response_model=TokenResponse)
 async def sms_login(request: SmsLoginRequest, http_request: Request):
     """手机号验证码登录。
@@ -1585,7 +1720,7 @@ async def sms_login(request: SmsLoginRequest, http_request: Request):
         raise HTTPException(status_code=403, detail="账号已被禁用,请联系管理员")
 
     # 6. 计算设备指纹(若提供 client_uuid)
-    device_fp: Optional[str] = None
+    device_fp: str | None = None
     if request.client_uuid:
         user_agent, ip = _get_request_context(http_request)
         device_fp = compute_device_fingerprint(
@@ -1603,13 +1738,17 @@ async def sms_login(request: SmsLoginRequest, http_request: Request):
     )
 
     # 8. 审计 + Prometheus 指标
-    _audit("LOGIN_SUCCESS", user_id=user.id,
-           detail={"username": user.username, "method": "sms"},
-           http_request=http_request)
+    _audit(
+        "LOGIN_SUCCESS",
+        user_id=user.id,
+        detail={"username": user.username, "method": "sms"},
+        http_request=http_request,
+    )
 
     # Phase 2.10: 记录登录指标
     try:
         from fnixagent.core.observability.metrics import record_login
+
         record_login(success=True, method="sms")
     except Exception:
         pass
