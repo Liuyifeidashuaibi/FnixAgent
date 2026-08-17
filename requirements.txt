@@ -31,7 +31,7 @@ langchain-openai>=0.1.0
 # 文档处理
 python-docx==0.8.11
 reportlab==4.0.7
-pypdf==3.17.0
+pypdf==6.15.0
 
 # 数据可视化
 matplotlib==3.8.2
