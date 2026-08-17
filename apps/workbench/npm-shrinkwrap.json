@@ -1,12 +1,12 @@
 {
   "name": "@fnixagent/workbench",
-  "version": "2.1.2",
+  "version": "1.0.0",
   "lockfileVersion": 3,
   "requires": true,
   "packages": {
     "": {
       "name": "@fnixagent/workbench",
-      "version": "2.1.2",
+      "version": "1.0.0",
       "dependencies": {
         "@monaco-editor/react": "^4.7.0",
         "@sentry/react": "^10.55.0",
@@ -20,8 +20,9 @@
         "@xterm/addon-fit": "^0.11.0",
         "@xterm/addon-web-links": "^0.12.0",
         "@xterm/xterm": "^6.0.0",
-        "@xyflow/react": "^12.10.2",
+        "@xyflow/react": "^12.11.3",
         "diff-match-patch": "^1.0.5",
+        "dompurify": "^3.4.12",
         "highlight.js": "^11.11.1",
         "lucide-react": "^1.16.0",
         "mermaid": "^11.16.0",
@@ -2872,7 +2873,7 @@
       "version": "19.2.3",
       "resolved": "https://registry.npmjs.org/@types/react-dom/-/react-dom-19.2.3.tgz",
       "integrity": "sha512-jp2L/eY6fn+KgVVQAOqYItbF0VY/YApe5Mz2F0aykSO8gx31bYCZyvSeYxCHKvzHG5eZjc+zyaS5BrBWya2+kQ==",
-      "dev": true,
+      "devOptional": true,
       "license": "MIT",
       "peerDependencies": {
         "@types/react": "^19.2.0"
@@ -3325,18 +3326,28 @@
       ]
     },
     "node_modules/@xyflow/react": {
-      "version": "12.10.2",
-      "resolved": "https://registry.npmjs.org/@xyflow/react/-/react-12.10.2.tgz",
-      "integrity": "sha512-CgIi6HwlcHXwlkTpr0fxLv/0sRVNZ8IdwKLzzeCscaYBwpvfcH1QFOCeaTCuEn1FQEs/B8CjnTSjhs8udgmBgQ==",
+      "version": "12.11.3",
+      "resolved": "https://registry.npmjs.org/@xyflow/react/-/react-12.11.3.tgz",
+      "integrity": "sha512-G3jogHz2GWUtIOkhavUGno2YzY9u6fILIJBttfsBendb0/HWB90JG+sOTAvlIMEwyvq9zgy9V9ZQSwyQjR5QzQ==",
       "license": "MIT",
       "dependencies": {
-        "@xyflow/system": "0.0.76",
+        "@xyflow/system": "0.0.80",
         "classcat": "^5.0.3",
         "zustand": "^4.4.0"
       },
       "peerDependencies": {
+        "@types/react": ">=17",
+        "@types/react-dom": ">=17",
         "react": ">=17",
         "react-dom": ">=17"
+      },
+      "peerDependenciesMeta": {
+        "@types/react": {
+          "optional": true
+        },
+        "@types/react-dom": {
+          "optional": true
+        }
       }
     },
     "node_modules/@xyflow/react/node_modules/zustand": {
@@ -3368,9 +3379,9 @@
       }
     },
     "node_modules/@xyflow/system": {
-      "version": "0.0.76",
-      "resolved": "https://registry.npmjs.org/@xyflow/system/-/system-0.0.76.tgz",
-      "integrity": "sha512-hvwvnRS1B3REwVDlWexsq7YQaPZeG3/mKo1jv38UmnpWmxihp14bW6VtEOuHEwJX2FvzFw8k77LyKSk/wiZVNA==",
+      "version": "0.0.80",
+      "resolved": "https://registry.npmjs.org/@xyflow/system/-/system-0.0.80.tgz",
+      "integrity": "sha512-ywc3ZqG91brzWrH1WlwMdIX4goOfrpBy6AbLdVSaof/Xx9l138ijIKRExM6EkMro2F+OImGmSiA/WKcXvKVcfA==",
       "license": "MIT",
       "dependencies": {
         "@types/d3-drag": "^3.0.7",
@@ -4521,9 +4532,9 @@
       "license": "Apache-2.0"
     },
     "node_modules/dompurify": {
-      "version": "3.2.7",
-      "resolved": "https://registry.npmjs.org/dompurify/-/dompurify-3.2.7.tgz",
-      "integrity": "sha512-WhL/YuveyGXJaerVlMYGWhvQswa7myDG17P7Vu65EWC05o8vfeNbvNf4d/BOvH99+ZW+LlQsc1GDKMa1vNK6dw==",
+      "version": "3.4.13",
+      "resolved": "https://registry.npmjs.org/dompurify/-/dompurify-3.4.13.tgz",
+      "integrity": "sha512-2vmYIoqjze2d+kakP8S/nS5shfsl587kzwEjcGlTdiksUVgFHnFCsLYDVj/JNqJVOQZGSYBTmuycv0PodwmnMQ==",
       "license": "(MPL-2.0 OR Apache-2.0)",
       "optionalDependencies": {
         "@types/trusted-types": "^2.0.7"
@@ -6187,15 +6198,6 @@
         "uuid": "^11.1.0 || ^12 || ^13 || ^14.0.0"
       }
     },
-    "node_modules/mermaid/node_modules/dompurify": {
-      "version": "3.4.12",
-      "resolved": "https://registry.npmmirror.com/dompurify/-/dompurify-3.4.12.tgz",
-      "integrity": "sha512-zQvGet8Z2sWbQhCmfFz/T5QWH2oBmjnqK3qvOjaqaNLrLEF912WamU+ohnTp0TCep/MFVHpdJuCZEdFOdTnEFg==",
-      "license": "(MPL-2.0 OR Apache-2.0)",
-      "optionalDependencies": {
-        "@types/trusted-types": "^2.0.7"
-      }
-    },
     "node_modules/mermaid/node_modules/marked": {
       "version": "16.4.2",
       "resolved": "https://registry.npmmirror.com/marked/-/marked-16.4.2.tgz",
@@ -6822,6 +6824,15 @@
       "dependencies": {
         "dompurify": "3.2.7",
         "marked": "14.0.0"
+      }
+    },
+    "node_modules/monaco-editor/node_modules/dompurify": {
+      "version": "3.2.7",
+      "resolved": "https://registry.npmjs.org/dompurify/-/dompurify-3.2.7.tgz",
+      "integrity": "sha512-WhL/YuveyGXJaerVlMYGWhvQswa7myDG17P7Vu65EWC05o8vfeNbvNf4d/BOvH99+ZW+LlQsc1GDKMa1vNK6dw==",
+      "license": "(MPL-2.0 OR Apache-2.0)",
+      "optionalDependencies": {
+        "@types/trusted-types": "^2.0.7"
       }
     },
     "node_modules/ms": {
