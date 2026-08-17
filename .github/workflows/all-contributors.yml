@@ -29,7 +29,7 @@ jobs:
     steps:
       - name: Parse comment
         id: parse
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const comment = context.payload.comment.body;
