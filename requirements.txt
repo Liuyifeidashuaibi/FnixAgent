@@ -73,7 +73,7 @@ croniter==2.0.1
 
 # 其他
 python-dateutil==2.8.2
-pytz==2023.3
+pytz==2026.3.post1
 
 # --------------------------------------------------------------------------
 # 以下企业 / 云集成依赖已移至 requirements-optional.txt，standalone 不安装：
