@@ -1,4 +1,4 @@
-"""Agent 基类(借鉴 AgentScope Agent + OpenAI SDK Agent)。
+"""Agent 基类。
 
 设计哲学(AgentScope 核心):
   单 Agent 极致健壮 + 多 Agent 平滑扩展

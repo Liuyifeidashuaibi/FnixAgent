@@ -38,7 +38,7 @@ export interface AppConfig {
   model: string;
   theme: string;
   adaptiveMode?: boolean;
-  adaptiveStrategy?: import("../lib/ai/providerCapabilities").AdaptiveStrategy;
+  adaptiveStrategy?: import("../lib/llm/providerCapabilities").AdaptiveStrategy;
   autocompleteEnabled?: boolean;
   autocompleteMode?: "auto" | "fim" | "chat" | "disabled";
   autocompleteDebounceMs?: number;

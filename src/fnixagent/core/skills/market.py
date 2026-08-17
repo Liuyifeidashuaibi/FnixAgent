@@ -1,6 +1,4 @@
-"""组织内技能市场(P2-2)。
-
-借鉴 App Store / VS Code Marketplace 模式,允许组织内部成员:
+"""组织内技能市场(P2-2)。,允许组织内部成员:
   - 创建技能草稿(create_draft)
   - 提交审核(submit_for_review)
   - 审批发布(approve / reject)

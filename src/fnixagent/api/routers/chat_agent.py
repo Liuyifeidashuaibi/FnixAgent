@@ -85,7 +85,7 @@ class ChatAgentRequest(BaseModel):
     Attributes:
         messages: 对话消息列表, 每条消息包含 role 和 content。
         workspace: 可选的工作区路径, 指定 Agent 操作的代码项目根目录。
-        preview: True 时写操作 dry-run（Cursor 先审后写），由客户端 Accept 落盘。
+        preview: True 时写操作 dry-run（先审后写），由客户端 Accept 落盘。
         session_id: Harness session ID（可选，用于持久化 Code 任务）。
         llm: Desktop BYOK 请求级 LLM 覆盖。
     """
@@ -213,7 +213,7 @@ async def _stream_agent_response(
             )
             return
 
-    # Cursor-style review-before-apply
+    # 行业编码工具-style review-before-apply
     if getattr(agent, "_tools", None) is not None:
         agent._tools.preview_mode = bool(req.preview)
 

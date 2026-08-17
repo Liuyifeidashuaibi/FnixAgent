@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""E2E: Trae Work / WorkBuddy 三态 Ask / Plan / Craft 验收。"""
+"""E2E: 业界工作台 / 工作台 三态 Ask / Plan / Craft 验收。"""
 from __future__ import annotations
 # -*- coding: utf-8 -*-
 # Copyright (C) 2026 FnixAgent. All rights reserved.

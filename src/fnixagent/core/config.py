@@ -43,7 +43,7 @@ class LLMConfig:
     rate_refill_per_sec: float = 10.0  # 每秒补充令牌
     # 计费
     billing_enabled: bool = True
-    # P2-9: 模型降级链(借鉴 open-fnix-agent 的 3 级降级)
+    # P2-9: 模型降级链
     # max_failovers 控制单次 chat() 调用最多尝试多少个 fallback provider
     # 默认 1 表示主→备(向后兼容);设为 2 表示主→备1→备2(三级降级)
     max_failovers: int = 1

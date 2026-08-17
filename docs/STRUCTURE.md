@@ -17,20 +17,20 @@ FnixAgent/
 ├── tests/                  # pytest
 ├── e2e/                    # Playwright（可选）
 ├── config/ · migrations/ · deploy/
-└── _references/            # 仅文档索引；上游克隆不进 git
+└── ...
 ```
 
 ## 入口命令
 
-| 命令 | 作用 |
-|------|------|
-| `pnpm setup` | 安装依赖 |
-| `pnpm doctor` | 环境检查 |
-| `pnpm dev` | Workbench Tauri |
-| `pnpm dev:all:tauri` | fnix-local + agentd + Workbench |
-| `pnpm dev:api` | 仅 agentd |
-| `pnpm e2e:api` | API 冒烟 |
-| `pnpm build` | Workbench 生产构建 |
+| 命令                   | 作用                                      |
+| ---------------------- | ----------------------------------------- |
+| `pnpm setup`           | 安装依赖                                  |
+| `pnpm doctor`          | 环境检查                                  |
+| `pnpm dev`             | Workbench Tauri                           |
+| `pnpm dev:all:tauri`   | fnix-local + agentd + Workbench           |
+| `pnpm dev:api`         | 仅 agentd                                 |
+| `pnpm e2e:api`         | API 冒烟                                  |
+| `pnpm build`           | Workbench 生产构建                        |
 | `pnpm build:packaging` | workbench Tauri 安装包（含 sidecar 资源） |
 
 ## 已移除（不再维护）
@@ -42,8 +42,8 @@ FnixAgent/
 
 ## 命名约定
 
-| 旧 | 新 |
-|----|----|
-| `apps/workbench` | `apps/workbench` |
+| 旧                     | 新                     |
+| ---------------------- | ---------------------- |
+| `apps/workbench`       | `apps/workbench`       |
 | `@fnixagent/workbench` | `@fnixagent/workbench` |
-| `smoke:hermes` | `smoke:fnix` |
+| `smoke:fnix`           | `smoke:fnix`           |

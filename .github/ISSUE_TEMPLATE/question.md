@@ -1,6 +1,6 @@
 ---
 name: Question / Help
-about: Ask a question about Fnix Harness usage, configuration, or behavior
+about: Ask a question about FnixAgent usage, configuration, or behavior
 title: '[Question] '
 labels: question
 ---
@@ -23,7 +23,7 @@ labels: question
 ## Environment
 
 - OS: <!-- e.g., Windows 11 23H2, macOS 14.5, Ubuntu 24.04 -->
-- Fnix Harness version: <!-- e.g., v1.0.0-beta.1, or commit SHA -->
+- FnixAgent version: <!-- e.g., v1.0.0-beta.1, or commit SHA -->
 - Install method: <!-- Release installer / from source / pnpm dev -->
 - API Key provider: <!-- e.g., OpenAI, Anthropic, Qwen, GLM, DeepSeek -->
 

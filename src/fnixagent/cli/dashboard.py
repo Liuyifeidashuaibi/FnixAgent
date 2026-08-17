@@ -1,4 +1,4 @@
-"""fnixagent dashboard — 本机 Web 管理台（对标 hermes dashboard :9119）。"""
+"""fnixagent dashboard — 本机 Web 管理台（端口 :9119）。"""
 
 # -*- coding: utf-8 -*-
 # Copyright (C) 2026 FnixAgent. All rights reserved.

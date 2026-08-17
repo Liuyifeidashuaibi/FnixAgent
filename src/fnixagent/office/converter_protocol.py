@@ -16,7 +16,7 @@ ConverterRegistry 支持注册/查找/派发,并提供 fallback 降级机制
   - PDFConverter(.pdf)
   全部基于 ParserExpert.parse_elements + MarkdownRenderer 实现。
 
-设计参考:
+设计思路:
   - markitdown/src/markitdown/converters/_base.py(DocumentConverter Protocol)
   - markitdown 的 ConverterRegistry 派发机制
 """

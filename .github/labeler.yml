@@ -18,9 +18,6 @@ docs:
   - '!**/node_modules/**'
 ci:
   - .github/**
-  - .github/workflows/**
-  - .github/ISSUE_TEMPLATE/**
-  - .github/PULL_REQUEST_TEMPLATE**
 deploy:
   - deploy/**
   - docker-compose*.yml
@@ -35,17 +32,7 @@ schemas:
   - openapi.json
   - packages/protocol/**
 
-# --- Kinds ---
-feature:
-  - '!**/*.test.*'
-  - '!**/*.spec.*'
-fix:
-  - '!**/*.test.*'
-  - '!**/*.spec.*'
-docs:
-  - '**/*.md'
-ci:
-  - .github/**
+# --- Kinds (feature/fix determined by PR title or conventional commit) ---
 dependencies:
   - package.json
   - pnpm-lock.yaml

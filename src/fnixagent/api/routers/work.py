@@ -1,6 +1,6 @@
 """API 路由 — Work 模式（README 9 步流水线主路径）。
 
-对标并超越 TRAE Work / WorkBuddy：
+对齐工程实践：
   安全 → 记忆 → 推理选择 → KTG/STP → 执行 → 审核 → MFP/持久化
 """
 
@@ -49,7 +49,7 @@ class WorkStreamRequest(BaseModel):
     session_id: str | None = None
     llm: LlmOverride | None = None
     user_id: str | None = None
-    # WorkBuddy：ask=问一问 / plan=想一想 / craft=做一做（默认）
+    # 工作台：ask=问一问 / plan=想一想 / craft=做一做（默认）
     work_mode: str | None = Field(default="craft", max_length=16)
     # 前端技能开关：禁用的内置技能名（builtin skills 注入时跳过）
     disabled_skills: list[str] | None = Field(default=None, max_length=64)
@@ -120,7 +120,7 @@ async def work_stream(body: WorkStreamRequest, request: Request):
 
         trace_id = ""
 
-        # H1 史诗级优化: Input Guardrail (借鉴 OpenAI Agents SDK input_guardrail)
+        # H1 史诗级优化: Input Guardrail
         # 在请求入口拦截提示注入 / API Key 泄露 / 超长输入
         try:
             from fnixagent.core.agent.artifact_guardrail import run_input_guardrails
@@ -195,7 +195,7 @@ async def work_stream(body: WorkStreamRequest, request: Request):
                     if isinstance(data, dict):
                         name = str(data.get("name") or data.get("tool") or "")
                         args = data.get("args") or data.get("arguments") or {}
-                        # H1 史诗级优化: Tool Guardrail (借鉴 OpenAI Agents SDK tool_input_guardrail)
+                        # H1 史诗级优化: Tool Guardrail
                         # 检测路径穿越 / API Key 泄露 / 破坏性命令
                         try:
                             from fnixagent.core.agent.artifact_guardrail import run_tool_guardrails
@@ -783,7 +783,7 @@ async def work_write_artifact(req: ArtifactWriteRequest, request: Request):
 async def work_apply_artifact_patch(req: ArtifactApplyRequest, request: Request):
     """应用 SEARCH/REPLACE patch 到 artifact 文件(增量编辑)。
 
-    对标: 搜索替换块 + 内联编辑 + 画布编辑
+    对齐: 搜索替换块 + 内联编辑 + 画布编辑
 
     流程:
         1. 读取原文件
@@ -930,7 +930,7 @@ async def work_apply_artifact_patch(req: ArtifactApplyRequest, request: Request)
 
 # ─── Spec 4: 长程任务 resume_from_checkpoint ─────────────────────────────
 # 长程任务中断后（崩溃/用户停止/超时），从最后一个 checkpoint 恢复执行
-# 对标 LangGraph Checkpoint / OpenAI Agents SDK session resume
+# 对齐 LangGraph Checkpoint / OpenAI Agents SDK session resume
 #
 # 核心流程：
 #   1. GET /work/runs — 列出所有 runs（含状态、可恢复标志）

@@ -1,15 +1,15 @@
 """
 ∞ Agent Optimizer v2.0 — 全方位优化引擎
 
-设计参考 2026 年全球最顶级优化技术:
+设计思路 2026 年全球最顶级优化技术:
 
   ┌─────────────────────────────────────────────────────────────────┐
   │  Token & Cost 优化:                                             │
-  │  Prompt Caching   → KV Cache复用, 成本暴降90% (Anthropic 2026) │
+  │  Prompt Caching   → KV Cache复用, 成本暴降90% (2026) │
   │  Semantic Caching → embedding+cosine, 命中率68%, 速度250x      │
   │  Model Routing    → 70%便宜+30%贵 = 66%成本节省               │
   │  Agentic Compile  → 单次LLM生成蓝图, 后续零调用执行            │
-  │  OpenClaw实践    → Token减少47-72%, 模型调用减少60%           │
+  │  行业实践    → Token减少47-72%, 模型调用减少60%           │
   ├─────────────────────────────────────────────────────────────────┤
   │  Inference 加速:                                                │
   │  LLMCompiler      → DAG并行函数调用, 3x+加速                  │
@@ -95,11 +95,11 @@ class TokenOptimizer:
     """
     Token 优化器 — 三层缓存体系
 
-    设计参考:
-      - Anthropic Prompt Caching: "Prompt Caching is everything"
-        KV Cache 复用, 成本暴降90% (Anthropic/DeepSeek), 50% (OpenAI)
+    设计思路:
+      - 行业 Prompt Caching: "Prompt Caching is everything"
+        KV Cache 复用, 成本暴降90% (OpenAI), 50% (OpenAI)
       - GPT Semantic Cache: embedding+cosine≥0.95, 命中率68%, 速度250x
-      - OpenClaw: Token减少47-72%
+      - 行业实践: Token减少47-72%
 
     三层架构:
       L1: Prompt Caching (精确前缀匹配) → 命中率20-40%, 速度极快
@@ -446,7 +446,7 @@ class ModelRouter:
     """
     模型路由器 — 成本感知的智能模型选择
 
-    设计参考:
+    设计思路:
       - 2026年模型路由已成为标准实践
       - 70% Fast + 30% Frontier = 66% 成本节省
       - 90% Nano + 10% Frontier = 86% 成本节省
@@ -613,7 +613,7 @@ class ParallelExecutor:
     """
     并行执行器 — LLMCompiler 启发
 
-    设计参考:
+    设计思路:
       - LLMCompiler: Function Calling Planner → Task Fetching Unit → Executor
       - DAG拓扑排序: 无依赖任务并行执行
       - Wave执行: 批量执行同波次任务
@@ -789,7 +789,7 @@ class CostCircuitBreaker:
     """
     成本熔断器 — 预算超限自动熔断
 
-    设计参考:
+    设计思路:
       - 2026 Agent 生产环境必备: 成本熔断机制
       - 三层保护: 请求级 → 会话级 → 日级
 
@@ -922,7 +922,7 @@ class ErrorRecoveryEngine:
     """
     错误恢复引擎 — 多层级防御
 
-    设计参考:
+    设计思路:
       - 2026 Agent生产级错误处理最佳实践
       - 四层防御: 预防 → 检测 → 恢复 → 降级
       - 指数退避+抖动 (Amazon标准)
@@ -1343,7 +1343,7 @@ class AgentHarness:
     """
     Agent Harness 总控 — Agent 的底盘系统
 
-    设计参考:
+    设计思路:
       - Harness Engineering (2026范式): "Prompt是方向盘, Context是燃料, Harness是底盘"
       - 翁荔(TML): RSI不会从模型内部自己长出来, 需要Harness
       - HarnessX: 跨harness GRPO联合进化

@@ -1,6 +1,4 @@
-"""SqliteCheckpointer —— H3-4 SQLite 持久化 Checkpointer。
-
-借鉴 LangGraph SqliteSaver 的 SQL schema + WAL 模式设计,
+"""SqliteCheckpointer —— H3-4 SQLite 持久化 Checkpointer。,
 并融合 OpenAI Agents SDK SQLiteSession 的双表 schema(message 独立通道)。
 
 LICENSE 兼容性:
@@ -16,7 +14,7 @@ LICENSE 兼容性:
      - writes(thread_id, checkpoint_id, task_id, idx, channel, value, created_at)
      → messages 通过 writes 表实现 append-only,不全量重写
   3. setup() 双检锁延迟建表,首次 cursor() 调用时执行
-  4. threading.Lock 串行所有 cursor 操作(借鉴 LangGraph SqliteSaver)
+  4. threading.Lock 串行所有 cursor 操作
   5. 标准库 sqlite3,零外部依赖,standalone 友好
 """
 
@@ -49,7 +47,7 @@ from fnixagent.core.checkpoint.types import (
 logger = logging.getLogger(__name__)
 
 # ============================================================================
-# SQL Schema (借鉴 LangGraph SqliteSaver,MIT License)
+# SQL Schema
 # ============================================================================
 # 设计要点:
 #   - WAL 模式:写入不阻塞读,崩溃恢复性强
@@ -93,7 +91,7 @@ CREATE INDEX IF NOT EXISTS idx_writes_thread_cp
 """
 
 class SqliteCheckpointer(BaseCheckpointer):
-    """SQLite Checkpointer(借鉴 LangGraph SqliteSaver + OpenAI SQLiteSession)。
+    """SQLite Checkpointer。
 
     特性:
       - WAL 模式:读写不互斥,跨线程安全
@@ -241,9 +239,7 @@ class SqliteCheckpointer(BaseCheckpointer):
         writes: list[tuple[str, Any]],
         task_id: str,
     ) -> None:
-        """追加中间写(append-only,每条 write 一行)。
-
-        借鉴 LangGraph put_writes:在每个 task(节点子任务)执行后立即调用,
+        """追加中间写(append-only,每条 write 一行)。(节点子任务)执行后立即调用,
         崩溃后可从 last write 恢复,无需重放整个节点。
 
         Args:

@@ -203,7 +203,7 @@ Logo / Icon 周围必须留出**至少 Logo 高度 1× 的空白**:
 
 ## 联系 / Contact
 
-如有 Logo 使用疑问:`brand@fnixagent.dev`
+如有 Logo 使用疑问:`liuyifeidashuaibi@gmail.com`
 
 ---
 

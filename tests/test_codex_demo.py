@@ -1,7 +1,7 @@
 """
-FnixAgent Coding — Codex 对标演示
+FnixAgent Coding — Code 对齐演示
 =====================================
-模拟 Codex 真实使用流程: 接收任务 → 规划 → 执行 → 审查 → 输出 diff。
+模拟 Code 真实使用流程: 接收任务 → 规划 → 执行 → 审查 → 输出 diff。
 
 场景: 修复 calculator.py 的除零 bug + 自动生成测试。
 使用 ScriptedLLM 按调用顺序返回预设 JSON, 让 Plan→Execute→Review 三阶段真实跑通。
@@ -40,7 +40,7 @@ from fnixagent.core.code.agent import CodingAgent, CodingTask
 class ScriptedLLM:
     """脚本化 LLM, 按调用顺序返回预设响应。
 
-    对标 Codex 背后的 GPT-4: 接收上下文 → 返回结构化 JSON。
+    对齐工程实践 背后的 GPT-4: 接收上下文 → 返回结构化 JSON。
     每次调用消耗一个预设响应, 超出时返回空串 (降级)。
     """
 
@@ -200,8 +200,8 @@ def print_sub(title):
 
 
 async def demo_codex_flow():
-    """演示 1: 完整 Plan→Execute→Review 流程 (对标 Codex)。"""
-    print_stage("场景 1: Codex 式编码任务 — 修复除零 bug + 生成测试")
+    """演示 1: 完整 Plan→Execute→Review 流程 (对齐工程实践)。"""
+    print_stage("场景 1: Code 式编码任务 — 修复除零 bug + 生成测试")
 
     with tempfile.TemporaryDirectory() as tmpdir:
         # --- 准备含 bug 的项目 ---
@@ -296,12 +296,12 @@ async def demo_codex_flow():
             result.status.value == "completed" and result.review_passed and fixed_ok and test_ok
         )
         print_sub("总结")
-        print(f"  对标 Codex 流程完整跑通: {'YES' if overall else 'NO'}")
+        print(f"  对齐工程实践 流程完整跑通: {'YES' if overall else 'NO'}")
         return overall
 
 
 async def demo_cli_mcp():
-    """演示 2: CLI + MCP 双接口 (对标 Codex IDE 集成)。"""
+    """演示 2: CLI + MCP 双接口 (对齐工程实践 IDE 集成)。"""
     print_stage("场景 2: CLI + MCP 双接口 — IDE 集成能力")
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -328,7 +328,7 @@ async def demo_cli_mcp():
         code = await server.run_cli(["search", "greet", "--top_k", "3"])
         print(f"  退出码: {code}")
 
-        # --- MCP 接口演示 (对标 Trae/VS Code 调用) ---
+        # --- MCP 接口演示 (对齐 IDE 调用) ---
         print_sub("MCP: mcp_list_tools()")
         tools = server.mcp_list_tools()
         print(f"  工具数: {len(tools)}")
@@ -386,8 +386,8 @@ async def demo_cli_mcp():
 
 
 async def demo_repo_map():
-    """演示 3: 仓库地图 (对标 Aider RepoMap)。"""
-    print_stage("场景 3: 仓库地图 — Aider RepoMap 对标")
+    """演示 3: 仓库地图 (对齐  RepoMap)。"""
+    print_stage("场景 3: 仓库地图 —  RepoMap 对齐")
 
     with tempfile.TemporaryDirectory() as tmpdir:
         # 创建多模块项目
@@ -436,7 +436,7 @@ async def demo_repo_map():
 
 async def main():
     print("=" * 70)
-    print("  FnixAgent Coding — Codex 对标演示")
+    print("  FnixAgent Coding — Code 对齐演示")
     print("  完整 Plan→Execute→Review + CLI/MCP + RepoMap")
     print("=" * 70)
 
@@ -450,7 +450,7 @@ async def main():
     total = len(results)
     print(f"  场景通过: {passed}/{total}")
     if passed == total:
-        print("  结论: 完整对标 Codex 核心能力 (Plan→Execute→Review + 原子编辑 + IDE 集成)")
+        print("  结论: 完整对齐工程实践 核心能力 (Plan→Execute→Review + 原子编辑 + IDE 集成)")
     else:
         print("  结论: 部分场景未通过, 需排查")
 

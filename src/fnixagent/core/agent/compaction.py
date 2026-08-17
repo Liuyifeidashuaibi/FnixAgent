@@ -1,6 +1,6 @@
 """Spec 4: 轻量 Compaction — 当 messages 超 threshold tokens 时调 LLM 生成 summary。
 
-参考业界最佳实践 三层压缩 / LCM (Lossless Context Management) 三级 escalation 的简化版。
+参考工程实践 三层压缩 / LCM (Lossless Context Management) 三级 escalation 的简化版。
 
 策略 (一级压缩, 不做 DAG):
     1. 估算 messages 总 token 数 (粗略: 1 token ≈ 3.5 chars 英文 / 1.5 chars 中文)
@@ -18,12 +18,7 @@ P4.1 缓存安全分叉 (缓存安全分叉模式):
     - 唯一新计费的是 compaction 指令本身 (~1K tokens)
     - 收益: 每次 compaction LLM 调用从全价 → cache hit 价 (节省 80%+)
 
-参考:
-    - 上下文压缩机制: https://deepwiki.com/anthropics/claude-code/3.3-context-window-and-compaction
-    - LCM paper: https://arxiv.org/abs/2506.18655
-    - Anthropic prompt caching: https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching
-    - 缓存安全分叉模式: https://claude.com/blog/lessons-from-building-claude-code-prompt-caching-is-everything
-    - qwen-plus Context Cache: https://help.aliyun.com/zh/model-studio/context-cache
+参考:    - LCM paper: [论文] 2506.18655    - qwen-plus Context Cache: https://help.aliyun.com/zh/model-studio/context-cache
     - DeepSeek KV cache: https://api-docs.deepseek.com/guides/kv_cache
 """
 
@@ -49,7 +44,7 @@ _CHARS_PER_TOKEN_ZH = 1.5
 def estimate_tokens(messages: list[dict[str, Any]]) -> int:
     """粗略估算 messages 的 token 数。
 
-    对标 tiktoken 精确计数, 但避免依赖 tiktoken (numpy 重依赖)。
+    对齐 tiktoken 精确计数, 但避免依赖 tiktoken (numpy 重依赖)。
     误差 ±15%, 用于触发阈值判断足够。
     """
     total_chars = 0
@@ -223,8 +218,6 @@ def _build_cache_safe_prompt(
     before_tokens: int,
 ) -> list[dict[str, Any]]:
     """P4.1: 构造 cache-safe compaction prompt（复用父 prefix）。
-
-    借鉴 缓存安全分叉模式 模式:
     - 不构造全新 [system, user] prompt（会破坏 prefix, cache 全失效）
     - 直接用父 messages 作为 prefix（cache 命中父对话的 KV cache）
     - 把 compaction 指令作为新 user message 追加末尾
@@ -391,18 +384,18 @@ def _extract_content(result: Any) -> str:
     return str(result)
 
 # ============================================================================
-# P2: 三级 Escalation (借鉴 LCM Algorithm 3 + openai-agents-context-compaction)
+# P2: 三级 Escalation
 # ============================================================================
 #
 # 设计原则 (深度思考):
 #   1. L1 (已有 compact_messages_if_needed): LLM preserve_details summary
 #      - 失败场景: LLM 不可用 / summary 比原文还长 / 网络超时
 #   2. L2 (新增): boundary-aware sliding window
-#      - 借鉴 openai-agents-context-compaction 的 _boundary_aware_compact
+#      -
 #      - 保护 tool_call / tool_result 配对完整性 (避免孤儿消息导致 API 400)
 #      - 保留 system + 最近 N 条, 中间全删 (无 LLM, 确定性)
 #   3. L3 (新增): DeterministicTruncate
-#      - 借鉴 LCM Level 3: DeterministicTruncate(X, 512)
+#      -(X, 512)
 #      - 无 LLM, 硬截断到 512 tokens, 保证收敛
 #      - 只在 L2 仍然超阈值时触发 (极端情况)
 #
@@ -410,7 +403,7 @@ def _extract_content(result: Any) -> str:
 # ============================================================================
 
 def _find_tool_call_pairs(messages: list[dict[str, Any]]) -> set[int]:
-    """识别 tool_call / tool_result 配对的索引 (借鉴 openai-agents-context-compaction)。
+    """识别 tool_call / tool_result 配对的索引 。
 
     tool_call 在 assistant message 的 tool_calls 字段, tool_result 在 role=tool 的 message。
     配对必须保持完整, 否则 OpenAI API 会返回 400 (orphan tool_call_id)。
@@ -454,8 +447,6 @@ def sliding_window_compact(
     target_tokens: int = 30000,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """L2: boundary-aware sliding window 压缩 (无 LLM, 确定性)。
-
-    借鉴 openai-agents-context-compaction 的 _boundary_aware_compact:
       - 保留前 keep_first_n (system + 第一条 user)
       - 保留最后 keep_recent 条 (最近上下文)
       - 中间消息: 保护 tool_call/tool_result 配对完整性, 其余删除
@@ -569,9 +560,7 @@ def deterministic_truncate(
     max_tokens: int = 512,
     keep_first_n: int = 1,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
-    """L3: 确定性硬截断 (无 LLM, 保证收敛)。
-
-    借鉴 LCM Algorithm 3 Level 3: DeterministicTruncate(X, 512)
+    """L3: 确定性硬截断 (无 LLM, 保证收敛)。(X, 512)
     保留 system + 最近消息, 中间硬截断到 max_tokens。
 
     保证收敛: 无论输入多大, 输出一定 <= max_tokens + 一条消息的容差。
@@ -645,7 +634,7 @@ async def compact_with_escalation(
     l3_max_tokens: int = 512,
     cache_safe: bool = True,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
-    """三级 Escalation 压缩 (借鉴 LCM Algorithm 3)。
+    """三级 Escalation 压缩 。
 
     流程:
       L1: compact_messages_if_needed (LLM preserve_details summary)
@@ -748,10 +737,10 @@ async def compact_with_escalation(
     }
 
 # ============================================================================
-# P3: 软/硬阈值异步 compaction (借鉴 LCM Equation 1)
+# P3: 软/硬阈值异步 compaction
 # ============================================================================
 #
-# 三段式 overhead (借鉴 LCM Equation 1):
+# 三段式 overhead :
 #   |C| < τsoft (50K):  none     — 零开销, 不触发压缩
 #   τsoft ≤ |C| < τhard (80K): async — 异步压缩, turn 间原子 swap, 用户无感
 #   |C| ≥ τhard (80K): blocking — 阻塞压缩, 避免 context overflow
@@ -765,7 +754,7 @@ async def compact_with_escalation(
 # ============================================================================
 
 class BackgroundCompactor:
-    """后台异步 compactor (借鉴 LCM Equation 1 的 async regime)。
+    """后台异步 compactor 。
 
     用法:
         bg = BackgroundCompactor(llm_adapter, tau_soft=50000, tau_hard=80000)

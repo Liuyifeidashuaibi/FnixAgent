@@ -14,23 +14,23 @@
 
 // ── Request Types ─────────────────────────────────────────────────────────────
 
-export interface AnthropicRequestMessage {
+export interface RequestMessage {
   role: "user" | "assistant";
-  content: AnthropicContentBlock[] | string;
+  content: ContentBlock[] | string;
 }
 
-export type AnthropicContentBlock =
-  | AnthropicTextBlock
-  | AnthropicImageBlock
-  | AnthropicToolUseBlock
-  | AnthropicToolResultBlock;
+export type ContentBlock =
+  | TextBlock
+  | ImageBlock
+  | ToolUseBlock
+  | ToolResultBlock;
 
-export interface AnthropicTextBlock {
+export interface TextBlock {
   type: "text";
   text: string;
 }
 
-export interface AnthropicImageBlock {
+export interface ImageBlock {
   type: "image";
   source: {
     type: "base64";
@@ -39,31 +39,31 @@ export interface AnthropicImageBlock {
   };
 }
 
-export interface AnthropicToolUseBlock {
+export interface ToolUseBlock {
   type: "tool_use";
   id: string;
   name: string;
   input: Record<string, unknown>;
 }
 
-export interface AnthropicToolResultBlock {
+export interface ToolResultBlock {
   type: "tool_result";
   tool_use_id: string;
   content: string;
   is_error?: boolean;
 }
 
-export interface AnthropicMessagesRequest {
+export interface MessagesRequest {
   model: string;
   max_tokens: number;
   system?: string;
-  messages: AnthropicRequestMessage[];
+  messages: RequestMessage[];
   temperature?: number;
   stream?: boolean;
-  tools?: AnthropicToolDefinition[];
+  tools?: ToolDefinition[];
 }
 
-export interface AnthropicToolDefinition {
+export interface ToolDefinition {
   name: string;
   description: string;
   input_schema: Record<string, unknown>;
@@ -71,21 +71,21 @@ export interface AnthropicToolDefinition {
 
 // ── Response Types (non-streaming) ────────────────────────────────────────────
 
-export interface AnthropicMessagesResponse {
+export interface MessagesResponse {
   id: string;
   type: "message";
   role: "assistant";
-  content: AnthropicResponseBlock[];
+  content: ResponseBlock[];
   model: string;
   stop_reason: "end_turn" | "max_tokens" | "stop_sequence" | "tool_use";
-  usage: AnthropicUsage;
+  usage: Usage;
 }
 
-export type AnthropicResponseBlock =
+export type ResponseBlock =
   | { type: "text"; text: string }
   | { type: "tool_use"; id: string; name: string; input: Record<string, unknown> };
 
-export interface AnthropicUsage {
+export interface Usage {
   input_tokens: number;
   output_tokens: number;
   cache_creation_input_tokens?: number;
@@ -94,17 +94,17 @@ export interface AnthropicUsage {
 
 // ── SSE Streaming Event Types ─────────────────────────────────────────────────
 
-export type AnthropicStreamEvent =
-  | AnthropicMessageStartEvent
-  | AnthropicContentBlockStartEvent
-  | AnthropicContentBlockDeltaEvent
-  | AnthropicContentBlockStopEvent
-  | AnthropicMessageDeltaEvent
-  | AnthropicMessageStopEvent
-  | AnthropicPingEvent
-  | AnthropicErrorEvent;
+export type StreamEvent =
+  | MessageStartEvent
+  | ContentBlockStartEvent
+  | ContentBlockDeltaEvent
+  | ContentBlockStopEvent
+  | MessageDeltaEvent
+  | MessageStopEvent
+  | PingEvent
+  | ErrorEvent;
 
-export interface AnthropicMessageStartEvent {
+export interface MessageStartEvent {
   type: "message_start";
   message: {
     id: string;
@@ -115,38 +115,38 @@ export interface AnthropicMessageStartEvent {
   };
 }
 
-export interface AnthropicContentBlockStartEvent {
+export interface ContentBlockStartEvent {
   type: "content_block_start";
   index: number;
   content_block: { type: "text"; text: string } | { type: "tool_use"; id: string; name: string; input: Record<string, unknown> };
 }
 
-export interface AnthropicContentBlockDeltaEvent {
+export interface ContentBlockDeltaEvent {
   type: "content_block_delta";
   index: number;
   delta: { type: "text_delta"; text: string } | { type: "input_json_delta"; partial_json: string };
 }
 
-export interface AnthropicContentBlockStopEvent {
+export interface ContentBlockStopEvent {
   type: "content_block_stop";
   index: number;
 }
 
-export interface AnthropicMessageDeltaEvent {
+export interface MessageDeltaEvent {
   type: "message_delta";
   delta: { stop_reason: string };
   usage: { output_tokens: number };
 }
 
-export interface AnthropicMessageStopEvent {
+export interface MessageStopEvent {
   type: "message_stop";
 }
 
-export interface AnthropicPingEvent {
+export interface PingEvent {
   type: "ping";
 }
 
-export interface AnthropicErrorEvent {
+export interface ErrorEvent {
   type: "error";
   error: { type: string; message: string };
 }

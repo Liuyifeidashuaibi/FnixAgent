@@ -12,15 +12,15 @@
 ```
                               ┌──────────────────────┐
                               │   LLM Provider       │
-                              │   (OpenAI/Anthropic/  │
-                              │    Ollama/...)       │
+                              │   ( LLM//  │
+                              │    本地推理引擎/...)       │
                               └──────────┬───────────┘
                                          │ HTTPS / HTTP
                                          │ (prompt, response)
               ┌──────────────────────────▼─────────────────────────┐
               │                                                     │
    ┌──────────▼──────────┐                                ┌─────────▼────────┐
-   │  WebView (React UI) │ ◄── IPC invoke() ────────────► │  Tauri Core (R)  │
+   │  WebView (React UI) │ ◄── IPC invoke────────────► │  Tauri Core (R)  │
    │  - React 18         │                                │  - 窗口管理       │
    │  - 用户输入/输出     │                                │  - 文件白名单      │
    │  - 不持文件/网络     │                                │  - Capability 检查 │
@@ -46,7 +46,7 @@
 ┌────────────────────────────────────────────────────┐
 │ Trust Boundary 1: 浏览器进程                        │
 │ (前端 — 不可信)                                      │
-│   ↓ invoke() 必须经过 capability 检查                │
+│   ↓ invoke必须经过 capability 检查                │
 ├────────────────────────────────────────────────────┤
 │ Trust Boundary 2: Rust 进程                        │
 │ (特权上下文 — 受限但必要)                            │
@@ -71,7 +71,7 @@
 | 威胁 | 攻击路径 | 风险等级 | 对策 |
 | --- | --- | --- | --- |
 | **T-S1** 伪造用户调用 agentd | 进程监听 127.0.0.1,本地任意进程可连 | 🟡 中 | (1) 启用 mTLS (2) Token 鉴权 (3) Unix socket 替代 TCP |
-| **T-S2** 伪造 LLM 响应 | 中间人替换 OpenAI 响应 | 🟢 低 | HTTPS + 证书钉扎 (未来) |
+| **T-S2** 伪造 LLM 响应 | 中间人替换  LLM 响应 | 🟢 低 | HTTPS + 证书钉扎 (未来) |
 | **T-S3** 伪造 Skill 文件 | 攻击者写入 `~/.fnix/skills/evil/` | 🟡 中 | (1) Skill 目录权限 0700 (2) 启动时校验签名 (3) gitleaks 扫描 prompt injection |
 | **T-S4** Token 重放 | 捕获 API Key 重放 | 🟢 低 | TLS + 短期 token |
 
@@ -146,7 +146,7 @@
 1. **操作系统可信**:用户没有安装恶意软件
 2. **本地磁盘可信**:全盘加密(FileVault / BitLocker)由用户决定
 3. **Rust 工具链可信**:Rust 编译产物未被篡改
-4. **LLM Provider 可信**:OpenAI / Anthropic 等不会主动作恶
+4. **LLM Provider 可信**: LLM /  等不会主动作恶
 5. **OS Keychain 可信**:macOS Keychain / Windows Credential Manager 实现安全
 
 我们**不假设**:
@@ -176,7 +176,7 @@
 
 ---
 
-## 七、参考 / References
+## 七、/ References
 
 - [STRIDE Threat Modeling](https://learn.microsoft.com/en-us/security/engineering/threat-modeling)
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/)

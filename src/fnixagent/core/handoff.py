@@ -1,6 +1,4 @@
 """类型化消息 + Handoff 协议 —— P3-1。
-
-借鉴:
   - OpenAI Agents SDK:Handoff 作为 Agent 配置项,声明可移交的目标 Agent
   - LangGraph:状态在节点间显式传递,无隐式共享
   - AgentScope:Msg + 路由字段(send_to / sent_from / cause_by)支撑多 Agent

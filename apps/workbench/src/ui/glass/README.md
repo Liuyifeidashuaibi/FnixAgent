@@ -1,6 +1,6 @@
 # Fnix Glass Kit
 
-ChatGPT / Codex **light frost** components for Workbench.
+Desktop / Code **light frost** components for Workbench.
 
 ## Use
 

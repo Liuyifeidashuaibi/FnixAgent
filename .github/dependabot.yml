@@ -1,40 +1,88 @@
 version: 2
 updates:
-  # Python 依赖 (pip)
-  - package-ecosystem: "pip"
-    directory: "/"
+  # Python dependencies (pip/uv)
+  - package-ecosystem: 'pip'
+    directory: '/'
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "Asia/Shanghai"
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'Asia/Shanghai'
     open-pull-requests-limit: 10
     labels:
-      - "dependencies"
-      - "python"
+      - 'dependencies'
+      - 'python'
     reviewers:
-      - "Liuyifeidashuaibi"
+      - 'Liuyifeidashuaibi'
     assignees:
-      - "Liuyifeidashuaibi"
+      - 'Liuyifeidashuaibi'
+    groups:
+      python-dev:
+        patterns:
+          - 'pytest*'
+          - 'ruff'
+          - 'mypy'
+          - 'pytest-cov'
+        update-types:
+          - 'minor'
+          - 'patch'
+
+  # npm dependencies (pnpm workspace)
+  - package-ecosystem: 'npm'
+    directory: '/apps/workbench'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'Asia/Shanghai'
+    open-pull-requests-limit: 10
+    labels:
+      - 'dependencies'
+      - 'javascript'
+    reviewers:
+      - 'Liuyifeidashuaibi'
+    groups:
+      react-ecosystem:
+        patterns:
+          - 'react'
+          - 'react-dom'
+          - '@types/react*'
+        update-types:
+          - 'minor'
+          - 'patch'
+      tailwind:
+        patterns:
+          - 'tailwindcss'
+          - '@tailwindcss*'
+        update-types:
+          - 'minor'
+          - 'patch'
 
   # GitHub Actions
-  - package-ecosystem: "github-actions"
-    directory: "/"
+  - package-ecosystem: 'github-actions'
+    directory: '/'
     schedule:
-      interval: "monthly"
+      interval: 'monthly'
     labels:
-      - "dependencies"
-      - "ci"
+      - 'dependencies'
+      - 'ci'
     reviewers:
-      - "Liuyifeidashuaibi"
+      - 'Liuyifeidashuaibi'
+    groups:
+      github-actions:
+        patterns:
+          - '*'
+        update-types:
+          - 'minor'
+          - 'patch'
 
-  # Docker
-  - package-ecosystem: "docker"
-    directory: "/"
+  # Docker base images
+  - package-ecosystem: 'docker'
+    directory: '/deploy/docker'
     schedule:
-      interval: "monthly"
+      interval: 'monthly'
     labels:
-      - "dependencies"
-      - "docker"
+      - 'dependencies'
+      - 'docker'
     reviewers:
-      - "Liuyifeidashuaibi"
+      - 'Liuyifeidashuaibi'

@@ -4,7 +4,7 @@
 # This software and its source code are proprietary and confidential.
 # Unauthorized copying, modification, distribution, or use is strictly prohibited.
 
-﻿"""
+"""
 数据库初始化脚本。
 
 使用 SQLAlchemy 创建所有表。

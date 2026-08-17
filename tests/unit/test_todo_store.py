@@ -1,4 +1,4 @@
-"""TodoStore 单元测试 — load-bearing state 外化 (对标 Claude Code TodoWrite)。
+"""TodoStore 单元测试 — load-bearing state 外化 (对齐 行业编码工具 TodoWrite)。
 
 覆盖:
 - add / update_status / remove / clear_completed

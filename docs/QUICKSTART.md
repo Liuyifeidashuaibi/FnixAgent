@@ -1,6 +1,6 @@
-# Fnix Harness 快速开始
+# FnixAgent 快速开始
 
-> **无需域名、无需云服务器、无需 Docker。**  
+> **无需域名、无需云服务器、无需 Docker。**
 > **BYOK**：LLM API Key 在 Desktop **设置 → AI** 填写，保存在本机。
 
 ---
@@ -59,7 +59,7 @@ pnpm dev:all
 |------|------|
 | `pnpm dev:all` | Tauri + API + fnix-local |
 | `pnpm verify:beta` | 发布前验收 |
-| `pnpm clean:cache` | 清理 C 盘 Cursor sandbox 等缓存 |
+| `pnpm clean:cache` | 清理 C 盘  sandbox 等缓存 |
 | `pnpm build` | 打安装包 |
 
 ---
@@ -73,4 +73,4 @@ pnpm clean:cache
 pnpm clean:cache:aggressive
 ```
 
-主要占用：`%TEMP%\cursor-sandbox-cache`（Cursor Agent 编译缓存，可安全删除）
+主要占用：`%TEMP%\cursor-sandbox-cache`（ Agent 编译缓存，可安全删除）

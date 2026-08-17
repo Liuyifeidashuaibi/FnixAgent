@@ -1,6 +1,4 @@
 """DAAO — Difficulty-Aware Agentic Orchestration 真路由决策器（Spec 7+）。
-
-借鉴:
   - arxiv 2509.11079 DAAO: VAE 量化 query 难度 → 动态决定 workflow depth
   - AutoAgents-ai/DAAO: 多智能体架构搜索（可学习调度大脑）
   - AMORE: Adaptive Multi-agent Orchestration with Reflective Execution
@@ -14,7 +12,7 @@
 设计取舍 (设计原则:简单性优先):
   原设计含 tool_subset 字段试图筛选工具子集, 但 8 处分支全部赋空 list,
   且 work_pipeline 仅透传给前端 UI 展示, 不实际过滤工具集。
-  参考业界最佳实践/业界主流 Agent 工具/Aider 均不做工具子集筛选——LLM 自己会选对工具,
+  参考工程实践/主流 Agent 工具/ 均不做工具子集筛选——LLM 自己会选对工具,
   强行过滤反而可能让 LLM 拿不到需要的工具。已诚实移除该字段, 消除误导。
 
 四维闭环核心（Spec 7+）:

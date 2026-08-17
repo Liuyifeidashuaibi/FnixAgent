@@ -1,6 +1,6 @@
 """端到端验证：AG-UI 结构化事件全链路 (loop.py → RunEngine → 前端 block)
 
-验证目标 (对标 AG-UI 16 种标准事件 + Claude Code block-by-block 渲染):
+验证目标 (对齐 AG-UI 16 种标准事件 + 行业编码工具 block-by-block 渲染):
   1. AgenticLoop.run_stream 发射 step_start / step_end / file_change 事件
   2. 事件顺序正确: step_start → thinking → action/tool_call → observation/tool_result
                    → file_change → step_end → text → done

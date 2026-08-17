@@ -6,12 +6,12 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { softTruncate, windowMessages } from "../shell/chatgpt-desktop/windowing";
+import { softTruncate, windowMessages } from "../shell/desktop/windowing";
 import {
   assessArtifactQuality,
   deliverableCoverage,
   formatArtifactVersion,
-} from "../shell/chatgpt-desktop/artifactMeta";
+} from "../shell/desktop/artifactMeta";
 
 describe("windowing", () => {
   it("windows long message lists", () => {

@@ -32,7 +32,7 @@
 
 ### 2.2 仅在你主动调用云端 LLM 时发送
 
-当你**显式选择**调用云端 LLM(OpenAI / Anthropic / DeepSeek / ...)时,
+当你**显式选择**调用云端 LLM( LLM /  / DeepSeek / ...)时,
 Agent 会向 LLM Provider 发送:
 
 | 数据 | 用途 | 备注 |
@@ -69,15 +69,15 @@ Agent 会向 LLM Provider 发送:
 
 **建议用户**在使用前阅读:
 
-- [OpenAI Privacy Policy](https://openai.com/policies/privacy-policy)
-- [Anthropic Privacy Policy](https://www.anthropic.com/privacy)
+- [ LLM Privacy Policy](https://openai.com/policies/privacy-policy)
+- [ Privacy Policy](https://www.anthropic.com/privacy)
 - [DeepSeek Privacy Policy](https://www.deepseek.com/privacy)
 
 **特别注意**:
 
-- OpenAI 默认会保留 API 数据 30 天(用于滥用检测),可通过 Organization
+-  LLM 默认会保留 API 数据 30 天(用于滥用检测),可通过 Organization
   Settings → Data Controls 关闭
-- Anthropic 默认不使用 API 数据训练模型
+-  默认不使用 API 数据训练模型
 - 部分 Provider 可能在中国大陆有特殊合规要求,使用前自行评估
 
 ---
@@ -128,7 +128,7 @@ FnixAgent **不强制**全盘加密,但**强烈建议**开启:
 ### 创建
 
 ```
-用户输入 → MemoryStore.add() → 写 ~/.fnix/memory/{type}/{date}.md
+用户输入 → MemoryStore.add→ 写 ~/.fnix/memory/{type}/{date}.md
                                 → 触发 git commit
                                 → 触发 embedding 索引更新
 ```
@@ -136,7 +136,7 @@ FnixAgent **不强制**全盘加密,但**强烈建议**开启:
 ### 访问
 
 ```
-MemoryStore.search() → BM25 + 向量 RRF → LLM context → 用户
+MemoryStore.search→ BM25 + 向量 RRF → LLM context → 用户
    ↑ 记入 access_count, 更新 last_accessed
 ```
 
@@ -218,8 +218,8 @@ FnixAgent 服务于成年开发者。如未满 18 岁,使用前请监护人阅�
 
 但**当你使用云端 LLM 时**:
 
-- 你向 OpenAI(美国)发送 prompt
-- 你向 Anthropic(美国)发送 prompt
+- 你向  LLM(美国)发送 prompt
+- 你向 (美国)发送 prompt
 - 你向 DeepSeek(中国)发送 prompt
 
 跨境传输发生在**你与 LLM Provider 之间**,由 Provider 的隐私政策约束,
@@ -238,14 +238,14 @@ FnixAgent 是**桌面应用,不使用浏览器 Cookie**,不进行网站跟踪,
 
 | 类别 | 邮箱 |
 | --- | --- |
-| 隐私问题 | privacy@fnixagent.dev |
-| 安全漏洞 | security@fnixagent.dev (PGP,见 SECURITY.md) |
-| 商用授权 | licensing@fnixagent.dev |
+| 隐私问题 | liuyifeidashuaibi@gmail.com |
+| 安全漏洞 | liuyifeidashuaibi@gmail.com (PGP,见 SECURITY.md) |
+| 商用授权 | liuyifeidashuaibi@gmail.com |
 | 一般问题 | GitHub Issues |
 
 ---
 
-## 十二、合规参考 / Compliance References
+## 十二、合规/ Compliance References
 
 本政策的隐私保护水平参考以下标准设计:
 

@@ -1,6 +1,6 @@
 """自适应并发池 (Autoscaled Pool) — P0-05。
 
-灵感来自 zhua 项目的 AutoscaledPool(scheduler/kernel.py)。与固定大小的
+设计基础 zhua 项目的 AutoscaledPool(scheduler/kernel.py)。与固定大小的
 ThreadPoolExecutor 不同,本池根据系统负载(CPU / 内存 / 平均响应延迟)动态
 调整并发槽数,在过载时主动降级、空闲时逐步升级,实现"按压力伸缩"的并发治理。
 

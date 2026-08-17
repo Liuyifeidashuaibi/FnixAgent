@@ -83,26 +83,26 @@ export function GlassComposer({
         .join(" ")}
     >
       {attachments && attachments.length > 0 ? (
-        <div className="oai-attach-chips">
+        <div className="fnix-attach-chips">
           {attachments.map((a) => (
-            <div key={a.id} className={`oai-attach-chip${a.type === "image" ? " is-image" : ""}`}>
+            <div key={a.id} className={`fnix-attach-chip${a.type === "image" ? " is-image" : ""}`}>
               {a.type === "image" ? (
-                <img className="oai-attach-thumb" src={`data:${a.mimeType};base64,${a.base64}`} alt={a.name} />
+                <img className="fnix-attach-thumb" src={`data:${a.mimeType};base64,${a.base64}`} alt={a.name} />
               ) : (
-                <span className="oai-attach-fileico" aria-hidden>
+                <span className="fnix-attach-fileico" aria-hidden>
                   📄
                 </span>
               )}
-              <span className="oai-attach-meta">
-                <span className="oai-attach-name" title={a.name}>
+              <span className="fnix-attach-meta">
+                <span className="fnix-attach-name" title={a.name}>
                   {a.name}
                 </span>
-                <span className="oai-attach-size">{formatSize(a.size)}</span>
+                <span className="fnix-attach-size">{formatSize(a.size)}</span>
               </span>
               {onRemoveAttachment ? (
                 <button
                   type="button"
-                  className="oai-attach-x"
+                  className="fnix-attach-x"
                   aria-label={`移除 ${a.name}`}
                   onClick={() => onRemoveAttachment(a.id)}
                 >

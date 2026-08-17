@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Suggest an idea for Fnix Harness
+about: Suggest an idea for FnixAgent
 title: '[Feature] '
 labels: enhancement
 ---

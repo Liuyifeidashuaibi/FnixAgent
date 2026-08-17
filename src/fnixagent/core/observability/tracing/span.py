@@ -13,7 +13,7 @@ Span 树形结构说明:
   - Span 的 trace_id 在整个 Trace 生命周期内不变,用于关联同一 Trace
     下的所有 Span。
 
-设计借鉴:
+设计:
   - OpenAI Agents SDK: SpanData 分类型(agent/llm/tool/guardrail/handoff)
   - OpenTelemetry:     Span 的 started_at/ended_at/status/attributes 模型
 """

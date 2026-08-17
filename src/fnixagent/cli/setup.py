@@ -17,7 +17,7 @@ PROVIDERS = {
         "https://dashscope.aliyuncs.com/compatible-mode/v1",
         "qwen-plus",
     ),
-    "2": ("openai", "OpenAI", "https://api.openai.com/v1", "gpt-4o"),
+    "2": ("openai", "openai", "https://api.openai.com/v1", "gpt-4o"),
     "3": ("deepseek", "DeepSeek", "https://api.deepseek.com/v1", "deepseek-chat"),
     "4": ("glm", "Zhipu GLM", "https://open.bigmodel.cn/api/paas/v4", "glm-4"),
     "5": ("custom", "Custom OpenAI-compatible", "", ""),

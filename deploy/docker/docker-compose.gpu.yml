@@ -325,7 +325,7 @@ services:
   # ==================================================================
   # 第二层:Headroom Token 压缩网关 (省 60-95% Token)
   # ==================================================================
-  # 仓库: https://github.com/fnixagent/headroom (开源 context optimization layer)
+  # 仓库: https://github.com/Liuyifeidashuaibi/headroom (开源 context optimization layer)
   # 2026 关键能力:
   #   - 实测节省 60-95% Token,精度保留 97%
   #   - 长对话历史自动摘要精简

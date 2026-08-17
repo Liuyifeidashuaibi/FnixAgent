@@ -7,7 +7,7 @@ labels: security
 
 <!-- 
    ⚠️  STOP — Please do not report security vulnerabilities via public GitHub Issues.
-   Read SECURITY.md first. For sensitive issues, email security@fnixagent.dev (PGP available).
+   Read SECURITY.md first. For sensitive issues, email liuyifeidashuaibi@gmail.com (PGP available).
    
    This template is for low-severity, well-understood, non-exploitable issues only.
    If in doubt, use the private disclosure channel in SECURITY.md.

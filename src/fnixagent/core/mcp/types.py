@@ -4,7 +4,7 @@
 所有 MCP 客户端/服务器/注册表共享这些类型。
 
 参考:
-  - Anthropic MCP 规范:https://modelcontextprotocol.io
+  - MCP 规范:https://modelcontextprotocol.io
   - JSON-RPC 2.0:https://www.jsonrpc.org/specification
 
 设计原则:

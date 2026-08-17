@@ -1,6 +1,4 @@
 """HERA SkillLibrary — Voyager-style 自动技能捕获（Spec 6）。
-
-借鉴 MineDojo/Voyager 的 SkillManager.add_new_skill + retrieve_skills 模式:
 - 任务成功后自动捕获解决方案为技能
 - 下次类似任务前召回 top-K 历史技能注入 prompt
 - 存储为 JSON + 简单关键词检索（无 Chroma 依赖，零外部依赖）
@@ -36,7 +34,7 @@ from pathlib import Path
 class CapturedSkill:
     """一个自动捕获的技能（来自成功任务）。
 
-    对标 Voyager SkillManager 的 skill entry:
+    对齐 Voyager SkillManager 的 skill entry:
       - program_name → skill_id
       - program_code → solution_summary + tool_calls
       - description → task_signature
@@ -213,7 +211,7 @@ class SkillLibrary:
 
         成功技能: 保存为可召回的正向经验。
         失败技能: 保存为可召回的反面经验（标注 success=False），供 DAAO
-        计算真实失败率、避免下次重复踩坑。借鉴 用户反馈信号机制
+        计算真实失败率、避免下次重复踩坑。
         的"开发者是否 acted on report"反馈信号思路——失败轨迹同样
         是有效训练信号。
 
@@ -379,7 +377,7 @@ class SkillLibrary:
         """格式化为 system prompt 注入块。
 
         成功技能与失败技能分组展示——失败技能作为"反面经验"标注，
-        驱动 LLM 避开已验证行不通的路径（对标 Reflexion 的 episodic
+        驱动 LLM 避开已验证行不通的路径（对齐 Reflexion 的 episodic
         memory buffer：失败轨迹的文字反思同样作为下轮输入）。
         """
         if not skills:

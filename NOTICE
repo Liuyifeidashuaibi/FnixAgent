@@ -9,7 +9,7 @@ Copyright (C) 2024-2026 FnixAgent / 刘逸飞. All Rights Reserved.
 依法所有。未经著作权人事先书面许可,严禁以任何形式复制、修改、分发、
 商用、衍生创作。具体许可条款详见同目录下的 LICENSE 文件。
 
-如需商用,请参考 LICENSE-COMMERCIAL.md 的联系流程。
+如需商用,请参考 docs/LICENSE-COMMERCIAL.md 的联系流程。
 
 This software is **PROPRIETARY SOFTWARE**. All rights are reserved by the
 copyright holder FnixAgent / Liu Yifei. Reproduction, modification,
@@ -17,7 +17,7 @@ distribution, commercial use, and creation of derivative works are
 strictly prohibited without prior written permission. See the LICENSE
 file for complete terms.
 
-For commercial licensing, see LICENSE-COMMERCIAL.md.
+For commercial licensing, see docs/LICENSE-COMMERCIAL.md.
 
 ================================================================================
 架构 / Architecture
@@ -116,13 +116,12 @@ DevOps / CI
 
 Documentation
   - MkDocs / Material for MkDocs    (BSD-2 / MIT)
-  - All-Contributors bot            (MIT)
 
 完整清单与版本以 `package.json` / `pyproject.toml` / `Cargo.toml` /
 `pnpm-lock.yaml` / `uv.lock` 为准。
 
-完整、准确、机器可读的 SBOM (Software Bill of Materials) 见
-`reports/sbom.spdx.json` (由 `make sbom` 生成)。
+完整、准确、机器可读的 SBOM (Software Bill of Materials) 将在正式发布时
+随 Release 附件提供 (SPDX 格式)。
 
 ================================================================================
 商标 / Trademarks
@@ -135,10 +134,10 @@ Documentation
   - 商品 / 服务 / 培训 / 课程的对外宣传
   - 暗示与 FnixAgent 有关联或背书的场景
 
-详见 TRADEMARKS.md。
+详见 docs/TRADEMARKS.md。
 
 "FnixAgent™", the FnixAgent logo, and the F monogram are trademarks or
-pending trademarks of FnixAgent / Liu Yifei. See TRADEMARKS.md for the
+pending trademarks of FnixAgent / Liu Yifei. See docs/TRADEMARKS.md for the
 full trademark policy.
 
 ================================================================================

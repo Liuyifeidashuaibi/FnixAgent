@@ -1,6 +1,6 @@
 # Support
 
-This document explains **where to get help** with Fnix Harness and **how to ask effectively** so the community can help you faster.
+This document explains **where to get help** with FnixAgent and **how to ask effectively** so the community can help you faster.
 
 > 📌 **TL;DR:** Q&A and troubleshooting go to [GitHub Discussions → Q&A](https://github.com/Liuyifeidashuaibi/FnixAgent/discussions/categories/q-a). **Security issues go to the private channel in [SECURITY.md](SECURITY.md).** GitHub Issues are reserved for bugs, feature requests, and documentation problems.
 
@@ -15,8 +15,8 @@ This document explains **where to get help** with Fnix Harness and **how to ask 
 | **Feature idea** | [Discussions → Ideas](https://github.com/Liuyifeidashuaibi/FnixAgent/discussions/categories/ideas) first, then promote to an issue. | For large changes, use the [RFC template](https://github.com/Liuyifeidashuaibi/FnixAgent/issues/new?template=rfc.md). |
 | **Docs problem** | [Issues → Documentation](https://github.com/Liuyifeidashuaibi/FnixAgent/issues/new?template=documentation.md) | Typo, broken link, missing topic. |
 | **Performance** | [Issues → Performance](https://github.com/Liuyifeidashuaibi/FnixAgent/issues/new?template=performance.md) | Include a profile (py-spy / flamegraph). |
-| **Security vulnerability** | **Private:** `security@fnixagent.dev` (see [SECURITY.md](SECURITY.md)) | **Never** use a public issue. |
-| **Commercial / enterprise support** | Email `sales@fnixagent.dev` | SLA, custom builds, training. |
+| **Security vulnerability** | **Private:** `liuyifeidashuaibi@gmail.com` (see [SECURITY.md](SECURITY.md)) | **Never** use a public issue. |
+| **Commercial / enterprise support** | Email `liuyifeidashuaibi@gmail.com` | SLA, custom builds, training. |
 | **中文用户群** | See [README.md → Community](README.md#community) | WeChat / Discord / Telegram links. |
 
 ---
@@ -41,7 +41,7 @@ A good question includes:
 
 ## Environment
 - OS: Windows 11 23H2 / macOS 14.5 / Ubuntu 24.04
-- Fnix Harness version: v1.x.y (run `fnixagent --version`)
+- FnixAgent version: v1.x.y (run `fnixagent --version`)
 - Install method: Release installer / from source / pnpm dev
 - LLM provider: OpenAI / Anthropic / Qwen / GLM / DeepSeek / other
 - Model: gpt-4o / claude-3-5-sonnet / qwen-long / etc.
@@ -70,7 +70,7 @@ This is an open-source project maintained by a small core team in their spare ti
 | 💡 Ideas / Q&A | **1–2 weeks**, but community often replies sooner |
 | 🌐 i18n / docs typos | **1–4 weeks** |
 
-There are **no SLAs** for community support. For guaranteed response times, contact `sales@fnixagent.dev` for commercial support.
+There are **no SLAs** for community support. For guaranteed response times, contact `liuyifeidashuaibi@gmail.com` for commercial support.
 
 ---
 

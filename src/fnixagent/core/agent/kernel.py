@@ -1,7 +1,7 @@
 """
 AgentKernel - Agent 操作系统内核 (Agent OS Kernel)
 ====================================================
-对标 2026 AgentOS 前沿研究 (OpenClaw / DingTalk Agent OS / Honor Agentic OS /
+对齐 2026 AgentOS 前沿研究 / Agent OS / Agentic OS /
 Meta Dreamer / Microsoft Project Solara), 将传统 OS 概念完整映射到 Agent 系统。
 
 设计哲学 (2026 共识):
@@ -88,6 +88,7 @@ from fnixagent.core.agent.vfs import ContextFS
 
 # Syscall 处理器签名
 SyscallHandler = Callable[[SyscallRequest], Awaitable[SyscallResponse]]
+
 
 class AgentKernel:
     """Agent 操作系统内核 (类比 Linux Kernel)。
@@ -772,10 +773,8 @@ class AgentKernel:
     # --- COMPUTER 处理器 ---
 
     async def _handle_computer_use(self, req: SyscallRequest) -> SyscallResponse:
-        # 预留: 实际接入 Claude Computer Use / OpenAI Operator / browser-use
-        return SyscallResponse.err(
-            "computer.use 需接入 Claude Computer Use / browser-use (预留接口)"
-        )
+        # 预留: 实际接入 OpenAI Operator / browser-use
+        return SyscallResponse.err("computer.use 需接入 browser-use (预留接口)")
 
     async def _handle_shell_exec(self, req: SyscallRequest) -> SyscallResponse:
         command = req.args.get("command", "")
@@ -801,8 +800,8 @@ class AgentKernel:
         return SyscallResponse.err("web.search 需接入 Brave/Tavily 搜索 MCP (预留接口)")
 
     async def _handle_web_fetch(self, req: SyscallRequest) -> SyscallResponse:
-        # 预留: 接入 Jina Reader / Firecrawl
-        return SyscallResponse.err("web.fetch 需接入 Jina Reader / Firecrawl (预留接口)")
+        # 预留: 接入 阅读服务 / 网页抓取服务
+        return SyscallResponse.err("web.fetch 需接入 阅读服务 / 网页抓取服务 (预留接口)")
 
     # --- SCHEDULE 处理器 ---
 
@@ -875,11 +874,13 @@ class AgentKernel:
             "has_audit_backend": self._audit_backend is not None,
         }
 
+
 # ============================================================================
 # 全局内核实例 (延迟创建, 修复原版 import 即创建 bug)
 # ============================================================================
 
 _kernel_instance: AgentKernel | None = None
+
 
 def get_kernel() -> AgentKernel:
     """获取全局内核实例 (延迟创建)。
@@ -892,10 +893,12 @@ def get_kernel() -> AgentKernel:
         _kernel_instance = AgentKernel()
     return _kernel_instance
 
+
 def reset_kernel() -> None:
     """重置全局内核实例 (测试用)。"""
     global _kernel_instance
     _kernel_instance = None
+
 
 __all__ = [
     "AgentKernel",

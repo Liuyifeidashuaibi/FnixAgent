@@ -1,6 +1,4 @@
-"""TodoStore — load-bearing state 外化 (任务状态外化)。
-
-借鉴 Anthropic《Effective Harnesses for Long-Running Agents》(2025-11):
+"""TodoStore — load-bearing state 外化 (任务状态外化)。(2025-11):
   - "不是让 agent 记住全部上下文, 而是让它能快速理解当前工作状态"
   - JSON 而非 Markdown (模型更不易改坏结构, 不擅自删需求)
   - feature list 初始全标 passes: false (防假性完成)
@@ -36,10 +34,10 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class TodoItem:
-    """一个待办事项 (对标 Anthropic harness 的 feature list item)。
+    """一个待办事项 (对齐  harness 的 feature list item)。
 
      status 流转: pending → in_progress → completed | failed
-    初始全标 pending (防假性完成, 借鉴 Anthropic harness 的 passes: false 默认)。
+    初始全标 pending (防假性完成,)。
     """
 
     id: str
@@ -179,7 +177,7 @@ class TodoStore:
             return [t for t in self.todos if t.status in ("pending", "in_progress")]
 
     def get_in_progress(self) -> TodoItem | None:
-        """获取当前进行中的待办 (对标 Anthropic: 每轮只做一个 feature)。"""
+        """获取当前进行中的待办 (对齐 : 每轮只做一个 feature)。"""
         with self._lock:
             for t in self.todos:
                 if t.status == "in_progress":

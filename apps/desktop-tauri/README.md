@@ -167,7 +167,7 @@ Tauri 窗口标题随语言动态切换。
 ```json
 "plugins": {
   "updater": {
-    "endpoints": ["https://releases.fnixagent.dev/{{target}}/{{arch}}/{{current_version}}"],
+    "endpoints": ["https://github.com/Liuyifeidashuaibi/FnixAgent/releases"],
     "pubkey": "dW50cnVzdGVy...",
     "windows": {
       "installMode": "passive"

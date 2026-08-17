@@ -1,6 +1,6 @@
 # Fnix 发布策略（定稿）
 
-> 状态：**定稿（L6）** · 主仓许可证：**Proprietary（专有软件）**  
+> 状态：**定稿（L6）** · 主仓许可证：**Proprietary（专有软件）**
 > 原则：本地优先，BYOK，用户下载安装包后本地使用，无账号无注册。
 
 ---
@@ -44,7 +44,7 @@ pnpm build             # 本地打安装包
 
 ## 3. Release notes 模板
 
-> Fnix Harness `vX.Y.Z` — 本地 Work/Code，BYOK，无账号。  
+> FnixAgent `vX.Y.Z` — 本地 Work/Code，BYOK，无账号。
 > 下载对应平台安装包；Key 仅存本机。
 
 ---

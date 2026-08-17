@@ -1,11 +1,11 @@
 """
 升级引擎 — 分析差距，生成升级建议，自动执行升级
 
-设计参考:
-  - Hermes: 技能自动创建 (Skill Factory), GEPA遗传优化
-  - OpenClaw: self-improving-agent skill, 错误修正沉淀
-  - SAGE: RL-based skill selection, 奖赏驱动
-  - GEPA: 遗传帕累托Prompt进化, 交叉+突变, 败因分析
+设计思路:
+  - 自动技能创建方案 (Skill Factory), 遗传优化遗传优化
+  - 自进化技能, 错误修正沉淀
+  - 强化学习方案 skill selection, 奖赏驱动
+  - 遗传优化: 遗传帕累托Prompt进化, 交叉+突变, 败因分析
 """
 
 # -*- coding: utf-8 -*-

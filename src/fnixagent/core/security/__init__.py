@@ -8,7 +8,7 @@
   - Desensitizer: 数据脱敏(手机/邮箱/身份证等)
   - SecurityEngine: 总控,串联输入安全与输出审核
 
-P0 安全模块扩展(参考 Anthropic 三层防御 + OWASP ASI Top 10):
+P0 安全模块扩展(参考  三层防御 + OWASP ASI Top 10):
   - SandboxExecutor: 跨平台 OS 级执行沙箱(Windows Job Object / Linux bwrap)
   - ToolAuditor: 工具语义审计层(路径越界/破坏性关键词/参数类型校验)
   - ImpactTracker: 影响溯源系统(before/after 快照 + 一键回滚)

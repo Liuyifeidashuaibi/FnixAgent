@@ -11,7 +11,7 @@ import {
   canOpenReview,
   canStartRun,
   canUndoReview,
-} from "../shell/chatgpt-desktop/shellFsm";
+} from "../shell/desktop/shellFsm";
 
 describe("shellFsm", () => {
   it("blocks apply while streaming", () => {
@@ -47,10 +47,10 @@ describe("shellFsm", () => {
     ).toBe(true);
   });
 
-  it("review open only in codex with pending", () => {
+  it("review open only in code with pending", () => {
     expect(canOpenReview({ mode: "work", hasPending: true })).toBe(false);
-    expect(canOpenReview({ mode: "codex", hasPending: false })).toBe(false);
-    expect(canOpenReview({ mode: "codex", hasPending: true })).toBe(true);
+    expect(canOpenReview({ mode: "code", hasPending: false })).toBe(false);
+    expect(canOpenReview({ mode: "code", hasPending: true })).toBe(true);
   });
 
   it("canStartRun allows idle/error/done", () => {

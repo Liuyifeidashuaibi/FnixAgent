@@ -40,7 +40,7 @@
 // 标签
 <label htmlFor="api-key">API Key</label>
 <input id="api-key" type="password" aria-describedby="hint-key" />
-<span id="hint-key">从 OpenAI 控制台获取</span>
+<span id="hint-key">从  LLM 控制台获取</span>
 
 // 加载状态
 <button aria-busy={loading} disabled={loading}>
@@ -106,11 +106,11 @@ useHotkeys('alt+n', newConversation)
 function Modal({ onClose }) {
   const closeRef = useRef<HTMLButtonElement>(null)
 
-  useEffect(() => {
+  useEffect(=> {
     // 进入时聚焦关闭按钮
     closeRef.current?.focus()
     // 关闭时返回触发元素
-    return () => triggerRef.current?.focus()
+    return => triggerRef.current?.focus()
   }, [])
 
   return (
@@ -180,7 +180,7 @@ function Modal({ onClose }) {
 
 ```tsx
 // 用 CSS 变量而非动画属性硬编码
-const duration = useReducedMotion() ? '0ms' : '200ms'
+const duration = useReducedMotion? '0ms' : '200ms'
 ```
 
 ### 2.6 表单
@@ -315,7 +315,7 @@ about: 报告可访问性 / 辅助技术问题
 
 ---
 
-## 七、参考 / References
+## 七、/ References
 
 - [WCAG 2.1](https://www.w3.org/TR/WCAG21/)
 - [WAI-ARIA Authoring Practices](https://www.w3.org/WAI/ARIA/apg/)

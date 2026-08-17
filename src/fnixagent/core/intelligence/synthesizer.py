@@ -1,8 +1,8 @@
 """
 LLM 驱动的知识合成引擎 — 将采集信息转化为可执行的升级方案
 
-设计参考:
-  - GPT-Researcher: 多Agent分阶段研究, 生成结构化报告
+设计思路:
+  - 研究助手: 多Agent分阶段研究, 生成结构化报告
   - AI-Researcher: 智能文献评估, 自动实验设计
   - PaperOrchestra: 多Agent专业分工, 迭代改进
 
@@ -294,7 +294,7 @@ class RuleBasedExtractor:
 
     def _suggest_action(self, item: SourceItem, insight_type: InsightType) -> str:
         actions = {
-            InsightType.NEW_FRAMEWORK: f"评估 {item.title[:50]} 的设计理念，考虑借鉴其核心架构",
+            InsightType.NEW_FRAMEWORK: f"评估 {item.title[:50]} 的设计理念，评估其核心架构",
             InsightType.NEW_TECHNIQUE: f"研究 {item.title[:50]} 的技术方案，评估是否可集成到 FnixAgent",
             InsightType.ARCHITECTURE_PATTERN: f"分析 {item.title[:50]} 的架构模式，对比当前系统设计",
             InsightType.RESEARCH_BREAKTHROUGH: f"深入阅读 {item.title[:50]} 论文，提取可落地的创新点",

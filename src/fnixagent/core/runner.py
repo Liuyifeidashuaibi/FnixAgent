@@ -1,6 +1,4 @@
-"""单一 Runner 入口 —— P1-4。
-
-借鉴 OpenAI Agents SDK 的 Runner 设计 + LangGraph 的 NextStep 模型,
+"""单一 Runner 入口 —— P1-4。,
 提供统一的 Agent 执行入口,收敛 lifecycle.py / graph.invoke / scheduler 三条路径。
 
 核心概念:

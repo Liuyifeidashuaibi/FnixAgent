@@ -1,4 +1,5 @@
 <!-- markdownlint-disable MD041 MD024 -->
+
 ## Summary
 
 <!-- Provide a clear, concise summary of the change. What does this PR do and why? -->
@@ -33,9 +34,9 @@
 
 ### Key Changes
 
-- 
-- 
-- 
+-
+-
+-
 
 ### Design Notes
 
@@ -52,9 +53,9 @@
 
 ### Test Plan
 
-1. 
-2. 
-3. 
+1.
+2.
+3.
 
 ### Coverage
 
@@ -67,7 +68,7 @@
 
 <!-- Required for review readiness. All boxes must be checked. -->
 
-- [ ] My code follows the project's [CODE_STYLE.md](CODE_STYLE.md)
+- [ ] My code follows the project's [CODE_STYLE.md](../docs/CODE_STYLE.md)
 - [ ] I have performed a self-review of my own code
 - [ ] I have commented my code, particularly in hard-to-understand areas
 - [ ] I have made corresponding changes to the documentation
@@ -103,7 +104,7 @@
 
 <!-- Optional: specific areas you'd like reviewers to focus on, or known limitations. -->
 
-<!-- 
+<!--
    Additional context for maintainers:
    - Risk level: low / medium / high
    - Backport targets: release branches (e.g., v1.0.x, v1.1.x)

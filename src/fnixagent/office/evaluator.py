@@ -1,6 +1,6 @@
-"""Fnix Agent 评测框架(借鉴 OfficeBench + SpreadsheetBench)。
+"""Fnix Agent 评测框架。
 
-设计参考:
+设计思路:
   - OfficeBench 的声明式评测:任务 JSON 中定义 evaluation 检查项列表
   - SpreadsheetBench 的 OJ 式多测试用例 + Soft/Hard 双指标
   - 评测与任务解耦,新增任务无需改评测代码
@@ -89,7 +89,7 @@ class TaskResult:
 
 @dataclass
 class ScoreSummary:
-    """评测汇总分数(借鉴 SpreadsheetBench 的 Soft/Hard 双指标)。
+    """评测汇总分数。
 
     Attributes:
         total_tasks: 总任务数
@@ -138,7 +138,7 @@ class Evaluator(BaseExpert):
         return self._name
 
     def __init__(self) -> None:
-        # 评测函数注册表(借鉴 OfficeBench 的声明式评测函数库)
+        # 评测函数注册表
         self._check_functions: dict[str, Callable] = {
             "file_exists": self._check_file_exists,
             "file_not_exists": self._check_file_not_exists,
@@ -190,7 +190,7 @@ class Evaluator(BaseExpert):
         self,
         tasks: list[dict[str, Any]],
     ) -> ExpertResult:
-        """批量评测多个任务(借鉴 SpreadsheetBench 的 OJ 式评估)。
+        """批量评测多个任务。
 
         Args:
             tasks: 任务列表,每项含 output_dir, checks, task_id
@@ -241,7 +241,7 @@ class Evaluator(BaseExpert):
             )
 
     # ------------------------------------------------------------------
-    # 评测函数库(借鉴 OfficeBench 的 evaluate.py)
+    # 评测函数库
     # ------------------------------------------------------------------
 
     @staticmethod
@@ -362,7 +362,7 @@ class Evaluator(BaseExpert):
 
     @staticmethod
     def _check_excel_cell_value(output_dir: str, args: dict) -> CheckResult:
-        """检查 Excel 单元格值(借鉴 SpreadsheetBench 的精确区域比对)。"""
+        """检查 Excel 单元格值。"""
         filename = args.get("filename", "")
         sheet_name = args.get("sheet")
         cell_ref = args.get("cell", "")  # 如 "A1" 或 "B3"
@@ -382,7 +382,7 @@ class Evaluator(BaseExpert):
             actual = ws[cell_ref].value
             wb.close()
 
-            # 归一化比对(借鉴 SpreadsheetBench 的 transform_value)
+            # 归一化比对
             def normalize(v):
                 if v is None:
                     return ""
@@ -514,7 +514,7 @@ class Evaluator(BaseExpert):
         )
 
     def register_check(self, name: str, func: Callable) -> None:
-        """注册自定义检查函数(借鉴 Unstructured 的注册表模式)。
+        """注册自定义检查函数。
 
         Args:
             name: 检查函数名

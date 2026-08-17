@@ -1,7 +1,7 @@
 """
 影响溯源系统 (Impact Tracker)。
 
-参考 Anthropic 三层防御体系的第三层(可追溯),对高风险文件操作做:
+参考  三层防御体系的第三层(可追溯),对高风险文件操作做:
   - before(): 操作前生成快照(文件哈希 + docx 段落 + xlsx 单元格)
   - after():  操作后生成快照,与 before 对比生成 diff_summary
   - rollback(operation_id): 一键回滚到 before 快照(仅恢复内容)

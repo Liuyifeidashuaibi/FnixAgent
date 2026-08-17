@@ -20,7 +20,7 @@ Usage:
     server = IDEServer(project_root=".")
     await server.run_cli(["search", "AgentKernel"])
 
-    # MCP 方式 (供 Trae/VS Code 调用)
+    # MCP 方式 (供 IDE 调用)
     result = await server.mcp_call("code.read", {"file_path": "src/main.py"})
     tools = server.mcp_list_tools()
 """
@@ -75,7 +75,7 @@ class IDEServer:
 
     对外提供:
       - CLI: agentos-coding <command> [args]
-      - MCP: 工具调用接口 (供 Trae/VS Code 连接)
+      - MCP: 工具调用接口 (供 IDE 连接)
 
     Usage:
         server = IDEServer(project_root=".")
@@ -625,7 +625,7 @@ class IDEServer:
         tool: str,
         arguments: dict[str, Any],
     ) -> dict[str, Any]:
-        """MCP 工具调用入口 (供 Trae/VS Code 通过 MCP 协议调用)。
+        """MCP 工具调用入口 (供 IDE 通过 MCP 协议调用)。
 
         Args:
             tool: 工具名 (code.read / code.write / code.edit / code.search /

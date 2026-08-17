@@ -1,4 +1,4 @@
-"""Harness 路径约定 — ~/.fnix 与 {workspace}/.fnix（对标 Hermes ~/.hermes）。"""
+"""Harness 路径约定 — ~/.fnix 与 {workspace}/.fnix（对齐 Fnix ~/.fnix）。"""
 
 # -*- coding: utf-8 -*-
 # Copyright (C) 2026 FnixAgent. All rights reserved.
@@ -17,7 +17,7 @@ def fnix_home() -> Path:
     raw = os.getenv("FNIX_HOME", "").strip()
     if raw:
         return Path(raw).expanduser().resolve()
-    # Hermes 在 Windows 用 LOCALAPPDATA；Fnix 统一 ~/.fnix，可用环境变量覆盖
+    # Fnix 在 Windows 用 LOCALAPPDATA；Fnix 统一 ~/.fnix，可用环境变量覆盖
     return Path.home() / ".fnix"
 
 

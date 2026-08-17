@@ -1,10 +1,10 @@
 """
 FnixAgent ∞ 自进化飞轮 v2.0 — 七层闭环进化体系 (Intelligence & Auto-Evolution)
 
-设计参考全球顶尖项目与前沿论文:
+设计思路全球顶尖项目与前沿论文:
   ┌──────────────────────────────────────────────────────────────────┐
   │  学术前沿:                                                       │
-  │  GEPA (ICLR 2026 Oral)    → 遗传帕累托Prompt进化, 比RL好6%       │
+  │  遗传优化 (ICLR 2026 Oral)    → 遗传帕累托Prompt进化, 比RL好6%       │
   │  SIPDO (ICLR 2026)        → 自改进Prompt设计优化闭环             │
   │  KnowRL (ACL 2026)        → 知识增强RL, 模型认知边界自感知       │
   │  Misevolution (上交+普林)  → 自进化"错误进化"风险                │
@@ -12,17 +12,17 @@ FnixAgent ∞ 自进化飞轮 v2.0 — 七层闭环进化体系 (Intelligence & 
   │  MemRL (2026)             → 运行时RL在情景记忆上自进化            │
   ├──────────────────────────────────────────────────────────────────┤
   │  工业标杆:                                                       │
-  │  Hermes Agent (128k★)     → 闭环学习+自动技能+Nudge+Atropos RL   │
-  │  OpenClaw                 → AutoSkill+ClawHub+Capability Evolver │
+  │  行业领先方案     → 闭环学习+自动技能+Nudge+训练框架 RL   │
+  │  行业实践                 → 自动技能创建+技能市场+Capability Evolver │
   │  OpenAI Agents SDK        → MCP原生+沙盒+子Agent handoff         │
   │  MCP (97M下载/月)         → Agent工具调用标准协议                │
   │  agentmemory (23k★)       → 持久化记忆引擎, 自动捕获             │
-  │  Letta/MemGPT             → Agent OS: Context=RAM, 外部=Disk     │
+  │  记忆服务层/记忆服务             → Agent OS: Context=RAM, 外部=Disk     │
   ├──────────────────────────────────────────────────────────────────┤
   │  新范式:                                                         │
   │  Loop Engineering (Boris) → "不给AI写提示词, 设计Loop驱动AI"     │
   │  Agent-as-a-Judge          → 自进化评估标准, RL优化评估策略      │
-  │  GPT-Researcher (28k★)    → 多Agent协同, 分阶段研究              │
+  │  研究助手 (28k★)    → 多Agent协同, 分阶段研究              │
   └──────────────────────────────────────────────────────────────────┘
 
 架构 (七层体系):
@@ -30,17 +30,17 @@ FnixAgent ∞ 自进化飞轮 v2.0 — 七层闭环进化体系 (Intelligence & 
   │  Layer 7: 自我审判层 (SelfJudge)          ← Agent-as-a-Judge    │
   │  CriteriaEvolver │ MultiDimensionScorer │ ComparativeJudge      │
   ├──────────────────────────────────────────────────────────────────┤
-  │  Layer 6: 技能市场层 (Skill Marketplace)   ← OpenClaw ClawHub    │
+  │  Layer 6: 技能市场层 (Skill Marketplace)   ← 技能市场    │
   ├──────────────────────────────────────────────────────────────────┤
-  │  Layer 5: 记忆层 (MemoryManager)            ← Letta/MemGPT        │
+  │  Layer 5: 记忆层 (MemoryManager)            ← 记忆服务层/记忆服务        │
   ├──────────────────────────────────────────────────────────────────┤
-  │  Layer 4: 知识合成层 (SynthesisEngine)     ← GPT-Researcher      │
+  │  Layer 4: 知识合成层 (SynthesisEngine)     ← 研究助手      │
   │  RuleBasedExtractor → LLMSynthesizer → SynthesisReport          │
   ├──────────────────────────────────────────────────────────────────┤
   │  Layer 3: 安全认知层 (EvolutionGuard)      ← KnowRL+Misevolution │
   │  BoundaryAwareness │ DegradationDetector │ SandboxValidator     │
   ├──────────────────────────────────────────────────────────────────┤
-  │  Layer 2: 遗传进化层 (GeneticEvolver)      ← GEPA+SIPDO         │
+  │  Layer 2: 遗传进化层 (GeneticEvolver)      ← 遗传优化+SIPDO         │
   │  Gene Encoder │ ParetoFrontier │ Tournament │ Crossover │ Mutate │
   ├──────────────────────────────────────────────────────────────────┤
   │  Layer 1: 循环工程层 (LoopEngine)          ← 循环工程范式   │

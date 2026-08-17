@@ -1,4 +1,4 @@
-"""Fnix CLI surface — setup / doctor / dashboard / model（对标 Hermes CLI）。"""
+"""Fnix CLI surface — setup / doctor / dashboard / model（对齐 Fnix CLI）。"""
 
 # -*- coding: utf-8 -*-
 # Copyright (C) 2026 FnixAgent. All rights reserved.

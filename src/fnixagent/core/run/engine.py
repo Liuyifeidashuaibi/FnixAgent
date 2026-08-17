@@ -120,7 +120,7 @@ class RunEngine:
     ) -> AsyncIterator[RunEvent]:
         """Spec 4: 流式执行 + 自动 checkpoint（含 messages_so_far 完整 state）。
 
-        对标 LangGraph Checkpointer: 每个 node transition 后 commit state。
+        对齐 LangGraph Checkpointer: 每个 node transition 后 commit state。
         上下文压缩机制: messages 超阈值时自动压缩（在 AgenticLoop 内）。
 
         checkpoint state 包含:
@@ -344,7 +344,7 @@ async def work_loop_source(
 
     Spec 4: 透传 resume_from 到 AgenticLoop，支持长程任务从 checkpoint 恢复。
     P0-1: 透传 task_id 到 AgenticLoop，激活 CheckpointManager.append_messages
-          持久化通道 (借鉴 OpenAI Agents SDK Session 每 turn 边界批量写)。
+          持久化通道 。
     """
     async for event in agent.run_stream(user_input, resume_from=resume_from, task_id=task_id):
         if isinstance(event, dict):

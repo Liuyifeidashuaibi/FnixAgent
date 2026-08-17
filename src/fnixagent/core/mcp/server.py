@@ -1,5 +1,5 @@
 """
-FnixAgent MCP Server — 让 FnixAgent 可被 Cursor/Trae 等 IDE 作为 MCP 工具调用
+FnixAgent MCP Server — 让 FnixAgent 可被 行业编码工具 等 IDE 作为 MCP 工具调用
 
 MCP (Model Context Protocol) Server 实现:
   - 标准 MCP JSON-RPC 协议
@@ -7,7 +7,7 @@ MCP (Model Context Protocol) Server 实现:
   - HTTP/SSE 传输 (用于远程调用)
   - 暴露所有 FnixAgent 工具和能力
 
-Cursor/Trae 配置示例:
+行业编码工具 配置示例:
   {
     "mcpServers": {
       "fnixagent": {

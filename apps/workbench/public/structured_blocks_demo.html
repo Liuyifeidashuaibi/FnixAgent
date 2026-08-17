@@ -78,18 +78,18 @@
     letter-spacing: 0.05em;
   }
 
-  /* === 用户消息（仿 shell chatgpt-desktop .oai-user-bubble） === */
-  .oai-turn { display: flex; margin: 0 0 24px; }
-  .oai-turn-user { justify-content: flex-end; }
-  .oai-user-bubble {
+  /* === 用户消息（仿 shell desktop .fnix-user-bubble） === */
+  .fnix-turn { display: flex; margin: 0 0 24px; }
+  .fnix-turn-user { justify-content: flex-end; }
+  .fnix-user-bubble {
     background: var(--accent-light);
     color: var(--text);
     padding: 10px 14px;
     border-radius: 14px;
     max-width: 80%;
   }
-  .oai-turn-assistant { justify-content: flex-start; gap: 12px; }
-  .oai-asst-mark {
+  .fnix-turn-assistant { justify-content: flex-start; gap: 12px; }
+  .fnix-asst-mark {
     width: 26px; height: 26px;
     border-radius: 50%;
     background: conic-gradient(from 180deg, #7c3aed 0 35%, #0d0d0d 35% 70%, #7c3aed 70% 100%);
@@ -98,7 +98,7 @@
     flex-shrink: 0;
     margin-top: 2px;
   }
-  .oai-asst-body {
+  .fnix-asst-body {
     flex: 1; min-width: 0;
     color: var(--text);
     line-height: 1.65;
@@ -106,20 +106,20 @@
   }
 
   /* === AG-UI 结构化 block 容器 === */
-  .oai-asst-blocks {
+  .fnix-asst-blocks {
     display: flex;
     flex-direction: column;
     gap: 10px;
   }
-  .oai-asst-blocks > * { margin: 0; }
-  .oai-asst-text {
+  .fnix-asst-blocks > * { margin: 0; }
+  .fnix-asst-text {
     color: var(--text);
     line-height: 1.65;
     font-size: 15px;
   }
-  .oai-asst-text p { margin: 0 0 0.85em; }
-  .oai-asst-text p:last-child { margin-bottom: 0; }
-  .oai-md-p { margin: 0 0 0.7em; line-height: 1.6; }
+  .fnix-asst-text p { margin: 0 0 0.85em; }
+  .fnix-asst-text p:last-child { margin-bottom: 0; }
+  .fnix-md-p { margin: 0 0 0.7em; line-height: 1.6; }
 
   /* === 以下样式直接复用 17-cline-chat-blocks.css 的 .cl- 前缀 === */
   /* ThinkingBlock */
@@ -338,12 +338,12 @@
   }
 
   /* prose */
-  .oai-inline-code {
+  .fnix-inline-code {
     font-family: var(--mono); font-size: 0.9em;
     background: #f0f0f0; border-radius: 5px; padding: 1px 5px;
   }
-  .oai-asst-text a { color: #2563eb; text-decoration: underline; }
-  .oai-asst-text strong { font-weight: 600; }
+  .fnix-asst-text a { color: #2563eb; text-decoration: underline; }
+  .fnix-asst-text strong { font-weight: 600; }
 
   /* legend */
   .legend {
@@ -377,14 +377,14 @@
   <section class="demo-section">
     <h2>完整执行轨迹 <span class="tag">write_file</span></h2>
 
-    <div class="oai-turn oai-turn-user">
-      <div class="oai-user-bubble">写一个简单的 HTML demo，含一个按钮和点击提示</div>
+    <div class="fnix-turn fnix-turn-user">
+      <div class="fnix-user-bubble">写一个简单的 HTML demo，含一个按钮和点击提示</div>
     </div>
 
-    <div class="oai-turn oai-turn-assistant">
-      <div class="oai-asst-mark" aria-hidden></div>
-      <div class="oai-asst-body">
-        <div class="oai-asst-blocks">
+    <div class="fnix-turn fnix-turn-assistant">
+      <div class="fnix-asst-mark" aria-hidden></div>
+      <div class="fnix-asst-body">
+        <div class="fnix-asst-blocks">
 
           <!-- progress: Step 1/5 running -->
           <div class="cl-progress-strip" role="status">
@@ -509,9 +509,9 @@
           </div>
 
           <!-- text: 最终响应 -->
-          <div class="oai-asst-text">
-            <p class="oai-md-p">已将源码写入 <code class="oai-inline-code">/demo/button.html</code>，可直接打开验证。</p>
-            <p class="oai-md-p">包含一个按钮，点击后会弹出 <strong>Hi!</strong> 提示。</p>
+          <div class="fnix-asst-text">
+            <p class="fnix-md-p">已将源码写入 <code class="fnix-inline-code">/demo/button.html</code>，可直接打开验证。</p>
+            <p class="fnix-md-p">包含一个按钮，点击后会弹出 <strong>Hi!</strong> 提示。</p>
           </div>
 
         </div>
@@ -533,10 +533,10 @@
   <section class="demo-section">
     <h2>错误恢复 <span class="tag">error · persistent</span></h2>
 
-    <div class="oai-turn oai-turn-assistant">
-      <div class="oai-asst-mark" aria-hidden></div>
-      <div class="oai-asst-body">
-        <div class="oai-asst-blocks">
+    <div class="fnix-turn fnix-turn-assistant">
+      <div class="fnix-asst-mark" aria-hidden></div>
+      <div class="fnix-asst-body">
+        <div class="fnix-asst-blocks">
 
           <div class="cl-progress-strip" role="status">
             <svg class="cl-progress-spinner spin" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
@@ -586,7 +586,7 @@
               <span class="cl-error-tool">run_command</span>
             </div>
             <div class="cl-error-detail">
-              端口 5173 已被占用，可尝试: <code class="oai-inline-code">--port 5174</code> 或 <code class="oai-inline-code">npx kill-port 5173</code>
+              端口 5173 已被占用，可尝试: <code class="fnix-inline-code">--port 5174</code> 或 <code class="fnix-inline-code">npx kill-port 5173</code>
             </div>
           </div>
 
@@ -603,10 +603,10 @@
       审计轨迹完整保留在后端 RunEngine SQLite 事件日志中。
     </p>
 
-    <div class="oai-turn oai-turn-assistant">
-      <div class="oai-asst-mark" aria-hidden></div>
-      <div class="oai-asst-body">
-        <div class="oai-asst-blocks">
+    <div class="fnix-turn fnix-turn-assistant">
+      <div class="fnix-asst-mark" aria-hidden></div>
+      <div class="fnix-asst-body">
+        <div class="fnix-asst-blocks">
 
           <div class="cl-progress-strip complete" role="status">
             <svg class="cl-progress-check" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
@@ -617,8 +617,8 @@
             <span class="cl-progress-desc">Step 8/30 (done)</span>
           </div>
 
-          <div class="oai-asst-text">
-            <p class="oai-md-p">已完成 8 步，写入 3 个文件。当前进度 26.7%。</p>
+          <div class="fnix-asst-text">
+            <p class="fnix-md-p">已完成 8 步，写入 3 个文件。当前进度 26.7%。</p>
           </div>
 
         </div>

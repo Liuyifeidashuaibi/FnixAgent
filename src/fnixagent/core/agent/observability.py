@@ -1,7 +1,7 @@
 """
 Observability - 可观测性 (Observability)
 =========================================
-对标 OpenTelemetry (OTel) + Langfuse + Phoenix 的可观测性管道。
+对齐 OpenTelemetry (OTel) + Langfuse + Phoenix 的可观测性管道。
 
 设计要点:
   - OTel 钩子: 结构化事件 (syscall 级追踪)
@@ -99,7 +99,7 @@ class Span:
 
 
 class ObservabilityManager:
-    """可观测性管理器 (对标 OTel + Langfuse)。
+    """可观测性管理器 (对齐 OTel + Langfuse)。
 
     功能:
       - Span 管理 (开始/结束/属性/事件)

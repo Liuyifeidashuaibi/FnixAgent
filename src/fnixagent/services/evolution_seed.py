@@ -1,6 +1,6 @@
 """办公场景 KTG 种子 + STP 技能绑定。
 
-这是 FnixAgent 相对 Trae/Cursor 的核心差异化能力，不是可选项：
+这是 FnixAgent 相对 行业编码工具/行业编码工具 的核心差异化能力，不是可选项：
   - KTG：四层知识拓扑（目标→概念→规则→事实）
   - STP：L2 概念 ↔ Office/检索技能突触
   - 由 build_graph() 在启动时强制播种
@@ -123,7 +123,7 @@ def seed_office_topology(
         layer=TopologyLayer.L1_GOAL,
         node_type=NodeType.GOAL,
         name="智能办公助手",
-        content="学习 / 教育 / 办公场景的 AI 工作台（对标并超越 TRAE Work）",
+        content="学习 / 教育 / 办公场景的 AI 工作台（对齐并超越  Work）",
         node_id="L1:office_agent",
     )
     stats["nodes"] += 1

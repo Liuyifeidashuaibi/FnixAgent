@@ -70,7 +70,7 @@ _DEFAULT_RULES = """# Fnix 项目规则
 - 修改代码前先阅读相关文件
 - 回复简洁，说明产物路径与验收方式
 
-也可在仓库根或子目录放置 `AGENTS.md` / `AGENTS.override.md`（Codex 兼容），
+也可在仓库根或子目录放置 `AGENTS.md` / `AGENTS.override.md`（行业兼容），
 Fnix 会按目录层级注入到 Work / Code 上下文。
 """
 
@@ -81,7 +81,7 @@ _DEFAULT_MCP = {
 
 
 def ensure_home_layout() -> Path:
-    """确保用户级 ~/.fnix 完整布局（对标 Hermes ensure_hermes_home）。"""
+    """确保用户级 ~/.fnix 完整布局（自主设计 ensure_fnixagent_home）。"""
     home = fnix_home()
     for sub in (
         home,

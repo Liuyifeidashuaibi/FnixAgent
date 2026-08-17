@@ -1,15 +1,5 @@
 <div align="center">
 
-> ⚠️ **版权声明 / Copyright Notice**
->
-> 本仓库以 **All Rights Reserved** 方式发布。
-> 可以**在 GitHub 上浏览代码**,但**严禁**复制、修改、商用、Fork、衍生创作。
-> 详见 [LICENSE](LICENSE) / [LICENSE-COMMERCIAL.md](LICENSE-COMMERCIAL.md) / [TRADEMARKS.md](TRADEMARKS.md)。
->
-> This repository is released under **All Rights Reserved**.
-> You may **view** the code on GitHub, but **may not** copy, modify, use commercially,
-> fork, or create derivative works. See [LICENSE](LICENSE).
-
 <!-- Logo / Hero -->
 
 <p align="center">
@@ -18,13 +8,19 @@
 
 # FnixAgent
 
+[![All Rights Reserved](https://img.shields.io/badge/license-All%20Rights%20Reserved-red)](LICENSE)
+[![CI](https://github.com/Liuyifeidashuaibi/FnixAgent/actions/workflows/ci.yml/badge.svg)](https://github.com/Liuyifeidashuaibi/FnixAgent/actions/workflows/ci.yml)
+[![Releases](https://img.shields.io/github/v/release/Liuyifeidashuaibi/FnixAgent?include_prereleases&label=release)](https://github.com/Liuyifeidashuaibi/FnixAgent/releases)
+[![Platforms](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)]()
+[![Built with Tauri](https://img.shields.io/badge/built%20with-Tauri%202-4FB8FF)](https://tauri.app)
+
 ### Local-first AI workspace — Work & Code on your machine, BYOK only.
 
-**🔒 All Rights Reserved — 个人作品集 / Personal Portfolio (see [LICENSE](LICENSE))**
+**🔒 All Rights Reserved — see [LICENSE](LICENSE)**
 **🚫 不接受外部代码贡献 / No external code contributions accepted**
 **Built with** Tauri 2 · Python 3.11+ · React 18 · FastAPI · LangGraph
 
-[Get started](#-quick-start) · [Documentation](docs/INDEX.md) · [Releases](https://github.com/Liuyifeidashuaibi/FnixAgent/releases) · [Roadmap](ROADMAP.md) · [Discussions](https://github.com/Liuyifeidashuaibi/FnixAgent/discussions)
+[Get started](#-quick-start) · [Documentation](docs/INDEX.md) · [Releases](https://github.com/Liuyifeidashuaibi/FnixAgent/releases) · [Roadmap](docs/ROADMAP.md) · [Discussions](https://github.com/Liuyifeidashuaibi/FnixAgent/discussions)
 
 ---
 
@@ -39,7 +35,7 @@ Code on projects, and a self-evolving kernel that gets smarter the more you use 
 
 ## Table of contents
 
-- [Why Fnix Harness?](#-why-fnix-harness)
+- [Why FnixAgent?](#-why-fnixagent)
 - [Features](#-features)
 - [Quick start](#-quick-start)
 - [Architecture](#-architecture)
@@ -56,18 +52,18 @@ Code on projects, and a self-evolving kernel that gets smarter the more you use 
 
 ---
 
-## ❓ Why Fnix Harness?
+## ❓ Why FnixAgent?
 
-Most AI tools force you to choose between **convenience** (cloud SaaS, your data leaves your machine, vendor lock-in) and **control** (BYO model, BYO keys, but you wire up a dozen scripts). Fnix Harness is the missing middle:
+Most AI tools force you to choose between **convenience** (cloud SaaS, your data leaves your machine, vendor lock-in) and **control** (BYO model, BYO keys, but you wire up a dozen scripts). FnixAgent is the missing middle:
 
-| Concern | Cloud SaaS | DIY scripts | **Fnix Harness** |
-|---|---|---|---|
-| Account / sign-up | Required | None | **None** |
-| Where your data lives | Their cloud | Your disk | **Your disk** |
-| Who pays for the LLM | They (markup) | You (BYOK) | **You (BYOK, no markup)** |
-| How smart it gets | Static prompt | Static prompt | **Self-evolving (KTG / STP / MFP)** |
-| Work + Code in one place | Separate tools | Glue scripts | **First-class** |
-| Sandboxed execution | Trust them | Roll your own | **Built-in** |
+| Concern                  | Cloud SaaS     | DIY scripts   | **FnixAgent**                       |
+| ------------------------ | -------------- | ------------- | ----------------------------------- |
+| Account / sign-up        | Required       | None          | **None**                            |
+| Where your data lives    | Their cloud    | Your disk     | **Your disk**                       |
+| Who pays for the LLM     | They (markup)  | You (BYOK)    | **You (BYOK, no markup)**           |
+| How smart it gets        | Static prompt  | Static prompt | **Self-evolving (KTG / STP / MFP)** |
+| Work + Code in one place | Separate tools | Glue scripts  | **First-class**                     |
+| Sandboxed execution      | Trust them     | Roll your own | **Built-in**                        |
 
 > 🔑 **BYOK = Bring Your Own Key.** We never see your API key. It lives in your OS keychain.
 
@@ -195,38 +191,38 @@ Or open the desktop, hit ⌘N / Ctrl-N, and type the same thing. The agent will 
              keys)                  scratch)
 ```
 
-For a deeper dive — including the **self-evolution flywheel**, **security layers**, and **deployment topology** — see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and the 6 architecture SVGs in [`docs/`](docs/).
+For a deeper dive — including the **self-evolution flywheel**, **security layers**, and **deployment topology** — see [`docs/STRUCTURE.md`](docs/STRUCTURE.md) and the architecture SVGs in [`docs/`](docs/).
 
 ---
 
 ## 🧰 Tech stack
 
-| Layer | Choice | Why |
-|-------|--------|-----|
-| Desktop shell | **Tauri 2** | Small binary, native webview, first-class IPC. |
-| UI | **React 18 + Tailwind + Radix** | Composable, accessible, no global runtime. |
-| Agent runtime | **Python 3.11+ / FastAPI** | Best LLM ecosystem, async-native. |
-| Orchestration | **LangGraph + custom** | DAGs are easier to debug than opaque chains. |
-| LLM | **OpenAI-compatible** | Works with OpenAI / Anthropic / Qwen / GLM / DeepSeek / Ollama. |
-| Local sidecar | **Rust** | Predictable latency, no GIL, small binary. |
-| Storage | **SQLite (local) + Markdown (memory)** | Source-of-truth, version-controllable. |
-| CI/CD | **GitHub Actions** | Pinned actions, matrix builds, signed releases. |
-| Test | **pytest + vitest + Playwright** | Unit + E2E in one box. |
-| Lint / format | **ruff + pyright + ESLint + Prettier** | Fast, opinionated, zero-config. |
+| Layer         | Choice                                 | Why                                                                   |
+| ------------- | -------------------------------------- | --------------------------------------------------------------------- |
+| Desktop shell | **Tauri 2**                            | Small binary, native webview, first-class IPC.                        |
+| UI            | **React 18 + Tailwind + Radix**        | Composable, accessible, no global runtime.                            |
+| Agent runtime | **Python 3.11+ / FastAPI**             | Best LLM ecosystem, async-native.                                     |
+| Orchestration | **LangGraph + custom**                 | DAGs are easier to debug than opaque chains.                          |
+| LLM           | **OpenAI-compatible**                  | Works with OpenAI / Anthropic / Qwen / GLM / DeepSeek / 本地推理引擎. |
+| Local sidecar | **Rust**                               | Predictable latency, no GIL, small binary.                            |
+| Storage       | **SQLite (local) + Markdown (memory)** | Source-of-truth, version-controllable.                                |
+| CI/CD         | **GitHub Actions**                     | Pinned actions, matrix builds, signed releases.                       |
+| Test          | **pytest + vitest + Playwright**       | Unit + E2E in one box.                                                |
+| Lint / format | **ruff + pyright + ESLint + Prettier** | Fast, opinionated, zero-config.                                       |
 
 ---
 
 ## 📈 Project status
 
-| Component | Status | Version | Notes |
-|-----------|--------|---------|-------|
-| Three-process harness (Desktop / agentd / fnix-local) | ✅ Stable | 1.0.0-beta.1 | Tauri 2, BYOK-only |
-| Work mode (artifact generation) | ✅ Beta | 1.0.0-beta.1 | DOCX/XLSX/PDF |
-| Code mode (diff review) | ✅ Beta | 1.0.0-beta.1 | Multi-file plans |
-| Self-evolution kernel (KTG/STP/MFP) | ✅ Beta | 1.0.0-beta.1 | Markdown source-of-truth |
-| fnix-local Rust port | 🚧 In progress | — | See [ROADMAP](ROADMAP.md#-next-planned--this-quarter) |
-| Skills marketplace | 🚧 Planned | — | — |
-| Plugin SDK GA | 🚧 Planned | — | — |
+| Component                                             | Status         | Version      | Notes                                                      |
+| ----------------------------------------------------- | -------------- | ------------ | ---------------------------------------------------------- |
+| Three-process harness (Desktop / agentd / fnix-local) | ✅ Stable      | 1.0.0-beta.1 | Tauri 2, BYOK-only                                         |
+| Work mode (artifact generation)                       | ✅ Beta        | 1.0.0-beta.1 | DOCX/XLSX/PDF                                              |
+| Code mode (diff review)                               | ✅ Beta        | 1.0.0-beta.1 | Multi-file plans                                           |
+| Self-evolution kernel (KTG/STP/MFP)                   | ✅ Beta        | 1.0.0-beta.1 | Markdown source-of-truth                                   |
+| fnix-local Rust port                                  | 🚧 In progress | —            | See [Roadmap](docs/ROADMAP.md#-next-planned--this-quarter) |
+| Skills marketplace                                    | 🚧 Planned     | —            | —                                                          |
+| Plugin SDK GA                                         | 🚧 Planned     | —            | —                                                          |
 
 We follow [semver](https://semver.org/). The [CHANGELOG](CHANGELOG.md) is the source of truth.
 
@@ -236,18 +232,18 @@ We follow [semver](https://semver.org/). The [CHANGELOG](CHANGELOG.md) is the so
 
 - 📖 [docs/INDEX.md](docs/INDEX.md) — the table of contents
 - 🚀 [docs/QUICKSTART.md](docs/QUICKSTART.md) — get going in 5 minutes
-- 🏛️ [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — system architecture
-- 🛠️ [DEVELOPMENT.md](DEVELOPMENT.md) — developer's guide
-- 🚢 [RELEASE.md](RELEASE.md) — how to cut a release
+- 🏛️ [docs/STRUCTURE.md](docs/STRUCTURE.md) — system architecture
+- 🛠️ [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) — developer's guide
+- 🚢 [.github/RELEASE.md](.github/RELEASE.md) — how to cut a release
 - 🤝 [CONTRIBUTING.md](CONTRIBUTING.md) — how to contribute
 - 🛡️ [SECURITY.md](SECURITY.md) — how to report a vulnerability
-- 🗺️ [ROADMAP.md](ROADMAP.md) — what we're building next
+- 🗺️ [docs/ROADMAP.md](docs/ROADMAP.md) — what we're building next
 
 ---
 
 ## 🗺️ Roadmap
 
-See [ROADMAP.md](ROADMAP.md) for the long view. Short version:
+See [docs/ROADMAP.md](docs/ROADMAP.md) for the long view. Short version:
 
 - **Now:** v1.0.0 GA · Tauri 2 desktop · Work/Code modes · KTG/STP/MFP kernel · Standalone installer
 - **Next:** fnix-local Rust port · Skills marketplace · MCP registry UI · i18n
@@ -259,7 +255,7 @@ Vote on priorities in [Discussions → Polls](https://github.com/Liuyifeidashuai
 
 ## 🤝 Contributing
 
-**本项目不接受外部代码贡献。** 这是一个个人作品集项目(详见 [LICENSE](LICENSE))。
+**本项目目前不接受外部代码贡献。**(详见 [LICENSE](LICENSE))
 
 - ❌ **不接受** Pull Request / 代码合并
 - ✅ 欢迎**报告 Bug**(GitHub Issue)
@@ -271,8 +267,7 @@ Vote on priorities in [Discussions → Polls](https://github.com/Liuyifeidashuai
 
 详见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
-**This project does NOT accept external code contributions** (it's a
-personal portfolio project). See [LICENSE](LICENSE).
+**This project does NOT accept external code contributions at this time.** See [LICENSE](LICENSE).
 
 - ❌ Pull Requests / code merging not accepted
 - ✅ Bug reports and design discussions are welcome
@@ -282,12 +277,12 @@ personal portfolio project). See [LICENSE](LICENSE).
 
 ## 💬 Community
 
-| Channel | Best for |
-|---------|----------|
-| [GitHub Discussions](https://github.com/Liuyifeidashuaibi/FnixAgent/discussions) | Q&A, ideas, show-and-tell |
-| [GitHub Issues](https://github.com/Liuyifeidashuaibi/FnixAgent/issues) | Bug reports, feature requests, RFCs |
-| [Twitter/X](https://twitter.com/fnixagent) | Announcements |
-| Email `hello@fnixagent.dev` | Anything else |
+| Channel                                                                          | Best for                            |
+| -------------------------------------------------------------------------------- | ----------------------------------- |
+| [GitHub Discussions](https://github.com/Liuyifeidashuaibi/FnixAgent/discussions) | Q&A, ideas, show-and-tell           |
+| [GitHub Issues](https://github.com/Liuyifeidashuaibi/FnixAgent/issues)           | Bug reports, feature requests, RFCs |
+| 💬 WeChat `15515797178`                                                          | 直接联系作者 / Direct contact       |
+| ✉️ Email `liuyifeidashuaibi@gmail.com`                                           | Anything else                       |
 
 ---
 
@@ -299,13 +294,13 @@ Found a vulnerability? **Please do not open a public issue.** See [SECURITY.md](
 
 ## 👥 Maintainers
 
-See [MAINTAINERS.md](MAINTAINERS.md) and [GOVERNANCE.md](GOVERNANCE.md).
+See [.github/MAINTAINERS.md](.github/MAINTAINERS.md) and [.github/GOVERNANCE.md](.github/GOVERNANCE.md).
 
 ---
 
 ## ✨ Contributors
 
-> 本项目为个人作品集,所有代码、文档、设计均由 [@fnixagent](https://github.com/fnixagent) 独立完成。
+> 本项目所有代码、文档、设计均由 Liu Yifei ([liuyifeidashuaibi](https://github.com/Liuyifeidashuaibi)) 独立完成。
 > 由于 [LICENSE](LICENSE) 限制,不接受外部代码贡献,故不设 Contributors 名单。
 >
 > 第三方组件致谢见 [NOTICE](NOTICE)。
@@ -319,20 +314,20 @@ See [MAINTAINERS.md](MAINTAINERS.md) and [GOVERNANCE.md](GOVERNANCE.md).
 - ❌ 禁止复制、修改、商用、Fork、衍生创作
 - ✅ 仅允许在 GitHub / 网页浏览器中**阅读浏览**单个文件
 - ⚠️ 第三方组件各自按其原始许可证约束(详见 [NOTICE](NOTICE))
-- 💼 商用请联系 [LICENSE-COMMERCIAL.md](LICENSE-COMMERCIAL.md)
+- 💼 商用请联系 [docs/LICENSE-COMMERCIAL.md](docs/LICENSE-COMMERCIAL.md)
 
 This repository is **All Rights Reserved**. See [LICENSE](LICENSE).
 
 - ❌ No copying, modification, commercial use, forking, or derivative works
 - ✅ Read-only viewing on GitHub / web browser is permitted
 - ⚠️ Third-party components retain their original licenses (see [NOTICE](NOTICE))
-- 💼 Commercial licensing: see [LICENSE-COMMERCIAL.md](LICENSE-COMMERCIAL.md)
+- 💼 Commercial licensing: see [docs/LICENSE-COMMERCIAL.md](docs/LICENSE-COMMERCIAL.md)
 
 ---
 
 ## 🌟 Acknowledgments
 
-Fnix Harness stands on the shoulders of giants. Key inspirations and dependencies:
+FnixAgent stands on the shoulders of giants. Key inspirations and dependencies:
 
 - 🦀 [Tauri](https://tauri.app/) — desktop shell
 - ⚡ [FastAPI](https://fastapi.tiangolo.com/) — agentd API
@@ -341,14 +336,14 @@ Fnix Harness stands on the shoulders of giants. Key inspirations and dependencie
 - 🗂️ [SQLite](https://www.sqlite.org/) — local storage
 - 🛠️ [ruff](https://github.com/astral-sh/ruff), [pyright](https://github.com/microsoft/pyright), [Playwright](https://playwright.dev/) — dev tooling
 
-And the open-source Agent research community — see [agent-research-report.md](agent-research-report.md) for the deep dive into the 11 reference projects that informed our design.
+And the open-source community — thank you for the inspiration and tools that make projects like this possible.
 
 ---
 
 <div align="center">
 
-**[⭐ Star this repo](https://github.com/Liuyifeidashuaibi/FnixAgent) · [🍴 Fork](https://github.com/Liuyifeidashuaibi/FnixAgent/fork) · [📣 Discuss](https://github.com/Liuyifeidashuaibi/FnixAgent/discussions)**
+**[⭐ Star this repo](https://github.com/Liuyifeidashuaibi/FnixAgent) · [📣 Discuss](https://github.com/Liuyifeidashuaibi/FnixAgent/discussions)**
 
-<sub>Built with ❤️ by the FnixAgent team and contributors worldwide.</sub>
+<sub>Maintained by Liu Yifei · 💬 WeChat 15515797178 · ✉️ liuyifeidashuaibi@gmail.com</sub>
 
 </div>

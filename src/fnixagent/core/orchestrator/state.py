@@ -8,7 +8,7 @@
 
 新的 OrchestratorContext = AgentState + EngineRefs(组合)。
 
-设计动机(借鉴 OpenAI Agents SDK 的 RunContext 泛型 + LangGraph 的 Channel 概念):
+设计动机:
   - handoff 时只传递 AgentState,避免引擎引用被序列化/跨网络传输
   - Checkpoint 时只持久化 AgentState,EngineRefs 在恢复时由 Runner 重新注入
   - 多 Agent 协作时,每个 Agent 收到的是同一份 EngineRefs + 各自的 AgentState 副本

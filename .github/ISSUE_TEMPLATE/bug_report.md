@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Report a problem with Fnix Harness
+about: Report a problem with FnixAgent
 title: '[Bug] '
 labels: bug
 ---

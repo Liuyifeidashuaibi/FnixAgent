@@ -12,7 +12,7 @@
   - 实体记忆更新时做权限检查
   - 记忆检索结果做来源标记
 
-顶级架构升级组件 (参考 EverOS / waku-agent):
+顶级架构升级组件 :
   - MarkdownMemoryStore: Markdown 源真相存储层
   - RetrievalGate: 智能检索门控
   - MemoryConsolidator: 定期记忆提炼
@@ -30,7 +30,7 @@ from fnixagent.core.memory.long_term import LongTermMemory
 from fnixagent.core.memory.manager import MemoryManager
 from fnixagent.core.memory.short_term import ShortTermMemory
 
-# 顶级架构升级组件 (参考 EverOS / waku-agent)
+# 顶级架构升级组件
 from fnixagent.core.memory.markdown_store import MarkdownMemoryStore, MemoryEntry
 from fnixagent.core.memory.retrieval_gate import RetrievalGate, RetrievalDecision
 from fnixagent.core.memory.consolidation import (

@@ -1,4 +1,4 @@
-"""检查点管理器 - 工作流状态持久化与恢复(借鉴 kaoyan checkpoint + zhua reclaim_stale)。
+"""检查点管理器 - 工作流状态持久化与恢复。
 
 特性:
   1. 每步状态持久化: 工作流每完成一个节点,保存当前状态
@@ -67,7 +67,7 @@ class CheckpointEntry:
         user_id:      用户ID
         node:         当前节点(analyze/plan/think/...)
         state:        序列化的 WorkflowContext(可 JSON 序列化的 dict)
-        messages:     独立的消息流通道(append-only,借鉴 LangGraph writes 表
+        messages:     独立的消息流通道(append-only,
                       与 OpenAI Agents SDK agent_messages 表)。每条 message
                       一行,避免 state 全量重写。崩溃恢复后从此处重建对话上下文。
         created_at:   创建时间戳(time.time, wall clock)
@@ -158,7 +158,6 @@ class CheckpointManager:
       1. 内存: dict[task_id, CheckpointEntry] (快路径,进程内)
       2. Redis(可选): HASH field=task_id, value=JSON (持久化,跨进程)
       3. JSONL 文件(可选): ~/.fnix/checkpoints/<task_id>.jsonl (standalone 兜底,
-         借鉴 OpenAI Agents SDK SQLiteSession 的 standalone 思路 + LangGraph
          SqliteSaver 的 file_path 注入设计。Redis 不可用时启用文件兜底)
 
     内存为单一事实源;Redis 用于跨进程可见与崩溃恢复;JSONL 文件作为最终兜底,
@@ -346,7 +345,7 @@ class CheckpointManager:
     #   第 1 行: 元数据头 {"__type__": "header", "task_id":..., "node":..., ...}
     #   第 2..N 行: 每行一条 message {"__type__": "message", "role":..., "content":...}
     #
-    # 设计要点(借鉴 OpenAI Agents SDK SQLiteSession + LangGraph SqliteSaver):
+    # 设计要点:
     #   - 原子写: 写临时文件 + os.replace,避免崩溃时半写入
     #   - append-only messages: 写时先读全量,追加 message 后整文件原子替换
     #     (简化实现;后续可优化为只 append message 行)
@@ -510,7 +509,7 @@ class CheckpointManager:
         return count
 
     # ------------------------------------------------------------------
-    # 内部:messages 兼容性修复(借鉴 letta backfill_missing_tool_call_ids)
+    # 内部:messages 兼容性修复
     # ------------------------------------------------------------------
 
     @staticmethod
@@ -698,8 +697,6 @@ class CheckpointManager:
         node: str = "",
     ) -> None:
         """向 task_id 追加单条 message(append-only,不全量重写 state)。
-
-        借鉴 LangGraph put_writes / OpenAI Agents SDK add_items 的 append-only
         messages 通道设计。若 task_id 不存在则自动创建空 state 的 entry。
 
         Args:
@@ -748,8 +745,6 @@ class CheckpointManager:
         node: str = "",
     ) -> None:
         """向 task_id 批量追加 messages(append-only,单次 fsync)。
-
-        借鉴 OpenAI Agents SDK Session.add_items 的批量 API: 每个 turn 边界
         批量追加, 而非每条 message 都触发 fsync。长程任务 8h 累积可显著降低 I/O。
 
         Args:
@@ -802,8 +797,6 @@ class CheckpointManager:
         compaction_info: dict[str, Any] | None = None,
     ) -> None:
         """全量替换 task_id 的 messages (单次 fsync)。
-
-        借鉴 OpenAI Agents SDK `OpenAIResponsesCompactionAwareSession.run_compaction`
         协议的设计思路: 当 compaction / summarization 发生时, Session 自己负责
         持久化压缩后的结果, 避免 resume 时重复触发压缩 (浪费 LLM 调用 + token)。
 
@@ -1100,7 +1093,7 @@ class CheckpointManager:
     # 异步接口 (P1-1): asyncio.to_thread 包装, 避免 event loop 阻塞
     # ------------------------------------------------------------------
     #
-    # 设计要点 (借鉴 OpenAI Agents SDK SQLiteSession.add_items 的 async 模式):
+    # 设计要点 :
     #   - 同步接口保留 (非 async 场景 + 测试用)
     #   - async 接口用 asyncio.to_thread 把同步 I/O 丢到线程池
     #   - 基准测试: 同步 append_messages 阻塞 event loop 最长 16ms,

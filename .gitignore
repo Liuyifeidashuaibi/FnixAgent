@@ -81,10 +81,8 @@ data/cache/
 .fnix/
 .workbuddy/
 
-# --- Reference clones (index only) ---
-_references/*
-!_references/INDEX.md
-!_references/CLONE.md
+# --- Reference / study clones (local only, never tracked) ---
+_references/
 
 # --- Test / e2e ---
 playwright-report/
@@ -125,9 +123,26 @@ docs/转载用研究资料/
 # --- Experimental code ---
 experiments/
 ops-memory-mcp/
-apps/workbench/src/shell/chatgpt-desktop/
+apps/workbench/src/shell/desktop/
 
 # --- One-shot test scripts ---
 test_*.py
 verify_*.py
 test.jsonl
+
+# --- Agent workspace (not part of repo) ---
+.dumate/
+AGENTS.md
+MEMORY.md
+memory-topic/
+.easyclaw/
+
+# Reference/study tooling (local only)
+scripts/clone-references.mjs
+scripts/verify-references.mjs
+scripts/fnix-stack.mjs
+
+# Temporary cleanup scripts (never commit)
+scripts/clean_*.py
+scripts/p1_*.py
+scripts/ai_trace*.py

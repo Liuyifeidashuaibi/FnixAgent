@@ -69,7 +69,6 @@ package.json      -diff
 .github/workflows/*.yml linguist-language=YAML
 
 # Vendored dependencies — exclude from language stats
-/_references/*    linguist-vendored
 /.fnixrules       linguist-vendored
 /.cluster         linguist-vendored
 /node_modules     linguist-vendored

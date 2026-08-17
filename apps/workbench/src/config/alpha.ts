@@ -7,8 +7,8 @@
 
 /** Fnix product metadata (About / diagnostics). */
 
-export const FNIX_WEBSITE_URL = "https://github.com/fnixagent/fnixagent";
-export const FNIX_GITHUB_URL = "https://github.com/fnixagent/fnixagent";
+export const FNIX_WEBSITE_URL = "https://github.com/Liuyifeidashuaibi/FnixAgent";
+export const FNIX_GITHUB_URL = "https://github.com/Liuyifeidashuaibi/FnixAgent";
 export const FNIX_DISCORD_URL = "";
 export const FNIX_LICENSE = "Apache-2.0";
 export const FNIX_VERSION = "1.0.0";

@@ -65,7 +65,7 @@ class ToolExecutor:
     ) -> None:
         self._registry = registry
         self._config = config or ToolConfig()
-        # Hook 列表(借鉴 Lagent before/after_action 机制)
+        # Hook 列表
         # before_hooks: 工具执行前调用,可修改参数或拦截执行
         # after_hooks: 工具执行后调用,可修改结果或触发副作用
         self._before_hooks: list = []
@@ -90,7 +90,7 @@ class ToolExecutor:
         self._step_counter = 0
         self._lock = threading.Lock()
 
-    # -- Hook 机制(借鉴 Lagent) -------------------------------------------
+    # -- Hook 机制 -------------------------------------------
 
     def add_before_hook(self, hook: Any) -> None:
         """注册前置 Hook。
@@ -198,7 +198,7 @@ class ToolExecutor:
 
     def _execute_impl(self, call: ToolCall) -> ToolResult:
         """实际执行逻辑(被 execute() 包裹 Span)。"""
-        # P1-02: 请求去重(借鉴 zhua FNV-64a + Simhash)。
+        # P1-02: 请求去重。
         # 启用方式: 调用 executor.add_before_hook 注册 dedup before_hook,或在
         # 业务编排层显式调用 core.tools.deduplicator.get_deduplicator() 进行
         # check_and_record(method="TOOL", target=call.name, arguments=call.arguments)。

@@ -1,6 +1,6 @@
 """内置 Skill → Work prompt 注入器（渐进式披露，Progressive Disclosure）。
 
-对齐 Anthropic Agent Skills / Trae Work 的注入策略：
+对齐 行业 Agent Skills / 行业工作台 的注入策略：
     1. 索引层：所有启用的内置技能以「一行名称+描述」注入（低 token 成本，
        让模型知道有哪些能力）
     2. 激活层：用户输入命中技能 triggers/tags/name 时，注入该技能的完整

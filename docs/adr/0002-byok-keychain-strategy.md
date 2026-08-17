@@ -15,7 +15,7 @@ tags: [security, privacy, byok]
 
 ## Context (背景)
 
-FnixAgent 用户使用云端 LLM (OpenAI / Anthropic / DeepSeek) 时必须提供 API Key。
+FnixAgent 用户使用云端 LLM ( LLM /  / DeepSeek) 时必须提供 API Key。
 
 需求:
 

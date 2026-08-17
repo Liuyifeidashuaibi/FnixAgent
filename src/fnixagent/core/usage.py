@@ -1,6 +1,4 @@
-"""Token/Cost 用量归因 —— P1-5。
-
-借鉴 OpenAI Agents SDK 的 Usage 模型 + PydanticAI 的 UsageLimits,
+"""Token/Cost 用量归因 —— P1-5。,
 提供统一的 Token/Cost 跟踪与限额控制。
 
 核心类:

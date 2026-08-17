@@ -9,25 +9,25 @@
 
 ### 1.1 已有优势
 
-| 模块 | 现状 | 评级 |
-|------|------|------|
+| 模块           | 现状                                     | 评级     |
+| -------------- | ---------------------------------------- | -------- |
 | KTG 知识拓扑图 | 4层固定结构 + 6类节点 + 6类边 + 权重系统 | ⭐⭐⭐⭐ |
-| STP 技能协议 | 拓扑绑定 + 三级权限 + 反馈机制 | ⭐⭐⭐⭐ |
-| MFP 进化飞轮 | 4阶闭环（感知→固化→反思→爬坡） | ⭐⭐⭐⭐ |
-| 三层记忆 | 短期/长期/实体 + 统一管理器 | ⭐⭐⭐ |
-| Agent 基类 | 4步 ReAct + 双入口（同步/流式） | ⭐⭐⭐ |
-| 工具系统 | 注册/执行/并行/DAG/沙箱 | ⭐⭐⭐⭐ |
+| STP 技能协议   | 拓扑绑定 + 三级权限 + 反馈机制           | ⭐⭐⭐⭐ |
+| MFP 进化飞轮   | 4阶闭环（感知→固化→反思→爬坡）           | ⭐⭐⭐⭐ |
+| 三层记忆       | 短期/长期/实体 + 统一管理器              | ⭐⭐⭐   |
+| Agent 基类     | 4步 ReAct + 双入口（同步/流式）          | ⭐⭐⭐   |
+| 工具系统       | 注册/执行/并行/DAG/沙箱                  | ⭐⭐⭐⭐ |
 
 ### 1.2 待提升领域
 
-| 领域 | 问题 | 参考标杆 |
-|------|------|----------|
-| 记忆系统 | 缺少 Markdown 源真相 + 检索门控 | EverOS / waku-agent |
-| 技能进化 | 缺少 9 维评估 + 棘轮机制 | 达尔文.skill |
-| Context Engineering | 缺少 Checkpoint + Token 预算 | DeerFlow / Raven |
-| 执行可观测 | 缺少 Durable Timeline | amcp |
-| 主动能力 | 缺少 Proactivity 系统 | Raven |
-| 并行协作 | 缺少 Concurrent Agent Teams | OpenPencil |
+| 领域                | 问题                            | 参考标杆            |
+| ------------------- | ------------------------------- | ------------------- |
+| 记忆系统            | 缺少 Markdown 源真相 + 检索门控 | EverOS / waku-agent |
+| 技能进化            | 缺少 9 维评估 + 棘轮机制        | 达尔文.skill        |
+| Context Engineering | 缺少 Checkpoint + Token 预算    | DeerFlow / Raven    |
+| 执行可观测          | 缺少 Durable Timeline           | amcp                |
+| 主动能力            | 缺少 Proactivity 系统           | Raven               |
+| 并行协作            | 缺少 Concurrent Agent Teams     | OpenPencil          |
 
 ---
 
@@ -116,19 +116,19 @@
 ```python
 class RetrievalGate:
     """智能判断是否需要检索记忆。
-    
+
     避免不必要的检索开销（waku-agent 核心设计）。
     """
-    
+
     def should_retrieve(self, query: str, context: dict) -> bool:
         """判断是否需要检索。
-        
+
         检索条件（满足任一即检索）：
         1. 查询包含时间/人物/地点等实体词
         2. 查询包含"记得"/"之前"/"上次"等记忆指示词
         3. 上下文缺少相关实体信息
         4. 查询复杂度 > 阈值
-        
+
         不检索条件：
         1. 简单问候/闲聊
         2. 纯计算/格式化任务
@@ -137,19 +137,19 @@ class RetrievalGate:
         # 快速路径：简单任务不检索
         if self._is_simple_task(query):
             return False
-        
+
         # 记忆指示词检测
         if self._has_memory_indicators(query):
             return True
-        
+
         # 实体词检测
         if self._has_entity_keywords(query):
             return True
-        
+
         # 上下文完整性检查
         if not self._context_sufficient(context, query):
             return True
-        
+
         return False
 ```
 
@@ -158,13 +158,13 @@ class RetrievalGate:
 ```python
 class MemoryConsolidator:
     """定期提炼记忆事实。
-    
+
     每 N 次对话后自动 consolidate，提取关键事实写入 MEMORY.md。
     """
-    
+
     async def consolidate(self, session_id: str, threshold: int = 10):
         """提炼记忆。
-        
+
         流程：
         1. 读取最近 N 条对话
         2. LLM 提取关键事实/决策/偏好
@@ -174,13 +174,13 @@ class MemoryConsolidator:
         """
         # 获取待提炼的对话
         episodes = await self._get_recent_episodes(session_id, threshold)
-        
+
         # LLM 提取事实
         facts = await self._extract_facts(episodes)
-        
+
         # 合并到 MEMORY.md
         await self._merge_to_memory_md(facts)
-        
+
         # 更新索引
         await self._update_indices(facts)
 ```
@@ -190,13 +190,13 @@ class MemoryConsolidator:
 ```python
 class MemoryReflector:
     """离线记忆进化。
-    
+
     定期分析记忆，合并相似项，提炼模式，更新知识 Wiki。
     """
-    
+
     async def reflect(self):
         """执行记忆反思。
-        
+
         流程：
         1. 聚类相似 episodes
         2. 提炼高频模式
@@ -206,13 +206,13 @@ class MemoryReflector:
         """
         # 聚类相似事件
         clusters = await self._cluster_episodes()
-        
+
         # 提炼模式
         patterns = await self._extract_patterns(clusters)
-        
+
         # 更新知识 Wiki
         await self._update_knowledge_wiki(patterns)
-        
+
         # 衰减低频记忆
         await self._decay_low_frequency_memories()
 ```
@@ -226,10 +226,10 @@ class MemoryReflector:
 ```python
 class SkillEvaluator:
     """技能 9 维评估器。
-    
-    参考达尔文.skill 的评估体系。
+
+    九维评估体系。
     """
-    
+
     DIMENSIONS = [
         "structure_quality",      # 结构质量
         "executive_effectiveness", # 执行效果
@@ -241,7 +241,7 @@ class SkillEvaluator:
         "user_feedback",          # 用户反馈
         "regression_safety",      # 回归安全性
     ]
-    
+
     # 高风险行动黑名单（禁止出现）
     HIGH_RISK_BLACKLIST = [
         "rm -rf /",
@@ -249,10 +249,10 @@ class SkillEvaluator:
         "sudo chmod 777",
         # ... 更多
     ]
-    
+
     async def evaluate(self, skill: Skill, trace: TraceRecord) -> SkillScore:
         """执行 9 维评估。
-        
+
         返回：
         - 总分 (0-100)
         - 各维度分数
@@ -262,16 +262,16 @@ class SkillEvaluator:
         scores = {}
         for dim in self.DIMENSIONS:
             scores[dim] = await self._evaluate_dimension(skill, trace, dim)
-        
+
         # 失败模式检测
         failure_modes = self._detect_failure_modes(trace)
-        
+
         # 黑名单检查
         blacklist_violations = self._check_blacklist(skill)
-        
+
         # 计算总分
         total = self._calculate_total(scores, failure_modes, blacklist_violations)
-        
+
         return SkillScore(
             total=total,
             dimensions=scores,
@@ -286,13 +286,13 @@ class SkillEvaluator:
 ```python
 class SkillEvolver:
     """技能进化器（棘轮机制）。
-    
+
     只保留改进，自动回滚退步。
     """
-    
+
     async def evolve(self, skill: Skill) -> EvolutionResult:
         """执行技能进化。
-        
+
         流程：
         1. 基线评估（当前版本）
         2. 生成改进版本
@@ -302,14 +302,14 @@ class SkillEvolver:
         """
         # 基线评估
         baseline_score = await self.evaluator.evaluate(skill, skill.last_trace)
-        
+
         # 生成改进版本
         improved = await self._generate_improvement(skill, baseline_score)
-        
+
         # 测试改进版本
         test_trace = await self._test_skill(improved)
         improved_score = await self.evaluator.evaluate(improved, test_trace)
-        
+
         # 棘轮决策
         if improved_score.total > baseline_score.total:
             # 保留改进
@@ -325,19 +325,19 @@ class SkillEvolver:
 ```python
 class HumanInTheLoop:
     """Human-in-the-Loop 守关机制。
-    
+
     关键阶段强制暂停等用户确认。
     """
-    
+
     GATES = [
         "before_high_risk_action",  # 高风险操作前
         "before_skill_evolution",   # 技能进化前
         "before_memory_deletion",   # 记忆删除前
     ]
-    
+
     async def check_gate(self, gate: str, context: dict) -> GateResult:
         """检查守关。
-        
+
         返回：
         - approved: 是否批准
         - reason: 原因
@@ -345,10 +345,10 @@ class HumanInTheLoop:
         """
         if gate not in self.GATES:
             return GateResult(approved=True)
-        
+
         # 暂停等待用户确认
         response = await self._wait_for_user_confirmation(gate, context)
-        
+
         return GateResult(
             approved=response.approved,
             reason=response.reason,
@@ -365,13 +365,13 @@ class HumanInTheLoop:
 ```python
 class CheckpointManager:
     """上下文 Checkpoint 管理器。
-    
+
     支持 delta + snapshot 两种模式。
     """
-    
+
     async def create_checkpoint(self, state: AgentState, mode: str = "delta") -> Checkpoint:
         """创建 Checkpoint。
-        
+
         delta 模式：只保存变化的部分
         snapshot 模式：保存完整状态
         """
@@ -382,14 +382,14 @@ class CheckpointManager:
         else:
             # 完整快照
             return Checkpoint(mode="snapshot", data=state.to_dict(), timestamp=time.time())
-    
+
     async def restore_checkpoint(self, checkpoint_id: str) -> AgentState:
         """恢复 Checkpoint。
-        
+
         支持恢复到任意历史状态。
         """
         checkpoint = await self._load_checkpoint(checkpoint_id)
-        
+
         if checkpoint.mode == "snapshot":
             return AgentState.from_dict(checkpoint.data)
         else:
@@ -402,10 +402,10 @@ class CheckpointManager:
 ```python
 class TokenBudget:
     """Token 预算管理。
-    
+
     精确控制上下文各部分的 Token 分配。
     """
-    
+
     # 默认预算分配
     DEFAULT_BUDGET = {
         "system_prompt": 1000,
@@ -414,28 +414,28 @@ class TokenBudget:
         "history": 4000,
         "response": 2000,
     }
-    
+
     def __init__(self, total_budget: int = 128000):
         self.total = total_budget
         self.budgets = dict(self.DEFAULT_BUDGET)
-    
+
     def allocate(self, section: str, content: str) -> str:
         """分配 Token 预算。
-        
+
         如果内容超出预算，自动压缩/截断。
         """
         budget = self.budgets.get(section, 1000)
         tokens = self._count_tokens(content)
-        
+
         if tokens > budget:
             # 压缩策略
             return self._compress(content, budget)
-        
+
         return content
-    
+
     def _compress(self, content: str, target_tokens: int) -> str:
         """压缩内容到目标 Token 数。
-        
+
         策略：
         1. 移除冗余空白
         2. 缩写长词
@@ -453,10 +453,10 @@ class TokenBudget:
 ```python
 class DurableTimeline:
     """可审计的执行时间线。
-    
+
     每会话 2000 条事件元数据，支持中断恢复。
     """
-    
+
     @dataclass
     class TimelineEvent:
         event_id: str
@@ -464,12 +464,12 @@ class DurableTimeline:
         event_type: str  # thought, action, observation, tool_call, etc.
         data: dict
         metadata: dict
-    
+
     def __init__(self, session_id: str, max_events: int = 2000):
         self.session_id = session_id
         self.max_events = max_events
         self.events: list[self.TimelineEvent] = []
-    
+
     def record(self, event_type: str, data: dict, metadata: dict = None):
         """记录事件。"""
         event = self.TimelineEvent(
@@ -480,14 +480,14 @@ class DurableTimeline:
             metadata=metadata or {},
         )
         self.events.append(event)
-        
+
         # 超出上限时，压缩旧事件
         if len(self.events) > self.max_events:
             self._compress_old_events()
-    
+
     async def export(self) -> TimelineExport:
         """导出时间线。
-        
+
         用于审计、回放、调试。
         """
         return TimelineExport(
@@ -495,20 +495,20 @@ class DurableTimeline:
             events=self.events,
             duration=self.events[-1].timestamp - self.events[0].timestamp if self.events else 0,
         )
-    
+
     async def resume_from(self, event_id: str) -> AgentState:
         """从指定事件恢复执行。
-        
+
         支持中断后恢复。
         """
         # 找到事件位置
         idx = next(i for i, e in enumerate(self.events) if e.event_id == event_id)
-        
+
         # 重建状态
         state = AgentState()
         for event in self.events[:idx + 1]:
             state = self._apply_event(state, event)
-        
+
         return state
 ```
 
@@ -519,19 +519,19 @@ class DurableTimeline:
 ```python
 class ProactivitySystem:
     """主动能力系统。
-    
+
     Sentinel 观察 + Nudge 推动 + 调度工作。
     """
-    
+
     class Sentinel:
         """主动观察者。
-        
+
         持续监控系统状态，发现需要处理的事项。
         """
-        
+
         async def observe(self, context: dict) -> list[Observation]:
             """执行观察。
-            
+
             观察项：
             - 未读邮件/消息
             - 日历事件提醒
@@ -540,30 +540,30 @@ class ProactivitySystem:
             - 记忆中的待办事项
             """
             observations = []
-            
+
             # 检查日历
             calendar_events = await self._check_calendar(context)
             observations.extend(calendar_events)
-            
+
             # 检查任务
             task_reminders = await self._check_tasks(context)
             observations.extend(task_reminders)
-            
+
             # 检查记忆中的待办
             todo_reminders = await self._check_memory_todos(context)
             observations.extend(todo_reminders)
-            
+
             return observations
-    
+
     class Nudge:
         """推动机制。
-        
+
         在适当时机提醒用户。
         """
-        
+
         async def should_nudge(self, observation: Observation) -> bool:
             """判断是否应该推动。
-            
+
             条件：
             - 紧急事项（< 2 小时）
             - 用户在线且空闲
@@ -571,21 +571,21 @@ class ProactivitySystem:
             """
             if observation.urgency >= Urgency.HIGH:
                 return True
-            
-            if observation.deadline and observation.deadline < time.time() + 7200:
+
+            if observation.deadline and observation.deadline < time.time+ 7200:
                 return True
-            
+
             return False
-    
+
     class Scheduler:
         """调度工作。
-        
+
         定时执行后台任务。
         """
-        
+
         async def schedule(self, task: ScheduledTask):
             """调度任务。
-            
+
             支持：
             - 一次性任务 (at)
             - 周期性任务 (every)
@@ -601,13 +601,13 @@ class ProactivitySystem:
 ```python
 class ConcurrentAgentTeam:
     """并行 Agent 团队。
-    
+
     空间分解 + 并行流式生成。
     """
-    
+
     async def execute(self, task: Task, agents: list[Agent]) -> TeamResult:
         """执行并行任务。
-        
+
         流程：
         1. 编排器分解任务为子任务
         2. 按空间/功能分配给不同 Agent
@@ -616,22 +616,22 @@ class ConcurrentAgentTeam:
         """
         # 任务分解
         subtasks = await self._decompose_task(task)
-        
+
         # 分配给 Agent
         assignments = self._assign_to_agents(subtasks, agents)
-        
+
         # 并行执行
         results = await asyncio.gather(*[
-            agent.execute(assignment) 
+            agent.execute(assignment)
             for agent, assignment in assignments
         ])
-        
+
         # 合并结果
         return await self._merge_results(results)
-    
+
     async def _decompose_task(self, task: Task) -> list[SubTask]:
         """分解任务。
-        
+
         策略：
         - 空间分解（如页面不同区域）
         - 功能分解（如不同模块）
@@ -646,15 +646,15 @@ class ConcurrentAgentTeam:
 
 ### 4.1 优先级排序
 
-| 优先级 | 升级项 | 工作量 | 价值 |
-|--------|--------|--------|------|
-| P0 | 记忆系统 Markdown-first | 中 | 高 |
-| P0 | Retrieval Gate | 低 | 高 |
-| P1 | Skill 9 维评估 | 中 | 高 |
-| P1 | Checkpoint 机制 | 中 | 中 |
-| P2 | Durable Timeline | 中 | 中 |
-| P2 | Proactivity 系统 | 高 | 中 |
-| P3 | Concurrent Teams | 高 | 低（当前场景少） |
+| 优先级 | 升级项                  | 工作量 | 价值             |
+| ------ | ----------------------- | ------ | ---------------- |
+| P0     | 记忆系统 Markdown-first | 中     | 高               |
+| P0     | Retrieval Gate          | 低     | 高               |
+| P1     | Skill 9 维评估          | 中     | 高               |
+| P1     | Checkpoint 机制         | 中     | 中               |
+| P2     | Durable Timeline        | 中     | 中               |
+| P2     | Proactivity 系统        | 高     | 中               |
+| P3     | Concurrent Teams        | 高     | 低（当前场景少） |
 
 ### 4.2 实施步骤
 
@@ -711,12 +711,12 @@ class ConcurrentAgentTeam:
 
 ## 六、风险与缓解
 
-| 风险 | 等级 | 缓解策略 |
-|------|------|----------|
-| Markdown 同步延迟 | 中 | 级联 Watcher + 增量同步 |
-| 9 维评估成本高 | 中 | 异步执行 + 缓存结果 |
-| Checkpoint 存储膨胀 | 低 | 定期压缩 + 过期清理 |
-| Proactivity 打扰用户 | 高 | Nudge 策略 + 用户可配置 |
+| 风险                 | 等级 | 缓解策略                |
+| -------------------- | ---- | ----------------------- |
+| Markdown 同步延迟    | 中   | 级联 Watcher + 增量同步 |
+| 9 维评估成本高       | 中   | 异步执行 + 缓存结果     |
+| Checkpoint 存储膨胀  | 低   | 定期压缩 + 过期清理     |
+| Proactivity 打扰用户 | 高   | Nudge 策略 + 用户可配置 |
 
 ---
 
@@ -733,6 +733,7 @@ class ConcurrentAgentTeam:
 7. **OpenPencil**: Concurrent Agent Teams
 
 实施后，FnixAgent 将成为：
+
 - **记忆更强**: Markdown 源真相 + 智能检索
 - **技能更优**: 9 维评估 + 自动进化
 - **上下文更精**: Checkpoint + Token Budget
@@ -741,4 +742,4 @@ class ConcurrentAgentTeam:
 
 ---
 
-*文档版本: 2.0 | 生成日期: 2026-08-17*
+_文档版本: 2.0 | 生成日期: 2026-08-17_

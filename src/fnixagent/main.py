@@ -408,7 +408,7 @@ from fnixagent.core.gateway.middleware import GatewayMiddleware
 from fnixagent.core.profile import is_standalone
 
 _settings = Settings()
-# Standalone / debug：本机模式无需 JWT（对标 Hermes 自托管）
+# Standalone / debug：本机模式无需 JWT（自主设计 自托管）
 app = GatewayMiddleware(
     app,
     auth_required=not (_settings.debug or is_standalone()),
@@ -621,7 +621,7 @@ def _run_local(args) -> None:
 
 
 def main():
-    """FnixAgent CLI 主入口（对标 Hermes CLI）。
+    """FnixAgent CLI 主入口（对齐 Fnix CLI）。
 
     子命令:
       fnixagent setup / doctor / dashboard / model
@@ -634,7 +634,7 @@ def main():
     )
     subparsers = parser.add_subparsers(dest="command", help="子命令")
 
-    # ---- setup / doctor / dashboard / model（Hermes 对标）----
+    # ---- setup / doctor / dashboard / model（统一设计）----
     setup_parser = subparsers.add_parser("setup", help="交互配置 API Key / 模型")
     setup_parser.add_argument("--non-interactive", action="store_true")
     setup_parser.add_argument("--provider", default=None)
@@ -731,7 +731,7 @@ def main():
         _run_local(args)
     else:
         parser.print_help()
-        print("\n快速开始（对标 Hermes）:")
+        print("\n快速开始:")
         print("  fnixagent setup")
         print("  fnixagent doctor")
         print("  fnixagent dashboard")

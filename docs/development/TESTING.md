@@ -129,8 +129,8 @@ def fake_llm():
 import { describe, it, expect, vi } from 'vitest'
 import { parseSkillFrontmatter } from './skills'
 
-describe('parseSkillFrontmatter', () => {
-  it('parses valid skill', () => {
+describe('parseSkillFrontmatter', => {
+  it('parses valid skill', => {
     const md = `---
 skill: code-review
 version: 1.0.0
@@ -141,8 +141,8 @@ version: 1.0.0
     expect(result.content).toContain('# Content')
   })
 
-  it('throws on invalid YAML', () => {
-    expect(() =>
+  it('throws on invalid YAML', => {
+    expect(=>
       parseSkillFrontmatter('---\nskill: [invalid\n---\nbody')
     ).toThrow()
   })
@@ -158,14 +158,14 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_path_in_workspace() {
+    fn test_path_in_workspace{
         let allowlist = AllowList::new(&["/home/user/notes"]).unwrap();
         assert!(allowlist.contains("/home/user/notes/file.md"));
         assert!(!allowlist.contains("/etc/passwd"));
     }
 
     #[test]
-    fn test_path_traversal_blocked() {
+    fn test_path_traversal_blocked{
         let allowlist = AllowList::new(&["/home/user/notes"]).unwrap();
         assert!(!allowlist.contains("/home/user/notes/../etc/passwd"));
     }
@@ -216,15 +216,15 @@ test('workbench launches and shows home', async ({ page }) => {
 ```python
 # tests/integration/test_llm_openai.py
 import pytest
-from fnixagent.llm import OpenAIClient
+from fnixagent.llm import  LLMClient
 from vcr import vcr  # 用 VCR.py 录播 HTTP
 
 @vcr.use_cassette("tests/fixtures/openai_chat_completion.yaml")
 @pytest.mark.integration
 async def test_chat_completion():
-    client = OpenAIClient(api_key="test")
+    client =  LLMClient(api_key="test")
     result = await client.generate("hello")
-    assert "hello" in result.text.lower() or len(result.text) > 0
+    assert "hello" in result.text.loweror len(result.text) > 0
 ```
 
 ---
@@ -288,7 +288,7 @@ def test_slugify_idempotent(text):
 def test_slugify_lowercase_and_safe(text):
     slug = slugify(text)
     assert slug == slug.lower()
-    assert all(c.isalnum() or c == '-' for c in slug)
+    assert all(c.isalnumor c == '-' for c in slug)
 ```
 
 ---
@@ -405,7 +405,7 @@ pytest --artifact-dir=artifacts/
 
 ---
 
-## 十一、参考 / References
+## 十一、/ References
 
 - [pytest 文档](https://docs.pytest.org/)
 - [Vitest 文档](https://vitest.dev/)

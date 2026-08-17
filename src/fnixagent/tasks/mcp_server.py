@@ -18,7 +18,7 @@ QuestionBankScenario)通过 MCP(Model Context Protocol)暴露给外部 Agent 调
   - Expert 实例延迟初始化(首次调用时创建),避免 __init__ 触发依赖加载
   - 实例缓存(同一 Expert 只创建一次)
   - 高风险(destructive=True)操作记录审计日志(print)
-  - 借鉴 Office-Word-MCP-Server 的 readOnlyHint/destructiveHint 注解
+  -
   - 所有异常不外泄,统一转 _failure
 """
 
@@ -42,9 +42,7 @@ from fnixagent.office.base import BaseExpert, ExpertResult
 
 @dataclass
 class ToolAnnotations:
-    """MCP 工具注解(符合 MCP 规范)。
-
-    借鉴 Office-Word-MCP-Server 的 readOnlyHint/destructiveHint,
+    """MCP 工具注解(符合 MCP 规范)。,
     并扩展 idempotentHint(幂等性提示)。
 
     Attributes:
@@ -510,7 +508,7 @@ class OfficeMCPServer(BaseExpert):
     def to_mcp_manifest(self) -> dict:
         """生成 MCP 协议清单(tools 列表 + schema)。
 
-        兼容 Anthropic MCP tools/list 响应格式,
+        兼容 MCP tools/list 响应格式,
         额外携带 readOnlyHint/destructiveHint/idempotentHint 注解。
 
         Returns:

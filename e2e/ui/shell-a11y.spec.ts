@@ -16,8 +16,8 @@ test.beforeEach(async ({ page }) => {
 
 test('shell exposes skip link and main landmark', async ({ page }) => {
   await page.goto('/');
-  await expect(page.locator('#oai-main')).toBeVisible({ timeout: 20_000 });
-  const skip = page.locator('a.oai-skip-link');
+  await expect(page.locator('#fnix-main')).toBeVisible({ timeout: 20_000 });
+  const skip = page.locator('a.fnix-skip-link');
   await expect(skip).toHaveCount(1);
   await skip.focus();
   await expect(skip).toBeFocused();
@@ -43,11 +43,11 @@ test('Work/Code segment is keyboard reachable', async ({ page }) => {
 
 test('axe critical violations on shell root (if axe available)', async ({ page }) => {
   await page.goto('/');
-  await expect(page.locator('.oai-root')).toBeVisible({ timeout: 20_000 });
+  await expect(page.locator('.fnix-root')).toBeVisible({ timeout: 20_000 });
   try {
     const axePlaywright = await import('@axe-core/playwright');
     const AxeBuilder = axePlaywright.default;
-    const results = await new AxeBuilder({ page }).include('.oai-root').analyze();
+    const results = await new AxeBuilder({ page }).include('.fnix-root').analyze();
     const critical = results.violations.filter((v) => v.impact === 'critical' || v.impact === 'serious');
     expect(
       critical,

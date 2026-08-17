@@ -80,7 +80,7 @@ class CircuitState(str, Enum):
 
 
 class ToolCallState(str, Enum):
-    """工具调用状态机(借鉴 AgentScope ToolCallState)。
+    """工具调用状态机。
 
     状态流转图:
         CREATED ──→ APPROVED ──→ EXECUTING ──→ SUCCESS(终态)
@@ -225,7 +225,7 @@ class Entity:
 
 @dataclass
 class ToolCall:
-    """LLM 决定调用某工具(含状态机,借鉴 AgentScope)。
+    """LLM 决定调用某工具(含状态机,)。
 
     state 字段驱动 P0-4 重试策略与 P3-1 Handoff 接力:
       - 重试:仅 FAILED 可重试,重试时 attempts+=1 并回到 EXECUTING

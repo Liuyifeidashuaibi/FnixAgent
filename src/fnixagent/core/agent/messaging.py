@@ -1,7 +1,7 @@
 """
 A2ABus - Agent 间通信 (Agent-to-Agent Communication)
 =====================================================
-对标 A2A Protocol v1.0 (Linux Foundation 2026-04 生产就绪)。
+对齐 A2A Protocol v1.0 (Linux Foundation 2026-04 生产就绪)。
 
 设计要点:
   - JSON-RPC 2.0 消息格式
@@ -34,7 +34,7 @@ from fnixagent.core.agent.types import utcnow_iso
 
 @dataclass
 class AgentCard:
-    """Agent 能力声明 (对标 A2A Protocol AgentCard)。
+    """Agent 能力声明 (对齐 A2A Protocol AgentCard)。
 
     每个 Agent 启动时向 A2ABus 注册 AgentCard,
     其他 Agent 可通过 discover() 发现具备特定能力的 Agent。
@@ -200,7 +200,7 @@ class A2AMessage:
 class A2ABus:
     """Agent 间通信总线 (类比 IPC / Message Queue)。
 
-    对标 A2A Protocol v1.0 (Linux Foundation 2026-04 生产就绪)。
+    对齐 A2A Protocol v1.0 (Linux Foundation 2026-04 生产就绪)。
 
     支持模式:
       - 点对点消息: send(target, message)

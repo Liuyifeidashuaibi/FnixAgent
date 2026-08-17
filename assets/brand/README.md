@@ -1,6 +1,6 @@
 # Brand assets
 
-This directory holds the official **Fnix Harness** brand assets (logo, wordmark, color palette, OG image, etc.).
+This directory holds the official **FnixAgent** brand assets (logo, wordmark, color palette, OG image, etc.).
 
 > 📌 **TL;DR:** Use the wordmark for headers, the icon for app tiles, the OG image for social previews. Don't recolor, skew, or remix without permission.
 
@@ -16,7 +16,7 @@ This directory holds the official **Fnix Harness** brand assets (logo, wordmark,
 | `icon.svg` | SVG | vector | Square app icon |
 | `icon-512.png` | PNG | 512×512 | Tauri bundler / desktop icon |
 | `icon-256.png` | PNG | 256×256 | GitHub social card (small) |
-| `wordmark.svg` | SVG | vector | "Fnix Harness" text only |
+| `wordmark.svg` | SVG | vector | "FnixAgent" text only |
 | `og-image.png` | PNG | 1280×640 | Social preview (GitHub, Twitter, etc.) |
 | `favicon.ico` | ICO | multi | Browser tab |
 | `colors.md` | — | — | Brand color palette (token names + hex) |

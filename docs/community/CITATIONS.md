@@ -14,7 +14,7 @@
             with Three-Layer Task Graph Planning},
   year   = {2026},
   author = {Liu, Yifei},
-  url    = {https://github.com/fnixagent/fnixagent},
+  url    = {https://github.com/Liuyifeidashuaibi/FnixAgent},
   note   = {All Rights Reserved. View-only access via GitHub.},
   version = {0.5.0},
 }
@@ -25,7 +25,7 @@
 ```
 Liu, Y. (2026). FnixAgent: A Local-First Desktop Agent Workbench with
 Three-Layer Task Graph Planning (Version 0.5.0) [Computer software].
-https://github.com/fnixagent/fnixagent
+https://github.com/Liuyifeidashuaibi/FnixAgent
 ```
 
 ### MLA
@@ -33,7 +33,7 @@ https://github.com/fnixagent/fnixagent
 ```
 Liu, Yifei. FnixAgent: A Local-First Desktop Agent Workbench with
 Three-Layer Task Graph Planning. Version 0.5.0, 2026,
-github.com/fnixagent/fnixagent.
+github.com/Liuyifeidashuaibi/FnixAgent.
 ```
 
 ---
@@ -43,9 +43,9 @@ github.com/fnixagent/fnixagent.
 ### Markdown
 
 ```markdown
-本文讨论的 [FnixAgent](https://github.com/fnixagent/fnixagent)
+本文讨论的 [FnixAgent](https://github.com/Liuyifeidashuaibi/FnixAgent)
 是刘逸飞开发的本地优先桌面 Agent 工作台,采用三层任务图规划模型
-(KTG/STP/MFP),详见 [架构决策记录](https://github.com/fnixagent/fnixagent/blob/main/docs/adr/0004-three-layer-task-graph.md)。
+(KTG/STP/MFP),详见 [架构决策记录](https://github.com/Liuyifeidashuaibi/FnixAgent/blob/main/docs/adr/0004-three-layer-task-graph.md)。
 ```
 
 ### 引用论文 / 链接规范
@@ -60,9 +60,9 @@ github.com/fnixagent/fnixagent.
 ### 架构图
 
 ```markdown
-![FnixAgent 架构图](https://raw.githubusercontent.com/fnixagent/fnixagent/main/docs/architecture.svg)
+![FnixAgent 架构图](https://raw.githubusercontent.com/Liuyifeidashuaibi/FnixAgent/main/docs/architecture.svg)
 
-> 来源:[FnixAgent Architecture](https://github.com/fnixagent/fnixagent/blob/main/docs/architecture.svg),
+> 来源:[FnixAgent Architecture](https://github.com/Liuyifeidashuaibi/FnixAgent/blob/main/docs/architecture.svg),
 > © 2026 刘逸飞,引用请注明出处。
 ```
 
@@ -106,7 +106,7 @@ github.com/fnixagent/fnixagent.
 | 学术引用 | "FnixAgent" 或 "Liu, Y." |
 | 个人简历 | "刘逸飞 / FnixAgent 作者" |
 | 致谢 | "感谢刘逸飞开发了 FnixAgent" |
-| 公司博客 | 引用请注明 "刘逸飞 (fnixagent.dev)" |
+| 公司博客 | 引用请注明 "刘逸飞 (github.com/Liuyifeidashuaibi/FnixAgent)" |
 
 ---
 
@@ -120,7 +120,7 @@ FnixAgent 的完整 SBOM 见 [`reports/sbom.spdx.json`](../../reports/sbom.spdx.
 基于 [Tauri 2](https://tauri.app/) (MIT/Apache-2.0),
 [React](https://react.dev/) (MIT), 和
 [Rust](https://www.rust-lang.org/) (MIT/Apache-2.0) 的
-[FnixAgent](https://github.com/fnixagent/fnixagent)。
+[FnixAgent](https://github.com/Liuyifeidashuaibi/FnixAgent)。
 ```
 
 ---
@@ -131,11 +131,11 @@ FnixAgent 的完整 SBOM 见 [`reports/sbom.spdx.json`](../../reports/sbom.spdx.
 
 | 主题 | 联系邮箱 |
 | --- | --- |
-| 技术细节 | tech@fnixagent.dev |
-| 产品方向 | hello@fnixagent.dev |
-| 商用合作 | licensing@fnixagent.dev |
-| 媒体采访 | press@fnixagent.dev |
-| 安全研究 | security@fnixagent.dev |
+| 技术细节 | liuyifeidashuaibi@gmail.com |
+| 产品方向 | liuyifeidashuaibi@gmail.com |
+| 商用合作 | liuyifeidashuaibi@gmail.com |
+| 媒体采访 | liuyifeidashuaibi@gmail.com |
+| 安全研究 | liuyifeidashuaibi@gmail.com |
 
 ---
 
@@ -155,16 +155,16 @@ FnixAgent 的完整 SBOM 见 [`reports/sbom.spdx.json`](../../reports/sbom.spdx.
 
 FnixAgent 受以下项目启发(已在 [agent-research-report.md](../../agent-research-report.md) 中详细分析):
 
-- [LangChain](https://github.com/langchain-ai/langchain) — Python SDK 设计参考
+- [LangChain](https://github.com/langchain-ai/langchain) — Python SDK 设计思路
 - [LangGraph](https://github.com/langchain-ai/langgraph) — 图规划思想
 - [AutoGen](https://github.com/microsoft/autogen) — 多 Agent 协作
 - [Continue](https://github.com/continuedev/continue) — VS Code 集成参考
 - [Cline](https://github.com/cline/cline) — Skill 概念
-- [Ollama](https://github.com/ollama/ollama) — 本地 LLM 集成
+- [本地推理引擎](本地推理引擎) — 本地 LLM 集成
 - [Tauri](https://github.com/tauri-apps/tauri) — 桌面运行时
 - [Obsidian](https://obsidian.md/) — Markdown 记忆设计
 - [Dify](https://github.com/langgenius/dify) — Agent 编排 UI
-- [Anthropic Skills](https://docs.anthropic.com/) — Skill schema 设计
+- [ Skills](https://docs.anthropic.com/) — Skill schema 设计
 - [Microsoft TypeChat](https://github.com/microsoft/TypeChat) — 结构化输出
 
 ---

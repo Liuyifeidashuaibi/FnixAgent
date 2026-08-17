@@ -6,7 +6,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { finishRunning, upsertActivity, type ActivityItem } from "../shell/chatgpt-desktop/activityTypes";
+import { finishRunning, upsertActivity, type ActivityItem } from "../shell/desktop/activityTypes";
 
 const running: ActivityItem = {
   id: "tool-call-1",

@@ -1,6 +1,6 @@
-# Fnix Harness — 安装与运行指南
+# FnixAgent — 安装与运行指南
 
-> **产品定位**：本地优先的 AI Harness 工作台（对标 [Hermes Agent](https://github.com/NousResearch/hermes-agent) / OpenHarness），Work 办公 + Code 编程，**无账号、仅 BYOK**。
+> **产品定位**：本地优先的 AI 工作台，Work 办公 + Code 编程，**无账号、仅 BYOK**。
 
 ---
 
@@ -12,7 +12,7 @@
    - **macOS**：`.dmg`
    - **Linux**：`.deb` 或 AppImage
 3. 安装并启动 Fnix Desktop（**无需登录**）
-4. 首次引导或 **设置 → AI** → 填写您自己的 API Key（OpenAI / Qwen / DeepSeek / GLM / 兼容端点）
+4. 首次引导或 **设置 → AI** → 填写您自己的 API Key（ LLM / Qwen / DeepSeek / GLM / 兼容端点）
 5. 选择本地工作区文件夹 → 开始使用 Work 或 Code
 
 > Desktop 不会使用服务端 LLM Key；Key 保存在本机。
@@ -23,12 +23,12 @@
 
 ### 前置条件
 
-| 工具 | 版本 |
-|------|------|
-| Python | 3.11+ |
-| Node.js | 18+ |
-| pnpm | 9+ |
-| Rust | stable（Tauri，[安装指引](https://v2.tauri.app/start/prerequisites/)） |
+| 工具    | 版本                                                                   |
+| ------- | ---------------------------------------------------------------------- |
+| Python  | 3.11+                                                                  |
+| Node.js | 18+                                                                    |
+| pnpm    | 9+                                                                     |
+| Rust    | stable（Tauri，[安装指引](https://v2.tauri.app/start/prerequisites/)） |
 
 ### 一键安装
 
@@ -74,12 +74,12 @@ pnpm dev              # 仅 Tauri（Standalone 自动 spawn 后端）
 cp .env.example .env
 ```
 
-| 变量 | 说明 |
-|------|------|
-| `FNIXAGENT_PROFILE=standalone` | 零 Docker 本地模式（默认） |
-| `FNIX_API_ONLY=1` | 后端强制 BYOK（默认开启） |
-| `JWT_SECRET_KEY` | 本地 dev 可默认；**公开部署务必修改** |
-| `FNIX_LOCAL_URL` | sidecar 地址，默认 `http://127.0.0.1:8710` |
+| 变量                           | 说明                                       |
+| ------------------------------ | ------------------------------------------ |
+| `FNIXAGENT_PROFILE=standalone` | 零 Docker 本地模式（默认）                 |
+| `FNIX_API_ONLY=1`              | 后端强制 BYOK（默认开启）                  |
+| `JWT_SECRET_KEY`               | 本地 dev 可默认；**公开部署务必修改**      |
+| `FNIX_LOCAL_URL`               | sidecar 地址，默认 `http://127.0.0.1:8710` |
 
 **Desktop 用户的 LLM Key 在应用内 Settings 填写**，不必写入 `.env`（除非 headless API 调试）。
 
@@ -87,7 +87,7 @@ cp .env.example .env
 
 ## 磁盘空间
 
-Cursor / Agent 编译可能在 **C:\Users\<you>\AppData\Local\Temp\cursor-sandbox-cache** 占用数十 GB。
+/ Agent 编译可能在 **C:\Users\<you>\AppData\Local\Temp\cursor-sandbox-cache** 占用数十 GB。
 
 ```bash
 node scripts/clean-dev-cache.mjs
@@ -128,11 +128,11 @@ Desktop (Tauri 2)  →  agentd :8003  →  fnix-local :8710
 
 ## 故障排除
 
-| 问题 | 处理 |
-|------|------|
-| C 盘满 | `pnpm clean:cache` |
-| 后端离线 | `pnpm dev:api` 或检查 8003 端口（agentd 默认） |
-| 无 LLM 响应 | Settings → AI 检查 API Key |
+| 问题            | 处理                                                        |
+| --------------- | ----------------------------------------------------------- |
+| C 盘满          | `pnpm clean:cache`                                          |
+| 后端离线        | `pnpm dev:api` 或检查 8003 端口（agentd 默认）              |
+| 无 LLM 响应     | Settings → AI 检查 API Key                                  |
 | fnix-local 离线 | Work/Code 仍可用 Python fallback；可选 `pnpm stack:sidecar` |
 
 ---

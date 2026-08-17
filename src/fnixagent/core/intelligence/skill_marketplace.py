@@ -1,13 +1,13 @@
 """
 FnixAgent ∞ 技能市场 (Skill Marketplace) — Layer 6
 
-设计参考:
-  - OpenClaw AutoSkill: 对话中自动创建技能, 46% token减少
+设计思路:
+  - 自动技能创建: 对话中自动创建技能, 46% token减少
   - Evolver/EvoMap GEP: Genome Evolution Protocol, 标准基因胶囊, 审计轨迹
   - GenericAgent (Fudan): 技能树结晶, 6x token减少
-  - Hermes Agent: Nudge Engine → 技能创建, 通才技能包
+  - 主动知识持久化 → 技能创建, 通才技能包
   - DeerFlow 2.0: 技能市场插件生态
-  - ClawHub: 技能发现与分发
+  - 技能市场: 技能发现与分发
 
 核心思想:
   ┌─────────────────────────────────────────────────────────────────┐
@@ -15,7 +15,7 @@ FnixAgent ∞ 技能市场 (Skill Marketplace) — Layer 6
   ├─────────────────────────────────────────────────────────────────┤
   │  DETECT → CREATE → VALIDATE → VERSION → PUBLISH → EVOLVE        │
   │  │         │         │          │         │          │           │
-  │  │  检测到   │  从经验   │  沙箱    │  基因    │  技能    │  GEPA   │
+  │  │  检测到   │  从经验   │  沙箱    │  基因    │  技能    │  遗传优化   │
   │  │  可复用   │  中提取   │  验证    │  版本    │  市场    │  进化   │
   │  │  模式    │  技能    │  安全    │  控制    │  分发    │  优化   │
   │  └─────────┴─────────┴─────────┴─────────┴─────────┴─────────┘  │
@@ -189,10 +189,10 @@ class SkillMarketplace:
     技能市场 — 技能全生命周期管理
 
     实现:
-    - 技能检测与自动创建 (OpenClaw AutoSkill)
+    - 技能检测与自动创建 (自动技能创建)
     - 技能验证 (沙箱安全测试)
     - 技能版本控制 (语义化版本)
-    - 技能进化 (GEPA优化技能基因)
+    - 技能进化 (遗传优化优化技能基因)
     - 技能市场 (发现、分发、评分)
     """
 
@@ -234,7 +234,7 @@ class SkillMarketplace:
         return False
 
     # ============================================================
-    # 自动技能创建 (OpenClaw AutoSkill)
+    # 自动技能创建 (自动技能创建)
     # ============================================================
 
     def detect_and_create(
@@ -248,7 +248,7 @@ class SkillMarketplace:
         从成功任务中自动检测可复用模式并创建技能
 
         GenericAgent风格: 执行路径结晶为技能
-        触发条件: 3次成功类似操作 (Nudge Engine)
+        触发条件: 3次成功类似操作 (主动知识持久化)
         """
         if not success:
             return None
@@ -426,7 +426,7 @@ class SkillMarketplace:
         return skill
 
     # ============================================================
-    # 技能进化 (GEPA)
+    # 技能进化 (遗传优化)
     # ============================================================
 
     def evolve_skill(
@@ -437,7 +437,7 @@ class SkillMarketplace:
         performance_improvement: float = 0.0,
     ) -> Skill | None:
         """
-        进化技能基因 (GEPA遗传帕累托进化)
+        进化技能基因 (遗传优化遗传帕累托进化)
 
         对技能的单个基因进行变异, 记录性能变化
         """

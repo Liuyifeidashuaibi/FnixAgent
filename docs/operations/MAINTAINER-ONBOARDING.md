@@ -74,7 +74,7 @@ Subject: Nominate @user for Maintainer
 - [ ] 评审 3 个已存在的 PR(找历史中的 PR,作为练习)
 - [ ] 加入私有通讯渠道(邮件列表 / Discord)
 - [ ] 自我介绍(Discussion / 邮件)
-- [ ] 领取一个 `good first issue`(从 [Issue 列表](https://github.com/fnixagent/fnixagent/issues?q=label%3A%22good+first+issue%22)挑)
+- [ ] 领取一个 `good first issue`(从 [Issue 列表](https://github.com/Liuyifeidashuaibi/FnixAgent/issues?q=label%3A%22good+first+issue%22)挑)
 
 ---
 
@@ -178,7 +178,7 @@ Maintainer 响应时间:
 
 ## 八、激励 / Incentives
 
-由于本项目是个人作品集,**不**对外发放:
+由于本项目为独立维护的专有项目,**不**对外发放:
 
 - ❌ 薪资
 - ❌ 股权
@@ -194,7 +194,7 @@ Maintainer 响应时间:
 
 ---
 
-## 九、参考 / References
+## 九、/ References
 
 - [Rust Governance](https://www.rust-lang.org/governance)
 - [Kubernetes Community](https://www.kubernetes.dev/)

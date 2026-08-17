@@ -1,12 +1,12 @@
 """
 ∞ Evolution Guard — 安全认知层 (KnowRL + Misevolution 启发)
 
-设计参考:
+设计思路:
   - Misevolution (上海AI Lab + 上交大 + 普林斯顿):
     自进化Agent的"错误进化"风险 — 能力退化、错误积累、目标漂移
   - KnowRL (ACL 2026):
     知识增强RL, 模型认知边界自感知, 事实监督融入推理
-  - Hermes Agent: Honcho 辩证用户建模
+  - 用户建模 辩证用户建模
 
 三层防护:
   Layer 1: 认知边界感知 (KnowRL 启发)

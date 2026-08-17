@@ -1,6 +1,6 @@
 """地狱级综合能力测试题 — 「AI 初创公司竞品技术情报中心」
 
-测试题设计 (对标 GAIA Level 3 + 真实商业场景):
+测试题设计 (对齐 GAIA Level 3 + 真实商业场景):
   场景: 用户是 AI 初创公司 CTO, 需要一个完整的竞品技术情报中心
 
   任务分解 (覆盖全部 8 个能力域):
@@ -145,7 +145,7 @@ async def test_phase3_data_modeling(tmp_dir: Path) -> dict:
                             ["LangChain", "DAG", "Yes", "Short-term", "No", "Yes", 8.5],
                             ["AutoGPT", "ReAct", "Yes", "Vector DB", "No", "Yes", 7.2],
                             ["FnixAgent", "Hybrid", "Yes", "7-Layer", "Yes", "Yes", 9.3],
-                            ["Cursor", "IDE", "Yes", "Session", "No", "No", 8.8],
+                            ["行业编码工具", "IDE", "Yes", "Session", "No", "No", 8.8],
                         ],
                     }
                 ],
@@ -171,7 +171,7 @@ async def test_phase3_data_modeling(tmp_dir: Path) -> dict:
                 "file_path": chart_path,
                 "chart_type": "bar",
                 "title": "竞品技术评分对比",
-                "x_labels": ["LangChain", "AutoGPT", "FnixAgent", "Cursor"],
+                "x_labels": ["LangChain", "AutoGPT", "FnixAgent", "行业编码工具"],
                 "series": [{"name": "评分", "data": [8.5, 7.2, 9.3, 8.8]}],
             },
         )
@@ -219,7 +219,7 @@ async def test_phase4_document_delivery(tmp_dir: Path) -> dict:
                     "2. 竞品分析\nLangChain: DAG 架构, 强生态; "
                     "AutoGPT: ReAct 循环, 自主性强; "
                     "FnixAgent: 七层 Intelligence, 多模态; "
-                    "Cursor: IDE 集成。\n\n"
+                    "行业编码工具: IDE 集成。\n\n"
                     "3. 结论\nFnixAgent 在记忆层、多模态、自进化三方面领先。"
                 ),
             },
@@ -246,7 +246,10 @@ async def test_phase4_document_delivery(tmp_dir: Path) -> dict:
                 "output_path": pptx_path,
                 "title": "AI Agent 竞品情报简报",
                 "slides": [
-                    {"title": "竞品概览", "content": "LangChain / AutoGPT / FnixAgent / Cursor"},
+                    {
+                        "title": "竞品概览",
+                        "content": "LangChain / AutoGPT / FnixAgent / 行业编码工具",
+                    },
                     {"title": "技术对比", "content": "架构 / 工具调用 / 记忆 / 多模态 / 自进化"},
                     {"title": "结论", "content": "FnixAgent 七层 Intelligence 领先"},
                 ],

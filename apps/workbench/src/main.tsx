@@ -21,11 +21,11 @@ async function boot() {
   // falls back to VITE_API_BASE/the Vite proxy when this command is unavailable.
   await initializeFnixRuntime();
 
-  const { default: ChatGptDesktopApp } = await import("./shell/chatgpt-desktop/ChatGptDesktopApp");
+  const { default: DesktopApp } = await import("./shell/desktop/DesktopApp");
   createRoot(root).render(
     <StrictMode>
       <ErrorBoundary>
-        <ChatGptDesktopApp />
+        <DesktopApp />
       </ErrorBoundary>
     </StrictMode>,
   );

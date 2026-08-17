@@ -1,4 +1,4 @@
-# 📚 Fnix Harness — Documentation
+# 📚 FnixAgent — Documentation
 
 > Welcome! This is the table of contents for the entire project. If you're new here, start with **Quick start** below.
 
@@ -6,13 +6,13 @@
 
 ## 🚀 Quick start
 
-| Audience | Start here | Time |
-|----------|------------|------|
-| **End users** (just want to use the app) | [QUICKSTART.md](QUICKSTART.md) → download a [release](https://github.com/Liuyifeidashuaibi/FnixAgent/releases) | 5 min |
-| **Developers** (want to build from source) | [INSTALL.md](INSTALL.md) → [DEVELOPMENT.md](../DEVELOPMENT.md) | 30 min |
-| **Contributors** (want to ship code) | [CONTRIBUTING.md](../CONTRIBUTING.md) → [CODE_STYLE.md](../CODE_STYLE.md) | 1 h |
-| **Security researchers** | [SECURITY.md](../SECURITY.md) | 10 min |
-| **Architects / reviewers** | [ARCHITECTURE.md](../ARCHITECTURE.md) | 45 min |
+| Audience                                   | Start here                                                                                                     | Time   |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------- | ------ |
+| **End users** (just want to use the app)   | [QUICKSTART.md](QUICKSTART.md) → download a [release](https://github.com/Liuyifeidashuaibi/FnixAgent/releases) | 5 min  |
+| **Developers** (want to build from source) | [INSTALL.md](INSTALL.md) → [DEVELOPMENT.md](../DEVELOPMENT.md)                                                 | 30 min |
+| **Contributors** (want to ship code)       | [CONTRIBUTING.md](../CONTRIBUTING.md) → [CODE_STYLE.md](../CODE_STYLE.md)                                      | 1 h    |
+| **Security researchers**                   | [SECURITY.md](../SECURITY.md)                                                                                  | 10 min |
+| **Architects / reviewers**                 | [ARCHITECTURE.md](../ARCHITECTURE.md)                                                                          | 45 min |
 
 ---
 
@@ -65,7 +65,6 @@
 ## 📚 References
 
 - [references/](references/) — papers and prior art
-- [../_references/](../_references/) — cloned upstream Agent projects
 - [internal/](internal/) — internal RFCs and design notes (contributors only)
 
 ## 🇨🇳 中文资源
@@ -82,7 +81,7 @@
 - 💡 **Have an idea?** → [Start a discussion](https://github.com/Liuyifeidashuaibi/FnixAgent/discussions/categories/ideas)
 - 🛡️ **Security issue?** → [SECURITY.md](../SECURITY.md) (private)
 - 💬 **Question?** → [Q&A](https://github.com/Liuyifeidashuaibi/FnixAgent/discussions/categories/q-a)
-- 📧 **Other** → `hello@fnixagent.dev`
+- 📧 **Other** → `liuyifeidashuaibi@gmail.com`
 
 ---
 

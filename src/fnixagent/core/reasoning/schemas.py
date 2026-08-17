@@ -1,4 +1,4 @@
-"""LLM 输出结构化 Schema(借鉴 PydanticAI output_type)。
+"""LLM 输出结构化 Schema。
 
 为 LLM 关键输出定义 Pydantic Model,在 _call_llm 后强制校验,
 失败触发重试/降级而非静默继续。

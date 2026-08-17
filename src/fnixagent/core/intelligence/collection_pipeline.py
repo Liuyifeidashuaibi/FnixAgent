@@ -1,22 +1,22 @@
 """
 ∞ Collection Pipeline v2.0 — 顶级采集管道
 
-设计参考 2026 年全球最顶级采集技术:
+设计思路 2026 年全球最顶级采集技术:
   ┌─────────────────────────────────────────────────────────────────┐
   │  Deep Research Agents:                                          │
-  │  FlowSearch (上海AI Lab) → Multi-Agent DAG知识流, GAIA/HLE领先  │
-  │  STORM (Stanford, 7k★)    → LLM知识管理, 自动生成引文报告       │
-  │  GPT-Researcher (28k★)    → Plan-and-Solve 并行研究             │
-  │  DeepAgents (LangChain)   → Agent自己管理自己, 2026新范式       │
+  │  流程检索 (上海AI Lab) → Multi-Agent DAG知识流, GAIA/HLE领先  │
+  │  研究合成器 (Stanford, 7k★)    → LLM知识管理, 自动生成引文报告       │
+  │  研究助手 (28k★)    → Plan-and-Solve 并行研究             │
+  │  多智能体框架 (LangChain)   → Agent自己管理自己, 2026新范式       │
   ├─────────────────────────────────────────────────────────────────┤
   │  Web Scraping & Extraction:                                     │
-  │  FireCrawl               → LLM就绪, 智能清洗→Markdown/JSON      │
-  │  Crawl4AI                → AI驱动, LLM理解+传统采集性能         │
+  │  网页抓取服务               → LLM就绪, 智能清洗→Markdown/JSON      │
+  │  爬虫服务                → AI驱动, LLM理解+传统采集性能         │
   │  Bright Data MCP         → 企业级, 自动规避CAPTCHA, 代理池      │
-  │  Jina Reader API         → 任意URL→LLM-ready Markdown           │
+  │  阅读服务 API         → 任意URL→LLM-ready Markdown           │
   ├─────────────────────────────────────────────────────────────────┤
   │  AI Search APIs:                                                │
-  │  Tavily                   → Agent专用, 结构化字段, ClawHub#1    │
+  │  Tavily                   → Agent专用, 结构化字段, 技能市场#1    │
   │  Perplexity SAC           → Search as Code, 并行数千次搜索      │
   │  Brave Search API         → 隐私优先, AI Agent友好              │
   ├─────────────────────────────────────────────────────────────────┤
@@ -30,7 +30,7 @@
   Layer 4: 智能调度层 — 优先级队列, 去重, 速率限制, 故障转移, 自适应频率
   Layer 3: 多Agent协同层 — Paper/Code/News/Blog/Social 专业Agent分工
   Layer 2: 统一采集管道 — API/Scraping/RSS/MCP/Webhook 五类采集器
-  Layer 1: 数据清洗标准化 — FireCrawl式清洗, 语义去重, 格式标准化
+  Layer 1: 数据清洗标准化 — 网页抓取服务式清洗, 语义去重, 格式标准化
 
 30+ 信息源全景:
   学术: arXiv, Semantic Scholar, Connected Papers, Google Scholar, OpenReview
@@ -39,7 +39,7 @@
   新闻: RSS(15+), Hacker News, Reddit, Twitter/X
   大厂: OpenAI, Anthropic, DeepMind, Meta AI, Google AI, Microsoft Research
   会议: ICLR, ICML, NeurIPS, ACL, CVPR, AAAI
-  抓取: FireCrawl, Crawl4AI, Bright Data MCP, Jina Reader
+  抓取: 网页抓取服务, 爬虫服务, Bright Data MCP, 阅读服务
   协议: MCP, ACP, HTTP/2, WebSocket, Webhook
 """
 
@@ -71,6 +71,7 @@ logger = logging.getLogger(__name__)
 # 信息源注册表 — 30+ 源完整定义
 # ============================================================
 
+
 class SourceTier(str, Enum):
     """信息源等级"""
 
@@ -78,6 +79,7 @@ class SourceTier(str, Enum):
     TIER_1 = "tier_1"  # 重要 (Tavily, RSS, HuggingFace)
     TIER_2 = "tier_2"  # 补充 (Reddit, HN, Twitter)
     TIER_3 = "tier_3"  # 探索 (YouTube, 小众博客)
+
 
 class CollectionMethod(str, Enum):
     """采集方式"""
@@ -89,6 +91,7 @@ class CollectionMethod(str, Enum):
     WEBHOOK = "webhook"  # Webhook 推送
     GRAPHQL = "graphql"  # GraphQL 查询
     SDK = "sdk"  # 官方 SDK
+
 
 @dataclass
 class SourceConfig:
@@ -114,6 +117,7 @@ class SourceConfig:
     # 分类/标签过滤
     categories: list[str] = field(default_factory=list)
     tags: list[str] = field(default_factory=list)
+
 
 # ============================================================
 # 30+ 信息源定义
@@ -228,7 +232,7 @@ SOURCES = {
             "latest AI agent framework 2026",
             "OpenAI agent research 2026",
             "Google DeepMind agent 2026",
-            "Anthropic Claude agent MCP 2026",
+            "行业 agent MCP 2026",
             "self-evolving AI agent architecture",
             "multi-agent system breakthrough 2026",
             "AI agent memory persistence",
@@ -312,7 +316,7 @@ SOURCES = {
     ),
     "anthropic_blog": SourceConfig(
         source_id="anthropic_blog",
-        name="Anthropic Blog",
+        name="行业技术博客",
         tier=SourceTier.TIER_1,
         method=CollectionMethod.WEB_SCRAPING,
         base_url="https://www.anthropic.com/research",
@@ -354,7 +358,7 @@ SUPPLEMENTARY_SOURCES = [
     {"id": "twitter", "name": "Twitter/X AI", "category": "social"},
     {"id": "deepmind_blog", "name": "DeepMind Blog", "category": "blog"},
     {"id": "meta_ai_blog", "name": "Meta AI Blog", "category": "blog"},
-    {"id": "google_ai_blog", "name": "Google AI Blog", "category": "blog"},
+    {"id": "google_ai_blog", "name": "Meta AI Blog", "category": "blog"},
     {"id": "ms_research", "name": "Microsoft Research", "category": "blog"},
     {"id": "aaai", "name": "AAAI", "category": "academic"},
     {"id": "acl", "name": "ACL", "category": "academic"},
@@ -365,6 +369,7 @@ SUPPLEMENTARY_SOURCES = [
 # ============================================================
 # 采集结果统一模型
 # ============================================================
+
 
 @dataclass
 class RawItem:
@@ -384,6 +389,7 @@ class RawItem:
     content_length: int = 0
     language: str = "en"
     is_duplicate: bool = False
+
 
 @dataclass
 class NormalizedItem:
@@ -413,6 +419,7 @@ class NormalizedItem:
     quality_score: float = 0.0
     is_high_quality: bool = False
 
+
 @dataclass
 class CollectionBatch:
     """一次采集批次"""
@@ -434,18 +441,20 @@ class CollectionBatch:
     per_source_duration: dict = field(default_factory=dict)
     errors: list[str] = field(default_factory=list)
 
+
 # ============================================================
 # Layer 1: 数据清洗与标准化
 # ============================================================
+
 
 class DataNormalizer:
     """
     数据清洗与标准化引擎
 
-    设计参考:
-      - FireCrawl: 智能内容清洗, 过滤导航栏/页脚/广告, 输出纯净Markdown
-      - Jina Reader: 任意URL→LLM-ready Markdown
-      - Crawl4AI: LLM理解+传统采集性能
+    设计思路:
+      - 网页抓取服务: 智能内容清洗, 过滤导航栏/页脚/广告, 输出纯净Markdown
+      - 阅读服务: 任意URL→LLM-ready Markdown
+      - 爬虫服务: LLM理解+传统采集性能
 
     功能:
       - HTML→Markdown 转换
@@ -456,7 +465,7 @@ class DataNormalizer:
       - 格式标准化
     """
 
-    # 噪声模式 (FireCrawl启发)
+    # 噪声模式 (网页抓取服务启发)
     NOISE_PATTERNS = [
         r"<nav[^>]*>.*?</nav>",
         r"<footer[^>]*>.*?</footer>",
@@ -505,8 +514,8 @@ class DataNormalizer:
         "workflow",
         "agentic",
         "autonomous agent",
-        "OpenAI",
-        "Anthropic",
+        "openai",
+        "",
         "Claude",
         "GPT",
         "DeepMind",
@@ -515,7 +524,7 @@ class DataNormalizer:
         "LangGraph",
         "CrewAI",
         "AutoGen",
-        "OpenClaw",
+        "agent skill",
         "knowledge graph",
         "vector database",
         "embedding",
@@ -693,9 +702,11 @@ class DataNormalizer:
 
         return min(1.0, score)
 
+
 # ============================================================
 # Layer 2: 统一采集管道
 # ============================================================
+
 
 class UnifiedCollector:
     """
@@ -1205,7 +1216,7 @@ class UnifiedCollector:
         return items
 
     # ============================================================
-    # Web Scraping 采集器 (FireCrawl/Crawl4AI/Bright Data 启发)
+    # Web Scraping 采集器 (网页抓取服务/爬虫服务/Bright Data 启发)
     # ============================================================
 
     async def collect_web_scraping(self, source: SourceConfig) -> list[RawItem]:
@@ -1213,14 +1224,14 @@ class UnifiedCollector:
         Web Scraping 采集
 
         支持三种后端:
-          - FireCrawl API: 智能内容清洗
-          - Jina Reader: URL→Markdown
+          - 网页抓取服务 API: 智能内容清洗
+          - 阅读服务: URL→Markdown
           - 原生 httpx: 基础抓取
         """
         items = []
         client = await self._get_client()
 
-        # 优先使用 Jina Reader (免费, LLM-ready)
+        # 优先使用 阅读服务 (免费, LLM-ready)
         jina_url = f"https://r.jina.ai/{source.base_url}"
         await self._rate_limit(source)
 
@@ -1363,9 +1374,11 @@ class UnifiedCollector:
 
         return batch
 
+
 # ============================================================
-# Layer 3: 多Agent协同编排层 (FlowSearch 启发)
+# Layer 3: 多Agent协同编排层 (流程检索 启发)
 # ============================================================
+
 
 class AgentRole(str, Enum):
     """Agent 角色"""
@@ -1377,6 +1390,7 @@ class AgentRole(str, Enum):
     SOCIAL_AGENT = "social_agent"  # 社交媒体Agent
     SYNTHESIS_AGENT = "synthesis_agent"  # 综合合成Agent
 
+
 @dataclass
 class AgentTask:
     """Agent 任务"""
@@ -1387,14 +1401,15 @@ class AgentTask:
     priority: int = 0  # 0=最高
     dependencies: list[str] = field(default_factory=list)  # 依赖的 task_id
 
+
 class MultiAgentOrchestrator:
     """
     多Agent协同编排层
 
-    设计参考:
-      - FlowSearch (上海AI Lab): 多Agent DAG知识流, 动态结构化知识流
-      - GPT-Researcher: Plan-and-Solve 并行子任务
-      - DeepAgents: Agent自己管理自己
+    设计思路:
+      - 流程检索 (上海AI Lab): 多Agent DAG知识流, 动态结构化知识流
+      - 研究助手: Plan-and-Solve 并行子任务
+      - 多智能体框架: Agent自己管理自己
 
     工作流程:
       1. 任务分解: 按领域将采集任务分配给专业Agent
@@ -1560,9 +1575,11 @@ class MultiAgentOrchestrator:
 
         return report
 
+
 # ============================================================
 # Layer 4: 智能调度中心
 # ============================================================
+
 
 class ScheduleFrequency(str, Enum):
     """调度频率"""
@@ -1572,6 +1589,7 @@ class ScheduleFrequency(str, Enum):
     DAILY = "daily"  # 每日
     WEEKLY = "weekly"  # 每周
     MONTHLY = "monthly"  # 每月
+
 
 class IntelligentScheduler:
     """
@@ -1758,9 +1776,11 @@ class IntelligentScheduler:
             }
         return health
 
+
 # ============================================================
 # CollectionPipeline 别名 (兼容外部代码引用)
 # ============================================================
+
 
 class CollectionPipeline(UnifiedCollector):
     """

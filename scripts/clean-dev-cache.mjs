@@ -7,7 +7,7 @@
  */
 
 /**
- * Clean dev caches that commonly fill C: (Cursor sandbox, npm, pip, cargo, project artifacts).
+ * Clean dev caches that commonly fill C: (业界编码工具 sandbox, npm, pip, cargo, project artifacts).
  *
  * Usage:
  *   node scripts/clean-dev-cache.mjs          # safe defaults
@@ -47,7 +47,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 console.log('Fnix dev cache cleanup\n');
 
-// --- C: / system temp (Cursor agent builds can reach 60GB+) ---
+// --- C: / system temp (业界编码工具 agent builds can reach 60GB+) ---
 const tempTargets = [
   path.join(temp, 'cursor-sandbox-cache'),
   path.join(temp, 'DockerDesktopUpdates'),

@@ -7,7 +7,7 @@
   3. P0-04: 多评估器反思质量系统(6 个加权评估器,并行执行)
 
 参考 MiniMax Execute→Evaluate→Fix 闭环和 Self-Refine 思想。
-P0-04 借鉴 kaoyan-ai-platform 的 reflection/manager.py 设计。
+P0-04。
 
 注意:
   本包导出的 ReflectionResult 为 P0-04 新版(含 sub_scores/issues/

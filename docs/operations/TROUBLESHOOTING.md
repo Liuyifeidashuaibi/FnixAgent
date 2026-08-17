@@ -28,7 +28,7 @@
 **解决**(管理员 PowerShell):
 ```powershell
 Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
-irm https://fnixagent.dev/install.ps1 | iex
+irm https://raw.githubusercontent.com/Liuyifeidashuaibi/FnixAgent/main/install.ps1 | iex
 ```
 
 ### A2. macOS 提示"无法打开,因为无法验证开发者"
@@ -130,11 +130,11 @@ xcode-select --install
 
 ## C. LLM 调用问题
 
-### C1. "Connection refused" 调用本地 Ollama
+### C1. "Connection refused" 调用本地 本地推理引擎
 
 ```bash
-# 1. 确认 Ollama 在跑
-ollama serve
+# 1. 确认 本地推理引擎 在跑
+local-llm serve
 
 # 2. 确认端口可达
 curl http://127.0.0.1:11434/api/tags
@@ -151,10 +151,10 @@ grep base_url config/agentd.yaml
 
 **排查**:
 ```bash
-# 测试 OpenAI
+# 测试  LLM
 curl -H "Authorization: Bearer $OPENAI_API_KEY" https://api.openai.com/v1/models
 
-# 测试 Anthropic
+# 测试
 curl -H "x-api-key: $ANTHROPIC_API_KEY" https://api.anthropic.com/v1/models
 ```
 
@@ -170,7 +170,7 @@ llm:
   fallback:
     - openai
     - anthropic
-    - ollama
+    - local-llm
 ```
 
 ### C4. LLM 响应很慢
@@ -183,7 +183,7 @@ llm:
 ```yaml
 llm:
   providers:
-    ollama:
+    local-llm:
       num_ctx: 4096       # 减少上下文
       num_gpu: 1          # 用 GPU
       keep_alive: "30m"   # 模型保留
@@ -240,7 +240,7 @@ fnix memory reset --confirm
 
 **Windows**:
 ```powershell
-irm https://fnixagent.dev/fonts/install.ps1 | iex
+irm https://github.com/Liuyifeidashuaibi/FnixAgent/fonts/install.ps1 | iex
 ```
 
 **macOS**:系统设置 → 字体 → 下载 `Sarasa Mono SC`、`PingFang SC`

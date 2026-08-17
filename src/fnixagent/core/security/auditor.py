@@ -1,7 +1,7 @@
 """
 工具语义审计层 (Tool Auditor)。
 
-参考 OWASP ASI Top 10 与 Anthropic 三层防御体系的第二层(语义校验),
+参考 OWASP ASI Top 10 与  三层防御体系的第二层(语义校验),
 在 LLM 生成工具调用后、实际执行前插入静态审计:
   - 参数类型不匹配(JSON Schema 校验)
   - 路径越界(.. 跨目录、绝对路径越出 workspace)

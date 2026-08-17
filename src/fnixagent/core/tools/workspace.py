@@ -1,5 +1,5 @@
 """
-Workspace 工具集 — 参考业界主流 Agent 工具 的 Agent 工具能力
+Workspace 工具集 — 参考主流 Agent 工具 的 Agent 工具能力
 
 提供 AI Agent 与本地文件系统和 Shell 交互所需的核心工具:
   - read_file: 读取文件
@@ -274,7 +274,7 @@ class WorkspaceContext:
 
 class WorkspaceTools:
     """
-    Workspace 工具集 — 参考业界主流 Agent 工具 的 Agent 工具
+    Workspace 工具集 — 参考主流 Agent 工具 的 Agent 工具
 
     用法:
         tools = WorkspaceTools(workspace_root="/path/to/project")

@@ -197,7 +197,7 @@ PR 作者提交前先自己填:
 
 ---
 
-## 七、参考 / References
+## 七、/ References
 
 - [Google Engineering Practices — Code Review](https://google.github.io/eng-practices/review/)
 - [Conventional Comments](https://conventionalcomments.org/)

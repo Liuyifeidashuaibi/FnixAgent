@@ -301,7 +301,7 @@ def main() -> int:
         if not ws.is_dir():
             all_errs.append(f"workspace missing: {ws}")
         else:
-            print("\n== Codex LLM ==")
+            print("\n== Code LLM ==")
             all_errs.extend(test_codex_create_module(ws))
             all_errs.extend(test_codex_fix_bug(ws))
 

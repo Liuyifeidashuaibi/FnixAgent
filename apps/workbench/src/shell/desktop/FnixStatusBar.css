@@ -1,0 +1,82 @@
+/* FnixStatusBar — 底部一行信号灯
+ * 2.0 Aurora：主题感知 · 发丝顶线 · 呼吸光点 · 等宽数字 */
+
+.fnix-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 28px;
+  padding: 0 16px;
+  background: var(--bg, #fafafa);
+  border-top: 1px solid var(--hairline, rgba(0, 0, 0, 0.055));
+  font-family: ui-sans-serif, -apple-system, system-ui, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+  color: var(--muted, #5c6470);
+  user-select: none;
+}
+
+.fnix-status-light {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  max-width: 260px;
+}
+
+.fnix-status-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 11px;
+  color: var(--muted, #5c6470);
+}
+
+/* 状态点：静态为实心点，就绪态带柔光环 */
+.fnix-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #9ca3af;
+  flex-shrink: 0;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.fnix-status-dot.green {
+  background: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.16);
+}
+
+.fnix-status-dot.yellow {
+  background: #f59e0b;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.16);
+}
+
+.fnix-status-dot.red {
+  background: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.16);
+  animation: fnix-status-blink 1.6s ease-in-out infinite;
+}
+
+.fnix-status-dot.gray {
+  background: #9ca3af;
+}
+
+@keyframes fnix-status-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fnix-status-dot.red { animation: none; }
+}
+
+/* 暗色主题适配 */
+.theme-dark .fnix-status-bar {
+  background: var(--sidebar, #0c0d10);
+  color: #9da1ab;
+}
+.theme-dark .fnix-status-label {
+  color: #9da1ab;
+}

@@ -6,7 +6,7 @@
     - format_builtin_skills_block() — Work prompt 注入（渐进式披露）
     - CapturedSkill / SkillLibrary (HERA 自动捕获)
 
-顶级架构升级组件 (参考达尔文.skill):
+顶级架构升级组件:
     - SkillEvaluator: 9 维评估器
     - SkillEvolver: 技能进化器（棘轮机制）
     - HumanInTheLoop: 三层守关机制
@@ -32,7 +32,7 @@ from fnixagent.core.skills.registry import (
     reset_builtin_registry,
 )
 
-# 顶级架构升级组件 (参考达尔文.skill)
+# 顶级架构升级组件
 from fnixagent.core.skills.evaluator import (
     SkillEvaluator,
     SkillScore,

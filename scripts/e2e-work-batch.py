@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""离线 + 在线 Work 能力批量验收（Trae Work / WorkBuddy）。"""
+"""离线 + 在线 Work 能力批量验收（业界工作台 / 工作台）。"""
 from __future__ import annotations
 # -*- coding: utf-8 -*-
 # Copyright (C) 2026 FnixAgent. All rights reserved.

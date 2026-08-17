@@ -11,7 +11,7 @@
 
 设计原则:
   - 无第三方依赖(不依赖官方 mcp SDK;STDIO 用 asyncio,SSE 用 urllib)
-  - 协议兼容 Anthropic MCP(2024-11-05)
+  - 协议兼容 MCP(2024-11-05)
   - 异步优先(client 内部 async,提供同步包装)
   - 白名单模式(server 默认不暴露任何工具)
 """

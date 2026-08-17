@@ -8,7 +8,7 @@
 
 - [从 FnixAgent 旧版本升级](#从-fnixagent-旧版本升级)
 - [从 Continue / Cline 迁移配置](#从-continue--cline-迁移配置)
-- [从 Aider 迁移](#从-aider-迁移)
+- [从  迁移](#从-aider-迁移)
 - [从 LangChain / LlamaIndex 应用迁移](#从-langchain--llamaindex-应用迁移)
 - [数据迁移(换电脑)](#数据迁移换电脑)
 
@@ -105,7 +105,7 @@ fnixagent migrate-slash-commands \
 
 ---
 
-## 从 Aider 迁移
+## 从  迁移
 
 ### 1. 提取 `~/.aider.conf.yml`
 
@@ -135,7 +135,7 @@ dist/
 
 ### 3. Conversation 历史
 
-Aider 历史是 `~/.aider.chat.history.md`,无法自动迁移。
+ 历史是 `~/.aider.chat.history.md`,无法自动迁移。
 可手动浏览后挑选重要对话,粘到 FnixAgent 的 "Memory" 面板。
 
 ---
@@ -274,6 +274,6 @@ fnix config lint --fix
 ## 寻求帮助
 
 - 📖 本文档未覆盖?提 Issue
-- 💬 紧急问题:`licensing@fnixagent.dev`(请勿发敏感信息)
+- 💬 紧急问题:`liuyifeidashuaibi@gmail.com`(请勿发敏感信息)
 
 © 2024-2026 FnixAgent. All Rights Reserved.
