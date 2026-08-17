@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""E2E: 模拟前端在 test2 工作区创建 MBTI 测验站并验收（Work + Codex Apply）。"""
+"""E2E: 模拟前端在 test2 工作区创建 MBTI 测验站并验收（Work + Code Apply）。"""
 from __future__ import annotations
 # -*- coding: utf-8 -*-
 # Copyright (C) 2026 FnixAgent. All rights reserved.
@@ -158,7 +158,7 @@ def run_work(ws: Path, task: str) -> tuple[bool, str]:
 
 
 def run_codex_apply(ws: Path, task: str) -> tuple[bool, str, list[dict]]:
-    print("[e2e] Codex stream (preview)…")
+    print("[e2e] Code stream (preview)…")
     events = stream_ndjson(
         "/api/v1/chat/agent",
         {
@@ -242,7 +242,7 @@ def main() -> int:
         "禁止只写「创建文件」这类说明文字。"
     )
 
-    # 1) Work（对标 Trae Work / WorkBuddy — 应直接 write_file 落盘）
+    # 1) Work（对标 业界工作台 / 工作台 — 应直接 write_file 落盘）
     ok_work, msg_work = run_work(ws, task)
     print("[e2e] Work result:", ok_work, msg_work)
 
@@ -257,7 +257,7 @@ def main() -> int:
     print("[e2e] fallback: Code preview -> Accept")
     reset_artifact_dir(ws)
 
-    # 2) Code (Codex) preview → Accept
+    # 2) Code (Code) preview → Accept
     ok_codex, msg_codex, changes = run_codex_apply(ws, task)
     print("[e2e] Code result:", ok_codex, msg_codex, f"changes={len(changes)}")
     errors = validate_mbti_site(art)

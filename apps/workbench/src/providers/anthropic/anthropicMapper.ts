@@ -14,10 +14,10 @@
 
 import type { AIRequest, AIResponse, ResponseMetrics } from "../../utils/providers";
 import type {
-  AnthropicMessagesRequest,
-  AnthropicMessagesResponse,
-  AnthropicContentBlock,
-  AnthropicUsage,
+  MessagesRequest,
+  MessagesResponse,
+  ContentBlock,
+  Usage,
 } from "./anthropicTypes";
 
 // ── Request Mapping ───────────────────────────────────────────────────────────
@@ -25,13 +25,13 @@ import type {
 /**
  * Convert Fnix's AIRequest into the Anthropic Messages API request body.
  */
-export function mapRequestToAnthropic(
+export function mapRequestTo(
   request: AIRequest,
   model: string,
   stream: boolean,
-): AnthropicMessagesRequest {
+): MessagesRequest {
   // Build user content blocks
-  const userContent: AnthropicContentBlock[] = [
+  const userContent: ContentBlock[] = [
     { type: "text", text: request.userPrompt },
   ];
 
@@ -64,8 +64,8 @@ export function mapRequestToAnthropic(
 /**
  * Convert a non-streaming Anthropic response into Fnix's AIResponse.
  */
-export function mapAnthropicResponse(
-  response: AnthropicMessagesResponse,
+export function mapResponse(
+  response: MessagesResponse,
   providerName: string,
   model: string,
   durationMs: number,
@@ -79,7 +79,7 @@ export function mapAnthropicResponse(
   return {
     text: textContent,
     success: true,
-    metrics: buildAnthropicMetrics(
+    metrics: buildMetrics(
       providerName,
       model,
       response.usage,
@@ -92,10 +92,10 @@ export function mapAnthropicResponse(
 /**
  * Build ResponseMetrics from Anthropic usage data (exact tokens, not estimated).
  */
-export function buildAnthropicMetrics(
+export function buildMetrics(
   providerName: string,
   model: string,
-  usage: AnthropicUsage | null,
+  usage: Usage | null,
   durationMs: number,
   status: ResponseMetrics["status"],
 ): ResponseMetrics {

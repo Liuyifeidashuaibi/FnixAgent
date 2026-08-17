@@ -86,7 +86,7 @@ description: 对代码 diff 进行结构化审查   # 一句话描述
 # 元数据(可选但推荐)
 author: 刘逸飞
 license: All Rights Reserved           # 与主项目一致
-homepage: https://fnixagent.dev/skills/code-review
+homepage: https://github.com/Liuyifeidashuaibi/FnixAgent/skills/code-review
 tags: [code, review, productivity]
 category: development                  # development|productivity|creative|research|ops
 icon: ./icon.svg
@@ -441,10 +441,10 @@ fnix skill reload code-review
 
 ---
 
-## 十一、参考 / References
+## 十一、/ References
 
-- [Anthropic Tool Use](https://docs.anthropic.com/en/docs/tool-use)
-- [OpenAI Function Calling](https://platform.openai.com/docs/guides/function-calling)
+- [ Tool Use](https://docs.anthropic.com/en/docs/tool-use)
+- [ LLM Function Calling](https://platform.openai.com/docs/guides/function-calling)
 - [LangChain Tools](https://python.langchain.com/docs/modules/agents/tools/)
 
 ---

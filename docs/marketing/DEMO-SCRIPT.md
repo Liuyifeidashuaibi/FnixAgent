@@ -125,7 +125,7 @@ issues: [{severity, line, message}, ...]
 > "看,Key 在这里,FnixAgent 进程只能按需读取。"
 
 **[画面 - 调用云端 LLM,展示响应]**:
-> "需要时调用云端 OpenAI,prompt 走 HTTPS,Key 仍然在 Keychain。"
+> "需要时调用云端  LLM,prompt 走 HTTPS,Key 仍然在 Keychain。"
 
 ---
 
@@ -158,16 +158,14 @@ issues: [{severity, line, message}, ...]
 
 > **旁白**:
 >
-> "代码在 GitHub 上 fnixagent/fnixagent。
-> 这是 All Rights Reserved 的个人作品集项目,
-> 可以浏览学习但不能 fork 商用。
-> 详细的招聘一页纸在 docs/community/HIRING-ONE-PAGER.md。
+> "代码在 GitHub 上 Liuyifeidashuaibi/FnixAgent。
+> 项目以 All Rights Reserved 方式发布,可以浏览学习但不能 fork 商用。
 > 谢谢观看。""
 
 **[字幕 - 大字结尾]**:
 
 ```
-github.com/fnixagent/fnixagent
+github.com/Liuyifeidashuaibi/FnixAgent
 All Rights Reserved · View-Only
 docs/community/HIRING-ONE-PAGER.md
 ```
@@ -248,7 +246,7 @@ FnixAgent 是我用 Tauri 2 + Python 3.12 + Rust 做的本地优先桌面 Agent 
 ⚠️ 本项目以 All Rights Reserved 方式发布
 可以浏览学习,但禁止 fork / 商用 / 代码复用
 
-GitHub: github.com/fnixagent/fnixagent
+GitHub: github.com/Liuyifeidashuaibi/FnixAgent
 文档: docs/community/HIRING-ONE-PAGER.md
 
 #AI #Agent #Tauri #Python #Rust #开源项目 #面试 #个人项目

@@ -1,11 +1,11 @@
-"""文档检查器(借鉴 OfficeCLI render→look→fix 闭环)。
+"""文档检查器。
 
 核心能力:
   - render: 将文档(docx/pdf/pptx)渲染为图片,让 AI 能"看到"效果
   - inspect: 检查文档格式/内容是否符合预期
   - diagnose: 生成诊断报告,列出问题供 AI 修复
 
-设计参考:
+设计思路:
   - OfficeCLI 的 "render → look → fix" 模式:
     AI 生成文档后先渲染为图片,通过视觉检查发现问题,再修复
   - PPTAgent 的 PPTEval 评估框架:

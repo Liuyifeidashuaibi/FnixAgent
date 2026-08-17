@@ -37,7 +37,7 @@ jobs:
             👋 Thanks for your first pull request!
 
             A maintainer will review it shortly. While you wait, please:
-            1. Read [CONTRIBUTING.md](CONTRIBUTING.md) and [CODE_STYLE.md](CODE_STYLE.md)
+            1. Read [CONTRIBUTING.md](CONTRIBUTING.md) and [CODE_STYLE.md](docs/CODE_STYLE.md)
             2. Make sure CI is green (lint, typecheck, tests)
             3. Update [CHANGELOG.md](CHANGELOG.md) under `[Unreleased]`
             4. Rebase onto the latest `main`

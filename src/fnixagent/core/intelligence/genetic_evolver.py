@@ -1,12 +1,12 @@
 """
-∞ Genetic Evolver — 遗传帕累托进化层 (GEPA + SIPDO 启发)
+∞ Genetic Evolver — 遗传帕累托进化层 (遗传优化 + SIPDO 启发)
 
-设计参考:
-  - GEPA (ICLR 2026 Oral): Genetic-Pareto Prompt Evolution
+设计思路:
+  - 遗传优化 (ICLR 2026 Oral): Genetic-Pareto Prompt Evolution
     比主流RL高6%, 数据量仅1/35, 多目标同时优化
   - SIPDO (ICLR 2026): Self-Improving Prompt Design Optimization
     Prompt Learning 闭环自进化, 不断生成新问题新机制
-  - Hermes Agent: Atropos RL 训练集成
+  - 训练框架 RL 训练集成
 
 核心算法:
   1. 编码: 将 Prompt/Skill 编码为基因序列 (每段独立可变异)
@@ -299,7 +299,7 @@ class GeneticOperators:
         """
         单点交叉 — 交换两个父代的基因模块
 
-        GEPA 风格: 模块级交叉, 不是字符级
+        遗传优化 风格: 模块级交叉, 不是字符级
         """
         if random.random() > crossover_rate or len(parent_a.genes) < 2 or len(parent_b.genes) < 2:
             return copy.deepcopy(parent_a), copy.deepcopy(parent_b)
@@ -450,7 +450,7 @@ class EvolutionResult:
 
 class GeneticEvolver:
     """
-    遗传进化引擎 — GEPA + SIPDO 启发
+    遗传进化引擎 — 遗传优化 + SIPDO 启发
 
     端到端的 Prompt/Skill 进化流程:
       1. 编码 → 2. 初始化种群 → 3. 评估 → 4. 帕累托排序
@@ -720,9 +720,9 @@ class TrajectoryDrivenEvolution:
     """
     轨迹驱动进化 — 从执行轨迹中学习
 
-    设计参考:
+    设计思路:
       - SCOPE: 从执行轨迹中合成指南, 自动演化
-      - GEPA: 轨迹反馈驱动进化方向
+      - 遗传优化: 轨迹反馈驱动进化方向
 
     工作流程:
       1. 收集执行轨迹 (成功/失败)

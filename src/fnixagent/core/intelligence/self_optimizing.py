@@ -8,8 +8,6 @@ few-shot 示例；下次类似任务前召回注入 prompt，让 Agent "见多�
   - SkillLibrary  存任务签名 + solution_summary（粗粒度，"做过类似任务"）
   - SelfOptimizing 存完整 input/output + tool_sequence + score（细粒度，"具体怎么做的"）
 两者可并存：SkillLibrary 提供"是否做过"召回，SelfOptimizing 提供"怎么做"的 few-shot。
-
-借鉴:
   - dspy/teleprompt/bootstrap.py: BootstrapFewShot._bootstrap_one_example
     核心：metric(example, prediction, trace) → bool 决定是否沉淀
     精简：success_score 替代 metric，extract_examples_from_trace 替代 _bootstrap
@@ -45,7 +43,7 @@ from typing import Any
 class FewShotExample:
     """一条 few-shot 示例（来自成功轨迹）。
 
-    对标 DSPy Example(augmented=True, **inputs, **outputs)：
+    对齐 DSPy Example(augmented=True, **inputs, **outputs)：
       - example_id → DSPy example.id
       - input_text/output_text → DSPy Example 的 inputs/outputs
       - tool_sequence → DSPy trace 的 predictor 序列
@@ -64,7 +62,7 @@ class FewShotExample:
     usage_count: int = 0
     last_used_at: float = 0.0
 
-# 借鉴 SkillLibrary 的 _STOPWORDS，保持一致
+#，保持一致
 _STOPWORDS = frozenset(
     {
         "the",
@@ -158,9 +156,7 @@ def success_score(
     duration_ms: int,
     error_count: int,
 ) -> float:
-    """轨迹评分（DSPy.metric 的轻量替代）。
-
-    借鉴 DSPy BootstrapFewShot 的 metric_threshold：score >= 0.6 才入库。
+    """轨迹评分（DSPy.metric 的轻量替代）。。
 
     维度加权:
       - 成功 0.5（基础分，失败即 0）
@@ -192,7 +188,7 @@ def extract_examples_from_trace(
 ) -> FewShotExample | None:
     """从一条执行轨迹提取 few-shot 示例（DSPy._bootstrap_one_example 精简版）。
 
-    对标 DSPy BootstrapFewShot._bootstrap_one_example:
+    对齐 DSPy BootstrapFewShot._bootstrap_one_example:
       - 跑一次 teacher → 用 metric 判定 success → 成功则把 trace 沉淀为 demo
     精简：本函数不跑 teacher，直接用已有轨迹；用 success_score 替代 metric。
     """
@@ -278,7 +274,7 @@ class SelfOptimizingLibrary:
             pass
 
     def add(self, ex: FewShotExample | None) -> bool:
-        """添加示例，去重 + 容量限制（借鉴 Voyager 同名覆盖）。
+        """添加示例，去重 + 容量限制。
 
         - 相同 task_hash 7 天内不重复捕获（同 SkillLibrary 策略）
         - 相同 task_hash 超 7 天：覆盖旧的（Voyager V2 模式）
@@ -308,7 +304,7 @@ class SelfOptimizingLibrary:
     ) -> list[FewShotExample]:
         """召回 top-K 示例（Jaccard 相似度 + score 加权 + 时间衰减）。
 
-        对标 DSPy._train 取 demo：高分 demo 优先；同时借鉴 SkillLibrary 的
+        对齐 DSPy._train 取 demo：高分 demo 优先；同时
         时间衰减（30 天半衰期）+ workspace_kind 加分。
         """
         if not self.examples or not query.strip():

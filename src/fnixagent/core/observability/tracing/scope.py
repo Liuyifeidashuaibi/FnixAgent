@@ -5,7 +5,7 @@ TracingScope 维护当前线程/协程的 Span 栈,支持嵌套 with 语义:
   - 退出 with span: pop(expected=span)
   - 创建子 Span 时,自动从栈顶读取 parent_id
 
-设计借鉴:
+设计:
   - OpenTelemetry: ContextVar 存储 active span
   - OpenAI Agents SDK: scope 栈式管理
 

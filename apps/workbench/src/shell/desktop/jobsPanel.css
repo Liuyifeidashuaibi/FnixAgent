@@ -1,0 +1,310 @@
+﻿/* ============================================================
+ * P0 多任务并行可视化 — JobsPanel / TaskCard 样式
+ *
+ * 设计原则：
+ *   - 极简浅色（cursor code light 风格）
+ *   - 大面积留白，细线条，无 amber 色
+ *   - 状态色：pending 灰 / running 靛蓝 / completed 绿 / failed 红 / cancelled 灰
+ *   - 5px 细滚动条，150-250ms 过渡动画
+ * ============================================================ */
+
+/* ── Panel 容器 ── */
+.fnix-jobs-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px 12px;
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.12) transparent;
+}
+.fnix-jobs-panel::-webkit-scrollbar {
+  width: 5px;
+}
+.fnix-jobs-panel::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.12);
+  border-radius: 3px;
+}
+.fnix-jobs-panel.empty {
+  align-items: center;
+  justify-content: center;
+}
+
+.fnix-jobs-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px;
+}
+.fnix-jobs-panel-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text, #111827);
+  letter-spacing: 0.02em;
+}
+.fnix-jobs-refresh {
+  border: none;
+  background: transparent;
+  color: var(--muted, #6b7280);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 180ms ease, color 180ms ease;
+}
+.fnix-jobs-refresh:hover {
+  background: var(--bg-soft, #f3f4f6);
+  color: var(--text, #111827);
+}
+
+/* ── 统计行 ── */
+.fnix-jobs-stats-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  padding: 0 4px;
+}
+.fnix-jobs-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 4px;
+  border-radius: 8px;
+  background: var(--bg-soft, #f3f4f6);
+  transition: background 200ms ease;
+}
+.fnix-jobs-stat-value {
+  font-size: 16px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text, #111827);
+}
+.fnix-jobs-stat-label {
+  font-size: 11px;
+  color: var(--muted, #6b7280);
+  margin-top: 2px;
+}
+.fnix-jobs-stat.running .fnix-jobs-stat-value { color: var(--accent, #4f46e5); }
+.fnix-jobs-stat.completed .fnix-jobs-stat-value { color: var(--work, #10a37f); }
+.fnix-jobs-stat.failed .fnix-jobs-stat-value { color: #ef4444; }
+.fnix-jobs-stat.muted .fnix-jobs-stat-value { color: var(--muted, #6b7280); }
+
+/* ── Section ── */
+.fnix-jobs-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.fnix-jobs-section.empty {
+  padding: 10px 4px;
+}
+.fnix-jobs-section-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--faint, #9ca3af);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0 4px;
+}
+.fnix-jobs-empty-hint {
+  font-size: 12.5px;
+  color: var(--faint, #9ca3af);
+  padding: 12px 4px;
+  text-align: center;
+}
+
+/* ── TaskCard 网格 ── */
+.fnix-jobs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
+}
+.fnix-jobs-grid.completed {
+  opacity: 0.78;
+}
+
+/* ── TaskCard ── */
+.fnix-task-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #ffffff;
+  border: 1px solid var(--border, rgba(0, 0, 0, 0.06));
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+  outline: none;
+}
+.fnix-task-card:hover {
+  border-color: var(--border-2, rgba(0, 0, 0, 0.1));
+  box-shadow: var(--shadow-sm, 0 2px 12px rgba(0, 0, 0, 0.05));
+}
+.fnix-task-card.selected {
+  border-color: var(--accent, #4f46e5);
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.15);
+}
+.fnix-task-card.failed {
+  border-color: rgba(239, 68, 68, 0.25);
+}
+.fnix-task-card.running {
+  border-color: rgba(79, 70, 229, 0.22);
+}
+
+.fnix-task-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.fnix-task-card-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--faint, #9ca3af);
+}
+.fnix-task-card-dot.pending {
+  background: var(--faint, #9ca3af);
+  animation: fnix-pulse 1.6s ease-in-out infinite;
+}
+.fnix-task-card-dot.running {
+  background: var(--accent, #4f46e5);
+  animation: fnix-pulse 1.1s ease-in-out infinite;
+}
+.fnix-task-card-dot.completed { background: var(--work, #10a37f); }
+.fnix-task-card-dot.failed { background: #ef4444; }
+.fnix-task-card-dot.cancelled { background: var(--muted, #6b7280); }
+
+@keyframes fnix-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(0.85); }
+}
+
+.fnix-task-card-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text, #111827);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+.fnix-task-card-meta {
+  font-size: 11px;
+  color: var(--faint, #9ca3af);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+/* ── 进度条 ── */
+.fnix-task-card-progress {
+  width: 100%;
+  height: 3px;
+  background: var(--bg-muted, #e5e7eb);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.fnix-task-card-progress-bar {
+  height: 100%;
+  background: var(--accent, #4f46e5);
+  border-radius: 2px;
+  transition: width 220ms ease;
+}
+.fnix-task-card.completed .fnix-task-card-progress-bar { background: var(--work, #10a37f); }
+.fnix-task-card.failed .fnix-task-card-progress-bar { background: #ef4444; }
+.fnix-task-card.cancelled .fnix-task-card-progress-bar { background: var(--muted, #6b7280); }
+
+/* ── 步骤小圆点 ── */
+.fnix-task-card-steps {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.fnix-task-step-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--bg-muted, #e5e7eb);
+  flex-shrink: 0;
+  transition: background 180ms ease;
+}
+.fnix-task-step-dot.pending { background: var(--bg-muted, #e5e7eb); }
+.fnix-task-step-dot.running {
+  background: var(--accent, #4f46e5);
+  animation: fnix-pulse 1.1s ease-in-out infinite;
+}
+.fnix-task-step-dot.completed { background: var(--work, #10a37f); }
+.fnix-task-step-dot.failed { background: #ef4444; }
+.fnix-task-step-dot.skipped { background: var(--faint, #9ca3af); }
+
+/* ── 错误显示 ── */
+.fnix-task-card-error {
+  font-size: 11.5px;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.06);
+  border-radius: 6px;
+  padding: 6px 8px;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── 产物 chip ── */
+.fnix-task-card-artifacts {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.fnix-task-artifact-chip {
+  font-size: 11px;
+  color: var(--muted, #6b7280);
+  background: var(--bg-soft, #f3f4f6);
+  border-radius: 4px;
+  padding: 2px 6px;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fnix-task-artifact-chip.more {
+  background: transparent;
+  color: var(--faint, #9ca3af);
+}
+
+/* ── Footer ── */
+.fnix-task-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 2px;
+}
+.fnix-task-card-status-label {
+  font-size: 11px;
+  color: var(--muted, #6b7280);
+  letter-spacing: 0.04em;
+}
+.fnix-task-card.completed .fnix-task-card-status-label { color: var(--work, #10a37f); }
+.fnix-task-card.failed .fnix-task-card-status-label { color: #ef4444; }
+.fnix-task-card.cancelled .fnix-task-card-status-label { color: var(--muted, #6b7280); }
+
+.fnix-task-card-cancel {
+  border: 1px solid var(--border-2, rgba(0, 0, 0, 0.1));
+  background: transparent;
+  color: var(--muted, #6b7280);
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+.fnix-task-card-cancel:hover {
+  background: rgba(239, 68, 68, 0.06);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.25);
+}

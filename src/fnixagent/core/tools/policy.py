@@ -133,7 +133,7 @@ class ToolPolicy:
                 auto_approve_high = False
             else:
                 # P1 安全加固: 默认 fail-closed, SHELL/DESTRUCTIVE 必须显式确认
-                # 参考业界最佳实践: 破坏性命令默认要求用户确认, 即使本地 standalone 模式
+                # 参考工程实践: 破坏性命令默认要求用户确认, 即使本地 standalone 模式
                 # 用户可通过 FNIX_TOOL_AUTO_APPROVE=1 显式开启免确认 (不推荐生产使用)
                 auto_approve_high = False
         self.auto_approve_high = auto_approve_high

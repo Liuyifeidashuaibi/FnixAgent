@@ -28,7 +28,7 @@
 - [ ] 期望行为 vs 实际行为
 - [ ] 截图 / 录屏 / 日志
 
-如果是安全问题或漏洞,请改发 security@fnixagent.dev(见 SECURITY.md)。
+如果是安全问题或漏洞,请改发 liuyifeidashuaibi@gmail.com(见 SECURITY.md)。
 ```
 
 ### 2.2 Bug 报告
@@ -145,7 +145,7 @@
 新 Issue 进来
    ↓
 [ ] 是安全问题吗?
-   ↓ Yes → 立即移到私下处理,公开 Issue 关闭,留 security@fnixagent.dev
+   ↓ Yes → 立即移到私下处理,公开 Issue 关闭,留 liuyifeidashuaibi@gmail.com
    ↓ No
 [ ] 是 bug 还是 feature?
    ↓ Bug
@@ -223,7 +223,7 @@ jobs:
 已在 v0.5.1 修复:
 
 - 修复 commit: abc123
-- Release: https://github.com/fnixagent/fnixagent/releases/tag/v0.5.1
+- Release: https://github.com/Liuyifeidashuaibi/FnixAgent/releases/tag/v0.5.1
 
 升级后请确认问题解决。如有问题请重新打开本 issue。
 ```
@@ -251,7 +251,7 @@ jobs:
 
 ---
 
-## 八、参考 / References
+## 八、/ References
 
 - [GitHub — Triaging issues](https://docs.github.com/en/issues/tracking-your-work-with-issues/about-issues-and-pull-requests)
 - [Conventional Comments](https://conventionalcomments.org/)

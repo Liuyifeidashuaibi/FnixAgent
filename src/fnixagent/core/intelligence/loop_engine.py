@@ -1,10 +1,10 @@
 """
 ∞ Loop Engine — 自主闭环工程层 (2026 范式转移)
 
-设计参考:
-  - 循环工程理念 (业界主流 Agent 工具 之父): "I don't write prompts. I design Loops."
+设计思路:
+  - 循环工程理念 (主流 Agent 工具 之父): "I don't write prompts. I design Loops."
   - Loop Engineering: 触发→执行→评估→重试/结束 闭环机制
-  - Hermes Agent: Nudge Engine 自主知识持久化
+  - 主动知识持久化
   - SCOPE: 从执行轨迹在线合成指南
 
 核心思想:
@@ -19,7 +19,7 @@
   │  Loop Registry    │  Loop Scheduler   │  Loop Executor      │
   │  (Loop 注册中心)   │  (Loop 调度器)    │  (Loop 执行器)      │
   ├─────────────────────────────────────────────────────────────┤
-  │  Experience DB    │  Root Cause       │  Nudge Engine       │
+  │  Experience DB    │  Root Cause       │  主动知识持久化       │
   │  (经验数据库)      │  Analyzer         │  (自主推动)         │
   │                   │  (根因分析)        │                     │
   └─────────────────────────────────────────────────────────────┘
@@ -49,6 +49,7 @@ logger = logging.getLogger(__name__)
 # Loop 基础模型
 # ============================================================
 
+
 class LoopPhase(str, Enum):
     """Loop 执行阶段"""
 
@@ -62,6 +63,7 @@ class LoopPhase(str, Enum):
     RETRYING = "retrying"  # 重试中
     ABORTED = "aborted"  # 已中止
 
+
 class LoopPriority(str, Enum):
     """Loop 优先级"""
 
@@ -69,6 +71,7 @@ class LoopPriority(str, Enum):
     HIGH = "high"  # 高 (核心能力提升)
     MEDIUM = "medium"  # 中 (功能增强)
     LOW = "low"  # 低 (探索性改进)
+
 
 class LoopOutcome(str, Enum):
     """Loop 结果"""
@@ -80,6 +83,7 @@ class LoopOutcome(str, Enum):
     NO_CHANGE = "no_change"  # 无变化
     NEEDS_HUMAN = "needs_human"  # 需要人工介入
 
+
 @dataclass
 class LoopTrigger:
     """Loop 触发条件"""
@@ -90,6 +94,7 @@ class LoopTrigger:
     source: str = ""  # 触发来源
     params: dict = field(default_factory=dict)
     fired_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+
 
 @dataclass
 class LoopStep:
@@ -105,6 +110,7 @@ class LoopStep:
     status: str = "pending"  # pending / running / success / failed
     error: str = ""
 
+
 @dataclass
 class LoopPlan:
     """Loop 执行计划"""
@@ -118,6 +124,7 @@ class LoopPlan:
     max_retries: int = 3
     timeout_seconds: int = 600
     created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+
 
 @dataclass
 class LoopExperience:
@@ -136,6 +143,7 @@ class LoopExperience:
     tags: list[str] = field(default_factory=list)
     recorded_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
+
 @dataclass
 class LoopResult:
     """Loop 执行结果"""
@@ -152,9 +160,11 @@ class LoopResult:
     duration_ms: float = 0
     error: str = ""
 
+
 # ============================================================
 # Loop 定义
 # ============================================================
+
 
 @dataclass
 class Loop:
@@ -174,9 +184,11 @@ class Loop:
     parent_loop_id: str = ""  # 父 Loop (if nested)
     created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
+
 # ============================================================
 # Loop 执行器
 # ============================================================
+
 
 class LoopExecutor:
     """
@@ -390,16 +402,18 @@ class LoopExecutor:
         """获取已完成的 Loop 结果"""
         return self._completed_loops[-limit:]
 
+
 # ============================================================
 # Loop 调度器
 # ============================================================
+
 
 class LoopScheduler:
     """
     Loop 调度器 — 管理多 Loop 的并行执行和优先级
 
-    设计参考:
-      - Hermes Agent: 定时自动化任务
+    设计思路:
+      - 自主设计: 定时自动化任务
       - OpenAI Agents SDK: 子Agent手递手切换
     """
 
@@ -470,16 +484,18 @@ class LoopScheduler:
 
         return results
 
+
 # ============================================================
-# Nudge Engine — 自主推动机制
+# 主动知识持久化 — 自主推动机制
 # ============================================================
+
 
 class NudgeEngine:
     """
-    Nudge Engine — 自主知识持久化推动
+    主动知识持久化 — 自主推动
 
-    设计参考:
-      - Hermes Agent: periodic nudges to persist knowledge
+    设计思路:
+      - 自主设计: periodic nudges to persist knowledge
       - agentmemory: 自动捕获学习内容
 
     当系统检测到有价值的知识未被持久化时，主动推动写入。
@@ -551,9 +567,11 @@ class NudgeEngine:
 
         return None
 
+
 # ============================================================
 # Loop 注册中心
 # ============================================================
+
 
 class LoopRegistry:
     """
@@ -588,7 +606,7 @@ class LoopRegistry:
         },
         "prompt_evolution": {
             "name": "Prompt 进化",
-            "description": "GEPA 遗传帕累托优化系统 Prompt，提升质量和效率",
+            "description": "遗传帕累托优化系统 Prompt，提升质量和效率",
             "category": "prompt",
             "priority": LoopPriority.MEDIUM,
             "trigger_type": "event",

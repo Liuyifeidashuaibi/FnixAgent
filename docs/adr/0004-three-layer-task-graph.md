@@ -145,7 +145,7 @@ milestones:
 
 ## Alternatives Considered (备选方案)
 
-- **Anthropic Skill / Tool 编排**:过于扁平,没有时间维度
+- ** Skill / Tool 编排**:过于扁平,没有时间维度
 - **LangChain Plan-and-Execute**:只有一层 plan,不支持嵌套
 
 ## References (参考)

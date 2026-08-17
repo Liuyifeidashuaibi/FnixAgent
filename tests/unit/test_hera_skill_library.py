@@ -376,7 +376,7 @@ class TestThreadSafety:
 
 
 class TestAddFeedback:
-    """用户反馈信号回路测试 (对标 Cursor Bugbot Learning)。"""
+    """用户反馈信号回路测试 (对齐 行业编码工具 Bugbot Learning)。"""
 
     def test_add_feedback_up(self, library: SkillLibrary):
         skill = library.add_new_skill(
@@ -462,7 +462,7 @@ class TestAddFeedback:
         assert lib2.skills[0].feedback_comment == "好"
 
     def test_feedback_influences_retrieval_weight(self, library: SkillLibrary):
-        """👍 反馈应加分, 👎 反馈应大幅降权 (对标 Cursor Bugbot 反馈信号)。"""
+        """👍 反馈应加分, 👎 反馈应大幅降权 (对齐 行业编码工具 Bugbot 反馈信号)。"""
         # 三个相似任务, 不同反馈
         library.add_new_skill(
             user_input="生成月度报告 A",

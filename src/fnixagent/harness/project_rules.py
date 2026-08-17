@@ -1,11 +1,11 @@
-"""项目规则 — AGENTS.md 兼容分层加载（对标 Codex，落在 Fnix）。
+"""项目规则 — AGENTS.md 兼容分层加载（对齐工程实践，落在 Fnix）。
 
 优先级（后写覆盖前写的语义由「越具体越靠后」保证）：
 1. {workspace}/.fnix/rules.md          — Fnix 原生
 2. 从 workspace 根走到 cwd 路径上各层的 AGENTS.md / AGENTS.override.md
    （override 同层优先于 AGENTS.md）
 
-默认上限 32 KiB（与 Codex 默认量级一致），防止撑爆上下文。
+默认上限 32 KiB（与 行业默认量级一致），防止撑爆上下文。
 """
 
 # -*- coding: utf-8 -*-

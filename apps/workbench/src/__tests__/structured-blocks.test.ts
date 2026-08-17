@@ -9,7 +9,7 @@ import { describe, expect, it } from "vitest";
 import { ndjsonEventToBlock, redactSensitiveText } from "../utils/structuredBlocks";
 
 describe("structured event blocks", () => {
-  it("reads Codex step data from the nested step payload", () => {
+  it("reads Code step data from the nested step payload", () => {
     expect(ndjsonEventToBlock({
       type: "step_start",
       step: { step: 3, total: 5, description: "Run focused tests" },

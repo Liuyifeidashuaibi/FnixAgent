@@ -1,4 +1,4 @@
-"""LangGraph 状态 Reducer 函数集合(借鉴 LangGraph Annotated[T, reducer])。
+"""LangGraph 状态 Reducer 函数集合。
 
 Reducer 定义状态字段的合并语义:当多个节点返回同一字段的更新时,
 LangGraph 调用对应 reducer 合并,而非默认覆盖。

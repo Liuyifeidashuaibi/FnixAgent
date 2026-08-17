@@ -1,11 +1,11 @@
-# L4c — Codex / Cursor / Trae 必备层次 × Fnix 对照与实施计划
+# L4c — Code /  /  必备层次 × Fnix 对照与实施计划
 
-> 原则：学参考、定自己的产品（见 [`FNIX_PRODUCT.md`](../FNIX_PRODUCT.md)）。  
+> 原则：学参考、定自己的产品（见 [`FNIX_PRODUCT.md`](../FNIX_PRODUCT.md)）。
 > 不抄 `.codex` / 云订阅 / Electron；对齐能力，落在 `~/.fnix` + Work/Code。
 
 ---
 
-## 1. 做一款 Codex / Cursor / Trae 级产品需要哪些环节
+## 1. 做一款 Code /  /  级产品需要哪些环节
 
 三款产品外壳不同，**内核层次高度重合**：
 
@@ -20,7 +20,7 @@ L6  安全沙箱         工作区边界、命令黑名单、Diff/回滚
 L7  交付与双轨       安装包、BYOK、OSS vs 企业
 ```
 
-| 层次 | Codex | Cursor | Trae | Fnix 对标 |
+| 层次 | Code |  |  | Fnix |
 |------|-------|--------|------|-----------|
 | L0 壳 | CLI(+多端) | IDE/Composer | Work+Code | **Living Workbench** |
 | L1 宿主 | `~/.codex` | 云+本地 | 云+本地 | **Tauri→agentd→fnix-local→`~/.fnix`** |
@@ -29,7 +29,7 @@ L7  交付与双轨       安装包、BYOK、OSS vs 企业
 | L4 规则 | AGENTS.md 分层 | Rules/.cursorrules | 项目约定 | **`.fnix/rules.md` + AGENTS.md 兼容** |
 | L5 记忆 | 会话+记忆+Skills | 索引+记忆 | 会话 | **SOUL/MEMORY/skills/sessions** |
 | L6 安全 | 沙箱+审批 | Accept Diff | — | **路径沙箱+Diff Accept；回滚增强** |
-| L7 商业 | OpenAI 绑定 | 订阅 | 云账号 | **Community BYOK；Enterprise JWT** |
+| L7 商业 |  LLM 绑定 | 订阅 | 云账号 | **Community BYOK；Enterprise JWT** |
 
 ---
 
@@ -81,7 +81,7 @@ L7  交付与双轨       安装包、BYOK、OSS vs 企业
 ### 明确不做（Community）
 - 云端隔离容器执行（企业另轨）
 - 登录墙 / 托管 LLM
-- 重写为单一 Codex CLI 产品
+- 重写为单一  CLI 产品
 
 ---
 
@@ -96,7 +96,7 @@ pnpm smoke:code-loop   # Step 2+ 后仍必跑
 
 ---
 
-## 5. 与上一轮「Codex 模块清单」的对应
+## 5. 与上一轮「Code 模块清单」的对应
 
 | 你列的模块 | 落点 |
 |------------|------|

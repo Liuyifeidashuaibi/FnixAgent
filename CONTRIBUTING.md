@@ -2,37 +2,37 @@
 
 > ⚠️ **重要声明 / Important Notice**
 >
-> **本项目不接受外部代码贡献**。这是一个个人作品集项目,以
-> [All Rights Reserved](LICENSE) 方式发布。详见下文 "贡献边界" 章节。
+> **本项目不接受外部代码贡献**。本项目以 [All Rights Reserved](LICENSE)
+> 方式发布,详见下文 "贡献边界" 章节。
 >
-> **This project does NOT accept external code contributions.** It is a
-> personal portfolio project released under [All Rights Reserved](LICENSE).
+> **This project does NOT accept external code contributions at this time.**
+> The project is released under [All Rights Reserved](LICENSE).
 > See "Contribution Boundaries" below.
 
 ---
 
-感谢您关注 Fnix Harness！
+感谢您关注 FnixAgent!
 
 ## ⚠️ 贡献边界 / Contribution Boundaries
 
-| 类型 | 是否接受 |
-| --- | --- |
-| ❌ 代码贡献 (Pull Request) | **不接受** |
-| ❌ 翻译合作 | **不接受**(由维护者本人完成) |
-| ❌ Skill / Prompt 投稿 | **不接受**(见 [TRADEMARKS.md](TRADEMARKS.md)) |
-| ✅ Bug 报告 (GitHub Issue) | 欢迎 |
-| ✅ 设计讨论 (GitHub Discussion) | 欢迎 |
-| ✅ 安全漏洞披露 (PGP 邮件) | 欢迎 |
-| ✅ Star / 引用 / 在社交媒体提及 | 欢迎 |
+| 类型                            | 是否接受                                                |
+| ------------------------------- | ------------------------------------------------------- |
+| ❌ 代码贡献 (Pull Request)      | **不接受**                                              |
+| ❌ 翻译合作                     | **不接受**(由维护者本人完成)                            |
+| ❌ Skill / Prompt 投稿          | **不接受**(见 [docs/TRADEMARKS.md](docs/TRADEMARKS.md)) |
+| ✅ Bug 报告 (GitHub Issue)      | 欢迎                                                    |
+| ✅ 设计讨论 (GitHub Discussion) | 欢迎                                                    |
+| ✅ 安全漏洞披露 (PGP 邮件)      | 欢迎                                                    |
+| ✅ Star / 引用 / 在社交媒体提及 | 欢迎                                                    |
 
 **为什么?**
 
 1. **许可证限制**:本项目以 All Rights Reserved 发布,合入外部代码会带来
    法律风险(版权归属不清)
-2. **项目目标**:这是**个人简历作品集**,目的是展示作者工程能力,不是
-   社区协作型开源项目
+2. **维护模式**:本项目由单一维护者独立研发,当前阶段不接受社区代码合入,
+   以保证架构与质量控制的一致性
 3. **质量控制**:作者对每一行代码的设计都有明确意图,外部代码难以匹配
-4. **法律保护**:详细见 [LICENSE](LICENSE) 与 [LICENSE-COMMERCIAL.md](LICENSE-COMMERCIAL.md)
+4. **法律保护**:详细见 [LICENSE](LICENSE) 与 [docs/LICENSE-COMMERCIAL.md](docs/LICENSE-COMMERCIAL.md)
 
 ## 如果你想做类似项目
 
@@ -45,8 +45,6 @@
 
 ### 报告问题
 
-### 报告问题
-
 在创建 issue 之前，请先搜索现有 issue 列表，确保您的问题尚未被报告。如果找到相关 issue，您可以添加评论提供额外信息。
 
 创建新 issue 时，请使用相应的 issue 模板：
@@ -56,13 +54,13 @@
 
 ### 提交代码
 
-1. **Fork 仓库** - 点击仓库右上角的 "Fork" 按钮
-2. **克隆您的 fork** - `git clone https://github.com/<your-username>/FnixAgent.git`
-3. **创建分支** - `git checkout -b feature/your-feature-name`
-4. **进行更改** - 编写代码并确保测试通过
-5. **提交更改** - `git commit -m "feat: 描述您的更改"`
-6. **推送到您的 fork** - `git push origin feature/your-feature-name`
-7. **创建 Pull Request** - 在 GitHub 上创建 PR，描述您的更改
+本项目当前为**专有软件 (All Rights Reserved)**，不接受外部代码合入 (Pull Request)。
+以下开发环境设置和代码规范仅供维护者内部参考。
+
+如发现 Bug 或希望提出功能建议，请通过
+[GitHub Issues](https://github.com/Liuyifeidashuaibi/FnixAgent/issues)
+或 [Discussions](https://github.com/Liuyifeidashuaibi/FnixAgent/discussions)
+发起讨论。
 
 ### 开发环境设置
 
@@ -99,6 +97,7 @@ pnpm dev
 ```
 
 类型：
+
 - `feat`: 新功能
 - `fix`: 修复
 - `docs`: 文档更新

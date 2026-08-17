@@ -48,5 +48,5 @@ rg -n "L1-requirements" docs/layers/00-INDEX.md
 
 ## 4. 下一层入口
 
-→ **L2 底层引擎**：补齐内核健康字段、fnix-local 降级断言、BYOK 解析链回归。  
+→ **L2 底层引擎**：补齐内核健康字段、fnix-local 降级断言、BYOK 解析链回归。
 关键代码：`services/engine.py`、`work_pipeline.py`、`llm_policy.py`、`harness/local_bridge.py`。

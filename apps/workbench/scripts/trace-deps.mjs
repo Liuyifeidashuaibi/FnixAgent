@@ -7,19 +7,19 @@
 
 // Trace real dependency graph from production entry points.
 // Usage: node scripts/trace-deps.mjs
-import fs from "node:fs";
-import path from "node:path";
+import fs from 'node:fs';
+import path from 'node:path';
 
-const SRC = path.resolve(process.cwd(), "src");
-const exts = [".ts", ".tsx", ".js", ".jsx", ".css", ".json"];
+const SRC = path.resolve(process.cwd(), 'src');
+const exts = ['.ts', '.tsx', '.js', '.jsx', '.css', '.json'];
 
 function resolveImport(fromFile, spec) {
-  if (!spec.startsWith(".")) return null; // package import
+  if (!spec.startsWith('.')) return null; // package import
   const base = path.resolve(path.dirname(fromFile), spec);
   const candidates = [
     base,
     ...exts.map((e) => base + e),
-    ...exts.map((e) => path.join(base, "index" + e)),
+    ...exts.map((e) => path.join(base, 'index' + e)),
   ];
   for (const c of candidates) {
     if (fs.existsSync(c) && fs.statSync(c).isFile()) return c;
@@ -34,7 +34,7 @@ const cssImportRe = /@import\s+["']([^"']+)["']/g;
 function scan(file) {
   let text;
   try {
-    text = fs.readFileSync(file, "utf8");
+    text = fs.readFileSync(file, 'utf8');
   } catch {
     return [];
   }
@@ -47,16 +47,13 @@ function scan(file) {
   return out;
 }
 
-// Production entries: main.tsx static imports + ChatGptDesktopApp (dynamic prod path)
-const entries = [
-  path.join(SRC, "main.tsx"),
-  path.join(SRC, "shell/chatgpt-desktop/ChatGptDesktopApp.tsx"),
-];
+// Production entries: main.tsx static imports + DesktopApp (dynamic prod path)
+const entries = [path.join(SRC, 'main.tsx'), path.join(SRC, 'shell/desktop/DesktopApp.tsx')];
 // Excluded dynamic branches (dev/test): App.tsx, GlassKitPreview, Spec3Preview
 const EXCLUDE = new Set([
-  path.join(SRC, "App.tsx"),
-  path.join(SRC, "Spec3Preview.tsx"),
-  path.join(SRC, "ui/glass/preview/GlassKitPreview.tsx"),
+  path.join(SRC, 'App.tsx'),
+  path.join(SRC, 'Spec3Preview.tsx'),
+  path.join(SRC, 'ui/glass/preview/GlassKitPreview.tsx'),
 ]);
 
 const seen = new Set();
@@ -85,9 +82,12 @@ const used = all.filter((f) => seen.has(f));
 const dead = all.filter((f) => !seen.has(f));
 
 console.log(`TOTAL ${all.length}  USED ${used.length}  DEAD ${dead.length}`);
-console.log("\n=== DEAD FILES (not reachable from production shell) ===");
+console.log('\n=== DEAD FILES (not reachable from production shell) ===');
 for (const f of dead.sort()) console.log(path.relative(SRC, f));
 fs.writeFileSync(
-  "scripts/dead-files.txt",
-  dead.sort().map((f) => path.relative(SRC, f)).join("\n"),
+  'scripts/dead-files.txt',
+  dead
+    .sort()
+    .map((f) => path.relative(SRC, f))
+    .join('\n'),
 );

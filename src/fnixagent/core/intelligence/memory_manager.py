@@ -1,11 +1,11 @@
-"""L5 记忆层 (Memory Manager) — 对标 Letta/MemGPT。
+"""L5 记忆层 (Memory Manager) — 对齐 记忆服务层/记忆服务。
 
-核心思想 (Letta/MemGPT 范式):
+核心思想 (记忆服务层/记忆服务 范式):
   - Context = RAM:  当前对话上下文中的短期记忆
   - External = Disk: 持久化在外部的长期记忆
   - 系统自主管理记忆的写入、召回、巩固、遗忘
 
-记忆类型 (对标认知科学):
+记忆类型 (对齐认知科学):
   - episodic:   情景记忆 (具体任务执行经验)
   - semantic:   语义记忆 (提炼出的通用知识)
   - procedural: 程序记忆 (可复用的操作流程)
@@ -39,7 +39,7 @@ import time
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
-# 借鉴 self_optimizing.py 的 _STOPWORDS, 保持分词一致
+#, 保持分词一致
 _STOPWORDS = frozenset(
     {
         "the",
@@ -131,7 +131,7 @@ _VALID_TYPES = frozenset({"episodic", "semantic", "procedural", "working"})
 
 @dataclass
 class MemoryEntry:
-    """一条记忆 (对标 MemGPT MemoryBlock 的轻量版)。"""
+    """一条记忆 (对齐 记忆服务 MemoryBlock 的轻量版)。"""
 
     memory_id: str
     key: str  # 记忆键 (任务签名/主题)
@@ -150,10 +150,10 @@ class IntelligenceMemoryManager:
     存储路径: {workspace}/.fnix/intelligence_memory/memories.json
     线程安全, 零外部依赖。
 
-    对标 Letta/MemGPT:
-      - recall()   ≈ MemGPT 的 context_window 检索
-      - add_memory() ≈ MemGPT 的 memory_write
-      - consolidate() ≈ MemGPT 的 memory_consolidation (短期→长期)
+    对齐 记忆服务层/记忆服务:
+      - recall()   ≈ 记忆服务 的 context_window 检索
+      - add_memory() ≈ 记忆服务 的 memory_write
+      - consolidate() ≈ 记忆服务 的 memory_consolidation (短期→长期)
     """
 
     def __init__(self, workspace: str, state_dir: str = None):
@@ -232,7 +232,7 @@ class IntelligenceMemoryManager:
     ) -> MemoryEntry | None:
         """写入持久化记忆。
 
-        - 相同 key 覆盖 (对标 Voyager 同名覆盖)
+        - 相同 key 覆盖 (对齐 Voyager 同名覆盖)
         - memory_type 限定为 episodic/semantic/procedural/working
         - working 类型不固化, consolidate 时会被清理
         """
@@ -302,7 +302,7 @@ class IntelligenceMemoryManager:
             return result
 
     def consolidate(self) -> dict:
-        """把短期记忆固化为长期记忆 (对标 MemGPT memory_consolidation)。
+        """把短期记忆固化为长期记忆 (对齐 记忆服务 memory_consolidation)。
 
         策略:
           1. working (工作记忆) 清理 (太短期, 不保留)

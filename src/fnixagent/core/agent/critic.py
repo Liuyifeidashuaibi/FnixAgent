@@ -1,6 +1,4 @@
 """Spec 5 独立 Critic Agent — 任务产物语义审查（精简版）。
-
-借鉴:
   - noahshinn/reflexion (NeurIPS 2023): Actor + Evaluator + Self-Reflection
   - LangGraph Reflexion: Actor agent + External evaluator
   - CRITIC 框架: LLM 用工具做外判批判
@@ -36,10 +34,10 @@ from pydantic import BaseModel, Field, ValidationError
 
 logger = logging.getLogger(__name__)
 
-# H4: Pydantic BaseModel 强约束 (借鉴 OpenAI Agents SDK output_type)
+# H4: Pydantic BaseModel 强约束
 # 替代原 dataclass, 让 LLM 输出有结构化校验
 class CriticVerdict(BaseModel):
-    """Critic 审查结论 (Pydantic BaseModel, 借鉴 OpenAI Agents SDK output_type).
+    """Critic 审查结论 (Pydantic BaseModel,).
 
     用 model_validate_json 严格解析 LLM 输出,
     解析失败时记录 warning, 不再退化为启发式判断.
@@ -49,7 +47,6 @@ class CriticVerdict(BaseModel):
       - -1.0: 哨兵值, 表示"审查未完成" (LLM 调用失败/JSON 解析失败)
         passed=True 不阻断主流程, 但调用方可通过 score==-1.0 emit
         可观测信号 (critic.skipped), 避免静默漏检。
-        借鉴 LangGraph Reflexion Evaluator 的 fail-soft-with-signal 模式:
         fail-closed 会被 except 吞掉形成"假装阻断实则静默放行"的最差组合,
         fail-soft-with-signal 取折中——不阻断但不静默。
     """
@@ -246,8 +243,6 @@ class CriticAgent:
 
     def _parse_verdict(self, raw: str) -> CriticVerdict | None:
         """H4: 用 Pydantic BaseModel 严格解析 LLM 输出.
-
-        借鉴 OpenAI Agents SDK output_type:
           - 先尝试整体 model_validate_json
           - 失败则提取 JSON 块 (```json ... ``` 或 { ... })
           - 再用 model_validate_json 严格解析
@@ -297,7 +292,7 @@ class CriticAgent:
         #   - 调用方 (work_pipeline) 检测 score==-1.0 时 emit critic_skipped 事件
         #   - MFP 第 3 阶 (元反思) 可统计 critic.skip_rate 作为健康度指标
         #
-        # 借鉴 LangGraph Reflexion Evaluator 的 fail-soft-with-signal 模式。
+        #。
         logger.warning(
             "CriticAgent JSON 解析失败 (已尝试 4 种策略), "
             "返回 fail-soft verdict (passed=True, score=-1.0 哨兵). raw[:200]=%s",

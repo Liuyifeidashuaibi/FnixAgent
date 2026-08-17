@@ -1,6 +1,4 @@
-"""优先级任务队列 (Priority Task Queue) — P1-05。
-
-借鉴 zhua 项目 scheduler/kernel.py 的 ScheduleItem + 优先级队列设计,
+"""优先级任务队列 (Priority Task Queue) — P1-05。,
 为 fnixagent 任务管道提供优先级调度、插队、持久化与崩溃恢复能力。
 
 特性:

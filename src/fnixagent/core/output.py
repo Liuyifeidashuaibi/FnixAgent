@@ -1,4 +1,4 @@
-"""LLM 输出处理器(借鉴 PydanticAI OutputProcessor)。
+"""LLM 输出处理器。
 
 提供通用的输出校验 + 重试 + 降级框架:
   - OutputSchema:     包装 Pydantic Model,提供 validate 方法

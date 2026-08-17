@@ -2,9 +2,9 @@
 知识提炼引擎 — 从收集的情报中提炼关键洞见，分类整理，为飞轮升级提供输入
 
 参考设计:
-  - Hermes: 两文件系统 (MEMORY.md + USER.md) 压缩文本 + 权重衰减
-  - OpenClaw: markdown 结构化技能 + 自动修正沉淀
-  - GEPA: 遗传优化、评分选择、帕累托最优、随机突变
+  - 两文件系统方案 (MEMORY.md + USER.md) 压缩文本 + 权重衰减
+  - 结构化技能方案 + 自动修正沉淀
+  - 遗传优化: 遗传优化、评分选择、帕累托最优、随机突变
 """
 
 # -*- coding: utf-8 -*-
@@ -109,10 +109,10 @@ class KnowledgeExtractor:
             "prompt engineering": 0.4,
             "openai agents sdk": 0.6,
             "langgraph": 0.4,
-            "openclaw": 0.6,
-            "hermes agent": 0.6,
-            "sage": 0.6,
-            "gepa": 0.7,
+            "agent skill": 0.6,
+            "self-evolving": 0.6,
+            "skill evolution": 0.6,
+            "genetic optimization": 0.7,
             "icml": 0.4,
             "iclr": 0.4,
             "neurips": 0.4,

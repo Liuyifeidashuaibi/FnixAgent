@@ -104,7 +104,7 @@
 缓解:请升级到 v0.4.4 或回滚到 v0.4.3
 根因:详见 #issue_num
 
-如有问题请在本贴评论或发邮件到 support@fnixagent.dev
+如有问题请在本贴评论或发邮件到 liuyifeidashuaibi@gmail.com
 ```
 
 ---
@@ -193,7 +193,7 @@ v0.5.0-rc.0 不受影响。根因是新引入的 embedding 索引未设置 LRU �
 发现安全漏洞时,**不能**走常规流程,必须:
 
 1. **不**在公开 Issue / Discussion 写漏洞细节
-2. **立即**邮件 `security@fnixagent.dev`(PGP 加密)
+2. **立即**邮件 `liuyifeidashuaibi@gmail.com`(PGP 加密)
 3. **72 小时**内决定 CVE 编号与修复时间线
 4. **修复完成后 90 天**(或与 reporter 商定)再公开披露
 
@@ -226,7 +226,7 @@ v0.5.0-rc.0 不受影响。根因是新引入的 embedding 索引未设置 LRU �
 
 ---
 
-## 七、参考 / References
+## 七、/ References
 
 - [Google SRE Book — Incident Management](https://sre.google/sre-book/managing-incidents/)
 - [Atlassian Incident Handbook](https://www.atlassian.com/incident-management/handbook)

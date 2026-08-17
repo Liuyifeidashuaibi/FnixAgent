@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 # 内置 skill 目录(本文件所在目录的 builtin/ 子目录)
 _BUILTIN_DIR: Path = Path(__file__).parent / "builtin"
 
-# skill 名校验: 仅小写字母/数字/连字符,1~64 字符(对齐 Anthropic Agent Skills 规范)
+# skill 名校验: 仅小写字母/数字/连字符,1~64 字符(对齐 行业 Agent Skills 规范)
 _SKILL_NAME_PATTERN = re.compile(r"^[a-z0-9-]{1,64}$")
 # 语义化版本(semver)宽松匹配
 _VERSION_PATTERN = re.compile(r"^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.\-]+)?$")

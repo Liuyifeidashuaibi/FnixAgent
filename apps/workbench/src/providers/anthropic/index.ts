@@ -9,14 +9,14 @@
  * Anthropic Provider — Public API.
  *
  * Usage:
- *   import { sendToAnthropic, sendToAnthropicStreaming } from "../providers/anthropic";
+ *   import { sendTo, sendToStreaming } from "../providers/anthropic";
  */
 
-export { sendToAnthropic, sendToAnthropicStreaming } from "./AnthropicProvider";
-export type { AnthropicStreamCallbacks, StreamAccumulator } from "./anthropicStream";
+export { sendTo, sendToStreaming } from "./AnthropicProvider";
+export type { StreamCallbacks, StreamAccumulator } from "./anthropicStream";
 export type {
-  AnthropicMessagesRequest,
-  AnthropicMessagesResponse,
-  AnthropicStreamEvent,
-  AnthropicUsage,
+  MessagesRequest,
+  MessagesResponse,
+  StreamEvent,
+  Usage,
 } from "./anthropicTypes";

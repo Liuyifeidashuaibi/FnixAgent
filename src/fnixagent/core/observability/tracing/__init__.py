@@ -1,6 +1,4 @@
-"""分层 Tracing Span 模块 —— P1-1。
-
-借鉴 OpenAI Agents SDK 的 Tracing 设计 + OpenTelemetry 的 Span 模型,
+"""分层 Tracing Span 模块 —— P1-1。,
 提供分层、可嵌套、可导出的 Tracing 能力。
 
 模块组成:

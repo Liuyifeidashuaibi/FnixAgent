@@ -6,7 +6,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { applySelectedHunks, splitUnifiedHunks } from "../shell/chatgpt-desktop/diffHunks";
+import { applySelectedHunks, splitUnifiedHunks } from "../shell/desktop/diffHunks";
 
 const SAMPLE = `@@ -1,3 +1,4 @@
  line1

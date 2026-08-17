@@ -8,7 +8,7 @@
 设计:
   - 异步优先:所有 IO 方法为 async,同步版用 asyncio.run 包装
   - 无第三方依赖:STDIO 用 asyncio.subprocess;SSE 用 urllib(避免引入 httpx)
-  - 协议兼容 Anthropic MCP(2024-11-05 版本)
+  - 协议兼容 MCP(2024-11-05 版本)
   - 单 server 单 client;多 server 由 MCPToolRegistry 管理多个 client
 
 不依赖官方 mcp SDK,避免安装负担;若需更完整能力,可子类化扩展。

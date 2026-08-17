@@ -8,7 +8,7 @@
 插件只需在 pyproject.toml 中声明 entry_point 并实现对应 Protocol,
 即可被 PluginManager 自动发现并注册到 ConverterRegistry。
 
-设计参考:
+设计思路:
   - unstructured 的 extras 插件化机制(entry_points group)
   - markitdown 的 converter 注册模式
 

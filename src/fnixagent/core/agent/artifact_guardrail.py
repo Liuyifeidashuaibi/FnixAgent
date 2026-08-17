@@ -1,12 +1,10 @@
-"""Artifact Guardrail — 借鉴 OpenAI Agents SDK guardrail + Reflexion Actor-Evaluator.
+"""Artifact Guardrail —
 
 设计目的: 解决 "LLM 工具调用成功但产物不合规" 的盲点
   - craft 模式未落盘 → 强制重跑
   - .py 文件 AST 语法错误 → Reflexion 修复循环
   - .html 文件结构不完整 → Reflexion 修复循环
   - HTML 任务未分离 CSS/JS → 提示重写
-
-借鉴:
   - OpenAI Agents SDK guardrail: 输入/输出 guardrail 强制校验
   - noahshinn/reflexion: Actor + Evaluator + Self-Reflection 修复循环
   - LangGraph: 状态机式修复流程 (validate → repair → re-validate)
@@ -321,8 +319,6 @@ def build_reflexion_repair_prompt(
     artifacts: list[dict[str, str]],
 ) -> str:
     """构造 Reflexion 风格的修复提示.
-
-    借鉴 noahshinn/reflexion: Actor 失败 → Evaluator 反馈 → Actor 看到反馈重试.
     把 guardrail 检测到的所有问题作为"反思反馈"传给 LLM, 让它修复.
     """
     issues_text = "\n".join(f"- {issue}" for issue in report.all_issues[:10])
@@ -383,7 +379,7 @@ def should_route_short_explanation_to_ask(
 
 # ============================================================================
 # H1 史诗级优化: Input/Tool Guardrail 三层架构
-# 借鉴 OpenAI Agents SDK v0.18 的 input_guardrail + tool_input_guardrail
+#
 # 设计文档: https://openai.github.io/openai-agents-python/guardrails/
 #
 # 三层 guardrail:
@@ -391,7 +387,7 @@ def should_route_short_explanation_to_ask(
 #   2. Tool Guardrail   — 工具执行前: 检测路径穿越 / 趯界 / 内容泄露
 #   3. Output Guardrail — 产物校验 (已实现的 enforce_craft_deliverables)
 #
-# 短路机制 (借鉴 SDK 的 tripwire_triggered):
+# 短路机制 :
 #   guardrail 触发 → 抛出 TripwireTriggered 异常 → Runner 立即终止
 #   而不是返回 passed=False 让后续步骤继续跑
 # ============================================================================
@@ -399,7 +395,7 @@ def should_route_short_explanation_to_ask(
 
 @dataclass
 class GuardrailFunctionOutput:
-    """Guardrail 函数输出 (借鉴 OpenAI Agents SDK GuardrailFunctionOutput).
+    """Guardrail 函数输出 .
 
     tripwire_triggered=True 时, Runner 应立即终止当前流程.
     """
@@ -421,7 +417,7 @@ class GuardrailFunctionOutput:
 
 
 class InputGuardrailTripwireTriggered(Exception):
-    """Input guardrail 触发短路 (借鉴 OpenAI Agents SDK InputGuardrailTripwireTriggered)."""
+    """Input guardrail 触发短路 ."""
 
     def __init__(self, guardrail_name: str, output: GuardrailFunctionOutput):
         self.guardrail_name = guardrail_name
@@ -430,7 +426,7 @@ class InputGuardrailTripwireTriggered(Exception):
 
 
 class ToolGuardrailTripwireTriggered(Exception):
-    """Tool guardrail 触发短路 (借鉴 OpenAI Agents SDK ToolGuardrailTripwireTriggered)."""
+    """Tool guardrail 触发短路 ."""
 
     def __init__(self, guardrail_name: str, output: GuardrailFunctionOutput):
         self.guardrail_name = guardrail_name
@@ -480,10 +476,7 @@ _SECRET_PATTERNS = [
 
 
 def block_prompt_injection(text: str) -> GuardrailFunctionOutput:
-    """Input Guardrail: 检测提示注入攻击.
-
-    借鉴 OpenAI Agents SDK 示例 block_secrets + OWASP LLM01.
-    """
+    """Input Guardrail: 检测提示注入攻击."""
     if not text:
         return GuardrailFunctionOutput(output_info="空输入")
     for pat, desc in _PROMPT_INJECTION_PATTERNS:

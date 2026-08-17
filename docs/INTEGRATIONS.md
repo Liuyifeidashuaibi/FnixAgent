@@ -18,7 +18,7 @@
 
 ## LLM Providers
 
-### OpenAI
+###  LLM
 
 **配置**:
 
@@ -47,7 +47,7 @@ fnix key set --provider=openai
 # 输入 sk-... → 存入 OS Keychain
 ```
 
-### Anthropic
+###
 
 ```yaml
 llm:
@@ -83,7 +83,7 @@ llm:
       default_model: qwen-max
 ```
 
-### 自定义 OpenAI 兼容端点(OneAPI / LiteLLM / vLLM)
+### 自定义  LLM 兼容端点(OneAPI / LiteLLM / vLLM)
 
 ```yaml
 llm:
@@ -99,17 +99,17 @@ llm:
 
 ## 本地运行时
 
-### Ollama
+### 本地推理引擎
 
-**安装**:https://ollama.com/download
+**安装**:参见本地推理引擎官方文档
 
 **配置**:
 
 ```yaml
 llm:
   providers:
-    ollama:
-      type: ollama
+    local-llm:
+      type: local-llm
       base_url: http://127.0.0.1:11434
       default_model: qwen2.5-coder:7b
       keep_alive: 30m
@@ -120,21 +120,21 @@ llm:
 **拉模型**:
 
 ```bash
-ollama pull qwen2.5-coder:7b
-ollama pull llama3.1:8b
-ollama pull bge-small-zh  # embedding
+local-llm pull qwen2.5-coder:7b
+local-llm pull llama3.1:8b
+local-llm pull bge-small-zh  # embedding
 ```
 
-### LM Studio
+### 本地推理引擎
 
-**安装**:https://lmstudio.ai/
+**安装**:https://local-llm.ai/
 
-LM Studio 启动 OpenAI 兼容服务:
+本地推理引擎 启动  LLM 兼容服务:
 
 ```yaml
 llm:
   providers:
-    lmstudio:
+    local-llm:
       type: openai_compat
       base_url: http://127.0.0.1:1234/v1
       default_model: loaded-model-identifier
@@ -217,7 +217,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Run FnixAgent Review
-        uses: fnixagent/fnixagent-action@v1
+        uses: Liuyifeidashuaibi/FnixAgent-action@v1
         with:
           task: review-diff
           llm-provider: openai
@@ -240,7 +240,7 @@ agent-review:
 
 ```yaml
 # .pre-commit-config.yaml
-- repo: https://github.com/fnixagent/pre-commit-hooks
+- repo: https://github.com/Liuyifeidashuaibi/pre-commit-hooks
   rev: v1.0.0
   hooks:
     - id: fnixagent-lint
@@ -259,7 +259,7 @@ integrations:
     type: github
     token_ref: keychain:github_token
     repos:
-      - fnixagent/fnixagent
+      - Liuyifeidashuaibi/FnixAgent
     events:
       - issues
       - pull_request

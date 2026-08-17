@@ -135,9 +135,9 @@ import { lazy, Suspense } from 'react'
 import Heavy from './components/Heavy'
 
 // ✅ 路由级 lazy
-const Heavy = lazy(() => import('./components/Heavy'))
+const Heavy = lazy(=> import('./components/Heavy'))
 
-function App() {
+function App{
   return (
     <Suspense fallback={<Skeleton />}>
       <Routes />
@@ -151,7 +151,7 @@ function App() {
 ```rust
 // src-tauri/src/lib.rs
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
-pub fn run() {
+pub fn run{
     // 后台初始化非关键模块
     tauri::async_runtime::spawn(async {
         load_skill_registry().await;

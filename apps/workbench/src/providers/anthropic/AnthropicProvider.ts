@@ -22,9 +22,9 @@
  */
 
 import type { AIProviderConfig, AIRequest, AIResponse } from "../../utils/providers";
-import { mapRequestToAnthropic, mapAnthropicResponse, buildAnthropicMetrics } from "./anthropicMapper";
-import { executeAnthropicStream } from "./anthropicStream";
-import type { AnthropicMessagesResponse } from "./anthropicTypes";
+import { mapRequestTo, mapResponse, buildMetrics } from "./anthropicMapper";
+import { executeStream } from "./anthropicStream";
+import type { MessagesResponse } from "./anthropicTypes";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -37,7 +37,7 @@ const API_VERSION = "2023-06-01";
  * Send a non-streaming request to the Anthropic Messages API.
  * Returns the complete response as a Fnix AIResponse.
  */
-export async function sendToAnthropic(
+export async function sendTo(
   config: AIProviderConfig,
   model: string,
   request: AIRequest,
@@ -46,7 +46,7 @@ export async function sendToAnthropic(
   const baseUrl = (config.baseUrl?.replace(/\/+$/, "") || DEFAULT_BASE_URL);
   const url = `${baseUrl}/messages`;
 
-  const body = mapRequestToAnthropic(request, model, false);
+  const body = mapRequestTo(request, model, false);
 
   try {
     const response = await fetch(url, {
@@ -63,13 +63,13 @@ export async function sendToAnthropic(
       return {
         text: "",
         success: false,
-        error: parseAnthropicError(response.status, errorText),
-        metrics: buildAnthropicMetrics(config.name, model, null, durationMs, response.status === 429 ? "rate_limited" : "error"),
+        error: parseError(response.status, errorText),
+        metrics: buildMetrics(config.name, model, null, durationMs, response.status === 429 ? "rate_limited" : "error"),
       };
     }
 
-    const data: AnthropicMessagesResponse = await response.json();
-    return mapAnthropicResponse(data, config.name, model, durationMs);
+    const data: MessagesResponse = await response.json();
+    return mapResponse(data, config.name, model, durationMs);
   } catch (err) {
     const durationMs = performance.now() - startTime;
     if (request.signal?.aborted) {
@@ -77,14 +77,14 @@ export async function sendToAnthropic(
         text: "",
         success: false,
         error: "Request cancelled",
-        metrics: buildAnthropicMetrics(config.name, model, null, durationMs, "error"),
+        metrics: buildMetrics(config.name, model, null, durationMs, "error"),
       };
     }
     return {
       text: "",
       success: false,
       error: `Network error — cannot reach Anthropic: ${err instanceof Error ? err.message : String(err)}`,
-      metrics: buildAnthropicMetrics(config.name, model, null, durationMs, "error"),
+      metrics: buildMetrics(config.name, model, null, durationMs, "error"),
     };
   }
 }
@@ -99,7 +99,7 @@ export async function sendToAnthropic(
  *
  * Returns the full accumulated text + metrics when the stream completes.
  */
-export async function sendToAnthropicStreaming(
+export async function sendToStreaming(
   config: AIProviderConfig,
   model: string,
   request: AIRequest,
@@ -109,13 +109,13 @@ export async function sendToAnthropicStreaming(
   const url = `${baseUrl}/messages`;
   const streamId = request.streamId ?? `anthropic-${Date.now()}`;
 
-  const body = mapRequestToAnthropic(request, model, true);
+  const body = mapRequestTo(request, model, true);
 
   // Dynamically import Tauri event emitter to send tokens to the UI
   // (same mechanism as Rust-based streaming — UI listens on 'llm-stream')
   const { emit } = await import("@tauri-apps/api/event");
 
-  const accumulator = await executeAnthropicStream(
+  const accumulator = await executeStream(
     url,
     buildHeaders(config.apiKey),
     JSON.stringify(body),
@@ -141,14 +141,14 @@ export async function sendToAnthropicStreaming(
       text: accumulator.text,
       success: false,
       error: accumulator.error,
-      metrics: buildAnthropicMetrics(config.name, model, accumulator.usage, durationMs, "error"),
+      metrics: buildMetrics(config.name, model, accumulator.usage, durationMs, "error"),
     };
   }
 
   return {
     text: accumulator.text,
     success: true,
-    metrics: buildAnthropicMetrics(config.name, model, accumulator.usage, durationMs, "success"),
+    metrics: buildMetrics(config.name, model, accumulator.usage, durationMs, "success"),
   };
 }
 
@@ -162,7 +162,7 @@ function buildHeaders(apiKey: string): Record<string, string> {
   };
 }
 
-function parseAnthropicError(status: number, body: string): string {
+function parseError(status: number, body: string): string {
   if (status === 401) return "Invalid Anthropic API key. Check your key in Settings.";
   if (status === 403) return "Anthropic API access denied. Your key may lack permissions for this model.";
   if (status === 404) return "Model not found on Anthropic. Check the model ID in Settings.";

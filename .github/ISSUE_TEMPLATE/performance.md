@@ -16,7 +16,7 @@ labels: performance
 - OS: <!-- e.g., Windows 11 23H2, macOS 14.5, Ubuntu 24.04 -->
 - CPU: <!-- e.g., Apple M2, Intel i7-13700H -->
 - RAM: <!-- e.g., 16 GB -->
-- Fnix Harness version: <!-- e.g., v1.0.0-beta.1 -->
+- FnixAgent version: <!-- e.g., v1.0.0-beta.1 -->
 - Workload: <!-- e.g., "agentd + Work mode, 10 concurrent sessions, qwen-long context" -->
 
 ## Measurement

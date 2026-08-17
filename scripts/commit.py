@@ -154,7 +154,7 @@ def main() -> int:
 ## Top-Level
 - OPEN_SOURCE_CHECKLIST.md (all 17 categories checked)
 
-Co-Authored-By: Liu Yifei <hello@fnixagent.dev>"""
+Co-Authored-By: Liu Yifei <hello@github.com/Liuyifeidashuaibi/FnixAgent>"""
 
     print(f"\n[Commit message] {len(commit_msg)} chars")
     print(f"  First 200 chars: {commit_msg[:200]}...")

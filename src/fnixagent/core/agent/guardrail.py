@@ -1,7 +1,7 @@
 """
 Guardrail - 护栏 (Guardrails)
 ===============================
-对标 Guardrails AI + Ragas 1.0 的输入/输出护栏系统。
+对齐 Guardrails AI + Ragas 1.0 的输入/输出护栏系统。
 
 设计要点:
   - 三层护栏: INPUT (LLM 调用前) / EXECUTION (工具调用前) / OUTPUT (返回前)
@@ -33,7 +33,7 @@ from fnixagent.core.agent.types import GuardrailAction, GuardrailLayer, utcnow_i
 
 @dataclass
 class GuardrailContext:
-    """护栏上下文 (对标 Guardrails AI Context)。
+    """护栏上下文 (对齐 Guardrails AI Context)。
 
     提供完整 syscall 上下文, 而非仅字符串。
 
@@ -68,7 +68,7 @@ class GuardrailContext:
 
 @dataclass
 class GuardrailResult:
-    """护栏检查结果 (对标 Guardrails AI ValidationResult)。"""
+    """护栏检查结果 (对齐 Guardrails AI ValidationResult)。"""
 
     action: GuardrailAction = GuardrailAction.PASS
     message: str = ""
@@ -133,7 +133,7 @@ class GuardrailEntry:
 
 
 class GuardrailManager:
-    """护栏管理器 (对标 Guardrails AI)。
+    """护栏管理器 (对齐 Guardrails AI)。
 
     三层护栏:
       INPUT     - LLM 调用前检查输入

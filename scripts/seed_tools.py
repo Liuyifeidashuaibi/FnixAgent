@@ -4,7 +4,7 @@
 # This software and its source code are proprietary and confidential.
 # Unauthorized copying, modification, distribution, or use is strictly prohibited.
 
-﻿"""
+"""
 种子数据脚本 - 初始化工具元数据。
 
 向 tools 表灌入标准工具定义。

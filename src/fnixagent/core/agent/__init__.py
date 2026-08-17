@@ -1,7 +1,7 @@
 """
 fnixagent OS — Agent 操作系统内核包
 =====================================
-对标 2026 AgentOS 前沿研究 (OpenClaw / DingTalk Agent OS / Honor Agentic OS /
+对齐 2026 AgentOS 前沿研究 / Agent OS / Agentic OS /
 Meta Dreamer / Microsoft Project Solara), 将传统 OS 概念完整映射到 Agent 系统。
 
 设计哲学 (2026 共识):

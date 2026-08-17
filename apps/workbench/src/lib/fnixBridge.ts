@@ -6,7 +6,7 @@
  */
 
 /**
- * Fnix Harness bridge — sync Workbench BYOK / workspace with agentd (~/.fnix).
+ * FnixAgent bridge — sync Workbench BYOK / workspace with agentd (~/.fnix).
  * UI remains Tauri-native; agentd is the Python brain for Work / harness APIs.
  */
 

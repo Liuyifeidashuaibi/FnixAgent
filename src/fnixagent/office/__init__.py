@@ -11,7 +11,7 @@
   - ImageExpert:       图像分析(分镜网格定位/图文分离/批量裁剪)
   - TemplateManager:   模板管理(列出/应用/注册/预览)
   - DocumentInspector: 文档检查器(渲染/检查/诊断,render→look→fix 闭环)
-  - Evaluator:         声明式评测(借鉴 OfficeBench/SpreadsheetBench,Soft/Hard 双指标)
+  - Evaluator:         声明式评测
 
 设计原则:
   - 所有 Expert 继承 BaseExpert,统一接口风格(create/edit/...)

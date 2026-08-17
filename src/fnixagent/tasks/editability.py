@@ -1,7 +1,6 @@
 """输出可编辑性保证(Phase 6.5)。
 
 确保 fnixagent 所有输出文档保持可编辑性(非图片/可二次编辑),
-借鉴微软 Office Agent "HTML5→PPTX 可编辑" 和 OfficeCLI "渲染 vs 纯数据" 之争。
 
 核心原则:
   - 输出 docx/xlsx/pptx 而非图片(除非用户明确要求图片)

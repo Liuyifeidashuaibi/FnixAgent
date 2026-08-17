@@ -1,4 +1,4 @@
-"""中间件洋葱(借鉴 AgentScope MiddlewareBase 6 钩子)。
+"""中间件洋葱。
 
 中间件是横切关注点的通用钩子框架,比 Guardrail 管道更通用:
   - Guardrail(P0-2)是 SecurityMiddleware 的内部实现

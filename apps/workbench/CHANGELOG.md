@@ -1,7 +1,7 @@
 # Changelog
 
-All notable changes to Fnix are documented here.  
-Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).  
+All notable changes to Fnix are documented here.
+Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
@@ -33,14 +33,14 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 - **Inline Diff Preview** — shows AI proposed changes directly in the editor gutter before applying
-- **Edit Preview Panel** — dedicated review panel for AI-generated edits with accept/reject per hunk
+- **Edit Preview Panel** — dedicated review panel for generated edits with accept/reject per hunk
 - **Intelligence Panel** — unified view of embeddings, symbol index, and call graph status
 - **Dependency Graph View** — interactive visual dependency graph powered by `@xyflow/react`
 - **Context Sidebar** — live breakdown of what's in the AI context window (files, symbols, git diff)
 - **Context Window Bar** — real-time token usage indicator in chat input area
 - **Import Panel** — workspace and project import UI
 - **Merge Conflict Panel** — visual merge conflict resolution with accept/reject per block
-- **Refactor Panel** — UI for reviewing and applying AI-assisted refactor operations
+- **Refactor Panel** — UI for reviewing and applying assisted refactor operations
 - **Reasoning Panel** — shows AI chain-of-thought in compact or expanded mode
 - **Task Planner Panel** — AI generates step-by-step plan before executing tasks
 - **Task Cost Summary** — per-task cost breakdown overlay
@@ -60,7 +60,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - **Proactive Error Detector** — watches terminal output and surfaces actionable fixes
 - **Session Memory** — persists agent decisions and context summaries across turns
 - **Refactor Service** — changeset-based refactoring with validation
-- **TestGenerator Service** — AI-assisted unit test generation
+- **TestGenerator Service** — automated unit test generation
 - **DAPBridge** — frontend ↔ Rust Debug Adapter Protocol bridge
 - **Ambiguity Detector** — pre-flight task analysis to detect unclear instructions
 - **Budget Controller** — enforces per-task token and cost limits

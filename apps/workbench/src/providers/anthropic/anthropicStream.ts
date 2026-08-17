@@ -36,8 +36,8 @@
  */
 
 import type {
-  AnthropicStreamEvent,
-  AnthropicUsage,
+  StreamEvent,
+  Usage,
 } from "./anthropicTypes";
 
 // ── Stream State ──────────────────────────────────────────────────────────────
@@ -46,7 +46,7 @@ export interface StreamAccumulator {
   /** Full text response accumulated from text deltas. */
   text: string;
   /** Token usage (filled progressively from message_start + message_delta). */
-  usage: AnthropicUsage;
+  usage: Usage;
   /** Stop reason from message_delta. */
   stopReason: string | null;
   /** Tool use blocks (for future tool streaming support). */
@@ -69,7 +69,7 @@ interface ActiveBlock {
 
 // ── Streaming Callbacks ───────────────────────────────────────────────────────
 
-export interface AnthropicStreamCallbacks {
+export interface StreamCallbacks {
   /** Called for each text token as it arrives. */
   onToken: (token: string) => void;
   /** Called when the stream completes normally. */
@@ -86,11 +86,11 @@ export interface AnthropicStreamCallbacks {
  * Uses browser fetch (no Rust dependency). Tauri desktop apps have no CORS restrictions
  * on fetch, so direct API calls work without a proxy.
  */
-export async function executeAnthropicStream(
+export async function executeStream(
   url: string,
   headers: Record<string, string>,
   body: string,
-  callbacks: AnthropicStreamCallbacks,
+  callbacks: StreamCallbacks,
   abortSignal?: AbortSignal,
 ): Promise<StreamAccumulator> {
   const accumulator: StreamAccumulator = {
@@ -164,7 +164,7 @@ export async function executeAnthropicStream(
         if (trimmed.startsWith("data: ")) {
           const data = trimmed.slice(6);
           try {
-            const event = JSON.parse(data) as AnthropicStreamEvent;
+            const event = JSON.parse(data) as StreamEvent;
             processEvent(event, accumulator, activeBlock, callbacks, (block) => { activeBlock = block; });
           } catch {
             // Malformed JSON — skip (ping events sometimes don't have data)
@@ -196,10 +196,10 @@ export async function executeAnthropicStream(
 // ── Event Processing ──────────────────────────────────────────────────────────
 
 function processEvent(
-  event: AnthropicStreamEvent,
+  event: StreamEvent,
   acc: StreamAccumulator,
   activeBlock: ActiveBlock | null,
-  callbacks: AnthropicStreamCallbacks,
+  callbacks: StreamCallbacks,
   setActiveBlock: (block: ActiveBlock | null) => void,
 ): void {
   switch (event.type) {

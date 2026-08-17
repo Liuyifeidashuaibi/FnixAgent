@@ -1,7 +1,7 @@
 # Fnix 六层实施报告 — 总索引
 
-> 产品主设计：[`../FNIX_PRODUCT.md`](../FNIX_PRODUCT.md)  
-> 双轨边界：[`COMMERCIAL.md`](./COMMERCIAL.md)  
+> 产品主设计：[`../FNIX_PRODUCT.md`](../FNIX_PRODUCT.md)
+> 双轨边界：[`COMMERCIAL.md`](./COMMERCIAL.md)
 > 更新：2026-07-18
 
 ## 进度
@@ -15,7 +15,7 @@
 | L4b 认知完善 | [L4b-cognition.md](./L4b-cognition.md) | ✅ |
 | L4c 行业对照 | [L4c-industry-vs-fnix.md](./L4c-industry-vs-fnix.md) | ✅ Step1–5 |
 | L4d Workbench UI | [L4d-workbench.md](./L4d-workbench.md) | ✅ `apps/workbench` |
-| L4e ChatGPT 壳 | [L4e-chatgpt-desktop-shell.md](./L4e-chatgpt-desktop-shell.md) | ✅ 默认外观 |
+| L4e Desktop Shell | [L4e-desktop-shell.md](./L4e-desktop-shell.md) | ✅ 默认外观 |
 | 仓库结构 | [../STRUCTURE.md](../STRUCTURE.md) | ✅ |
 | L5 上层产品 | [L5-product.md](./L5-product.md) | ✅ |
 | L6 商业化打包 | [L6-packaging.md](./L6-packaging.md) | ✅ |

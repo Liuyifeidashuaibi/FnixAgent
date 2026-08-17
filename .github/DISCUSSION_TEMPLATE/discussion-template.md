@@ -33,7 +33,7 @@ categories:
 
   - name: 🎨 Show and tell
     description: |
-      Share what you've built with Fnix Harness: skills, plugins, workflows,
+      Share what you've built with FnixAgent: skills, plugins, workflows,
       screenshots, blog posts, demos, integrations with other tools.
     position: 4
     emoji: 🎨

@@ -1,6 +1,4 @@
 """声明式角色配置 —— P3-2。
-
-借鉴:
   - MetaGPT:Role 概念,通过配置定义角色的目标/约束/工具
   - OpenAI Agents SDK:Agent 配置化(tools/instructions/model)
   - LangGraph:声明式节点配置

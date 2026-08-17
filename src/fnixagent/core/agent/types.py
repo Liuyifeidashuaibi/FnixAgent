@@ -79,14 +79,14 @@ class AgentState(enum.Enum):
 
 
 class MemoryLayer(enum.Enum):
-    """四层记忆架构 (2026 业界统一共识)。
+    """四层记忆架构 (2026 行业统一共识)。
 
-    参考: Letta (MemGPT 23K star) / A-MEM / Mem-α / Mem0 / Zep Graphiti
+    参考: 记忆服务层 (记忆服务 23K star) / A-MEM / Mem-α / Mem0 / Zep Graphiti
 
     层级:
       SENSORY  - 感知记忆: LLM 当前处理的 token 流 (GPU KV Cache, vLLM PagedAttention)
       WORKING  - 工作记忆: 当前对话上下文 (LLM Context Window)
-      EPISODIC - 情节记忆: 历史对话事件 (Letta + Postgres, 自动摘要)
+      EPISODIC - 情节记忆: 历史对话事件 (记忆服务层 + Postgres, 自动摘要)
       SEMANTIC - 语义记忆: 知识图谱 / 向量库 (Milvus + cognee + GraphRAG)
     """
 
@@ -110,7 +110,7 @@ class SyscallCategory(enum.Enum):
 
 
 class GuardrailAction(enum.Enum):
-    """护栏动作 (对标 Guardrails AI)。"""
+    """护栏动作 (对齐 Guardrails AI)。"""
 
     PASS = "pass"  # 通过
     WARN = "warn"  # 警告但放行
@@ -170,7 +170,7 @@ class MemoryBackend(Protocol):
     """记忆后端协议 (情节/语义层)。
 
     可由 core/memory/manager.py 的 MemoryManager 适配实现,
-    或直接对接 Letta/Milvus/cognee。
+    或直接对接 记忆服务层/Milvus/cognee。
     """
 
     async def recall(
@@ -331,7 +331,7 @@ class TraceContext:
 
 @dataclass
 class Result:
-    """统一结果类型 (对标 Rust Result)。"""
+    """统一结果类型 (对齐 Rust Result)。"""
 
     success: bool
     value: Any = None

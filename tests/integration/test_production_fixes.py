@@ -131,7 +131,7 @@ def test_p1_2_tauri_dev_mode_conditional():
 def test_p0_1_frontend_timeout_extended():
     """P0-1: 前端 idle timeout 应从 60s 提升到 5 分钟。"""
     runtime_ts = (
-        ROOT / "apps" / "workbench" / "src" / "shell" / "chatgpt-desktop" / "fnixRuntime.ts"
+        ROOT / "apps" / "workbench" / "src" / "shell" / "desktop" / "fnixRuntime.ts"
     )
     if not runtime_ts.exists():
         print("[P0-1 前端] 跳过: fnixRuntime.ts 不存在")

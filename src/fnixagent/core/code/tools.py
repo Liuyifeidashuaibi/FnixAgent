@@ -1,7 +1,7 @@
 """
 CodeTools - 代码操作工具集
 ==========================
-对标 Codex 文件操作和 Trae 工具生态, 提供编码智能体的 6 个核心工具:
+对齐工程实践 文件操作和 工具生态, 提供编码智能体的 6 个核心工具:
   - read:   读取文件 (支持行范围)
   - write:  写入文件 (创建或覆盖, 原子应用)
   - edit:   精确替换 (字符串匹配 + 替换)
@@ -175,7 +175,7 @@ class CodeTools:
         self._root: Path = Path(project_root).resolve()
         self._diff: DiffEngine = diff_engine or DiffEngine(project_root)
         self._indexer = code_indexer  # 可选, 延迟初始化
-        # Cursor-style: True → DiffEngine dry_run (propose, don't write)
+        # 行业编码工具-style: True → DiffEngine dry_run (propose, don't write)
         self.preview_mode: bool = False
 
     # ------------------------------------------------------------------------

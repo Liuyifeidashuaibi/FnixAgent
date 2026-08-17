@@ -1,7 +1,7 @@
 """
 DiffEngine - 原子多文件编辑引擎
 ================================
-对标 Codex diff apply 和 Trae 多文件编辑, 基于 AgentOS 构建编码 Agent 的原子编辑层。
+对齐工程实践 diff apply 和 多文件编辑, 基于 AgentOS 构建编码 Agent 的原子编辑层。
 
 设计要点:
   - 原子性: 变更集内全部成功才提交, 任一失败自动回滚已应用的变更
@@ -53,7 +53,7 @@ from fnixagent.core.agent.types import utcnow_iso
 class ChangeType(Enum):
     """变更类型。
 
-    对标 Git 的 add/modify/delete, 描述单个文件的操作语义。
+    对齐 Git 的 add/modify/delete, 描述单个文件的操作语义。
     """
 
     CREATE = "create"  # 创建新文件 (文件不能已存在)
@@ -170,7 +170,7 @@ class ChangeSet:
 class ChangeSetBuilder:
     """变更集构建器 (流式 API)。
 
-    提供链式调用构建 ChangeSet, 对标 Codex 的 edit block 构建方式。
+    提供链式调用构建 ChangeSet, 对齐工程实践 的 edit block 构建方式。
 
     Usage:
         cs = (ChangeSetBuilder("重构: 拆分 utils")
@@ -292,7 +292,7 @@ class DiffEngine:
       3. 冲突检测 (并发编辑检测, 基于 mtime)
       4. Dry-run 模式 (只预览不写入)
 
-    对标 Codex diff apply 和 Trae 多文件编辑, 提供编码智能体的原子编辑能力。
+    对齐工程实践 diff apply 和 多文件编辑, 提供编码智能体的原子编辑能力。
 
     Attributes:
         _root: 项目根目录 (用于解析相对路径)

@@ -12,8 +12,7 @@ P0-05: 提供 AutoscaledPool —— 根据系统负载(CPU / 内存 / 平均响�
 与 core.governance(多层限流)互补: governance 面向 QPS/并发上限的硬限制,
 本模块面向"按负载弹性伸缩"的软调度。
 
-P1-05: 提供 PriorityTaskQueue —— 优先级任务队列(借鉴 zhua ScheduleItem +
-优先级队列设计),支持优先级调度、forefront 插队、Redis ZSet 持久化、
+P1-05: 提供 PriorityTaskQueue —— 优先级任务队列,支持优先级调度、forefront 插队、Redis ZSet 持久化、
 崩溃恢复(active 超时回收)与 fingerprint 去重。
 
   - 内存堆(heapq 大顶堆) + 可选 Redis ZSet 双写,跨进程可见

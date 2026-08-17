@@ -46,7 +46,7 @@
 - 🎨 Logo / 视觉设计
 - 📚 印刷 / 文具
 
-如有兴趣,请邮件 `sponsor@fnixagent.dev`。
+如有兴趣,请邮件 `liuyifeidashuaibi@gmail.com`。
 
 ---
 
@@ -60,8 +60,8 @@
     GitHub Sponsors:    $120.00
     个人赞助:            $50.00
   支出:
-    LLM API 测试:        $42.30 (Anthropic / DeepSeek)
-    域名 fnixagent.dev:  $12.00
+    LLM API 测试:        $42.30 ( / DeepSeek)
+    域名 github.com/Liuyifeidashuaibi/FnixAgent:  $12.00
     服务器 (Hetzner):     $7.50
   余额:                  $108.20
 ```
@@ -146,7 +146,7 @@ $100+/月 的企业赞助者可在 `assets/sponsors/` 展示 Logo:
 
 赞助者可在赞助后 30 天内申请退款:
 
-- 邮件:sponsor@fnixagent.dev
+- 邮件:liuyifeidashuaibi@gmail.com
 - 注明 GitHub 用户名 / 订单号
 - 7 个工作日内处理
 
@@ -184,7 +184,7 @@ $100+/月 的企业赞助者可在 `assets/sponsors/` 展示 Logo:
 | **Gold Sponsor** | Logo + 优先 issue 响应 | $1000/年 |
 | **Silver Sponsor** | Logo in README | $500/年 |
 
-联系:`sponsor@fnixagent.dev`
+联系:`liuyifeidashuaibi@gmail.com`
 
 ---
 
@@ -202,7 +202,7 @@ $100+/月 的企业赞助者可在 `assets/sponsors/` 展示 Logo:
 
 ---
 
-## 九、参考 / References
+## 九、/ References
 
 - [GitHub Sponsors 文档](https://docs.github.com/sponsors)
 - [Open Collective 文档](https://docs.opencollective.com/)

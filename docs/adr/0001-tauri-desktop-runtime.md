@@ -18,7 +18,7 @@ tags: [architecture, desktop, tauri]
 FnixAgent 需要一个跨平台桌面运行时,承载以下工作负载:
 
 1. 渲染 React 前端 (workbench UI)
-2. 调用本地 LLM (Ollama / LM Studio) 与本地工具 (shell、文件系统)
+2. 调用本地 LLM 与本地工具 (shell、文件系统)
 3. 持有 BYOK (Bring-Your-Own-Key) 凭据,不能上传到云
 4. 打包成 < 30 MB 的单文件安装包
 5. 同时支持 Windows / macOS / Linux
@@ -41,7 +41,7 @@ FnixAgent 需要一个跨平台桌面运行时,承载以下工作负载:
 ```
 ┌─────────────────┐    IPC     ┌──────────────────┐
 │  WebView 进程    │ ◄────────► │  Tauri Core 进程  │
-│  (React UI)     │  invoke()  │  (Rust commands) │
+│  (React UI)     │  invoke │  (Rust commands) │
 └─────────────────┘            └────────┬─────────┘
                                        │
                               ┌────────▼─────────┐

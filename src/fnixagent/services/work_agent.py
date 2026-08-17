@@ -1,6 +1,6 @@
 """Work 模式 Agent 装配 — 办公工作台主路径。
 
-对标 TRAE Work / WorkBuddy：任务拆解 → 调 Office/业务工具 → 可交付产物。
+对齐工程实践：任务拆解 → 调 Office/业务工具 → 可交付产物。
 """
 
 # -*- coding: utf-8 -*-
@@ -29,13 +29,13 @@ from fnixagent.core.types import ToolPermission
 logger = logging.getLogger(__name__)
 
 
-WORK_SYSTEM_PROMPT = """你是 FnixAgent 办公工作台助手（对标 TRAE WorkBuddy + Work 内的 Code 能力）。
+WORK_SYSTEM_PROMPT = """你是 FnixAgent 办公工作台助手（对齐行业最佳实践 + Work 内的 Code 能力）。
 你拥有自进化内核：KTG 知识拓扑检索 + STP 技能突触调度 + MFP 四阶飞轮。
 你帮助用户完成学习、教育、办公与编码任务：周报、文档、Excel、PPT、PDF、网站/HTML、脚本、资料检索等。
 
-模式说明（对标 TRAE）：
-- 你当前是 **Work（Chat）模式**：通用工作台，**也可以写代码、做网站**（与 Codex 同等落盘标准）。
-- **Codex** 是专精编码模式：绑定项目文件夹、先预览 diff 再 Accept；Work 则直接 write_file 落盘到工作区。
+模式说明（对齐行业最佳实践）：
+- 你当前是 **Work（Chat）模式**：通用工作台，**也可以写代码、做网站**（与 Code 同等落盘标准）。
+- **Code** 是专精编码模式：绑定项目文件夹、先预览 diff 再 Accept；Work 则直接 write_file 落盘到工作区。
 
 规则:
 1. 先理解任务目标与验收标准，再调用工具执行
@@ -57,7 +57,7 @@ def format_code_task_prompt() -> str:
     """Work 模式下检测到编码/建站任务时追加的提示（工作模式编码任务检测）。"""
     return """
 
-## 编码/应用生成任务（Work 内可做，对标 TRAE Work App generation + WorkBuddy Craft）
+## 编码/应用生成任务（Work 内可做，对齐工程实践 Work App generation + Craft 模式）
 你现在处于 **Work 模式的 Craft 执行态**：必须动手写文件，不能只聊天。
 1. 立刻用 **tools API** 调用 `write_file`（每个文件一次），参数名是 `file_path` 与 `content`
 2. 静态网站最少三个文件：
@@ -84,7 +84,7 @@ def wrap_code_user_input(user_input: str) -> str:
     )
 
 
-# WorkBuddy 式执行模式：Ask（只问）/ Plan（先想）/ Craft（做一做）
+# 工作台式执行模式：Ask（只问）/ Plan（先想）/ Craft（做一做）
 WorkExecMode = str  # "ask" | "plan" | "craft"
 
 _MUTATING_TOOL_NAMES = frozenset(
@@ -164,7 +164,7 @@ def normalize_work_mode(mode: str | None) -> str:
 def format_ask_prompt() -> str:
     return """
 
-## 执行模式：Ask（问一问 · 对标 WorkBuddy Ask）
+## 执行模式：Ask（问一问 · 对齐工程实践 Ask）
 - 只回答问题、解释、给建议，**禁止**创建/修改/删除任何文件
 - 不可调用 write_file / edit_file / 办公生成类写盘工具
 - 若用户需要落盘交付，请提示切换到 **Craft（做一做）**
@@ -174,7 +174,7 @@ def format_ask_prompt() -> str:
 def format_plan_prompt() -> str:
     return """
 
-## 执行模式：Plan（想一想 · 对标 WorkBuddy Plan）
+## 执行模式：Plan（想一想 · 对齐工程实践 Plan）
 - 先输出清晰可执行计划（步骤、产物路径、风险），**本回合不写盘**
 - 可读文件做调研；禁止 write_file / 生成文档写盘
 - 计划确认后用户会切到 **Craft** 再执行
@@ -1019,7 +1019,7 @@ def build_work_agent_loop(
             )
             system_prompt = WORK_SYSTEM_PROMPT + _format_ktg_context(ktg_paths)
 
-        # Ask/Plan：移除写盘工具（对标 WorkBuddy 权限边界）
+        # Ask/Plan：移除写盘工具（对齐工程实践 权限边界）
         if mode in ("ask", "plan"):
             strip_mutating_tools(registry)
 

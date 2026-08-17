@@ -16,7 +16,7 @@ Desktop/CLI llm override
     → llm_policy.resolve_llm_for_request (FNIX_API_ONLY)
     → Work/Code pipeline / chat
     → LLMAdapter._auto_detect (~/.fnix secrets + config)
-    → OpenAI-compatible provider
+    →  LLM-compatible provider
 
 Work/Code context
     → local_bridge / local_context

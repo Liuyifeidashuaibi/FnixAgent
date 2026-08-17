@@ -1,7 +1,7 @@
 # fnixagent 部署手册（Enterprise / cloud）
 
-> **轨道**：本文件描述 **Enterprise** 部署（`FNIXAGENT_PROFILE=cloud`）。  
-> **Community** 个人桌面请用 GitHub Release / `pnpm dev`，见 [`layers/COMMERCIAL.md`](./layers/COMMERCIAL.md)。  
+> **轨道**：本文件描述 **Enterprise** 部署（`FNIXAGENT_PROFILE=cloud`）。
+> **Community** 个人桌面请用 GitHub Release / `pnpm dev`，见 [`layers/COMMERCIAL.md`](./layers/COMMERCIAL.md)。
 > **目标**：在 Linux 主机部署 agentd，供团队或私有连接使用。
 
 本手册覆盖三种部署形态:
@@ -235,7 +235,7 @@ curl -k -X POST https://localhost/api/v1/auth/register \
 | 变量 | Provider |
 |---|---|
 | `GLM_API_KEY` | 智谱 GLM |
-| `OPENAI_API_KEY` | OpenAI |
+| `OPENAI_API_KEY` |  LLM |
 | `DEEPSEEK_API_KEY` | DeepSeek |
 | `QWEN_API_KEY` | 阿里通义千问 |
 

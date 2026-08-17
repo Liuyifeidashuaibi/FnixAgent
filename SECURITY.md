@@ -2,7 +2,7 @@
 
 The FnixAgent team takes the security of this project seriously — including the safety of the **data, files, API keys, and sessions** that flow through it. This document explains how to report a vulnerability, what we commit to, and how we handle disclosures.
 
-> 📌 **TL;DR:** Email **security@fnixagent.dev** (PGP available) for private disclosure. See [Support → Security disclosure](.github/SUPPORT.md#-where-to-get-help) for the workflow.
+> 📌 **TL;DR:** Email **liuyifeidashuaibi@gmail.com** (PGP available) for private disclosure. See [Support → Security disclosure](.github/SUPPORT.md#-where-to-get-help) for the workflow.
 
 ---
 
@@ -40,7 +40,7 @@ Beta / RC / nightly builds are **not** eligible for security backports — pleas
 
 | Channel | Details |
 |---------|---------|
-| **Email** | `security@fnixagent.dev` |
+| **Email** | `liuyifeidashuaibi@gmail.com` |
 | **PGP fingerprint** | `7C9F 0E2B 4A1C 8D55 3B2E  F8A4 6D12 9C3E 0B7A 1F4D` |
 | **GitHub private disclosure** | Repository → Security tab → "Report a vulnerability" |
 | **Response time** | **< 48 hours** to acknowledge |
@@ -99,7 +99,7 @@ The following are **out of scope** for our security reward / disclosure program:
 - Missing security headers in our **documentation site** (it's static HTML).
 - **Self-XSS**: pasting attacker-controlled content into your own session.
 
-If you're unsure whether something is in scope, **ask first** at `security@fnixagent.dev`.
+If you're unsure whether something is in scope, **ask first** at `liuyifeidashuaibi@gmail.com`.
 
 ---
 
@@ -129,7 +129,7 @@ All historical advisories are also published via **GitHub Security Advisories** 
 
 ## 🛡️ Hardening guide for users
 
-Even though Fnix Harness is local-first, you should still follow these best practices:
+Even though FnixAgent is local-first, you should still follow these best practices:
 
 ### API key hygiene
 
@@ -140,7 +140,7 @@ Even though Fnix Harness is local-first, you should still follow these best prac
 
 ### Workspace isolation
 
-- Run Fnix Harness in a **dedicated user account** if you plan to point it at sensitive directories.
+- Run FnixAgent in a **dedicated user account** if you plan to point it at sensitive directories.
 - The Workbench's **Code mode** is sandboxed by default — don't disable the sandbox unless you understand the implications.
 - Treat `~/.fnix/sessions/` as sensitive: it contains full session transcripts. Encrypt the volume if you travel with a laptop.
 
@@ -159,7 +159,7 @@ Even though Fnix Harness is local-first, you should still follow these best prac
 If you ever see unexpected network traffic, file-access, or model calls, please:
 
 1. Capture a `pnpm doctor` + a `strace` / `lldb` / `procmon` trace if possible.
-2. Open a private report at `security@fnixagent.dev`.
+2. Open a private report at `liuyifeidashuaibi@gmail.com`.
 3. Don't post logs publicly until we've reviewed them.
 
 ---

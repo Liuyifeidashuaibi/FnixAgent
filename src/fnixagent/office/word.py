@@ -1180,7 +1180,7 @@ class WordExpert(BaseExpert):
         return diffs
 
     # ------------------------------------------------------------------
-    # 表格格式化(借鉴 Office-Word-MCP-Server/core/tables.py)
+    # 表格格式化
     # ------------------------------------------------------------------
 
     @staticmethod

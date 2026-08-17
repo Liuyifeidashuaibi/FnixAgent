@@ -1,6 +1,6 @@
 """自我验证模块(Phase 6.1)。
 
-题库处理结果的声明式质检模块,借鉴 OfficeBench evaluate.py 的声明式检查思路。
+题库处理结果的声明式质检模块,。
 
 检查项:
   - 无 NAMECONTENT 乱码残留
@@ -232,7 +232,7 @@ class TaskValidator(BaseExpert):
         return ValidationReport.from_checks(checks)
 
     # ------------------------------------------------------------------
-    # 通用声明式检查(借鉴 OfficeBench evaluate.py)
+    # 通用声明式检查
     # ------------------------------------------------------------------
 
     def validate_general(self, path: str, checks: list[dict]) -> ValidationReport:

@@ -1,11 +1,11 @@
 """
-FnixAgent Agentic Loop — 参考业界主流 Agent 工具 的核心执行循环
+FnixAgent Agentic Loop — 参考主流 Agent 工具 的核心执行循环
 
 真正的 Agent 执行循环:
   Think → Act → Observe → Reflect → Respond
 
 参照:
-  - Cursor/Trae: 思考 → 工具调用 → 观察结果 → 继续思考 → 最终响应
+  - 行业编码工具: 思考 → 工具调用 → 观察结果 → 继续思考 → 最终响应
   - ReAct 模式: Reasoning + Acting
   - Plan & Execute: 规划 → 执行 → 反馈
   - Reflection: 执行后反思
@@ -357,7 +357,7 @@ class AgenticLoop:
             system_prompt: 自定义系统提示（含 {workspace_root} 占位）；默认编码助手提示
             force_tool_delivery: Craft/建站时若模型只聊天，强制再催一轮工具调用
             max_reflect_rounds: Spec 6 VMAO — Reflexion 自反思重试最大轮数
-                (借鉴 noahshinn/reflexion 的 self_reflection → 重生成 → 验证模式)
+
                 当连续工具失败 ≥2 次时，触发一次自反思并注入到下轮上下文。
         """
         self._llm = llm_call
@@ -662,7 +662,7 @@ class AgenticLoop:
                 提供时将跳过用户输入初始化，从历史消息继续执行。
             task_id: P0-1 集成 CheckpointManager.append_messages 的任务 ID。
                 提供时，AgenticLoop 会以"每个 turn 边界批量写"的方式
-                (借鉴 OpenAI Agents SDK Session.add_items)将 system/user/
+                将 system/user/
                 assistant/tool_call/tool_result/reflection 消息持久化到
                 CheckpointManager 三层存储(内存+Redis+JSONL)。崩溃后可
                 通过 resume_from 恢复完整对话上下文。
@@ -688,7 +688,7 @@ class AgenticLoop:
         # 用偏移而非维护 pending 列表: 不修改任何 messages_for_llm.append 调用
         _ckpt_offset = 0
 
-        # P3: 软/硬阈值异步 compactor (借鉴 LCM Equation 1)
+        # P3: 软/硬阈值异步 compactor
         # τsoft=50K 异步压缩, τhard=80K 阻塞压缩
         _bg_compactor = None
         try:
@@ -710,7 +710,7 @@ class AgenticLoop:
         async def _aflush_step() -> None:
             """flush messages_for_llm 自上次偏移以来的新消息到 CheckpointManager (单次 fsync, async)。
 
-            设计要点 (借鉴 OpenAI Agents SDK Session.add_items 每 turn 边界批量写):
+            设计要点 :
               - step 末尾/return 前/error 退出前调用
               - 用 slice 一次性 aappend_messages, 单次 fsync
               - compaction 重赋 messages_for_llm 后偏移自动失效, 不重复写
@@ -794,7 +794,7 @@ class AgenticLoop:
                 }
 
                 # P3: 每个 turn 开始时检查后台异步压缩任务是否完成, 完成则原子 swap
-                # (借鉴 LCM Equation 1: turn 边界 swap, 避免在 LLM 调用中改 messages)
+                #
                 # 第一个 step 时 _bg_result 必为 None, maybe_swap 返回 None, 无副作用
                 if _bg_compactor is not None:
                     swapped = _bg_compactor.maybe_swap(messages_for_llm)
@@ -940,7 +940,7 @@ class AgenticLoop:
                 #      发 text_content 作为 thought（"我决定调用 xxx 工具因为…"）
                 #   3) text_content 非空 + 无 tool_calls（最终答复）：
                 #      不发 thought chunk（避免与后面的 text chunk 内容重复）
-                # 这样前端 ProcessTimeline 的"展开思考"才有真实价值，参考业界主流 Code Agent reasoning 可见性。
+                # 这样前端 ProcessTimeline 的"展开思考"才有真实价值，参考主流 Code Agent reasoning 可见性。
                 thought_data = ""
                 if reasoning_content and reasoning_content.strip():
                     thought_data = reasoning_content[:2000]
@@ -953,8 +953,7 @@ class AgenticLoop:
 
                 # 最终响应
                 if text_content and not tool_calls:
-                    # P0-1 D3: 持久化 final assistant message (借鉴 OpenAI SDK
-                    # Session "After each run: assistant responses stored")
+                    # P0-1 D3: 持久化 final assistant message
                     messages_for_llm.append({"role": "assistant", "content": text_content})
 
                     if self._wrote_files():
@@ -1032,7 +1031,7 @@ class AgenticLoop:
                         tool_name = tc_api["function"]["name"]
                         tool_args = _coerce_tool_arguments(tc_api["function"]["arguments"])
 
-                        # Spec 2: action chunk — 工具调用前置事件（对标 AG-UI ToolCallStart）
+                        # Spec 2: action chunk — 工具调用前置事件（对齐 AG-UI ToolCallStart）
                         # 前端 fnixRuntime 已有 case 'action' → 显示 "Running xxx…"
                         yield {
                             "type": "action",
@@ -1062,7 +1061,7 @@ class AgenticLoop:
                             )
                         )
 
-                        # Spec 2: observation chunk — 工具结果事件（对标 AG-UI ToolCallResult）
+                        # Spec 2: observation chunk — 工具结果事件（对齐 AG-UI ToolCallResult）
                         # 截断到 500 字符避免长输出刷屏，前端 activity 卡片显示摘要
                         yield {
                             "type": "observation",
@@ -1077,8 +1076,8 @@ class AgenticLoop:
                         yield {"type": "tool_result", "data": result_text[:2000]}
 
                         # AG-UI file_change 事件 — 让前端 DiffBlock 显示三态 diff 审查
-                        # 调研：Cursor 论坛 "per-change Apply + inline diff review" +
-                        #   业界主流 Agent 工具 Issue #31395 per-hunk accept/discard
+                        # 调研：技术论坛 "per-change Apply + inline diff review" +
+                        #   主流 Agent 工具 Issue #31395 per-hunk accept/discard
                         # 当工具是文件编辑操作时，emit file_change 让前端 DiffBlock 渲染
                         if tool_name in (
                             "write_file",
@@ -1135,7 +1134,7 @@ class AgenticLoop:
                         )
 
                         # P2 + P3: 三级 Escalation Compaction + 软/硬阈值异步
-                        # 对标 LCM Algorithm 3 (3-level escalation) + LCM Equation 1 (3-regime overhead)
+                        # 对齐 LCM Algorithm 3 (3-level escalation) + LCM Equation 1 (3-regime overhead)
                         # τsoft=50K: 异步压缩 (后台跑, turn 间 swap, 用户无感)
                         # τhard=80K: 阻塞压缩 (必须等待, 避免 context overflow)
                         try:
@@ -1232,7 +1231,7 @@ class AgenticLoop:
                             )
 
                     # Spec 6 VMAO: Reflexion 自反思重试闭环
-                    # 借鉴 noahshinn/reflexion 的 self_reflection → 注入 → 重生成模式
+                    #
                     # 触发条件: 本轮有失败 + 累计连续失败 ≥2 + 反思轮数未超限
                     if round_failures:
                         self._consecutive_failures += 1
@@ -1481,9 +1480,7 @@ class AgenticLoop:
         user_input: str,
         recent_failures: list[dict],
     ) -> str:
-        """Spec 6 VMAO — 生成自反思（Reflexion pattern, noahshinn/reflexion 借鉴）。
-
-        借鉴 reflexion/programming_runs/reflexion.py 的 self_reflection 步骤:
+        """Spec 6 VMAO — 生成自反思。
         - 给 LLM 看「最近失败的工具调用 + 用户原始目标」
         - 让 LLM 输出"为什么失败 + 下一步该尝试什么策略"
         - 不带 tools（防止反思本身又触发工具调用）

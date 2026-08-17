@@ -3,7 +3,7 @@
 基于 TypedDict 的 State 定义,LangGraph 要求 State 必须是 TypedDict,
 节点函数签名为 (State) -> State(部分字段更新)。
 
-本版本引入显式 Reducer(借鉴 LangGraph Annotated[T, reducer]),
+本版本引入显式 Reducer,
 消除原 total=False 默认覆盖隐患:
   - messages/tool_calls/tool_results 等列表字段:追加而非覆盖
   - iteration:累加而非覆盖

@@ -6,7 +6,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { normalizeThemePref, resolveShellTheme } from "../shell/chatgpt-desktop/theme";
+import { normalizeThemePref, resolveShellTheme } from "../shell/desktop/theme";
 
 describe("theme", () => {
   it("normalizes preference", () => {

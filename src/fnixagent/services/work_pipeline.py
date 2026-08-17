@@ -290,7 +290,7 @@ def build_mission_schema(user_input: str, work_mode: str = "craft") -> dict[str,
             workspace_kind = kind
             break
 
-    # Ask/Plan：解释类问题不因 MBTI/网站等关键词误判为 code（对标 WorkBuddy）
+    # Ask/Plan：解释类问题不因 MBTI/网站等关键词误判为 code（对齐工程实践）
     if mode in ("ask", "plan"):
         explain_hints = ("解释", "什么是", "是什么", "介绍", "含义", "区别", "为什么", "如何理解")
         build_hints = (
@@ -372,7 +372,7 @@ class WorkPipelineContext:
     stp_selected_count: int = 0  # STP 真接入: 拓扑调度选中的技能数 (论文 ablation 指标)
     stp_skipped_reason: str = ""  # STP 降级原因 (fail-soft-with-signal, 对齐 Critic 模式)
     workspace_kind: str = "general"
-    work_mode: str = "craft"  # ask | plan | craft（WorkBuddy）
+    work_mode: str = "craft"  # ask | plan | craft（工作台）
     security_blocked: bool = False
     block_reason: str = ""
     memory_budget: dict = field(default_factory=dict)
@@ -438,12 +438,12 @@ class WorkPipeline:
         self, ctx: WorkPipelineContext, tool_count: int = 8
     ) -> WorkPipelineContext:
         mode = (ctx.work_mode or "craft").lower()
-        # WorkBuddy Ask：少步、只问答
+        # Ask 模式：少步、只问答
         if mode == "ask":
             ctx.reasoning_mode = ReasoningMode.REACT
             ctx.max_steps = min(ctx.max_steps, 8)
             return ctx
-        # WorkBuddy Plan：必须先规划
+        # Plan 模式：必须先规划
         if mode == "plan":
             ctx.reasoning_mode = ReasoningMode.PLAN_EXECUTE
             ctx.max_steps = max(ctx.max_steps, 20)
@@ -596,7 +596,7 @@ class WorkPipeline:
         """流式执行 AgenticLoop，产出统一事件 dict。
 
         P0-1: task_id 透传到 AgenticLoop, 激活 CheckpointManager.append_messages
-              持久化通道 (借鉴 OpenAI Agents SDK Session 每 turn 边界批量写)。
+              持久化通道 。
         P0-2: Reflexion 修复循环调用本方法时, 传 resume_from 包含第一轮 messages,
               让 LLM 在修复时能看到完整上下文。
         """
@@ -1017,7 +1017,7 @@ async def run_work_stream(
     ctx = pipeline.step4_select_reasoning(ctx, tool_count=tool_count)
 
     # Spec 7+ 四维闭环: HERA 提前到 DAAO 之前, 让命中率反馈给 DAAO 路由
-    # (借鉴 AutoAgents-ai/DAAO: 调度大脑根据历史命中率自适应选择 workflow depth)
+    #
     hera_retrieved_count = 0
     hera_library_ref = None
     try:
@@ -1063,7 +1063,7 @@ async def run_work_stream(
         pass
 
     # Spec 7+ DAAO: 真路由决策器（替换原 emit-only 空壳）
-    # 借鉴 arxiv 2509.11079 DAAO: 根据难度+历史命中率自适应选择 workflow depth
+    #
     # 反馈回路: HERA 高命中率 → 减少反思轮数; HERA 低命中率+高难度 → 增加反思轮数;
     #          最近失败率高 → 切换到 plan_execute
     try:
@@ -1223,7 +1223,7 @@ async def run_work_stream(
     # load-bearing state 外化 (任务状态外化):
     # 从 .fnix/todos.json 加载未完成待办, 注入 prompt_extra。
     # compaction 后此块仍会重新注入, 确保长程任务不失忆。
-    # 借鉴 Anthropic Effective Harnesses: "不是记住全部上下文, 而是快速理解当前状态"
+    #, 而是快速理解当前状态"
     try:
         from fnixagent.core.skills.todos import TodoStore
 
@@ -1421,7 +1421,7 @@ async def run_work_stream(
             continue
         elif et == "reflection":
             # Spec 7+ 四维闭环: VMAO 反思 → HERA 写入"失败技能"
-            # 借鉴 noahshinn/reflexion 的 episodic memory buffer:
+            #
             #   反思结果作为"失败经验"沉淀, 下次类似任务 retrieve 时召回,
             #   让 Agent 看到上次怎么失败的, 避免重复试错。
             try:
@@ -1461,7 +1461,7 @@ async def run_work_stream(
             yield event
 
     # ── 史诗级优化: Artifact Guardrail + Reflexion 修复循环 ──────────────
-    # 借鉴 OpenAI Agents SDK output guardrail + noahshinn/reflexion Actor-Evaluator
+    #
     # 解决测试发现的 P0 问题:
     #   1. craft 模式 LLM 直接文字回答, 未调用 write_file (B1/C2/E3)
     #   2. .py 文件 AST 语法错误 (D6-1)
@@ -1533,7 +1533,7 @@ async def run_work_stream(
                 # 原缺陷: 硬编码 resume_from=None 丢弃第一轮对话, LLM 修复时不知:
                 #   1) 用户原始需求是什么  2) 之前生成了什么  3) 为什么失败
                 # 修复策略: 从 checkpoint 读取第一轮 messages, 追加 repair_prompt 作为新 user
-                # 借鉴 OpenAI Agents SDK Session "resuming interrupted runs with same session"
+                #
                 # _ckpt_offset: 告诉 AgenticLoop 前 N 条已在 checkpoint, 只 flush 新增的
                 #   repair_prompt + 后续 assistant/tool messages
                 repair_resume_from: dict | None = None
@@ -1665,7 +1665,7 @@ async def run_work_stream(
 
     # Spec 5 独立 Critic Agent: craft 模式 + 有产物 → 语义审查
     # 解决 VMAO 盲点: "工具调用成功但产物语义错误" (如生成了错误代码但 write_file 成功)
-    # 借鉴 noahshinn/reflexion 的 Actor + External Evaluator 模式:
+    #
     #   Critic 是独立第三方视角, 不是 self-reflect
     if exec_mode == "craft" and success and artifacts and not resume_from:
         try:
@@ -1737,7 +1737,7 @@ async def run_work_stream(
                 yield {"type": "artifact", "data": artifacts[-1]}
 
     duration_ms = (time.time() - start) * 1000
-    # 编码任务若未落盘，明确提示（对标 WorkBuddy Craft 必须交付）
+    # 编码任务若未落盘，明确提示（对齐工程实践 Craft 必须交付）
     wrote_code = any(str(t.get("name") or "") in ("write_file", "edit_file") for t in tool_calls)
     if (
         exec_mode == "craft"
@@ -1805,7 +1805,7 @@ async def run_work_stream(
 
     # Spec 6 Self-Optimizing: 离线轨迹沉淀（DSPy BootstrapFewShot 精简版）
     # 把成功轨迹的 (input, output, tool_sequence, score) 沉淀为 few-shot 示例
-    # score >= 0.6 才入库（借鉴 DSPy metric_threshold）
+    # score >= 0.6 才入库
     try:
         from fnixagent.core.intelligence.self_optimizing import (
             SelfOptimizingLibrary,

@@ -1,11 +1,11 @@
 """
 智能信息采集引擎 — 多源情报收集
 
-设计参考:
-  - Hermes Agent: 技能自动创建 + GEPA遗传优化
-  - OpenClaw: Self-Improving Agent Skill + ClawHub技能市场
-  - SAGE: RL-based skill library + 强化学习自进化
-  - GEPA (ICLR 2026 Oral): 遗传帕累托Prompt进化, 比RL好6%, 数据量仅1/35
+设计思路:
+  - 自动技能创建 + 遗传优化遗传优化
+  - 自进化技能方案 + 技能市场技能市场
+  - 强化学习方案 skill library + 强化学习自进化
+  - 遗传优化 (ICLR 2026 Oral): 遗传帕累托Prompt进化, 比RL好6%, 数据量仅1/35
 
 采集策略:
   - 高频 (每天): GitHub Trending, arXiv新论文, HN讨论

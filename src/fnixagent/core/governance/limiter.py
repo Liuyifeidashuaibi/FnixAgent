@@ -1,7 +1,7 @@
 """
 多层令牌桶限流器 (Multi-Layer Token Bucket Rate Limiter) — P0-02。
 
-治理级限流,灵感来自 zhua 项目的 ratelimit.py。与 core.llm.limiter 的单层
+治理级限流,设计基础 zhua 项目的 ratelimit.py。与 core.llm.limiter 的单层
 LLM 限流器不同,本模块面向网关级流量治理,提供三层隔离:
 
   1. 全局 QPS 桶  — 保护整体吞吐,默认 50 QPS

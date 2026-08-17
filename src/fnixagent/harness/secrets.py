@@ -1,4 +1,4 @@
-"""Harness 本地密钥 — ~/.fnix/secrets.json（CLI 与 Desktop 共享，Hermes 式本机 BYOK）。"""
+"""Harness 本地密钥 — ~/.fnix/secrets.json（CLI 与 Desktop 共享，本机 BYOK）。"""
 
 # -*- coding: utf-8 -*-
 # Copyright (C) 2026 FnixAgent. All rights reserved.

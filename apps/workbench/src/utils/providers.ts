@@ -285,8 +285,8 @@ export async function sendToProvider(
     case "openai-compatible":
       return callOpenAICompatible(config, model, request);
     case "anthropic": {
-      const { sendToAnthropic } = await import("../providers/anthropic");
-      return sendToAnthropic(config, model, request);
+      const { sendTo } = await import("../providers/anthropic");
+      return sendTo(config, model, request);
     }
     default:
       return {
@@ -410,8 +410,8 @@ export async function sendToProviderStreaming(
 
   // Anthropic: use isolated provider module (direct fetch, no Rust proxy)
   if (config.type === "anthropic") {
-    const { sendToAnthropicStreaming } = await import("../providers/anthropic");
-    return sendToAnthropicStreaming(config, model, { ...request, streamId });
+    const { sendToStreaming } = await import("../providers/anthropic");
+    return sendToStreaming(config, model, { ...request, streamId });
   }
 
   const startTime = performance.now();

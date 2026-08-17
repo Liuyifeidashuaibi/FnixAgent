@@ -6,14 +6,14 @@
   2. 负载均衡: 轮询 / 加权 / 最少负载
   3. 故障转移: 当前 provider 熔断或超时自动切下一个
   4. 集成限流、熔断、缓存、计费(装饰链式调用)
-  5. P2-9: 多级降级链(借鉴 open-fnix-agent),支持主→备1→备2 链式降级
+  5. P2-9: 多级降级链,支持主→备1→备2 链式降级
 
 路由流程:
   请求到达 → 限流检查 → 缓存检查 → 选 provider → 熔断检查
   → 调用 provider.chat() → 记录计费 → 更新统计
   → 异常? → 熔断记录 + 按降级链逐级 failover(最多 max_failovers 次)
 
-P2-9 降级链示例(借鉴 open-fnix-agent 的 3 级降级):
+P2-9 降级链示例:
   router.set_fallback_chain([
       primary_provider,    # 主模型(如 gemini-2.5-flash)
       fallback_provider,   # 降级1(如 gemini-2.5-flash-lite)
@@ -347,7 +347,7 @@ class LLMRouter:
         providers: list[BaseLLMProvider],
         capabilities: list[ModelCapability | None] | None = None,
     ) -> None:
-        """P2-9: 一键配置多级降级链(借鉴 open-fnix-agent 的 3 级降级)。
+        """P2-9: 一键配置多级降级链。
 
         将多个 provider 按顺序注册,启用 FAILOVER 策略,自动设置
         max_failovers = len(providers) - 1,使 chat() 按链路逐级降级。
@@ -459,7 +459,7 @@ class LLMRouter:
                 return cached
 
         # 3. 选 provider 并调用(P2-8: 用 _select_for 按能力筛选)
-        # P2-9: 多级降级链(借鉴 open-fnix-agent),按 max_failovers 循环重试
+        # P2-9: 多级降级链,按 max_failovers 循环重试
         entry = self._select_for(request)
         if entry is None:
             raise LLMCircuitOpenError("all providers circuit-open, no available LLM")

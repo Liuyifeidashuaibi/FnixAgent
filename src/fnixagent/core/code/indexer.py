@@ -1,7 +1,7 @@
 """
 CodeIndexer - 代码库语义索引器
 ================================
-仓库地图索引 (tree-sitter 符号图) + Trae 全量索引 + Codex 语义搜索。
+仓库地图索引 (tree-sitter 符号图) + 全量索引 + 语义搜索。
 
 设计要点:
   - AST 解析 (Python 内置 ast 模块, 零依赖)
@@ -330,7 +330,7 @@ def _parse_with_regex(file_path: str, source: str) -> list[SymbolInfo]:
 
 
 class CodeIndexer:
-    """代码库语义索引器 (仓库地图索引 + Trae 全量索引)。
+    """代码库语义索引器 (仓库地图索引 + 全量索引)。
 
     功能:
       1. AST/正则解析 → 符号表 (定义位置)
@@ -422,7 +422,7 @@ class CodeIndexer:
         incremental: bool = True,
         extensions: set[str] | None = None,
     ) -> IndexStats:
-        """索引目录 (类比 Trae 全量索引)。
+        """索引目录 (类比 全量索引)。
 
         Args:
             root: 项目根目录
@@ -598,7 +598,7 @@ class CodeIndexer:
         language: str | None = None,
         kind: SymbolKind | None = None,
     ) -> list[CodeSlice]:
-        """语义搜索代码 (对标 Codex 语义搜索)。
+        """语义搜索代码 (对齐工程实践 语义搜索)。
 
         双路检索: 向量 (语义) + BM25 (关键词), RRF 融合。
         """
@@ -636,7 +636,7 @@ class CodeIndexer:
         return slices
 
     def find_references(self, symbol: str) -> list[Location]:
-        """查找符号引用 (对标 IDE Find References)。
+        """查找符号引用 (对齐 IDE Find References)。
 
         当前实现: 简单文本匹配 (未来可升级到 LSP / tree-sitter)。
         """

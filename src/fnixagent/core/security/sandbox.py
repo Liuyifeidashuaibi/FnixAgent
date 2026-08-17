@@ -1,7 +1,7 @@
 """
 跨平台 OS 级执行沙箱 (Sandbox Executor)。
 
-参考 Anthropic 三层防御体系的第一层(隔离执行),为 LLM 生成的工具调用提供
+参考  三层防御体系的第一层(隔离执行),为 LLM 生成的工具调用提供
 OS 级隔离:
   - Windows: Job Object + 内存限制( ctypes 调用 win32 API)
   - Linux:   bubblewrap(bwrap)命名空间隔离
@@ -110,7 +110,7 @@ if sys.platform == "win32":  # pragma: no cover - 平台相关
 # ---------------------------------------------------------------------------
 
 class SandboxLevel(enum.Enum):
-    """分层沙箱档位(参考 OpenAI Codex Sandbox 三层模型)。
+    """分层沙箱档位(参考 行业编码产品 Sandbox 三层模型)。
 
     - ALLOW:     可信代码,当前 bwrap/Job Object 隔离即可
     - CONFIRM:   中风险,需 HITL(Human-In-The-Loop)人工确认后再执行
@@ -297,7 +297,7 @@ class SandboxExecutor:
         confirm_callback: Callable[[], bool] | None = None,
         cwd: str | None = None,
     ) -> SandboxResult:
-        """按分层档位执行命令(参考 OpenAI Codex Sandbox 三层模型)。
+        """按分层档位执行命令(参考 行业编码产品 Sandbox 三层模型)。
 
         - ALLOW:     直接走 execute(可信代码)
         - CONFIRM:   调用 confirm_callback 做人工确认;返回 False 则拒绝执行

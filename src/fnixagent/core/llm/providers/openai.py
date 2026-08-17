@@ -239,7 +239,7 @@ class OpenAICompatibleProvider(BaseLLMProvider):
         # - Qwen3 (DashScope OpenAI 兼容模式): message.reasoning_content
         # - OpenAI o1/o3: message.reasoning (汇总) 或 reasoning_content (per-step)
         # - DeepSeek-R1: message.reasoning_content
-        # - Claude (Anthropic API): thinking blocks (需 adapter 转换)
+        # - Claude ( API): thinking blocks (需 adapter 转换)
         # - GLM-4.5/4.6: message.reasoning_content (启用 thinking 参数后)
         reasoning_content = (
             message.get("reasoning_content")
@@ -248,7 +248,7 @@ class OpenAICompatibleProvider(BaseLLMProvider):
             or ""
         )
         if not isinstance(reasoning_content, str):
-            # 某些 provider 可能返回 list[dict] (Anthropic thinking blocks)
+            # 某些 provider 可能返回 list[dict] ( thinking blocks)
             try:
                 if isinstance(reasoning_content, list):
                     reasoning_content = "\n\n".join(

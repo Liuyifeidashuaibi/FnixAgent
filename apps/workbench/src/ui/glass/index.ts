@@ -6,7 +6,7 @@
  */
 
 /**
- * Fnix Glass Kit — ChatGPT / Codex light frost components.
+ * Fnix Glass Kit — Desktop / Code light frost components.
  * Import: `import { GlassComposer, ... } from "../../ui/glass"`
  * Root must include class `fnix-glass` and import `./tokens.css`.
  */

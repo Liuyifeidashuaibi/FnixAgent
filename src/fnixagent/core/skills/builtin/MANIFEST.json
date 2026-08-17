@@ -1,13 +1,12 @@
 {
   "version": "1.2.0",
   "generated_at": "2026-07-21",
-  "description": "FnixAgent 内置 Skill 清单 — 对齐 Agent Skills 开放标准；含 Trae Work 官方推荐市场技能适配与 dynamic-ui/html 交付/审查调试适配。",
+  "description": "FnixAgent 内置 Skill 清单 — 对齐 Agent Skills 开放标准；含社区推荐技能适配与 dynamic-ui/html 交付/审查调试适配。",
   "source": "builtin",
   "sources_note": {
-    "trae_work_official_14": "https://docs.trae.cn/solo_14-must-install-skills-for-trae-solo",
-    "vercel_agent_skills": "https://github.com/vercel-labs/agent-skills",
+    "community_recommended": "https://github.com/vercel-labs/agent-skills",
     "obra_superpowers": "https://github.com/obra/superpowers",
-    "trae_builtin_adapted": "dynamic-ui / html-report / html-deck / doc-writing-guide / research-guide / code-review / security-review / debugging 为 Trae Work 内置能力的 Fnix 适配重写（非整包复制）"
+    "builtin_adapted": "dynamic-ui / html-report / html-deck / doc-writing-guide / research-guide / code-review / security-review / debugging 为社区通用能力的 Fnix 适配重写（非整包复制）"
   },
   "count": 35,
   "skills": [
@@ -17,12 +16,7 @@
       "description": "脚本化浏览器操作：页面交互、截图、数据提取与自动化流程",
       "level": "reasoning",
       "output_format": "json",
-      "tags": [
-        "browser",
-        "automation",
-        "playwright",
-        "trae-work"
-      ],
+      "tags": ["browser", "automation", "playwright", "trae-work"],
       "license": "Apache-2.0"
     },
     {
@@ -31,13 +25,7 @@
       "description": "p5.js 生成艺术 — 几何/粒子/噪声/L-System 视觉作品",
       "level": "reasoning",
       "output_format": "html",
-      "tags": [
-        "algorithmic-art",
-        "p5js",
-        "generative",
-        "creative",
-        "code"
-      ],
+      "tags": ["algorithmic-art", "p5js", "generative", "creative", "code"],
       "license": "Apache-2.0"
     },
     {
@@ -46,13 +34,7 @@
       "description": "React+Tailwind+shadcn artifacts 构建，多组件状态管理",
       "level": "reasoning",
       "output_format": "html",
-      "tags": [
-        "artifacts",
-        "react",
-        "tailwind",
-        "shadcn",
-        "code"
-      ],
+      "tags": ["artifacts", "react", "tailwind", "shadcn", "code"],
       "license": "Apache-2.0"
     },
     {
@@ -61,13 +43,7 @@
       "description": "开发前强制澄清需求与设计；未获用户批准设计前禁止写代码",
       "level": "reasoning",
       "output_format": "md",
-      "tags": [
-        "brainstorming",
-        "design",
-        "requirements",
-        "planning",
-        "trae-work"
-      ],
+      "tags": ["brainstorming", "design", "requirements", "planning", "trae-work"],
       "license": "MIT"
     },
     {
@@ -76,13 +52,7 @@
       "description": "品牌规范 — 色板/字体/排版/Logo 用法/语气",
       "level": "basic",
       "output_format": "md",
-      "tags": [
-        "brand",
-        "guidelines",
-        "identity",
-        "design",
-        "consistency"
-      ],
+      "tags": ["brand", "guidelines", "identity", "design", "consistency"],
       "license": "Apache-2.0"
     },
     {
@@ -91,13 +61,7 @@
       "description": "PNG/PDF 视觉设计 — 海报/名片/封面/信息图",
       "level": "reasoning",
       "output_format": "png",
-      "tags": [
-        "canvas",
-        "design",
-        "visual",
-        "poster",
-        "creative"
-      ],
+      "tags": ["canvas", "design", "visual", "poster", "creative"],
       "license": "Apache-2.0"
     },
     {
@@ -106,12 +70,7 @@
       "description": "按数据特征选图并生成趋势/对比/分布/拓扑等可视化结果",
       "level": "reasoning",
       "output_format": "png",
-      "tags": [
-        "chart",
-        "visualization",
-        "data",
-        "trae-work"
-      ],
+      "tags": ["chart", "visualization", "data", "trae-work"],
       "license": "Apache-2.0"
     },
     {
@@ -120,13 +79,7 @@
       "description": "代码审查 — 审查 diff / 合并请求 / 未提交变更，产出结构化反馈：意图推断、Mermaid 变更概览、按严重度分级的问题清单。",
       "level": "reasoning",
       "output_format": "md",
-      "tags": [
-        "code-review",
-        "diff",
-        "quality",
-        "git",
-        "trae-work"
-      ],
+      "tags": ["code-review", "diff", "quality", "git", "trae-work"],
       "license": "Apache-2.0"
     },
     {
@@ -135,13 +88,7 @@
       "description": "React 组件组合模式：消除布尔 props 膨胀，复合组件/状态提升/React 19 API",
       "level": "reasoning",
       "output_format": "md",
-      "tags": [
-        "react",
-        "composition",
-        "architecture",
-        "vercel",
-        "trae-work"
-      ],
+      "tags": ["react", "composition", "architecture", "vercel", "trae-work"],
       "license": "MIT"
     },
     {
@@ -150,14 +97,7 @@
       "description": "Excel/CSV 数据查询聚合与多表关联分析，输出可复现结构化结论",
       "level": "reasoning",
       "output_format": "json",
-      "tags": [
-        "data",
-        "sql",
-        "csv",
-        "excel",
-        "analysis",
-        "trae-work"
-      ],
+      "tags": ["data", "sql", "csv", "excel", "analysis", "trae-work"],
       "license": "Apache-2.0"
     },
     {
@@ -166,13 +106,7 @@
       "description": "证据驱动的科学调试 — 假设 → 插桩 → 复现 → 分析 → 最小修复 → 对比验证。适用于静态分析无法定位、需要运行时证据的复杂 Bug；用户要求调试或多轮静态分析无果时激活。",
       "level": "reasoning",
       "output_format": "md",
-      "tags": [
-        "debug",
-        "troubleshooting",
-        "evidence",
-        "instrumentation",
-        "trae-work"
-      ],
+      "tags": ["debug", "troubleshooting", "evidence", "instrumentation", "trae-work"],
       "license": "Apache-2.0"
     },
     {
@@ -181,13 +115,7 @@
       "description": "人机协作写作 — 长文大纲/草稿/润色/扩写，对应 MarkdownRenderer",
       "level": "reasoning",
       "output_format": "md",
-      "tags": [
-        "coauthoring",
-        "writing",
-        "markdown",
-        "office",
-        "work"
-      ],
+      "tags": ["coauthoring", "writing", "markdown", "office", "work"],
       "license": "Apache-2.0"
     },
     {
@@ -196,13 +124,7 @@
       "description": "文档写作场景总控 — 意图解读、体裁与格式选择、风格校准、交付路由。写 PRD、需求文档、技术方案、研究报告、手册等任何结构化书面交付物时激活。",
       "level": "reasoning",
       "output_format": "md",
-      "tags": [
-        "writing",
-        "document",
-        "prd",
-        "routing",
-        "trae-work"
-      ],
+      "tags": ["writing", "document", "prd", "routing", "trae-work"],
       "license": "Apache-2.0"
     },
     {
@@ -211,13 +133,7 @@
       "description": "Word 文档创建/编辑/修订/批注，对应 WordExpert",
       "level": "basic",
       "output_format": "docx",
-      "tags": [
-        "docx",
-        "word",
-        "office",
-        "work",
-        "revision"
-      ],
+      "tags": ["docx", "word", "office", "work", "revision"],
       "license": "Apache-2.0"
     },
     {
@@ -226,14 +142,7 @@
       "description": "在对话流内联渲染紧凑可视化 — 图表、架构图、对比矩阵、交互 demo。仅当可视化比 Markdown 更清晰时使用；不用于网站、应用、长报告、看板或幻灯片。",
       "level": "reasoning",
       "output_format": "html",
-      "tags": [
-        "widget",
-        "visualization",
-        "chart",
-        "diagram",
-        "inline",
-        "trae-work"
-      ],
+      "tags": ["widget", "visualization", "chart", "diagram", "inline", "trae-work"],
       "license": "Apache-2.0"
     },
     {
@@ -242,13 +151,7 @@
       "description": "通过 CDP + agent-browser 自动化 Electron 桌面应用（VS Code/Slack/Discord 等）",
       "level": "reasoning",
       "output_format": "md",
-      "tags": [
-        "electron",
-        "desktop",
-        "automation",
-        "cdp",
-        "trae-work"
-      ],
+      "tags": ["electron", "desktop", "automation", "cdp", "trae-work"],
       "license": "MIT"
     },
     {
@@ -257,13 +160,7 @@
       "description": "经 Figma MCP 解析设计稿并生成/重构为符合项目规范的前端代码",
       "level": "reasoning",
       "output_format": "tsx",
-      "tags": [
-        "figma",
-        "design-to-code",
-        "mcp",
-        "frontend",
-        "trae-work"
-      ],
+      "tags": ["figma", "design-to-code", "mcp", "frontend", "trae-work"],
       "license": "MIT"
     },
     {
@@ -272,13 +169,7 @@
       "description": "前端设计系统 — 消除 AI slop UI，产出 production-grade 代码",
       "level": "reasoning",
       "output_format": "html",
-      "tags": [
-        "frontend",
-        "design-system",
-        "code",
-        "ui",
-        "anti-slop"
-      ],
+      "tags": ["frontend", "design-system", "code", "ui", "anti-slop"],
       "license": "Apache-2.0"
     },
     {
@@ -287,13 +178,7 @@
       "description": "克制高级感前端界面：落地页/SaaS/原型，强调信息层级与排版",
       "level": "reasoning",
       "output_format": "html",
-      "tags": [
-        "frontend",
-        "landing",
-        "saas",
-        "typography",
-        "trae-work"
-      ],
+      "tags": ["frontend", "landing", "saas", "typography", "trae-work"],
       "license": "Apache-2.0"
     },
     {
@@ -302,12 +187,7 @@
       "description": "Conventional Commits 安全提交流程：分析 diff、拆分暂存、生成规范 message",
       "level": "basic",
       "output_format": "md",
-      "tags": [
-        "git",
-        "commit",
-        "conventional-commits",
-        "trae-work"
-      ],
+      "tags": ["git", "commit", "conventional-commits", "trae-work"],
       "license": "Apache-2.0"
     },
     {
@@ -316,13 +196,7 @@
       "description": "从零创建自包含 HTML 幻灯片 — 从主题/大纲/文档/Markdown 生成可在任何浏览器打开的演示文稿。用户要「演示/幻灯片/路演/汇报」且不涉及已有 .pptx 文件时使用；产物永远是 HTML，写入 .fnix/artifacts/。",
       "level": "reasoning",
       "output_format": "html",
-      "tags": [
-        "slides",
-        "presentation",
-        "deck",
-        "html",
-        "trae-work"
-      ],
+      "tags": ["slides", "presentation", "deck", "html", "trae-work"],
       "license": "MIT"
     },
     {
@@ -331,14 +205,7 @@
       "description": "生成自包含 HTML 交付物（幻灯片除外）— 研究报告、白皮书、PRD、方案书、竞品分析、简历、数据看板等。产物是零外部依赖的 HTML 文件，写入 .fnix/artifacts/。",
       "level": "reasoning",
       "output_format": "html",
-      "tags": [
-        "report",
-        "html",
-        "deliverable",
-        "prd",
-        "whitepaper",
-        "trae-work"
-      ],
+      "tags": ["report", "html", "deliverable", "prd", "whitepaper", "trae-work"],
       "license": "Apache-2.0"
     },
     {
@@ -347,15 +214,7 @@
       "description": "状态报告/新闻稿/FAQ/邮件模板，对应 TemplateManager",
       "level": "basic",
       "output_format": "md",
-      "tags": [
-        "comms",
-        "report",
-        "press-release",
-        "faq",
-        "email",
-        "office",
-        "work"
-      ],
+      "tags": ["comms", "report", "press-release", "faq", "email", "office", "work"],
       "license": "Apache-2.0"
     },
     {
@@ -364,13 +223,7 @@
       "description": "MCP 服务器构建指南 — 注册工具/资源/提示，对齐 Model Context Protocol",
       "level": "meta",
       "output_format": "py",
-      "tags": [
-        "mcp",
-        "model-context-protocol",
-        "server",
-        "code",
-        "integration"
-      ],
+      "tags": ["mcp", "model-context-protocol", "server", "code", "integration"],
       "license": "Apache-2.0"
     },
     {
@@ -379,13 +232,7 @@
       "description": "PDF 文档处理 — 提取/合并/分割/标注/加密/OCR，对应 PDFExpert",
       "level": "basic",
       "output_format": "pdf",
-      "tags": [
-        "pdf",
-        "office",
-        "work",
-        "extract",
-        "merge"
-      ],
+      "tags": ["pdf", "office", "work", "extract", "merge"],
       "license": "Apache-2.0"
     },
     {
@@ -394,13 +241,7 @@
       "description": "PPT 创建/布局/主题/演讲备注，对应 PPTExpert",
       "level": "basic",
       "output_format": "pptx",
-      "tags": [
-        "pptx",
-        "powerpoint",
-        "slides",
-        "office",
-        "work"
-      ],
+      "tags": ["pptx", "powerpoint", "slides", "office", "work"],
       "license": "Apache-2.0"
     },
     {
@@ -409,14 +250,7 @@
       "description": "React/Next.js 性能与质量审查（Vercel 工程实践，8 类 70+ 规则）",
       "level": "reasoning",
       "output_format": "md",
-      "tags": [
-        "react",
-        "nextjs",
-        "performance",
-        "code-review",
-        "vercel",
-        "trae-work"
-      ],
+      "tags": ["react", "nextjs", "performance", "code-review", "vercel", "trae-work"],
       "license": "MIT"
     },
     {
@@ -425,13 +259,7 @@
       "description": "研究/调研/分析场景总控 — 信源分级、交叉验证、检索范式与交付路由。用户要查证事实、调研、对比选型、竞品分析、写研究报告时激活。",
       "level": "reasoning",
       "output_format": "md",
-      "tags": [
-        "research",
-        "analysis",
-        "sources",
-        "validation",
-        "trae-work"
-      ],
+      "tags": ["research", "analysis", "sources", "validation", "trae-work"],
       "license": "Apache-2.0"
     },
     {
@@ -440,13 +268,7 @@
       "description": "安全审查 — 对 diff / 合并请求做安全向审计，只报可论证利用路径的漏洞（source→sink），按置信度门槛过滤，不写修复代码。",
       "level": "reasoning",
       "output_format": "md",
-      "tags": [
-        "security",
-        "audit",
-        "vulnerability",
-        "diff",
-        "trae-work"
-      ],
+      "tags": ["security", "audit", "vulnerability", "diff", "trae-work"],
       "license": "Apache-2.0"
     },
     {
@@ -455,12 +277,7 @@
       "description": "元 skill — 引导用户创建新的 Agent Skill（SKILL.md 格式）",
       "level": "meta",
       "output_format": "md",
-      "tags": [
-        "meta",
-        "skill-creator",
-        "authoring",
-        "template"
-      ],
+      "tags": ["meta", "skill-creator", "authoring", "template"],
       "license": "Apache-2.0"
     },
     {
@@ -469,12 +286,7 @@
       "description": "Skill 模板 — 创建新 skill 时复制此目录作为基线",
       "level": "basic",
       "output_format": "md",
-      "tags": [
-        "template",
-        "meta",
-        "scaffold",
-        "starter"
-      ],
+      "tags": ["template", "meta", "scaffold", "starter"],
       "license": "Apache-2.0"
     },
     {
@@ -483,13 +295,7 @@
       "description": "10 预设主题 + 自定义 — 色板/字体/间距/圆角 design tokens",
       "level": "basic",
       "output_format": "json",
-      "tags": [
-        "theme",
-        "design-tokens",
-        "palette",
-        "typography",
-        "design"
-      ],
+      "tags": ["theme", "design-tokens", "palette", "typography", "design"],
       "license": "Apache-2.0"
     },
     {
@@ -498,14 +304,7 @@
       "description": "Playwright UI 验证 — 视觉/交互/响应式/a11y 自动检查",
       "level": "reasoning",
       "output_format": "json",
-      "tags": [
-        "testing",
-        "playwright",
-        "ui",
-        "a11y",
-        "code",
-        "verification"
-      ],
+      "tags": ["testing", "playwright", "ui", "a11y", "code", "verification"],
       "license": "Apache-2.0"
     },
     {
@@ -514,12 +313,7 @@
       "description": "有 spec/需求后、动手写代码前：产出可执行、可测试的分步实现计划",
       "level": "reasoning",
       "output_format": "md",
-      "tags": [
-        "planning",
-        "implementation",
-        "tdd",
-        "trae-work"
-      ],
+      "tags": ["planning", "implementation", "tdd", "trae-work"],
       "license": "MIT"
     },
     {
@@ -528,13 +322,7 @@
       "description": "Excel 公式/图表/格式/数据透视，对应 ExcelExpert",
       "level": "basic",
       "output_format": "xlsx",
-      "tags": [
-        "xlsx",
-        "excel",
-        "spreadsheet",
-        "formula",
-        "chart"
-      ],
+      "tags": ["xlsx", "excel", "spreadsheet", "formula", "chart"],
       "license": "Apache-2.0"
     }
   ]

@@ -333,7 +333,7 @@ def generate_og_image(brand_out: Path) -> None:
     draw.rectangle([60, 580, 1220, 584], fill=(80, 80, 80))
     draw.text((80, 595), u"\u00a9 2024-2026 FnixAgent \u00b7 All Rights Reserved",
               fill=(140, 140, 140), font=font_small)
-    draw.text((900, 595), "github.com/fnixagent/fnixagent",
+    draw.text((900, 595), "github.com/Liuyifeidashuaibi/FnixAgent",
               fill=(180, 180, 180), font=font_small)
 
     # 左下角装饰(几个小方块像状态指示)

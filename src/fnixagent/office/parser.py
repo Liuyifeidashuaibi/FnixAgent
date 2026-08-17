@@ -5,7 +5,7 @@
 专家职责:
   - 按扩展名自动派发解析器(docx/xlsx/pdf/html/txt/csv/json)
   - 表格抽取、表单字段抽取(正则)、布局检测
-  - 统一 Element 模型输出(借鉴 Unstructured.io 设计)
+  - 统一 Element 模型输出
 
 底层依赖:
   - python-docx / openpyxl / pypdf / pdfplumber / beautifulsoup4(按需)
@@ -15,7 +15,7 @@
   - 工作簿 read_only 模式,close 在 finally 中确保释放
   - 路径/扩展名校验前置,避免无效 IO
 
-设计参考(Unstructured.io):
+设计思路(Unstructured.io):
   - 统一 Element 模型: 所有解析产物都是 Element 子类实例,具备
     category/text/metadata/to_dict() 接口,方便下游统一处理。
   - 自描述 FileType 枚举: 每个枚举值携带支持的扩展名、能力标志
@@ -47,7 +47,7 @@ from typing import Any
 from fnixagent.office.base import BaseExpert, ExpertError, ExpertResult
 
 # ---------------------------------------------------------------------------
-# 统一 Element 模型(借鉴 Unstructured)
+# 统一 Element 模型
 # ---------------------------------------------------------------------------
 
 @dataclass
@@ -183,7 +183,7 @@ class PageBreak(Element):
         return "PageBreak"
 
 # ---------------------------------------------------------------------------
-# 自描述 FileType 枚举(借鉴 Unstructured)
+# 自描述 FileType 枚举
 # ---------------------------------------------------------------------------
 
 class FileType(Enum):
@@ -275,7 +275,7 @@ class ParseOptions:
     chunk_size: int = 1200
 
 # ---------------------------------------------------------------------------
-# 装饰器栈(借鉴 Unstructured 的 @apply_metadata / @add_chunking_strategy)
+# 装饰器栈
 # ---------------------------------------------------------------------------
 
 def apply_metadata(func: Callable) -> Callable:
@@ -385,7 +385,7 @@ class ParserExpert(BaseExpert):
 
     提供两套 API:
       - parse()(向后兼容):返回 dict 结构(type/paragraphs/tables/raw_text)
-      - parse_elements()(P2-9 新增,借鉴 Unstructured):返回 Element 列表,
+      - parse_elements()(P2-9 新增,):返回 Element 列表,
         支持 FileType 自描述派发、装饰器栈后处理、ParseOptions 集中配置
 
     能力边界:
@@ -451,7 +451,7 @@ class ParserExpert(BaseExpert):
             return self._failure(f"parse failed: {e}")
 
     # ------------------------------------------------------------------
-    # 统一入口(P2-9 新增: Element 列表输出,借鉴 Unstructured)
+    # 统一入口(P2-9 新增: Element 列表输出,)
     # ------------------------------------------------------------------
 
     def parse_elements(
@@ -1253,7 +1253,7 @@ class ParserExpert(BaseExpert):
         return r
 
     # ------------------------------------------------------------------
-    # Element 级别解析器(借鉴 Unstructured,返回 list[Element])
+    # Element 级别解析器
     # ------------------------------------------------------------------
 
     @apply_metadata

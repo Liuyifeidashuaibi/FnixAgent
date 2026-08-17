@@ -1,4 +1,4 @@
-"""~/.fnix home layout + memory（Hermes 对标）。"""
+"""~/.fnix home layout + memory（统一设计）。"""
 
 # -*- coding: utf-8 -*-
 # Copyright (C) 2026 FnixAgent. All rights reserved.
@@ -17,7 +17,7 @@ def harness_home(tmp_path, monkeypatch):
     return tmp_path / "fnix"
 
 
-def test_ensure_home_layout_creates_hermes_style_tree(harness_home):
+def test_ensure_home_layout_creates_fnix_style_tree(harness_home):
     from fnixagent.harness.paths import memories_dir, skills_dir, soul_path
     from fnixagent.harness.workspace import ensure_home_layout
 

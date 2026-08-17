@@ -1,6 +1,4 @@
-"""三层护栏注册中心 (Guardrail Registry)。
-
-借鉴 kaoyan-ai-platform 的护栏注册中心设计,扩展为完整的三层护栏体系:
+"""三层护栏注册中心 (Guardrail Registry)。,扩展为完整的三层护栏体系:
   1. 输入护栏 (Input):      用户输入进入 Agent 前的注入/敏感词/越权检测
   2. 执行护栏 (Execution):  工具调用执行前的权限/参数/高危操作校验
   3. 输出护栏 (Output):     Agent 输出返回用户前的格式/脱敏/合规审核

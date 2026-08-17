@@ -1,14 +1,11 @@
-"""Checkpoint 持久化模块 —— P1-2。
-
-借鉴 LangGraph 的 Checkpointer 设计,提供 Agent 状态的持久化与恢复能力。
+"""Checkpoint 持久化模块 —— P1-2。,提供 Agent 状态的持久化与恢复能力。
 
 模块组成:
   - types:    Checkpoint / CheckpointMetadata / CheckpointTuple 数据结构
   - base:     BaseCheckpointer 抽象基类(同步 + 异步接口)
   - memory:   MemoryCheckpointer(内存版,测试用)
   - postgres: PostgresCheckpointer(生产用,需 psycopg)
-  - manager:  CheckpointManager(P2-04,工作流状态持久化与恢复,
-              借鉴 kaoyan checkpoint + zhua reclaim_stale)
+  - manager:  CheckpointManager(P2-04,工作流状态持久化与恢复,)
 
 设计要点:
   - channel_values:     当前所有 channel 的值(对应 GraphState 各字段)

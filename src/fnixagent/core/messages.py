@@ -1,4 +1,4 @@
-"""块化消息(借鉴 AgentScope Msg + ContentBlock)。
+"""块化消息。
 
 本模块引入块化消息模型,替代现有 core/types.py 中的 Message(纯 str content)。
 设计目标:
@@ -133,7 +133,7 @@ Block = Union[
 
 @dataclass
 class Msg:
-    """块化消息(借鉴 AgentScope Msg)。
+    """块化消息。
 
     与现有 core/types.py:Message 的区别:
       - content: list[Block] 而非 str(支持多模态)

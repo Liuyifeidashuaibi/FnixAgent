@@ -1,7 +1,7 @@
 """
 MemoryManager - 四层记忆架构 (Four-Layer Memory Architecture)
 ===============================================================
-2026 业界统一共识: 感知/工作/情节/语义 四层分层。
+2026 行业统一共识: 感知/工作/情节/语义 四层分层。
 
 层级:
   SENSORY  - 感知记忆: LLM 当前处理的 token 流 (GPU KV Cache)
@@ -9,7 +9,7 @@ MemoryManager - 四层记忆架构 (Four-Layer Memory Architecture)
   WORKING  - 工作记忆: 当前对话上下文 (LLM Context Window)
              介质: LLM 本身, 快, 容量有限, 超限自动卸载到情节记忆
   EPISODIC - 情节记忆: 历史对话事件
-             介质: Letta (MemGPT 23K star) + Postgres, 自动摘要
+             介质: 记忆服务层 (记忆服务 23K star) + Postgres, 自动摘要
   SEMANTIC - 语义记忆: 知识图谱 / 向量库
              介质: Milvus + cognee + GraphRAG, 多跳推理
 
@@ -39,7 +39,7 @@ class MemoryManager:
     四层分层:
       感知记忆 → GPU KV Cache (vLLM PagedAttention), 最快, 容量最小
       工作记忆 → Context Window (LLM 本身), 快, 容量有限
-      情节记忆 → Letta + Postgres (自动摘要 / 卸载), 中速, 大容量
+      情节记忆 → 记忆服务层 + Postgres (自动摘要 / 卸载), 中速, 大容量
       语义记忆 → Milvus + GraphRAG (向量 + 多跳推理), 慢, 海量
 
     冷热分层:
@@ -48,7 +48,7 @@ class MemoryManager:
       - 冷数据: 语义记忆 (Milvus + 知识图谱)
 
     可插拔后端:
-      - episodic_backend: 情节记忆后端 (Letta / Postgres)
+      - episodic_backend: 情节记忆后端 (记忆服务层 / Postgres)
       - semantic_backend: 语义记忆后端 (Milvus / cognee)
       - 若两者使用同一 MemoryBackend, 则通过 layer 参数区分
     """

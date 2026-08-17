@@ -1,4 +1,4 @@
-"""统一 Guardrail 管道(借鉴 OpenAI Agents SDK input/output_guardrails)。
+"""统一 Guardrail 管道。
 
 [注] 完整三层护栏体系(输入/执行/输出,含工具调用执行层)请使用
 ``core.guardrail.get_guardrail_registry()``(见 fnixagent.core.guardrail)。
@@ -17,7 +17,7 @@
   - GuardrailPipeline:串行执行 + 短路(tripwire 触发即停止)
   - GuardrailResult:统一结果格式(passed/tripwire/sanitized_text/risk_score)
 
-tripwire 语义(借鉴 OpenAI SDK):
+tripwire 语义:
   - tripwire_triggered=True 表示严重违规,立即短路 + 审计
   - passed=False 但 tripwire=False 表示软拦截(如脱敏后继续)
 

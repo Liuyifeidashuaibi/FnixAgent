@@ -1,7 +1,7 @@
 """
 fnixagent Coding - 编码智能体能力层
 ======================================
-对标 Codex / Trae / OpenHands / Aider, 基于 AgentOS 构建编码 Agent。
+对齐工程实践 / 行业编码工具 /  / , 基于 AgentOS 构建编码 Agent。
 
 模块清单:
   code_indexer    - 代码库语义索引 (AST 切片 + 符号表 + 语义检索)

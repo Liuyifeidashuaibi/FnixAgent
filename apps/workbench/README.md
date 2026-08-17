@@ -4,7 +4,7 @@
 
 # Fnix v2.2.0
 
-**A native AI-powered code editor built with Tauri 2, React 19, and Monaco Editor.**  
+**A native AI-powered code editor built with Tauri 2, React 19, and Monaco Editor.**
 Multi-provider AI, agentic tool-calling, technical debt analysis, and a full IDE experience — all running locally on your machine.
 
 <br/>
@@ -136,7 +136,6 @@ All releases → [github.com/fnix/fnix-downloads/releases](https://github.com/fn
 | 🐛 Issues | [GitHub Issues](https://github.com/mandaloriantrader/Fnix/issues) |
 
 ---
-
 
 
 **Prerequisites:** Node.js 20+, Rust 1.77.2+

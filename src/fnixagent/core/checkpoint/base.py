@@ -1,7 +1,6 @@
 """BaseCheckpointer 抽象基类 —— P1-2。
 
-定义所有 Checkpointer 实现的统一接口(同步 + 异步)。
-借鉴 LangGraph 的 BaseCheckpointSaver 接口设计。
+定义所有 Checkpointer 实现的统一接口(同步 + 异步)。。
 
 核心方法:
   - put / aput:           保存检查点

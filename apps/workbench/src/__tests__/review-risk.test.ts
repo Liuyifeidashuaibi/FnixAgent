@@ -6,7 +6,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { assessFileReviewRisk, assessReviewBatch } from "../shell/chatgpt-desktop/reviewRisk";
+import { assessFileReviewRisk, assessReviewBatch } from "../shell/desktop/reviewRisk";
 
 describe("reviewRisk", () => {
   it("flags sensitive paths as high", () => {

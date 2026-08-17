@@ -1,7 +1,7 @@
 """
 CodingAgent - 编码智能体核心
 ============================
-对标 Codex Plan → Apply 范式和 Trae Agent Mode, 基于 AgentOS 构建编码 Agent。
+对齐工程实践 → Apply 范式和 Agent Mode, 基于 AgentOS 构建编码 Agent。
 
 架构:
     Planner → Executor → Reviewer
@@ -186,7 +186,7 @@ class CodingAgentEvent:
 # ============================================================================
 
 class CodingAgent:
-    """编码智能体 (对标 Codex/Trae Agent Mode)。
+    """编码智能体 (对齐工程实践)。
 
     架构: Planner → Executor → Reviewer
     底座: AgentOS Process + DiffEngine + CodeTools
@@ -302,11 +302,11 @@ class CodingAgent:
             )
         )
 
-        # HERA 技能捕获 (对标 Work 模式, 双模式对齐):
+        # HERA 技能捕获 (对齐 Work 模式, 双模式对齐):
         # 任务完成后把解决方案存入技能库, 下次类似任务可召回
         await self._capture_skill_hera(task, result)
 
-        # CriticAgent 独立审查 (对标 Work 模式, 双模式对齐):
+        # CriticAgent 独立审查 (对齐 Work 模式, 双模式对齐):
         # 解决 _review 内嵌审查易被 LLM 自圆其说的问题
         if status == TaskStatus.COMPLETED:
             await self._run_critic_review(task, result)
@@ -1663,7 +1663,7 @@ class CodingAgent:
     # ========================================================================
 
     async def _capture_skill_hera(self, task: CodingTask, result: TaskResult) -> None:
-        """HERA 技能捕获: 把成功的解决方案存入技能库 (对标 Work 模式)。
+        """HERA 技能捕获: 把成功的解决方案存入技能库 (对齐 Work 模式)。
 
         论文贡献: 失败技能也存储 (含 failure_count), 下次类似任务可降权召回避免重复错误。
         """
@@ -1691,10 +1691,9 @@ class CodingAgent:
             pass  # HERA 失败不阻塞主路径
 
     async def _run_critic_review(self, task: CodingTask, result: TaskResult) -> None:
-        """CriticAgent 独立审查 (对标 Work 模式, 双模式对齐)。
+        """CriticAgent 独立审查 (对齐 Work 模式, 双模式对齐)。
 
-        解决 Code 模式 _review 内嵌审查易被 LLM 自圆其说的问题。
-        借鉴 noahshinn/reflexion 的 Actor + External Evaluator 模式。
+        解决 Code 模式 _review 内嵌审查易被 LLM 自圆其说的问题。。
         """
         try:
             from fnixagent.core.agent.critic import CriticAgent

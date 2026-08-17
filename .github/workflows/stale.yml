@@ -5,7 +5,7 @@ name: Stale
 
 on:
   schedule:
-    - cron: "0 3 * * *"  # Daily 03:00 UTC
+    - cron: '0 3 * * *' # Daily 03:00 UTC
   workflow_dispatch:
 
 permissions:
@@ -21,8 +21,8 @@ jobs:
           # Issues
           days-before-issue-stale: 60
           days-before-issue-close: 14
-          stale-issue-label: "stale"
-          close-issue-label: "closed-by-stale"
+          stale-issue-label: 'stale'
+          close-issue-label: 'closed-by-stale'
           exempt-issue-labels: |
             pinned
             security
@@ -47,8 +47,8 @@ jobs:
           # PRs
           days-before-pr-stale: 45
           days-before-pr-close: 14
-          stale-pr-label: "stale"
-          close-pr-label: "closed-by-stale"
+          stale-pr-label: 'stale'
+          close-pr-label: 'closed-by-stale'
           exempt-pr-labels: |
             pinned
             security
@@ -63,6 +63,5 @@ jobs:
             2. Resolve any merge conflicts.
             3. Remove the `stale` label.
 
-          # Only run on repo, not on forks
-          only: issues
+          # Only process 100 items per run to avoid rate limits
           operations-per-run: 100
