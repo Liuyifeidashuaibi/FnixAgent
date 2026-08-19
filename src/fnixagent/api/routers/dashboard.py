@@ -21,6 +21,7 @@ API 路由 - 后台控制面板 Dashboard(Phase 4.4)。
 from __future__ import annotations
 
 import os
+import sys
 import time
 from datetime import UTC, datetime, timedelta
 
@@ -144,7 +145,7 @@ async def get_overview(_admin: dict = Depends(require_admin)):
                 "version": version,
                 "uptime_seconds": uptime_seconds,
                 "storage_mode": storage_mode,
-                "python_version": f"{os.sys.version_info.major}.{os.sys.version_info.minor}",
+                "python_version": f"{sys.version_info.major}.{sys.version_info.minor}",
             },
         },
     )
@@ -302,7 +303,7 @@ async def get_system_info(_admin: dict = Depends(require_admin)):
             "uptime_seconds": uptime_seconds,
             "uptime_human": f"{days}d {hours}h {minutes}m",
             "storage_mode": storage_mode,
-            "python_version": f"{os.sys.version_info.major}.{os.sys.version_info.minor}.{os.sys.version_info.micro}",
+            "python_version": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
             "environment": os.getenv("fnixagent_ENV", "development"),
             "mode": os.getenv("FNIXAGENT_MODE", "legacy"),
         },
