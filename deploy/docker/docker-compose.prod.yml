@@ -21,7 +21,8 @@ x-app-base: &app-base
     context: ../..
     dockerfile: deploy/docker/Dockerfile
   env_file:
-    - ../../.env.prod
+    - path: ../../.env.prod
+      required: false
   environment: &app-env
     DATABASE_URL: postgresql://fnixagent:${POSTGRES_PASSWORD}@postgres:5432/fnixagent
     REDIS_HOST: redis
@@ -51,8 +52,8 @@ x-app-base: &app-base
   logging:
     driver: json-file
     options:
-      max-size: "100m"
-      max-file: "10"
+      max-size: '100m'
+      max-file: '10'
 
 services:
   # ------------------------------------------------------------------
@@ -68,7 +69,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U fnixagent"]
+      test: ['CMD-SHELL', 'pg_isready -U fnixagent']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -85,7 +86,7 @@ services:
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      test: ['CMD', 'redis-cli', '-a', '${REDIS_PASSWORD}', 'ping']
       interval: 10s
       timeout: 3s
       retries: 5
@@ -107,7 +108,7 @@ services:
       - etcd_data:/etcd
     command: etcd -advertise-client-urls=http://127.0.0.1:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
     healthcheck:
-      test: ["CMD", "/usr/local/bin/etcd", "endpoint", "health"]
+      test: ['CMD', '/usr/local/bin/etcd', 'endpoint', 'health']
       interval: 30s
       timeout: 20s
       retries: 3
@@ -123,7 +124,7 @@ services:
     volumes:
       - minio_data:/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
       interval: 30s
       timeout: 20s
       retries: 3
@@ -136,7 +137,7 @@ services:
   milvus:
     image: milvusdb/milvus:v2.3.3
     container_name: fnixagent-milvus-prod
-    command: ["milvus", "run", "standalone"]
+    command: ['milvus', 'run', 'standalone']
     security_opt:
       - seccomp:unconfined
     environment:
@@ -150,7 +151,7 @@ services:
       minio:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:9091/healthz']
       interval: 30s
       start_period: 90s
       timeout: 20s
@@ -177,7 +178,11 @@ services:
     volumes:
       - es_data:/usr/share/elasticsearch/data
     healthcheck:
-      test: ["CMD-SHELL", "curl -sf -u elastic:${ES_PASSWORD} http://localhost:9200/_cluster/health || exit 1"]
+      test:
+        [
+          'CMD-SHELL',
+          'curl -sf -u elastic:${ES_PASSWORD} http://localhost:9200/_cluster/health || exit 1',
+        ]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -203,9 +208,20 @@ services:
       PIPELINE_WORKERS: ${DOC_PARSER_WORKERS:-2}
       # OCR 语言包
       OCR_LANG: ${OCR_LANG:-chi_sim+eng}
-# 蜂巢化拆分尚未实现：当前四个容器均跑完整 FastAPI（不同端口），
-# 直到真正的 --service 入口落地前，勿依赖按路径分流。
-    command: ["python", "-m", "fnixagent.main", "serve", "--host", "0.0.0.0", "--port", "8001", "--no-reload"]
+    # 蜂巢化拆分尚未实现：当前四个容器均跑完整 FastAPI（不同端口），
+    # 直到真正的 --service 入口落地前，勿依赖按路径分流。
+    command:
+      [
+        'python',
+        '-m',
+        'fnixagent.main',
+        'serve',
+        '--host',
+        '0.0.0.0',
+        '--port',
+        '8001',
+        '--no-reload',
+      ]
     depends_on:
       postgres:
         condition: service_healthy
@@ -214,12 +230,12 @@ services:
       minio:
         condition: service_healthy
     expose:
-      - "8001"
+      - '8001'
     deploy:
       resources:
         limits:
           memory: 2G
-          cpus: "2.0"
+          cpus: '2.0'
 
   # 服务 2:knowledge — 知识检索(Embed + 向量搜索)
   # 内存/GPU 密集型,负责 Embedding 与向量检索
@@ -234,7 +250,18 @@ services:
       EMBEDDER_DIM: ${EMBEDDER_DIM:-256}
       # 检索参数
       RETRIEVAL_TOP_K: ${RETRIEVAL_TOP_K:-10}
-    command: ["python", "-m", "fnixagent.main", "serve", "--host", "0.0.0.0", "--port", "8002", "--no-reload"]
+    command:
+      [
+        'python',
+        '-m',
+        'fnixagent.main',
+        'serve',
+        '--host',
+        '0.0.0.0',
+        '--port',
+        '8002',
+        '--no-reload',
+      ]
     depends_on:
       postgres:
         condition: service_healthy
@@ -245,12 +272,12 @@ services:
       elasticsearch:
         condition: service_healthy
     expose:
-      - "8002"
+      - '8002'
     deploy:
       resources:
         limits:
           memory: 3G
-          cpus: "1.5"
+          cpus: '1.5'
 
   # 服务 3:agent-runner — 推理调度(Reasoning + Agent 主循环)
   # LLM 调用密集型,负责对话编排、ReAct/Plan&Execute
@@ -266,7 +293,18 @@ services:
       DEFAULT_THINK_MODE: ${DEFAULT_THINK_MODE:-false}
       # Checkpoint 持久化
       CHECKPOINT_BACKEND: postgres
-    command: ["python", "-m", "fnixagent.main", "serve", "--host", "0.0.0.0", "--port", "8003", "--no-reload"]
+    command:
+      [
+        'python',
+        '-m',
+        'fnixagent.main',
+        'serve',
+        '--host',
+        '0.0.0.0',
+        '--port',
+        '8003',
+        '--no-reload',
+      ]
     depends_on:
       postgres:
         condition: service_healthy
@@ -277,12 +315,12 @@ services:
       tool-executor:
         condition: service_started
     expose:
-      - "8003"
+      - '8003'
     deploy:
       resources:
         limits:
           memory: 2G
-          cpus: "1.0"
+          cpus: '1.0'
 
   # 服务 4:tool-executor — 工具执行(沙箱 + MCP + Office Expert)
   # I/O 与文件操作密集型,负责调用 Office 专家与外部 MCP 工具
@@ -293,11 +331,22 @@ services:
       <<: *app-env
       fnixagent_SERVICE: tool-executor
       # 沙箱配置
-      SANDBOX_ENABLED: "true"
+      SANDBOX_ENABLED: 'true'
       SANDBOX_TIMEOUT_SECONDS: ${SANDBOX_TIMEOUT:-30}
       # MCP 配置
       MCP_SERVERS_CONFIG: /app/config/mcp_servers.yaml
-    command: ["python", "-m", "fnixagent.main", "serve", "--host", "0.0.0.0", "--port", "8004", "--no-reload"]
+    command:
+      [
+        'python',
+        '-m',
+        'fnixagent.main',
+        'serve',
+        '--host',
+        '0.0.0.0',
+        '--port',
+        '8004',
+        '--no-reload',
+      ]
     depends_on:
       postgres:
         condition: service_healthy
@@ -306,7 +355,7 @@ services:
       minio:
         condition: service_healthy
     expose:
-      - "8004"
+      - '8004'
     # tool-executor 需要访问宿主机 LibreOffice(用于格式转换)
     # 部署时请确保宿主机已安装 libreoffice 或挂载二进制
     volumes:
@@ -314,12 +363,12 @@ services:
       - ../../assets:/app/assets
       - app_logs:/app/logs
       - ../../data/uploads:/app/data/uploads
-      - /tmp:/tmp/host:rw  # 沙箱临时目录
+      - /tmp:/tmp/host:rw # 沙箱临时目录
     deploy:
       resources:
         limits:
           memory: 2G
-          cpus: "1.5"
+          cpus: '1.5'
 
   # ------------------------------------------------------------------
   # API 网关层
@@ -333,8 +382,8 @@ services:
       - agent-runner
       - tool-executor
     ports:
-      - "80:80"
-      - "443:443"
+      - '80:80'
+      - '443:443'
     volumes:
       - ../../deploy/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ../../deploy/nginx/fnixagent.conf:/etc/nginx/conf.d/fnixagent.conf:ro

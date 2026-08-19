@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 # FnixAgent 安装包 CDN 分发脚本 — Phase 1.9
 #
 # 用途:将 electron-builder 产物(.exe / .dmg / latest*.yml)同步到自建 CDN
