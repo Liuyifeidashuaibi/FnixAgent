@@ -24,22 +24,22 @@ npm install @fnixagent/sdk
 ## 快速开始
 
 ```typescript
-import { Agent } from '@fnixagent/sdk'
+import { Agent } from '@fnixagent/sdk';
 
 // 创建 agent
 const agent = new Agent({
   provider: 'openai',
   model: 'gpt-4o',
   apiKey: process.env.OPENAI_API_KEY,
-})
+});
 
 // 单轮对话
-const result = await agent.run('用 TypeScript 写 hello world')
-console.log(result.text)
+const result = await agent.run('用 TypeScript 写 hello world');
+console.log(result.text);
 
 // 流式
 for await (const chunk of agent.stream('写一篇长文')) {
-  process.stdout.write(chunk.delta)
+  process.stdout.write(chunk.delta);
 }
 ```
 
@@ -68,17 +68,17 @@ interface AgentConfig {
 
 ### 方法
 
-| 方法 | 描述 |
-| --- | --- |
-| `run(prompt, options?)` | 单轮对话 |
-| `stream(prompt, options?)` | 流式对话 |
-| `chat(messages, options?)` | 多轮对话 |
-| `plan(goal, options?)` | 生成 STP / MFP |
-| `memory.add(chunk)` | 添加记忆 |
-| `memory.search(query)` | 检索记忆 |
-| `skill.run(name, inputs)` | 运行 Skill |
-| `key.set(provider, key)` | 设置 API Key |
-| `key.list()` | 列出已配置的 Key |
+| 方法                       | 描述             |
+| -------------------------- | ---------------- |
+| `run(prompt, options?)`    | 单轮对话         |
+| `stream(prompt, options?)` | 流式对话         |
+| `chat(messages, options?)` | 多轮对话         |
+| `plan(goal, options?)`     | 生成 STP / MFP   |
+| `memory.add(chunk)`        | 添加记忆         |
+| `memory.search(query)`     | 检索记忆         |
+| `skill.run(name, inputs)`  | 运行 Skill       |
+| `key.set(provider, key)`   | 设置 API Key     |
+| `key.list()`               | 列出已配置的 Key |
 
 ---
 
@@ -111,14 +111,14 @@ function ChatPanel() {
 
 可用 hooks:
 
-| Hook | 用途 |
-| --- | --- |
-| `useAgent()` | 拿到当前 Agent |
-| `useChat(agent)` | 对话状态管理 |
-| `usePlan(agent)` | 任务规划 |
-| `useMemory(agent)` | 记忆操作 |
-| `useSkills(agent)` | Skill 管理 |
-| `useStreaming(agent)` | 流式响应 |
+| Hook                  | 用途           |
+| --------------------- | -------------- |
+| `useAgent()`          | 拿到当前 Agent |
+| `useChat(agent)`      | 对话状态管理   |
+| `usePlan(agent)`      | 任务规划       |
+| `useMemory(agent)`    | 记忆操作       |
+| `useSkills(agent)`    | Skill 管理     |
+| `useStreaming(agent)` | 流式响应       |
 
 ---
 
@@ -126,23 +126,21 @@ function ChatPanel() {
 
 ```typescript
 // extension.ts
-import * as vscode from 'vscode'
-import { Agent } from '@fnixagent/sdk'
-import { VscodeIntegration } from '@fnixagent/sdk/vscode'
+import * as vscode from 'vscode';
+import { Agent } from '@fnixagent/sdk';
+import { VscodeIntegration } from '@fnixagent/sdk/vscode';
 
 export function activate(context: vscode.ExtensionContext) {
   const agent = new Agent({
     provider: 'openai',
     enableMemory: true,
-  })
+  });
 
-  const integration = new VscodeIntegration(agent, context)
+  const integration = new VscodeIntegration(agent, context);
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('fnixagent.review', () =>
-      integration.reviewSelection()
-    )
-  )
+    vscode.commands.registerCommand('fnixagent.review', () => integration.reviewSelection()),
+  );
 }
 ```
 
@@ -153,23 +151,23 @@ export function activate(context: vscode.ExtensionContext) {
 ⚠️ 浏览器中不能直接连 LLM(API Key 会暴露),必须通过后端代理:
 
 ```typescript
-import { Agent } from '@fnixagent/sdk'
+import { Agent } from '@fnixagent/sdk';
 
 const agent = new Agent({
-  baseUrl: '/api/fnixagent',   // 后端代理
+  baseUrl: '/api/fnixagent', // 后端代理
   provider: 'openai',
-})
+});
 
-const result = await agent.run('hello')
+const result = await agent.run('hello');
 ```
 
-后端代理参考 [`examples/12_headless_cli.py`](../../EXAMPLES.md#12-无-ui-命令行模式)。
+后端代理参考 `examples/12_headless_cli.py`（项目根目录 examples/）。
 
 ---
 
 ## 类型定义
 
-完整类型见 [API.md](../../API.md#typescript-sdk)。
+完整类型见 [protocol schemas](../protocol/schemas/)。
 
 自动生成,源文件在 `packages/protocol/schemas/`。
 
@@ -178,30 +176,30 @@ const result = await agent.run('hello')
 ## 错误处理
 
 ```typescript
-import { AgentError, RateLimitError, NetworkError } from '@fnixagent/sdk'
+import { AgentError, RateLimitError, NetworkError } from '@fnixagent/sdk';
 
 try {
-  await agent.run('hello')
+  await agent.run('hello');
 } catch (e) {
   if (e instanceof RateLimitError) {
-    console.log('频率限制,等待', e.retryAfter, '秒')
+    console.log('频率限制,等待', e.retryAfter, '秒');
   } else if (e instanceof NetworkError) {
-    console.log('网络错误')
+    console.log('网络错误');
   } else if (e instanceof AgentError) {
-    console.log('Agent 错误:', e.message, e.code)
+    console.log('Agent 错误:', e.message, e.code);
   }
 }
 ```
 
 错误类型:
 
-| 错误 | HTTP | 含义 |
-| --- | --- | --- |
-| `AgentError` | 500 | 通用 |
-| `RateLimitError` | 429 | 速率限制 |
-| `NetworkError` | 503 | 网络/agentd 未运行 |
-| `AuthError` | 401 | API Key 错误 |
-| `ValidationError` | 400 | 参数错误 |
+| 错误              | HTTP | 含义               |
+| ----------------- | ---- | ------------------ |
+| `AgentError`      | 500  | 通用               |
+| `RateLimitError`  | 429  | 速率限制           |
+| `NetworkError`    | 503  | 网络/agentd 未运行 |
+| `AuthError`       | 401  | API Key 错误       |
+| `ValidationError` | 400  | 参数错误           |
 
 ---
 
@@ -237,9 +235,7 @@ class MockAgent extends Agent {
 
 ## 参考 / References
 
-- [`API.md`](../../API.md)
 - [`@fnixagent/protocol`](../protocol/README.md)
-- [examples/](../../EXAMPLES.md)
 
 ---
 

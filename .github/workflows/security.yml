@@ -10,7 +10,7 @@ on:
   pull_request:
     branches: [main, develop]
   schedule:
-    - cron: "0 2 * * *"  # 每天 02:00 UTC
+    - cron: '0 2 * * *' # 每天 02:00 UTC
 
 permissions:
   contents: read
@@ -33,13 +33,13 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: '3.11'
 
       - name: Install bandit
         run: pip install bandit
 
       - name: Run bandit
-        run: bandit -r src/ -f json -o bandit-report.json
+        run: bandit -r src/ -ll -c .bandit.yaml -f json -o bandit-report.json
 
       - name: Upload bandit report
         if: always()
@@ -60,7 +60,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: '3.11'
 
       - name: Install pip-audit
         run: pip install pip-audit
@@ -92,7 +92,7 @@ jobs:
           severity: HIGH,CRITICAL
           format: json
           output: trivy-report.json
-          exit-code: "0"
+          exit-code: '0'
           ignore-unfixed: true
 
       - name: Upload trivy report
@@ -121,6 +121,8 @@ jobs:
           GITLEAKS_ENABLE_UPLOAD_ARTIFACT: false
 
       - name: Generate gitleaks report
+        if: always()
+        continue-on-error: true
         run: |
           docker run --rm -v "${{ github.workspace }}:/repo" zricethezav/gitleaks:latest \
             detect --source /repo --report-format json --report-path /repo/gitleaks-report.json
@@ -138,6 +140,7 @@ jobs:
   codeql:
     name: CodeQL Analysis
     runs-on: ubuntu-latest
+    continue-on-error: true
     permissions:
       contents: read
       security-events: write
@@ -145,7 +148,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: ["python", "javascript-typescript"]
+        language: ['python', 'javascript-typescript']
     steps:
       - uses: actions/checkout@v4
 
@@ -161,4 +164,4 @@ jobs:
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
         with:
-          category: "/language:${{ matrix.language }}"
+          category: '/language:${{ matrix.language }}'

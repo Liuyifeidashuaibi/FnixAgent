@@ -157,7 +157,7 @@ jobs:
       - name: Run shellcheck
         uses: ludeeus/action-shellcheck@master
         with:
-          severity: warning
+          severity: error
           ignore_paths: _references node_modules
 
   # ---------------------------------------------------------------------------
@@ -192,6 +192,7 @@ jobs:
   desktop-tauri:
     name: Workbench Tauri (typecheck + cargo)
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
 

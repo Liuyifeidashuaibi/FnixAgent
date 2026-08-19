@@ -1,60 +1,64 @@
-# PR Labeler config
+# PR Labeler config (v5 format)
 # https://github.com/actions/labeler#configuration
 
 # --- Areas ---
 workbench:
-  - apps/workbench/**
-  - apps/desktop-tauri/**
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'apps/workbench/**'
+          - 'apps/desktop-tauri/**'
 agentd:
-  - src/fnixagent/**
-  - apps/fnix-local/**
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/fnixagent/**'
+          - 'apps/fnix-local/**'
 mcp:
-  - src/fnixagent/core/mcp/**
-  - src/fnixagent/mcp_server.py
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/fnixagent/core/mcp/**'
+          - 'src/fnixagent/mcp_server.py'
 docs:
-  - docs/**
-  - '**/*.md'
-  - '!**/CHANGELOG.md'
-  - '!**/node_modules/**'
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'docs/**'
+          - '**/*.md'
+          - '!**/CHANGELOG.md'
+          - '!**/node_modules/**'
 ci:
-  - .github/**
+  - changed-files:
+      - any-glob-to-any-file:
+          - '.github/**'
 deploy:
-  - deploy/**
-  - docker-compose*.yml
-  - Dockerfile
-  - .dockerignore
-  - '**/Dockerfile'
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'deploy/**'
+          - 'docker-compose*.yml'
+          - 'Dockerfile'
+          - '.dockerignore'
+          - '**/Dockerfile'
 security:
-  - src/fnixagent/core/security/**
-  - SECURITY.md
-  - .gitleaks.toml
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/fnixagent/core/security/**'
+          - 'SECURITY.md'
+          - '.gitleaks.toml'
 schemas:
-  - openapi.json
-  - packages/protocol/**
-
-# --- Kinds (feature/fix determined by PR title or conventional commit) ---
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'openapi.json'
+          - 'packages/protocol/**'
 dependencies:
-  - package.json
-  - pnpm-lock.yaml
-  - requirements.txt
-  - pyproject.toml
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'package.json'
+          - 'pnpm-lock.yaml'
+          - 'requirements.txt'
+          - 'pyproject.toml'
 tests:
-  - '**/*.test.*'
-  - '**/*.spec.*'
-  - tests/**
-  - e2e/**
-  - __tests__/**
-
-# --- Sizes (large PRs are reviewed more carefully) ---
-size/XS:
-  - changes: 0-9
-size/S:
-  - changes: 10-29
-size/M:
-  - changes: 30-99
-size/L:
-  - changes: 100-499
-size/XL:
-  - changes: 500-999
-size/XXL:
-  - changes: 1000+
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/*.test.*'
+          - '**/*.spec.*'
+          - 'tests/**'
+          - 'e2e/**'
+          - '__tests__/**'
