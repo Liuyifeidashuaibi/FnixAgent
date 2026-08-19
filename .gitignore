@@ -123,7 +123,6 @@ docs/转载用研究资料/
 # --- Experimental code ---
 experiments/
 ops-memory-mcp/
-apps/workbench/src/shell/desktop/
 
 # --- One-shot test scripts ---
 test_*.py

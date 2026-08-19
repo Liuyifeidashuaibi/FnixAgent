@@ -278,7 +278,7 @@ export function DesktopSettings({
     }
 
     // ~/.fnix + sidecar（harness 状态）
-    let st: Awaited<ReturnType<typeof fetchHarnessStatus>> = null;
+    let st: Awaited<ReturnType<typeof fetchHarnessStatus>>;
     try {
       st = await fetchHarnessStatus();
     } catch {

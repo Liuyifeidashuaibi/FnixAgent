@@ -54,7 +54,6 @@ uv.lock           -diff
 # Generated files — don't diff by default
 openapi.json      linguist-generated
 CHANGELOG.md      linguist-generated
-package.json      -diff
 
 # Custom: collapse generated OpenAPI diffs
 /api/openapi/*.json  linguist-generated
