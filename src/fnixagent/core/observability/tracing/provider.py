@@ -44,6 +44,7 @@ TraceExporter = Callable[[TraceImpl], None]
 # TracingProvider
 # ---------------------------------------------------------------------------
 
+
 class TracingProvider:
     """顶层 Tracing Provider。
 
@@ -183,6 +184,7 @@ class TracingProvider:
         with self._exporters_lock:
             return len(self._trace_exporters)
 
+
 # ---------------------------------------------------------------------------
 # 全局 Provider 管理
 # ---------------------------------------------------------------------------
@@ -190,6 +192,7 @@ class TracingProvider:
 _global_provider: TracingProvider | None = None
 # 单例初始化锁:保证多线程下 get_provider 只创建一个实例(线程安全单例)
 _provider_lock = threading.Lock()
+
 
 def get_provider() -> TracingProvider:
     """获取全局 TracingProvider(惰性初始化,线程安全)。
@@ -205,6 +208,7 @@ def get_provider() -> TracingProvider:
                 _global_provider = TracingProvider()
     return _global_provider
 
+
 def set_provider(provider: TracingProvider) -> None:
     """替换全局 TracingProvider(用于测试或自定义配置)。
 
@@ -213,6 +217,7 @@ def set_provider(provider: TracingProvider) -> None:
     global _global_provider
     with _provider_lock:
         _global_provider = provider
+
 
 def reset_provider() -> None:
     """重置全局 Provider 为 None(下次 get_provider 重新创建)。

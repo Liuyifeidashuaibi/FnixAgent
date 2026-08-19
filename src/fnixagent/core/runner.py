@@ -51,6 +51,7 @@ from fnixagent.core.orchestrator.state import (
 # NextStep 联合类型
 # ---------------------------------------------------------------------------
 
+
 class StepKind(str, Enum):
     """主循环每步的动作类型。"""
 
@@ -59,6 +60,7 @@ class StepKind(str, Enum):
     FINAL = "final"  # 完成,返回最终答案
     INTERRUPT = "interrupt"  # 中断(等待人工审核/外部输入)
     ERROR = "error"  # 错误,终止
+
 
 @dataclass
 class NextStep:
@@ -69,6 +71,7 @@ class NextStep:
 
     kind: StepKind
 
+
 @dataclass
 class NextStepRunNode(NextStep):
     """执行图节点。"""
@@ -76,6 +79,7 @@ class NextStepRunNode(NextStep):
     kind: StepKind = StepKind.RUN_NODE
     node_name: str = ""
     inputs: dict = field(default_factory=dict)
+
 
 @dataclass
 class NextStepHandoff(NextStep):
@@ -85,6 +89,7 @@ class NextStepHandoff(NextStep):
     target_agent: str = ""
     reason: str = ""
 
+
 @dataclass
 class NextStepFinal(NextStep):
     """完成,返回最终答案。"""
@@ -92,6 +97,7 @@ class NextStepFinal(NextStep):
     kind: StepKind = StepKind.FINAL
     answer: str = ""
     usage: Any | None = None  # Usage(P1-5)
+
 
 @dataclass
 class NextStepInterrupt(NextStep):
@@ -102,6 +108,7 @@ class NextStepInterrupt(NextStep):
     interrupt_id: str = ""
     resume_payload: dict | None = None
 
+
 @dataclass
 class NextStepError(NextStep):
     """错误终止。"""
@@ -110,9 +117,11 @@ class NextStepError(NextStep):
     error: str = ""
     error_type: str = ""
 
+
 # ---------------------------------------------------------------------------
 # RunConfig / RunResult
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class RunConfig:
@@ -137,6 +146,7 @@ class RunConfig:
     user_id: str = ""
     session_id: str = ""
     trace_id: str = ""
+
 
 @dataclass
 class RunResult:
@@ -182,9 +192,11 @@ class RunResult:
             "final_step_kind": self.final_step.kind.value if self.final_step else None,
         }
 
+
 # ---------------------------------------------------------------------------
 # AgentRunner
 # ---------------------------------------------------------------------------
+
 
 class AgentRunner:
     """单一 Runner 入口(P1-4)。

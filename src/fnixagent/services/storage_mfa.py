@@ -43,6 +43,7 @@ from fnixagent.core.security.auth.mfa import (
 # 因子 DTO
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class MFAFactorDTO:
     """用户已绑定的 MFA 因子。"""
@@ -75,6 +76,7 @@ class MFAFactorDTO:
             d["email"] = OTPClient.mask_target(self.email, FACTOR_EMAIL)
         return d
 
+
 @dataclass
 class RecoveryCodeDTO:
     """备用恢复码记录。"""
@@ -94,6 +96,7 @@ class RecoveryCodeDTO:
             "used_at": self.used_at.isoformat() if self.used_at else None,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
+
 
 @dataclass
 class MFAEnforcementDTO:
@@ -116,9 +119,11 @@ class MFAEnforcementDTO:
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
 
+
 # ---------------------------------------------------------------------------
 # 内存实现:因子存储
 # ---------------------------------------------------------------------------
+
 
 class InMemoryMFAFactorStore:
     """内存 MFA 因子存储(开发/测试用)。"""
@@ -208,9 +213,11 @@ class InMemoryMFAFactorStore:
                 del self._factors[fid]
             return len(to_del)
 
+
 # ---------------------------------------------------------------------------
 # 内存实现:恢复码存储
 # ---------------------------------------------------------------------------
+
 
 class InMemoryRecoveryCodeStore:
     """内存恢复码存储。"""
@@ -269,9 +276,11 @@ class InMemoryRecoveryCodeStore:
                 del self._codes[cid]
             return len(to_del)
 
+
 # ---------------------------------------------------------------------------
 # 内存实现:OTP challenge 存储
 # ---------------------------------------------------------------------------
+
 
 class InMemoryOTPChallengeStore:
     """内存 OTP challenge 存储(短信/邮箱)。"""
@@ -381,9 +390,11 @@ class InMemoryOTPChallengeStore:
                 del self._challenges[cid]
             return len(expired)
 
+
 # ---------------------------------------------------------------------------
 # 内存实现:MFA 强制策略存储
 # ---------------------------------------------------------------------------
+
 
 class InMemoryMFAEnforcementStore:
     """内存 MFA 强制策略存储(按角色)。"""
@@ -457,6 +468,7 @@ class InMemoryMFAEnforcementStore:
                 return False
             return self._enforcements[eid].enabled
 
+
 # ---------------------------------------------------------------------------
 # 工厂单例
 # ---------------------------------------------------------------------------
@@ -473,6 +485,7 @@ _otp_challenge_store_lock = threading.Lock()
 _mfa_enforcement_store: InMemoryMFAEnforcementStore | None = None
 _mfa_enforcement_store_lock = threading.Lock()
 
+
 def get_mfa_factor_store() -> InMemoryMFAFactorStore:
     global _mfa_factor_store
     if _mfa_factor_store is None:
@@ -481,10 +494,12 @@ def get_mfa_factor_store() -> InMemoryMFAFactorStore:
                 _mfa_factor_store = InMemoryMFAFactorStore()
     return _mfa_factor_store
 
+
 def reset_mfa_factor_store() -> None:
     global _mfa_factor_store
     with _mfa_factor_store_lock:
         _mfa_factor_store = None
+
 
 def get_recovery_code_store() -> InMemoryRecoveryCodeStore:
     global _recovery_code_store
@@ -494,10 +509,12 @@ def get_recovery_code_store() -> InMemoryRecoveryCodeStore:
                 _recovery_code_store = InMemoryRecoveryCodeStore()
     return _recovery_code_store
 
+
 def reset_recovery_code_store() -> None:
     global _recovery_code_store
     with _recovery_code_store_lock:
         _recovery_code_store = None
+
 
 def get_otp_challenge_store() -> InMemoryOTPChallengeStore:
     global _otp_challenge_store
@@ -507,10 +524,12 @@ def get_otp_challenge_store() -> InMemoryOTPChallengeStore:
                 _otp_challenge_store = InMemoryOTPChallengeStore()
     return _otp_challenge_store
 
+
 def reset_otp_challenge_store() -> None:
     global _otp_challenge_store
     with _otp_challenge_store_lock:
         _otp_challenge_store = None
+
 
 def get_mfa_enforcement_store() -> InMemoryMFAEnforcementStore:
     global _mfa_enforcement_store
@@ -520,10 +539,12 @@ def get_mfa_enforcement_store() -> InMemoryMFAEnforcementStore:
                 _mfa_enforcement_store = InMemoryMFAEnforcementStore()
     return _mfa_enforcement_store
 
+
 def reset_mfa_enforcement_store() -> None:
     global _mfa_enforcement_store
     with _mfa_enforcement_store_lock:
         _mfa_enforcement_store = None
+
 
 def reset_all_mfa_stores() -> None:
     """重置所有 MFA 存储(测试用)。"""

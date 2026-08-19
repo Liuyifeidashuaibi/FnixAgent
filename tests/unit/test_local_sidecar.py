@@ -11,6 +11,8 @@ from __future__ import annotations
 import pytest
 from fastapi.testclient import TestClient
 
+TEST_TOKEN = "test-capability-token"
+
 
 @pytest.fixture
 def project_workspace(tmp_path):
@@ -24,13 +26,25 @@ def project_workspace(tmp_path):
 
 
 @pytest.fixture
-def sidecar_client():
+def sidecar_env(tmp_path, monkeypatch):
+    """隔离 ~/.fnix(避免污染真实用户目录)并注入固定 capability 令牌。"""
+    monkeypatch.setenv("FNIX_HOME", str(tmp_path / "fnix-home"))
+    monkeypatch.setenv("FNIX_CAPABILITY_TOKEN", TEST_TOKEN)
+
+
+@pytest.fixture
+def sidecar_client(sidecar_env):
     from fnixagent.local.sidecar_app import create_app
 
     return TestClient(create_app())
 
 
+def _auth_headers() -> dict[str, str]:
+    return {"x-fnix-capability": TEST_TOKEN}
+
+
 def test_sidecar_health(sidecar_client):
+    """健康检查不需要令牌。"""
     res = sidecar_client.get("/health")
     assert res.status_code == 200
     data = res.json()
@@ -38,10 +52,30 @@ def test_sidecar_health(sidecar_client):
     assert data.get("service") == "fnix-local"
 
 
+def test_sidecar_gate_rejects_anonymous(sidecar_client, project_workspace):
+    """fail-closed: 未携带令牌访问 /v1/* 必须 401。"""
+    res = sidecar_client.post(
+        "/v1/index",
+        json={"workspace": str(project_workspace), "force": True},
+    )
+    assert res.status_code == 401
+
+
+def test_sidecar_gate_rejects_bad_token(sidecar_client, project_workspace):
+    """fail-closed: 错误令牌访问 /v1/* 必须 401。"""
+    res = sidecar_client.get(
+        "/v1/context",
+        params={"workspace": str(project_workspace)},
+        headers={"x-fnix-capability": "wrong-token"},
+    )
+    assert res.status_code == 401
+
+
 def test_sidecar_index_and_context(sidecar_client, project_workspace):
     res = sidecar_client.post(
         "/v1/index",
         json={"workspace": str(project_workspace), "force": True},
+        headers=_auth_headers(),
     )
     assert res.status_code == 200
     body = res.json()
@@ -52,6 +86,7 @@ def test_sidecar_index_and_context(sidecar_client, project_workspace):
     ctx = sidecar_client.get(
         "/v1/context",
         params={"workspace": str(project_workspace), "query": "hello"},
+        headers=_auth_headers(),
     )
     assert ctx.status_code == 200
     ctx_body = ctx.json()

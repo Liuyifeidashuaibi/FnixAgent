@@ -16,7 +16,7 @@ test('backend offline shows retry when health fails', async ({ page }) => {
     window.electron.backend.health = async () => ({ ok: false, error: 'mock offline' });
   });
   await page.goto('/');
-  await expect(page.getByText(/后端|offline|未响应|重试/i).first()).toBeVisible({
+  await expect(page.getByText(/后端|offline|未响应|离线|重试/i).first()).toBeVisible({
     timeout: 15_000,
   });
 });

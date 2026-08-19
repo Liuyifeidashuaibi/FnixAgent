@@ -2,7 +2,7 @@
 
 The FnixAgent team takes the security of this project seriously — including the safety of the **data, files, API keys, and sessions** that flow through it. This document explains how to report a vulnerability, what we commit to, and how we handle disclosures.
 
-> 📌 **TL;DR:** Email **liuyifeidashuaibi@gmail.com** (PGP available) for private disclosure. See [Support → Security disclosure](.github/SUPPORT.md#-where-to-get-help) for the workflow.
+> 📌 **TL;DR:** Email **liuyifeidashuaibi@gmail.com** for private disclosure, or use the repository's private vulnerability reporting. See [Support → Security disclosure](.github/SUPPORT.md#-where-to-get-help) for the workflow.
 
 ---
 
@@ -41,8 +41,7 @@ Beta / RC / nightly builds are **not** eligible for security backports — pleas
 | Channel | Details |
 |---------|---------|
 | **Email** | `liuyifeidashuaibi@gmail.com` |
-| **PGP fingerprint** | `7C9F 0E2B 4A1C 8D55 3B2E  F8A4 6D12 9C3E 0B7A 1F4D` |
-| **GitHub private disclosure** | Repository → Security tab → "Report a vulnerability" |
+| **GitHub private disclosure** | Repository → Security tab → "Report a vulnerability" (preferred) |
 | **Response time** | **< 48 hours** to acknowledge |
 
 ### What to include

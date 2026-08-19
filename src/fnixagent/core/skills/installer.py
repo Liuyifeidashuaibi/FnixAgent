@@ -67,6 +67,7 @@ _SANDBOX_FORBIDDEN_MODULES: frozenset[str] = frozenset(
 # 类型
 # ---------------------------------------------------------------------------
 
+
 class InstallScope(str, Enum):
     """安装作用域。"""
 
@@ -74,11 +75,13 @@ class InstallScope(str, Enum):
     TENANT = "tenant"  # 租户级:租户内所有项目可用
     USER = "user"  # 用户级:仅本人可用
 
+
 class InstallStatus(str, Enum):
     """安装状态。"""
 
     ACTIVE = "active"  # 已安装且启用
     DISABLED = "disabled"  # 已安装但禁用(ToolMetadata.enabled=False)
+
 
 # tool_loader 签名:输入 entry + version,输出 {tool_name: (metadata, func)}
 # 注意:返回值可包含 ToolMetadata(让 loader 自定义元数据),也可只返回 func(此时由 installer 用默认元数据)
@@ -86,6 +89,7 @@ ToolLoader = Callable[
     [SkillMarketEntry, SkillVersion],
     "dict[str, tuple[ToolMetadata, ToolFunc] | ToolFunc]",
 ]
+
 
 @dataclass
 class SkillInstallation:
@@ -105,31 +109,40 @@ class SkillInstallation:
     # 用户提供的安装配置(由 SkillVersion.config_schema 校验)
     config: dict[str, Any] = field(default_factory=dict)
 
+
 # ---------------------------------------------------------------------------
 # 异常
 # ---------------------------------------------------------------------------
 
+
 class SkillInstallerError(Exception):
     """安装器基础异常。"""
+
 
 class SkillNotPublishedError(SkillInstallerError):
     """技能未发布(不能安装 DRAFT/PENDING_REVIEW/REJECTED/DEPRECATED)。"""
 
+
 class SkillAlreadyInstalledError(SkillInstallerError):
     """技能已在同作用域安装(需先 uninstall 或 upgrade)。"""
+
 
 class SkillNotInstalledError(SkillInstallerError):
     """技能未安装(无法 uninstall/disable/enable/upgrade)。"""
 
+
 class ToolLoaderError(SkillInstallerError):
     """工具加载失败(loader 抛异常或返回空)。"""
+
 
 class SandboxViolation(SkillInstallerError):
     """沙箱违例(loader 返回的工具函数访问了禁用模块)。"""
 
+
 # ---------------------------------------------------------------------------
 # SkillInstaller
 # ---------------------------------------------------------------------------
+
 
 class SkillInstaller:
     """技能安装器。

@@ -18,6 +18,19 @@
 # This software and its source code are proprietary and confidential.
 # Unauthorized copying, modification, distribution, or use is strictly prohibited.
 
+# 顶级架构升级组件
+from fnixagent.core.skills.evaluator import (
+    Dimension,
+    DimensionScore,
+    SkillEvaluator,
+    SkillScore,
+)
+from fnixagent.core.skills.evolver import (
+    EvolutionRecord,
+    EvolutionResult,
+    HumanInTheLoop,
+    SkillEvolver,
+)
 from fnixagent.core.skills.injector import format_builtin_skills_block
 from fnixagent.core.skills.library import CapturedSkill, SkillLibrary
 from fnixagent.core.skills.loader import (
@@ -30,20 +43,6 @@ from fnixagent.core.skills.registry import (
     BuiltinSkillRegistry,
     get_builtin_registry,
     reset_builtin_registry,
-)
-
-# 顶级架构升级组件
-from fnixagent.core.skills.evaluator import (
-    SkillEvaluator,
-    SkillScore,
-    DimensionScore,
-    Dimension,
-)
-from fnixagent.core.skills.evolver import (
-    SkillEvolver,
-    EvolutionResult,
-    EvolutionRecord,
-    HumanInTheLoop,
 )
 
 __all__ = [

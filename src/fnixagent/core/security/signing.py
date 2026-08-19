@@ -86,6 +86,7 @@ _DEFAULT_KEYSTORE = os.path.join("assets", "keys")
 # 数据结构
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class SignatureInfo:
     """签名信息(嵌入文件 custom properties)。
@@ -102,6 +103,7 @@ class SignatureInfo:
     file_hash: str
     signature: str
 
+
 @dataclass
 class VerifyResult:
     """验签结果。
@@ -116,9 +118,11 @@ class VerifyResult:
     signed_by: str | None = None
     reason: str = ""
 
+
 # ---------------------------------------------------------------------------
 # DocumentSigner
 # ---------------------------------------------------------------------------
+
 
 class DocumentSigner:
     """OOXML 文档数字签名器。

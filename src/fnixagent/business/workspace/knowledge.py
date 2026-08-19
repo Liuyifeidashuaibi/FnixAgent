@@ -55,6 +55,7 @@ _VALID_CONTENT_TYPES = {"markdown", "html", "wiki", "pdf"}
 # 数据结构
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class KnowledgeBase:
     """知识库。"""
@@ -66,6 +67,7 @@ class KnowledgeBase:
     doc_count: int = 0
     created_at: str = ""
     updated_at: str = ""
+
 
 @dataclass
 class KnowledgeDoc:
@@ -86,6 +88,7 @@ class KnowledgeDoc:
         if self.tags is None:
             self.tags = []
 
+
 @dataclass
 class SearchResult:
     """知识库搜索结果。"""
@@ -99,9 +102,11 @@ class SearchResult:
         if self.matched_fields is None:
             self.matched_fields = []
 
+
 # ---------------------------------------------------------------------------
 # KnowledgeProvider 抽象
 # ---------------------------------------------------------------------------
+
 
 class KnowledgeProvider(BaseProvider):
     """知识库 Provider 抽象基类。
@@ -139,9 +144,11 @@ class KnowledgeProvider(BaseProvider):
         parent_doc_id: str | None = None,
     ) -> ConnectorResult: ...
 
+
 # ---------------------------------------------------------------------------
 # Stub 实现
 # ---------------------------------------------------------------------------
+
 
 class StubKnowledgeProvider(StubProvider, KnowledgeProvider):
     """知识库 stub 实现。
@@ -200,9 +207,11 @@ class StubKnowledgeProvider(StubProvider, KnowledgeProvider):
             action="upload",
         )
 
+
 # ---------------------------------------------------------------------------
 # KnowledgeConnector
 # ---------------------------------------------------------------------------
+
 
 class KnowledgeConnector(WorkspaceConnector):
     """外部知识库连接器(飞书知识库/语雀/Notion 等)。

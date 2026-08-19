@@ -60,6 +60,7 @@ logger = logging.getLogger(__name__)
 # 基因编码模型
 # ============================================================
 
+
 class GeneType(str, Enum):
     """基因类型"""
 
@@ -71,6 +72,7 @@ class GeneType(str, Enum):
     OUTPUT_FORMAT = "output_format"  # 输出格式约束
     CONSTRAINT = "constraint"  # 约束条件
     SKILL_STEP = "skill_step"  # 技能步骤
+
 
 @dataclass
 class Gene:
@@ -88,6 +90,7 @@ class Gene:
     mutation_history: list[str] = field(default_factory=list)  # 变异历史
     performance_score: float = 0.0  # 该基因的性能贡献
     generation: int = 0  # 所属代数
+
 
 @dataclass
 class Chromosome:
@@ -117,9 +120,11 @@ class Chromosome:
     total_score: float = 0.0  # 综合评分
     created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
+
 # ============================================================
 # 帕累托前沿引擎
 # ============================================================
+
 
 class ParetoFrontier:
     """
@@ -255,9 +260,11 @@ class ParetoFrontier:
 
         return max_move < threshold
 
+
 # ============================================================
 # 遗传算子
 # ============================================================
+
 
 class GeneticOperators:
     """遗传算子集合 — 选择、交叉、变异"""
@@ -410,9 +417,11 @@ class GeneticOperators:
         )
         return [copy.deepcopy(c) for c in sorted_pop[:elite_count]]
 
+
 # ============================================================
 # 遗传进化引擎
 # ============================================================
+
 
 @dataclass
 class EvolutionConfig:
@@ -427,6 +436,7 @@ class EvolutionConfig:
     convergence_threshold: float = 0.01
     convergence_window: int = 3
     early_stop_no_improvement: int = 10
+
 
 @dataclass
 class EvolutionResult:
@@ -447,6 +457,7 @@ class EvolutionResult:
     chromosome: Chromosome | None = None
     estimated_token_saving: int = 0
     error_message: str = ""
+
 
 class GeneticEvolver:
     """
@@ -712,9 +723,11 @@ class GeneticEvolver:
             return json.loads(state_file.read_text(encoding="utf-8"))
         return {}
 
+
 # ============================================================
 # 轨迹驱动的进化 (SCOPE 启发)
 # ============================================================
+
 
 class TrajectoryDrivenEvolution:
     """

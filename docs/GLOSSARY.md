@@ -238,4 +238,4 @@
 - 维护者:`@fnixagent-core`
 - 提 PR 修改:`docs(glossary): add <term>`
 
-© 2024-2026 FnixAgent. All Rights Reserved.
+© 2024-2026 FnixAgent. Licensed under PolyForm Noncommercial License 1.0.0.

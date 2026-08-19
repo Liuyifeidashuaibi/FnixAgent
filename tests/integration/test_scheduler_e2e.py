@@ -19,10 +19,19 @@ import sys
 
 import pytest
 
-# 确保无 API Key 时使用 MockLLMProvider
-os.environ.pop("GLM_API_KEY", None)
-os.environ.pop("OPENAI_API_KEY", None)
-os.environ.pop("QWEN_API_KEY", None)
+# 确保无 API Key 时使用 MockLLMProvider（覆盖全部支持的厂商键，
+# 防止与 unit 套件同场运行时 .env 已加载进 os.environ 造成污染）
+_LLM_KEY_ENVS = [
+    "GLM_API_KEY",
+    "OPENAI_API_KEY",
+    "QWEN_API_KEY",
+    "DASHSCOPE_API_KEY",
+    "DEEPSEEK_API_KEY",
+    "CUSTOM_API_KEY",
+    "EMBEDDING_API_KEY",
+]
+for _k in _LLM_KEY_ENVS:
+    os.environ.pop(_k, None)
 
 # 确保 src 在路径中
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
@@ -36,6 +45,8 @@ def scheduler(monkeypatch):
     """构建测试用调度器(每次测试重建)。
 
     防止加载 .env 文件污染测试环境(避免注册真实 LLM provider)。
+    双重隔离: monkeypatch.delenv 逐键清除 + load_dotenv 置空,
+    保证与 unit 套件同场运行时依然命中 MockLLMProvider。
     """
     try:
         import dotenv
@@ -43,6 +54,8 @@ def scheduler(monkeypatch):
         monkeypatch.setattr(dotenv, "load_dotenv", lambda *a, **kw: None)
     except ImportError:
         pass
+    for key in _LLM_KEY_ENVS:
+        monkeypatch.delenv(key, raising=False)
     reset_scheduler()
     s = build_scheduler()
     yield s

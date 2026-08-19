@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Run Work golden scenarios — artifacts must land under .fnix/artifacts/."""
+
 from __future__ import annotations
+
 # -*- coding: utf-8 -*-
 # Copyright (C) 2026 FnixAgent. All rights reserved.
 # Software Name: FnixAgent 智能工作台系统 V1.0
@@ -102,30 +104,55 @@ def stream_work(
     cap = (os.environ.get("FNIX_CAPABILITY_TOKEN") or "").strip()
     if cap:
         headers["X-Fnix-Capability"] = cap
-    req = urllib.request.Request(
-        f"{base.rstrip('/')}/api/v1/work/stream",
-        data=json.dumps(body).encode(),
-        method="POST",
-        headers=headers,
-    )
+
     arts: list[str] = []
     err = ""
-    with urllib.request.urlopen(req, timeout=timeout) as resp:
-        for raw in resp:
-            line = raw.decode("utf-8", errors="replace").strip()
-            if not line:
+    last_exc: Exception | None = None
+    for attempt in (1, 2):
+        arts, err = [], ""
+        req = urllib.request.Request(
+            f"{base.rstrip('/')}/api/v1/work/stream",
+            data=json.dumps(body).encode(),
+            method="POST",
+            headers=headers,
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                for raw in resp:
+                    line = raw.decode("utf-8", errors="replace").strip()
+                    if not line:
+                        continue
+                    ev = json.loads(line)
+                    ct = ev.get("chunk_type") or ev.get("type")
+                    content = ev.get("content") if "content" in ev else ev.get("data")
+                    if ct == "heartbeat":
+                        continue
+                    if ct == "artifact" and isinstance(content, dict) and content.get("path"):
+                        arts.append(str(content["path"]))
+                    elif ct == "error":
+                        err = str(content)
+                        break  # error 为终止事件,停止读取避免 teardown 竞态
+                    elif ct == "done" and isinstance(content, dict):
+                        for a in content.get("artifacts") or []:
+                            if isinstance(a, dict) and a.get("path"):
+                                arts.append(str(a["path"]))
+                        break  # done 为终止事件,停止读取避免 teardown 竞态
+            last_exc = None
+            break
+        except ConnectionResetError as e:
+            # 长连接偶发重置(Windows teardown 竞态):整场景重试一次
+            last_exc = e
+            if attempt == 1:
+                print(f"  ! connection reset (attempt {attempt}), retrying scenario…")
                 continue
-            ev = json.loads(line)
-            ct = ev.get("chunk_type") or ev.get("type")
-            content = ev.get("content") if "content" in ev else ev.get("data")
-            if ct == "artifact" and isinstance(content, dict) and content.get("path"):
-                arts.append(str(content["path"]))
-            elif ct == "error":
-                err = str(content)
-            elif ct == "done" and isinstance(content, dict):
-                for a in content.get("artifacts") or []:
-                    if isinstance(a, dict) and a.get("path"):
-                        arts.append(str(a["path"]))
+        except OSError as e:
+            # 其它传输层异常同样重试一次,避免单场景故障炸掉整轮门禁
+            last_exc = e
+            if attempt == 1:
+                print(f"  ! transport error {type(e).__name__} (attempt {attempt}), retrying…")
+                continue
+    if last_exc is not None:
+        return {"artifacts": arts, "error": f"transport: {type(last_exc).__name__}: {last_exc}"}
     return {"artifacts": arts, "error": err}
 
 
@@ -174,11 +201,7 @@ def main() -> int:
                 fails += 1
                 continue
             hits = collect_hits(ws, sc["expect_glob"])
-            under_art = [
-                h
-                for h in hits
-                if ".fnix" in h.as_posix() and "artifacts" in h.as_posix()
-            ]
+            under_art = [h for h in hits if ".fnix" in h.as_posix() and "artifacts" in h.as_posix()]
             min_files = int(sc.get("expect_min_files") or 1)
             if len(under_art) < min_files:
                 print(
@@ -190,7 +213,9 @@ def main() -> int:
 
             from fnixagent.core.benchmark.work_openability import score_artifacts
 
-            min_open = float(sc.get("min_openability") or os.environ.get("FNIX_WORK_MIN_OPEN", "0.8"))
+            min_open = float(
+                sc.get("min_openability") or os.environ.get("FNIX_WORK_MIN_OPEN", "0.8")
+            )
             openness = score_artifacts(under_art, min_score=min_open)
             if not openness["ok"]:
                 print(
@@ -202,9 +227,7 @@ def main() -> int:
                 fails += 1
                 continue
 
-            print(
-                f"  OK  {len(under_art)} artifact(s) · openability={openness['mean']}"
-            )
+            print(f"  OK  {len(under_art)} artifact(s) · openability={openness['mean']}")
             for h in under_art[:5]:
                 print(f"       {h}")
 

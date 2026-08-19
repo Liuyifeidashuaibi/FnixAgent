@@ -35,6 +35,7 @@ from typing import Any
 from fnixagent.core.config import ToolConfig
 from fnixagent.core.tools.sandbox.policy import SandboxPolicy
 
+
 @dataclass
 class SandboxResult:
     """沙箱执行结果。
@@ -60,6 +61,7 @@ class SandboxResult:
     violations: list[str] = field(default_factory=list)
     timed_out: bool = False
     memory_exceeded: bool = False
+
 
 class CodeSandbox:
     """受限代码执行沙箱。

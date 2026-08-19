@@ -32,6 +32,7 @@ import tempfile
 
 from fnixagent.office.base import BaseExpert, ExpertResult
 
+
 class DocumentInspector(BaseExpert):
     """文档检查器:渲染、检查、诊断。
 

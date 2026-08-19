@@ -44,11 +44,8 @@
     "createUpdaterArtifacts": true,
     "windows": {
       "nsis": {
-        "displayLanguageSelector": false,
-        "installerIcon": "icons/icon.ico",
         "installMode": "perMachine",
-        "languages": ["SimpChinese", "English"],
-        "shortcutName": "Fnix"
+        "languages": ["SimpChinese", "English"]
       }
     }
   },
@@ -56,9 +53,9 @@
     "updater": {
       "active": true,
       "endpoints": [
-        "https://github.com/FNIX-Agent/FnixAgent/releases/latest/download/latest.json"
+        "https://github.com/Liuyifeidashuaibi/FnixAgent/releases/latest/download/latest.json"
       ],
-      "pubkey": ""
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDc5QjM0M0JFRDE5RjM2NzMKUldSek5wL1J2a096ZVhZNnRwbEU2ZEFTTWRJcUVKcjY2d1B0Qi9jM2RUZjJQTE8yaTZXMUY0ei8K"
     }
   }
 }

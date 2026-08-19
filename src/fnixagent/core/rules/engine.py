@@ -1,5 +1,5 @@
 """
-项目级 Rules 引擎 (类似 .cursorrules / .traerules)。
+项目级 Rules 引擎。
 
 从项目根目录的 .fnixrules 文件加载规则,支持三种规则类型:
 - always: 始终包含在上下文中的规则

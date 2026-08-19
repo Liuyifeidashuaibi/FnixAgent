@@ -349,6 +349,60 @@ export async function denyMcpTrust(input: {
   }
 }
 
+// ─── MCP config (add / edit servers in ~/.fnix/mcp.json) ──────────────────
+
+export interface McpServerConfig {
+  name: string;
+  enabled?: boolean;
+  command?: string;
+  args?: string[];
+  url?: string;
+  env?: Record<string, string>;
+}
+
+/** Read the raw ~/.fnix/mcp.json server list. */
+export async function fetchMcpConfig(): Promise<{
+  ok: boolean;
+  version?: number;
+  servers?: McpServerConfig[];
+  error?: string;
+}> {
+  try {
+    const res = await fnixFetch("/api/v1/harness/mcp", {
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!res.ok) {
+      return { ok: false, error: await res.text().catch(() => res.statusText) };
+    }
+    const data = (await res.json()) as { ok?: boolean; version?: number; servers?: McpServerConfig[] };
+    return { ok: Boolean(data.ok ?? true), version: data.version, servers: data.servers || [] };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+/** Write ~/.fnix/mcp.json (add/update servers) and hot-reload the registry. */
+export async function updateMcpConfig(input: {
+  version: number;
+  servers: McpServerConfig[];
+}): Promise<{ ok: boolean; loaded?: number; error?: string }> {
+  try {
+    const res = await fnixFetch("/api/v1/harness/mcp", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+      signal: AbortSignal.timeout(6000),
+    });
+    if (!res.ok) {
+      return { ok: false, error: await res.text().catch(() => res.statusText) };
+    }
+    const data = (await res.json().catch(() => ({}))) as { ok?: boolean; loaded?: number };
+    return { ok: Boolean(data.ok ?? true), loaded: data.loaded };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
 // ===========================================================================
 // Memory 三层记忆（S1.2.4）
 // ===========================================================================

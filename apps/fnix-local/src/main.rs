@@ -1,4 +1,12 @@
 //! fnix-local — Rust sidecar implementing packages/protocol/openapi/fnix-local-v1.yaml
+//!
+//! Security model (must stay in sync with the Python fallback in
+//! `src/fnixagent/local/sidecar_app.py`):
+//!   - Every endpoint except `/health` requires the `x-fnix-capability` header
+//!     to match the local capability token (fail-closed, never fail-open).
+//!   - Token resolution: env `FNIX_CAPABILITY_TOKEN` (injected by the desktop
+//!     shell) → `~/.fnix/local_capability_token` file → freshly generated
+//!     UUIDv4, persisted to that file so a co-located agentd can discover it.
 
 use axum::{
     extract::{Query, Request, State},
@@ -21,12 +29,13 @@ use tokio::{fs, process::Command, time::timeout};
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use walkdir::WalkDir;
 
-const VERSION: &str = "0.1.0-rust";
+const VERSION: &str = "0.1.1-rust";
 
 #[derive(Clone)]
 struct AppState {
     sessions: Arc<Mutex<HashMap<String, IndexSession>>>,
     workspace_map: Arc<Mutex<HashMap<String, String>>>,
+    capability_token: String,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -97,9 +106,13 @@ async fn main() {
         .and_then(|p| p.parse().ok())
         .unwrap_or(8710);
 
+    let capability_token = resolve_capability_token();
+    tracing::info!("capability gate enabled (fail-closed for all endpoints except /health)");
+
     let state = AppState {
         sessions: Arc::new(Mutex::new(HashMap::new())),
         workspace_map: Arc::new(Mutex::new(HashMap::new())),
+        capability_token,
     };
 
     let cors = CorsLayer::new()
@@ -120,7 +133,7 @@ async fn main() {
         .route("/v1/context", get(get_context))
         .route("/v1/run", post(run_command))
         .route("/v1/read", get(read_file))
-        .layer(middleware::from_fn(capability_gate))
+        .layer(middleware::from_fn_with_state(state.clone(), capability_gate))
         .layer(cors)
         .with_state(state);
 
@@ -139,21 +152,82 @@ async fn health() -> Json<serde_json::Value> {
     }))
 }
 
-async fn capability_gate(req: Request, next: Next) -> Response {
-    let expected = std::env::var("FNIX_CAPABILITY_TOKEN")
-        .unwrap_or_default()
-        .trim()
-        .to_string();
-    if expected.is_empty() || req.uri().path() == "/health" {
+/// ~/.fnix directory, overridable via FNIX_HOME (matches harness.paths.fnix_home).
+fn fnix_home() -> Option<PathBuf> {
+    if let Ok(dir) = std::env::var("FNIX_HOME") {
+        let dir = dir.trim().to_string();
+        if !dir.is_empty() {
+            return Some(PathBuf::from(dir));
+        }
+    }
+    std::env::var("USERPROFILE")
+        .ok()
+        .or_else(|| std::env::var("HOME").ok())
+        .filter(|home| !home.trim().is_empty())
+        .map(|home| PathBuf::from(home).join(".fnix"))
+}
+
+/// Best-effort persistence so a separately spawned agentd can discover the token.
+fn persist_capability_token(token: &str) {
+    let Some(home) = fnix_home() else {
+        return;
+    };
+    if std::fs::create_dir_all(&home).is_err() {
+        return;
+    }
+    let path = home.join("local_capability_token");
+    let tmp = home.join("local_capability_token.tmp");
+    if std::fs::write(&tmp, format!("{token}\n")).is_err() {
+        return;
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let _ = std::fs::set_permissions(&tmp, std::fs::Permissions::from_mode(0o600));
+    }
+    let _ = std::fs::rename(&tmp, &path);
+}
+
+/// Resolve the local capability token: env → token file → generate + persist.
+/// Never returns empty — the gate is fail-closed, not fail-open.
+fn resolve_capability_token() -> String {
+    if let Ok(token) = std::env::var("FNIX_CAPABILITY_TOKEN") {
+        let token = token.trim().to_string();
+        if !token.is_empty() {
+            persist_capability_token(&token);
+            return token;
+        }
+    }
+    if let Some(home) = fnix_home() {
+        if let Ok(existing) = std::fs::read_to_string(home.join("local_capability_token")) {
+            let existing = existing.trim().to_string();
+            if !existing.is_empty() {
+                return existing;
+            }
+        }
+    }
+    let token = uuid::Uuid::new_v4().to_string();
+    persist_capability_token(&token);
+    token
+}
+
+async fn capability_gate(
+    State(state): State<AppState>,
+    req: Request,
+    next: Next,
+) -> Response {
+    if req.uri().path() == "/health" {
         return next.run(req).await;
     }
+    let expected = state.capability_token.as_str();
     let presented = req
         .headers()
         .get("x-fnix-capability")
         .and_then(|value| value.to_str().ok())
         .map(str::trim)
         .unwrap_or("");
-    if presented == expected {
+    // UUIDv4 tokens carry 122 bits of entropy; direct comparison is sufficient.
+    if !expected.is_empty() && presented == expected {
         return next.run(req).await;
     }
     (

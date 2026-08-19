@@ -262,8 +262,14 @@ class TestOfflineSqlGeneration:
     ]
 
     def test_upgrade_creates_expected_tables(self, upgrade_sql: str, downgrade_sql: str) -> None:
-        """upgrade 创建的表数量应与 downgrade 删除的表数量一致(迁移可逆)。"""
-        created = upgrade_sql.count("CREATE TABLE")
+        """upgrade 创建的表数量应与 downgrade 删除的表数量一致(迁移可逆)。
+
+        注: alembic 内部版本表 alembic_version 仅出现在 upgrade 离线 SQL 中
+        (alembic 按设计在 downgrade 后保留自身版本表),计数时需排除。
+        """
+        created = upgrade_sql.count("CREATE TABLE") - upgrade_sql.count(
+            "CREATE TABLE alembic_version"
+        )
         dropped = downgrade_sql.count("DROP TABLE")
         assert created == dropped, (
             f"upgrade CREATE TABLE ({created}) 与 downgrade DROP TABLE ({dropped}) 数量不一致"
@@ -291,8 +297,13 @@ class TestOfflineSqlGeneration:
         assert cascade_count >= 3, f"expected >=3 ON DELETE CASCADE, got {cascade_count}"
 
     def test_downgrade_drops_all_tables(self, upgrade_sql: str, downgrade_sql: str) -> None:
-        """downgrade 删除的表数量应与 upgrade 创建的表数量一致(可逆)。"""
-        created = upgrade_sql.count("CREATE TABLE")
+        """downgrade 删除的表数量应与 upgrade 创建的表数量一致(可逆)。
+
+        排除 alembic_version(alembic 内部版本表,按设计不随 downgrade 删除)。
+        """
+        created = upgrade_sql.count("CREATE TABLE") - upgrade_sql.count(
+            "CREATE TABLE alembic_version"
+        )
         dropped = downgrade_sql.count("DROP TABLE")
         assert dropped == created, (
             f"downgrade DROP TABLE ({dropped}) 与 upgrade CREATE TABLE ({created}) 数量不一致"

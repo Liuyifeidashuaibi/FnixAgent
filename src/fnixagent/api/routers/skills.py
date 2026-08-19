@@ -42,18 +42,189 @@ router = APIRouter(prefix="/skills", tags=["skills"])
 _market: SkillMarket | None = None
 _market_lock = threading.Lock()
 
+
+# ---------------------------------------------------------------------------
+# 内置技能样板注入
+# ---------------------------------------------------------------------------
+# FnixAgent 内置 35 个核心技能(MANIFEST.json),此前仅注入 system prompt,
+# 不进入 Settings 技能市场。此处将清单映射为「已发布样板」条目,使设置页
+# 首次打开即展示开箱即用的技能;用户仍可创建草稿 / 导入自己的技能。
+# 仅进程内单例首次创建时执行一次(同名跳过 → 天然幂等)。
+
+
+def _pretty_name(name: str) -> str:
+    """agent-browser -> Agent Browser（保留可读展示名）。"""
+    return " ".join(p.capitalize() for p in name.replace("_", "-").split("-"))
+
+
+def _category_for(tags: list[str]) -> str:
+    """根据标签推断展示分类(中文一级分类)。"""
+    tagset = set(tags or [])
+    rules: list[tuple[str, set[str]]] = [
+        (
+            "设计",
+            {
+                "design",
+                "visual",
+                "canvas",
+                "frontend",
+                "ui",
+                "theme",
+                "brand",
+                "art",
+                "poster",
+                "creative",
+                "typography",
+                "palette",
+                "figma",
+            },
+        ),
+        (
+            "文档",
+            {
+                "doc",
+                "docx",
+                "pptx",
+                "pdf",
+                "xlsx",
+                "writing",
+                "report",
+                "office",
+                "coauthoring",
+                "document",
+                "prd",
+                "whitepaper",
+                "markdown",
+                "deck",
+                "slides",
+                "presentation",
+                "email",
+                "comms",
+                "press-release",
+                "faq",
+            },
+        ),
+        ("安全", {"security", "audit", "vulnerability"}),
+        ("元技能", {"meta", "skill-creator", "template", "scaffold", "authoring", "starter"}),
+        (
+            "研究",
+            {
+                "research",
+                "data",
+                "analysis",
+                "sql",
+                "csv",
+                "excel",
+                "sources",
+                "validation",
+                "chart",
+                "visualization",
+                "widget",
+                "diagram",
+                "inline",
+            },
+        ),
+        (
+            "工程",
+            {
+                "code",
+                "react",
+                "debug",
+                "git",
+                "commit",
+                "nextjs",
+                "architecture",
+                "composition",
+                "performance",
+                "electron",
+                "diff",
+                "quality",
+                "testing",
+                "playwright",
+                "a11y",
+                "verification",
+            },
+        ),
+        (
+            "集成",
+            {
+                "mcp",
+                "model-context-protocol",
+                "server",
+                "integration",
+                "browser",
+                "automation",
+                "cdp",
+                "desktop",
+            },
+        ),
+    ]
+    for label, keys in rules:
+        if tagset & keys:
+            return label
+    return "通用"
+
+
+def _seed_builtin_skills(market: SkillMarket) -> None:
+    """将内置 MANIFEST 技能作为已发布样板注入市场(进程内首次创建时一次)。"""
+    import json
+    import os
+
+    try:
+        import fnixagent
+
+        pkg_root = os.path.dirname(fnixagent.__file__)
+        manifest_path = os.path.join(pkg_root, "core", "skills", "builtin", "MANIFEST.json")
+        with open(manifest_path, encoding="utf-8") as f:
+            data = json.load(f)
+    except Exception:
+        # 清单缺失/损坏不应影响单例构建(技能市场本身仍可正常使用)
+        return
+
+    for s in data.get("skills", []):
+        name = s.get("name")
+        if not name:
+            continue
+        # 幂等: 任意租户下已存在同名条目则跳过
+        if market.get_entry_by_name(name, tenant_id=""):
+            continue
+        version = s.get("version", "1.0.0")
+        level = s.get("level", "basic")
+        try:
+            initial = SkillVersion(version=version, skill_level=level, created_by="builtin")
+            entry = market.create_draft(
+                tenant_id="",
+                name=name,
+                display_name=_pretty_name(name),
+                description=s.get("description", ""),
+                category=_category_for(s.get("tags", [])),
+                tags=list(s.get("tags", [])),
+                owner_id="builtin",
+                initial_version=initial,
+            )
+            # 直连发布(内置样板,跳过人工审核)
+            market.submit_for_review(entry.id, reviewer_id="seed")
+            market.approve(entry.id, reviewer_id="seed", comment="内置技能样板(自动发布)")
+        except Exception:
+            # 单条异常不影响其余条目
+            continue
+
+
 def get_skill_market() -> SkillMarket:
-    """全局 SkillMarket 单例。"""
+    """全局 SkillMarket 单例(含内置技能样板一次性注入)。"""
     global _market
     if _market is None:
         with _market_lock:
             if _market is None:
                 _market = SkillMarket()
+                _seed_builtin_skills(_market)
     return _market
+
 
 # ---------------------------------------------------------------------------
 # 请求/响应模型
 # ---------------------------------------------------------------------------
+
 
 class CreateDraftRequest(BaseModel):
     """创建技能草稿请求。"""
@@ -70,15 +241,18 @@ class CreateDraftRequest(BaseModel):
     initial_version: str | None = None  # "1.0.0"
     initial_changelog: str = ""
 
+
 class ReviewActionRequest(BaseModel):
     """审核操作请求（submit / approve / deprecate 共用）。"""
 
     reviewer_id: str = "desktop"
     comment: str = ""
 
+
 # ---------------------------------------------------------------------------
 # 端点
 # ---------------------------------------------------------------------------
+
 
 @router.get("")
 async def list_entries(
@@ -114,6 +288,7 @@ async def list_entries(
         "stats": market.stats(),
     }
 
+
 @router.get("/drafts")
 async def list_drafts(
     owner_id: str | None = None,
@@ -128,6 +303,7 @@ async def list_drafts(
         "drafts": [_entry_to_dict(e) for e in drafts],
         "count": len(drafts),
     }
+
 
 @router.post("/drafts")
 async def create_draft(body: CreateDraftRequest) -> dict[str, Any]:
@@ -158,6 +334,7 @@ async def create_draft(body: CreateDraftRequest) -> dict[str, Any]:
         raise HTTPException(status_code=400, detail=str(e))
     return {"entry": _entry_to_dict(entry), "ok": True}
 
+
 @router.post("/{entry_id}/submit")
 async def submit_for_review(
     entry_id: str,
@@ -172,6 +349,7 @@ async def submit_for_review(
     except SkillStatusError as e:
         raise HTTPException(status_code=409, detail=str(e))
     return {"entry": _entry_to_dict(entry), "ok": True}
+
 
 @router.post("/{entry_id}/approve")
 async def approve_entry(
@@ -192,6 +370,7 @@ async def approve_entry(
         raise HTTPException(status_code=409, detail=str(e))
     return {"entry": _entry_to_dict(entry), "ok": True}
 
+
 @router.post("/{entry_id}/deprecate")
 async def deprecate_entry(
     entry_id: str,
@@ -207,9 +386,11 @@ async def deprecate_entry(
         raise HTTPException(status_code=409, detail=str(e))
     return {"entry": _entry_to_dict(entry), "ok": True}
 
+
 # ---------------------------------------------------------------------------
 # 序列化
 # ---------------------------------------------------------------------------
+
 
 def _entry_to_dict(entry: Any) -> dict[str, Any]:
     """SkillMarketEntry → JSON-safe dict（datetime ISO 化）。"""
@@ -246,5 +427,6 @@ def _entry_to_dict(entry: Any) -> dict[str, Any]:
         "review_comment": entry.review_comment,
         "reviewed_at": entry.reviewed_at.isoformat() if entry.reviewed_at else None,
     }
+
 
 __all__ = ["get_skill_market", "router"]

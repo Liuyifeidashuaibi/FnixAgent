@@ -537,6 +537,7 @@ def main():
         "--transport", "-t", choices=["stdio", "http"], default="stdio", help="传输方式"
     )
     parser.add_argument("--port", "-p", type=int, default=8000, help="HTTP 端口")
+    parser.add_argument("--host", default="127.0.0.1", help="HTTP 绑定地址 (安全默认仅本机回环)")
     args = parser.parse_args()
 
     server = MCPServer(args.workspace)
@@ -546,7 +547,7 @@ def main():
         app = transport.get_app()
         import uvicorn
 
-        uvicorn.run(app, host="0.0.0.0", port=args.port)
+        uvicorn.run(app, host=args.host, port=args.port)
     else:
         transport = StdioTransport(server)
         transport.run()

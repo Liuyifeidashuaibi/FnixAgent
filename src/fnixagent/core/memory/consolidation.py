@@ -133,7 +133,7 @@ class MemoryConsolidator:
         try:
             response = await self.llm.generate(prompt, temperature=0.3)
             facts = self._parse_llm_response(response)
-            return facts[:self.max_facts_per_consolidation]
+            return facts[: self.max_facts_per_consolidation]
         except Exception as e:
             print(f"Failed to extract facts: {e}")
             return []
@@ -227,12 +227,14 @@ class MemoryConsolidator:
 
                 facts = []
                 for item in data:
-                    facts.append(ExtractedFact(
-                        content=item.get("content", ""),
-                        category=item.get("category", "fact"),
-                        confidence=float(item.get("confidence", 0.8)),
-                        tags=item.get("tags", []),
-                    ))
+                    facts.append(
+                        ExtractedFact(
+                            content=item.get("content", ""),
+                            category=item.get("category", "fact"),
+                            confidence=float(item.get("confidence", 0.8)),
+                            tags=item.get("tags", []),
+                        )
+                    )
                 return facts
         except (json.JSONDecodeError, ValueError) as e:
             print(f"Failed to parse LLM response: {e}")
@@ -315,10 +317,12 @@ class ReflectionEngine:
             return {"merge_pairs": [], "patterns": []}
 
         # 格式化记忆
-        memories_text = "\n".join([
-            f"[{e.id}] ({e.category}) {e.content}"
-            for e in entries[-50:]  # 只分析最近 50 条
-        ])
+        memories_text = "\n".join(
+            [
+                f"[{e.id}] ({e.category}) {e.content}"
+                for e in entries[-50:]  # 只分析最近 50 条
+            ]
+        )
 
         # 调用 LLM
         prompt = self.REFLECTION_PROMPT.format(memories=memories_text)

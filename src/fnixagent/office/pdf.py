@@ -40,6 +40,7 @@ _MAX_OCR_IMAGE_SIZE = 20 * 1024 * 1024
 # PDF 加密允许的密钥长度(位)
 _ALLOWED_PDF_KEY_LENGTHS = (40, 128, 256)
 
+
 def _import_pdf_lib() -> tuple[Any, str | None]:
     """优先 pypdf,其次 PyPDF2。
 
@@ -58,6 +59,7 @@ def _import_pdf_lib() -> tuple[Any, str | None]:
         return PyPDF2, "PyPDF2"
     except ImportError:
         return None, None
+
 
 class PDFExpert(BaseExpert):
     """PDF 文档专家。

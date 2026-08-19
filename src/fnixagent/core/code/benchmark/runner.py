@@ -25,10 +25,10 @@ class RunOptions:
     dry_checks_only: bool = False
     agent_base_url: str = ""
     skip_agent: bool = False
-    retrieval_context: str = ""        # Context to inject into the prompt
-    reasoning_mode: str = ""           # "react" or "plan_execute"
-    max_steps_hint: int = 0            # Step budget hint
-    extra_instructions: str = ""       # Additional system-level instructions
+    retrieval_context: str = ""  # Context to inject into the prompt
+    reasoning_mode: str = ""  # "react" or "plan_execute"
+    max_steps_hint: int = 0  # Step budget hint
+    extra_instructions: str = ""  # Additional system-level instructions
 
 
 def materialize_workspace(task: TaskSpec, root: Path) -> Path:
@@ -61,11 +61,16 @@ def run_checks(task: TaskSpec, workspace: Path, meta: TaskRunMeta) -> list:
     return results
 
 
-def invoke_agent(task: TaskSpec, workspace: Path, base_url: str, opts: RunOptions | None = None) -> TaskRunMeta:
+def invoke_agent(
+    task: TaskSpec, workspace: Path, base_url: str, opts: RunOptions | None = None
+) -> TaskRunMeta:
     ensure_workspace(base_url, workspace)
     run = stream_agent(
-        base_url, task.prompt, str(workspace),
-        preview=True, timeout=task.timeout_s,
+        base_url,
+        task.prompt,
+        str(workspace),
+        preview=True,
+        timeout=task.timeout_s,
         retrieval_context=opts.retrieval_context if opts else "",
         reasoning_mode=opts.reasoning_mode if opts else "",
         max_steps_hint=opts.max_steps_hint if opts else 0,

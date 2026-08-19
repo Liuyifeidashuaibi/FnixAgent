@@ -214,9 +214,15 @@ class SkillEvaluator:
 
         # 需要 trace 的维度
         if trace:
-            dimension_scores[Dimension.EXECUTIVE_EFFECTIVENESS] = self._evaluate_effectiveness(trace)
-            dimension_scores[Dimension.FAILURE_MODE_ENCODING] = self._evaluate_failure_modes(skill, trace)
-            dimension_scores[Dimension.RESOURCE_EFFICIENCY] = self._evaluate_resource_efficiency(trace)
+            dimension_scores[Dimension.EXECUTIVE_EFFECTIVENESS] = self._evaluate_effectiveness(
+                trace
+            )
+            dimension_scores[Dimension.FAILURE_MODE_ENCODING] = self._evaluate_failure_modes(
+                skill, trace
+            )
+            dimension_scores[Dimension.RESOURCE_EFFICIENCY] = self._evaluate_resource_efficiency(
+                trace
+            )
             dimension_scores[Dimension.USER_FEEDBACK] = self._evaluate_user_feedback(trace)
         else:
             # 无 trace 时给默认分
@@ -246,7 +252,9 @@ class SkillEvaluator:
             total = max(0, total - 30)
 
         # 生成建议
-        suggestions = self._generate_suggestions(dimension_scores, failure_modes, blacklist_violations)
+        suggestions = self._generate_suggestions(
+            dimension_scores, failure_modes, blacklist_violations
+        )
 
         return SkillScore(
             total=total,

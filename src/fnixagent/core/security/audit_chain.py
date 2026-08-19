@@ -45,6 +45,7 @@ logger = logging.getLogger(__name__)
 # 数据结构
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class ChainEntry:
     """链式审计日志条目。
@@ -65,6 +66,7 @@ class ChainEntry:
     entry_hash: str
     content: str = ""
 
+
 @dataclass
 class MerkleProof:
     """Merkle 包含证明。
@@ -80,6 +82,7 @@ class MerkleProof:
     path: list[str]
     indices: list[int]
     root: str
+
 
 @dataclass
 class ChainSnapshot:
@@ -101,9 +104,11 @@ class ChainSnapshot:
     signature: str
     signer_key_id: str
 
+
 # ---------------------------------------------------------------------------
 # AuditChain
 # ---------------------------------------------------------------------------
+
 
 class AuditChain:
     """链式哈希审计 + WORM 存储。

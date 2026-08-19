@@ -45,6 +45,7 @@ _logger = logging.getLogger(__name__)
 # 数据结构
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class ApprovalRequest:
     """审批请求。"""
@@ -70,6 +71,7 @@ class ApprovalRequest:
         if self.cc_list is None:
             self.cc_list = []
 
+
 # ---------------------------------------------------------------------------
 # 状态机定义(BUG 修复:审批状态机非法转移)
 # ---------------------------------------------------------------------------
@@ -86,6 +88,7 @@ VALID_TRANSITIONS: dict[str, frozenset[str]] = {
     "cancelled": frozenset(),  # 终态
     "withdrawn": frozenset(),  # 终态
 }
+
 
 def validate_state_transition(current_status: str, action: str) -> str | None:
     """校验状态转移是否合法。
@@ -107,9 +110,11 @@ def validate_state_transition(current_status: str, action: str) -> str | None:
         )
     return None
 
+
 # ---------------------------------------------------------------------------
 # ApprovalProvider 抽象
 # ---------------------------------------------------------------------------
+
 
 class ApprovalProvider(BaseProvider):
     """审批 Provider 抽象基类。
@@ -159,9 +164,11 @@ class ApprovalProvider(BaseProvider):
     @abc.abstractmethod
     def get_status(self, request_id: str) -> ConnectorResult: ...
 
+
 # ---------------------------------------------------------------------------
 # Stub 实现
 # ---------------------------------------------------------------------------
+
 
 class StubApprovalProvider(StubProvider, ApprovalProvider):
     """审批 stub 实现。
@@ -243,9 +250,11 @@ class StubApprovalProvider(StubProvider, ApprovalProvider):
             ).__dict__,
         )
 
+
 # ---------------------------------------------------------------------------
 # ApprovalConnector
 # ---------------------------------------------------------------------------
+
 
 class ApprovalConnector(WorkspaceConnector):
     """审批连接器。

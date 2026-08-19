@@ -11,12 +11,32 @@ from __future__ import annotations
 import json
 import os
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 DEFAULT_LOCAL_URL = "http://127.0.0.1:8710"
 _TIMEOUT = float(os.getenv("FNIX_LOCAL_TIMEOUT", "30"))
+_CAPABILITY_HEADER = "X-Fnix-Capability"
+
+
+def _capability_token() -> str:
+    """解析 sidecar capability 令牌。
+
+    顺序: 环境变量 FNIX_CAPABILITY_TOKEN(桌面壳/同进程注入) →
+    ~/.fnix/local_capability_token 文件(sidecar 独立启动时自动生成落盘)。
+    与 fnix-local (Rust/Python 双实现) 的 fail-closed 闸门对齐。
+    """
+    env_token = (os.getenv("FNIX_CAPABILITY_TOKEN") or "").strip()
+    if env_token:
+        return env_token
+    try:
+        home_env = (os.getenv("FNIX_HOME") or "").strip()
+        home = Path(home_env) if home_env else Path.home() / ".fnix"
+        return (home / "local_capability_token").read_text(encoding="utf-8").strip()
+    except OSError:
+        return ""
 
 
 @dataclass
@@ -59,6 +79,9 @@ class LocalBridge:
         if body is not None:
             data = json.dumps(body).encode("utf-8")
             headers["Content-Type"] = "application/json"
+        token = _capability_token()
+        if token:
+            headers[_CAPABILITY_HEADER] = token
         req = Request(url, data=data, headers=headers, method=method)
         try:
             with urlopen(req, timeout=timeout or _TIMEOUT) as resp:

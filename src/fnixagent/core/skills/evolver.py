@@ -20,7 +20,6 @@ Skill Evolver - 技能进化器（棘轮机制）。
 
 from __future__ import annotations
 
-import copy
 import time
 from dataclasses import dataclass, field
 from typing import Any, Protocol
@@ -43,7 +42,7 @@ class SkillProtocol(Protocol):
     @property
     def version(self) -> str: ...
 
-    def clone(self) -> "SkillProtocol": ...
+    def clone(self) -> SkillProtocol: ...
 
 
 class TraceProtocol(Protocol):
@@ -164,14 +163,18 @@ class SkillEvolver:
             )
 
         # 记录历史
-        self.history.append(EvolutionRecord(
-            skill_name=skill.name,
-            version_from=skill.version,
-            version_to=f"v{float(skill.version[1:]) + 0.1:.1f}" if result.accepted else skill.version,
-            baseline_score=baseline_score.total,
-            improved_score=improved_score.total,
-            accepted=result.accepted,
-        ))
+        self.history.append(
+            EvolutionRecord(
+                skill_name=skill.name,
+                version_from=skill.version,
+                version_to=f"v{float(skill.version[1:]) + 0.1:.1f}"
+                if result.accepted
+                else skill.version,
+                baseline_score=baseline_score.total,
+                improved_score=improved_score.total,
+                accepted=result.accepted,
+            )
+        )
 
         return result
 
@@ -264,9 +267,9 @@ class HumanInTheLoop:
     # 守关类型
     GATES = [
         "before_high_risk_action",  # 高风险操作前
-        "before_skill_evolution",   # 技能进化前
-        "before_memory_deletion",   # 记忆删除前
-        "before_external_api_call", # 外部 API 调用前
+        "before_skill_evolution",  # 技能进化前
+        "before_memory_deletion",  # 记忆删除前
+        "before_external_api_call",  # 外部 API 调用前
     ]
 
     def __init__(self, auto_approve_gates: list[str] = None):
@@ -352,7 +355,5 @@ class HumanInTheLoop:
     def get_pending_approvals(self) -> list[dict[str, Any]]:
         """获取待审批列表。"""
         return [
-            {"id": k, **v}
-            for k, v in self.pending_approvals.items()
-            if v["status"] == "pending"
+            {"id": k, **v} for k, v in self.pending_approvals.items() if v["status"] == "pending"
         ]

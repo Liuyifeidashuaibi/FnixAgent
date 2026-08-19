@@ -47,6 +47,7 @@ DEFAULT_MAX_FILE_SIZE = 100 * 1024 * 1024
 # 返回结构
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class ExpertResult:
     """Expert 方法统一返回结构。
@@ -65,9 +66,11 @@ class ExpertResult:
     metadata: dict[str, Any] = field(default_factory=dict)
     duration_ms: float = 0.0
 
+
 # ---------------------------------------------------------------------------
 # 异常
 # ---------------------------------------------------------------------------
+
 
 class ExpertError(Exception):
     """Expert 基础异常。
@@ -80,9 +83,11 @@ class ExpertError(Exception):
         super().__init__(message)
         self.missing_lib = missing_lib
 
+
 # ---------------------------------------------------------------------------
 # BaseExpert
 # ---------------------------------------------------------------------------
+
 
 class BaseExpert(abc.ABC):
     """Office Expert 抽象基类。

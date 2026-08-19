@@ -52,6 +52,7 @@ from fnixagent.core.code.tools import CodeTools
 # CLI 命令描述
 # ============================================================================
 
+
 @dataclass
 class CLICommand:
     """CLI 命令描述。
@@ -66,9 +67,11 @@ class CLICommand:
     description: str
     handler: Callable[..., Awaitable[int]]  # 返回退出码
 
+
 # ============================================================================
 # IDE 集成服务 (CLI + MCP Server)
 # ============================================================================
+
 
 class IDEServer:
     """IDE 集成服务 (CLI + MCP Server 接口)。
@@ -904,9 +907,11 @@ class IDEServer:
             },
         ]
 
+
 # ============================================================================
 # CLI 入口
 # ============================================================================
+
 
 def main() -> int:
     """CLI 入口 (agentos-coding 命令)。
@@ -917,6 +922,7 @@ def main() -> int:
     server = IDEServer()
     args = sys.argv[1:]
     return asyncio.run(server.run_cli(args))
+
 
 if __name__ == "__main__":
     sys.exit(main())

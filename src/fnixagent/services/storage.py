@@ -68,7 +68,7 @@ MAX_LIST_LIMIT: int = 200
 
 from fnixagent.core.security.auth.password import (
     hash_password,  # 默认 Argon2id
-    needs_rehash,  # 检测旧算法/PBKDF2 哈希，触发 rehash
+    needs_rehash,  # noqa: F401 — re-export 供 services.storage_postgres 使用
     verify_password,  # 自动识别 Argon2id / PBKDF2
 )
 

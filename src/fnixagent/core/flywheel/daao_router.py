@@ -32,6 +32,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+
 @dataclass
 class RouteDecision:
     """DAAO 路由决策结果。"""
@@ -44,6 +45,7 @@ class RouteDecision:
     hera_hit_rate: float = 0.0  # 0.0-1.0
     recent_failure_rate: float = 0.0
     confidence: float = 1.0
+
 
 # ── 难度信号关键词 ────────────────────────────────────────────────────
 
@@ -94,6 +96,7 @@ _COMPLEXITY_KEYWORDS = {
     ],
 }
 
+
 def estimate_difficulty(
     user_input: str,
     workspace_kind: str,
@@ -134,7 +137,9 @@ def estimate_difficulty(
 
     return max(0.0, min(1.0, base + length_bonus + keyword_bonus + kind_bonus))
 
+
 # ── 路由策略 ────────────────────────────────────────────────────────────
+
 
 def route(
     *,
@@ -231,6 +236,7 @@ def route(
         confidence=1.0 if hera_hit_rate > 0 else 0.7,
     )
 
+
 def compute_hera_hit_rate(
     *,
     retrieved_count: int,
@@ -244,6 +250,7 @@ def compute_hera_hit_rate(
     if requested_top_k <= 0:
         return 0.0
     return min(1.0, retrieved_count / requested_top_k)
+
 
 def compute_recent_failure_rate(
     *,
@@ -277,6 +284,7 @@ def compute_recent_failure_rate(
         return failed / len(recent)
     except Exception:
         return 0.0
+
 
 __all__ = [
     "RouteDecision",

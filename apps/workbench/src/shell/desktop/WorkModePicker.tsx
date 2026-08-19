@@ -123,5 +123,5 @@ export function workModePlaceholder(mode: WorkExecMode): string {
 export function workModeHint(mode: WorkExecMode): string {
   if (mode === "ask") return "Ask · 只回答，不创建改文件";
   if (mode === "plan") return "Plan · 输出步骤，确认后切 Craft";
-  return "Craft · 写入 .fnix/artifacts";
+  return "Craft · 执行并落盘交付";
 }

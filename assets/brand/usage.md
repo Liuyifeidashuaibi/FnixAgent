@@ -194,7 +194,7 @@ Logo / Icon 周围必须留出**至少 Logo 高度 1× 的空白**:
 所有使用 FnixAgent Logo / 名称的物料**必须**包含:
 
 ```
-© 2024-2026 FnixAgent. All Rights Reserved.
+© 2024-2026 FnixAgent. Licensed under PolyForm Noncommercial License 1.0.0.
 ```
 
 或在显著位置声明"基于 FnixAgent 开源浏览"(详见 [LICENSE](../../LICENSE) 与 [TRADEMARKS.md](../../TRADEMARKS.md))。
@@ -207,4 +207,4 @@ Logo / Icon 周围必须留出**至少 Logo 高度 1× 的空白**:
 
 ---
 
-© 2024-2026 FnixAgent. All Rights Reserved.
+© 2024-2026 FnixAgent. Licensed under PolyForm Noncommercial License 1.0.0.

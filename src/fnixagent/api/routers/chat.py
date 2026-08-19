@@ -21,6 +21,7 @@ Phase 3.2: 接入内容审核(输入/输出双向审核)
 import json
 import os
 import uuid
+from datetime import datetime
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Request
@@ -132,8 +133,8 @@ async def create_session(request: SessionCreate, http_request: Request):
         id=session_id,
         title=request.title or "New Session",
         status="active",
-        created_at="2025-01-01T00:00:00",
-        updated_at="2025-01-01T00:00:00",
+        created_at=datetime.now(),
+        updated_at=datetime.now(),
     )
 
 
@@ -155,7 +156,7 @@ async def send_message(request: ChatRequest, http_request: Request):
     final_answer = _moderate_output(response.final_answer, http_request)
 
     return ChatResponse(
-        session_id=request.session_id or 1,
+        session_id=str(request.session_id or 1),
         message_id=0,
         response=final_answer,
         trace_id=response.trace.trace_id if response.trace else "",

@@ -65,6 +65,7 @@ from fnixagent.core.agent.types import (
 # Shell 命令结果
 # ============================================================================
 
+
 @dataclass
 class ShellResult:
     """Shell 命令执行结果。"""
@@ -104,9 +105,11 @@ class ShellResult:
             return json.dumps(self.output, ensure_ascii=False, default=str, indent=2)
         return str(self.output)
 
+
 # ============================================================================
 # Skill 抽象 (类比 shell 脚本)
 # ============================================================================
+
 
 @dataclass
 class Skill:
@@ -125,6 +128,7 @@ class Skill:
     handler: Callable[..., Awaitable[Any]] | None = None
     capabilities: set[str] = field(default_factory=set)
     source_path: str = ""
+
 
 class SkillRegistry:
     """Skill 注册表 (类比 PATH 中的可执行文件)。"""
@@ -205,9 +209,11 @@ class SkillRegistry:
             source_path=str(file_path),
         )
 
+
 # ============================================================================
 # AgentShell 主类
 # ============================================================================
+
 
 class AgentShell:
     """AgentOS 用户接口层 (类比 Unix Shell)。
@@ -930,9 +936,11 @@ class AgentShell:
             result = await self.execute(line)
             print(result.format(json_mode=json_mode), file=output_stream)
 
+
 # ============================================================================
 # 便捷构造函数
 # ============================================================================
+
 
 def create_shell(
     *,
@@ -982,6 +990,7 @@ def create_shell(
         else:
             asyncio.run(kernel.boot())
     return shell
+
 
 __all__ = [
     "AgentShell",

@@ -31,6 +31,7 @@ from __future__ import annotations
 
 from fnixagent.core.llm.providers.openai import OpenAICompatibleProvider
 
+
 class DeepSeekProvider(OpenAICompatibleProvider):
     """
     DeepSeek V4 Provider。

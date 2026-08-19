@@ -46,6 +46,7 @@ from fnixagent.graph.reducers import (
     merge_trace,
 )
 
+
 class GraphState(TypedDict, total=False):
     """LangGraph 全局状态(飞轮 ① 感知-执行阶段,显式 Reducer 版本)。
 
@@ -94,6 +95,7 @@ class GraphState(TypedDict, total=False):
     final_answer: Annotated[str, last_value]
     error: Annotated[str | None, last_value]
 
+
 def create_initial_state(user_input: str) -> GraphState:
     """创建初始状态。
 
@@ -126,6 +128,7 @@ def create_initial_state(user_input: str) -> GraphState:
         final_answer="",
         error=None,
     )
+
 
 # ---------------------------------------------------------------------------
 # A-5 向后兼容别名

@@ -35,7 +35,7 @@ skill: hello-world
 version: 1.0.0
 description: 说一句问候
 author: 刘逸飞
-license: All Rights Reserved
+license: PolyForm-Noncommercial-1.0.0
 inputs:
   - name: name
     type: string
@@ -85,7 +85,7 @@ description: 对代码 diff 进行结构化审查   # 一句话描述
 
 # 元数据(可选但推荐)
 author: 刘逸飞
-license: All Rights Reserved           # 与主项目一致
+license: PolyForm-Noncommercial-1.0.0   # 与主项目一致
 homepage: https://github.com/Liuyifeidashuaibi/FnixAgent/skills/code-review
 tags: [code, review, productivity]
 category: development                  # development|productivity|creative|research|ops
@@ -449,4 +449,4 @@ fnix skill reload code-review
 
 ---
 
-© 2024-2026 FnixAgent. All Rights Reserved.
+© 2024-2026 FnixAgent. Licensed under PolyForm Noncommercial License 1.0.0.

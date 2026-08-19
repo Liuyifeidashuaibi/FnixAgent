@@ -51,6 +51,7 @@ T = TypeVar("T")
 
 logger = logging.getLogger(__name__)
 
+
 class SingletonHolder(Generic[T]):
     """泛型单例持有器(双重检查锁)。
 
@@ -118,9 +119,11 @@ class SingletonHolder(Generic[T]):
         """获取单例,未初始化返回 None(不触发创建)。"""
         return self._instance
 
+
 # ---------------------------------------------------------------------------
 # 便捷装饰器: 将类转换为单例
 # ---------------------------------------------------------------------------
+
 
 def singleton_class(cls: type[T]) -> type[T]:
     """类装饰器: 为类添加线程安全的单例访问。
@@ -162,9 +165,11 @@ def singleton_class(cls: type[T]) -> type[T]:
     cls.reset_instance = reset_instance  # type: ignore[attr-defined]
     return cls
 
+
 # ---------------------------------------------------------------------------
 # 全局单例注册表(调试/监控用)
 # ---------------------------------------------------------------------------
+
 
 class SingletonRegistry:
     """全局单例注册表。
@@ -265,8 +270,10 @@ class SingletonRegistry:
             "initialized_names": initialized_names,
         }
 
+
 # 全局注册表单例
 _registry = SingletonRegistry()
+
 
 def get_singleton_registry() -> SingletonRegistry:
     """获取全局单例注册表。"""

@@ -7,7 +7,7 @@ import { test, expect } from '@playwright/test';
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     try {
-      localStorage.setItem('fnixagent-onboarded-v1', '1');
+      localStorage.setItem('fnix.onboarding.done', '1');
     } catch {
       /* ignore */
     }

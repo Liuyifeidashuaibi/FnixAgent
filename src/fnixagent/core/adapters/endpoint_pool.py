@@ -46,12 +46,14 @@ logger = logging.getLogger(__name__)
 # 数据结构
 # ============================================================================
 
+
 class EndpointStrategy(str, Enum):
     """端点选择策略。"""
 
     ROUND_ROBIN = "round_robin"  # 加权轮询
     RANDOM = "random"  # 加权随机
     STICKY = "sticky"  # 粘性会话(同一 key 优先同一端点)
+
 
 @dataclass
 class Endpoint:
@@ -70,6 +72,7 @@ class Endpoint:
     weight: int = 1
     max_concurrent: int = 10
     timeout: float = 30.0
+
 
 @dataclass
 class EndpointStats:
@@ -112,9 +115,11 @@ class EndpointStats:
             return 1.0
         return self.success_count / self.total_requests
 
+
 # ============================================================================
 # 端点连接池
 # ============================================================================
+
 
 class EndpointPool:
     """端点连接池 — 健康管理、故障恢复、负载均衡。
@@ -451,12 +456,14 @@ class EndpointPool:
                 f"<EndpointPool strategy={self._strategy.value} endpoints={len(self._endpoints)}>"
             )
 
+
 # ============================================================================
 # 模块级单例(double-checked locking)
 # ============================================================================
 
 _default_pool: EndpointPool | None = None
 _default_lock = threading.Lock()
+
 
 def get_endpoint_pool() -> EndpointPool:
     """获取全局默认端点池(惰性单例,线程安全,默认参数)。
@@ -471,6 +478,7 @@ def get_endpoint_pool() -> EndpointPool:
             if _default_pool is None:
                 _default_pool = EndpointPool()
     return _default_pool
+
 
 def reset_endpoint_pool() -> None:
     """重置全局默认端点池单例(释放引用,下次 ``get_endpoint_pool`` 重建)。

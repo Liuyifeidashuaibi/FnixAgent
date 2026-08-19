@@ -40,6 +40,7 @@ from fnixagent.core.types import ExecutionTrace
 # 策略类型枚举
 # ---------------------------------------------------------------------------
 
+
 class StrategyType(str, Enum):
     """策略类型(用于注册与查找)。"""
 
@@ -48,9 +49,11 @@ class StrategyType(str, Enum):
     PRECISE = "precise"  # 精确(Plan&Execute + Self-Reflect + 思考)
     COMPLIANCE = "compliance"  # 合规(强审计 + 人工确认)
 
+
 # ---------------------------------------------------------------------------
 # StrategyContext
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class StrategyContext:
@@ -89,9 +92,11 @@ class StrategyContext:
     # 元数据
     extra: dict[str, Any] = field(default_factory=dict)
 
+
 # ---------------------------------------------------------------------------
 # BaseStrategy
 # ---------------------------------------------------------------------------
+
 
 class BaseStrategy(abc.ABC):
     """策略抽象基类。

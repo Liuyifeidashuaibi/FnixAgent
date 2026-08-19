@@ -2,11 +2,11 @@
 
 > ⚠️ **重要声明 / Important Notice**
 >
-> **本项目不接受外部代码贡献**。本项目以 [All Rights Reserved](LICENSE)
+> **本项目不接受外部代码贡献**。本项目以 [PolyForm Noncommercial 1.0.0](LICENSE)
 > 方式发布,详见下文 "贡献边界" 章节。
 >
 > **This project does NOT accept external code contributions at this time.**
-> The project is released under [All Rights Reserved](LICENSE).
+> The project is released under [PolyForm Noncommercial 1.0.0](LICENSE).
 > See "Contribution Boundaries" below.
 
 ---
@@ -27,7 +27,7 @@
 
 **为什么?**
 
-1. **许可证限制**:本项目以 All Rights Reserved 发布,合入外部代码会带来
+1. **许可证限制**:本项目以 PolyForm Noncommercial 1.0.0 发布,合入外部代码会带来
    法律风险(版权归属不清)
 2. **维护模式**:本项目由单一维护者独立研发,当前阶段不接受社区代码合入,
    以保证架构与质量控制的一致性
@@ -54,7 +54,7 @@
 
 ### 提交代码
 
-本项目当前为**专有软件 (All Rights Reserved)**，不接受外部代码合入 (Pull Request)。
+本项目当前以 **PolyForm Noncommercial 1.0.0（非商用）** 许可发布，不接受外部代码合入 (Pull Request)。
 以下开发环境设置和代码规范仅供维护者内部参考。
 
 如发现 Bug 或希望提出功能建议，请通过

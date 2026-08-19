@@ -47,6 +47,7 @@ __all__ = [
 # 执行层护栏
 # ---------------------------------------------------------------------------
 
+
 class ToolPermissionGuardrail(ExecutionGuardrailGate):
     """工具权限检查护栏。
 
@@ -115,6 +116,7 @@ class ToolPermissionGuardrail(ExecutionGuardrailGate):
     def _is_high_permission(cls, level: Any) -> bool:
         """判断是否为 HIGH 权限(兼容 str Enum 与纯字符串)。"""
         return cls._level_str(level) == "high"
+
 
 class ToolParameterGuardrail(ExecutionGuardrailGate):
     """工具参数校验护栏。
@@ -210,6 +212,7 @@ class ToolParameterGuardrail(ExecutionGuardrailGate):
                 return p
         return None
 
+
 class HighRiskOperationGuardrail(ExecutionGuardrailGate):
     """高危操作确认护栏。
 
@@ -249,9 +252,11 @@ class HighRiskOperationGuardrail(ExecutionGuardrailGate):
             details={"tool_name": ctx.tool_name},
         )
 
+
 # ---------------------------------------------------------------------------
 # 输出层护栏
 # ---------------------------------------------------------------------------
+
 
 class OutputFormatGuardrail(OutputGuardrailGate):
     """输出格式校验护栏。
@@ -305,6 +310,7 @@ class OutputFormatGuardrail(OutputGuardrailGate):
                 details={"issues": issues},
             )
         return GuardrailCheckResult(guardrail_name=self.name, action=GuardrailAction.PASS)
+
 
 class SensitiveOutputGuardrail(OutputGuardrailGate):
     """输出敏感信息检测护栏。

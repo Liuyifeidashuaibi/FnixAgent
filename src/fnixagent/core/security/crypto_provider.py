@@ -59,6 +59,7 @@ except ImportError:  # pragma: no cover
 # 审计钩子(失败不影响主流程)
 # ---------------------------------------------------------------------------
 
+
 def _audit_crypto(action: str, detail: dict | None = None) -> None:
     """将密码学操作写入审计日志(仅记录元信息,不记录密钥/明文)。"""
     try:
@@ -68,15 +69,18 @@ def _audit_crypto(action: str, detail: dict | None = None) -> None:
     except Exception:
         pass
 
+
 # ---------------------------------------------------------------------------
 # 配置
 # ---------------------------------------------------------------------------
+
 
 class AlgorithmSuite(Enum):
     """算法栈枚举。"""
 
     SM = "sm"  # 国密栈(SM2/SM3/SM4)
     INTERNATIONAL = "intl"  # 国际栈(RSA/SHA256/AES)
+
 
 @dataclass
 class CryptoConfig:
@@ -91,6 +95,7 @@ class CryptoConfig:
     suite: AlgorithmSuite = AlgorithmSuite.SM
     sm_crypto: bool = True
     fallback_to_intl: bool = True
+
 
 # ---------------------------------------------------------------------------
 # SM3 纯 Python 实现(GB/T 32905-2016)
@@ -111,10 +116,12 @@ _SM3_IV = (
 # SM3 常量 T_j
 _SM3_T = tuple((0x79CC4519 if j < 16 else 0x7A879D8A) for j in range(64))
 
+
 def _sm3_rotl(x: int, n: int) -> int:
     """32 位循环左移。"""
     n &= 31
     return ((x << n) | (x >> (32 - n))) & 0xFFFFFFFF
+
 
 def _sm3_ff(j: int, x: int, y: int, z: int) -> int:
     """布尔函数 FF_j。"""
@@ -122,19 +129,23 @@ def _sm3_ff(j: int, x: int, y: int, z: int) -> int:
         return x ^ y ^ z
     return (x & y) | (x & z) | (y & z)
 
+
 def _sm3_gg(j: int, x: int, y: int, z: int) -> int:
     """布尔函数 GG_j。"""
     if j < 16:
         return x ^ y ^ z
     return (x & y) | ((~x & 0xFFFFFFFF) & z)
 
+
 def _sm3_p0(x: int) -> int:
     """置换函数 P_0。"""
     return x ^ _sm3_rotl(x, 9) ^ _sm3_rotl(x, 17)
 
+
 def _sm3_p1(x: int) -> int:
     """置换函数 P_1。"""
     return x ^ _sm3_rotl(x, 15) ^ _sm3_rotl(x, 23)
+
 
 def _sm3_pad(msg: bytes) -> bytes:
     """SM3 消息填充(类似 SHA-256,但长度域为 64 位大端)。"""
@@ -147,6 +158,7 @@ def _sm3_pad(msg: bytes) -> bytes:
     # 64 位大端长度(bit 长度)
     padded += struct.pack(">Q", length * 8)
     return padded
+
 
 def _sm3_compress(v: list, w: list) -> list:
     """SM3 压缩函数(单块)。"""
@@ -171,6 +183,7 @@ def _sm3_compress(v: list, w: list) -> list:
         f = e
         e = _sm3_p0(tt2)
     return [a, b, c, d, e, f, g, h]
+
 
 def sm3_hash(data: bytes) -> bytes:
     """SM3 哈希(纯 Python 实现,GB/T 32905-2016)。
@@ -198,6 +211,7 @@ def sm3_hash(data: bytes) -> bytes:
         new_v = _sm3_compress(v, w)
         v = [(v[k] ^ new_v[k]) for k in range(8)]
     return struct.pack(">8I", *v)
+
 
 # ---------------------------------------------------------------------------
 # SM4 纯 Python 实现(GB/T 32907-2016)
@@ -478,6 +492,7 @@ _SM4_CK = tuple(
     for i in range(32)
 )
 
+
 def _sm4_tau(a: int) -> int:
     """SM4 非线性变换 τ(4 字节并行 S 盒替换)。"""
     return (
@@ -486,6 +501,7 @@ def _sm4_tau(a: int) -> int:
         | (_SM4_SBOX[(a >> 8) & 0xFF] << 8)
         | _SM4_SBOX[a & 0xFF]
     )
+
 
 def _sm4_t(x: int) -> int:
     """SM4 合成置换 T = L(τ(X))。"""
@@ -499,6 +515,7 @@ def _sm4_t(x: int) -> int:
         ^ ((b << 24) | (b >> 8)) & 0xFFFFFFFF
     ) & 0xFFFFFFFF
 
+
 def _sm4_t_prime(x: int) -> int:
     """SM4 合成置换 T'(密钥扩展用)= L'(τ(X))。"""
     b = _sm4_tau(x)
@@ -507,10 +524,12 @@ def _sm4_t_prime(x: int) -> int:
         b ^ ((b << 13) | (b >> 19)) & 0xFFFFFFFF ^ ((b << 23) | (b >> 9)) & 0xFFFFFFFF
     ) & 0xFFFFFFFF
 
+
 def _sm4_rotl32(x: int, n: int) -> int:
     """32 位循环左移。"""
     n &= 31
     return ((x << n) | (x >> (32 - n))) & 0xFFFFFFFF
+
 
 def _sm4_key_expand(key: bytes) -> list:
     """SM4 密钥扩展,返回 32 个轮密钥。
@@ -528,6 +547,7 @@ def _sm4_key_expand(key: bytes) -> list:
         rk.append(new_k)
     return rk
 
+
 def _sm4_crypt_block(block: bytes, rk: list, decrypt: bool = False) -> bytes:
     """SM4 单块加密/解密(16 字节)。"""
     x = list(struct.unpack(">4I", block))
@@ -538,10 +558,12 @@ def _sm4_crypt_block(block: bytes, rk: list, decrypt: bool = False) -> bytes:
     # 反序变换 R
     return struct.pack(">4I", x[35], x[34], x[33], x[32])
 
+
 def _sm4_pkcs7_pad(data: bytes) -> bytes:
     """PKCS#7 填充到 16 字节倍数。"""
     pad_len = 16 - (len(data) % 16)
     return data + bytes([pad_len] * pad_len)
+
 
 def _sm4_pkcs7_unpad(data: bytes) -> bytes:
     """PKCS#7 去填充。"""
@@ -551,6 +573,7 @@ def _sm4_pkcs7_unpad(data: bytes) -> bytes:
     if pad_len < 1 or pad_len > 16:
         raise ValueError("无效的填充长度")
     return data[:-pad_len]
+
 
 def sm4_cbc_encrypt(plaintext: bytes, key: bytes, iv: bytes) -> bytes:
     """SM4-CBC 加密(纯 Python 实现)。
@@ -578,6 +601,7 @@ def sm4_cbc_encrypt(plaintext: bytes, key: bytes, iv: bytes) -> bytes:
         prev = encrypted
     return ciphertext
 
+
 def sm4_cbc_decrypt(ciphertext: bytes, key: bytes, iv: bytes) -> bytes:
     """SM4-CBC 解密(纯 Python 实现)。"""
     if len(key) != 16 or len(iv) != 16:
@@ -594,6 +618,7 @@ def sm4_cbc_decrypt(ciphertext: bytes, key: bytes, iv: bytes) -> bytes:
         prev = block
     return _sm4_pkcs7_unpad(plaintext)
 
+
 def sm3_hmac(key: bytes, data: bytes) -> bytes:
     """HMAC-SM3(基于纯 Python SM3,参考 RFC 2104)。"""
     block_size = 64  # SM3 块大小
@@ -605,9 +630,11 @@ def sm3_hmac(key: bytes, data: bytes) -> bytes:
     i_key_pad = bytes(k ^ 0x36 for k in key)
     return sm3_hash(o_key_pad + sm3_hash(i_key_pad + data))
 
+
 # ---------------------------------------------------------------------------
 # CryptoProvider
 # ---------------------------------------------------------------------------
+
 
 class CryptoProvider:
     """统一密码学接口(双栈)。
@@ -1001,12 +1028,14 @@ class CryptoProvider:
         decryptor = cipher.decryptor()
         return decryptor.update(ct) + decryptor.finalize()
 
+
 # ---------------------------------------------------------------------------
 # 全局单例(懒加载)
 # ---------------------------------------------------------------------------
 
 _provider_instance: CryptoProvider | None = None
 _provider_lock = None
+
 
 def _get_lock():
     """延迟导入 threading.Lock(避免模块加载时副作用)。"""
@@ -1016,6 +1045,7 @@ def _get_lock():
 
         _provider_lock = threading.Lock()
     return _provider_lock
+
 
 def get_crypto_provider(config: CryptoConfig | None = None) -> CryptoProvider:
     """获取全局 CryptoProvider 单例。
@@ -1032,6 +1062,7 @@ def get_crypto_provider(config: CryptoConfig | None = None) -> CryptoProvider:
             if _provider_instance is None:
                 _provider_instance = CryptoProvider(config)
     return _provider_instance
+
 
 def reset_crypto_provider() -> None:
     """重置单例(主要用于测试)。"""

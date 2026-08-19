@@ -39,6 +39,7 @@ logger = logging.getLogger(__name__)
 # 数据结构
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class Snapshot:
     """文件快照。
@@ -58,6 +59,7 @@ class Snapshot:
     mtime: str
     paragraphs: list[str] = field(default_factory=list)
     cells: list[list[str]] = field(default_factory=list)
+
 
 @dataclass
 class ImpactRecord:
@@ -81,9 +83,11 @@ class ImpactRecord:
     after: Snapshot | None
     diff_summary: str = ""
 
+
 # ---------------------------------------------------------------------------
 # ImpactTracker
 # ---------------------------------------------------------------------------
+
 
 class ImpactTracker:
     """影响溯源器。

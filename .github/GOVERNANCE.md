@@ -1,6 +1,6 @@
 # Governance
 
-> **TL;DR:** FnixAgent is a **sole-maintainer** project. All decisions are made by the maintainer. External contributions are not accepted (All Rights Reserved license).
+> **TL;DR:** FnixAgent is a **sole-maintainer** project. All decisions are made by the maintainer. External contributions are not accepted (PolyForm Noncommercial 1.0.0 license).
 
 ## Maintainer
 

@@ -42,6 +42,7 @@ from fnixagent.services.storage import get_user_store
 # PermissionDenied 异常
 # ---------------------------------------------------------------------------
 
+
 class PermissionDenied(fnixagentError):
     """权限检查失败异常(供非 HTTP 上下文使用)。
 
@@ -72,9 +73,11 @@ class PermissionDenied(fnixagentError):
         perms_str = ", ".join(self.required_permissions)
         super().__init__(f"权限不足: 用户 {user_id} 缺少权限 [{perms_str}]")
 
+
 # ---------------------------------------------------------------------------
 # Phase 2.5: 权限拒绝审计日志
 # ---------------------------------------------------------------------------
+
 
 def _audit_permission_denied(
     user_id: int | None,
@@ -120,6 +123,7 @@ def _audit_permission_denied(
     except Exception:
         pass
 
+
 # ---------------------------------------------------------------------------
 # 缓存:user_id → (permissions_set, expires_at)
 # ---------------------------------------------------------------------------
@@ -128,6 +132,7 @@ _CACHE_TTL_SECONDS: int = 60  # 60 秒 TTL
 
 _permission_cache: dict[int, tuple[set[str], float]] = {}
 _cache_lock = threading.Lock()
+
 
 def invalidate_user_permission_cache(user_id: int) -> None:
     """失效指定用户的权限缓存。
@@ -140,10 +145,12 @@ def invalidate_user_permission_cache(user_id: int) -> None:
     with _cache_lock:
         _permission_cache.pop(user_id, None)
 
+
 def invalidate_all_permission_cache() -> None:
     """失效全部用户的权限缓存(角色权限变更时调用)。"""
     with _cache_lock:
         _permission_cache.clear()
+
 
 # ---------------------------------------------------------------------------
 # 内置权限码集合(用于 DB 不可用时的回退)
@@ -212,6 +219,7 @@ _FALLBACK_VISITOR_PERMS: set[str] = {
 # 权限查询
 # ---------------------------------------------------------------------------
 
+
 def _query_permissions_from_store(user_id: int) -> set[str] | None:
     """从 RBAC 存储查询用户全部权限码(兼容 Pg / InMemory)。
 
@@ -259,6 +267,7 @@ def _query_permissions_from_store(user_id: int) -> set[str] | None:
     except Exception:
         return None
 
+
 def _fallback_permissions(role: str) -> set[str]:
     """DB 不可用时的回退:根据 User.role 字段返回权限集合。
 
@@ -278,6 +287,7 @@ def _fallback_permissions(role: str) -> set[str]:
     if role == "visitor":
         return set(_FALLBACK_VISITOR_PERMS)
     return set(_FALLBACK_USER_PERMS)
+
 
 def get_user_permissions(user_id: int) -> set[str]:
     """获取用户全部权限码集合(带缓存)。
@@ -327,6 +337,7 @@ def get_user_permissions(user_id: int) -> set[str]:
 
     return perms
 
+
 def has_permission(user_id: int, code: str) -> bool:
     """检查用户是否拥有指定权限。
 
@@ -344,6 +355,7 @@ def has_permission(user_id: int, code: str) -> bool:
         raise ValueError("code 必须为非空字符串")
     return code in get_user_permissions(user_id)
 
+
 def has_any_permission(user_id: int, *codes: str) -> bool:
     """检查用户是否拥有任一权限。
 
@@ -357,6 +369,7 @@ def has_any_permission(user_id: int, *codes: str) -> bool:
     perms = get_user_permissions(user_id)
     return any(c in perms for c in codes)
 
+
 def has_all_permissions(user_id: int, *codes: str) -> bool:
     """检查用户是否拥有全部权限。
 
@@ -369,6 +382,7 @@ def has_all_permissions(user_id: int, *codes: str) -> bool:
     """
     perms = get_user_permissions(user_id)
     return all(c in perms for c in codes)
+
 
 def check_permission(user_id: int, code: str) -> None:
     """检查权限,失败时抛 PermissionDenied(供非 HTTP 上下文使用)。
@@ -387,9 +401,11 @@ def check_permission(user_id: int, code: str) -> None:
     if not has_permission(user_id, code):
         raise PermissionDenied(user_id, code)
 
+
 # ---------------------------------------------------------------------------
 # FastAPI 依赖装饰器
 # ---------------------------------------------------------------------------
+
 
 def require_permission(code: str) -> Callable:
     """要求当前用户拥有指定权限,否则 403。
@@ -423,6 +439,7 @@ def require_permission(code: str) -> Callable:
 
     return _dep
 
+
 def require_any_permission(*codes: str) -> Callable:
     """要求当前用户拥有任一权限,否则 403。
 
@@ -455,6 +472,7 @@ def require_any_permission(*codes: str) -> Callable:
 
     return _dep
 
+
 def require_all_permissions(*codes: str) -> Callable:
     """要求当前用户拥有全部权限,否则 403。
 
@@ -481,6 +499,7 @@ def require_all_permissions(*codes: str) -> Callable:
         return payload
 
     return _dep
+
 
 def get_current_user_permissions(payload: dict = Depends(verify_jwt_token)) -> set[str]:
     """FastAPI 依赖:返回当前用户全部权限码集合(供前端菜单/按钮展示)。

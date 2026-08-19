@@ -53,6 +53,7 @@ from fnixagent.office.parser import (
 # 三层质量梯度
 # ---------------------------------------------------------------------------
 
+
 class ConverterLayer(Enum):
     """转换器质量层(数值越大质量越高,但成本/延迟越高)。"""
 
@@ -65,9 +66,11 @@ class ConverterLayer(Enum):
         """从高到低排序(用于 fallback 降级)。"""
         return [cls.L3_CLOUD, cls.L2_LLM, cls.L1_LOCAL]
 
+
 # ---------------------------------------------------------------------------
 # 转换结果
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class DocumentConverterResult:
@@ -91,9 +94,11 @@ class DocumentConverterResult:
     layer: str = "local"
     duration_ms: float = 0.0
 
+
 # ---------------------------------------------------------------------------
 # DocumentConverter Protocol(参考 markitdown)
 # ---------------------------------------------------------------------------
+
 
 @runtime_checkable
 class DocumentConverter(Protocol):
@@ -117,9 +122,11 @@ class DocumentConverter(Protocol):
         """优先级(数值越小优先级越高)。"""
         ...
 
+
 # ---------------------------------------------------------------------------
 # ConverterEntry / ConverterRegistry
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class ConverterEntry:
@@ -130,12 +137,14 @@ class ConverterEntry:
     priority: int
     name: str
 
+
 # layer 排序权重(数值越小越靠前,即高 layer 优先)
 _LAYER_ORDER = {
     ConverterLayer.L3_CLOUD: 0,
     ConverterLayer.L2_LLM: 1,
     ConverterLayer.L1_LOCAL: 2,
 }
+
 
 class ConverterRegistry:
     """转换器注册表:注册/查找/派发,支持 fallback 降级。
@@ -271,6 +280,7 @@ class ConverterRegistry:
         """列出所有已注册转换器(按排序顺序)。"""
         return list(self._entries)
 
+
 # ---------------------------------------------------------------------------
 # 内置 L1 转换器(包装 ParserExpert + MarkdownRenderer)
 # ---------------------------------------------------------------------------
@@ -286,6 +296,7 @@ _CATEGORY_MAP = {
     "Footer": Footer,
     "PageBreak": PageBreak,
 }
+
 
 class _BaseL1Converter:
     """L1 本地转换器基类(包装 ParserExpert + MarkdownRenderer)。
@@ -379,29 +390,35 @@ class _BaseL1Converter:
                 return el.text.strip()
         return None
 
+
 class WordConverter(_BaseL1Converter):
     """Word 文档 L1 转换器(.docx/.doc)。"""
 
     _accept_exts = ("docx", "doc")
+
 
 class ExcelConverter(_BaseL1Converter):
     """Excel 文档 L1 转换器(.xlsx/.xls)。"""
 
     _accept_exts = ("xlsx", "xls")
 
+
 class PPTConverter(_BaseL1Converter):
     """PPT 文档 L1 转换器(.pptx)。"""
 
     _accept_exts = ("pptx",)
+
 
 class PDFConverter(_BaseL1Converter):
     """PDF 文档 L1 转换器(.pdf)。"""
 
     _accept_exts = ("pdf",)
 
+
 # ---------------------------------------------------------------------------
 # 默认注册表工厂
 # ---------------------------------------------------------------------------
+
 
 def create_default_registry() -> ConverterRegistry:
     """创建包含内置 L1 转换器的默认注册表。

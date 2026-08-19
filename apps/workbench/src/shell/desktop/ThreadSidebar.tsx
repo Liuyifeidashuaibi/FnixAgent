@@ -394,7 +394,7 @@ export function ThreadSidebar({
         )}
       </div>
 
-      <div className="fnix-scroll" ref={listRef} role="listbox" aria-label="会话列表" onKeyDown={onKeyDownList}>
+      <div className="fnix-scroll" ref={listRef} onKeyDown={onKeyDownList}>
         {total === 0 && (
           <div className="fnix-side-empty">
             <MessageSquare size={22} />
@@ -422,22 +422,34 @@ export function ThreadSidebar({
           </div>
         ) : null}
 
-        {/* L1: 置顶区 — 仅当有置顶项时渲染 */}
-        {pinnedItems.length > 0 && (
-          <div className="fnix-thread-group fnix-pinned-group">
-            <div className="fnix-thread-group-h">置顶</div>
-            {pinnedItems.map((t) => renderThreadRow(t, true))}
-          </div>
-        )}
+        {/* listbox 仅包裹会话分组,空态/提示等 UI 留在外层,
+            满足 aria-required-children(listbox 子元素须为 option/group) */}
+        <div role="listbox" aria-label="会话列表">
+          {/* L1: 置顶区 — 仅当有置顶项时渲染 */}
+          {pinnedItems.length > 0 && (
+            <div
+              className="fnix-thread-group fnix-pinned-group"
+              role="group"
+              aria-label="置顶"
+            >
+              <div className="fnix-thread-group-h" role="presentation">
+                置顶
+              </div>
+              {pinnedItems.map((t) => renderThreadRow(t, true))}
+            </div>
+          )}
 
-        {unpinnedGroups.map((g) => (
-          <div key={g.label} className="fnix-thread-group">
-            {(unpinnedGroups.length > 1 || g.label !== "今天") && (
-              <div className="fnix-thread-group-h">{g.label}</div>
-            )}
-            {g.items.map((t) => renderThreadRow(t, false))}
-          </div>
-        ))}
+          {unpinnedGroups.map((g) => (
+            <div key={g.label} className="fnix-thread-group" role="group" aria-label={g.label}>
+              {(unpinnedGroups.length > 1 || g.label !== "今天") && (
+                <div className="fnix-thread-group-h" role="presentation">
+                  {g.label}
+                </div>
+              )}
+              {g.items.map((t) => renderThreadRow(t, false))}
+            </div>
+          ))}
+        </div>
 
         {/* Spec 4: 可恢复任务 section — 中断/失败的长程任务可一键 resume */}
         {onResumeRun && (

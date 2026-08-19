@@ -39,6 +39,7 @@ _PAREN_BLANK_RE = re.compile(r"[（(]\s*[）)]")
 # 数据结构
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class EditOp:
     """单个编辑操作。
@@ -57,6 +58,7 @@ class EditOp:
     position: str = "after"  # insert 位置: before/after/replace
     preserve_format: bool = True  # 是否保留原格式
 
+
 @dataclass
 class EditReport:
     """编辑结果报告。
@@ -73,9 +75,11 @@ class EditReport:
     failed_ops: int = 0
     details: list[dict] = field(default_factory=list)
 
+
 # ---------------------------------------------------------------------------
 # Run 级原地修改器
 # ---------------------------------------------------------------------------
+
 
 class RunEditor(BaseExpert):
     """Run 级原地修改器(Phase 5.3)。

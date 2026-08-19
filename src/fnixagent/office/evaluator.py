@@ -45,6 +45,7 @@ from fnixagent.office.base import BaseExpert, ExpertResult
 # 数据结构
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class CheckResult:
     """单个检查项的结果。
@@ -58,6 +59,7 @@ class CheckResult:
     passed: bool
     function: str
     detail: str = ""
+
 
 @dataclass
 class TaskResult:
@@ -87,6 +89,7 @@ class TaskResult:
             self.soft_rate = self.passed_count / self.total_count
             self.hard_rate = 1.0 if self.passed_count == self.total_count else 0.0
 
+
 @dataclass
 class ScoreSummary:
     """评测汇总分数。
@@ -113,9 +116,11 @@ class ScoreSummary:
             self.soft_avg = sum(r.soft_rate for r in self.results) / self.total_tasks
             self.hard_rate = self.passed_tasks / self.total_tasks
 
+
 # ---------------------------------------------------------------------------
 # 评测器
 # ---------------------------------------------------------------------------
+
 
 class Evaluator(BaseExpert):
     """Fnix Agent 评测器。

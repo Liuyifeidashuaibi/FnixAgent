@@ -40,6 +40,7 @@ __version__ = "1.0.0"
 
 from fnixagent.core.messages import Msg
 
+
 @dataclass
 class AgentContext:
     """Agent 运行上下文(每次 reply 创建)。
@@ -91,6 +92,7 @@ class AgentContext:
         if not isinstance(msg, Msg):
             raise TypeError(f"msg must be Msg, got {type(msg).__name__}")
         self.history.append(msg)
+
 
 class Agent(abc.ABC):
     """Agent 基类:4 步 ReAct + 双入口(同步/流式)。

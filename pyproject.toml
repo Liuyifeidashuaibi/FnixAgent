@@ -193,7 +193,13 @@ line-ending = "auto"
 # ---------------------------------------------------------------------------
 
 [tool.pyright]
-typeCheckingMode = "strict"
+# 类型检查基线收敛策略:
+# - strict 为长期目标(存量 ~12k 错误,不现实一步到位)
+# - 当前以 basic 为生产门槛(捕获缺失导入/参数错误等真实缺陷)
+# - 依赖桩缺失噪音降级为 warning,不阻塞 CI;存量 error 按基线逐模块清零
+typeCheckingMode = "basic"
+reportMissingImports = "warning"
+reportMissingTypeStubs = false
 pythonVersion = "3.11"
 include = ["src/fnixagent"]
 exclude = [

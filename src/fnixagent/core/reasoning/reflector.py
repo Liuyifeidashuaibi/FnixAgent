@@ -47,6 +47,7 @@ from fnixagent.core.types import (
     ReflectionResult,
 )
 
+
 class SelfReflectEngine(ReasoningEngine):
     """Self-Reflection 推理引擎。
 

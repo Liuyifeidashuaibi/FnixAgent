@@ -26,5 +26,12 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    {
+      name: 'chromium',
+      // channel 'chromium' 使用完整 Chromium(新 headless 模式),
+      // 不依赖 chromium-headless-shell 单独下载,弱网环境更可靠。
+      use: { ...devices['Desktop Chrome'], launchOptions: { channel: 'chromium' } },
+    },
+  ],
 });

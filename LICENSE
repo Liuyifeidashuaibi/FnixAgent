@@ -1,141 +1,153 @@
-FnixAgent™ 智能工作台系统
-Copyright (C) 2024-2026 FnixAgent / 刘逸飞. All Rights Reserved.
+Required Notice: Copyright FnixAgent / 刘逸飞 (https://github.com/Liuyifeidashuaibi/FnixAgent)
+
+FnixAgent 智能工作台系统
+Copyright (C) 2024-2026 FnixAgent / 刘逸飞
 
 ================================================================================
-中文版 (Chinese Version)
+许可摘要（中文，非法律文本；如与英文条款冲突，以英文条款为准）
 ================================================================================
 
-本软件(包括但不限于源代码、目标代码、文档、图形、Logo、商标、设计稿、
-配置文件、模型权重、Skill 包、提示词模板、本文档及任何衍生作品,以下统称
-"本软件") 系著作权人 FnixAgent / 刘逸飞 依法享有著作权的专有作品。
+本项目采用 PolyForm Noncommercial License 1.0.0（源码可见、非商用许可）：
 
-未经著作权人事先书面许可,**严禁**任何单位或个人:
+  ✅ 允许：
+  - 个人下载、安装、使用本软件
+  - 出于学习、研究、测试目的的查看与修改
+  - 非商业目的的复制与分发（须附带本许可）
 
-  1. 复制、转载、下载、镜像、抓取本软件的全部或任何部分;
-  2. 修改、改编、翻译、汇编、整理、再创作本软件的全部或任何部分;
-  3. 公开发布、公开展示、公开发行、传播本软件的全部或任何部分;
-  4. 将本软件的全部或任何部分用于任何商业目的,包括但不限于:
-     - 直接销售 / 收费 / 订阅
-     - 嵌入到商业产品 / SaaS 服务 / 商业项目
-     - 用于提供对外服务 (无论收费与否)
-     - 用于内部商业运营、培训、咨询、交付物
-  5. 基于本软件创作衍生作品 / 派生作品 / Fork 项目;
-  6. 将本软件的部分或全部反向工程、反编译、反汇编(在适用法律允许的
-     互操作性范围内除外);
-  7. 删除、遮掩、修改本软件上的任何版权标识、商标、水印;
-  8. 以"开源"、"免费"或其他名义诱导他人使用本软件的实质部分;
-  9. 将本软件的访问权或使用权再许可给第三方。
-
-**GitHub / Gitee / GitLab / 任何公开代码托管平台上的"公开浏览"行为**
-(如:个人阅读、在浏览器中查看单个文件、提交 GitHub Issue / Discussion
-作为参考性问题) 不被视为上述"分发"行为,但仍不得进行复制、下载、
-镜像、Fork、再分发等行为。
-
-如仅为**学习目的**的个人性、非系统性、非商业性参考阅读(不含复制、
-不含下载至本地副本、不含商用),著作权人在此给予有限的、不可转让的、
-可撤销的、非排他性的**阅览许可 (View-Only License)**,该许可:
-
-  (a) 不构成对本软件著作权的放弃;
-  (b) 不允许以任何方式存储、复制、再传播本软件;
-  (c) 在任何情况下均不得用于商业用途;
-  (d) 不得将参考所得的设计、架构、算法、提示词等直接用于构建
-      与本软件实质相似的替代品。
-
-本软件按"现状" (AS IS) 提供,不提供任何明示或暗示的担保。在适用法律
-允许的最大范围内,著作权人不就因浏览、参考或试图使用本软件而产生的
-任何直接或间接损失承担责任。
-
-本软件涉及若干第三方开源组件,其各自的著作权归相应权利人所有,该等
-组件的清单、版本及原始许可证信息详见 NOTICE 文件及第三方依赖清单。
-该等第三方组件**仅作为本软件运行时所依赖的独立技术组件**,其许可证
-条款仅约束该等组件本身,不构成对本软件其他部分权利状态的变更。
-
-如需获得超出本声明范围的授权(包括但不限于商业许可、授权许可、
-学术合作、白盒审计、技术转让等),请联系:
-
-  ✉  Email : liuyifeidashuaibi@gmail.com
-  🌐 Web   : https://github.com/Liuyifeidashuaibi/FnixAgent/blob/main/docs/LICENSE-COMMERCIAL.md
+  ❌ 禁止：
+  - 任何形式的商业使用（销售、收费服务、嵌入商业产品、
+    企业内部商业运营等，以英文条款 Noncommercial Purposes 定义为准）
 
 ================================================================================
-English Version
+PolyForm Noncommercial License 1.0.0
 ================================================================================
 
-FnixAgent™ Intelligent Workbench System
-Copyright (C) 2024-2026 FnixAgent / Liu Yifei. All Rights Reserved.
+<https://polyformproject.org/licenses/noncommercial/1.0.0>
 
-This software (including but not limited to source code, object code,
-documentation, graphics, logos, trademarks, designs, configuration files,
-model weights, skill packages, prompt templates, this document, and any
-derivative works, collectively the "Software") is the proprietary work of
-the copyright holder FnixAgent / Liu Yifei, and is protected by applicable
-copyright law and international treaty.
+# Acceptance
 
-Without the prior written permission of the copyright holder, NO entity or
-individual may:
+In order to get any license under these terms, you must agree
+to them as both strict obligations and conditions to all
+your licenses.
 
-  1. Copy, reprint, download, mirror, scrape, or otherwise reproduce the
-     Software, in whole or in part;
-  2. Modify, adapt, translate, compile, arrange, or create derivative works
-     based on the Software, in whole or in part;
-  3. Publicly release, display, publish, distribute, or transmit the
-     Software, in whole or in part;
-  4. Use the Software for any commercial purpose, including but not limited
-     to: direct sale, charging fees, subscription; embedding in commercial
-     products, SaaS services, or commercial projects; providing services
-     to third parties (whether charged or free); internal commercial
-     operations, training, consulting, or deliverables;
-  5. Create derivative works, forks, or ports based on the Software;
-  6. Reverse engineer, decompile, or disassemble the Software (except to
-     the extent expressly permitted by applicable law for interoperability);
-  7. Remove, obscure, or alter any copyright notice, trademark, or
-     watermark on the Software;
-  8. Induce or assist third parties to use the Software under the guise
-     of "open source", "free", or other false pretenses;
-  9. Sublicense the access or usage rights of the Software to third parties.
+# Copyright License
 
-"Public viewing" on a public code-hosting platform (such as GitHub, Gitee,
-GitLab) — including personal reading, viewing a single file in a browser,
-and submitting an issue or a question to a public discussion forum for
-referential purposes — is NOT considered "distribution" as defined above.
-However, copying, downloading, mirroring, forking, or redistributing the
-Software remains strictly prohibited.
+The licensor grants you a copyright license for the
+software to do everything you might do with the software
+that would otherwise infringe the licensor's copyright
+in it for any permitted purpose.  However, you may
+only distribute the software according to Distribution
+License and make changes or new works
+based on the software according to Changes and New Works
+License.
 
-For **personal, non-systematic, non-commercial reference reading for
-purely educational purposes** (excluding reproduction, downloading to a
-local copy, and any commercial use), the copyright holder hereby grants a
-limited, non-transferable, revocable, non-exclusive **View-Only License**,
-subject to the following conditions:
+# Distribution License
 
-  (a) This View-Only License does NOT constitute a waiver of any copyright
-      or other intellectual property right in the Software;
-  (b) The licensee may NOT store, copy, or further distribute the
-      Software in any form;
-  (c) The licensee may NOT use the Software for any commercial purpose
-      under any circumstances;
-  (d) The licensee may NOT directly use any design, architecture,
-      algorithm, prompt template, or other element observed in the
-      Software to construct a substantially similar substitute.
+The licensor grants you an additional copyright license
+to distribute copies of the software.  Your license
+to distribute covers distributing the software with
+changes and new works permitted by Changes and New Works
+License.
 
-The Software is provided "AS IS" without warranty of any kind. To the
-maximum extent permitted by applicable law, the copyright holder shall not
-be liable for any direct or indirect damages arising from viewing,
-referencing, or attempting to use the Software.
+# Notices
 
-This Software incorporates third-party open-source components; their
-respective copyrights belong to their respective owners. A list of such
-components, their versions, and original licenses is available in the
-NOTICE file and the third-party dependency list. Said third-party
-components are **independent technological components upon which this
-Software depends at runtime**; their respective license terms govern only
-those components themselves, and do NOT alter the proprietary status of
-the rest of the Software.
+You must ensure that anyone who gets a copy of any part of
+the software from you also gets a copy of these terms or the
+URL for them above, as well as copies of any plain-text lines
+beginning with `Required Notice:` that the licensor provided
+with the software.  For example:
 
-For any authorization beyond the scope of this notice (including but not
-limited to commercial licensing, academic collaboration, white-box audit,
-or technology transfer), please contact:
+> Required Notice: Copyright Yoyodyne, Inc. (http://example.com)
 
-  ✉  Email : liuyifeidashuaibi@gmail.com
-  🌐 Web   : https://github.com/Liuyifeidashuaibi/FnixAgent/blob/main/docs/LICENSE-COMMERCIAL.md
+# Changes and New Works License
 
-================================================================================
-最后更新 / Last Updated: 2026-08-17
+The licensor grants you an additional copyright license to
+make changes and new works based on the software for any
+permitted purpose.
+
+# Patent License
+
+The licensor grants you a patent license for the software that
+covers patent claims the licensor can license, or becomes able
+to license, that you would infringe by using the software.
+
+# Noncommercial Purposes
+
+Any noncommercial purpose is a permitted purpose.
+
+# Personal Uses
+
+Personal use for research, experiment, and testing for
+the benefit of public knowledge, personal study, private
+entertainment, hobby projects, amateur pursuits, or religious
+observance, without any anticipated commercial application,
+is use for a permitted purpose.
+
+# Noncommercial Organizations
+
+Use by any charitable organization, educational institution,
+public research organization, public safety or health
+organization, environmental protection organization,
+or government institution is use for a permitted purpose
+regardless of the source of funding or obligations resulting
+from the funding.
+
+# Fair Use
+
+You may have "fair use" rights for the software under the
+law. These terms do not limit them.
+
+# No Other Rights
+
+These terms do not allow you to sublicense or transfer any of
+your licenses to anyone else, or prevent the licensor from
+granting licenses to anyone else.  These terms do not imply
+any other licenses.
+
+# Patent Defense
+
+If you make any written claim that the software infringes or
+contributes to infringement of any patent, your patent license
+for the software granted under these terms ends immediately. If
+your company makes such a claim, your patent license ends
+immediately for work on behalf of your company.
+
+# Violations
+
+The first time you are notified in writing that you have
+violated any of these terms, or done anything with the software
+not covered by your licenses, your licenses can nonetheless
+continue if you come into full compliance with these terms,
+and take practical steps to correct past violations, within
+32 days of receiving notice.  Otherwise, all your licenses
+end immediately.
+
+# No Liability
+
+As far as the law allows, the software comes as is, without
+any warranty or condition, and the licensor will not be liable
+to you for any damages arising out of these terms or the use
+or nature of the software, under any kind of legal claim.
+
+# Definitions
+
+The licensor is the individual or entity offering these
+terms, and the software is the software the licensor makes
+available under these terms.
+
+You refers to the individual or entity agreeing to these
+terms.
+
+Your company is any legal entity, sole proprietorship,
+or other kind of organization that you work for, plus all
+organizations that have control over, are under the control of,
+or are under common control with that organization.  Control
+means ownership of substantially all the assets of an entity,
+or the power to direct its management and policies by vote,
+contract, or otherwise.  Control can be direct or indirect.
+
+Your licenses are all the licenses granted to you for the
+software under these terms.
+
+Use means anything you do with the software requiring one
+of your licenses.

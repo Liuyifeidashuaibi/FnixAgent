@@ -52,6 +52,7 @@ except ImportError:
 # RoleConfig dataclass
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class HandoffSpec:
     """角色配置中的 handoff 声明(对应 P3-1 Handoff)。
@@ -80,6 +81,7 @@ class HandoffSpec:
         if self.max_depth < 1:
             raise ValueError(f"HandoffSpec.max_depth must be >= 1, got {self.max_depth}")
 
+
 @dataclass
 class ModelPreference:
     """模型偏好配置。
@@ -95,6 +97,7 @@ class ModelPreference:
     fallback: str = ""
     temperature: float = 0.5
     max_tokens: int | None = None
+
 
 @dataclass
 class RoleConfig:
@@ -173,6 +176,7 @@ class RoleConfig:
                 parts.append(f"- {c}")
         return "\n".join(parts)
 
+
 # ---------------------------------------------------------------------------
 # RoleLoader
 # ---------------------------------------------------------------------------
@@ -197,6 +201,7 @@ _KNOWN_FIELDS = {
     "handoffs",
     "model_preference",
 }
+
 
 class RoleLoader:
     """角色配置加载器。
@@ -534,6 +539,7 @@ class RoleLoader:
                         exc,
                     )
         return count
+
 
 __all__ = [
     "HandoffSpec",

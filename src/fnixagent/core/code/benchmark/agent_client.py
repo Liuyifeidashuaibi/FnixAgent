@@ -40,7 +40,9 @@ def _llm_config() -> dict[str, str]:
     elif provider == "deepseek":
         return {
             "provider": "deepseek",
-            "model": os.environ.get("LLM_MODEL") or os.environ.get("DEEPSEEK_MODEL") or "deepseek-chat",
+            "model": os.environ.get("LLM_MODEL")
+            or os.environ.get("DEEPSEEK_MODEL")
+            or "deepseek-chat",
             "api_key": os.environ.get("DEEPSEEK_API_KEY", ""),
             "base_url": os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1"),
         }
@@ -48,7 +50,9 @@ def _llm_config() -> dict[str, str]:
         "provider": "qwen",
         "model": os.environ.get("LLM_MODEL") or os.environ.get("QWEN_MODEL") or "qwen-plus",
         "api_key": os.environ.get("DASHSCOPE_API_KEY", ""),
-        "base_url": os.environ.get("DASHSCOPE_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1"),
+        "base_url": os.environ.get(
+            "DASHSCOPE_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1"
+        ),
     }
 
 
@@ -103,7 +107,9 @@ def stream_agent(
         enhanced_prompt = f"Use a reason-act-observe loop. Think about what files to create, then create them.\n\n{enhanced_prompt}"
 
     if max_steps_hint > 0:
-        enhanced_prompt = f"You have up to {max_steps_hint} steps. Be thorough.\n\n{enhanced_prompt}"
+        enhanced_prompt = (
+            f"You have up to {max_steps_hint} steps. Be thorough.\n\n{enhanced_prompt}"
+        )
 
     # Always add explicit file creation instruction
     enhanced_prompt += "\n\nIMPORTANT: Create all required files in the workspace. Use the write_file tool to create each file with its complete content."

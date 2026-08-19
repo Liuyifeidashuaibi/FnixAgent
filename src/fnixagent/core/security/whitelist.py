@@ -64,6 +64,7 @@ DEFAULT_TASK_TOOLS: dict[str, list[str]] = {
 # 数据结构
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class ToolGrant:
     """临时工具授权(带过期时间)。
@@ -82,6 +83,7 @@ class ToolGrant:
     reason: str
     granted_by: str
 
+
 @dataclass
 class WhitelistDecision:
     """白名单判定结果。
@@ -98,9 +100,11 @@ class WhitelistDecision:
     matched_rule: str | None = None
     grant: ToolGrant | None = None
 
+
 # ---------------------------------------------------------------------------
 # ToolWhitelist
 # ---------------------------------------------------------------------------
+
 
 class ToolWhitelist:
     """任务粒度工具白名单。

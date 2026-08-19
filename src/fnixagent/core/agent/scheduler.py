@@ -39,6 +39,7 @@ from fnixagent.core.agent.types import (
     StorageBackend,
 )
 
+
 class AgentScheduler:
     """Agent 调度器 (类比 OS Scheduler)。
 
@@ -400,5 +401,6 @@ class AgentScheduler:
             "scheduler_running": self._scheduler_task is not None,
             "monitor_running": self._monitor_task is not None,
         }
+
 
 __all__ = ["AgentScheduler"]

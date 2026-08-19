@@ -87,6 +87,7 @@ _NONPRINT_RATIO = 0.30  # 非可打印字符占比阈值
 # 数据结构
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class JudgeVerdict:
     """裁判结论。
@@ -107,6 +108,7 @@ class JudgeVerdict:
     sanitized_output: str | None = None
     detail: str = ""
 
+
 @dataclass
 class JudgeConfig:
     """裁判配置。
@@ -123,6 +125,7 @@ class JudgeConfig:
     use_llm_judge: bool = False
     patterns_custom: list[str] = field(default_factory=list)
 
+
 # ---------------------------------------------------------------------------
 # 威胁严重度分级
 # ---------------------------------------------------------------------------
@@ -132,6 +135,7 @@ class JudgeConfig:
 _SEVERITY_HIGH = "high"
 _SEVERITY_MEDIUM = "medium"
 _SEVERITY_LOW = "low"
+
 
 class LLMJudge:
     """LLM 输出裁判。

@@ -41,6 +41,7 @@ T = TypeVar("T")
 # 错误分类
 # ---------------------------------------------------------------------------
 
+
 class RetryableError(fnixagentError):
     """可重试错误(超时/429/网络抖动等瞬时故障)。
 
@@ -48,6 +49,7 @@ class RetryableError(fnixagentError):
     """
 
     pass
+
 
 class NonRetryableError(fnixagentError):
     """不可重试错误(参数校验/权限拒绝/逻辑错误等永久故障)。
@@ -57,9 +59,11 @@ class NonRetryableError(fnixagentError):
 
     pass
 
+
 # ---------------------------------------------------------------------------
 # RetryPolicy
 # ---------------------------------------------------------------------------
+
 
 @dataclass(frozen=True)
 class RetryPolicy:
@@ -144,6 +148,7 @@ class RetryPolicy:
         # 其他异常默认不重试(避免对未知错误盲目重试)
         return False
 
+
 # ---------------------------------------------------------------------------
 # 预定义策略
 # ---------------------------------------------------------------------------
@@ -178,6 +183,7 @@ NO_RETRY_POLICY = RetryPolicy(
 # ---------------------------------------------------------------------------
 # with_retry 通用重试函数
 # ---------------------------------------------------------------------------
+
 
 def with_retry(
     func: Callable[..., T],
@@ -218,6 +224,7 @@ def with_retry(
     if last_error is not None:
         raise last_error
     raise RuntimeError("with_retry: unreachable")
+
 
 async def async_with_retry(
     func: Callable[..., Any],
@@ -261,9 +268,11 @@ async def async_with_retry(
         raise last_error
     raise RuntimeError("async_with_retry: unreachable")
 
+
 # ---------------------------------------------------------------------------
 # 装饰器形式
 # ---------------------------------------------------------------------------
+
 
 def retryable(
     policy: RetryPolicy = DEFAULT_RETRY_POLICY,
@@ -286,6 +295,7 @@ def retryable(
 
     return decorator
 
+
 def async_retryable(
     policy: RetryPolicy = DEFAULT_RETRY_POLICY,
     on_retry: Callable[[int, Exception], None] | None = None,
@@ -307,9 +317,11 @@ def async_retryable(
 
     return decorator
 
+
 # ---------------------------------------------------------------------------
 # 工具调用专用重试(与 ToolCallState 配合)
 # ---------------------------------------------------------------------------
+
 
 def execute_with_retry(
     tool_call: Any,

@@ -81,7 +81,7 @@ export function OnboardingWizard({
       setAgentdOk(alive);
       if (!alive) {
         setTestOk(false);
-        setToast("agentd 未连接 — 请先启动后端（pnpm dev / fnixagent serve）");
+        setToast("本地服务正在启动中，请稍候重试测试连接");
         return;
       }
       if (!apiKey.trim()) {
@@ -187,7 +187,7 @@ export function OnboardingWizard({
             <h2>
               <KeyRound size={18} /> API Key
             </h2>
-            <p className="fnix-onboard-hint">Key 只保存在本机（~/.fnix），不上传云端。</p>
+            <p className="fnix-onboard-hint">Key 只保存在你的本机，不会上传到云端。</p>
             <label className="fnix-field">
               <span>DashScope / OpenAI-compatible Key</span>
               <input
@@ -229,9 +229,6 @@ export function OnboardingWizard({
                 下一步
               </button>
             </div>
-            {agentdOk === false && (
-              <p className="fnix-onboard-hint bad">后端未就绪时也可先填 Key，稍后再测。</p>
-            )}
           </section>
         )}
 

@@ -570,7 +570,7 @@
   cursor: pointer;
 }
 .fnix-glass .glass-goal-btn:hover:not(:disabled) {
-  background: #f5f5f5;
+  background: var(--bg-muted, #f5f5f5);
 }
 .fnix-glass .glass-goal-btn:disabled {
   opacity: 0.45;
@@ -652,7 +652,7 @@
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: #ffffff;
+  background: var(--bg-soft, #ffffff);
   border: 1px solid var(--gp-line);
   color: var(--gp-muted);
   display: inline-flex;

@@ -60,6 +60,7 @@ from fnixagent.core.code.diff import (
 # 工具执行结果
 # ============================================================================
 
+
 @dataclass
 class ToolResult:
     """工具执行结果。
@@ -100,9 +101,11 @@ class ToolResult:
         """
         return cls(success=False, output=None, error=error)
 
+
 # ============================================================================
 # 代码操作工具集
 # ============================================================================
+
 
 class CodeTools:
     """代码操作工具集, 6 个核心工具。
@@ -819,5 +822,6 @@ class CodeTools:
                 return False
 
         return True
+
 
 __all__ = ["CodeTools", "ToolResult"]

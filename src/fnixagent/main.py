@@ -431,10 +431,20 @@ def _run_serve(args) -> None:
     cfg = load_yaml_config()
     server_cfg = cfg.get("server", {}) or {}
     port = args.port or server_cfg.get("port", 8003)
-    # 安全默认:standalone(桌面)形态强制 127.0.0.1,避免本机服务对外暴露
-    # 仅 cloud/local-stack 形态允许显式配置 0.0.0.0 或其它外部地址
-    default_host = "127.0.0.1" if is_standalone() else "0.0.0.0"
-    host = args.host or server_cfg.get("host", default_host)
+    # 安全默认:standalone(桌面)形态强制 127.0.0.1,避免本机服务对外暴露。
+    # standalone 下配置文件(config/settings.yaml)的 server.host 一律不生效,
+    # 仅当用户显式传 --host 时才可覆盖;cloud/local-stack 形态才允许配置外部地址。
+    if is_standalone():
+        if args.host and args.host not in ("127.0.0.1", "localhost"):
+            print(
+                f"[main] WARNING: standalone 形态检测到显式 --host={args.host},"
+                "本机服务将不再仅限回环地址;生产环境请谨慎"
+            )
+        host = args.host or "127.0.0.1"
+    else:
+        # cloud/local-stack 形态:对外监听是部署模型的预期行为(由反向代理/
+        # 防火墙收敛暴露面),此处显式声明意图。
+        host = args.host or server_cfg.get("host", "0.0.0.0")  # nosec B104
 
     if not isinstance(host, str) or not host:
         raise ValueError(f"server.host 必须为非空字符串, 收到 {host!r}")
@@ -549,7 +559,8 @@ def _run_mcp(args) -> None:
         app = transport.get_app()
         import uvicorn
 
-        uvicorn.run(app, host=args.host or "0.0.0.0", port=args.port or 8003)
+        # 安全默认与 serve 对齐:本机 127.0.0.1,需要对外时用 --host 显式指定
+        uvicorn.run(app, host=args.host or "127.0.0.1", port=args.port or 8003)
     else:
         transport = StdioTransport(server)
         transport.run()
@@ -656,7 +667,9 @@ def main():
 
     # ---- serve ----
     serve_parser = subparsers.add_parser("serve", help="启动 FastAPI 服务器")
-    serve_parser.add_argument("--host", default=None, help="绑定地址 (默认 0.0.0.0)")
+    serve_parser.add_argument(
+        "--host", default=None, help="绑定地址 (standalone 默认 127.0.0.1, cloud 默认 0.0.0.0)"
+    )
     serve_parser.add_argument("--port", "-p", type=int, default=None, help="端口 (默认 8003)")
     serve_parser.add_argument("--no-reload", action="store_true", help="禁用热重载")
     serve_parser.add_argument("--log-level", default=None, help="日志级别")

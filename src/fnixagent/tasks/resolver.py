@@ -78,6 +78,7 @@ _FINGERPRINT_HEAD_LEN = 50
 # 乱码检测报告
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class GarbageReport:
     """乱码检测报告。
@@ -100,9 +101,11 @@ class GarbageReport:
     parsed_options: list[tuple[str, str]] = field(default_factory=list)
     raw_text: str = ""
 
+
 # ---------------------------------------------------------------------------
 # 乱码检测器
 # ---------------------------------------------------------------------------
+
 
 class GarbageDetector(BaseExpert):
     """乱码检测器。
@@ -194,9 +197,11 @@ class GarbageDetector(BaseExpert):
             pairs.append((letter, content))
         return pairs
 
+
 # ---------------------------------------------------------------------------
 # 答案恢复结果
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class ResolveResult:
@@ -216,9 +221,11 @@ class ResolveResult:
     source: str = "none"
     needs_manual: bool = True
 
+
 # ---------------------------------------------------------------------------
 # 答案恢复器
 # ---------------------------------------------------------------------------
+
 
 class AnswerResolver(BaseExpert):
     """答案恢复器(多级策略链)。
