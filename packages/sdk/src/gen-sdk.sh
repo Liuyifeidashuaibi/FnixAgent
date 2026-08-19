@@ -1,4 +1,4 @@
-﻿#!/bin/bash
+#!/bin/bash
 # ===========================================================================
 # FnixAgent SDK — 从 FastAPI OpenAPI spec 生成 TypeScript 类型
 # Phase P2-01
