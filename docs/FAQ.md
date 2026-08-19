@@ -26,7 +26,7 @@ A. FnixAgent 是一个**本地优先 (Local-First)** 的桌面 Agent 工作台,�
 | 记忆 | 短时 | 短时 | 短时 | **长期记忆 (Markdown+Git)** |
 | 任务图 | 无 | 无 | 无 | **KTG/STP/MFP 三层** |
 | 隐私 | 上云 | 上云 | 上云 | **BYOK + 全本地** |
-| 商用授权 | 闭源 | 闭源 | Apache | **All Rights Reserved (专有)** |
+| 商用授权 | 闭源 | 闭源 | Apache | **PolyForm Noncommercial 1.0.0 (非商用)** |
 
 详见 `docs/COMPARISON.md`。
 
@@ -37,7 +37,7 @@ A. 构建一个完整落地的桌面 Agent 工程:覆盖**架构设计 / 跨语�
 
 ### Q4. 这个项目是开源的吗?
 
-A. **否**。本项目以 **All Rights Reserved** 方式发布,具体见 [LICENSE](../LICENSE)。
+A. **否**。本项目以 **PolyForm Noncommercial 1.0.0**（源码可见、非商用）许可发布,具体见 [LICENSE](../LICENSE)。
    GitHub 上**可以浏览**,但**禁止**复制、修改、商用、Fork、衍生创作,
    也**不接受**社区代码合入。
 
@@ -241,4 +241,4 @@ A. 本项目不接受外部代码贡献。所有代码均为著作权人独立�
 
 > 📮 没找到答案?提 Issue: https://github.com/Liuyifeidashuaibi/FnixAgent/issues/new/choose
 
-© 2024-2026 FnixAgent. All Rights Reserved.
+© 2024-2026 FnixAgent. Licensed under PolyForm Noncommercial License 1.0.0.

@@ -27,7 +27,7 @@ import logging
 import os
 import threading
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -207,7 +207,7 @@ class SecretManager:
 
     def check_rotation(self) -> list[str]:
         """返回需要轮换的 secret 名单(超过 max_age_days)。"""
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         expired: list[str] = []
         for name, src in self._sources.items():
             if src.max_age_days <= 0:
@@ -359,7 +359,7 @@ class SecretManager:
         with self._lock:
             if name not in self._meta:
                 self._meta[name] = {
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(UTC).isoformat(),
                 }
                 self._save_meta()
 
@@ -370,7 +370,7 @@ class SecretManager:
             return None
         try:
             created = datetime.fromisoformat(meta["created_at"])
-            return (datetime.utcnow() - created).days
+            return (datetime.now(UTC) - created).days
         except (ValueError, TypeError):
             return None
 
@@ -380,7 +380,7 @@ class SecretManager:
         if src.max_age_days <= 0:
             return None
         try:
-            expires = datetime.utcnow() + timedelta(days=src.max_age_days)
+            expires = datetime.now(UTC) + timedelta(days=src.max_age_days)
             return expires.isoformat()
         except Exception:
             return None

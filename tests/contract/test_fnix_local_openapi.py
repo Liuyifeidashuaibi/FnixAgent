@@ -22,7 +22,9 @@ OPENAPI = ROOT / "packages" / "protocol" / "openapi" / "fnix-local-v1.yaml"
 
 @pytest.fixture
 def client() -> TestClient:
-    return TestClient(create_app())
+    app = create_app()
+    token = app.state.capability_token
+    return TestClient(app, headers={"x-fnix-capability": token})
 
 
 @pytest.fixture

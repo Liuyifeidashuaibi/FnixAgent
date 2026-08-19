@@ -28,6 +28,7 @@ import threading
 import time
 from dataclasses import dataclass
 
+
 @dataclass
 class _Bucket:
     """单个限流桶的内部状态。"""
@@ -43,6 +44,7 @@ class _Bucket:
         if elapsed > 0:
             self.tokens = min(self.capacity, self.tokens + elapsed * self.refill_rate)
             self.last_refill = now
+
 
 class TokenBucketRateLimiter:
     """多 key 令牌桶限流器。
@@ -211,6 +213,7 @@ class TokenBucketRateLimiter:
                     for key, b in self._buckets.items()
                 },
             }
+
 
 # 向后兼容别名:对外提供 RateLimiter 简称,与 TokenBucketRateLimiter 等价
 RateLimiter = TokenBucketRateLimiter

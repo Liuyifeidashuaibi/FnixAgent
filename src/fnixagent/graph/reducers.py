@@ -25,6 +25,7 @@ from __future__ import annotations
 
 from typing import Any
 
+
 def last_value(left: Any, right: Any) -> Any:
     """覆盖语义:返回右值(最后写入胜出)。
 
@@ -33,12 +34,14 @@ def last_value(left: Any, right: Any) -> Any:
     """
     return right
 
+
 def add_int(left: int | None, right: int) -> int:
     """累加语义:左值 + 右值。
 
     用于 iteration 计数字段,每次节点返回 1 表示递增一轮。
     """
     return (left or 0) + right
+
 
 def append_list(left: list | None, right: list) -> list:
     """追加语义:左列表 + 右列表(允许重复)。
@@ -47,6 +50,7 @@ def append_list(left: list | None, right: list) -> list:
     这些字段允许重复(同一工具可能被多次调用)。
     """
     return (left or []) + list(right)
+
 
 def append_unique(left: list | None, right: list) -> list:
     """去重追加语义:合并去重(按值相等判断)。
@@ -59,6 +63,7 @@ def append_unique(left: list | None, right: list) -> list:
         if item not in merged:
             merged.append(item)
     return merged
+
 
 def add_messages(left: list[dict] | None, right: list[dict]) -> list[dict]:
     """消息去重追加:按 id 或 role+content 去重。
@@ -91,6 +96,7 @@ def add_messages(left: list[dict] | None, right: list[dict]) -> list[dict]:
             merged.append(msg)
     return merged
 
+
 def merge_dict(left: dict | None, right: dict) -> dict:
     """字典合并语义:后者覆盖前者。
 
@@ -100,6 +106,7 @@ def merge_dict(left: dict | None, right: dict) -> dict:
     merged = dict(left or {})
     merged.update(right)
     return merged
+
 
 def merge_trace(left: dict | None, right: dict) -> dict:
     """trace 字段深合并:list 追加,dict 递归合并,其他覆盖。

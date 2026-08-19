@@ -49,14 +49,17 @@ _DEFAULT_MAX_TTL = 86400
 # 异常
 # ---------------------------------------------------------------------------
 
+
 class LeaseExpiredError(Exception):
     """租约已过期或已撤销。"""
 
     pass
 
+
 # ---------------------------------------------------------------------------
 # 数据结构
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class LeasedSecret:
@@ -82,6 +85,7 @@ class LeasedSecret:
     max_ttl: int = _DEFAULT_MAX_TTL
     bound_to: str | None = None
 
+
 @dataclass
 class CubbyholeToken:
     """Cubbyhole 单次使用 token(参考 Vault Cubbyhole)。
@@ -100,9 +104,11 @@ class CubbyholeToken:
     expires_at: float = 0.0
     used: bool = False
 
+
 # ---------------------------------------------------------------------------
 # LeaseManager
 # ---------------------------------------------------------------------------
+
 
 class LeaseManager:
     """密钥租约管理器(线程安全)。
@@ -410,9 +416,11 @@ class LeaseManager:
         """惰性删除过期租约(调用方需持锁)。"""
         self._leases.pop(lease_id, None)
 
+
 # ---------------------------------------------------------------------------
 # 后台定时清理(可选,需调用方启动线程)
 # ---------------------------------------------------------------------------
+
 
 class LeaseCleaner:
     """租约后台清理器(定时调用 cleanup_expired)。

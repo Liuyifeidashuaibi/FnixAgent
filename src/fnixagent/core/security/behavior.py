@@ -32,7 +32,7 @@ import math
 import threading
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +48,7 @@ except ImportError:
 # ---------------------------------------------------------------------------
 # 审计钩子(异常吞掉,不影响主流程)
 # ---------------------------------------------------------------------------
+
 
 def _audit_behavior_anomaly(
     user_id: str,
@@ -71,9 +72,11 @@ def _audit_behavior_anomaly(
     except Exception:
         pass
 
+
 # ---------------------------------------------------------------------------
 # 数据结构
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class BehaviorFeatures:
@@ -97,6 +100,7 @@ class BehaviorFeatures:
     tools_used: list[str] = field(default_factory=list)
     data_volume_kb: float = 0.0
 
+
 @dataclass
 class BehaviorBaseline:
     """用户行为基线。
@@ -119,6 +123,7 @@ class BehaviorBaseline:
     active_hours: list[int] = field(default_factory=list)
     trained_at: str = ""
 
+
 @dataclass
 class AnomalyScore:
     """行为异常评分结果。
@@ -137,9 +142,11 @@ class AnomalyScore:
     recommendation: str = "allow"
     features: BehaviorFeatures | None = None
 
+
 # ---------------------------------------------------------------------------
 # BehaviorAnalyzer
 # ---------------------------------------------------------------------------
+
 
 class BehaviorAnalyzer:
     """UEBA 行为基线分析器。
@@ -211,7 +218,7 @@ class BehaviorAnalyzer:
             if not window:
                 baseline = BehaviorBaseline(
                     user_id=user_id,
-                    trained_at=datetime.utcnow().isoformat(),
+                    trained_at=datetime.now(UTC).isoformat(),
                 )
                 with self._lock:
                     self._baselines[user_id] = baseline
@@ -238,7 +245,7 @@ class BehaviorAnalyzer:
                 mean_data_volume=mean_data,
                 std_data_volume=std_data,
                 active_hours=active_hours,
-                trained_at=datetime.utcnow().isoformat(),
+                trained_at=datetime.now(UTC).isoformat(),
             )
             with self._lock:
                 self._baselines[user_id] = baseline
@@ -251,7 +258,7 @@ class BehaviorAnalyzer:
             logger.warning("[behavior] 训练基线失败: %s", exc)
             return BehaviorBaseline(
                 user_id=user_id,
-                trained_at=datetime.utcnow().isoformat(),
+                trained_at=datetime.now(UTC).isoformat(),
             )
 
     def analyze(self, features: BehaviorFeatures) -> AnomalyScore:
@@ -521,12 +528,14 @@ class BehaviorAnalyzer:
         variance = sum((v - mean) ** 2 for v in values) / (len(values) - 1)
         return math.sqrt(variance)
 
+
 # ---------------------------------------------------------------------------
 # 全局单例(懒加载)
 # ---------------------------------------------------------------------------
 
 _analyzer_instance: BehaviorAnalyzer | None = None
 _analyzer_lock = threading.Lock()
+
 
 def get_behavior_analyzer() -> BehaviorAnalyzer:
     """获取全局 BehaviorAnalyzer 单例。"""
@@ -536,6 +545,7 @@ def get_behavior_analyzer() -> BehaviorAnalyzer:
             if _analyzer_instance is None:
                 _analyzer_instance = BehaviorAnalyzer()
     return _analyzer_instance
+
 
 def reset_behavior_analyzer() -> None:
     """重置单例(主要用于测试)。"""

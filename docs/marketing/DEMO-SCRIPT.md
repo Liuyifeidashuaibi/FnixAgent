@@ -159,14 +159,14 @@ issues: [{severity, line, message}, ...]
 > **旁白**:
 >
 > "代码在 GitHub 上 Liuyifeidashuaibi/FnixAgent。
-> 项目以 All Rights Reserved 方式发布,可以浏览学习但不能 fork 商用。
+> 项目以 PolyForm Noncommercial 1.0.0 发布:可自由使用与学习,禁止商用。
 > 谢谢观看。""
 
 **[字幕 - 大字结尾]**:
 
 ```
 github.com/Liuyifeidashuaibi/FnixAgent
-All Rights Reserved · View-Only
+PolyForm Noncommercial 1.0.0
 docs/community/HIRING-ONE-PAGER.md
 ```
 
@@ -201,7 +201,7 @@ docs/community/HIRING-ONE-PAGER.md
 | Markdown | "Mark Down" |
 | LangGraph | "Lang Graph" |
 | KTG / STP / MFP | 不展开解释,字幕照搬 |
-| All Rights Reserved | "保留所有权利" |
+| PolyForm Noncommercial 1.0.0 | "非商业使用许可" |
 
 ---
 
@@ -243,7 +243,7 @@ FnixAgent 是我用 Tauri 2 + Python 3.12 + Rust 做的本地优先桌面 Agent 
 - 38 个分类标签
 - 200+ 测试用例,核心模块 85% 覆盖率
 
-⚠️ 本项目以 All Rights Reserved 方式发布
+⚠️ 本项目以 PolyForm Noncommercial 1.0.0 方式发布
 可以浏览学习,但禁止 fork / 商用 / 代码复用
 
 GitHub: github.com/Liuyifeidashuaibi/FnixAgent
@@ -323,4 +323,4 @@ obs --startrecording --collection "FnixAgent Demo"
 
 ---
 
-© 2024-2026 FnixAgent. All Rights Reserved.
+© 2024-2026 FnixAgent. Licensed under PolyForm Noncommercial License 1.0.0.

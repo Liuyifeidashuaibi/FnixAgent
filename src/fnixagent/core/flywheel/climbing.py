@@ -54,6 +54,7 @@ TOP_PATHS_LIMIT: int = 10
 # 高频技能组合阈值
 SKILL_COMBO_THRESHOLD: int = 3
 
+
 class HillClimbingFlywheel:
     """飞轮 ④ 爬坡进化环。
 

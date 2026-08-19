@@ -55,6 +55,7 @@ logger = logging.getLogger(__name__)
 # 检查点条目
 # ============================================================================
 
+
 @dataclass
 class CheckpointEntry:
     """检查点条目。
@@ -147,9 +148,11 @@ class CheckpointEntry:
             ttl_seconds=float(data.get("ttl_seconds", 3600.0)),
         )
 
+
 # ============================================================================
 # 检查点管理器
 # ============================================================================
+
 
 class CheckpointManager:
     """检查点管理器。
@@ -1155,12 +1158,14 @@ class CheckpointManager:
 
         return await asyncio.to_thread(self.get_messages, task_id, limit=limit)
 
+
 # ============================================================================
 # 模块级单例(双重检查锁定)
 # ============================================================================
 
 _singleton_lock = threading.Lock()
 _singleton_manager: CheckpointManager | None = None
+
 
 def get_checkpoint_manager(
     redis_client: Any = None,
@@ -1204,6 +1209,7 @@ def get_checkpoint_manager(
             file_dir=file_dir,
         )
         return _singleton_manager
+
 
 def reset_checkpoint_manager() -> None:
     """重置全局单例(主要供测试使用)。

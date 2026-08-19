@@ -58,6 +58,7 @@ from fnixagent.core.code.tools import CodeTools
 # Git 操作结果
 # ============================================================================
 
+
 @dataclass
 class GitResult:
     """Git 操作结果。
@@ -98,9 +99,11 @@ class GitResult:
         """
         return cls(success=False, output=None, error=error)
 
+
 # ============================================================================
 # 自动化 Git 操作智能体
 # ============================================================================
+
 
 class GitAgent:
     """自动化 Git 操作智能体。
@@ -530,5 +533,6 @@ class GitAgent:
         if result.success:
             return result.output.strip()
         return ""
+
 
 __all__ = ["GitAgent", "GitResult"]

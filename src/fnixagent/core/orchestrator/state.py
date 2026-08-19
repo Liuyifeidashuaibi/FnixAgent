@@ -33,6 +33,7 @@ from typing import Any
 # 可持久化的 Agent 状态
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class AgentState:
     """可持久化的 Agent 状态(可序列化、可跨 Agent 传递)。
@@ -159,9 +160,11 @@ class AgentState:
             user_profile=data.get("user_profile"),
         )
 
+
 # ---------------------------------------------------------------------------
 # 不可序列化的引擎引用
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class EngineRefs:
@@ -214,9 +217,11 @@ class EngineRefs:
             "has_config": self.config is not None,
         }
 
+
 # ---------------------------------------------------------------------------
 # 组合上下文 = AgentState + EngineRefs
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class OrchestratorContext:

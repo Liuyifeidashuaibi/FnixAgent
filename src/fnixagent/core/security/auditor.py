@@ -28,7 +28,7 @@ import os
 import re
 import threading
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 
 logger = logging.getLogger(__name__)
 
@@ -182,7 +182,7 @@ class ToolAuditor:
             AuditReport:含 allowed/risk_level/records/need_confirm
         """
         records: list[AuditRecord] = []
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(UTC).isoformat()
         risk = "low"
         need_confirm = False
         confirm_reason: str | None = None
@@ -359,7 +359,7 @@ class ToolAuditor:
     ) -> list[AuditRecord]:
         """检测 .. 跨目录与绝对路径越出 workspace。"""
         findings: list[AuditRecord] = []
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(UTC).isoformat()
         for key, val in params.items():
             if not isinstance(val, str):
                 continue
@@ -421,7 +421,7 @@ class ToolAuditor:
     ) -> list[AuditRecord]:
         """扫描参数字符串值中的破坏性关键词,做风险分级。"""
         findings: list[AuditRecord] = []
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(UTC).isoformat()
         for key, val in params.items():
             if not isinstance(val, str):
                 continue
@@ -463,7 +463,7 @@ class ToolAuditor:
     ) -> list[AuditRecord]:
         """基于 JSON Schema 做基本类型校验。"""
         findings: list[AuditRecord] = []
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(UTC).isoformat()
         props = schema.get("properties", {}) if isinstance(schema, dict) else {}
         for name, val in params.items():
             spec = props.get(name)

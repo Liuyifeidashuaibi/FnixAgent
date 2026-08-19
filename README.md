@@ -8,7 +8,7 @@
 
 # FnixAgent
 
-[![All Rights Reserved](https://img.shields.io/badge/license-All%20Rights%20Reserved-red)](LICENSE)
+[![License: PolyForm Noncommercial 1.0.0](https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-blue)](LICENSE)
 [![CI](https://github.com/Liuyifeidashuaibi/FnixAgent/actions/workflows/ci.yml/badge.svg)](https://github.com/Liuyifeidashuaibi/FnixAgent/actions/workflows/ci.yml)
 [![Releases](https://img.shields.io/github/v/release/Liuyifeidashuaibi/FnixAgent?include_prereleases&label=release)](https://github.com/Liuyifeidashuaibi/FnixAgent/releases)
 [![Platforms](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)]()
@@ -16,9 +16,9 @@
 
 ### Local-first AI workspace — Work & Code on your machine, BYOK only.
 
-**🔒 All Rights Reserved — see [LICENSE](LICENSE)**
+**🔒 PolyForm Noncommercial 1.0.0（授予非商业使用）— see [LICENSE](LICENSE)**
 **🚫 不接受外部代码贡献 / No external code contributions accepted**
-**Built with** Tauri 2 · Python 3.11+ · React 18 · FastAPI · LangGraph
+**Built with** Tauri 2 · Python 3.11+ · React 19 · FastAPI · LangGraph
 
 [Get started](#-quick-start) · [Documentation](docs/INDEX.md) · [Releases](https://github.com/Liuyifeidashuaibi/FnixAgent/releases) · [Roadmap](docs/ROADMAP.md) · [Discussions](https://github.com/Liuyifeidashuaibi/FnixAgent/discussions)
 
@@ -65,7 +65,7 @@ Most AI tools force you to choose between **convenience** (cloud SaaS, your data
 | Work + Code in one place | Separate tools | Glue scripts  | **First-class**                     |
 | Sandboxed execution      | Trust them     | Roll your own | **Built-in**                        |
 
-> 🔑 **BYOK = Bring Your Own Key.** We never see your API key. It lives in your OS keychain.
+> 🔑 **BYOK = Bring Your Own Key.** We never see your API key. It stays on your machine in `~/.fnix/secrets.json` (Windows: encrypted at rest via DPAPI; POSIX: file mode 0600).
 
 ---
 
@@ -103,7 +103,7 @@ Most AI tools force you to choose between **convenience** (cloud SaaS, your data
 ### 📦 Distribution
 
 - **Windows** — NSIS installer, portable ZIP.
-- **macOS** — DMG (notarized for Gatekeeper).
+- **macOS** — DMG (currently unsigned: expect a Gatekeeper warning on first launch; notarization is on the roadmap).
 - **Linux** — `.deb`, AppImage, and `.rpm` (planned).
 - **Auto-updates** via Tauri's built-in updater.
 
@@ -115,7 +115,7 @@ Most AI tools force you to choose between **convenience** (cloud SaaS, your data
 
 1. Grab the latest installer for your platform from the [Releases page](https://github.com/Liuyifeidashuaibi/FnixAgent/releases).
 2. Install.
-3. Open the app. On first launch, paste your LLM provider API key — it's stored in your **OS keychain**, never on our servers.
+3. Open the app. On first launch, paste your LLM provider API key — it's stored locally in `~/.fnix/secrets.json` (DPAPI-encrypted on Windows, `0600` elsewhere), never on our servers.
 4. Pick a folder → choose **Work** (office tasks) or **Code** (project work) → start.
 
 ### Option 2 — build from source (for developers)
@@ -169,7 +169,7 @@ Or open the desktop, hit ⌘N / Ctrl-N, and type the same thing. The agent will 
 ```text
 ┌────────────────────────────────────────────────────────────────────────┐
 │                    Tauri 2 Desktop (apps/workbench)                     │
-│                       React 18 + Tailwind + TS 5.6                      │
+│                       React 19 + Tailwind + TS 6.0                      │
 └───────────────┬────────────────────────────────────┬───────────────────┘
                 │ HTTP/JSON                          │ PTY (portable-pty)
                 │ :8003                              │ local shell
@@ -200,13 +200,13 @@ For a deeper dive — including the **self-evolution flywheel**, **security laye
 | Layer         | Choice                                 | Why                                                                   |
 | ------------- | -------------------------------------- | --------------------------------------------------------------------- |
 | Desktop shell | **Tauri 2**                            | Small binary, native webview, first-class IPC.                        |
-| UI            | **React 18 + Tailwind + Radix**        | Composable, accessible, no global runtime.                            |
+| UI            | **React 19 + Tailwind + Radix**        | Composable, accessible, no global runtime.                            |
 | Agent runtime | **Python 3.11+ / FastAPI**             | Best LLM ecosystem, async-native.                                     |
 | Orchestration | **LangGraph + custom**                 | DAGs are easier to debug than opaque chains.                          |
 | LLM           | **OpenAI-compatible**                  | Works with OpenAI / Anthropic / Qwen / GLM / DeepSeek / 本地推理引擎. |
 | Local sidecar | **Rust**                               | Predictable latency, no GIL, small binary.                            |
 | Storage       | **SQLite (local) + Markdown (memory)** | Source-of-truth, version-controllable.                                |
-| CI/CD         | **GitHub Actions**                     | Pinned actions, matrix builds, signed releases.                       |
+| CI/CD         | **GitHub Actions**                     | Pinned actions, matrix builds, signed updater artifacts.              |
 | Test          | **pytest + vitest + Playwright**       | Unit + E2E in one box.                                                |
 | Lint / format | **ruff + pyright + ESLint + Prettier** | Fast, opinionated, zero-config.                                       |
 
@@ -309,18 +309,20 @@ See [.github/MAINTAINERS.md](.github/MAINTAINERS.md) and [.github/GOVERNANCE.md]
 
 ## 📜 License
 
-本项目整体以 **All Rights Reserved** 方式发布(详见 [LICENSE](LICENSE))。
+本项目整体以 **PolyForm Noncommercial License 1.0.0** 发布——源码可见、授予非商业使用(详见 [LICENSE](LICENSE))。
 
-- ❌ 禁止复制、修改、商用、Fork、衍生创作
-- ✅ 仅允许在 GitHub / 网页浏览器中**阅读浏览**单个文件
+- ✅ 允许个人下载、安装、使用，以及为学习/研究目的的查看与修改
+- ✅ 允许非商业目的的复制与分发(须附带 LICENSE)
+- ❌ 禁止任何形式的商业使用(销售、收费服务、嵌入商业产品、企业商业运营等)
 - ⚠️ 第三方组件各自按其原始许可证约束(详见 [NOTICE](NOTICE))
-- 💼 商用请联系 [docs/LICENSE-COMMERCIAL.md](docs/LICENSE-COMMERCIAL.md)
+- 💼 商用授权请联系 [docs/LICENSE-COMMERCIAL.md](docs/LICENSE-COMMERCIAL.md)
 
-This repository is **All Rights Reserved**. See [LICENSE](LICENSE).
+This project is licensed under the **PolyForm Noncommercial License 1.0.0** — source-available, free for noncommercial use. See [LICENSE](LICENSE).
 
-- ❌ No copying, modification, commercial use, forking, or derivative works
-- ✅ Read-only viewing on GitHub / web browser is permitted
-- ⚠️ Third-party components retain their original licenses (see [NOTICE](NOTICE))
+- ✅ Personal download, installation and use; viewing and modifying for learning/research
+- ✅ Noncommercial copying and distribution (must include the LICENSE)
+- ❌ No commercial use of any kind (selling, paid services, embedding in commercial products, internal business operations, etc.)
+- ⚠️ Third-party components retain their own licenses (see [NOTICE](NOTICE))
 - 💼 Commercial licensing: see [docs/LICENSE-COMMERCIAL.md](docs/LICENSE-COMMERCIAL.md)
 
 ---

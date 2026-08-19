@@ -32,6 +32,7 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class TodoItem:
     """一个待办事项 (对齐  harness 的 feature list item)。
@@ -48,6 +49,7 @@ class TodoItem:
     updated_at: float = 0.0
     completed_at: float = 0.0
     note: str = ""  # 可选备注 (如失败原因)
+
 
 @dataclass
 class TodoStore:
@@ -221,5 +223,6 @@ class TodoStore:
                 "completed": sum(1 for t in self.todos if t.status == "completed"),
                 "failed": sum(1 for t in self.todos if t.status == "failed"),
             }
+
 
 __all__ = ["TodoItem", "TodoStore"]

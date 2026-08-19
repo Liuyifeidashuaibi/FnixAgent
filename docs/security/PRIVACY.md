@@ -265,4 +265,4 @@ FnixAgent 是**桌面应用,不使用浏览器 Cookie**,不进行网站跟踪,
 - 维护者:`@fnixagent-core`
 - 下次复审:2027-02-17
 
-© 2024-2026 FnixAgent. All Rights Reserved.
+© 2024-2026 FnixAgent. Licensed under PolyForm Noncommercial License 1.0.0.

@@ -45,20 +45,26 @@ logger = logging.getLogger(__name__)
 # 异常
 # ---------------------------------------------------------------------------
 
+
 class MFAError(Exception):
     """MFA 操作异常基类。"""
+
 
 class MFANotInstalledError(MFAError):
     """所需依赖库未安装(pyotp / 短信 SDK 等)。"""
 
+
 class MFAConfigError(MFAError):
     """MFA 配置错误(缺字段 / factor_type 未知)。"""
+
 
 class MFAVerificationError(MFAError):
     """MFA 验证失败(code 无效 / 已过期 / 已使用)。"""
 
+
 class MFARateLimitError(MFAError):
     """MFA 频率超限(短信/邮箱发送过频 / 验证尝试过多)。"""
+
 
 # ---------------------------------------------------------------------------
 # 常量
@@ -101,6 +107,7 @@ MFA_CHALLENGE_TTL_SECONDS: int = 5 * 60  # 5 分钟
 # 数据结构
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class TOTPConfig:
     """TOTP 因子配置。"""
@@ -110,6 +117,7 @@ class TOTPConfig:
     account_name: str = ""  # 通常为用户邮箱或用户名
     digits: int = TOTP_DIGITS
     interval: int = TOTP_INTERVAL
+
 
 @dataclass
 class SMSConfig:
@@ -122,6 +130,7 @@ class SMSConfig:
     template_code: str = ""  # 短信模板 ID
     sdk_app_id: str = ""  # 腾讯云特有
 
+
 @dataclass
 class EmailConfig:
     """邮件发送配置(SMTP)。"""
@@ -133,6 +142,7 @@ class EmailConfig:
     from_addr: str = ""
     use_tls: bool = True  # True=SSL(465), False=STARTTLS(587)
     subject: str = "[fnixagent] 您的登录验证码"
+
 
 @dataclass
 class OTPChallenge:
@@ -148,6 +158,7 @@ class OTPChallenge:
     consumed: bool = False
     created_at: float = field(default_factory=time.time)
 
+
 @dataclass
 class OTPSendResult:
     """OTP 发送结果。"""
@@ -158,9 +169,11 @@ class OTPSendResult:
     expires_in: int = OTP_TTL_SECONDS
     error: str = ""
 
+
 # ---------------------------------------------------------------------------
 # TOTP 客户端
 # ---------------------------------------------------------------------------
+
 
 class TOTPClient:
     """TOTP 客户端(Google Authenticator 兼容)。
@@ -251,9 +264,11 @@ class TOTPClient:
         )
         return totp.now()
 
+
 # ---------------------------------------------------------------------------
 # 备用恢复码
 # ---------------------------------------------------------------------------
+
 
 class RecoveryCodeClient:
     """备用恢复码生成与校验。
@@ -296,9 +311,11 @@ class RecoveryCodeClient:
         actual = RecoveryCodeClient.hash_code(code)
         return hmac.compare_digest(actual, code_hash)
 
+
 # ---------------------------------------------------------------------------
 # OTP(短信/邮箱)
 # ---------------------------------------------------------------------------
+
 
 class OTPClient:
     """一次性验证码客户端(短信/邮箱通用)。
@@ -455,9 +472,11 @@ class OTPClient:
             logger.error("邮件发送失败(to=%s): %s", to_addr, e)
             return False
 
+
 # ---------------------------------------------------------------------------
 # MFA Challenge Token(登录中签发的临时 token,用于完成 MFA 验证)
 # ---------------------------------------------------------------------------
+
 
 def create_mfa_challenge_token(
     user_id: int, username: str, factors: list[str], secret_key: str | None = None
@@ -509,6 +528,7 @@ def create_mfa_challenge_token(
     else:
         signature = _jwt_sign(signing_input)
     return f"{signing_input}.{signature}"
+
 
 def verify_mfa_challenge_token(token: str, secret_key: str | None = None) -> dict:
     """校验 MFA Challenge Token,返回 payload。

@@ -40,6 +40,7 @@ from fnixagent.office.base import BaseExpert, ExpertResult
 # 数据结构
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class ToolAnnotations:
     """MCP 工具注解(符合 MCP 规范)。,
@@ -54,6 +55,7 @@ class ToolAnnotations:
     read_only_hint: bool = True
     destructive_hint: bool = False
     idempotent_hint: bool = False
+
 
 @dataclass
 class ToolDef:
@@ -90,6 +92,7 @@ class ToolDef:
         """是否破坏性(等价于 annotations.destructive_hint)。"""
         return self.annotations.destructive_hint
 
+
 @dataclass
 class ToolInvocation:
     """工具调用。
@@ -106,9 +109,11 @@ class ToolInvocation:
     caller: str = "external"
     request_id: str = ""
 
+
 # ---------------------------------------------------------------------------
 # OfficeMCPServer
 # ---------------------------------------------------------------------------
+
 
 class OfficeMCPServer(BaseExpert):
     """MCP 文档操作服务器:把 fnixagent 能力暴露给外部 Agent。

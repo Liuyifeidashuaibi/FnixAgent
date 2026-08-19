@@ -9,11 +9,11 @@ This file lists the people responsible for the `Liuyifeidashuaibi/FnixAgent` rep
 |            |                                                            |
 | ---------- | ---------------------------------------------------------- |
 | **Name**   | Liuyifeidashuaibi                                          |
-| **GitHub** | [@Liuyifeidashuaibi](https://github.com/Liuyifeidashuaibi) |
+| **GitHub** | [@Liuyifeidashuaibi]Ahttps://github.com/Liuyifeidashuaibi) |
 | **Role**   | Founder · Architect · Sole Maintainer                      |
 | **Scope**  | Vision, releases, security, public roadmap, all subsystems |
 
-> This is a sole-maintainer project (All Rights Reserved). External contributions are not accepted at this time.
+> This is a sole-maintainer project (PolyForm Noncommercial 1.0.0). External contributions are not accepted at this time.
 
 ---
 

@@ -1,0 +1,25 @@
+# FnixAgent 可选依赖(企业 / 云私有部署)
+# standalone 桌面形态不需要安装本文件;requirements.txt 已可完整运行。
+# 启用 cloud / 企业私有部署时执行: pip install -r requirements-optional.txt
+
+# 数据库(cloud / local-stack 形态使用 PostgreSQL)
+psycopg2-binary==2.9.12
+
+# 缓存(cloud 形态使用 Redis 配额 / 会话)
+redis>=5.0.0
+
+# 搜索引擎(cloud 形态;standalone 用内存检索)
+elasticsearch>=8.0.0
+
+# 对象存储(cloud 形态;standalone 用本地文件系统)
+minio>=7.2.0
+
+# 向量数据库(cloud 形态;standalone 用内存向量检索)
+# pymilvus>=2.4.0
+
+# 企业目录集成
+ldap3>=2.9.0            # LDAP/AD 域同步 (Phase 2.2)
+python3-saml>=1.16.0    # SAML 2.0 SSO (Phase 2.3; Windows 需 libxml2/libxslt)
+
+# MFA 短信 / OTP 扩展
+# pyotp 已随核心依赖安装(requirements.txt)

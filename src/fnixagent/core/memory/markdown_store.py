@@ -23,7 +23,6 @@ Markdown 记忆存储层。
 
 from __future__ import annotations
 
-import os
 import re
 import time
 from dataclasses import dataclass, field
@@ -155,13 +154,15 @@ class MarkdownMemoryStore:
                 except ValueError:
                     pass
 
-            entries.append(MemoryEntry(
-                id=entry_id,
-                content=entry_content,
-                category=category,
-                tags=tags,
-                timestamp=timestamp,
-            ))
+            entries.append(
+                MemoryEntry(
+                    id=entry_id,
+                    content=entry_content,
+                    category=category,
+                    tags=tags,
+                    timestamp=timestamp,
+                )
+            )
 
         return entries
 
@@ -238,6 +239,7 @@ class MarkdownMemoryStore:
         knowledge_dest = snapshot_dir / "knowledge"
         if knowledge_src.exists():
             import shutil
+
             shutil.copytree(knowledge_src, knowledge_dest, dirs_exist_ok=True)
 
         return str(snapshot_dir)
@@ -258,5 +260,6 @@ class MarkdownMemoryStore:
         knowledge_dest = self.base_dir / "knowledge"
         if knowledge_src.exists():
             import shutil
+
             shutil.rmtree(knowledge_dest)
             shutil.copytree(knowledge_src, knowledge_dest)

@@ -42,6 +42,7 @@ from fnixagent.office.base import BaseExpert, ExpertResult
 # 风险等级
 # ---------------------------------------------------------------------------
 
+
 class RiskLevel(Enum):
     """操作风险等级。
 
@@ -52,6 +53,7 @@ class RiskLevel(Enum):
     LOW = "low"  # 修改副本,不影响原文件
     MEDIUM = "medium"  # 修改原文件但可撤销(如格式统一)
     HIGH = "high"  # 不可逆操作(删除段落/批量删除/覆盖/加密)
+
 
 # 风险等级→数值映射,数值越大风险越高
 _RISK_ORDER: dict[RiskLevel, int] = {
@@ -96,6 +98,7 @@ _BATCH_KEYWORDS: frozenset[str] = frozenset(
     }
 )
 
+
 def _bump_up(level: RiskLevel) -> RiskLevel:
     """风险等级提升一级(封顶 HIGH)。"""
     order = _RISK_ORDER[level]
@@ -106,9 +109,11 @@ def _bump_up(level: RiskLevel) -> RiskLevel:
             return lvl
     return RiskLevel.HIGH
 
+
 # ---------------------------------------------------------------------------
 # 确认请求
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class ConfirmationRequest:
@@ -142,9 +147,11 @@ class ConfirmationRequest:
     decided_by: str | None = None
     reason: str | None = None
 
+
 # ---------------------------------------------------------------------------
 # HumanConfirmer
 # ---------------------------------------------------------------------------
+
 
 class HumanConfirmer(BaseExpert):
     """人工确认节点。

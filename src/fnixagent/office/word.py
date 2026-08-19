@@ -63,6 +63,7 @@ ALIGNMENT_MAP: dict[str, int] = {
     "justify": 3,
 }
 
+
 class WordExpert(BaseExpert):
     """Word 文档专家。
 

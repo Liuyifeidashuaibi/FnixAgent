@@ -123,7 +123,6 @@ docs/转载用研究资料/
 # --- Experimental code ---
 experiments/
 ops-memory-mcp/
-apps/workbench/src/shell/desktop/
 
 # --- One-shot test scripts ---
 test_*.py
@@ -146,3 +145,13 @@ scripts/fnix-stack.mjs
 scripts/clean_*.py
 scripts/p1_*.py
 scripts/ai_trace*.py
+
+# Local artifacts / scratch output (not part of repo)
+output.docx
+outputs/
+.uploads/
+up.sql
+down.sql
+pyright*.txt
+unit-result.txt
+unit-final.txt

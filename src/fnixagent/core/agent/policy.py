@@ -51,6 +51,7 @@ if TYPE_CHECKING:
     from fnixagent.core.agent.process import AgentProcess
     from fnixagent.core.agent.syscall import SyscallRequest
 
+
 @dataclass
 class PolicyRule:
     """策略规则 (类比 iptables 规则)。
@@ -72,6 +73,7 @@ class PolicyRule:
     condition: Callable[[dict[str, Any]], bool] | None = None
     priority: int = 0
     description: str = ""
+
 
 class PolicyEngine:
     """策略引擎 (类比 OS 权限 / capability model)。
@@ -296,5 +298,6 @@ class PolicyEngine:
             "has_backend": self._backend is not None,
             "tracked_pids": len(self._pid_roles),
         }
+
 
 __all__ = ["PolicyEngine", "PolicyRule"]

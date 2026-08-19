@@ -41,6 +41,7 @@ logger = logging.getLogger(__name__)
 _CHARS_PER_TOKEN_EN = 3.5
 _CHARS_PER_TOKEN_ZH = 1.5
 
+
 def estimate_tokens(messages: list[dict[str, Any]]) -> int:
     """粗略估算 messages 的 token 数。
 
@@ -68,12 +69,14 @@ def estimate_tokens(messages: list[dict[str, Any]]) -> int:
     # 中英混合: 假设 60% 英文 40% 中文, 平均 ~2.5 chars/token
     return max(1, int(total_chars / 2.5))
 
+
 def _count_chars(text: str) -> int:
     """计算字符数, 中文按 2 计 (粗略权重)。"""
     n = 0
     for ch in text:
         n += 2 if "\u4e00" <= ch <= "\u9fff" else 1
     return n
+
 
 async def compact_messages_if_needed(
     llm_adapter: Any,
@@ -211,6 +214,7 @@ async def compact_messages_if_needed(
             "cache_safe": cache_safe,
         }
 
+
 def _build_cache_safe_prompt(
     parent_messages: list[dict[str, Any]],
     middle_start: int,
@@ -258,6 +262,7 @@ def _build_cache_safe_prompt(
     # 复用父 messages（浅拷贝避免修改原列表），追加 compaction 指令作为新 user message
     return list(parent_messages) + [{"role": "user", "content": instruction}]
 
+
 def _serialize_messages_for_summary(messages: list[dict[str, Any]]) -> str:
     """把消息列表序列化为 LLM 可读的文本。"""
     lines: list[str] = []
@@ -285,6 +290,7 @@ def _serialize_messages_for_summary(messages: list[dict[str, Any]]) -> str:
 
         lines.append(f"[{i + 1}] {role}: {content_str}")
     return "\n".join(lines)
+
 
 def _build_summary_prompt(middle_text: str, before_tokens: int) -> list[dict[str, str]]:
     """构造压缩 prompt (用户态请求 LLM 生成 summary)。"""
@@ -314,6 +320,7 @@ def _build_summary_prompt(middle_text: str, before_tokens: int) -> list[dict[str
             ).replace("{middle_text}", middle_text),
         },
     ]
+
 
 async def _call_llm_for_summary(llm_adapter: Any, messages: list[dict[str, str]]) -> str:
     """调 LLM 生成 summary。
@@ -364,6 +371,7 @@ async def _call_llm_for_summary(llm_adapter: Any, messages: list[dict[str, str]]
         f"type={type(llm_adapter).__name__}"
     )
 
+
 def _extract_content(result: Any) -> str:
     """从 LLM 响应中提取文本内容 (兼容 OpenAI / DashScope / 直接 str)。"""
     if isinstance(result, str):
@@ -383,6 +391,7 @@ def _extract_content(result: Any) -> str:
         return json.dumps(result, ensure_ascii=False)
     return str(result)
 
+
 # ============================================================================
 # P2: 三级 Escalation
 # ============================================================================
@@ -401,6 +410,7 @@ def _extract_content(result: Any) -> str:
 #
 # 每级检查 Tokens(S) < Tokens(X), 失败则升级; L3 保证收敛 (无 LLM 依赖)
 # ============================================================================
+
 
 def _find_tool_call_pairs(messages: list[dict[str, Any]]) -> set[int]:
     """识别 tool_call / tool_result 配对的索引 。
@@ -438,6 +448,7 @@ def _find_tool_call_pairs(messages: list[dict[str, Any]]) -> set[int]:
             paired.add(idx)
 
     return paired
+
 
 def sliding_window_compact(
     messages: list[dict[str, Any]],
@@ -554,6 +565,7 @@ def sliding_window_compact(
         "error": None,
     }
 
+
 def deterministic_truncate(
     messages: list[dict[str, Any]],
     *,
@@ -622,6 +634,7 @@ def deterministic_truncate(
         f"kept_tokens={kept_tokens}",
         "error": None,
     }
+
 
 async def compact_with_escalation(
     llm_adapter: Any,
@@ -736,6 +749,7 @@ async def compact_with_escalation(
         "l2_after_tokens": l2_info.get("after_tokens", 0),
     }
 
+
 # ============================================================================
 # P3: 软/硬阈值异步 compaction
 # ============================================================================
@@ -752,6 +766,7 @@ async def compact_with_escalation(
 #   - 硬阈值触发时, 如果后台任务还在跑, 等待它完成; 否则同步触发新压缩
 #   - 原子 swap: 用 lock 保护 messages 替换, 避免 turn 中途被替换
 # ============================================================================
+
 
 class BackgroundCompactor:
     """后台异步 compactor 。

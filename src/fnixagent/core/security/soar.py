@@ -47,6 +47,7 @@ except ImportError:  # pragma: no cover
 # 数据结构
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class PlaybookAction:
     """剧本动作。
@@ -61,6 +62,7 @@ class PlaybookAction:
     name: str
     params: dict
     timeout: int = 60
+
 
 @dataclass
 class PlaybookStep:
@@ -79,6 +81,7 @@ class PlaybookStep:
     condition: str | None = None
     require_approval: bool = False
     approval_timeout: int = 3600
+
 
 @dataclass
 class Playbook:
@@ -99,6 +102,7 @@ class Playbook:
     steps: list[PlaybookStep]
     enabled: bool = True
     description: str = ""
+
 
 @dataclass
 class PlaybookExecution:
@@ -126,9 +130,11 @@ class PlaybookExecution:
     error: str | None = None
     results: list[dict] = field(default_factory=list)
 
+
 # ---------------------------------------------------------------------------
 # 审计钩子(失败不影响主流程)
 # ---------------------------------------------------------------------------
+
 
 def _audit_playbook(
     action: str,
@@ -142,9 +148,11 @@ def _audit_playbook(
     except Exception:
         pass
 
+
 # ---------------------------------------------------------------------------
 # PlaybookEngine
 # ---------------------------------------------------------------------------
+
 
 class PlaybookEngine:
     """SOAR 响应剧本引擎。

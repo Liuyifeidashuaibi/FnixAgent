@@ -55,6 +55,7 @@ from fnixagent.graph.nodes import (
 )
 from fnixagent.graph.state import GraphState
 
+
 class GraphBuilder:
     """LangGraph 图装配器。
 
@@ -206,9 +207,11 @@ class GraphBuilder:
             raise RuntimeError(f"LangGraph 图编译失败(带检查点): {type(e).__name__}: {e}") from e
         return compiled
 
+
 # ---------------------------------------------------------------------------
 # 便捷函数: 一行构建图(隐藏 GraphBuilder 细节)
 # ---------------------------------------------------------------------------
+
 
 def build_graph(
     search_engine: Any,

@@ -1,4 +1,13 @@
-"""fnix-local HTTP sidecar — FastAPI 应用。"""
+"""fnix-local HTTP sidecar — FastAPI 应用。
+
+安全模型(与 Rust 版 fnix-local 对齐):
+    - 所有 /v1/* 端点要求请求头 ``x-fnix-capability`` 与本机 capability
+      令牌一致,否则 fail-closed 返回 401。
+    - 令牌解析顺序: 环境变量 FNIX_CAPABILITY_TOKEN(桌面壳启动时注入) →
+      ``~/.fnix/local_capability_token`` 文件(独立启动时自动生成并落盘,
+      供同机 agentd 发现)。绝不 fail-open。
+    - CORS 仅放行本地桌面 origin,与 Rust sidecar 白名单一致。
+"""
 
 # -*- coding: utf-8 -*-
 # Copyright (C) 2026 FnixAgent. All rights reserved.
@@ -8,14 +17,75 @@
 
 from __future__ import annotations
 
+import hmac
 import os
+import stat
+import uuid
+from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
-VERSION = "0.2.0-python"
+VERSION = "0.3.0-python"
+
+CAPABILITY_HEADER = "x-fnix-capability"
+
+# 与 Rust sidecar (apps/fnix-local) 保持一致的本地 origin 白名单
+_LOCAL_ORIGINS: list[str] = [
+    "http://127.0.0.1:5175",
+    "http://localhost:5175",
+    "http://127.0.0.1:1420",
+    "http://localhost:1420",
+    "tauri://localhost",
+    "https://tauri.localhost",
+]
+
+
+def _fnix_home() -> Path:
+    """~/.fnix 目录(可被 FNIX_HOME 覆盖),与 harness.paths.fnix_home 语义一致。"""
+    env = (os.getenv("FNIX_HOME") or "").strip()
+    if env:
+        return Path(env)
+    return Path.home() / ".fnix"
+
+
+def _token_file() -> Path:
+    return _fnix_home() / "local_capability_token"
+
+
+def _persist_token(token: str) -> None:
+    """尽力落盘令牌文件(best-effort,失败不影响服务)。"""
+    try:
+        home = _fnix_home()
+        home.mkdir(parents=True, exist_ok=True)
+        path = _token_file()
+        tmp = path.with_name(path.name + ".tmp")
+        tmp.write_text(token + "\n", encoding="utf-8")
+        if os.name != "nt":
+            os.chmod(tmp, stat.S_IRUSR | stat.S_IWUSR)
+        os.replace(tmp, path)
+    except OSError:
+        pass
+
+
+def resolve_capability_token() -> str:
+    """解析本机 capability 令牌;环境变量缺失时自动生成并落盘(fail-closed)。"""
+    env_token = (os.getenv("FNIX_CAPABILITY_TOKEN") or "").strip()
+    if env_token:
+        _persist_token(env_token)
+        return env_token
+    try:
+        existing = _token_file().read_text(encoding="utf-8").strip()
+        if existing:
+            return existing
+    except OSError:
+        pass
+    generated = uuid.uuid4().hex
+    _persist_token(generated)
+    return generated
 
 
 class IndexRequest(BaseModel):
@@ -39,10 +109,26 @@ def create_app() -> FastAPI:
     )
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=_LOCAL_ORIGINS,
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    app.state.capability_token = resolve_capability_token()
+
+    @app.middleware("http")
+    async def capability_gate(request: Request, call_next):
+        """令牌闸门: /health 与 CORS 预检放行,其余端点 fail-closed。"""
+        if request.url.path == "/health" or request.method == "OPTIONS":
+            return await call_next(request)
+        expected: str = app.state.capability_token
+        presented = (request.headers.get(CAPABILITY_HEADER) or "").strip()
+        if not expected or not hmac.compare_digest(expected, presented):
+            return JSONResponse(
+                status_code=401,
+                content={"detail": "Missing or invalid capability token"},
+            )
+        return await call_next(request)
 
     @app.get("/health")
     async def health() -> dict[str, Any]:

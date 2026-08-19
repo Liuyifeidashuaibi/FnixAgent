@@ -132,7 +132,7 @@
   flex-direction: column;
   gap: 8px;
   padding: 10px 12px;
-  background: #ffffff;
+  background: var(--bg, #ffffff);
   border: 1px solid var(--border, rgba(0, 0, 0, 0.06));
   border-radius: 10px;
   cursor: pointer;
@@ -144,14 +144,14 @@
   box-shadow: var(--shadow-sm, 0 2px 12px rgba(0, 0, 0, 0.05));
 }
 .fnix-task-card.selected {
-  border-color: var(--accent, #4f46e5);
-  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.15);
+  border-color: var(--accent, #0d8f6a);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent, #0d8f6a) 18%, transparent);
 }
 .fnix-task-card.failed {
   border-color: rgba(239, 68, 68, 0.25);
 }
 .fnix-task-card.running {
-  border-color: rgba(79, 70, 229, 0.22);
+  border-color: color-mix(in srgb, var(--accent, #0d8f6a) 22%, transparent);
 }
 
 .fnix-task-card-header {

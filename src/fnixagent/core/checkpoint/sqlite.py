@@ -90,6 +90,7 @@ CREATE INDEX IF NOT EXISTS idx_writes_thread_cp
     ON writes(thread_id, checkpoint_id, task_id, idx);
 """
 
+
 class SqliteCheckpointer(BaseCheckpointer):
     """SQLite Checkpointer。
 

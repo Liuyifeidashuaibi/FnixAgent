@@ -57,7 +57,7 @@ import {
   type RecentProject,
 } from "../../utils/tauri";
 import { Composer } from "./Composer";
-import { EvolutionPanel } from "./EvolutionPanel";
+// 进化辅助信息（KTG/STP/MFP）已移至设置 → Diagnostics「进化内核」卡片
 import { FnixStatusBar } from "./FnixStatusBar";
 import { MessageList } from "./MessageList";
 import { DesktopSettings } from "./DesktopSettings";
@@ -69,7 +69,6 @@ import { ReviewView } from "./ReviewView";
 import { ResultsView } from "./ResultsView";
 import {
   WorkModePicker,
-  workModeHint,
   workModePlaceholder,
 } from "./WorkModePicker";
 import {
@@ -600,12 +599,14 @@ export default function DesktopApp() {
           nextConfig = localAppConfig(nextConfig);
           await saveAIProviders(nextProviders).catch(() => undefined);
           await saveConfigToStore(nextConfig).catch(() => undefined);
-          void syncHarnessConfig({
+          // agentd 可能尚未就绪(慢启动),同步失败不得阻断启动序列,
+          // 否则首次运行向导判断会被跳过,用户永远看不到 onboarding。
+          await syncHarnessConfig({
             provider: LOCAL_LLM.provider,
             model: nextConfig.model,
             base_url: LOCAL_LLM.baseUrl,
             api_key: nextConfig.api_key,
-          });
+          }).catch(() => undefined);
         }
 
         setConfig(nextConfig);
@@ -938,13 +939,9 @@ export default function DesktopApp() {
         />
 
         <div className="fnix-side-foot">
-          <button type="button" className={`fnix-settings-row${agentdOk === false ? " bad" : ""}`} onClick={() => openSettings("models")}>
+          <button type="button" className="fnix-settings-row" onClick={() => openSettings("models")}>
             <SettingsIcon size={16} />
             <span>设置</span>
-            <span
-              className={`fnix-status-dot${agentdOk ? " ok" : agentdOk === false ? " bad" : ""}`}
-              title={agentdOk === null ? "检查后端状态中…" : agentdOk ? "后端已连接" : "后端离线 — 点击打开设置"}
-            />
           </button>
           <button
             type="button"
@@ -978,11 +975,6 @@ export default function DesktopApp() {
             <button type="button" onClick={() => openSettings("models")}>
               打开设置
             </button>
-          </div>
-        )}
-        {hasByok && agentdOk === false && (
-          <div className="fnix-banner">
-            <span>agentd 未连接（{getFnixApiBase()}）—请先启动后端或检查 Runtime Doctor</span>
           </div>
         )}
         {chat.error && (
@@ -1131,12 +1123,7 @@ export default function DesktopApp() {
                   projectPath={projectPath}
                   compact
                 />
-                <EvolutionPanel
-                  history={chat.evolutionHistory}
-                  current={chat.evolution}
-                  streaming={chat.streaming}
-                />
-                <p className="fnix-disclaimer">{workModeHint(workMode)}</p>
+                {/* 进化辅助信息（KTG/STP/MFP）与 Craft 写入提示已移至设置 → Diagnostics「进化内核」卡片，主界面保持简洁 */}
               </div>
             </div>
             {inspectorOpen ? (

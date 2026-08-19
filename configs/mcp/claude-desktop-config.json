@@ -2,12 +2,12 @@
   "mcpServers": {
     "fnixagent": {
       "command": "cmd",
-      "args": ["/c", "e:\\FNIX\\FnixAgent\\.venv\\Scripts\\python.exe", "-m", "fnixagent.mcp_server"],
-      "cwd": "e:\\FNIX\\FnixAgent",
+      "args": ["/c", "python", "-m", "fnixagent.mcp_server"],
+      "cwd": "FNIXAGENT_ROOT",
       "env": {
-        "FNIX_WORKSPACE": "e:\\FNIX\\FnixAgent",
+        "FNIX_WORKSPACE": "FNIXAGENT_ROOT",
         "FNIX_API_BASE": "http://127.0.0.1:8003",
-        "PYTHONPATH": "e:\\FNIX\\FnixAgent\\src",
+        "PYTHONPATH": "FNIXAGENT_ROOT\\src",
         "PYTHONIOENCODING": "utf-8"
       }
     }

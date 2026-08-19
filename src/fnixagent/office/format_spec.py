@@ -54,6 +54,7 @@ _CODE_FONTS: frozenset[str] = frozenset(
 # 数据结构
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class FormatSpec:
     """格式规范配置(可序列化)。
@@ -90,6 +91,7 @@ class FormatSpec:
     normalize_whitespace: bool = True  # 是否合并多余空白
     preserve_code_blocks: bool = True  # 代码块保留等宽字体
 
+
 @dataclass
 class FormatReport:
     """格式化结果报告。
@@ -106,9 +108,11 @@ class FormatReport:
     skipped_runs: int = 0
     details: list[dict] = field(default_factory=list)
 
+
 # ---------------------------------------------------------------------------
 # 格式统一器
 # ---------------------------------------------------------------------------
+
 
 class FormatNormalizer(BaseExpert):
     """格式统一器(Phase 5.6)。

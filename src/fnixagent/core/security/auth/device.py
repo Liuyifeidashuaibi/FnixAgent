@@ -45,6 +45,7 @@ _IPV6_PREFIX_LEN = 64  # /64
 # IP 段提取(避免 NAT/移动网络漂移)
 # ---------------------------------------------------------------------------
 
+
 def _extract_ip_segment(ip: str) -> str:
     """提取 IP 段(IPv4 取 /24,IPv6 取 /64)。
 
@@ -73,9 +74,11 @@ def _extract_ip_segment(ip: str) -> str:
     # 未知格式
     return "unknown"
 
+
 # ---------------------------------------------------------------------------
 # 指纹计算
 # ---------------------------------------------------------------------------
+
 
 def compute_device_fingerprint(
     client_uuid: str,
@@ -103,6 +106,7 @@ def compute_device_fingerprint(
     raw = f"{client_uuid}|{user_agent}|{ip_segment}"
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
+
 def verify_device_fingerprint(
     token_fp: str,
     client_uuid: str,
@@ -127,15 +131,18 @@ def verify_device_fingerprint(
     current_fp = compute_device_fingerprint(client_uuid, user_agent, ip_address)
     return _constant_time_compare(token_fp, current_fp)
 
+
 def is_valid_client_uuid(uuid_str: str) -> bool:
     """校验客户端 UUID 格式是否合法。"""
     if not uuid_str:
         return False
     return bool(_UUID_PATTERN.match(uuid_str))
 
+
 # ---------------------------------------------------------------------------
 # 工具
 # ---------------------------------------------------------------------------
+
 
 def _constant_time_compare(a: str, b: str) -> bool:
     """常量时间字符串比较(防侧信道)。"""

@@ -54,6 +54,7 @@ from fnixagent.core.types import ReasoningMode
 # 模块级预编译正则(避免每次 _score_complexity 都重新编译)
 _SENTENCE_SPLIT_RE = re.compile(r"[.!?。！？；\n]")
 
+
 class ReasoningSelector:
     """推理策略选择器(P2-6 策略模式)。
 

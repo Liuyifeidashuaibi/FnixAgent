@@ -46,6 +46,7 @@ from fnixagent.core.checkpoint.types import (
     CheckpointTuple,
 )
 
+
 class PostgresCheckpointer(BaseCheckpointer):
     """PostgreSQL 版 Checkpointer(生产用)。
 

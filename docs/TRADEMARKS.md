@@ -88,4 +88,4 @@
 - 两者冲突时以 [LICENSE](../LICENSE) 为准
 - 著作权人保留对任何未明确授权的使用追究法律责任的权利
 
-© 2024-2026 FnixAgent. All Rights Reserved.
+© 2024-2026 FnixAgent. Licensed under PolyForm Noncommercial License 1.0.0.

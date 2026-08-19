@@ -32,6 +32,7 @@ from typing import Any
 from fnixagent.core.reasoning.strategies.base import BaseStrategy, StrategyContext
 from fnixagent.core.types import ExecutionTrace, ReasoningMode
 
+
 class ComplianceStrategy(BaseStrategy):
     """合规策略:Plan&Execute + 人工确认 + 强审计。"""
 

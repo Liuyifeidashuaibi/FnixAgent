@@ -54,6 +54,7 @@ logger = logging.getLogger(__name__)
 # 调度任务项
 # ============================================================================
 
+
 @dataclass
 class ScheduleItem:
     """调度任务项 — 队列中的单个任务单元。
@@ -94,9 +95,11 @@ class ScheduleItem:
         """
         return -self.priority < -other.priority
 
+
 # ============================================================================
 # 优先级任务队列
 # ============================================================================
+
 
 class PriorityTaskQueue:
     """优先级任务队列 — 内存堆 + 可选 Redis ZSet 双写。
@@ -764,12 +767,14 @@ class PriorityTaskQueue:
             self._shutdown = True
             self._cond.notify_all()
 
+
 # ============================================================================
 # 模块级单例
 # ============================================================================
 
 _default_queue: PriorityTaskQueue | None = None
 _default_lock = threading.Lock()
+
 
 def get_priority_queue(
     redis_client: Any = None,
@@ -803,6 +808,7 @@ def get_priority_queue(
                     stale_timeout=stale_timeout,
                 )
     return _default_queue
+
 
 def reset_priority_queue() -> None:
     """重置全局默认优先级任务队列单例(释放引用,下次 get_priority_queue 重建)。

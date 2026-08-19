@@ -276,4 +276,4 @@ fnix config lint --fix
 - 📖 本文档未覆盖?提 Issue
 - 💬 紧急问题:`liuyifeidashuaibi@gmail.com`(请勿发敏感信息)
 
-© 2024-2026 FnixAgent. All Rights Reserved.
+© 2024-2026 FnixAgent. Licensed under PolyForm Noncommercial License 1.0.0.

@@ -39,6 +39,7 @@ logger = logging.getLogger(__name__)
 # 数据结构
 # ---------------------------------------------------------------------------
 
+
 class DLPAction(Enum):
     """DLP 策略动作。"""
 
@@ -46,6 +47,7 @@ class DLPAction(Enum):
     BLOCK = "block"
     REDACT = "redact"
     WARN = "warn"
+
 
 @dataclass
 class DLPPolicy:
@@ -73,6 +75,7 @@ class DLPPolicy:
     action: DLPAction = DLPAction.WARN
     min_confidence: float = 0.7
 
+
 @dataclass
 class DLPDetection:
     """单次检测结果。
@@ -90,6 +93,7 @@ class DLPDetection:
     position: tuple[int, int]
     confidence: float
     severity: str
+
 
 @dataclass
 class DLPResult:
@@ -109,9 +113,11 @@ class DLPResult:
     sanitized_output: str | None = None
     reason: str = ""
 
+
 # ---------------------------------------------------------------------------
 # DLPGateway
 # ---------------------------------------------------------------------------
+
 
 class DLPGateway:
     """DLP 出口拦截网关。

@@ -58,6 +58,7 @@ logger = logging.getLogger(__name__)
 # 配置
 # ============================================================================
 
+
 @dataclass
 class AutoscaledPoolConfig:
     """自适应并发池配置。
@@ -115,9 +116,11 @@ class AutoscaledPoolConfig:
         if self.latency_window_size < 1:
             raise ValueError(f"latency_window_size 必须 >= 1, got {self.latency_window_size}")
 
+
 # ============================================================================
 # 自适应并发池
 # ============================================================================
+
 
 @dataclass
 class _AdjustmentRecord:
@@ -127,6 +130,7 @@ class _AdjustmentRecord:
     old_concurrency: int  # 调整前并发
     new_concurrency: int  # 调整后并发
     reason: str  # 调整原因
+
 
 class AutoscaledPool:
     """自适应并发池 — 根据系统负载动态调整并发数。
@@ -480,12 +484,14 @@ class AutoscaledPool:
         with self._lock:
             self._shutdown = True
 
+
 # ============================================================================
 # 模块级单例
 # ============================================================================
 
 _default_pool: AutoscaledPool | None = None
 _default_lock = threading.Lock()
+
 
 def get_autoscaled_pool(config: AutoscaledPoolConfig | None = None) -> AutoscaledPool:
     """获取全局默认自适应并发池(惰性单例,线程安全)。
@@ -503,6 +509,7 @@ def get_autoscaled_pool(config: AutoscaledPoolConfig | None = None) -> Autoscale
             if _default_pool is None:
                 _default_pool = AutoscaledPool(config)
     return _default_pool
+
 
 def reset_autoscaled_pool() -> None:
     """重置全局默认自适应并发池单例(释放引用,下次 get_autoscaled_pool 重建)。

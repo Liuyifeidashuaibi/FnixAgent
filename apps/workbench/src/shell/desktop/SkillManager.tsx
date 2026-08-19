@@ -358,6 +358,7 @@ function CapturedSkillsList({ entries }: { entries: FnixSkillEntry[] }) {
         <li key={e.id} className="fnix-skill-card">
           <div className="fnix-skill-card-head">
             <span className="fnix-skill-name">{e.display_name || e.name}</span>
+            {e.owner_id === "builtin" && <span className="fnix-skill-sample-tag">内置</span>}
             <span className={`fnix-skill-status status-${e.status}`}>{e.status}</span>
           </div>
           {e.description && <p className="fnix-skill-desc">{e.description}</p>}

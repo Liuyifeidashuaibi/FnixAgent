@@ -335,7 +335,7 @@ class SessionCreate(BaseModel):
 class SessionResponse(BaseModel):
     """会话响应。"""
 
-    id: int
+    id: str
     title: str | None
     status: str
     created_at: datetime
@@ -345,7 +345,7 @@ class SessionResponse(BaseModel):
 class MessageCreate(BaseModel):
     """创建消息请求。"""
 
-    session_id: int
+    session_id: str
     content: str
     content_type: str = "text"
 
@@ -354,7 +354,7 @@ class MessageResponse(BaseModel):
     """消息响应。"""
 
     id: int
-    session_id: int
+    session_id: str
     role: str
     content: str
     content_type: str
@@ -380,7 +380,7 @@ class LlmOverride(BaseModel):
 class ChatRequest(BaseModel):
     """Agent对话请求。"""
 
-    session_id: int | None = None  # 可选,不传则创建新会话
+    session_id: str | None = None  # 可选,不传则创建新会话
     user_input: str = Field(..., min_length=1, max_length=10000)
     context: dict | None = None  # 任务上下文
     stream: bool = False  # 是否流式输出
@@ -390,7 +390,7 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     """Agent对话响应。"""
 
-    session_id: int
+    session_id: str
     message_id: int
     response: str
     trace_id: str

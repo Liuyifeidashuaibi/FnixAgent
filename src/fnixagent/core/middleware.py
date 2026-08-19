@@ -34,6 +34,7 @@ from typing import Any
 
 from fnixagent.core.messages import Msg
 
+
 class MiddlewareBase(abc.ABC):
     """中间件基类:6 钩子,子类按需实现。
 
@@ -113,6 +114,7 @@ class MiddlewareBase(abc.ABC):
         # 缓存到类对象上(子类各自一份,不污染基类)
         cls._is_implemented_cache = result
         return result
+
 
 class MiddlewareChain:
     """中间件链:按注册顺序执行请求钩子,逆序执行响应钩子(洋葱模型)。
@@ -215,9 +217,11 @@ class MiddlewareChain:
                 error = result
         return error
 
+
 # ---------------------------------------------------------------------------
 # 现有模块适配为中间件(P0-2 / P1-1 实现具体逻辑,此处为骨架)
 # ---------------------------------------------------------------------------
+
 
 class SecurityMiddleware(MiddlewareBase):
     """安全中间件(包装 SecurityEngine / GuardrailPipeline)。
@@ -277,6 +281,7 @@ class SecurityMiddleware(MiddlewareBase):
         except Exception:
             pass
         return msg
+
 
 class TracingMiddleware(MiddlewareBase):
     """Tracing 中间件(开/关 Span)。

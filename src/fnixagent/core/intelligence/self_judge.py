@@ -45,6 +45,7 @@ logger = logging.getLogger(__name__)
 # 评估维度
 # ============================================================
 
+
 class EvaluateDimension(str, Enum):
     """评估维度 — 可随系统进化动态扩展"""
 
@@ -58,6 +59,7 @@ class EvaluateDimension(str, Enum):
     CONSISTENCY = "consistency"  # 一致性
     ADAPTABILITY = "adaptability"  # 适应性
     EXPLAINABILITY = "explainability"  # 可解释性
+
 
 @dataclass
 class EvolvingCriteria:
@@ -84,6 +86,7 @@ class EvolvingCriteria:
     created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     updated_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
+
 @dataclass
 class JudgeVerdict:
     """审判结论"""
@@ -105,9 +108,11 @@ class JudgeVerdict:
     verdict: str = ""  # accept / conditional_accept / reject
     improvement_detected: bool = False
 
+
 # ============================================================
 # 多维度评分器
 # ============================================================
+
 
 class MultiDimensionScorer:
     """
@@ -220,9 +225,11 @@ class MultiDimensionScorer:
         )
         logger.info(f"添加新评估维度: {dimension.value}")
 
+
 # ============================================================
 # 对比评判器
 # ============================================================
+
 
 class ComparativeJudge:
     """
@@ -289,9 +296,11 @@ class ComparativeJudge:
         else:
             return "建议拒绝: 存在明显退化"
 
+
 # ============================================================
 # 回归检测器
 # ============================================================
+
 
 class RegressionDetector:
     """
@@ -342,9 +351,11 @@ class RegressionDetector:
             "message": f"检测到 {len(regressions)} 个维度回归" if regressions else "无回归",
         }
 
+
 # ============================================================
 # 标准进化器
 # ============================================================
+
 
 class CriteriaEvolver:
     """
@@ -505,9 +516,11 @@ class CriteriaEvolver:
 
         return all_high or all_low
 
+
 # ============================================================
 # 自我审判总控
 # ============================================================
+
 
 class SelfJudge:
     """

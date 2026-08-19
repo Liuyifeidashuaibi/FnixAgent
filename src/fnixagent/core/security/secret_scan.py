@@ -36,13 +36,14 @@ import re
 import threading
 from collections import Counter
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # 审计钩子(异常吞掉)
 # ---------------------------------------------------------------------------
+
 
 def _audit_secret_leak(finding: SecretFinding) -> None:
     """将密钥泄露命中写入审计日志(异常吞掉)。"""
@@ -64,9 +65,11 @@ def _audit_secret_leak(finding: SecretFinding) -> None:
     except Exception:
         pass
 
+
 # ---------------------------------------------------------------------------
 # 数据结构
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class SecretFinding:
@@ -90,6 +93,7 @@ class SecretFinding:
     entropy: float = 0.0
     severity: str = "high"
 
+
 @dataclass
 class ScanResult:
     """扫描结果汇总。
@@ -108,9 +112,11 @@ class ScanResult:
     scanned_text_length: int = 0
     duration_ms: float = 0.0
 
+
 # ---------------------------------------------------------------------------
 # SecretScanner
 # ---------------------------------------------------------------------------
+
 
 class SecretScanner:
     """密钥泄露扫描器。
@@ -293,7 +299,7 @@ class SecretScanner:
         Returns:
             ScanResult 汇总
         """
-        start = datetime.utcnow()
+        start = datetime.now(UTC)
         result = ScanResult()
         try:
             if not os.path.isdir(dir_path):
@@ -327,7 +333,7 @@ class SecretScanner:
         except Exception as exc:
             logger.warning("[secret_scan] 扫描目录异常 %s: %s", dir_path, exc)
         # 计算耗时
-        elapsed = (datetime.utcnow() - start).total_seconds() * 1000.0
+        elapsed = (datetime.now(UTC) - start).total_seconds() * 1000.0
         result.duration_ms = round(elapsed, 2)
         return result
 
@@ -495,12 +501,14 @@ class SecretScanner:
             except re.error as exc:
                 logger.warning("[secret_scan] 规则编译失败 %s: %s", rule_id, exc)
 
+
 # ---------------------------------------------------------------------------
 # 全局单例(懒加载)
 # ---------------------------------------------------------------------------
 
 _scanner_instance: SecretScanner | None = None
 _scanner_lock = threading.Lock()
+
 
 def get_secret_scanner() -> SecretScanner:
     """获取全局 SecretScanner 单例。"""
@@ -510,6 +518,7 @@ def get_secret_scanner() -> SecretScanner:
             if _scanner_instance is None:
                 _scanner_instance = SecretScanner()
     return _scanner_instance
+
 
 def reset_secret_scanner() -> None:
     """重置单例(主要用于测试)。"""

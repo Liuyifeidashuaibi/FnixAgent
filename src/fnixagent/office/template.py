@@ -44,6 +44,7 @@ from fnixagent.office.base import BaseExpert, ExpertError, ExpertResult
 # 模板元数据
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class TemplateInfo:
     """模板信息。
@@ -64,9 +65,11 @@ class TemplateInfo:
     variables: list[str] = field(default_factory=list)
     registered_at: float = 0.0
 
+
 # ---------------------------------------------------------------------------
 # TemplateManager
 # ---------------------------------------------------------------------------
+
 
 class TemplateManager(BaseExpert):
     """文档模板管理专家。

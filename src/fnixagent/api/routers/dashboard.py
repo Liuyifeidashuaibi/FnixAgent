@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import os
 import time
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, Query
 
@@ -84,7 +84,7 @@ async def get_overview(_admin: dict = Depends(require_admin)):
     total_users = len(all_users)
     disabled_users = sum(1 for u in all_users if u.profile.get("disabled"))
     pending_deletion = sum(1 for u in all_users if u.profile.get("deleted_at"))
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     today_new = sum(1 for u in all_users if u.created_at and u.created_at >= today_start)
 
@@ -151,7 +151,7 @@ async def get_user_stats(_admin: dict = Depends(require_admin)):
         role_counts[u.role] = role_counts.get(u.role, 0) + 1
 
     # 按注册日期分布(近 7 天)
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     daily_new: list[dict] = []
     for i in range(6, -1, -1):
         day_start = (now - timedelta(days=i)).replace(hour=0, minute=0, second=0, microsecond=0)
@@ -183,7 +183,7 @@ async def get_audit_stats(
 ):
     """审计统计(指定时间窗口内的动作分布)。"""
     audit_store = _get_audit_store()
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     since = now - timedelta(hours=hours)
 
     logs, total = audit_store.query(start=since.isoformat(), limit=10000)
@@ -305,7 +305,7 @@ async def get_trends(
     user_store = _get_user_store()
     audit_store = _get_audit_store()
 
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     daily_data: list[dict] = []
 
     for i in range(days - 1, -1, -1):

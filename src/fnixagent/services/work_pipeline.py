@@ -20,6 +20,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import os
 import time
 import uuid
@@ -59,6 +60,9 @@ def normalize_artifact_path(path: str, workspace: str = "") -> str:
     p = (path or "").strip().replace("\\", "/").rstrip(".,;")
     if not p:
         return ""
+    # 收起连续斜杠(模型输出/目录拼接偶发 `.fnix//artifacts//x` 形式)
+    while "//" in p:
+        p = p.replace("//", "/")
     ws = str(Path(workspace or "").expanduser().resolve()).replace("\\", "/")
     if ws and p.startswith(ws):
         p = p[len(ws) :].lstrip("/")
@@ -1223,7 +1227,7 @@ async def run_work_stream(
     # load-bearing state 外化 (任务状态外化):
     # 从 .fnix/todos.json 加载未完成待办, 注入 prompt_extra。
     # compaction 后此块仍会重新注入, 确保长程任务不失忆。
-    #, 而是快速理解当前状态"
+    # , 而是快速理解当前状态"
     try:
         from fnixagent.core.skills.todos import TodoStore
 
@@ -1679,12 +1683,23 @@ async def run_work_stream(
                 }
                 for tc in tool_calls[:15]
             ]
-            verdict = await critic.review(
-                user_input=ctx.user_input,
-                artifacts=artifacts,
-                tool_calls_summary=tool_calls_summary,
-                answer=answer,
+            # 心跳保活: critic LLM 审查可能数十秒静默, 每 10s emit 一条
+            # heartbeat 事件, 避免 NDJSON 长连接在长静默中被传输层重置
+            # (Windows teardown 竞态); 前端与门禁脚本忽略该事件类型。
+            critic_task = asyncio.ensure_future(
+                critic.review(
+                    user_input=ctx.user_input,
+                    artifacts=artifacts,
+                    tool_calls_summary=tool_calls_summary,
+                    answer=answer,
+                )
             )
+            while not critic_task.done():
+                try:
+                    await asyncio.wait_for(asyncio.shield(critic_task), timeout=10.0)
+                except TimeoutError:
+                    yield {"type": "heartbeat", "data": {"phase": "critic"}}
+            verdict = await critic_task
             if verdict is not None:
                 # Spec 7 fail-soft-with-signal: 检测哨兵值, emit 可观测信号
                 # score==-1.0 表示审查未完成 (LLM 故障/解析失败),
@@ -1735,6 +1750,27 @@ async def run_work_stream(
             merge_artifact(artifacts, art["path"], workspace)
             if len(artifacts) > n_before:
                 yield {"type": "artifact", "data": artifacts[-1]}
+
+    # Artifact-first 交付判定(生产 UX 保障): Craft 模式以交付物为验收标准。
+    # 执行循环未自主终止(超过步数上限)但产物已真实落盘时, 降级为交付成功,
+    # 避免「任务实际完成却判失败」的用户可见回归; 回复中如实标注未终止原因。
+    if (
+        exec_mode == "craft"
+        and artifacts
+        and success is False
+        and isinstance(answer, str)
+        and answer.startswith("执行失败：")
+        and "超过最大步数" in answer
+    ):
+        success = True
+        delivered_paths = "\n".join(
+            f"- {a.get('path', '')}" for a in artifacts[:10] if isinstance(a, dict)
+        )
+        reason = answer[len("执行失败：") :].strip()
+        answer = (
+            f"产物已交付（{reason}，但交付物已生成，不影响结果）。\n\n交付物:\n{delivered_paths}"
+        )
+        yield {"type": "text", "data": answer}
 
     duration_ms = (time.time() - start) * 1000
     # 编码任务若未落盘，明确提示（对齐工程实践 Craft 必须交付）

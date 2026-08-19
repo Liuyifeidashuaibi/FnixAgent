@@ -70,6 +70,7 @@ _FORMAT_COMBO_WARNING_THRESHOLD = 5
 # 验证报告与检查项
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class CheckItem:
     """单项检查结果。
@@ -87,6 +88,7 @@ class CheckItem:
     severity: str = "error"
     detail: str = ""
     fix_suggestion: str | None = None
+
 
 @dataclass
 class ValidationReport:
@@ -146,9 +148,11 @@ class ValidationReport:
             ],
         )
 
+
 # ---------------------------------------------------------------------------
 # TaskValidator
 # ---------------------------------------------------------------------------
+
 
 class TaskValidator(BaseExpert):
     """自我验证模块。

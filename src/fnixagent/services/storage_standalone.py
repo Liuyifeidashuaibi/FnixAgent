@@ -15,7 +15,7 @@ from __future__ import annotations
 import json
 import os
 import threading
-from datetime import datetime
+from datetime import UTC, datetime
 
 from fnixagent.services.storage import StoredUser, UserStore
 
@@ -49,9 +49,9 @@ def _user_from_json(data: dict) -> StoredUser:
         try:
             created_at = datetime.fromisoformat(created)
         except ValueError:
-            created_at = datetime.utcnow()
+            created_at = datetime.now(UTC)
     else:
-        created_at = datetime.utcnow()
+        created_at = datetime.now(UTC)
     return StoredUser(
         id=int(data["id"]),
         username=str(data["username"]),

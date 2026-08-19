@@ -44,6 +44,7 @@ Vector = list[float]
 # Embedding 缓存默认上限(条),超出按 LRU 淘汰
 DEFAULT_CACHE_SIZE: int = 1024
 
+
 class BaseEmbedder(abc.ABC):
     """Embedding 模型抽象基类。
 
@@ -102,6 +103,7 @@ class BaseEmbedder(abc.ABC):
     def clear_cache(self) -> None:
         """清空 embedding 缓存。"""
         self._cache.clear()
+
 
 class HashingEmbedder(BaseEmbedder):
     """
@@ -174,9 +176,11 @@ class HashingEmbedder(BaseEmbedder):
         """批量编码(逐条调用 embed, 命中 LRU 缓存以减少重复哈希)。"""
         return [self.embed(t) for t in texts]
 
+
 # ---------------------------------------------------------------------------
 # 检索便捷函数
 # ---------------------------------------------------------------------------
+
 
 def retrieve(
     query_vector: Vector,

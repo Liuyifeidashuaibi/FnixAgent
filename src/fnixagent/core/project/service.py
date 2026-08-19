@@ -61,11 +61,14 @@ from fnixagent.core.project.models import (
     ProjectStatus,
 )
 
+
 class ProjectPermissionError(Exception):
     """项目权限不足。"""
 
+
 class ProjectNotFoundError(Exception):
     """项目不存在。"""
+
 
 class ProjectService:
     """项目服务层。

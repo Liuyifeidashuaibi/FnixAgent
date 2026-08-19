@@ -9,10 +9,10 @@
 
 **FnixAgent 默认不开放商用许可。**
 
-本仓库以"**All Rights Reserved**"方式发布,GitHub 上仅供**个人学习参考**。
+本仓库以 **PolyForm Noncommercial License 1.0.0** 方式发布：源码可见、授予非商业使用。
 未经书面授权,**严禁将本项目的任何部分用于任何商业目的**。
 
-如需在以下场景使用本项目,请先取得商用授权:
+如需在"下场景使用本项目,请先取得商用授权:
 
 - 🏢 公司内部产品集成 / Internal product integration
 - 💼 SaaS 服务 / SaaS service offering
@@ -49,7 +49,7 @@
 
 | 模式 | 说明 | 适用场景 |
 | --- | --- | --- |
-| **OEM Embedded** | 嵌入到客户产品中,以客户品牌分发 | 硬件厂商、ISV |
+| **OEM Embedded** | 嵌入到客户产品中,"客户品牌分发 | 硬件厂商、ISV |
 | **SaaS Reseller** | 作为后端服务对外提供,可计费 | SaaS 平台、云厂商 |
 | **Internal Use** | 客户公司内部使用,不外发 | 企业 IT、研发中心 |
 | **Source Custody** | 完整源码托管 + 修改权 | 战略合作、技术并购 |
@@ -62,7 +62,7 @@
 
 ## 🎓 学习用途特别说明 / Educational Use
 
-以下行为**不需要**商用授权,但仍受 [LICENSE](../LICENSE) 中"View-Only License"
+"下行为**不需要**商用授权,但仍受 [LICENSE](../LICENSE) 中"View-Only License"
 条款约束:
 
 - ✅ 在浏览器中阅读单个文件
@@ -71,7 +71,7 @@
 - ✅ 学术论文中**引用**项目并提供链接(不含代码片段)
 - ✅ 个人学习本项目后,凭记忆 / 经验自行编写**不实质相似**的代码
 
-以下行为**需要**商用授权:
+"下行为**需要**商用授权:
 
 - ❌ 复制任何源文件到本地或第三方系统
 - ❌ 基于本项目进行 fork / 二次开发
@@ -84,7 +84,7 @@
 ## ⚖️ 法律效力 / Legal Effect
 
 - 本文件是 [LICENSE](../LICENSE) 的**非穷尽性补充**
-- 两者冲突时以 [LICENSE](../LICENSE) 为准
+- 两者冲突时" [LICENSE](../LICENSE) 为准
 - 著作权人在适用法律允许的范围内保留最终解释权
 
-© 2024-2026 FnixAgent. All Rights Reserved.
+© 2024-2026 FnixAgent. Licensed under PolyForm Noncommercial License 1.0.0.

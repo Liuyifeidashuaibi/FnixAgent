@@ -15,7 +15,7 @@
   year   = {2026},
   author = {Liu, Yifei},
   url    = {https://github.com/Liuyifeidashuaibi/FnixAgent},
-  note   = {All Rights Reserved. View-only access via GitHub.},
+  note   = {PolyForm Noncommercial License 1.0.0.},
   version = {0.5.0},
 }
 ```
@@ -143,11 +143,11 @@ FnixAgent 的完整 SBOM 见 [`reports/sbom.spdx.json`](../../reports/sbom.spdx.
 
 | ❌ 避免 | ✅ 推荐 |
 | --- | --- |
-| "FnixAgent 是开源的" | "FnixAgent 是公开可见的(All Rights Reserved)" |
+| "FnixAgent 是开源的" | "FnixAgent 是源码可见的(PolyForm Noncommercial 1.0.0)" |
 | "Fork 即可" | "请勿 fork,见 LICENSE" |
 | "免费商用" | "需要商用授权,见 LICENSE-COMMERCIAL.md" |
 | "FnixAgent 由 FnixAgent 公司开发" | "FnixAgent 由刘逸飞独立开发" |
-| "本项目受 MIT 许可证约束" | "本项目受 All Rights Reserved 约束,仅供查看" |
+| "本项目受 MIT 许可证约束" | "本项目受 PolyForm Noncommercial 1.0.0 约束,仅限非商业使用" |
 
 ---
 
@@ -186,4 +186,4 @@ FnixAgent 受以下项目启发(已在 [agent-research-report.md](../../agent-re
 
 ---
 
-© 2024-2026 FnixAgent. All Rights Reserved.
+© 2024-2026 FnixAgent. Licensed under PolyForm Noncommercial License 1.0.0.

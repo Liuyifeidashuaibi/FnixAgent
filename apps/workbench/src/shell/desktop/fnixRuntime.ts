@@ -212,6 +212,10 @@ async function readNdjsonStream(
   res: Response,
   signal: AbortSignal | undefined,
   onLine: (obj: Record<string, unknown>) => void,
+  /** Optional: return true on terminal events (done/error) to stop reading
+   *  immediately — avoids blocking reads after the logical end of the stream
+   *  (Windows teardown races can turn a clean close into a connection reset). */
+  stopWhen?: (obj: Record<string, unknown>) => boolean,
 ): Promise<void> {
   if (!res.body) {
     const text = await res.text();
@@ -219,7 +223,9 @@ async function readNdjsonStream(
       const t = line.trim();
       if (!t) continue;
       try {
-        onLine(JSON.parse(t) as Record<string, unknown>);
+        const parsed = JSON.parse(t) as Record<string, unknown>;
+        onLine(parsed);
+        if (stopWhen?.(parsed)) break;
       } catch {
         /* skip */
       }
@@ -230,6 +236,7 @@ async function readNdjsonStream(
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
   let buf = "";
+  let stopped = false;
   while (true) {
     if (signal?.aborted) {
       try {
@@ -248,13 +255,26 @@ async function readNdjsonStream(
       const t = line.trim();
       if (!t) continue;
       try {
-        onLine(JSON.parse(t) as Record<string, unknown>);
+        const parsed = JSON.parse(t) as Record<string, unknown>;
+        onLine(parsed);
+        if (stopWhen?.(parsed)) {
+          stopped = true;
+          break;
+        }
       } catch {
         /* skip bad line */
       }
     }
+    if (stopped) {
+      try {
+        await reader.cancel();
+      } catch {
+        /* ignore */
+      }
+      return;
+    }
   }
-  if (buf.trim()) {
+  if (!stopped && buf.trim()) {
     try {
       onLine(JSON.parse(buf.trim()) as Record<string, unknown>);
     } catch {
@@ -834,6 +854,11 @@ export async function streamWork(opts: {
       }
       opts.handlers.onDone?.(content);
     }
+  }, (obj) => {
+    // 终止事件后立即停止读取,避免 done 之后的阻塞读在 Windows teardown
+    // 竞态下收到 connection reset(done/error 在服务端均为终止事件)。
+    const t = String(obj.chunk_type || obj.type || "");
+    return t === "done" || t === "error";
   });
     if (!sawDone) opts.handlers.onDone?.(null);
   } finally {
@@ -978,6 +1003,10 @@ export async function streamCode(opts: {
     if (t === "error") {
       opts.handlers.onError?.(String(obj.content || obj.error || "error"));
     }
+  }, (obj) => {
+    // 终止事件后立即停止读取(done/error 在服务端均为终止事件)。
+    const tt = String(obj.type || "");
+    return tt === "done" || tt === "error";
   });
     if (!sawDone) opts.handlers.onDone?.(null);
   } finally {

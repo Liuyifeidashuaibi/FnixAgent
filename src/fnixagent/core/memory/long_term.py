@@ -35,6 +35,7 @@ from fnixagent.core.retrieval.vectorstore import BaseVectorStore, InMemoryVector
 from fnixagent.core.text import chunk_by_chars
 from fnixagent.core.types import MemoryItem
 
+
 class LongTermMemory:
     """
     长期向量记忆。

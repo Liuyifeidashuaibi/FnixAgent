@@ -36,7 +36,12 @@ _DASHSCOPE_MODEL_ALIASES = {
 
 
 def normalize_llm_model(model: str, provider: str = "") -> str:
-    """Rewrite known-bad / alias model ids to a working DashScope chat model."""
+    """Rewrite known-bad / alias model ids to a working DashScope chat model.
+
+    Only models explicitly listed in _DASHSCOPE_MODEL_ALIASES are rewritten.
+    qwen3-max / qwen3.6-plus / qwen3-235b-a22b etc. are real, working models on
+    the DashScope platform and must pass through unchanged.
+    """
     name = (model or "").strip()
     if not name:
         return name
@@ -44,11 +49,6 @@ def normalize_llm_model(model: str, provider: str = "") -> str:
     alias = _DASHSCOPE_MODEL_ALIASES.get(key)
     if alias:
         return alias
-    prov = (provider or "").strip().lower()
-    if prov in ("qwen", "dashscope", "") and key.startswith("qwen3"):
-        # Prefer stable plus unless the id is an explicit dated snapshot.
-        if "2025" not in key and "2024" not in key:
-            return "qwen-plus"
     return name
 
 

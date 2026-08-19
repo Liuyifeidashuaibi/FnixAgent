@@ -31,7 +31,7 @@ from __future__ import annotations
 import re
 import threading
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 
@@ -45,6 +45,7 @@ _VERSION_PATTERN = re.compile(r"^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.\-]+)?$")
 # ---------------------------------------------------------------------------
 # 枚举
 # ---------------------------------------------------------------------------
+
 
 class SkillStatus(str, Enum):
     """技能生命周期状态。
@@ -60,6 +61,7 @@ class SkillStatus(str, Enum):
     PUBLISHED = "published"  # 已发布(可被安装)
     REJECTED = "rejected"  # 审核拒绝(可改回 DRAFT 修改)
     DEPRECATED = "deprecated"  # 已弃用(不可安装,已安装可继续用)
+
 
 # 允许的状态转换(用于校验)。
 # 状态机设计原则:严格线性流转,禁止跳过 PENDING_REVIEW 直接进入 PUBLISHED。
@@ -86,6 +88,7 @@ _VALID_TRANSITIONS: dict[SkillStatus, set[SkillStatus]] = {
 # Pydantic 模型
 # ---------------------------------------------------------------------------
 
+
 class SkillVersion(BaseModel):
     """技能版本。
 
@@ -109,6 +112,7 @@ class SkillVersion(BaseModel):
     )
     created_at: datetime = Field(default_factory=datetime.utcnow)
     created_by: str = Field("", description="创建者用户 ID")
+
 
 class SkillMarketEntry(BaseModel):
     """技能市场条目。
@@ -140,31 +144,40 @@ class SkillMarketEntry(BaseModel):
     review_comment: str = ""
     reviewed_at: datetime | None = None
 
+
 # ---------------------------------------------------------------------------
 # 异常
 # ---------------------------------------------------------------------------
 
+
 class SkillMarketError(Exception):
     """技能市场基础异常。"""
+
 
 class SkillNotFoundError(SkillMarketError):
     """技能不存在。"""
 
+
 class SkillVersionNotFoundError(SkillMarketError):
     """技能版本不存在。"""
+
 
 class SkillStatusError(SkillMarketError):
     """状态转换非法(如 DRAFT 直接 PUBLISHED)。"""
 
+
 class SkillAlreadyExistsError(SkillMarketError):
     """技能名已存在(同租户内唯一)。"""
+
 
 class SkillReviewError(SkillMarketError):
     """审核操作非法(如非 PENDING_REVIEW 状态调 approve)。"""
 
+
 # ---------------------------------------------------------------------------
 # SkillMarket
 # ---------------------------------------------------------------------------
+
 
 class SkillMarket:
     """组织内技能市场。
@@ -258,7 +271,7 @@ class SkillMarket:
                 raise SkillStatusError(f"Cannot submit skill '{entry.name}': no version added")
             entry.status = SkillStatus.PENDING_REVIEW
             entry.reviewer_id = reviewer_id
-            entry.updated_at = datetime.utcnow()
+            entry.updated_at = datetime.now(UTC)
             return entry
 
     def approve(
@@ -285,9 +298,9 @@ class SkillMarket:
             entry.status = SkillStatus.PUBLISHED
             entry.reviewer_id = reviewer_id
             entry.review_comment = comment
-            entry.reviewed_at = datetime.utcnow()
-            entry.published_at = datetime.utcnow()
-            entry.updated_at = datetime.utcnow()
+            entry.reviewed_at = datetime.now(UTC)
+            entry.published_at = datetime.now(UTC)
+            entry.updated_at = datetime.now(UTC)
             return entry
 
     def reject(
@@ -310,8 +323,8 @@ class SkillMarket:
             entry.status = SkillStatus.REJECTED
             entry.reviewer_id = reviewer_id
             entry.review_comment = comment
-            entry.reviewed_at = datetime.utcnow()
-            entry.updated_at = datetime.utcnow()
+            entry.reviewed_at = datetime.now(UTC)
+            entry.updated_at = datetime.now(UTC)
             return entry
 
     def deprecate(self, entry_id: str, reason: str = "") -> SkillMarketEntry:
@@ -323,9 +336,9 @@ class SkillMarket:
             entry = self._get_or_raise(entry_id)
             self._check_transition(entry, SkillStatus.DEPRECATED)
             entry.status = SkillStatus.DEPRECATED
-            entry.deprecated_at = datetime.utcnow()
+            entry.deprecated_at = datetime.now(UTC)
             entry.review_comment = reason
-            entry.updated_at = datetime.utcnow()
+            entry.updated_at = datetime.now(UTC)
             return entry
 
     def reactivate(self, entry_id: str) -> SkillMarketEntry:
@@ -340,7 +353,7 @@ class SkillMarket:
             entry.reviewer_id = ""
             entry.review_comment = ""
             entry.reviewed_at = None
-            entry.updated_at = datetime.utcnow()
+            entry.updated_at = datetime.now(UTC)
             return entry
 
     # ------------------------------------------------------------------
@@ -375,7 +388,7 @@ class SkillMarket:
                 )
             entry.versions.append(version)
             entry.latest_version = version.version
-            entry.updated_at = datetime.utcnow()
+            entry.updated_at = datetime.now(UTC)
             return entry
 
     def list_versions(self, entry_id: str) -> list[SkillVersion]:
@@ -530,7 +543,7 @@ class SkillMarket:
         with self._lock:
             entry = self._get_or_raise(entry_id)
             entry.install_count = max(0, entry.install_count + delta)
-            entry.updated_at = datetime.utcnow()
+            entry.updated_at = datetime.now(UTC)
             return entry.install_count
 
     def update_rating(self, entry_id: str, new_rating: float) -> SkillMarketEntry:
@@ -546,7 +559,7 @@ class SkillMarket:
             total = entry.rating * entry.rating_count + new_rating
             entry.rating_count += 1
             entry.rating = round(total / entry.rating_count, 2)
-            entry.updated_at = datetime.utcnow()
+            entry.updated_at = datetime.now(UTC)
             return entry
 
     # ------------------------------------------------------------------

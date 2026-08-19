@@ -96,12 +96,12 @@ class TestHashChain:
 
     def test_verify_hash_chain_single_entry(self):
         """单条记录(prev_hash=genesis)应通过。"""
-        from datetime import datetime
+        from datetime import UTC, datetime
 
         from fnixagent.core.audit import AuditLogDTO, verify_hash_chain
         from fnixagent.core.audit.logger import _GENESIS_HASH, _compute_entry_hash
 
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         detail = {"username": "alice"}
         detail_json = json.dumps(detail, sort_keys=True, ensure_ascii=False)
         entry_hash = _compute_entry_hash(
@@ -307,12 +307,12 @@ class TestInMemoryAuditStore:
         assert total == 2
 
     def test_query_with_time_range(self):
-        from datetime import datetime, timedelta
+        from datetime import UTC, datetime, timedelta
 
         from fnixagent.services.storage_audit import InMemoryAuditStore
 
         store = InMemoryAuditStore()
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
 
         # 手动创建带时间戳的记录
         entry1 = store.create(user_id=1, action="login.success")

@@ -66,7 +66,7 @@ export function FullChainBenchmarkPanel({ workspace, onClose }: Props) {
       <header className="fnix-bench-head">
         <div>
           <h1>全链路测试</h1>
-          <p>前端 · agentd · Harness · Work · Code · FCS</p>
+          <p>前端 · 后台引擎 · 运行环境 · Work · Code · FCS</p>
         </div>
         <button type="button" className="fnix-ibtn" onClick={onClose} aria-label="Close">
           <X size={18} />

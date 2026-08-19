@@ -1,0 +1,25 @@
+# Bandit 配置 — 与 pyproject.toml [tool.ruff.lint] 安全策略对齐
+#
+# 以下规则在本项目产生大量「已声明意图的误报」,与 ruff S 规则的
+# ignore/per-file-ignores 保持一致的理由:
+#
+#   B324 (hashlib md5/sha1): 仅用于非加密哈希(task_hash / 缓存键),
+#        不用于密码或签名 — 对应 ruff S324
+#   B314 (xml.etree):        仅解析受信源(arXiv API 响应),
+#        对应 ruff S314
+#   B310 (urllib open):      仅访问受信 LLM/搜索 API,
+#        对应 ruff S310
+#   B108 (hardcoded /tmp):   沙箱/临时产物场景的预期路径,
+#        对应 ruff S108
+#   B102 (exec):             沙箱执行器/插件加载的核心功能,
+#        对应 ruff S102
+#
+# B104(bind all interfaces)不在跳过列表:standalone 强制 127.0.0.1,
+# cloud 形态的 0.0.0.0 使用点以行内 `# nosec B104` 显式声明意图。
+
+skips:
+  - B324
+  - B314
+  - B310
+  - B108
+  - B102

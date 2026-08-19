@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import threading
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 
 # ---------------------------------------------------------------------------
 # SSO 配置 DTO
@@ -214,7 +214,7 @@ class InMemorySSOConfigStore:
         with self._lock:
             cid = self._next_id
             self._next_id += 1
-            now = datetime.utcnow()
+            now = datetime.now(UTC)
             cfg = SSOConfigDTO(
                 id=cid,
                 provider_type=kwargs["provider_type"],
@@ -276,7 +276,7 @@ class InMemorySSOConfigStore:
                         setattr(cfg, k, dict(kwargs[k]))
                     else:
                         setattr(cfg, k, kwargs[k])
-            cfg.updated_at = datetime.utcnow()
+            cfg.updated_at = datetime.now(UTC)
             return cfg
 
     def delete_config(self, config_id: int) -> bool:
@@ -319,7 +319,7 @@ class InMemorySSOBindingStore:
                 user_id=user_id,
                 provider_code=provider_code,
                 provider_user_id=provider_user_id,
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(UTC),
             )
             self._bindings[bid] = binding
             self._provider_idx[key] = bid

@@ -79,6 +79,7 @@ _CA_KEY_SIZE = 2048
 # 数据结构
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class SVID:
     """SPIFFE Verifiable Identity Document(工作负载身份凭证)。
@@ -99,6 +100,7 @@ class SVID:
     # JWT 模式下的 token(cryptography 可用时为 None)
     jwt_token: str | None = None
 
+
 @dataclass
 class AgentIdentity:
     """Agent 工作负载身份。
@@ -114,6 +116,7 @@ class AgentIdentity:
     role: str
     spiffe_id: str
     svid: SVID | None = None
+
 
 @dataclass
 class NetworkPolicy:
@@ -133,9 +136,11 @@ class NetworkPolicy:
     allowed_tools: list[str] = field(default_factory=list)
     denied: bool = False
 
+
 # ---------------------------------------------------------------------------
 # IdentityBroker
 # ---------------------------------------------------------------------------
+
 
 class IdentityBroker:
     """SPIFFE 风格身份代理(本地 CA + SVID 签发)。

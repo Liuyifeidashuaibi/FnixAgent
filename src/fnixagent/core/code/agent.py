@@ -56,6 +56,7 @@ from uuid import uuid4
 
 from fnixagent.core.agent.types import utcnow_iso
 
+
 def _heal_rounds() -> int:
     """报错修复最大轮数（0 = 关闭 heal）。"""
     try:
@@ -63,9 +64,11 @@ def _heal_rounds() -> int:
     except ValueError:
         return 3
 
+
 # ============================================================================
 # 任务状态枚举
 # ============================================================================
+
 
 class TaskStatus(Enum):
     """任务状态。"""
@@ -78,9 +81,11 @@ class TaskStatus(Enum):
     FAILED = "failed"
     CANCELLED = "cancelled"
 
+
 # ============================================================================
 # 数据结构
 # ============================================================================
+
 
 @dataclass
 class TaskStep:
@@ -104,6 +109,7 @@ class TaskStep:
     result: str | dict = ""
     error: str = ""
 
+
 @dataclass
 class CodingTask:
     """编码任务。
@@ -121,6 +127,7 @@ class CodingTask:
     files: list[str] = field(default_factory=list)  # 涉及文件
     constraints: list[str] = field(default_factory=list)  # 约束条件
     created_at: str = field(default_factory=lambda: utcnow_iso())
+
 
 @dataclass
 class TaskResult:
@@ -145,6 +152,7 @@ class TaskResult:
     review_notes: str = ""
     duration_sec: float = 0.0
     error: str | None = None
+
 
 @dataclass
 class CodingAgentEvent:
@@ -181,9 +189,11 @@ class CodingAgentEvent:
     review_notes: str | None = None
     result: TaskResult | None = None
 
+
 # ============================================================================
 # 编码智能体
 # ============================================================================
+
 
 class CodingAgent:
     """编码智能体 (对齐工程实践)。
@@ -1871,6 +1881,7 @@ class CodingAgent:
         if len(text) <= max_len:
             return text
         return text[:max_len] + "..."
+
 
 __all__ = [
     "CodingAgent",

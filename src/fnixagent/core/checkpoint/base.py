@@ -32,6 +32,7 @@ from fnixagent.core.checkpoint.types import (
     CheckpointTuple,
 )
 
+
 class BaseCheckpointer(abc.ABC):
     """Checkpointer 抽象基类。
 

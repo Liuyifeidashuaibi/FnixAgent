@@ -252,6 +252,10 @@ fn spawn_agentd(
         std::env::var("FNIXAGENT_PROFILE").unwrap_or_else(|_| "standalone".into());
     let backend = format!("http://{host}:{port}");
     let port_arg = port.to_string();
+    // Production guardrail (fnixagent.main lifespan): SERVICE_ENV=production 时
+    // 弱/空 JWT_SECRET_KEY 会拒绝启动。桌面壳每次启动生成强随机密钥注入,
+    // 打包发布版(agentd 以 production 运行)方可正常拉起。
+    let jwt_secret = uuid::Uuid::new_v4().to_string();
 
     // Packaged builds use PyInstaller binary. Dev uses live Python so gateway
     // fixes apply without rebuilding (set FNIX_AGENTD_BUNDLE=1 to force binary).
@@ -279,6 +283,7 @@ fn spawn_agentd(
                 .env("FNIX_LOCAL_URL", sidecar_url)
                 .env("FNIX_LOCAL_MANAGED", "false")
                 .env("FNIX_CAPABILITY_TOKEN", capability_token)
+                .env("JWT_SECRET_KEY", &jwt_secret)
                 .env("FNIXAGENT_BACKEND_URL", &backend)
                 .stdout(stdout)
                 .stderr(stderr)
@@ -306,6 +311,7 @@ fn spawn_agentd(
         .env("FNIX_LOCAL_URL", sidecar_url)
         .env("FNIX_LOCAL_MANAGED", "false")
         .env("FNIX_CAPABILITY_TOKEN", capability_token)
+        .env("JWT_SECRET_KEY", jwt_secret)
         .env("FNIXAGENT_BACKEND_URL", backend)
         .stdout(stdout)
         .stderr(stderr)

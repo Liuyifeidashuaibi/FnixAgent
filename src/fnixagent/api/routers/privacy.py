@@ -25,7 +25,7 @@ API 路由 - 用户隐私中心(Phase 3.2 / 2.12)。
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import Response
@@ -214,7 +214,7 @@ async def export_personal_data(
         masked_phone = f"{phone[:3]}****{phone[7:]}"
 
     export_data = {
-        "exported_at": datetime.utcnow().isoformat(),
+        "exported_at": datetime.now(UTC).isoformat(),
         "user": {
             "id": user.id,
             "username": user.username,
@@ -231,7 +231,7 @@ async def export_personal_data(
         "audit_logs": audit_data,
     }
 
-    filename = f"fnixagent_export_{user_id}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
+    filename = f"fnixagent_export_{user_id}_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.json"
     content = json.dumps(export_data, ensure_ascii=False, indent=2, default=str)
 
     return Response(
@@ -282,7 +282,7 @@ async def request_account_deletion(
             "username": user.username,
             "retention_days": retention_days,
             "hard_delete_at": (
-                datetime.utcnow().replace(microsecond=0).isoformat()
+                datetime.now(UTC).replace(microsecond=0).isoformat()
                 if retention_days == 0
                 else None
             ),
@@ -294,7 +294,7 @@ async def request_account_deletion(
         success=True,
         message=f"账号注销请求已提交,将在 {retention_days} 天后永久删除。在此期间可登录撤销注销。",
         data={
-            "deleted_at": datetime.utcnow().isoformat(),
+            "deleted_at": datetime.now(UTC).isoformat(),
             "retention_days": retention_days,
         },
     )
@@ -359,7 +359,7 @@ async def get_deletion_status(payload: dict = Depends(verify_jwt_token)):
     if hard_delete_at:
         try:
             hard_delete_time = datetime.fromisoformat(hard_delete_at)
-            now = datetime.utcnow()
+            now = datetime.now(UTC)
             remaining_days = max(0, (hard_delete_time - now).days)
         except (ValueError, TypeError):
             remaining_days = None

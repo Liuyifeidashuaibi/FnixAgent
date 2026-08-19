@@ -42,6 +42,7 @@ from fnixagent.core.observability.tracing.span import (
     SpanStatus,
 )
 
+
 class TraceImpl:
     """一个 Trace 的运行时实现。
 

@@ -44,21 +44,27 @@ from fnixagent.core.types import ToolPermission
 # 异常
 # ---------------------------------------------------------------------------
 
+
 class MCPRegistryError(Exception):
     """MCP 注册表基础异常。"""
+
 
 class MCPServerNotFoundError(MCPRegistryError):
     """server_id 不存在。"""
 
+
 class MCPServerAlreadyExistsError(MCPRegistryError):
     """server_id 已存在。"""
+
 
 class MCPToolNotFoundError(MCPRegistryError):
     """工具名在所有 server 中找不到。"""
 
+
 # ---------------------------------------------------------------------------
 # MCPToolRegistry
 # ---------------------------------------------------------------------------
+
 
 class MCPToolRegistry:
     """MCP 工具注册表:管理多 server + 多工具。

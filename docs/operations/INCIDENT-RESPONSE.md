@@ -234,4 +234,4 @@ v0.5.0-rc.0 不受影响。根因是新引入的 embedding 索引未设置 LRU �
 
 ---
 
-© 2024-2026 FnixAgent. All Rights Reserved.
+© 2024-2026 FnixAgent. Licensed under PolyForm Noncommercial License 1.0.0.

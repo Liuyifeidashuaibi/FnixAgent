@@ -25,7 +25,7 @@ import secrets
 import threading
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 # ---------------------------------------------------------------------------
@@ -68,7 +68,7 @@ MAX_LIST_LIMIT: int = 200
 
 from fnixagent.core.security.auth.password import (
     hash_password,  # 默认 Argon2id
-    needs_rehash,  # 检测旧算法/PBKDF2 哈希，触发 rehash
+    needs_rehash,  # noqa: F401 — re-export 供 services.storage_postgres 使用
     verify_password,  # 自动识别 Argon2id / PBKDF2
 )
 
@@ -426,7 +426,7 @@ class UserStore:
             user = self._users.get(user_id)
             if not user:
                 return False
-            now = datetime.utcnow()
+            now = datetime.now(UTC)
             from datetime import timedelta
 
             hard_delete_at = now + timedelta(days=retention_days)
@@ -488,7 +488,7 @@ class UserStore:
             待硬删除的用户列表
         """
         if before is None:
-            before = datetime.utcnow()
+            before = datetime.now(UTC)
         with self._lock:
             result: list[StoredUser] = []
             for u in self._users.values():
@@ -558,7 +558,7 @@ class ApiKeyStore:
                 api_key=plaintext,
                 api_key_hash=key_hash,
                 scopes=scopes or ["chat"],
-                expires_at=datetime.utcnow() + timedelta(days=expires_days),
+                expires_at=datetime.now(UTC) + timedelta(days=expires_days),
             )
             self._keys[kid] = record
             self._hash_idx[key_hash] = kid
@@ -819,7 +819,7 @@ class TaskStore:
             if not task:
                 return None
             task.status = "running"
-            task.started_at = datetime.utcnow()
+            task.started_at = datetime.now(UTC)
             return task
 
     def add_step(
@@ -851,9 +851,9 @@ class TaskStore:
                 if s.step_no == step_no:
                     s.status = status
                     if status == "running" and not s.started_at:
-                        s.started_at = datetime.utcnow()
+                        s.started_at = datetime.now(UTC)
                     if status in ("success", "failed") and not s.finished_at:
-                        s.finished_at = datetime.utcnow()
+                        s.finished_at = datetime.now(UTC)
                     if result is not None:
                         s.result = result
                     if error:
@@ -868,7 +868,7 @@ class TaskStore:
             if not task:
                 return None
             task.status = "succeeded"
-            task.finished_at = datetime.utcnow()
+            task.finished_at = datetime.now(UTC)
             if result is not None:
                 task.result = result
             return task
@@ -880,7 +880,7 @@ class TaskStore:
             if not task:
                 return None
             task.status = "failed"
-            task.finished_at = datetime.utcnow()
+            task.finished_at = datetime.now(UTC)
             task.error = error
             return task
 
@@ -894,7 +894,7 @@ class TaskStore:
             if task.status in ("succeeded", "failed", "cancelled"):
                 return None
             task.status = "cancelled"
-            task.finished_at = datetime.utcnow()
+            task.finished_at = datetime.now(UTC)
             return task
 
     def retry(self, task_id: int) -> StoredTask | None:

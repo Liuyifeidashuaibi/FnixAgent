@@ -31,13 +31,14 @@ import logging
 import os
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # 数据结构
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class Snapshot:
@@ -58,6 +59,7 @@ class Snapshot:
     mtime: str
     paragraphs: list[str] = field(default_factory=list)
     cells: list[list[str]] = field(default_factory=list)
+
 
 @dataclass
 class ImpactRecord:
@@ -81,9 +83,11 @@ class ImpactRecord:
     after: Snapshot | None
     diff_summary: str = ""
 
+
 # ---------------------------------------------------------------------------
 # ImpactTracker
 # ---------------------------------------------------------------------------
+
 
 class ImpactTracker:
     """影响溯源器。
@@ -124,7 +128,7 @@ class ImpactTracker:
         snapshot = self._take_snapshot(path)
         record = ImpactRecord(
             operation_id=op_id,
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(UTC).isoformat(),
             tool_name=tool_name,
             target_path=os.path.realpath(path),
             before=snapshot,
@@ -161,7 +165,7 @@ class ImpactTracker:
         if after_snap is not None:
             self._save_snapshot(operation_id, "after", after_snap)
         # 更新内存记录的 timestamp 为完成时间
-        record.timestamp = datetime.utcnow().isoformat()
+        record.timestamp = datetime.now(UTC).isoformat()
         return record
 
     def rollback(self, operation_id: str) -> bool:

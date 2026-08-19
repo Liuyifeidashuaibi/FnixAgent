@@ -44,6 +44,7 @@ from fnixagent.tasks.dsl import (
 # 表格类文件扩展名(用于 TABLE_EXTRACT 推断)
 _TABLE_EXTS = {"xlsx", "xls", "csv", "xlsm"}
 
+
 class TaskRouter(BaseExpert):
     """任务路由器:意图识别 + 任务类型推断 + 步骤计划生成。
 

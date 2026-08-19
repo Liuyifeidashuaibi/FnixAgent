@@ -34,6 +34,7 @@ from pydantic import BaseModel, Field, ValidationError
 
 logger = logging.getLogger(__name__)
 
+
 # H4: Pydantic BaseModel 强约束
 # 替代原 dataclass, 让 LLM 输出有结构化校验
 class CriticVerdict(BaseModel):
@@ -60,6 +61,7 @@ class CriticVerdict(BaseModel):
     raw_response: str = Field(default="", description="LLM 原始响应", exclude=True)
 
     model_config = {"extra": "ignore"}  # 允许 LLM 输出多余字段, 忽略即可
+
 
 class CriticAgent:
     """Spec 5 独立 Critic Agent。
@@ -292,7 +294,7 @@ class CriticAgent:
         #   - 调用方 (work_pipeline) 检测 score==-1.0 时 emit critic_skipped 事件
         #   - MFP 第 3 阶 (元反思) 可统计 critic.skip_rate 作为健康度指标
         #
-        #。
+        # 。
         logger.warning(
             "CriticAgent JSON 解析失败 (已尝试 4 种策略), "
             "返回 fail-soft verdict (passed=True, score=-1.0 哨兵). raw[:200]=%s",
@@ -337,5 +339,6 @@ class CriticAgent:
                 if depth == 0 and start >= 0:
                     return text[start : i + 1]
         return ""
+
 
 __all__ = ["CriticAgent", "CriticVerdict"]

@@ -34,6 +34,7 @@ import time
 from fnixagent.core.text import estimate_tokens
 from fnixagent.core.types import Message, MessageRole
 
+
 class ShortTermMemory:
     """
     短期会话记忆(滑动窗口 + LRU 淘汰)。
