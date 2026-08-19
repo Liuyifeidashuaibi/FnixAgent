@@ -26,7 +26,7 @@ from __future__ import annotations
 import threading
 import time
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 
 from fnixagent.core.security.auth.mfa import (
     FACTOR_EMAIL,
@@ -173,7 +173,7 @@ class InMemoryMFAFactorStore:
         with self._lock:
             fid = self._next_id
             self._next_id += 1
-            now = datetime.utcnow()
+            now = datetime.now(UTC)
             factor = MFAFactorDTO(
                 id=fid,
                 user_id=user_id,
@@ -196,7 +196,7 @@ class InMemoryMFAFactorStore:
             for k in ("secret", "phone", "email", "enabled"):
                 if k in kwargs and kwargs[k] is not None:
                     setattr(factor, k, kwargs[k])
-            factor.updated_at = datetime.utcnow()
+            factor.updated_at = datetime.now(UTC)
             return factor
 
     def delete(self, factor_id: int) -> bool:
@@ -242,7 +242,7 @@ class InMemoryRecoveryCodeStore:
         with self._lock:
             cid = self._next_id
             self._next_id += 1
-            now = datetime.utcnow()
+            now = datetime.now(UTC)
             code = RecoveryCodeDTO(
                 id=cid,
                 user_id=user_id,
@@ -266,7 +266,7 @@ class InMemoryRecoveryCodeStore:
             if not c or c.used:
                 return False
             c.used = True
-            c.used_at = datetime.utcnow()
+            c.used_at = datetime.now(UTC)
             return True
 
     def delete_all_by_user(self, user_id: int) -> int:
@@ -423,7 +423,7 @@ class InMemoryMFAEnforcementStore:
     def upsert(self, role: str, factor_type: str, enabled: bool = True) -> MFAEnforcementDTO:
         with self._lock:
             existing_id = self._role_idx.get(role)
-            now = datetime.utcnow()
+            now = datetime.now(UTC)
             if existing_id is not None:
                 e = self._enforcements[existing_id]
                 e.factor_type = factor_type

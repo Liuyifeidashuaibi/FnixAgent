@@ -37,7 +37,7 @@ import logging
 import os
 import threading
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 
 logger = logging.getLogger(__name__)
 
@@ -414,7 +414,7 @@ class RuleEngine:
             with self._lock:
                 rules_snapshot = list(self._rules)
             matches: list[RuleMatch] = []
-            now = datetime.utcnow().isoformat()
+            now = datetime.now(UTC).isoformat()
             for rule in rules_snapshot:
                 if rule.matches(event):
                     match = RuleMatch(

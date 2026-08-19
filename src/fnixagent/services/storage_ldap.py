@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import threading
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 
 from fnixagent.core.security.auth.ldap import LDAPConfig
 
@@ -146,7 +146,7 @@ class InMemoryLDAPConfigStore:
         with self._lock:
             cid = self._next_id
             self._next_id += 1
-            now = datetime.utcnow()
+            now = datetime.now(UTC)
             cfg = LDAPConfigDTO(
                 id=cid,
                 name=name,
@@ -194,7 +194,7 @@ class InMemoryLDAPConfigStore:
             ):
                 if k in kwargs and kwargs[k] is not None:
                     setattr(cfg, k, kwargs[k])
-            cfg.updated_at = datetime.utcnow()
+            cfg.updated_at = datetime.now(UTC)
             return cfg
 
     def delete_config(self, config_id: int) -> bool:
@@ -209,7 +209,7 @@ class InMemoryLDAPConfigStore:
         with self._lock:
             cfg = self._configs.get(config_id)
             if cfg:
-                cfg.last_sync_at = datetime.utcnow()
+                cfg.last_sync_at = datetime.now(UTC)
 
 
 # ---------------------------------------------------------------------------
@@ -314,7 +314,7 @@ class PgLDAPConfigStore:
         # 生成新 ID:取现有最大 ID + 1
         all_configs = self._load_all()
         new_id = max([c.id for c in all_configs], default=0) + 1
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         cfg = LDAPConfigDTO(
             id=new_id,
             name=name,
@@ -367,7 +367,7 @@ class PgLDAPConfigStore:
         ):
             if k in kwargs and kwargs[k] is not None:
                 setattr(cfg, k, kwargs[k])
-        cfg.updated_at = datetime.utcnow()
+        cfg.updated_at = datetime.now(UTC)
         with self._get_db().session() as s:
             r = s.get(self._Setting, self._key(config_id))
             if r:
@@ -387,7 +387,7 @@ class PgLDAPConfigStore:
     def mark_synced(self, config_id: int) -> None:
         cfg = self.get_config(config_id)
         if cfg:
-            cfg.last_sync_at = datetime.utcnow()
+            cfg.last_sync_at = datetime.now(UTC)
             with self._get_db().session() as s:
                 r = s.get(self._Setting, self._key(config_id))
                 if r:

@@ -27,7 +27,7 @@ import logging
 import os
 import threading
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from functools import lru_cache
 
 logger = logging.getLogger(__name__)
@@ -135,7 +135,7 @@ class KDFManager:
         return DerivedKey(
             key=key,
             context=context,
-            derived_at=datetime.utcnow().isoformat(),
+            derived_at=datetime.now(UTC).isoformat(),
             kdk_id=self._kdk_id,
         )
 

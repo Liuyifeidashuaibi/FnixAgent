@@ -32,7 +32,7 @@ import math
 import threading
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 
 logger = logging.getLogger(__name__)
 
@@ -218,7 +218,7 @@ class BehaviorAnalyzer:
             if not window:
                 baseline = BehaviorBaseline(
                     user_id=user_id,
-                    trained_at=datetime.utcnow().isoformat(),
+                    trained_at=datetime.now(UTC).isoformat(),
                 )
                 with self._lock:
                     self._baselines[user_id] = baseline
@@ -245,7 +245,7 @@ class BehaviorAnalyzer:
                 mean_data_volume=mean_data,
                 std_data_volume=std_data,
                 active_hours=active_hours,
-                trained_at=datetime.utcnow().isoformat(),
+                trained_at=datetime.now(UTC).isoformat(),
             )
             with self._lock:
                 self._baselines[user_id] = baseline
@@ -258,7 +258,7 @@ class BehaviorAnalyzer:
             logger.warning("[behavior] 训练基线失败: %s", exc)
             return BehaviorBaseline(
                 user_id=user_id,
-                trained_at=datetime.utcnow().isoformat(),
+                trained_at=datetime.now(UTC).isoformat(),
             )
 
     def analyze(self, features: BehaviorFeatures) -> AnomalyScore:

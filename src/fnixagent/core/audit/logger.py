@@ -38,7 +38,7 @@ import hashlib
 import json
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 
 logger = logging.getLogger(__name__)
 
@@ -317,7 +317,7 @@ class AuditLogger:
         try:
             detail = _desensitize_detail(detail or {})
             detail_json = json.dumps(detail, sort_keys=True, ensure_ascii=False)
-            now = datetime.utcnow()
+            now = datetime.now(UTC)
             created_at_iso = now.isoformat()
 
             # 获取上一条记录的 hash

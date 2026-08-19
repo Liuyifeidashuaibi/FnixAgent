@@ -14,7 +14,7 @@ import os
 import sys
 import uuid
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import UTC, datetime
 
 import yaml
 from fastapi import FastAPI, Request
@@ -185,7 +185,7 @@ async def lifespan(app: FastAPI):
             print("[main] WARNING: SERVICE_DEBUG=true in production — gateway auth is open")
 
     app.state.settings = settings
-    app.state.start_time = datetime.utcnow()
+    app.state.start_time = datetime.now(UTC)
     app.state.mode = mode
 
     # 传统模式: 构建 AgentScheduler

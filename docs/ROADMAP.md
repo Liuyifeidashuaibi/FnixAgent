@@ -16,7 +16,6 @@ Make every developer and knowledge worker 10× more productive on their own mach
 
 These are the items the core team is actively working on.
 
-- [ ] **v1.0.0 GA** — Tauri 2 desktop, three-process harness, BYOK-only GA
 - [ ] **Work mode artifact pipeline** — DOCX / XLSX / PDF generation with template support
 - [ ] **Code mode diff review** — `@file` references, Accept/Reject per hunk, multi-file plans
 - [ ] **KTG / STP / MFP self-evolution kernel** — Knowledge-Task Graph, Skill-Task Pipeline, Memory-Formation Protocol
@@ -63,6 +62,7 @@ These are the items the core team is actively working on.
 
 ### 2026-Q3
 
+- ✅ **v1.0.0 GA** — Tauri 2 desktop, three-process harness, BYOK-only GA, production hardening, PolyForm Noncommercial license
 - ✅ **v1.0.0-beta.1** — Tauri 2 desktop, three-process harness, BYOK-only
 - ✅ **MarkdownMemoryStore** — Markdown source-of-truth memory (EverOS pattern)
 - ✅ **RetrievalGate** — complexity-aware memory retrieval
@@ -93,12 +93,12 @@ See [CHANGELOG.md](CHANGELOG.md) for the full history.
 
 We score every candidate feature on four axes (each 1–5):
 
-| Axis | Question |
-|------|----------|
-| **Impact** | How many users benefit, and how much? |
-| **Fit** | How well does it advance the mission above? |
-| **Cost** | How much engineering, design, and ongoing maintenance? |
-| **Risk** | Security, privacy, or stability risk? |
+| Axis       | Question                                               |
+| ---------- | ------------------------------------------------------ |
+| **Impact** | How many users benefit, and how much?                  |
+| **Fit**    | How well does it advance the mission above?            |
+| **Cost**   | How much engineering, design, and ongoing maintenance? |
+| **Risk**   | Security, privacy, or stability risk?                  |
 
 A feature moves from **Maybe → Later → Next** when its `Impact × Fit - Cost - Risk` clears the threshold, **or** when a community poll gives it strong signal.
 
@@ -113,4 +113,4 @@ A feature moves from **Maybe → Later → Next** when its `Impact × Fit - Cost
 
 ---
 
-_Last updated: 2026-08-17 · Next review: monthly_
+_Last updated: 2026-08-20 · Next review: monthly_

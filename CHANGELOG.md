@@ -182,7 +182,7 @@
 
 - **清理根目录冗余文件**: 移除 FNIXAGENT_CODE_LEVEL_UPGRADE.md、FNIXAGENT_TOP_TIER_UPGRADE_PLAN.md、FNIXAGENT_TECH_PLAN_V2.md 等临时规划文档
 
-## [1.1.0] - 2026-07-13
+## [0.2.0] - 2026-07-13
 
 ### Added
 
@@ -222,7 +222,7 @@
 - 新增 KDK 分离(KDF + HKDF-SHA256),主密钥派生与数据密钥分离
 - 新增密钥泄露检测(detect-secrets + gitleaks)pre-commit 钩子
 
-## [1.0.0] - 2026-01-01
+## [0.1.0] - 2026-01-01
 
 ### Added
 
@@ -237,6 +237,7 @@
 - 身份认证:LDAP/AD 域集成、SSO(SAML 2.0 / OAuth 2.0)、MFA(TOTP / 短信)
 - 部署:Docker / docker-compose / Helm / Terraform 多环境部署支持
 
-[Unreleased]: https://github.com/Liuyifeidashuaibi/FnixAgent/compare/v1.1.0...HEAD
-[1.1.0]: https://github.com/Liuyifeidashuaibi/FnixAgent/compare/v1.0.0...v1.1.0
+[Unreleased]: https://github.com/Liuyifeidashuaibi/FnixAgent/compare/v1.0.0...HEAD
 [1.0.0]: https://github.com/Liuyifeidashuaibi/FnixAgent/releases/tag/v1.0.0
+[0.2.0]: https://github.com/Liuyifeidashuaibi/FnixAgent/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/Liuyifeidashuaibi/FnixAgent/releases/tag/v0.1.0

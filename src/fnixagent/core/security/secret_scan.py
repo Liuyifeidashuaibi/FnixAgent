@@ -36,7 +36,7 @@ import re
 import threading
 from collections import Counter
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 
 logger = logging.getLogger(__name__)
 
@@ -299,7 +299,7 @@ class SecretScanner:
         Returns:
             ScanResult 汇总
         """
-        start = datetime.utcnow()
+        start = datetime.now(UTC)
         result = ScanResult()
         try:
             if not os.path.isdir(dir_path):
@@ -333,7 +333,7 @@ class SecretScanner:
         except Exception as exc:
             logger.warning("[secret_scan] 扫描目录异常 %s: %s", dir_path, exc)
         # 计算耗时
-        elapsed = (datetime.utcnow() - start).total_seconds() * 1000.0
+        elapsed = (datetime.now(UTC) - start).total_seconds() * 1000.0
         result.duration_ms = round(elapsed, 2)
         return result
 

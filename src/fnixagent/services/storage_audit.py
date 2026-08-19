@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import os
 import threading
-from datetime import datetime
+from datetime import UTC, datetime
 
 from fnixagent.core.audit.logger import AuditLogDTO
 
@@ -65,7 +65,7 @@ class InMemoryAuditStore:
                 user_agent=user_agent,
                 prev_hash=prev_hash,
                 entry_hash=entry_hash,
-                created_at=created_at or datetime.utcnow(),
+                created_at=created_at or datetime.now(UTC),
             )
             self._logs[lid] = log
             return log
@@ -185,7 +185,7 @@ class PgAuditStore:
                 user_agent=user_agent,
                 prev_hash=prev_hash,
                 entry_hash=entry_hash,
-                created_at=created_at or datetime.utcnow(),
+                created_at=created_at or datetime.now(UTC),
             )
             session.add(log)
             session.flush()  # 获取 id

@@ -31,7 +31,7 @@ from __future__ import annotations
 import re
 import threading
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 
@@ -271,7 +271,7 @@ class SkillMarket:
                 raise SkillStatusError(f"Cannot submit skill '{entry.name}': no version added")
             entry.status = SkillStatus.PENDING_REVIEW
             entry.reviewer_id = reviewer_id
-            entry.updated_at = datetime.utcnow()
+            entry.updated_at = datetime.now(UTC)
             return entry
 
     def approve(
@@ -298,9 +298,9 @@ class SkillMarket:
             entry.status = SkillStatus.PUBLISHED
             entry.reviewer_id = reviewer_id
             entry.review_comment = comment
-            entry.reviewed_at = datetime.utcnow()
-            entry.published_at = datetime.utcnow()
-            entry.updated_at = datetime.utcnow()
+            entry.reviewed_at = datetime.now(UTC)
+            entry.published_at = datetime.now(UTC)
+            entry.updated_at = datetime.now(UTC)
             return entry
 
     def reject(
@@ -323,8 +323,8 @@ class SkillMarket:
             entry.status = SkillStatus.REJECTED
             entry.reviewer_id = reviewer_id
             entry.review_comment = comment
-            entry.reviewed_at = datetime.utcnow()
-            entry.updated_at = datetime.utcnow()
+            entry.reviewed_at = datetime.now(UTC)
+            entry.updated_at = datetime.now(UTC)
             return entry
 
     def deprecate(self, entry_id: str, reason: str = "") -> SkillMarketEntry:
@@ -336,9 +336,9 @@ class SkillMarket:
             entry = self._get_or_raise(entry_id)
             self._check_transition(entry, SkillStatus.DEPRECATED)
             entry.status = SkillStatus.DEPRECATED
-            entry.deprecated_at = datetime.utcnow()
+            entry.deprecated_at = datetime.now(UTC)
             entry.review_comment = reason
-            entry.updated_at = datetime.utcnow()
+            entry.updated_at = datetime.now(UTC)
             return entry
 
     def reactivate(self, entry_id: str) -> SkillMarketEntry:
@@ -353,7 +353,7 @@ class SkillMarket:
             entry.reviewer_id = ""
             entry.review_comment = ""
             entry.reviewed_at = None
-            entry.updated_at = datetime.utcnow()
+            entry.updated_at = datetime.now(UTC)
             return entry
 
     # ------------------------------------------------------------------
@@ -388,7 +388,7 @@ class SkillMarket:
                 )
             entry.versions.append(version)
             entry.latest_version = version.version
-            entry.updated_at = datetime.utcnow()
+            entry.updated_at = datetime.now(UTC)
             return entry
 
     def list_versions(self, entry_id: str) -> list[SkillVersion]:
@@ -543,7 +543,7 @@ class SkillMarket:
         with self._lock:
             entry = self._get_or_raise(entry_id)
             entry.install_count = max(0, entry.install_count + delta)
-            entry.updated_at = datetime.utcnow()
+            entry.updated_at = datetime.now(UTC)
             return entry.install_count
 
     def update_rating(self, entry_id: str, new_rating: float) -> SkillMarketEntry:
@@ -559,7 +559,7 @@ class SkillMarket:
             total = entry.rating * entry.rating_count + new_rating
             entry.rating_count += 1
             entry.rating = round(total / entry.rating_count, 2)
-            entry.updated_at = datetime.utcnow()
+            entry.updated_at = datetime.now(UTC)
             return entry
 
     # ------------------------------------------------------------------

@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import os
 import threading
-from datetime import datetime
+from datetime import UTC, datetime
 
 from fnixagent.core.security.rbac import (
     invalidate_all_permission_cache,
@@ -58,8 +58,8 @@ class RoleDTO:
         self.is_active = is_active
         self.sort_order = sort_order
         self.permission_codes = permission_codes or []
-        self.created_at = created_at or datetime.utcnow()
-        self.updated_at = updated_at or datetime.utcnow()
+        self.created_at = created_at or datetime.now(UTC)
+        self.updated_at = updated_at or datetime.now(UTC)
 
     def to_dict(self) -> dict:
         return {
@@ -96,7 +96,7 @@ class PermissionDTO:
         self.action = action
         self.description = description
         self.is_builtin = is_builtin
-        self.created_at = created_at or datetime.utcnow()
+        self.created_at = created_at or datetime.now(UTC)
 
     def to_dict(self) -> dict:
         return {
@@ -136,8 +136,8 @@ class DepartmentDTO:
         self.sort_order = sort_order
         self.description = description
         self.is_active = is_active
-        self.created_at = created_at or datetime.utcnow()
-        self.updated_at = updated_at or datetime.utcnow()
+        self.created_at = created_at or datetime.now(UTC)
+        self.updated_at = updated_at or datetime.now(UTC)
         self.children = children or []
 
     def to_dict(self) -> dict:
@@ -179,8 +179,8 @@ class PositionDTO:
         self.description = description
         self.is_active = is_active
         self.sort_order = sort_order
-        self.created_at = created_at or datetime.utcnow()
-        self.updated_at = updated_at or datetime.utcnow()
+        self.created_at = created_at or datetime.now(UTC)
+        self.updated_at = updated_at or datetime.now(UTC)
 
     def to_dict(self) -> dict:
         return {
@@ -415,7 +415,7 @@ class PgRbacStore:
                 r.is_active = is_active
             if sort_order is not None:
                 r.sort_order = sort_order
-            r.updated_at = datetime.utcnow()
+            r.updated_at = datetime.now(UTC)
             s.flush()
             # 角色变更可能影响已分配用户 → 全部失效
             invalidate_all_permission_cache()
@@ -650,7 +650,7 @@ class PgRbacStore:
                 r.is_active = is_active
             if sort_order is not None:
                 r.sort_order = sort_order
-            r.updated_at = datetime.utcnow()
+            r.updated_at = datetime.now(UTC)
             s.flush()
             return self._dept_to_dto(r)
 
@@ -740,7 +740,7 @@ class PgRbacStore:
                 r.is_active = is_active
             if sort_order is not None:
                 r.sort_order = sort_order
-            r.updated_at = datetime.utcnow()
+            r.updated_at = datetime.now(UTC)
             s.flush()
             return self._pos_to_dto(r)
 
@@ -953,7 +953,7 @@ class InMemoryRbacStore:
             for k in ("name", "description", "is_active", "sort_order"):
                 if k in kwargs and kwargs[k] is not None:
                     setattr(r, k, kwargs[k])
-            r.updated_at = datetime.utcnow()
+            r.updated_at = datetime.now(UTC)
             invalidate_all_permission_cache()
             return r
 
@@ -1067,7 +1067,7 @@ class InMemoryRbacStore:
             for k in ("name", "parent_id", "manager_id", "description", "is_active", "sort_order"):
                 if k in kwargs and kwargs[k] is not None:
                     setattr(r, k, kwargs[k])
-            r.updated_at = datetime.utcnow()
+            r.updated_at = datetime.now(UTC)
             return r
 
     def delete_department(self, dept_id: int) -> bool:
@@ -1118,7 +1118,7 @@ class InMemoryRbacStore:
             for k in ("name", "level", "description", "is_active", "sort_order"):
                 if k in kwargs and kwargs[k] is not None:
                     setattr(r, k, kwargs[k])
-            r.updated_at = datetime.utcnow()
+            r.updated_at = datetime.now(UTC)
             return r
 
     def delete_position(self, pos_id: int) -> bool:

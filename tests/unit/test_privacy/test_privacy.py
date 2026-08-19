@@ -48,7 +48,7 @@
 # Unauthorized copying, modification, distribution, or use is strictly prohibited.
 
 import time
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from fastapi import FastAPI
@@ -650,7 +650,7 @@ class TestUserSoftDelete:
         u1, _ = store.create("future1", "f1@e.com", "Pass1234")
         store.soft_delete_user(u1.id, retention_days=30)
         # 用未来时间查询,应包含
-        future = datetime.utcnow() + timedelta(days=31)
+        future = datetime.now(UTC) + timedelta(days=31)
         candidates = store.get_users_to_hard_delete(before=future)
         assert u1.id in [u.id for u in candidates]
 

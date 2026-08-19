@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import logging
 import threading
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +51,7 @@ def _run_due_syncs() -> None:
 
     store = get_ldap_config_store()
     configs = store.list_configs(include_inactive=False)
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
 
     for cfg in configs:
         # 判断是否到期
