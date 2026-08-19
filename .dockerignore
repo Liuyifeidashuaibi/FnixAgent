@@ -72,7 +72,6 @@ assets/traces/
 assets/snapshots/
 
 # 配置文件
-config/
 *.toml
 !pyproject.toml
 

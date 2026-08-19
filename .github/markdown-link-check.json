@@ -11,6 +11,27 @@
     },
     {
       "pattern": "^https://github\\.com/.*/(issues|pulls|actions|commit|blob|tree)/[a-f0-9]{6,}$"
+    },
+    {
+      "pattern": "^https://github\\.com/.*/discussions"
+    },
+    {
+      "pattern": "^https://www\\.npmjs\\.com/"
+    },
+    {
+      "pattern": "^https://jsfiddle\\.net/"
+    },
+    {
+      "pattern": "^https://googleprojectzero\\.blogspot\\.com/"
+    },
+    {
+      "pattern": "^https://tauri\\.app/"
+    },
+    {
+      "pattern": "^https://developer\\.android\\.com/"
+    },
+    {
+      "pattern": "^\\.\\/"
     }
   ],
   "httpHeaders": [

@@ -61,6 +61,17 @@ def _get_moderation_service():
         return None
 
 
+def _to_aware(dt: datetime) -> datetime:
+    """将 naive datetime 视为 UTC 并附加 tzinfo，确保与 aware datetime 可比较。
+
+    数据库 / 测试 fixture 中存储的 datetime 可能是 naive 的（无 tzinfo），
+    而 ``datetime.now(UTC)`` 返回 aware datetime，直接比较会抛 TypeError。
+    """
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=UTC)
+    return dt
+
+
 # ---------------------------------------------------------------------------
 # 路由
 # ---------------------------------------------------------------------------
@@ -86,7 +97,7 @@ async def get_overview(_admin: dict = Depends(require_admin)):
     pending_deletion = sum(1 for u in all_users if u.profile.get("deleted_at"))
     now = datetime.now(UTC)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    today_new = sum(1 for u in all_users if u.created_at and u.created_at >= today_start)
+    today_new = sum(1 for u in all_users if u.created_at and _to_aware(u.created_at) >= today_start)
 
     # 审计统计(近 24h)
     since = now - timedelta(hours=24)
@@ -156,7 +167,9 @@ async def get_user_stats(_admin: dict = Depends(require_admin)):
     for i in range(6, -1, -1):
         day_start = (now - timedelta(days=i)).replace(hour=0, minute=0, second=0, microsecond=0)
         day_end = day_start + timedelta(days=1)
-        count = sum(1 for u in all_users if u.created_at and day_start <= u.created_at < day_end)
+        count = sum(
+            1 for u in all_users if u.created_at and day_start <= _to_aware(u.created_at) < day_end
+        )
         daily_new.append(
             {
                 "date": day_start.strftime("%Y-%m-%d"),
@@ -315,7 +328,7 @@ async def get_trends(
         # 当日新增用户
         all_users, _ = user_store.list_users(limit=10000)
         new_users = sum(
-            1 for u in all_users if u.created_at and day_start <= u.created_at < day_end
+            1 for u in all_users if u.created_at and day_start <= _to_aware(u.created_at) < day_end
         )
 
         # 当日审计量
