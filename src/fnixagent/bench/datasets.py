@@ -17,14 +17,15 @@
 
 from __future__ import annotations
 
+import io
 import json
 import logging
 import re
 import urllib.request
 import zipfile
-import io
+from collections.abc import Callable, Iterator
 from pathlib import Path
-from typing import Any, Callable, Iterator
+from typing import Any
 
 from fnixagent.bench.schema import BenchTask
 
@@ -371,8 +372,7 @@ def _load_swe_bench(cache: Path) -> list[BenchTask]:
     cache.mkdir(parents=True, exist_ok=True)
     pq = cache / "test.parquet"
     if not pq.is_file():
-        # 优先本地 bench-datasets 下降到的副本
-        local_pq = _local_clone("..")
+        # 优先本地 bench-datasets 下载到的副本
         cand = Path(__file__).resolve().parents[2] / "data" / "bench-datasets" / "swe-bench-lite-test.parquet"
         if cand.is_file():
             import shutil as _sh

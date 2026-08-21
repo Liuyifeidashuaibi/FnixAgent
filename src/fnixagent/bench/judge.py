@@ -19,8 +19,9 @@ from __future__ import annotations
 import json
 import logging
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any
 
 from fnixagent.bench.schema import BenchTask, FailureType, TaskRun, TaskStatus
 
@@ -153,13 +154,24 @@ failure_type 仅在 success=false 时填写。判定标准：输出结果是否�
     def _heuristic_inner(self, task: BenchTask, run: TaskRun) -> Verdict | None:
         err = run.error or ""
 
-        # 基础设施错误优先识别：模型配额/纼权失败属于环境问题，不是 Agent 能力缺陷
-        if run.status == TaskStatus.FAILURE and err and _INFRA_PAT.search(err):
+        # 基础设施错误最优先识别：模型配额/鉴权失败属于环境问题，不是 Agent 能力缺陷。
+        # 注意：不能依赖 run.status == FAILURE —— agent 返回失败时 status 仍是 PENDING，
+        # 之前因此漏判，上千条配额耗尽被误归类为 incomplete_output。
+        if err and _INFRA_PAT.search(err):
             return Verdict(
-                TaskStatus.FAILURE, FailureType.OTHER.value,
-                evidence=f"基础设施错误(LLM 纼权/配额): {err[:240]}",
+                TaskStatus.INFRA_SKIP, "",
+                evidence=f"基础设施错误(LLM 配额/鉴权)，待配额恢复后重跑: {err[:200]}",
                 method="heuristic",
             )
+        # 工具调用错误里也可能携带配额信息（中途配额耗尽）
+        if run.tool_calls:
+            joined = " ".join(str(c.get("output_preview", "")) for c in run.tool_calls[-3:])
+            if _INFRA_PAT.search(joined):
+                return Verdict(
+                    TaskStatus.INFRA_SKIP, "",
+                    evidence=f"工具输出含配额/鉴权错误: {joined[:200]}",
+                    method="heuristic",
+                )
 
         if run.status == TaskStatus.FAILURE and (
             any(m in err for m in _CRASH_MARKERS) or err

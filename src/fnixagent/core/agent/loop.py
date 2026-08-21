@@ -39,6 +39,7 @@ from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
+_logger = logger
 
 # Models sometimes emit fake XML / markdown instead of native tool_calls.
 _PSEUDO_WRITE_RE = re.compile(
@@ -327,8 +328,19 @@ class AgenticLoop:
 5. 如果工具调用失败，分析原因并尝试其他方法
 6. 回复保持简洁，直接给出答案
 
+7. {workspace_root} 就是你的真实工作目录——禁止反复用 ls/glob 侦察确认；
+   侦察类调用最多 2 次，之后必须开始动手产出
+8. 任务要求的文件必须用 write_file 实际写入磁盘；只描述计划或只在回复里
+   粘贴代码而不调用工具，一律视为未完成
+9. 同一工具 + 同一参数连续调用 2 次即视为死循环，立即改变策略
+  （换工具、换参数，或直接产出结果）
+
 你当前的工作目录是: {workspace_root}
 """
+
+    # 工具死循环熔断阈值（BenchForge 全量评测头号缺陷修复）
+    _LOOP_NUDGE_AT = 2  # 连续相同签名调用达到此次数 → 注入纠偏消息
+    _LOOP_BREAK_AT = 4  # 纠偏后仍重复 → 熔断止损
 
     def __init__(
         self,
@@ -374,6 +386,14 @@ class AgenticLoop:
         self._tool_nudge_used = False
         self._pseudo_recoveries = 0
         self._last_round_was_pseudo = False
+        self._last_tool_signature = None
+        self._tool_repeat_count = 0
+        self._loop_nudge_used = False
+        # A1: 文件级死循环检测（同一文件被反复写→读→写→读）
+        self._written_file_paths: set[str] = set()      # 所有已写入的文件
+        self._read_file_paths: set[str] = set()          # 所有已读取的文件
+        self._file_write_count: dict[str, int] = {}      # 每个文件写入次数
+        self._file_ops: dict[str, list[str]] = {}        # 每个文件的操作序列 ["write","read",...]
 
         # 对话历史
         self.messages: list[Message] = []
@@ -407,6 +427,15 @@ class AgenticLoop:
         self._tool_nudge_used = False
         self._pseudo_recoveries = 0
         self._last_round_was_pseudo = False
+        self._last_tool_signature = None
+        self._tool_repeat_count = 0
+        self._loop_nudge_used = False
+        # A1: 文件级死循环检测
+        self._written_file_paths = set()
+        self._read_file_paths = set()
+        self._file_write_count = {}
+        self._file_ops = {}
+        self._file_deadloop_msg: str | None = None  # A1 文件死循环检测结果
         # Spec 6 VMAO: 重置 Reflexion 状态
         self._consecutive_failures = 0
         self._reflect_rounds_used = 0
@@ -572,6 +601,9 @@ class AgenticLoop:
 
                         # 执行工具
                         tool_result = await self._execute_tool(tool_name, tool_args)
+                        self._track_tool_repeat(tool_name, tool_args)
+                        # A1: 文件级死循环检测（同一文件反复写/读交替）
+                        self._track_file_op(tool_name, tool_args)
 
                         trace = StepTrace(
                             step_index=step_idx,
@@ -604,6 +636,50 @@ class AgenticLoop:
                             )
                         )
 
+                    # 工具死循环熔断：连续相同签名调用 → 先纠偏，纠偏无效即止损
+                    if self._tool_repeat_count >= self._LOOP_BREAK_AT:
+                        err = (
+                            f"检测到工具调用死循环（{self._last_tool_signature} 已连续重复 "
+                            f"{self._tool_repeat_count} 次），纠偏无效，熔断止损。"
+                        )
+                        if self.on_response:
+                            self.on_response(err)
+                        result = AgentLoopResult(
+                            success=False,
+                            error=err,
+                            steps=self.traces,
+                            total_tokens=total_tokens,
+                            total_duration_ms=(time.time() - start_time) * 1000,
+                        )
+                        if self.enable_evolution:
+                            self._trigger_evolution_hook(result)
+                        return result
+                    # A1: 文件级死循环检测（同一文件反复写/读交替）
+                    if self._file_deadloop_msg:
+                        file_dead_err = self._file_deadloop_msg
+                        self._file_deadloop_msg = None
+                        err = f"检测到文件死循环: {file_dead_err}"
+                        if self.on_response:
+                            self.on_response(err)
+                        result = AgentLoopResult(
+                            success=False,
+                            error=err,
+                            steps=self.traces,
+                            total_tokens=total_tokens,
+                            total_duration_ms=(time.time() - start_time) * 1000,
+                        )
+                        if self.enable_evolution:
+                            self._trigger_evolution_hook(result)
+                        return result
+                    if (
+                        self._tool_repeat_count >= self._LOOP_NUDGE_AT
+                        and not self._loop_nudge_used
+                    ):
+                        self._loop_nudge_used = True
+                        messages_for_llm.append(
+                            {"role": "user", "content": self._loop_nudge_content()}
+                        )
+
                     if (
                         self.force_tool_delivery
                         and self._last_round_was_pseudo
@@ -623,10 +699,12 @@ class AgenticLoop:
                             self._trigger_evolution_hook(result)
                         return result
 
-            # 达到最大步数
+            # 达到最大步数 — A2: 生成收尾摘要，替代冷错误
+            wrapup = self._build_wrapup(step_idx + 1, self._written_file_paths)
             return AgentLoopResult(
                 success=False,
-                error=f"超过最大步数 ({self.max_steps})",
+                error=wrapup,
+                response=wrapup,
                 steps=self.traces,
                 total_tokens=total_tokens,
                 total_duration_ms=(time.time() - start_time) * 1000,
@@ -823,7 +901,7 @@ class AgenticLoop:
                                     },
                                 )
                             except Exception:
-                                pass
+                                _logger.debug('Unhandled exception', exc_info=True)
 
                 # Spec 2: 思考链可见 — 真实 step 标记（具体内容由 LLM 返回后补发）
                 yield {"type": "thinking", "data": f"Step {step_idx + 1}: 思考中..."}
@@ -873,14 +951,14 @@ class AgenticLoop:
                                 _ev_type, _ev_data = hb_task.result()
                                 yield {"type": _ev_type, "data": _ev_data}
                             except Exception:
-                                pass
+                                _logger.debug('Unhandled exception', exc_info=True)
                 finally:
                     _hb_stop.set()
                     _hb_task.cancel()
                     try:
                         await _hb_task
                     except (asyncio.CancelledError, Exception):
-                        pass
+                        _logger.debug('Unhandled exception', exc_info=True)
                     if "llm_task" in locals() and not llm_task.done():
                         llm_task.cancel()
 
@@ -929,7 +1007,7 @@ class AgenticLoop:
                             "on" if _bg_compactor is not None else "off",
                         )
                 except Exception:
-                    pass
+                    _logger.debug('Unhandled exception', exc_info=True)
 
                 text_content, tool_calls, reasoning_content = self._parse_llm_response(llm_result)
 
@@ -1045,6 +1123,9 @@ class AgenticLoop:
                         yield {"type": "tool_call", "data": {"name": tool_name, "args": tool_args}}
 
                         tool_result = await self._execute_tool(tool_name, tool_args)
+                        self._track_tool_repeat(tool_name, tool_args)
+                        # A1: 文件级死循环检测
+                        self._track_file_op(tool_name, tool_args)
                         result_text = (
                             tool_result if isinstance(tool_result, str) else str(tool_result)
                         )
@@ -1230,6 +1311,40 @@ class AgenticLoop:
                                 }
                             )
 
+                    # 工具死循环熔断（BenchForge F1：连续相同签名调用 → 纠偏 → 止损）
+                    if self._tool_repeat_count >= self._LOOP_BREAK_AT:
+                        err = (
+                            f"检测到工具调用死循环（{self._last_tool_signature} 已连续重复 "
+                            f"{self._tool_repeat_count} 次），纠偏无效，熔断止损。"
+                        )
+                        await _aflush_step()
+                        yield {"type": "error", "data": err}
+                        return
+                    # A1: 文件级死循环检测（同一文件反复写/读交替）
+                    if self._file_deadloop_msg:
+                        file_dead_err = self._file_deadloop_msg
+                        self._file_deadloop_msg = None
+                        await _aflush_step()
+                        yield {"type": "error", "data": f"检测到文件死循环: {file_dead_err}"}
+                        return
+                    if (
+                        self._tool_repeat_count >= self._LOOP_NUDGE_AT
+                        and not self._loop_nudge_used
+                    ):
+                        self._loop_nudge_used = True
+                        nudge = self._loop_nudge_content()
+                        messages_for_llm.append({"role": "user", "content": nudge})
+                        self.messages.append(Message(role=MessageRole.USER, content=nudge))
+                        yield {
+                            "type": "observation",
+                            "data": {
+                                "name": "loop_guard",
+                                "success": False,
+                                "summary": "检测到重复工具调用，已注入纠正指令",
+                                "duration_ms": 0,
+                            },
+                        }
+
                     # Spec 6 VMAO: Reflexion 自反思重试闭环
                     #
                     # 触发条件: 本轮有失败 + 累计连续失败 ≥2 + 反思轮数未超限
@@ -1318,21 +1433,127 @@ class AgenticLoop:
                             "previous_failures": self._recent_failures[-3:],
                         },
                     }
-            # P0-1: 超过最大步数 error 退出前 flush, 保留完整轨迹供 resume
+            # A2: 步数耗尽 — 收尾摘要替代冷错误
+            wrapup = self._build_wrapup(step_idx + 1, self._written_file_paths)
             await _aflush_step()
-            yield {"type": "error", "data": f"超过最大步数 ({self.max_steps})"}
+            yield {"type": "text", "data": wrapup}
+            yield {"type": "done", "data": {"steps": len(self.traces), "duration_ms": (time.time() - start_time) * 1000, "exhausted": True}}
 
         except Exception as e:
             # P0-1: 异常退出前 best-effort flush, 保留崩溃现场
             try:
                 await _aflush_step()
             except Exception:
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
             yield {"type": "error", "data": str(e)}
 
     # ============================================================
     # 内部方法
     # ============================================================
+
+    def _build_wrapup(self, steps_used: int, files_written: set[str] | None = None) -> str:
+        """A2: 步数耗尽时生成结构化收尾摘要，替代冷错误。
+
+        摘要包含：已写入文件、已执行步数、最后思考内容、下一步建议。
+        """
+        if files_written is None:
+            files_written = self._written_file_paths
+        parts = [f"已达到最大步数限制（{self.max_steps} 步），自动结束。"]
+        if files_written:
+            parts.append(f"\n\n已创建/修改的文件（{len(files_written)} 个）：")
+            for fp in sorted(files_written)[:10]:
+                parts.append(f"  - {fp}")
+            if len(files_written) > 10:
+                parts.append(f"  ... 及其他 {len(files_written) - 10} 个文件")
+        if self.traces:
+            last_thought = next(
+                (t.thought[:200] for t in reversed(self.traces) if t.thought and t.thought.strip()),
+                None,
+            )
+            if last_thought:
+                parts.append(f"\n\n最后思考：{last_thought}")
+            tool_count = len([t for t in self.traces if t.tool_name])
+            parts.append(f"\n共执行 {len(self.traces)} 步，其中 {tool_count} 次工具调用。")
+        if files_written:
+            parts.append("\n\n以上产物已保存到工作区，可直接使用。如需继续，请重新描述任务。")
+        else:
+            parts.append("\n\n未产出任何文件，请检查任务描述是否清晰，或尝试重新发起。")
+        return "".join(parts)
+
+    def _track_tool_repeat(self, tool_name: str, tool_args: dict) -> int:
+        """追踪工具调用签名，返回连续重复次数（1 = 全新调用）。"""
+        try:
+            sig = (
+                tool_name
+                + ":"
+                + json.dumps(tool_args, sort_keys=True, ensure_ascii=False)[:200]
+            )
+        except Exception:  # noqa: BLE001
+            sig = tool_name + ":<unserializable>"
+        if sig == self._last_tool_signature:
+            self._tool_repeat_count += 1
+        else:
+            self._last_tool_signature = sig
+            self._tool_repeat_count = 1
+        return self._tool_repeat_count
+
+    def _extract_file_path(self, tool_name: str, tool_args: dict) -> str:
+        """从工具名和参数中提取文件路径，写/读/编辑类工具都用这个提取。"""
+        if tool_name not in ("write_file", "read_file", "edit_file", "writeFile", "editFile",
+                              "create_file", "glob", "apply_diff", "search_content"):
+            return ""
+        if isinstance(tool_args, dict):
+            return str(tool_args.get("file_path") or tool_args.get("path") or
+                       tool_args.get("file") or tool_args.get("pattern") or "")
+        return ""
+
+    def _track_file_op(self, tool_name: str, tool_args: dict) -> str | None:
+        """文件级死循环检测。返回非空字符串 = 熔断错误消息。"""
+        self._file_deadloop_msg = None
+        fpath = self._extract_file_path(tool_name, tool_args)
+        if not fpath:
+            return None
+        # 分类操作类型
+        if tool_name in ("write_file", "writeFile", "create_file"):
+            op = "write"
+            # 同一文件写入超过 2 次 → 怀疑死循环重写
+            self._file_write_count[fpath] = self._file_write_count.get(fpath, 0) + 1
+            if self._file_write_count[fpath] >= 3:
+                msg = (
+                    f"检测到文件死循环重写：{fpath} 已被写入 {self._file_write_count[fpath]} 次，"
+                    "结果不再变化。请停止重写，直接给出最终答复。"
+                )
+                self._file_deadloop_msg = msg
+                return msg
+            self._written_file_paths.add(fpath)
+        elif tool_name in ("read_file", "glob", "search_content"):
+            op = "read"
+            self._read_file_paths.add(fpath)
+        else:
+            return None
+        # 交替操作检测：写→读→写→读 同一文件
+        seq = self._file_ops.setdefault(fpath, [])
+        seq.append(op)
+        if len(seq) >= 4:
+            last4 = seq[-4:]
+            if last4 == ["write", "read", "write", "read"] or last4 == ["read", "write", "read", "write"]:
+                msg = (
+                    f"检测到文件操作死循环：{fpath} 处于 {last4[0]}→{last4[1]}→{last4[2]}→{last4[3]} 交替中，"
+                    "信息不会再变化。请立刻停止侦察，直接产出最终结果。"
+                )
+                self._file_deadloop_msg = msg
+                return msg
+        return None
+
+    def _loop_nudge_content(self) -> str:
+        return (
+            f"检测到你在连续重复相同的工具调用（{self._last_tool_signature}，"
+            f"已连续 {self._tool_repeat_count} 次），结果不会再变化。\n"
+            "请立即停止侦察，改变策略：\n"
+            "- 你的真实工作目录就是系统提示中的 workspace 路径，无需再确认；\n"
+            "- 若任务要求产出文件，立刻用 write_file 写出完整内容；\n"
+            "- 若信息已足够，直接给出最终答复，不要再调用相同工具。"
+        )
 
     def _should_nudge_for_tools(self, text_content: str, step_idx: int) -> bool:
         if not self.force_tool_delivery or self._tool_nudge_used:
@@ -1568,7 +1789,7 @@ class AgenticLoop:
                     traces=[t.to_summary() for t in self.traces],
                 )
             except Exception:
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
 
         # 每 N 次执行触发一次进化
         if self._execution_count % self.evolution_interval == 0:
