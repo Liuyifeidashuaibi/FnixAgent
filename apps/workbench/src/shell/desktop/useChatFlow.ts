@@ -50,6 +50,24 @@ import {
   type ActivityItem,
 } from "./activityTypes";
 
+/** 把后端返回的裸技术错误转译为用户可行动的指引文案。
+ * 原文仍保留在 activity/控制台中供诊断，此处只优化面向用户的表述。
+ */
+export function humanizeErrorMessage(raw: string): string {
+  const msg = String(raw || "");
+  if (!msg) return msg;
+  if (/insufficient_quota|Free quota exhausted|HTTP 40[13]/i.test(msg)) {
+    return "模型配额已耗尽或鉴权失败：请在设置中更换有效模型或 Key（已自动尝试兜底模型链）。";
+  }
+  if (/Too Many Requests|HTTP 429/i.test(msg)) {
+    return "模型服务限流中，系统已自动重试；若持续失败请稍后重试或切换模型。";
+  }
+  if (/任务超时|TimeoutError/i.test(msg)) {
+    return "任务执行超时：可将大任务拆分，或稍后重试。";
+  }
+  return msg;
+}
+
 export type EvolutionRecord = {
   evolution: EvolutionInfo;
   durationMs: number;
@@ -353,7 +371,8 @@ function createStreamHandlers(
       });
       setStatus(`Preview: ${fc.path || "file"}`);
     },
-    onError: (message: string) => {
+    onError: (rawMessage: string) => {
+      const message = humanizeErrorMessage(rawMessage);
       setError(message);
       // 同步 runStore.error：FnixStatusBar / 其他订阅 runStore 的组件依赖此字段显示错误，
       // 原代码仅 setError(本地) 不调 runStore.setError，导致状态栏看不到错误反馈
