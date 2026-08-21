@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import threading
 from pathlib import Path
@@ -16,6 +17,9 @@ from typing import Any
 
 from fnixagent.harness.paths import fnix_home
 from fnixagent.harness.workspace import ensure_home_layout
+
+_logger = logging.getLogger(__name__)
+
 
 _MCP_DEFAULT = {
     "version": 1,
@@ -65,15 +69,35 @@ def read_config_toml() -> dict[str, Any]:
         return {}
 
 
+def _toml_value(value: Any) -> str:
+    """把标量/list 值序列化为 TOML 字面量。"""
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, (int, float)):
+        return repr(value)
+    if isinstance(value, (list, tuple)):
+        return "[" + ", ".join(_toml_value(v) for v in value) + "]"
+    s = str(value).replace("\\", "\\\\").replace('"', '\\"')
+    return f'"{s}"'
+
 def write_config_toml(data: dict[str, Any]) -> None:
+    """写回 BYOK 配置 — read-modify-write，未知键（如 model_fallbacks）保留。"""
     ensure_home_layout()
+    existing = read_config_toml()
+    merged: dict[str, Any] = dict(existing)
+    for key, value in (data or {}).items():
+        if value is not None and value != "":
+            merged[str(key)] = value
+    mcp_block = merged.pop("mcp", None)
+
     lines: list[str] = []
-    provider = str(data.get("provider") or "")
-    model = str(data.get("model") or "")
-    lines.append(f'provider = "{provider}"')
-    lines.append(f'model = "{model}"')
-    if data.get("base_url"):
-        lines.append(f'base_url = "{data["base_url"]}"')
+    for key in ("provider", "model", "base_url"):
+        if key in merged:
+            lines.append(f"{key} = {_toml_value(merged.pop(key))}")
+    for key, value in merged.items():
+        if isinstance(value, dict):
+            continue  # 保留未知嵌套段：跳过序列化但不清空语义认知（现有文件仅 mcp 段）
+        lines.append(f"{key} = {_toml_value(value)}")
     lines.append("")
     lines.append("[mcp]")
     lines.append("# servers configured via mcp.json")
@@ -189,6 +213,7 @@ def attach_mcp_tools_to_registry(tool_registry: Any, *, connect: bool = True) ->
                 try:
                     mcp.sync_tools(info.server_id)
                 except Exception:
+                    _logger.debug("Unhandled exception", exc_info=True)
                     continue
         return mcp.register_to_tool_registry(tool_registry)
     except Exception:

@@ -20,6 +20,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
+from fnixagent.harness.paths import default_workspace
 
 router = APIRouter(prefix="/work", tags=["work"])
 
@@ -110,7 +111,7 @@ async def work_stream(body: WorkStreamRequest, request: Request):
     """办公任务流式执行 — README 9 步流水线。"""
     from fnixagent.services.llm_policy import principal_is_admin, resolve_llm_for_request
 
-    workspace = body.workspace or os.getenv("FNIXAGENT_WORKSPACE") or os.getcwd()
+    workspace = body.workspace or str(default_workspace())
     raw_llm = body.llm.model_dump(exclude_none=True) if body.llm else None
     is_admin = principal_is_admin(request)
     llm_dict, llm_err = resolve_llm_for_request(raw_llm, is_admin=is_admin)
@@ -332,7 +333,7 @@ async def enqueue_work_job(body: WorkJobRequest, request: Request):
     from fnixagent.harness.work_jobs import enqueue_work_job as _enqueue
     from fnixagent.services.llm_policy import principal_is_admin, resolve_llm_for_request
 
-    workspace = body.workspace or os.getenv("FNIXAGENT_WORKSPACE") or os.getcwd()
+    workspace = body.workspace or str(default_workspace())
     raw_llm = body.llm.model_dump(exclude_none=True) if body.llm else None
     is_admin = principal_is_admin(request)
     llm_dict, llm_err = resolve_llm_for_request(raw_llm, is_admin=is_admin)
@@ -540,7 +541,7 @@ async def work_read_artifact(path: str, request: Request):
     import base64
     from pathlib import Path as PathLib
 
-    workspace = os.getenv("FNIXAGENT_WORKSPACE") or os.getcwd()
+    workspace = str(default_workspace())
     ws_abs = PathLib(workspace).resolve()
 
     # 路径解析：相对 workspace 或绝对路径
@@ -690,7 +691,7 @@ def _resolve_artifact_path(path: str, workspace: str | None = None) -> tuple[Any
     """
     from pathlib import Path as PathLib
 
-    ws = workspace or os.getenv("FNIXAGENT_WORKSPACE") or os.getcwd()
+    ws = workspace or str(default_workspace())
     ws_abs = PathLib(ws).resolve()
     raw_path = PathLib(path).expanduser()
     try:
@@ -944,6 +945,21 @@ async def work_apply_artifact_patch(req: ArtifactApplyRequest, request: Request)
 #   - 新 events 流式返回，同时持久化到同一 run_id
 
 
+def _redact_run_meta(meta: dict) -> dict:
+    """runs 对外响应脱敏：不把 API Key 回传给客户端。
+
+    存储层保留完整凭据供 resume 使用；仅在 HTTP 响应出口遮罩。
+    """
+    import copy
+
+    sanitized = copy.deepcopy(meta or {})
+    llm = sanitized.get("llm")
+    if isinstance(llm, dict):
+        for key_field in ("api_key", "apiKey"):
+            if llm.get(key_field):
+                llm[key_field] = "***redacted***"
+    return sanitized
+
 @router.get("/runs")
 async def work_list_runs(
     status: str | None = None,
@@ -996,7 +1012,7 @@ async def work_list_runs(
                 "status": row[3],
                 "created_at": row[4],
                 "updated_at": row[5],
-                "meta": meta,
+                "meta": _redact_run_meta(meta),
                 "resumable": row[3] in ("running", "failed", "interrupted"),
             }
         )
@@ -1016,9 +1032,12 @@ async def work_get_run(run_id: str):
     checkpoint = store.load_checkpoint(run_id)
     events = store.load_events(run_id, after_sequence=0)
 
+    public_run = dict(run)
+    if isinstance(public_run.get("meta"), dict):
+        public_run["meta"] = _redact_run_meta(public_run["meta"])
     return {
         "ok": True,
-        "run": run,
+        "run": public_run,
         "checkpoint": checkpoint,
         "events": events[-50:],  # 最近 50 条
         "events_total": len(events),
@@ -1163,7 +1182,7 @@ async def work_resume_run(run_id: str, request: Request):
             # Spec 4+: 传 run_id_override 让原 run_id 续写, 避免原 run 永远停留 interrupted
             async for event in run_work_stream(
                 user_input="(resume)",
-                workspace=meta.get("workspace") or os.getcwd(),
+                workspace=meta.get("workspace") or str(default_workspace()),
                 llm=llm_dict,
                 session_id=run.get("session_id") or "",
                 user_id=meta.get("user_id") or "desktop",

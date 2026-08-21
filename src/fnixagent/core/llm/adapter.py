@@ -83,6 +83,8 @@ class LLMAdapter:
         base_url: str = "",
         model_name: str = "",
         provider_name: str = "",
+        timeout: float | None = None,
+        fallback_models: list[str] | None = None,
     ):
         """
         Args:
@@ -90,12 +92,20 @@ class LLMAdapter:
             base_url: API 基础 URL (为空时使用默认值)
             model_name: 模型名 (为空时使用默认值)
             provider_name: 提供商名 (为空时自动检测)
+            timeout: 单条 LLM 请求超时(秒)；为空时取环境变量 FNIX_LLM_TIMEOUT，默认 120s
+            fallback_models: 模型熔断兜底链；主模型出现纼权/配额类终态错误
+                (HTTP 401/403/404, insufficient_quota 等) 时自动切换到下一模型。
+                为空时依次从 ~/.fnix/config.toml `model_fallbacks`、环境变量
+                LLM_MODEL_FALLBACKS / BENCH_MODEL_FALLBACKS (逗号分隔) 读取。
         """
         self._provider: OpenAICompatibleProvider | None = None
         self._provider_name = provider_name
         self._api_key = api_key
         self._base_url = base_url
         self._model_name = model_name
+        self._timeout = float(timeout) if timeout else float(os.getenv("FNIX_LLM_TIMEOUT", "120"))
+        self._fallback_models: list[str] = list(fallback_models or [])
+        self._fallback_cursor = 0
         self._configured = False
 
     def _auto_detect(self) -> None:
@@ -117,6 +127,16 @@ class LLMAdapter:
             self._model_name = str(harness_cfg.get("model") or "")
         if not self._base_url and harness_cfg.get("base_url"):
             self._base_url = str(harness_cfg.get("base_url") or "")
+        if not self._fallback_models:
+            cfg_fb = harness_cfg.get("model_fallbacks")
+            if isinstance(cfg_fb, (list, tuple)):
+                self._fallback_models = [str(m) for m in cfg_fb if str(m).strip()]
+            else:
+                env_fb = os.getenv("LLM_MODEL_FALLBACKS", "") or os.getenv("BENCH_MODEL_FALLBACKS", "")
+                if env_fb:
+                    self._fallback_models = [
+                        m.strip() for m in env_fb.split(",") if m.strip()
+                    ]
 
         # 优先使用显式 / harness 配置
         if self._api_key:
@@ -136,6 +156,7 @@ class LLMAdapter:
                 model_name=self._model_name or def_model,
                 api_key=self._api_key,
                 base_url=base,
+                timeout=self._timeout,
             )
             self._configured = True
             return
@@ -169,6 +190,7 @@ class LLMAdapter:
                     model_name=model,
                     api_key=api_key,
                     base_url=base,
+                    timeout=self._timeout,
                 )
                 self._configured = True
                 return
@@ -197,9 +219,49 @@ class LLMAdapter:
                     model_name=model,
                     api_key=api_key,
                     base_url=base,
+                    timeout=self._timeout,
                 )
                 self._configured = True
                 return
+
+    @staticmethod
+    def _is_terminal_model_error(exc: LLMError) -> bool:
+        """判断是否为模型级终态错误（纼权/配额/模型不存在），不可靠重试解决。"""
+        msg = str(exc)
+        return any(
+            marker in msg
+            for marker in (
+                "HTTP 401", "HTTP 403", "HTTP 404",
+                "insufficient_quota", "invalid_api_key",
+            )
+        )
+
+    def _try_next_fallback(self) -> bool:
+        """切换到下一个兜底模型；无可用兜底时返回 False。"""
+        if self._provider is None:
+            return False
+        candidates = [
+            m for m in self._fallback_models if m and m != (self._model_name or "")
+        ]
+        if self._fallback_cursor >= len(candidates):
+            return False
+        prev = self._model_name or "<default>"
+        next_model = candidates[self._fallback_cursor]
+        self._fallback_cursor += 1
+        import logging
+
+        logging.getLogger(__name__).warning(
+            "模型 %s 纼权/配额不可用，自动切换兜底模型 %s", prev, next_model,
+        )
+        self._model_name = next_model
+        self._provider = OpenAICompatibleProvider(
+            name=self._provider._name,
+            model_name=next_model,
+            api_key=self._provider._api_key,
+            base_url=self._provider._base_url,
+            timeout=self._timeout,
+        )
+        return True
 
     @property
     def is_configured(self) -> bool:
@@ -305,8 +367,19 @@ class LLMAdapter:
 
         # Sync httpx providers block the event loop if awaited directly —
         # always offload so /health and other requests stay responsive.
-        provider = self._provider
-        response: LLMResponse = await asyncio.to_thread(provider.chat, request)
+        # 熔断兜底：主模型遇到纼权/配额类终态错误时自动切换兜底模型重试。
+        while True:
+            request.model = model or self._model_name or ""
+            provider = self._provider
+            if provider is None:
+                raise LLMError(f"[{self._provider_name or 'llm'}] provider not initialized")
+            try:
+                response: LLMResponse = await asyncio.to_thread(provider.chat, request)
+                break
+            except LLMError as exc:
+                if self._is_terminal_model_error(exc) and self._try_next_fallback():
+                    continue
+                raise
 
         # 转换为 AgenticLoop 期望的格式
         result: dict[str, Any] = {

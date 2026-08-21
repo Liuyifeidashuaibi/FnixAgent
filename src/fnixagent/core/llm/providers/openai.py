@@ -205,7 +205,17 @@ class OpenAICompatibleProvider(BaseLLMProvider):
             status = exc.response.status_code
             # 5xx 服务端错误或 429 限流可重试;其余 4xx 不可重试
             retryable = status >= 500 or status == 429
-            return retryable, f"HTTP {status}"
+            # 附带服务端错误简述（如 insufficient_quota），截断防日志膨胀
+            detail = ""
+            try:
+                body = exc.response.json()
+                err_obj = body.get("error") if isinstance(body, dict) else None
+                msg = err_obj.get("message") if isinstance(err_obj, dict) else None
+                if isinstance(msg, str) and msg:
+                    detail = f" ({msg[:160]})"
+            except Exception:
+                pass
+            return retryable, f"HTTP {status}{detail}"
         if httpx is not None and isinstance(exc, httpx.RequestError):
             # 网络层错误(连接超时/DNS/读取超时等)可重试;
             # httpx 的异常默认不携带 Authorization 头,使用类名 + 简要信息
