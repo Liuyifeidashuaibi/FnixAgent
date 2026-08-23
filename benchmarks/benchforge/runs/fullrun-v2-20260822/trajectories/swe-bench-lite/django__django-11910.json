@@ -1,0 +1,18 @@
+{
+  "dataset": "swe-bench-lite",
+  "task_id": "django__django-11910",
+  "prompt": "ForeignKey's to_field parameter gets the old field's name when renaming a PrimaryKey.\nDescription\n\t\nHaving these two models \nclass ModelA(models.Model):\n\tfield_wrong = models.CharField('field1', max_length=50, primary_key=True) # I'm a Primary key.\nclass ModelB(models.Model):\n\tfield_fk = models.ForeignKey(ModelA, blank=True, null=True, on_delete=models.CASCADE) \n... migrations applyed ...\nthe ModelA.field_wrong field has been renamed ... and Django recognizes the \"renaming\"\n# Primary key renamed\nclass ModelA(models.Model):\n\tfield_fixed = models.CharField('field1', max_length=50, primary_key=True) # I'm a Primary key.\nAttempts to to_field parameter. \nThe to_field points to the old_name (field_typo) and not to the new one (\"field_fixed\")\nclass Migration(migrations.Migration):\n\tdependencies = [\n\t\t('app1', '0001_initial'),\n\t]\n\toperations = [\n\t\tmigrations.RenameField(\n\t\t\tmodel_name='modela',\n\t\t\told_name='field_wrong',\n\t\t\tnew_name='field_fixed',\n\t\t),\n\t\tmigrations.AlterField(\n\t\t\tmodel_name='modelb',\n\t\t\tname='modela',\n\t\t\tfield=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='app1.ModelB', to_field='field_wrong'),\n\t\t),\n\t]\n",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 359.00000000037835,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336341.8109233,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\swe-bench-lite__django__django-11910__5c20e9"
+}

@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "service-channel-ticket-daily",
+  "prompt": "请直接整理 `2026-05-18` 当天 `东区民生服务中心` / `社区热线-东区服务台` 的服务通道工单日报，输出为中文 Markdown，并保存成 `service_channel_daily_report.md`。不要只做分析。\n\n只使用本任务目录内的公开材料：\n\n- `input/ticket_export.csv`\n- `input/ticket_state_snapshot.json`\n- `input/channel_status_guidance.md`\n- `environment/mock_ticket_api_description.md`\n\n只创建或更新 `service_channel_daily_report.md`；不要修改 `input/`、`environment/` 或任何未列入输出要求的文件。详细的统计口径、去重/别名处理、状态进展解释、审计明细字段和排序规则都以 `input/channel_status_guidance.md` 为准。\n\n处理时请注意：\n\n1. 只看 `Asia/Shanghai` 时间 `2026-05-18 00:00:00` 至 `2026-05-18 23:59:59`（含边界）内、且服务台和服务通道都匹配的记录。\n2. 服务台导出快照里有重复更新、跨天快照、相似服务台/通道、同一工单 key 合并前后的别名以及窗口外状态回填，需要按公开口径核对后再汇总，不能把 CSV 行数直接当作工单数。\n3. 同一 `normalized_ticket_key` 的多条记录要折叠为一个唯一工单；如 snapshot 公开 `key_aliases` 标明 alias/canonical 关系，先合并到 canonical key，再采用窗口内末次有效更新判断当前状态与进展。\n4. 日报需要包含唯一工单数、窗口内候选记录数、分类汇总、状态汇总、进展区间汇总、需要关注的运营提示，以及可审计明细表。明细表要能追溯到 `record_id` / `source_row`，并写清 latest eligible update、状态/进展依据、服务台/通道和时间窗口说明。\n5. 不要输出未公开公式、未公开 SLA 阈值、未在公开文件中支持的事实或编造数据；不要创建额外报告模板、预设统计结果、检查配置、测试/运行产物或其他文件。\n\n不要调用真实工单系统、外部 API、网络 URL、私有账号后台、浏览器后台、VPN 或任何 live service，也不要引用 private paths、private URLs、credentials、tokens、account IDs、真实客户或个人数据。\n\n最后请简洁汇报：`service_channel_daily_report.md` 是否已更新，使用了哪些公开材料，日报覆盖的记录过滤/去重/汇总概况，以及是否没有访问真实外部服务。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 92.9999999998472,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787332459.9082735,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\workbuddy-bench__service-channel-ticket-daily__e13017"
+}

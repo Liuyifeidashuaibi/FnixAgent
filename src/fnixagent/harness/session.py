@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import os
 import threading
+import time
 import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
@@ -117,9 +118,50 @@ class SessionStore:
         path = self._path(session.id)
         tmp = str(path) + ".tmp"
         with self._lock:
-            with open(tmp, "w", encoding="utf-8") as f:
-                json.dump(session.to_dict(), f, ensure_ascii=False, indent=2)
-            os.replace(tmp, path)
+            try:
+                with open(tmp, "w", encoding="utf-8") as f:
+                    json.dump(session.to_dict(), f, ensure_ascii=False, indent=2)
+                self._atomic_replace(tmp, str(path))
+            except Exception as exc:
+                # session 持久化失败不阻断任务主流程：
+                # Windows Defender / 沙箱实时扫描新建 .tmp 时 os.replace 偶发
+                # WinError 5/32，重试与兜底后仍失败时降级为日志，任务继续执行
+                # （任务正确性由 workspace 产物承载，session 仅作记录/展示）。
+                try:
+                    print(f"[session] save degraded (ignored): {exc}", flush=True)
+                except Exception:
+                    pass
+
+
+    @staticmethod
+    def _atomic_replace(tmp: str, path: str, attempts: int = 10) -> None:
+        """Windows 鲁棒原子写入。
+
+        os.replace 在防病毒(Defender)实时扫描新建 .tmp 或并发读者持有目标文件时,
+        会偶发 WinError 5 / 32(拒绝访问 / 文件正在使用)。这里做指数退避重试;
+        仍失败则回退为「直接写目标文件 + 删除 tmp」,放弃原子性但保证会话不丢。
+        """
+        last_exc: Exception | None = None
+        for i in range(attempts):
+            try:
+                os.replace(tmp, path)
+                return
+            except (OSError, PermissionError) as exc:  # WinError 5 / 32 等
+                last_exc = exc
+                if i < attempts - 1:
+                    time.sleep(0.08 * (i + 1))
+        # 兜底:直接把 tmp 内容写到目标,再删 tmp(无原子性,但绝不丢会话)
+        try:
+            with open(path, "w", encoding="utf-8") as dst:
+                with open(tmp, "r", encoding="utf-8") as src:
+                    dst.write(src.read())
+            try:
+                os.remove(tmp)
+            except OSError:
+                pass
+        except Exception:
+            if last_exc:
+                raise last_exc
 
     def get(self, session_id: str) -> WorkSession | None:
         path = self._path(session_id)

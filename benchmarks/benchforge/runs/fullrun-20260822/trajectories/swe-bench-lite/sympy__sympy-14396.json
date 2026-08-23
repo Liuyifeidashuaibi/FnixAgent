@@ -1,0 +1,18 @@
+{
+  "dataset": "swe-bench-lite",
+  "task_id": "sympy__sympy-14396",
+  "prompt": "Poly(domain='RR[y,z]') doesn't work\n``` py\nIn [14]: Poly(1.2*x*y*z, x)\nOut[14]: Poly(1.2*y*z*x, x, domain='RR[y,z]')\n\nIn [15]: Poly(1.2*x*y*z, x, domain='RR[y,z]')\n---------------------------------------------------------------------------\nOptionError                               Traceback (most recent call last)\n<ipython-input-15-d83389519ae1> in <module>()\n----> 1 Poly(1.2*x*y*z, x, domain='RR[y,z]')\n\n/Users/aaronmeurer/Documents/Python/sympy/sympy-scratch/sympy/polys/polytools.py in __new__(cls, rep, *gens, **args)\n     69     def __new__(cls, rep, *gens, **args):\n     70         \"\"\"Create a new polynomial instance out of something useful. \"\"\"\n---> 71         opt = options.build_options(gens, args)\n     72\n     73         if 'order' in opt:\n\n/Users/aaronmeurer/Documents/Python/sympy/sympy-scratch/sympy/polys/polyoptions.py in build_options(gens, args)\n    718\n    719     if len(args) != 1 or 'opt' not in args or gens:\n--> 720         return Options(gens, args)\n    721     else:\n    722         return args['opt']\n\n/Users/aaronmeurer/Documents/Python/sympy/sympy-scratch/sympy/polys/polyoptions.py in __init__(self, gens, args, flags, strict)\n    151                     self[option] = cls.preprocess(value)\n    152\n--> 153         preprocess_options(args)\n    154\n    155         for key, value in dict(defaults).items():\n\n/Users/aaronmeurer/Documents/Python/sympy/sympy-scratch/sympy/polys/polyoptions.py in preprocess_options(args)\n    149\n    150                 if value is not None:\n--> 151                     self[option] = cls.preprocess(value)\n    152\n    153         preprocess_options(args)\n\n/Users/aaronmeurer/Documents/Python/sympy/sympy-scratch/sympy/polys/polyoptions.py in preprocess(cls, domain)\n    480                 return sympy.polys.domains.QQ.algebraic_field(*gens)\n    481\n--> 482         raise OptionError('expected a valid domain specification, got %s' % domain)\n    483\n    484     @classmethod\n\nOptionError: expected a valid domain specification, got RR[y,z]\n```\n\nAlso, the wording of error message could be improved\n\n",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/sympy/polys/polyoptions.py b/sympy/polys/polyoptions.py\n--- a/sympy] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 125.0,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787332466.7663186,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\swe-bench-lite__sympy__sympy-14396__45e3ef"
+}

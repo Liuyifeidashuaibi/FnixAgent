@@ -24,9 +24,13 @@
 
 from __future__ import annotations
 
+import logging
 import threading
 import time
 from dataclasses import dataclass
+
+_logger = logging.getLogger(__name__)
+
 
 
 @dataclass
@@ -143,7 +147,7 @@ class TokenBucketRateLimiter:
 
                 record_rate_limit_triggered(limiter_type="llm")
             except Exception:
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
             return False
 
     def try_acquire(self, key: str, tokens: float = 1.0) -> bool:

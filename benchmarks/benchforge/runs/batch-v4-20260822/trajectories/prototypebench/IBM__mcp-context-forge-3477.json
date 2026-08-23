@@ -1,0 +1,30 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "IBM__mcp-context-forge-3477",
+  "prompt": "<!--\r\nFor specialized templates, append to your PR URL:\r\n  ?template=bug_fix.md   - Bug fixes\r\n  ?template=feature.md   - New features\r\n  ?template=docs.md      - Documentation\r\n  ?template=plugin.md    - New plugins\r\n\r\nExample: https://github.com/IBM/mcp-context-forge/compare/main...your-branch?expand=1&template=bug_fix.md\r\n-->\r\n\r\n## 🔗 Related Issue\r\nCloses https://github.com/IBM/mcp-context-forge/issues/3368\r\n\r\n---\r\n\r\n## 📝 Summary\r\n\r\n1. Modified `mcpgateway/admin.py `(lines 10764-10777):\r\n\r\n- Added try-catch block around all orjson.loads() calls for form field parsing\r\n- Catches `orjson.JSONDecodeError` and returns a 422 response with descriptive error message\r\n- Affects fields: headers, input_schema, output_schema, annotations, query_mapping, header_mapping, allowlist, plugin_chain_pre, plugin_chain_post\r\n- Error message format: `Invalid JSON in form field: {error details}`\r\n- Applied identical fix to admin_edit_tool endpoint\r\n\r\n2. Added/updated tests in `tests/unit/mcpgateway/test_admin.py`:\r\n\r\n- test_admin_add_tool_with_invalid_query_mapping_json: New test verifying 422 for invalid query_mapping JSON\r\n- test_admin_add_tool_with_invalid_header_mapping_json: New test verifying 422 for invalid header_mapping JSON\r\n- test_admin_add_tool_with_invalid_json: Updated existing test to expect 422 response instead of raised exception\r\n- Added test_admin_edit_tool_with_invalid_headers_json\r\n- Added test_admin_edit_tool_with_invalid_input_schema_json\r\n\r\nTest Results:\r\n\r\nAll 3 new/updated tests pass\r\nAll 17 tests in TestAdminToolRoutes pass\r\nNo regressions introduced\r\n\r\n---\r\n\r\n## 🏷️ Type of Change\r\n- [x] Bug fix\r\n- [ ] Feature / Enhancement\r\n- [ ] Documentation\r\n- [ ] Refactor\r\n- [ ] Chore (deps, CI, tooling)\r\n- [ ] Other (describe below)\r\n\r\n---\r\n\r\n## 🧪 Verification\r\n\r\n| Check                     | Command         | Status |\r\n|---------------------------|-----------------|--------|\r\n| Lint suite                | `make lint`     |      ✅   |\r\n| Unit tests                | `make test`     |    ✅     |\r\n| Coverage ≥ 80%            | `make coverage` |        |\r\n\r\n---\r\n\r\n## ✅ Checklist\r\n- [x] Code formatted (`make black isort pre-commit`)\r\n- [x] Tests added/updated for changes\r\n- [ ] Documentation updated (if applicable)\r\n- [x] No secrets or credentials committed\r\n\r\n---\r\n\r\n## 📓 Notes (optional)\r\n_Screenshots, design decisions, or additional context._",
+  "status": "failure",
+  "failure_type": "mcp_call_error",
+  "failure_evidence": "执行过程中遇到LLM调用失败，错误信息表明存在不正确的消息格式，导致无法完成任务。",
+  "final_response": "",
+  "steps": [
+    "Step 0 | 思考: 了解了，您提供了一个 PR 模板的内容，看起来是针对一个具体的 GitHub 项目 `IBM/mcp-context-forge` 的 Pull Request 描述。这个 PR 主要是修复了 `mc... | 工具 ✓ write_file({\"file_path\": \"PR_TEMPLATE.md\", \"content\": \"## 🔗 R) | 耗时: 16871ms, tokens: 3947"
+  ],
+  "tool_calls": [
+    {
+      "step": 1,
+      "tool": "write_file",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\batch-v4-20260822\\\\workspaces\\\\prototypebench__IBM__mcp-context-forge-3477__dce370\\\\PR_TEMPLATE.md', 'size': 1984, 'rel_path': 'PR_TEMPLATE.md', 'mirror': None})\n已写入: PR_TEMPLATE.md (1984 字符)"
+    }
+  ],
+  "files_written": [
+    "PR_TEMPLATE.md"
+  ],
+  "total_tokens": 3947,
+  "duration_ms": 17859.000000000036,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen-max): HTTP 400 (<400> InternalError.Algo.InvalidParameter: messages with role \"tool\" must be a response to a preceeding message with \"tool_calls\".)",
+  "judge_method": "llm",
+  "started_at": 1787384888.272842,
+  "workspace": "benchmarks\\benchforge\\runs\\batch-v4-20260822\\workspaces\\prototypebench__IBM__mcp-context-forge-3477__dce370"
+}

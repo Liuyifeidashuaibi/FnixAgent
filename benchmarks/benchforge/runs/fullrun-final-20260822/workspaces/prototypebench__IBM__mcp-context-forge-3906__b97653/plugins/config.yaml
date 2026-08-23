@@ -1,0 +1,45 @@
+encoded_exfil_detection:
+  # Core detection settings
+  min_suspicion_score: 3
+  min_encoded_length: 24
+  min_entropy: 3.3
+  printable_ratio_threshold: 0.7
+
+  # Allowlisting (Gap 1)
+  allowlist_patterns:
+    # Example: JWT tokens (base64-encoded with dots)
+    # - "^[A-Za-z0-9+/]+\\.[A-Za-z0-9+/]+\\.[A-Za-z0-9+/]+$"
+    # Example: git SHAs
+    # - "^[a-fA-F0-9]{40}$"
+    []
+
+  # Per-encoding thresholds (Gap 2)
+  per_encoding_score:
+    hex: 5
+    base64: 2
+
+  # Configurable keywords and egress hints (Gap 4)
+  extra_sensitive_keywords:
+    - "watsonx_api"
+    - "ibm_cloud_key"
+    - "ibm_watsonx"
+  extra_egress_hints:
+    - "ibmcloud"
+    - "watsonx"
+
+  # Nested encoding detection (Gap 5)
+  max_decode_depth: 2
+
+  # JSON-within-strings parsing (Gap 6)
+  parse_json_strings: true
+
+  # Container recursion depth limit (Gap 7)
+  max_recursion_depth: 32
+
+  # Detection logging (Gap 8)
+  log_detections: true
+
+  # Blocking and redaction settings
+  block_on_detection: true
+  redact_enabled: false
+  min_findings_to_block: 1

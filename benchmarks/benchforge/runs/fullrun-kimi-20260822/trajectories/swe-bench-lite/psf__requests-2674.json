@@ -1,0 +1,18 @@
+{
+  "dataset": "swe-bench-lite",
+  "task_id": "psf__requests-2674",
+  "prompt": "urllib3 exceptions passing through requests API\nI don't know if it's a design goal of requests to hide urllib3's exceptions and wrap them around requests.exceptions types.\n\n(If it's not IMHO it should be, but that's another discussion)\n\nIf it is, I have at least two of them passing through that I have to catch in addition to requests' exceptions. They are requests.packages.urllib3.exceptions.DecodeError and requests.packages.urllib3.exceptions.TimeoutError (this one I get when a proxy timeouts)\n\nThanks!\n\n",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/requests/adapters.py b/requests/adapters.py\n--- a/requests/adapters] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 92.9999999998472,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787334466.3645208,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\swe-bench-lite__psf__requests-2674__3d7dad"
+}

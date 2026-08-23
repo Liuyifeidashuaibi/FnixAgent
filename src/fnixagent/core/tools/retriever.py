@@ -23,12 +23,16 @@
 
 from __future__ import annotations
 
+import logging
 import threading
 from typing import Any
 
 from fnixagent.core.mathops import batch_cosine_similarity
 from fnixagent.core.retrieval.embedder import BaseEmbedder, HashingEmbedder
 from fnixagent.core.tools.protocol import ToolLayer, ToolMetadata
+
+_logger = logging.getLogger(__name__)
+
 
 # ---------------------------------------------------------------------------
 # 异常
@@ -171,7 +175,7 @@ class ToolRetriever:
             try:
                 metadata.description_embedding = list(vector)
             except Exception:
-                pass  # dataclass 不可变时忽略
+                _logger.debug('Unhandled exception', exc_info=True)  # dataclass 不可变时忽略
         self._index[metadata.name] = (metadata, vector)
 
     def _embed_text(self, metadata: ToolMetadata) -> str:

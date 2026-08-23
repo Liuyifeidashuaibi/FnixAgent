@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas - Bird Animation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            background-image: url('assets/bg.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="myCanvas"></canvas>
+
+    <script>
+        // Initialize window.store for game state
+        window.store = {
+            score: 0,
+            floorX: 0,
+            isAnimating: false,
+            frameAdjustedRate: 1,
+            birdX: 30,
+            birdY: 0,
+            floorHeight: 80,
+            pipes: [] // Array of pipe objects: {x, topHeight, bottomY, width, passed}
+        };
+
+        const canvas = document.getElementById('myCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Base aspect ratio (600:800 = 3:4)
+        const BASE_WIDTH = 600;
+        const BASE_HEIGHT = 800;
+        const ASPECT_RATIO = BASE_WIDTH / BASE_HEIGHT;
+
+        // Game assets
+        let birdImage = null;
+        let floorImage = null;
+        let pipeUpImage = null;
+        let pipeDownImage = null;
+        let imagesLoaded = false;
+
+        // Pipe configuration
+        const PIPE_WIDTH = 52;
+        const PIPE_GAP_MIN = 120;
+        const PIPE_GAP_MAX = 240;
+        const PIPE_SPACING = 200;
+        const PIPE_SPEED = 4;
+
+        // Function to get DPR
+        function getDPR() {
+            return window.devicePixelRatio || 1;
+        }
+
+        // Function to get frame adjusted rate from URL query
+        function getFrameAdjustedRate() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const rate = parseFloat(urlParams.get('frameAdjustedRate')) || 1;
+            return rate;
+        }
+
+        // Function to load images
+        function loadImages() {
+            return Promise.all([
+                new Promise((resolve, reject) => {
+                    birdImage = new Image();
+                    birdImage.onload = () => resolve();
+                    birdImage.onerror = () => reject(new Error('Failed to load bird.png'));
+                    birdImage.src = 'assets/bird.png';
+                }),
+                new Promise((resolve, reject) => {
+                    floorImage = new Image();
+                    floorImage.onload = () => resolve();
+                    floorImage.onerror = () => reject(new Error('Failed to load fg.png'));
+                    floorImage.src = 'assets/fg.png';
+                }),
+                new Promise((resolve, reject) => {
+                    pipeUpImage = new Image();
+                    pipeUpImage.onload = () => resolve();
+                    pipeUpImage.onerror = () => reject(new Error('Failed to load pipeUp.png'));
+                    pipeUpImage.src = 'assets/pipeUp.png';
+                }),
+                new Promise((resolve, reject) => {
+                    pipeDownImage = new Image();
+                    pipeDownImage.onload = () => resolve();
+                    pipeDownImage.onerror = () => reject(new Error('Failed to load pipeDown.png'));
+                    pipeDownImage.src = 'assets/pipeDown.png';
+                })
+            ]).then(() => {
+                imagesLoaded = true;
+                console.log('Images loaded successfully');
+            }).catch(error => {
+                console.error('Error loading images:', error);
+            });
+        }
+
+        // Function to generate new pipe
+        function generatePipe(displayWidth, displayHeight) {
+            const gapHeight = PIPE_GAP_MIN + Math.random() * (PIPE_GAP_MAX - PIPE_GAP_MIN);
+            const maxGapTop = displayHeight / 2 - 80;
+            const minGapTop = 80;
+            
+            let gapTop = minGapTop + Math.random() * (maxGapTop - minGapTop);
+            
+            // Ensure gap fits within constraints
+            if (gapTop + gapHeight > maxGapTop + 80) {
+                gapTop = maxGapTop + 80 - gapHeight;
+            }
+            if (gapTop < minGapTop) {
+                gapTop = minGapTop;
+            }
+            
+            const topHeight = gapTop;
+            const bottomY = gapTop + gapHeight;
+            
+            return {
+                x: displayWidth,
+                topHeight: topHeight,
+                bottomY: bottomY,
+                width: PIPE_WIDTH,
+                passed: false
+            };
+        }
+
+        // Function to resize canvas with DPR scaling
+        function resizeCanvas() {
+            const dpr = getDPR();
+            
+            // Set canvas height to window height
+            const displayHeight = window.innerHeight;
+            // Scale width proportionally
+            const displayWidth = displayHeight * ASPECT_RATIO;
+
+            // Set canvas display size
+            canvas.style.width = displayWidth + 'px';
+            canvas.style.height = displayHeight + 'px';
+
+            // Set canvas actual size with DPR scaling
+            canvas.width = displayWidth * dpr;
+            canvas.height = displayHeight * dpr;
+
+            // Scale context to match DPR
+            ctx.scale(dpr, dpr);
+
+            // Update bird and floor positions for responsive design
+            window.store.birdY = displayHeight / 2;
+            window.store.floorHeight = 80;
+
+            // Initialize pipes if empty
+            if (window.store.pipes.length === 0) {
+                // Generate initial pipes
+                for (let i = 0; i < 3; i++) {
+                    window.store.pipes.push(generatePipe(displayWidth, displayHeight));
+                    window.store.pipes[i].x = displayWidth + i * PIPE_SPACING;
+                }
+            }
+
+            // Update frame adjusted rate
+            window.store.frameAdjustedRate = getFrameAdjustedRate();
+
+            // Redraw content
+            draw();
+        }
+
+        // Function to draw pipes
+        function drawPipes(displayWidth, displayHeight) {
+            if (!imagesLoaded || !pipeUpImage || !pipeDownImage) return;
+            
+            const floorY = displayHeight - window.store.floorHeight;
+            
+            window.store.pipes.forEach(pipe => {
+                // Draw top pipe (flipped)
+                ctx.save();
+                ctx.translate(0, pipe.topHeight);
+                ctx.scale(1, -1);
+                ctx.drawImage(pipeUpImage, pipe.x, 0, pipe.width, pipeUpImage.height);
+                ctx.restore();
+                
+                // Draw bottom pipe
+                ctx.drawImage(pipeDownImage, pipe.x, pipe.bottomY, pipe.width, pipeDownImage.height);
+            });
+        }
+
+        // Function to draw everything
+        function draw() {
+            const displayWidth = parseFloat(canvas.style.width);
+            const displayHeight = parseFloat(canvas.style.height);
+            const floorY = displayHeight - window.store.floorHeight;
+
+            // Clear canvas
+            ctx.clearRect(0, 0, displayWidth, displayHeight);
+
+            // Draw pipes (behind other elements)
+            drawPipes(displayWidth, displayHeight);
+
+            // Draw bird if image is loaded
+            if (imagesLoaded && birdImage) {
+                ctx.drawImage(birdImage, window.store.birdX, window.store.birdY);
+            }
+
+            // Draw floor if image is loaded (top layer)
+            if (imagesLoaded && floorImage) {
+                // Draw floor tiles (repeat pattern)
+                const floorWidth = floorImage.width;
+                const floorHeight = floorImage.height;
+                
+                // Calculate how many floor tiles we need
+                const tilesNeeded = Math.ceil(displayWidth / floorWidth) + 1;
+                
+                for (let i = 0; i < tilesNeeded; i++) {
+                    const tileX = (window.store.floorX + i * floorWidth) % displayWidth;
+                    ctx.drawImage(floorImage, tileX, floorY);
+                }
+            }
+
+            // Draw score display
+            const scoreText = 'Score: ' + window.store.score;
+            const scoreX = 10;
+            const scoreY = 10;
+            const fontSize = 14;
+            const padding = 8;
+
+            ctx.font = `${fontSize}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`;
+            const textMetrics = ctx.measureText(scoreText);
+            const textWidth = textMetrics.width;
+            const textHeight = fontSize;
+
+            // Draw rectangular border
+            const borderX = scoreX - padding;
+            const borderY = scoreY - textHeight - padding;
+            const borderWidth = textWidth + padding * 2;
+            const borderHeight = textHeight + padding * 2;
+
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(borderX, borderY, borderWidth, borderHeight);
+
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(borderX, borderY, borderWidth, borderHeight);
+
+            // Draw score text
+            ctx.fillStyle = 'white';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText(scoreText, scoreX, scoreY);
+
+            // Draw "Click to Start" text if not animating
+            if (!window.store.isAnimating) {
+                ctx.font = 'bold 32px -apple-system, BlinkMacSystemFont, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                ctx.fillText('Click to Start', displayWidth / 2, displayHeight / 2);
+            }
+
+            // Draw canvas info text
+            ctx.font = 'bold 24px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            
+            const dpr = getDPR();
+            const infoText = `${Math.round(displayWidth)} × ${Math.round(displayHeight)} (DPR: ${dpr})`;
+            ctx.fillText(infoText, displayWidth / 2, displayHeight / 2 + 60);
+
+            ctx.font = '14px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+            ctx.fillText('Frame Rate: ' + window.store.frameAdjustedRate.toFixed(2), displayWidth / 2, displayHeight / 2 + 85);
+        }
+
+        // Function to start animation
+        function startAnimation() {
+            if (!window.store.isAnimating) {
+                window.store.isAnimating = true;
+                console.log('Animation started');
+                animate();
+            }
+        }
+
+        // Animation loop
+        function animate() {
+            if (!window.store.isAnimating) return;
+
+            const displayWidth = parseFloat(canvas.style.width);
+            const displayHeight = parseFloat(canvas.style.height);
+
+            // Update floor position (4px * frameAdjustedRate)
+            window.store.floorX -= 4 * window.store.frameAdjustedRate;
+            
+            // Reset floor position when it moves too far left
+            if (window.store.floorX <= -floorImage.width) {
+                window.store.floorX = 0;
+            }
+
+            // Update pipes
+            window.store.pipes.forEach(pipe => {
+                pipe.x -= PIPE_SPEED * window.store.frameAdjustedRate;
+                
+                // Check if bird passed the pipe
+                if (!pipe.passed && pipe.x + pipe.width < window.store.birdX) {
+                    pipe.passed = true;
+                    window.store.score += 10;
+                }
+            });
+
+            // Remove pipes that are off-screen
+            window.store.pipes = window.store.pipes.filter(pipe => pipe.x > -pipe.width);
+
+            // Generate new pipes
+            if (window.store.pipes.length === 0 || 
+                (window.store.pipes[window.store.pipes.length - 1].x < displayWidth - PIPE_SPACING)) {
+                window.store.pipes.push(generatePipe(displayWidth, displayHeight));
+            }
+
+            // Increment score
+            window.store.score += 1;
+
+            // Redraw
+            draw();
+
+            // Continue animation
+            requestAnimationFrame(animate);
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', resizeCanvas);
+
+        // Handle click to start animation
+        canvas.addEventListener('click', startAnimation);
+
+        // Handle Enter key to start animation
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                startAnimation();
+            }
+        });
+
+        // Initialize
+        async function init() {
+            // Load images first
+            await loadImages();
+            
+            // Set up canvas
+            resizeCanvas();
+            
+            // Start score increment timer
+            setInterval(() => {
+                if (window.store.isAnimating) {
+                    window.store.score += 10;
+                    draw();
+                }
+            }, 1000);
+        }
+
+        // Start the application
+        init();
+    </script>
+</body>
+</html>

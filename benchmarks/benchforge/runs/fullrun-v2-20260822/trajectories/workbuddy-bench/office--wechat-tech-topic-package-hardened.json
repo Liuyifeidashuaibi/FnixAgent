@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "office--wechat-tech-topic-package-hardened",
+  "prompt": "你是一位中文科技公众号的选题编辑。请只使用本任务目录内已经冻结的公开资料，为规划日 `2026-06-18` 做一份“技术选题决策板”。目标是给编辑会快速判断今天最值得写什么：先有清楚的取舍摘要，再给可追溯的主推选题和备选/降级理由；只做选题推荐，不写完整文章。\n\n需要参考：\n\n- `input/source_board/tech_source_digest_2026-06-18.jsonl`\n- `input/source_board/recent_coverage_history_2026-06.md`\n- `input/source_board/channel_audience_brief.md`\n- `input/source_board/desk_note_source_state_log.md`\n- `input/editorial_guide/topic_board_selection_policy.md`\n- `environment/local_workspace_boundary.md`\n\n最后请生成且只生成两个正式交付文件：\n\n1. `output/topic_package/wechat_topic_board_2026-06-18.md`\n2. `output/topic_package/wechat_topic_board_2026-06-18.json`\n\n选题和整理要求：\n\n1. 只能基于资料包内的冻结来源和编辑口径筛选，不要联网补热度、不要调用真实搜索、外部 API、浏览器、私有服务、真实公众号后台、账号数据、图片/视频/音频/OCR/VLM 工具或本地材料之外的内容。\n2. 从本地来源中选出正好 5 个排序主推选题，并另外给出 2 或 3 个 reserve/downranked 选题。每个主推和 reserve/downranked 选题都要绑定本地 `source_id`，不得引用 JSONL 中不存在的来源 ID。\n3. 筛选标准要像真实公众号选题会：普通读者能看懂、能产生讨论、有明确切入角度，不是纯新闻复述；同时要处理技术深度与大众可读性、标题可用性、频道受众适配和近期覆盖差异。\n4. 排序前请先处理最新状态、重复/同事件来源合并、更新/更正/被替代说法、近期覆盖历史冲突、促销或单一厂商材料、未证实或安全敏感材料、桥接主题和频道适配冲突。不要只按日期、来源数量、单一风险词或单一文件排序。\n5. Markdown 需要包含：前置取舍摘要、5 个排序主推选题卡、2 或 3 个 reserve/downranked 选题、close-call matrix、source-state notes、non-selection/downrank logs、资料包内自检。前置取舍摘要里请用一句话说明“今日最值得写的选题”及主要理由。\n6. 每个主推选题卡至少包含：`rank`、公众号风格标题、话题角度、`source_id` 列表、来源/证据摘要、最新状态处理、近期覆盖差异、目标读者、推荐理由、风险或边界提示、排序取舍说明。\n7. close-call matrix 至少比较 3 组相邻或易混候选，说明为什么某个候选进入主推、降为 reserve/downranked，或被合并/排除。\n8. non-selection/downrank logs 至少覆盖重复合并、过窗背景、促销/低证据、未证实或安全敏感、近期覆盖重复或频道适配冲突。\n9. JSON sidecar 是正式输出的一部分，不是临时草稿或附属说明。它必须与 Markdown 保持一致，至少包含：`package_date`、`source_bundle_id`、`primary_topics`、`reserve_or_downranked_topics`、`close_call_matrix`、`source_state_notes`、`non_selection_downrank_log`、`local_only_self_checks`、`markdown_json_consistency`。`primary_topics` 中的 rank、title、source_ids、risk_or_boundary_note 必须与 Markdown 一致。\n10. 输出是选题规划包，不是完整文章、发布包或真实平台排期。不要生成全文正文、封面图、视频、音频、HTML/SVG、截图、脚本、真实平台排期或其他正式发布文件。\n11. 不得输出真实 URL、真实账号标识、联系方式、凭据、客户/用户数据、私有路径/URL，或本地材料之外的事实、机构背书、实时热度、阅读量、后台数据、未公开指标、内部校验依据或非交付所需的评审配置细节。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 358.99999999946886,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336329.7314086,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\workbuddy-bench__office--wechat-tech-topic-package-hardened__d4564f"
+}

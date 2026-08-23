@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My App</title>
+    <style>
+        :root, [data-theme="light"] {
+            --bg: #ffffff;
+            --text: #1a1a2e;
+            --card-bg: #f8f9fa;
+            --border: #e0e0e0;
+            --accent: #4a90d9;
+            --accent-hover: #357abd;
+            --shadow: rgba(0,0,0,0.08);
+        }
+
+        [data-theme="dark"] {
+            --bg: #1a1a2e;
+            --text: #e0e0e0;
+            --card-bg: #16213e;
+            --border: #2a2a4a;
+            --accent: #6ab0f3;
+            --accent-hover: #8ec5f7;
+            --shadow: rgba(0,0,0,0.3);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            transition: background 0.3s, color 0.3s;
+            min-height: 100vh;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid var(--border);
+            transition: border-color 0.3s;
+        }
+
+        h1 { font-size: 1.5rem; }
+
+        .theme-toggle {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        .theme-toggle:hover { border-color: var(--accent); }
+
+        main {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px var(--shadow);
+            transition: all 0.3s;
+        }
+
+        .card h2 { margin-bottom: 0.75rem; }
+
+        .card a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .card a:hover { text-decoration: underline; }
+
+        p { line-height: 1.6; margin-bottom: 0.5rem; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>My App</h1>
+        <button class="theme-toggle" id="themeToggle">🌙 Dark Mode</button>
+    </header>
+    <main>
+        <div class="card">
+            <h2>Welcome</h2>
+            <p>This is the main application page. Toggle the theme using the button above.</p>
+        </div>
+        <div class="card">
+            <h2>Documentation</h2>
+            <p>Open the documentation in a new window. It will automatically match your current theme.</p>
+            <a href="doc.html" target="_blank" rel="noopener">Open Docs in New Window ↗</a>
+        </div>
+    </main>
+
+    <script>
+        (function() {
+            const html = document.documentElement;
+            const toggleBtn = document.getElementById('themeToggle');
+            const STORAGE_KEY = 'app-theme';
+            const channel = typeof BroadcastChannel !== 'undefined'
+                ? new BroadcastChannel('theme-sync') : null;
+
+            // Apply saved theme on load
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                html.setAttribute('data-theme', saved);
+                updateButton(saved);
+            }
+
+            function updateButton(theme) {
+                toggleBtn.textContent = theme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
+            }
+
+            function setTheme(theme) {
+                html.setAttribute('data-theme', theme);
+                localStorage.setItem(STORAGE_KEY, theme);
+                updateButton(theme);
+                // Broadcast to other windows (including doc.html)
+                if (channel) channel.postMessage({ theme });
+            }
+
+            toggleBtn.addEventListener('click', function() {
+                const current = html.getAttribute('data-theme');
+                setTheme(current === 'dark' ? 'light' : 'dark');
+            });
+
+            // Listen for theme changes from other tabs/windows
+            if (channel) {
+                channel.addEventListener('message', function(e) {
+                    if (e.data && e.data.theme) {
+                        html.setAttribute('data-theme', e.data.theme);
+                        localStorage.setItem(STORAGE_KEY, e.data.theme);
+                        updateButton(e.data.theme);
+                    }
+                });
+            }
+
+            // Also listen for storage events (cross-tab fallback)
+            window.addEventListener('storage', function(e) {
+                if (e.key === STORAGE_KEY && e.newValue) {
+                    html.setAttribute('data-theme', e.newValue);
+                    updateButton(e.newValue);
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

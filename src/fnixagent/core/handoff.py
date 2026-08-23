@@ -39,6 +39,7 @@ from typing import Any
 from fnixagent.core.messages import Msg
 
 logger = logging.getLogger(__name__)
+_logger = logger
 
 # ---------------------------------------------------------------------------
 # Handoff 输入 / 输出(运行时契约)
@@ -566,14 +567,14 @@ def exec_handoff(
             try:
                 span_cm.__exit__(type(exc), exc, exc.__traceback__)
             except Exception:
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
         return output, None
     else:
         if span_cm is not None:
             try:
                 span_cm.__exit__(None, None, None)
             except Exception:
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
 
     # 6. 查找目标 Agent 实例(若 agents 注册表提供)
     target_instance = None

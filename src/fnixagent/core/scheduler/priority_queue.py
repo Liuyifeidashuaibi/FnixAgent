@@ -49,6 +49,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 logger = logging.getLogger(__name__)
+_logger = logger
 
 # ============================================================================
 # 调度任务项
@@ -639,7 +640,7 @@ class PriorityTaskQueue:
                 try:
                     self._redis.zrem(self._active_key, task_id)
                 except Exception:
-                    pass
+                    _logger.debug('Unhandled exception', exc_info=True)
                 continue
 
             data_str = data.decode("utf-8") if isinstance(data, bytes) else data
@@ -650,7 +651,7 @@ class PriorityTaskQueue:
                     self._redis.zrem(self._active_key, task_id)
                     self._redis.hdel(self._active_items_key, task_id)
                 except Exception:
-                    pass
+                    _logger.debug('Unhandled exception', exc_info=True)
                 continue
 
             # 清理 Redis active,重入 Redis + 内存 queue

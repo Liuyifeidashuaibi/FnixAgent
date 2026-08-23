@@ -1,0 +1,18 @@
+{
+  "dataset": "web-bench",
+  "task_id": "vue--task-12",
+  "prompt": "1) Add appealing Comments.vue with the title 'Comments' at the bottom of Blog.vue. 2) Include a TextArea with the placeholder 'Enter Your Comment' and a submit button (.comment-btn) to submit the comment. 3) Only display comments related to the selected blog, showing them in cards with the className '.comment-item', placed above the TextArea. 4) Create store/comment.ts implement CommentStore without Inject/Provide API、Pinia etc., and connect CommentStore to UI. 5) Preserve comments when a blog is edited, and clear them when a blog is deleted. 6) Constraint: DO NOT USE any third-party packages; ONLY utilize Vue APIs.",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 344.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336320.1374314,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\web-bench__vue--task-12__299de5"
+}

@@ -28,6 +28,7 @@ RBAC 细粒度权限控制(Phase 2.1)。
 
 from __future__ import annotations
 
+import logging
 import threading
 import time
 from collections.abc import Callable
@@ -37,6 +38,9 @@ from fastapi import Depends, HTTPException, Request
 from fnixagent.api.routers.auth import verify_jwt_token
 from fnixagent.core.exceptions import fnixagentError
 from fnixagent.services.storage import get_user_store
+
+_logger = logging.getLogger(__name__)
+
 
 # ---------------------------------------------------------------------------
 # PermissionDenied 异常
@@ -119,9 +123,9 @@ def _audit_permission_denied(
             for perm in required_perms:
                 record_permission_denied(permission=perm, endpoint=endpoint)
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
     except Exception:
-        pass
+        _logger.debug('Unhandled exception', exc_info=True)
 
 
 # ---------------------------------------------------------------------------

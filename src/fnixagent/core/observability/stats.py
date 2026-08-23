@@ -54,7 +54,6 @@ class StatsAggregator:
     用法:
         agg = get_stats_aggregator()
         agg.register("rate_limiter", lambda: get_limiter().get_stats())
-        agg.register("guardrail", lambda: get_guardrail_registry().get_stats())
         ...
         # 获取全部指标
         snapshot = agg.collect()
@@ -229,7 +228,6 @@ def register_default_providers() -> None:
 
     自动尝试注册以下模块(均用 try/except,不存在则跳过):
       - rate_limiter:   core.governance.limiter.get_limiter().get_stats()
-      - guardrail:      core.guardrail.get_guardrail_registry().get_stats()
       - autoscale_pool: core.scheduler.get_autoscaled_pool().get_stats()
       - endpoint_pool:  core.adapters.get_endpoint_pool().get_stats()
       - deduplicator:   core.tools.deduplicator.get_deduplicator().get_stats()
@@ -247,14 +245,6 @@ def register_default_providers() -> None:
         agg.register("rate_limiter", lambda: get_limiter().get_stats())
     except Exception as e:
         logger.debug("注册 rate_limiter 统计提供者失败: %s", e)
-
-    # guardrail(三层护栏注册中心)
-    try:
-        from fnixagent.core.guardrail import get_guardrail_registry
-
-        agg.register("guardrail", lambda: get_guardrail_registry().get_stats())
-    except Exception as e:
-        logger.debug("注册 guardrail 统计提供者失败: %s", e)
 
     # autoscale_pool(自适应并发池)
     try:

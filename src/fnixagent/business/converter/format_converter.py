@@ -26,6 +26,7 @@ from collections.abc import Callable
 from fnixagent.core.tools.protocol import ToolMetadata
 
 _logger = logging.getLogger(__name__)
+logger = _logger
 
 
 # ---------------------------------------------------------------------------
@@ -143,11 +144,14 @@ def convert_document(
 
 
 def convert_docx_to_pdf(docx_path: str, pdf_path: str) -> dict:
-    """DOCX 转 PDF。"""
-    # TODO: 接入真实转换引擎(Word COM / LibreOffice)
+    """DOCX 转 PDF。
+
+    .. warning:: 此功能尚未实现真实转换引擎,调用将返回失败。
+    """
+    logger.warning("convert_docx_to_pdf: 转换引擎未实现(stub),输入=%s -> %s", docx_path, pdf_path)
     return {
-        "success": True,
-        "output_file": pdf_path,
+        "success": False,
+        "error": "conversion engine not implemented (stub)",
         "source_format": "docx",
         "target_format": "pdf",
         "engine": "stub",
@@ -155,11 +159,14 @@ def convert_docx_to_pdf(docx_path: str, pdf_path: str) -> dict:
 
 
 def convert_docx_to_md(docx_path: str, md_path: str) -> dict:
-    """DOCX 转 Markdown。"""
-    # TODO: 接入 pandoc / python-docx
+    """DOCX 转 Markdown。
+
+    .. warning:: 此功能尚未实现真实转换引擎,调用将返回失败。
+    """
+    logger.warning("convert_docx_to_md: 转换引擎未实现(stub),输入=%s -> %s", docx_path, md_path)
     return {
-        "success": True,
-        "output_file": md_path,
+        "success": False,
+        "error": "conversion engine not implemented (stub)",
         "source_format": "docx",
         "target_format": "md",
         "engine": "stub",
@@ -167,11 +174,14 @@ def convert_docx_to_md(docx_path: str, md_path: str) -> dict:
 
 
 def convert_md_to_docx(md_path: str, docx_path: str) -> dict:
-    """Markdown 转 DOCX。"""
-    # TODO: 接入 pandoc / python-docx
+    """Markdown 转 DOCX。
+
+    .. warning:: 此功能尚未实现真实转换引擎,调用将返回失败。
+    """
+    logger.warning("convert_md_to_docx: 转换引擎未实现(stub),输入=%s -> %s", md_path, docx_path)
     return {
-        "success": True,
-        "output_file": docx_path,
+        "success": False,
+        "error": "conversion engine not implemented (stub)",
         "source_format": "md",
         "target_format": "docx",
         "engine": "stub",
@@ -179,11 +189,14 @@ def convert_md_to_docx(md_path: str, docx_path: str) -> dict:
 
 
 def convert_pdf_to_docx(pdf_path: str, docx_path: str) -> dict:
-    """PDF 转 DOCX。"""
-    # TODO: 接入 pdf2docx / PyPDF2 + python-docx
+    """PDF 转 DOCX。
+
+    .. warning:: 此功能尚未实现真实转换引擎,调用将返回失败。
+    """
+    logger.warning("convert_pdf_to_docx: 转换引擎未实现(stub),输入=%s -> %s", pdf_path, docx_path)
     return {
-        "success": True,
-        "output_file": docx_path,
+        "success": False,
+        "error": "conversion engine not implemented (stub)",
         "source_format": "pdf",
         "target_format": "docx",
         "engine": "stub",

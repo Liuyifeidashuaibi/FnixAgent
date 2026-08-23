@@ -1,0 +1,59 @@
+diff --git a/django/db/models/fields/__init__.py b/django/db/models/fields/__init__.py
+index abc1234..def5678 100644
+--- a/django/db/models/fields/__init__.py
++++ b/django/db/models/fields/__init__.py
+@@ -1234,7 +1234,7 @@ class FilePathField(Field):
+     def __init__(self, path="", match=None, recursive=False, allow_files=True,
+                  allow_folders=False, **kwargs):
+         self.path = path
+-        self.match = match
++        self._match = match
+         self.recursive = recursive
+         self.allow_files = allow_files
+         self.allow_folders = allow_folders
+@@ -1245,6 +1245,24 @@ class FilePathField(Field):
+         super().__init__(**kwargs)
+ 
+     def generate_choices(self, include_blank=True):
++        from django.core.files.storage import default_storage
++        try:
++            choices = []
++            if not self.path:
++                return choices
++            paths = default_storage.listdir(self.path)[0]
++            for filename in paths:
++                if self.match and not self.match.search(filename):
++                    continue
++                if not self.allow_files and os.path.isfile(os.path.join(self.path, filename)):
++                    continue
++                if not self.allow_folders and os.path.isdir(os.path.join(self.path, filename)):
++                    continue
++                choices.append((filename, filename))
++            if include_blank:
++                choices.insert(0, ("", "---------"))
++            return choices
++        except OSError:
++            return []
+ 
+ 
+ class GenericIPAddressField(Field):
+@@ -1250,0 +1269 @@ class FilePathField(Field):
++    @property
++    def path(self):
++        return self._path() if callable(self._path) else self._path
++
++    @property
++    def match(self):
++        return self._match() if callable(self._match) else self._match
++
++    @property
++    def recursive(self):
++        return self._recursive() if callable(self._recursive) else self._recursive
++
++    @property
++    def allow_files(self):
++        return self._allow_files() if callable(self._allow_files) else self._allow_files
++
++    @property
++    def allow_folders(self):
++        return self._allow_folders() if callable(self._allow_folders) else self._allow_folders

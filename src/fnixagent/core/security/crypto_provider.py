@@ -34,6 +34,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 logger = logging.getLogger(__name__)
+_logger = logger
 
 # 可选依赖:gmssl(国密原生实现)
 try:
@@ -67,7 +68,7 @@ def _audit_crypto(action: str, detail: dict | None = None) -> None:
 
         AuditLogger().log(action=action, detail=detail or {})
     except Exception:
-        pass
+        _logger.debug('Unhandled exception', exc_info=True)
 
 
 # ---------------------------------------------------------------------------

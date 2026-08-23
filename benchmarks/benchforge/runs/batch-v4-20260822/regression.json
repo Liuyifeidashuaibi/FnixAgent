@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "generated_at": 1787345136.5564067,
+  "source_run": "batch-v4-20260822",
+  "total_failures": 6,
+  "by_failure_type": {
+    "incomplete_output": 5,
+    "mcp_call_error": 1
+  },
+  "by_dataset": {
+    "web-bench": 6
+  },
+  "tasks": [
+    {
+      "dataset": "web-bench",
+      "task_id": "bom--task-8",
+      "prompt": "Warn and save doc page url before window is closed. Ask user with confirm dialog whether jumping to the last saved doc page.",
+      "failure_type": "incomplete_output",
+      "evidence": "无最终回复且未产出任何文件"
+    },
+    {
+      "dataset": "web-bench",
+      "task_id": "bom--task-17",
+      "prompt": "Add a circle element (class 'network') in the setting panel. Monitor network state, change '.network' to green (class '.online') when network is online, change '.network' to red (class '.offline') when network is offline.",
+      "failure_type": "incomplete_output",
+      "evidence": "无最终回复且未产出任何文件"
+    },
+    {
+      "dataset": "web-bench",
+      "task_id": "bom--task-19",
+      "prompt": "Add button '.fullscreen' in setting panel. Click '.fullscreen' to set fullscreen for content frame, and add button '.exit-fullscreen' (clicked to exit fullscreen and hide itself) in doc page.",
+      "failure_type": "incomplete_output",
+      "evidence": "无最终回复且未产出任何文件"
+    },
+    {
+      "dataset": "web-bench",
+      "task_id": "calculator--task-6",
+      "prompt": "revert position of button sin, button π, no change for other buttons",
+      "failure_type": "incomplete_output",
+      "evidence": "无最终回复且未产出任何文件"
+    },
+    {
+      "dataset": "web-bench",
+      "task_id": "calculator--task-7",
+      "prompt": "change button 'clear' width to 3 columns",
+      "failure_type": "incomplete_output",
+      "evidence": "无最终回复且未产出任何文件"
+    },
+    {
+      "dataset": "web-bench",
+      "task_id": "calculator--task-9",
+      "prompt": "move toggle button to bottom-center of the page",
+      "failure_type": "mcp_call_error",
+      "evidence": "工具失败率50%"
+    }
+  ]
+}

@@ -9,14 +9,14 @@
  * Full-chain benchmark panel — run from Settings or composer `/benchmark`.
  */
 
-import { useCallback, useRef, useState } from "react";
-import { Activity, CheckCircle2, Loader2, Play, X, XCircle } from "lucide-react";
+import { useCallback, useRef, useState } from 'react';
+import { Activity, CheckCircle2, Loader2, Play, X, XCircle } from 'lucide-react';
 import {
   runFullChainBenchmark,
   scoreColor,
   type BenchmarkReport,
   type BenchmarkStage,
-} from "../../services/benchmark/fullChainBenchmark";
+} from '../../services/benchmark/fullChainBenchmark';
 
 interface Props {
   workspace?: string;
@@ -45,13 +45,13 @@ export function FullChainBenchmarkPanel({ workspace, onClose }: Props) {
         workspace,
         includeLlm,
         fcsLimit: 3,
-        fcsTag: "smoke",
+        fcsTag: 'smoke',
         signal: ac.signal,
         onStage: (s) => setStages((prev) => [...prev.filter((x) => x.id !== s.id), s]),
       });
       setReport(result);
     } catch (e) {
-      if ((e as Error).name !== "AbortError") {
+      if ((e as Error).name !== 'AbortError') {
         setError(String(e));
       }
     } finally {
@@ -62,7 +62,7 @@ export function FullChainBenchmarkPanel({ workspace, onClose }: Props) {
   const overall = report?.overall_score ?? null;
 
   return (
-    <div className="fnix-bench-root" role="dialog" aria-label="全链路基准测试">
+    <div className="fnix-bench-root" role="region" aria-label="全链路基准测试">
       <header className="fnix-bench-head">
         <div>
           <h1>全链路测试</h1>
@@ -83,9 +83,14 @@ export function FullChainBenchmarkPanel({ workspace, onClose }: Props) {
           />
           含 LLM + Code 冒烟（较慢，需 API Key）
         </label>
-        <button type="button" className="fnix-bench-run" disabled={running} onClick={() => void run()}>
+        <button
+          type="button"
+          className="fnix-bench-run"
+          disabled={running}
+          onClick={() => void run()}
+        >
           {running ? <Loader2 size={16} className="spin" /> : <Play size={16} />}
-          {running ? "运行中…" : "开始测试"}
+          {running ? '运行中…' : '开始测试'}
         </button>
       </div>
 
@@ -93,8 +98,8 @@ export function FullChainBenchmarkPanel({ workspace, onClose }: Props) {
         <div className={`fnix-bench-score ${scoreColor(overall)}`}>
           <span className="fnix-bench-score-num">{overall}</span>
           <span className="fnix-bench-score-label">
-            系统分 {report?.hard_pass ? "· PASS" : "· 需优化"}
-            {report?.fcs != null ? ` · FCS ${report.fcs}` : ""}
+            系统分 {report?.hard_pass ? '· PASS' : '· 需优化'}
+            {report?.fcs != null ? ` · FCS ${report.fcs}` : ''}
           </span>
         </div>
       )}
@@ -108,7 +113,7 @@ export function FullChainBenchmarkPanel({ workspace, onClose }: Props) {
           </p>
         )}
         {stages.map((s) => (
-          <div key={s.id} className={`fnix-bench-row ${s.ok ? "ok" : "bad"}`}>
+          <div key={s.id} className={`fnix-bench-row ${s.ok ? 'ok' : 'bad'}`}>
             {s.ok ? <CheckCircle2 size={16} /> : <XCircle size={16} />}
             <div className="fnix-bench-row-body">
               <span className="fnix-bench-row-id">{s.id}</span>

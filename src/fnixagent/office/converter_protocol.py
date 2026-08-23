@@ -29,6 +29,7 @@ ConverterRegistry 支持注册/查找/派发,并提供 fallback 降级机制
 
 from __future__ import annotations
 
+import logging
 import os
 import time
 from dataclasses import dataclass, field
@@ -48,6 +49,9 @@ from fnixagent.office.parser import (
     Table,
     Title,
 )
+
+_logger = logging.getLogger(__name__)
+
 
 # ---------------------------------------------------------------------------
 # 三层质量梯度
@@ -215,6 +219,7 @@ class ConverterRegistry:
                     return entry.converter
             except Exception:
                 # 单个 converter accept 异常不影响后续查找
+                _logger.debug('Unhandled exception', exc_info=True)
                 continue
         return None
 

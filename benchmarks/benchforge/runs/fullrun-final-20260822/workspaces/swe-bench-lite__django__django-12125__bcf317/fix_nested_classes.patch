@@ -1,0 +1,19 @@
+diff --git a/django/db/migrations/serializer.py b/django/db/migrations/serializer.py
+index 1234567..89abcde 100644
+--- a/django/db/migrations/serializer.py
++++ b/django/db/migrations/serializer.py
+@@ -123,7 +123,12 @@ class BaseSerializer:
+         # Import the class
+         if hasattr(value, '__module__') and hasattr(value, '__name__'):
+             module = value.__module__
+-            name = value.__name__
++            # Use __qualname__ for nested classes to get proper qualified name
++            # __qualname__ includes outer class names for nested classes
++            # while __name__ only gives the innermost class name
++            if hasattr(value, '__qualname__'):
++                name = value.__qualname__
++            else:
++                name = value.__name__
+             # Python's own serialization uses __builtin__ for builtins
+             if module == "builtins":
+                 return "%s(%s)" % (name, args)

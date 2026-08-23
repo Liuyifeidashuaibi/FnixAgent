@@ -1,0 +1,18 @@
+{
+  "dataset": "swe-bench-lite",
+  "task_id": "sympy__sympy-23262",
+  "prompt": "Python code printer not respecting tuple with one element\nHi,\r\n\r\nThanks for the recent updates in SymPy! I'm trying to update my code to use SymPy 1.10 but ran into an issue with the Python code printer. MWE:\r\n\r\n\r\n```python\r\nimport inspect\r\nfrom sympy import lambdify\r\n\r\ninspect.getsource(lambdify([], tuple([1])))\r\n```\r\nSymPy 1.9 and under outputs:\r\n```\r\n'def _lambdifygenerated():\\n    return (1,)\\n'\r\n```\r\n\r\nBut SymPy 1.10 gives\r\n\r\n```\r\n'def _lambdifygenerated():\\n    return (1)\\n'\r\n```\r\nNote the missing comma after `1` that causes an integer to be returned instead of a tuple. \r\n\r\nFor tuples with two or more elements, the generated code is correct:\r\n```python\r\ninspect.getsource(lambdify([], tuple([1, 2])))\r\n```\r\nIn SymPy  1.10 and under, outputs:\r\n\r\n```\r\n'def _lambdifygenerated():\\n    return (1, 2)\\n'\r\n```\r\nThis result is expected.\r\n\r\nNot sure if this is a regression. As this breaks my program which assumes the return type to always be a tuple, could you suggest a workaround from the code generation side? Thank you. \n",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/sympy/utilities/lambdify.py b/sympy/utilities/lambdify.py\n--- a/sym] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787332467.4703772,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\swe-bench-lite__sympy__sympy-23262__2e19b4"
+}

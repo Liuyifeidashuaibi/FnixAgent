@@ -34,6 +34,7 @@ from fnixagent.api.schemas.models import (
     SessionCreate,
     SessionResponse,
 )
+from fnixagent.harness.paths import default_workspace
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -196,7 +197,7 @@ async def stream_chat(request: ChatRequest, http_request: Request):
                 workspace = request.context.get("workspace") or request.context.get(
                     "workspace_path"
                 )
-            workspace = workspace or os.getenv("FNIXAGENT_WORKSPACE") or os.getcwd()
+            workspace = workspace or str(default_workspace())
 
             raw_llm = request.llm.model_dump(exclude_none=True) if request.llm else None
             llm_dict, llm_err = resolve_llm_for_request(
@@ -465,7 +466,7 @@ def _build_agent_loop_for_stream(
     try:
         from fnixagent.services.work_agent import build_work_agent_loop
 
-        root = workspace or os.getenv("FNIXAGENT_WORKSPACE") or os.getcwd()
+        root = workspace or str(default_workspace())
         return build_work_agent_loop(workspace_root=root, llm=llm)
     except Exception:
         return None

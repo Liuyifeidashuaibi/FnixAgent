@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "xiaohongshu-psychology-note-pack",
+  "prompt": "直接把这轮小红书心理/情绪练习编辑包收尾成稿。请实际产出文件，不要只做分析。\n\n只使用当前任务目录里的这些交接材料：\n\n- `input/编辑简报_情绪练习笔记包.md`\n- `input/旧稿包_6月一轮稿.md`\n- `input/编辑交接与变更单.md`\n- `input/素材与安全边界摘记.csv`\n- `input/复用与署名冲突便签.csv`\n- `input/安全改写口径便签.md`\n\n目标是在当前工作目录根路径只生成两个定稿文件：\n\n1. `xiaohongshu_note_pack.md`\n2. `content_plan.csv`\n\n执行要求：\n\n1. 从旧稿包里的 7 个候选方向里筛出并修成 4 篇面向普通读者的非临床自助练习笔记。不是把所有旧稿都救回来，也不要把任一张材料表机械等同于一篇成稿。\n2. 后来的交接意见优先于早先说法；遇到冲突时做最小范围的编辑处理：可保留语气、场景或一小段练习入口，但要弃用来源不清、关系操控、安全过界或已被后续意见覆盖的片段。\n3. 每篇笔记要像真实编辑稿：标题、面向读者、生活场景开头、正文、小练习或句式、温和互动句、话题标签都要齐；材料说明用自然短句，不要写成编号清单。\n4. `content_plan.csv` 每篇一行，用下面这组表头：\n\n```csv\n稿件代号,暂定标题,主要读者,生活场景,主素材线索,辅助素材线索,参考碎片或弃用碎片,采用与改写说明,本稿避开的旧意见或风险,与其他稿件的复用协调,互动边界,成稿位置,责编备注\n```\n\n边界请守住：\n\n- 内容只能是心理学通识、情绪整理和日常练习提醒；不要写诊断、治疗承诺、危机干预替代、个性化心理健康建议、隐私收集、联系方式收集、症状评分收集、关系操控或专业治疗/资质暗示。\n- 风险片段只能作为识别、改写或弃用材料；不要把明确过界、来源不清或已被后续意见覆盖的句子原样放进成稿正文。\n- 如果提到持续严重困扰或紧急危险，只能提示读者寻求当地紧急服务、身边可信赖的人或专业支持。\n- 不要生成 `content_plan.json`、图片、PNG、ZIP、PPT、脚本、上传说明、抓取/API 内容、平台发布包或任何额外交付文件。\n- 不要联网、调用真实平台账号、浏览器、外部网站、账号后台、私有服务、外部工具、插件、自动化服务，或任何非编辑交接材料。\n\n完成后只需要简洁说明是否成功，以及两个输出文件名。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 78.00000000042928,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787334457.3384786,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\workbuddy-bench__xiaohongshu-psychology-note-pack__c34410"
+}

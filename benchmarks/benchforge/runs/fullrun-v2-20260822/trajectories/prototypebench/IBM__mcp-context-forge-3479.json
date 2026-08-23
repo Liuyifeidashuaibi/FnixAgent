@@ -1,0 +1,18 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "IBM__mcp-context-forge-3479",
+  "prompt": "# ✨ Feature / Enhancement PR\n\n## 🔗 Epic / Issue\nCloses #3478\n\n---\n\n## 🚀 Summary (1-2 sentences)\nAdds separate UI section/header hide configuration for admin vs non-admin users. Admins can retain full UI access in deployments where non-admin views are restricted, including embedded mode where logout and team selector auto-hiding now only applies to non-admins.\n\n---\n\n## 🧪 Checks\n\n- [x] `make lint` passes\n- [x] `make test` passes\n- [ ] CHANGELOG updated (if user-facing)\n\n---\n\n## 📓 Notes\n\n### New Environment Variables\n\n| Variable | Applies to | Default |\n|---|---|---|\n| `MCPGATEWAY_UI_HIDE_SECTIONS` | non-admin users | `[]` |\n| `MCPGATEWAY_UI_HIDE_HEADER_ITEMS` | non-admin users | `[]` |\n| `MCPGATEWAY_UI_HIDE_SECTIONS_ADMIN` | admin users | `[]` (see all) |\n| `MCPGATEWAY_UI_HIDE_HEADER_ITEMS_ADMIN` | admin users | `[]` (see all) |\n\n### Visibility Resolution\n\n```mermaid\nflowchart TD\n    A[Request to /admin/] --> B{is_admin?}\n    B -->|yes| C[Use _ADMIN env vars]\n    B -->|no| D[Use existing env vars]\n    D --> E{MCPGATEWAY_UI_EMBEDDED?}\n    E -->|yes| F[Add logout, team_selector to hidden headers]\n    E -->|no| G[No embedded defaults]\n    C --> H[Apply query param / cookie overrides]\n    F --> H\n    G --> H\n    H --> I[Map hidden sections → hidden tabs]\n    I --> J[Return visibility config]\n```\n\n### Backward Compatibility\n\nExisting deployments without `_ADMIN` vars behave identically — admins see everything (empty list = no hiding), non-admin behavior unchanged.\n\n### Files Changed\n\n- `mcpgateway/config.py` — 2 new fields with shared validators\n- `mcpgateway/admin.py` — `get_ui_visibility_config()` gains `is_admin` param\n- `.env.example` — Document new vars\n- `docker-compose.yml`, `docker-compose-embedded.yml` — Add new vars\n- `charts/mcp-stack/values.yaml`, `values.schema.json` — Helm chart entries\n- `docs/docs/config.schema.json` — Schema entries\n- `docs/docs/manage/admin-ui-customization.md` — Role-based visibility docs\n- `tests/unit/mcpgateway/test_config.py` — 5 new tests\n- `tests/unit/mcpgateway/test_admin.py` — 6 new tests",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 342.9999999998472,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336336.6582792,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\prototypebench__IBM__mcp-context-forge-3479__ff817e"
+}

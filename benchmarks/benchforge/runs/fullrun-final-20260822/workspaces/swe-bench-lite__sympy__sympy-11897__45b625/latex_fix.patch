@@ -1,0 +1,48 @@
+diff --git a/sympy/printing/latex.py b/sympy/printing/latex.py
+index abc123..def456 100644
+--- a/sympy/printing/latex.py
++++ b/sympy/printing/latex.py
+@@ -123,7 +123,12 @@ class LatexPrinter(Printer):
+         if exp.is_Integer and exp.is_negative:
+             # Use e^{-x} notation instead of \frac{1}{e^x} for consistency with pretty printer
+             if base.is_Symbol and base.func == exp:
+-                return r"\frac{1}{%s}" % self._print(base**(-exp))
++                # For exp(-x), use e^{-x} format
++                if base.is_Symbol and base.func == exp and base.args[0].is_Symbol:
++                    return r"e^{%s}" % self._print(-exp * base.args[0])
++                else:
++                    return r"\frac{1}{%s}" % self._print(base**(-exp))
+         elif exp.is_Mul and exp.args[0].is_Integer and exp.args[0].is_negative:
+             # Handle cases like exp(-2*x)
+             return r"e^{%s}" % self._print(exp)
+@@ -456,7 +461,12 @@ class LatexPrinter(Printer):
+         # Handle division: a/b/c should be \frac{a}{b c} not \frac{a}{b}/c
+         if len(args) == 2 and args[1].is_Pow and args[1].exp.is_Integer and args[1].exp.is_negative:
+             # a * b**(-1) -> \frac{a}{b}
+-            return r"\frac{%s}{%s}" % (self._print(args[0]), self._print(args[1]**(-1)))
++            # Preserve parentheses for sums in denominator
++            denom = args[1]**(-1)
++            if denom.is_Add:
++                return r"\frac{%s}{\left(%s\right)}" % (self._print(args[0]), self._print(denom))
++            else:
++                return r"\frac{%s}{%s}" % (self._print(args[0]), self._print(denom))
+         # Handle cases like 1/(x+y)/2 -> \frac{1}{2(x+y)}
+         if len(args) > 2:
+             # Find division operations
+@@ -470,7 +480,15 @@ class LatexPrinter(Printer):
+                 # Group division terms
+                 numer = args[0]
+                 denom_factors = []
+-                for arg in args[1:]:
++                for i, arg in enumerate(args[1:]):
++                    if arg.is_Pow and arg.exp.is_Integer and arg.exp.is_negative:
++                        # Handle 1/(x+y) as denominator factor
++                        base = arg.base
++                        if base.is_Add:
++                            denom_factors.append(r"\left(%s\right)^{%s}" % (self._print(base), self._print(arg.exp)))
++                        else:
++                            denom_factors.append(self._print(arg))
++                    else:
+                         denom_factors.append(self._print(arg))
+                 if len(denom_factors) == 1:
+                     return r"\frac{%s}{%s}" % (self._print(numer), denom_factors[0])

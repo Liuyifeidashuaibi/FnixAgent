@@ -1,0 +1,29 @@
+diff --git a/sklearn/preprocessing/_encoders.py b/sklearn/preprocessing/_encoders.py
+index abc1234..def5678 100644
+--- a/sklearn/preprocessing/_encoders.py
++++ b/sklearn/preprocessing/_encoders.py
+@@ -XXX,XX +XXX,XX @@ class OneHotEncoder(_BaseEncoder):
+                 # replace unknowns with first category
+                 if self.handle_unknown == 'ignore':
+                     # We cast to the same dtype as the category array
+-                    X_tr[:, i] = np.where(mask, X_tr[:, i], categories[i][0])
++                    # Check if replacement string fits in current dtype
++                    replacement = categories[i][0]
++                    if (hasattr(X_tr[:, i], 'dtype') and 
++                        X_tr[:, i].dtype.kind in ('U', 'S') and
++                        isinstance(replacement, str)):
++                        # Get length of replacement string
++                        rep_len = len(replacement)
++                        # Get current dtype itemsize
++                        if X_tr[:, i].dtype.kind == 'U':
++                            # Unicode: itemsize is in bytes, each char is 4 bytes
++                            current_max_len = X_tr[:, i].dtype.itemsize // 4
++                        else:  # 'S' - byte string
++                            current_max_len = X_tr[:, i].dtype.itemsize
++                        # If replacement is longer, convert to object dtype
++                        if rep_len > current_max_len:
++                            X_tr = X_tr.astype(object)
++                    X_tr[:, i] = np.where(mask, X_tr[:, i], replacement)
+                 else:
+                     # Raise error for unknown categories
+                     raise ValueError("y contains previously unseen labels: %s"

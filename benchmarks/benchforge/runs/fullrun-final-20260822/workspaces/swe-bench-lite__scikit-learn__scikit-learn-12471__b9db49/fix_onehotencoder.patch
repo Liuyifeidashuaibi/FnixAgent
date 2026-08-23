@@ -1,0 +1,20 @@
+diff --git a/sklearn/preprocessing/_encoders.py b/sklearn/preprocessing/_encoders.py
+index abc1234..def5678 100644
+--- a/sklearn/preprocessing/_encoders.py
++++ b/sklearn/preprocessing/_encoders.py
+@@ -123,7 +123,15 @@ class OneHotEncoder(_BaseEncoder):
+                 # replace unknowns with first category
+                 if self.handle_unknown == 'ignore':
+                     # We cast to the same dtype as the category array
+-                    X_tr[:, i] = np.where(mask, X_tr[:, i], categories[i][0])
++                    # Check if the replacement value fits in the current dtype
++                    # If not, convert to object dtype to avoid truncation
++                    replacement = categories[i][0]
++                    if (hasattr(X_tr[:, i], 'dtype') and 
++                        X_tr[:, i].dtype.kind in ('U', 'S') and
++                        len(replacement) > X_tr[:, i].dtype.itemsize // (1 if X_tr[:, i].dtype.kind == 'S' else 4)):
++                        X_tr = X_tr.astype(object)
++                    X_tr[:, i] = np.where(mask, X_tr[:, i], replacement)
+                 else:
+                     # Raise error for unknown categories
+                     raise ValueError("y contains previously unseen labels: %s"

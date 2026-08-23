@@ -30,6 +30,7 @@
 
 from __future__ import annotations
 
+import logging
 import threading
 import uuid
 from collections.abc import Callable
@@ -47,6 +48,9 @@ from fnixagent.core.skills.market import (
     SkillVersionNotFoundError,
 )
 from fnixagent.core.tools.protocol import ToolFunc, ToolMetadata
+
+_logger = logging.getLogger(__name__)
+
 
 # 沙箱禁用模块(技能安装时不允许访问文件系统/子进程/网络底层)
 # 检测机制:扫描 loader 返回的工具函数 __globals__,若包含以下模块则拒绝注册
@@ -295,7 +299,7 @@ class SkillInstaller:
                     try:
                         self._registry.unregister(name)
                     except Exception:
-                        pass
+                        _logger.debug('Unhandled exception', exc_info=True)
                 raise ToolLoaderError(
                     f"Failed to register tools for skill '{entry.name}': {e}"
                 ) from e
@@ -336,7 +340,7 @@ class SkillInstaller:
                 try:
                     self._registry.unregister(tool_name)
                 except Exception:
-                    pass
+                    _logger.debug('Unhandled exception', exc_info=True)
 
             # 清理索引与记录
             scope_key = (
@@ -395,7 +399,7 @@ class SkillInstaller:
             if tools and tool_name in tools:
                 tools[tool_name].metadata.enabled = enabled
         except Exception:
-            pass  # 容错:registry 实现不暴露内部结构时忽略
+            _logger.debug('Unhandled exception', exc_info=True)  # 容错:registry 实现不暴露内部结构时忽略
 
     # ------------------------------------------------------------------
     # 升级

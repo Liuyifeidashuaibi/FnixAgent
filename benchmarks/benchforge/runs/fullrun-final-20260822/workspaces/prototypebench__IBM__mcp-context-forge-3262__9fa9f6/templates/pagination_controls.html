@@ -1,0 +1,27 @@
+<div data-extra-params="{{ query_params | default({}) | tojson | forceescape }}">
+  <!-- Other HTML content -->
+  <script>
+    document.addEventListener('alpine:init', () => {
+      Alpine.data('paginationControls', (initialPage) => ({
+        page: initialPage,
+        init() {
+          const extraParams = JSON.parse(this.$el.dataset.extraParams || '{}');
+          Object.entries(extraParams).forEach(([k, v]) => {
+            if (k !== 'include_inactive' && v !== null && v !== undefined) {
+              url.searchParams.set(k, String(v));
+            }
+          });
+
+          // Also pick up team_id if the parent app injects it into the browser URL
+          // (e.g. when the gateway is embedded in an iframe).
+          const currentUrlParams = new URLSearchParams(window.location.search);
+          const teamIdFromUrl = currentUrlParams.get('team_id');
+          if (teamIdFromUrl && !extraParams.team_id) {
+            url.searchParams.set('team_id', teamIdFromUrl);
+          }
+        },
+        // Other pagination controls methods...
+      }));
+    });
+  </script>
+</div>

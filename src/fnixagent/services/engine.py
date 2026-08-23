@@ -19,6 +19,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 from dataclasses import dataclass
 
@@ -41,6 +42,9 @@ from fnixagent.core.reflection.validator import ResultValidator
 from fnixagent.core.security.engine import SecurityEngine
 from fnixagent.core.tools.executor import ToolExecutor
 from fnixagent.core.tools.registry import ToolRegistry
+
+_logger = logging.getLogger(__name__)
+
 
 # ---------------------------------------------------------------------------
 # LLM Provider 工厂
@@ -92,7 +96,7 @@ def _create_llm_providers() -> list[tuple[BaseLLMProvider, float]]:
             try:
                 providers.append((QwenProvider(api_key=qwen_key), 1.0))
             except Exception:
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
 
     # 无可用 Provider 时回退到 Mock
     if not providers:
@@ -374,7 +378,7 @@ def build_graph(config: CoreConfig | None = None) -> GraphComponents:
             topology_store_mgr.load_from_store()
             print(f"[services]   KTG 已从 {topo_dir} 加载快照")
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
     except Exception as e:
         print(f"[services]   KTG 持久化初始化跳过: {e}")
 
@@ -516,7 +520,7 @@ def process_with_graph(
     try:
         components.trace_store.append(trace)
     except Exception:
-        pass  # 轨迹持久化失败不影响主流程
+        _logger.debug('Unhandled exception', exc_info=True)  # 轨迹持久化失败不影响主流程
 
     # 飞轮 ② 知识固化(实时,每次对话后触发)
     solidified = components.flywheel_solidification.process(trace)
@@ -531,7 +535,7 @@ def process_with_graph(
         try:
             components.flywheel_climbing.run()
         except Exception:
-            pass  # 进化失败不影响主流程
+            _logger.debug('Unhandled exception', exc_info=True)  # 进化失败不影响主流程
 
     return {
         "answer": (

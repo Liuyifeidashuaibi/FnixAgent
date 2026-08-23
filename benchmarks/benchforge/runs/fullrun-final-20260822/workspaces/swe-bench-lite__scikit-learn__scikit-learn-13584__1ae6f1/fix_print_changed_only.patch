@@ -1,0 +1,36 @@
+diff --git a/sklearn/base.py b/sklearn/base.py
+index abc123..def456 100644
+--- a/sklearn/base.py
++++ b/sklearn/base.py
+@@ -15,6 +15,7 @@ import warnings
+ import warnings
+ from collections import defaultdict
+ from contextlib import contextmanager
++import numpy as np
+ 
+ from . import __version__
+ from ._config import get_config
+@@ -250,7 +251,12 @@ class BaseEstimator:
+         """
+         # ignore deprecation warnings of get_params
+         with warnings.catch_warnings():
+-            params = self.get_params(deep=False)
++            params = self.get_params(deep=False)
++
++        def _safe_equals(a, b):
++            try:
++                return a == b
++            except ValueError:
++                return np.array_equal(a, b)
+ 
+         # Get defaults
+         init_params = signature(self.__init__).parameters
+@@ -270,7 +276,7 @@ class BaseEstimator:
+                 # skip deprecated parameters
+                 continue
+ 
+-            if param == default:
++            if _safe_equals(param, default):
+                 continue
+             changed_params[param_name] = param
+         return changed_params

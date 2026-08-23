@@ -1,0 +1,18 @@
+{
+  "dataset": "web-bench",
+  "task_id": "less--task-4",
+  "prompt": "Add 'Save' button (class 'save') and 'Preview' button (class 'preview') in 'common/SurveyDesign.js'. Click 'Save' button to save Survey data to 'localStorage.data'. Survey data format is like `{title:'survey title', questions:[{className:'Question', title:'title 1', name:'question1'}, {className:'Question', title:'title2', name:'question2'}]}`. Each type of question's JSON data should contain all properties from constructor params and configs. Click 'Preview' button to save Survey data and open preview page in new window. Save codes to 'common/SurveyDesign.js'.",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 344.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336294.0891716,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\web-bench__less--task-4__d67112"
+}

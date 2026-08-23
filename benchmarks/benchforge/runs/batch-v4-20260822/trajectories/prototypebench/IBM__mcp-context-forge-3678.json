@@ -1,0 +1,28 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "IBM__mcp-context-forge-3678",
+  "prompt": "## Related Issue\n\nCloses #3524\n\n## Summary\n\n`_update_or_create_resources()` forced `gateway.visibility` on every gateway refresh, silently overwriting resource-specific visibility overrides that were correctly set during initial registration via `register_gateway()`.\n\n<details>\n<summary>Change details</summary>\n\n**The inconsistency**\n\n| Path | Visibility logic | Behaviour |\n|---|---|---|\n| `register_gateway()` (line 961) | `getattr(r, \"visibility\", None) or visibility` | Respects per-resource override ✅ |\n| `_update_or_create_resources()` — update (line 4227) | `gateway.visibility` | Overwrites override ❌ |\n| `_update_or_create_resources()` — create (line 4240) | `gateway.visibility` | Ignores override ❌ |\n\n**Fix**\n\nBoth the update and create paths in `_update_or_create_resources()` now use:\n\n```python\ngetattr(resource, \"visibility\", None) or gateway.visibility\n```\n\nmatching the existing behaviour in `register_gateway()`. When a resource carries no visibility override, gateway visibility is used as before.\n\n**Tests**\n\nUpdated existing tests to explicitly set `resource.visibility = None` where gateway visibility should win. Added two regression tests:\n- Per-resource visibility is preserved on update when `update_visibility=True`\n- Per-resource visibility is used on create in `_update_or_create_resources()`\n\n</details>\n\n---\n\n## Scope\n\n| Requirement | Status |\n|---|---|\n| `_update_or_create_resources()` update path respects per-resource visibility | ✅ |\n| `_update_or_create_resources()` create path respects per-resource visibility | ✅ |\n| Consistent with `register_gateway()` behaviour | ✅ |\n| Regression tests added | ✅ |\n\n---\n\n## 🔬 Steps to Test\n\n```bash\nuv run pytest tests/unit/mcpgateway/services/test_gateway_service.py tests/unit/mcpgateway/services/test_gateway_service_extended.py tests/unit/mcpgateway/services/test_gateway_service_helpers.py -v\n```\n\n---\n\n## 🏷️ Type of Change\n\n- [x] Bug fix\n\n---\n\n## ✅ Checklist\n\n- [x] Code formatted (`make black isort pre-commit`)\n- [x] Tests added/updated for changes\n- [x] No secrets or credentials committed",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [
+    "Step 0 | 思考: The provided summary and details indicate that a bug related to the handling of resource visibility ... | 工具 ✓ glob({\"pattern\": \"gateway_service*.py\"}) | 耗时: 5321ms, tokens: 3334"
+  ],
+  "tool_calls": [
+    {
+      "step": 1,
+      "tool": "glob",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'count': 0, 'pattern': 'gateway_service*.py'})\n(无匹配结果)"
+    }
+  ],
+  "files_written": [],
+  "total_tokens": 3334,
+  "duration_ms": 6375.0,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen-max): HTTP 400 (<400> InternalError.Algo.InvalidParameter: messages with role \"tool\" must be a response to a preceeding message with \"tool_calls\".)",
+  "judge_method": "heuristic",
+  "started_at": 1787384950.0908487,
+  "workspace": "benchmarks\\benchforge\\runs\\batch-v4-20260822\\workspaces\\prototypebench__IBM__mcp-context-forge-3678__6502ec"
+}

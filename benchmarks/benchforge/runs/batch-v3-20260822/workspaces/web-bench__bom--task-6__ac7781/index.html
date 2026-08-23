@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iframe Address Sync</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; }
+        .header {
+            background: #333;
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .address-bar {
+            flex: 1;
+            background: #555;
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            word-break: break-all;
+        }
+        iframe {
+            width: 100%;
+            height: calc(100vh - 50px);
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <span>Address:</span>
+        <div class="address-bar" id="addressDisplay">Loading...</div>
+    </div>
+    <iframe id="contentFrame" src="page1.html"></iframe>
+
+    <script>
+        const iframe = document.getElementById('contentFrame');
+        const addressDisplay = document.getElementById('addressDisplay');
+
+        // Update address display and browser URL when iframe navigates
+        function syncAddress(url) {
+            addressDisplay.textContent = url;
+            // Keep browser address in sync using hash (works cross-origin)
+            const hashPath = url.replace(/^.*[\/\\]/, '');
+            if (window.location.hash !== '#' + hashPath) {
+                history.pushState(null, '', '#' + hashPath);
+            }
+        }
+
+        // Listen for navigation messages from iframe
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'iframe-navigation') {
+                syncAddress(event.data.url);
+            }
+        });
+
+        // For same-origin iframes, also poll location directly
+        function pollIframeLocation() {
+            try {
+                const iframeUrl = iframe.contentWindow.location.href;
+                syncAddress(iframeUrl);
+            } catch (e) {
+                // Cross-origin restriction - rely on postMessage
+            }
+        }
+
+        // Poll every 500ms for same-origin sync
+        setInterval(pollIframeLocation, 500);
+
+        // Handle browser back/forward buttons
+        window.addEventListener('popstate', function() {
+            const hash = window.location.hash.slice(1);
+            if (hash) {
+                iframe.src = hash;
+                syncAddress(hash);
+            }
+        });
+
+        // Initial sync
+        iframe.addEventListener('load', function() {
+            try {
+                syncAddress(iframe.contentWindow.location.href);
+            } catch (e) {
+                syncAddress(iframe.src);
+            }
+        });
+    </script>
+</body>
+</html>

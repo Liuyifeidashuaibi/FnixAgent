@@ -1,0 +1,18 @@
+{
+  "dataset": "web-bench",
+  "task_id": "less--task-13",
+  "prompt": "Click config panel button (class 'add-statement') to add an statement row. In design page each statement row (class 'statement'), user can click button (class 'remove-statement') to remove an statement row, click statement text (class 'statement-text') to edit it in place. In design page each option cell (class 'option'), user can click button (class 'add-option') to add an option column, click button (class 'remove-option') to remove an option column, click option text (class 'option-text') to edit it in place.",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 359.00000000037835,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336294.691906,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\web-bench__less--task-13__20117c"
+}

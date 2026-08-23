@@ -1,0 +1,28 @@
+{
+  "dataset": "web-bench",
+  "task_id": "bom--task-11",
+  "prompt": "Right click button forward to show a menu layer (class 'menu forward-menu') which contains all forward history urls (class 'menu-item') which is clicked to jump to the page. The newest url is the first menu item.",
+  "status": "infra_skip",
+  "failure_type": "",
+  "failure_evidence": "基础设施错误(LLM 配额/鉴权)，待配额恢复后重跑: LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.6-plus-2026-04-02): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"u",
+  "final_response": "",
+  "steps": [
+    "Step 0 | 工具 ✓ ls({\"path\": \".\"}) | 耗时: 2288ms, tokens: 2791"
+  ],
+  "tool_calls": [
+    {
+      "step": 1,
+      "tool": "ls",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'count': 0, 'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\batch-v3-20260822\\\\workspaces\\\\web-bench__bom--task-7__3fc7db'})\n(空目录)"
+    }
+  ],
+  "files_written": [],
+  "total_tokens": 2791,
+  "duration_ms": 2311.999999999898,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.6-plus-2026-04-02): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787340742.0110743,
+  "workspace": "benchmarks\\benchforge\\runs\\batch-v3-20260822\\workspaces\\web-bench__bom--task-11__5fb372"
+}

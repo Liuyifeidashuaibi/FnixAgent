@@ -34,6 +34,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
 logger = logging.getLogger(__name__)
+_logger = logger
 
 # 可选依赖:cryptography(RSA 签名校验)
 try:
@@ -473,7 +474,7 @@ class SupplyChainVerifier:
             try:
                 os.unlink(tmp_path)  # type: ignore[possibly-undefined]
             except Exception:
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
 
     # -- 内部:信任密钥存储 -----------------------------------------------
 
@@ -486,7 +487,7 @@ class SupplyChainVerifier:
                     if isinstance(data, dict):
                         return data
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
         return {}
 
     def _save_trusted_keys(self) -> bool:
@@ -528,4 +529,4 @@ class SupplyChainVerifier:
 
             AuditLogger().log(action=action, detail=detail)
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)

@@ -1,0 +1,18 @@
+{
+  "dataset": "vibe-code-bench",
+  "task_id": "case_02_quiz",
+  "prompt": "# Build me a Quiz App\n\nCreate an interactive quiz game as a web page. I want:\n\n- A start screen with a \"Begin Quiz\" button\n- 10 trivia questions (make up fun ones about random topics)\n- Multiple choice with 4 options each\n- Show one question at a time\n- Highlight if I got it right or wrong after clicking\n- Keep track of my score\n- At the end, show my final score and let me play again\n- Some nice animations would be cool\n\nSingle HTML file please, with everything embedded.",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[\"\"\"\nFunctional tests for Quiz App (case_02_quiz).\n\nTests verify:\n1. Questions ar] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 77.99999999951979,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787334459.043474,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\vibe-code-bench__case_02_quiz__119927"
+}

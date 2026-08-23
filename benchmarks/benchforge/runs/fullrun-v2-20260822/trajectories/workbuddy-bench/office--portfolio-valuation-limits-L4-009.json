@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "office--portfolio-valuation-limits-L4-009",
+  "prompt": "现在要做一份离线组合估值和限额复核。工作区里已经放好了季末冻结持仓、估值价格快照、证券主数据、组合限额规则卡和运营资料包。请不要联网，也不要调用行情、券商、交易、邮件、IM、外部消息推送或任何外部接口；这次只做固定快照复核，不做真实市场操作、真实调仓、买卖建议或个人配置建议。\n请先阅读 `portfolio_limits.md` 和 `operations_pack.md`，再结合 `holdings.csv`、`price_snapshot.xlsx` 和 `security_attributes.json`，生成一个新的 Excel 工作簿 `output/portfolio_valuation_limits_output.xlsx`。\n输出 workbook 需要包含四个 sheet：`valuation_detail`、`limit_breaches`、`deviation_review_flags`、`portfolio_summary`。\n`valuation_detail` 的列依次为 holding_id、portfolio_id、account_id、symbol、security_name、asset_class、normalized_sector_code、normalized_sector_name、currency、quantity、valuation_price、fx_to_cny、price_status、market_value_cny、nav_weight_pct、exception_flag。\n`limit_breaches` 的列依次为 scope_type、scope_id、rule_id、breach_code、actual_value_pct、threshold_pct、denominator、boundary_note、source_rows。每一条规则命中单独输出一行；同一证券、行业或资产大类命中多条规则时必须全部保留。\n`deviation_review_flags` 的列依次为 scope_id、security_name、actual_weight_pct、benchmark_weight_pct、deviation_pct、review_flag、source_rows。这里只输出固定快照复核状态，例如 REVIEW_POSITIVE_DEVIATION、NO_REVIEW_FLAG 或 PRICE_MISSING_NO_DEVIATION，不得写买入、卖出、加仓、减仓、调仓、建仓或投资建议。\n`portfolio_summary` 的列依次为 summary_type、summary_key、amount_cny、weight_pct、count、note。金额单位为人民币元，比例单位为百分比。\n关键口径以规则卡为准：现金计入基金资产净值但不参与单券集中度；同一证券跨账户持仓在单券和偏离规则下按证券代码合并；行业聚合使用 security_attributes.json 中的归一行业代码和适用标记；基金/ETF 不直接并入股票行业限额；价格状态为 MISSING 的持仓进入价格异常，不按 0 或成本价替代，也不产生单券或偏离命中；不同规则的分母、边界和例外可能不同。\n\n请读取工作区中的输入文件：`input/holdings.csv`、`input/price_snapshot.xlsx`、`input/security_attributes.json`、`input/portfolio_limits.md`、`input/operations_pack.md`。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 375.0,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336328.9767582,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\workbuddy-bench__office--portfolio-valuation-limits-L4-009__766e90"
+}

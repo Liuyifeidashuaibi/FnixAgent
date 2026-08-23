@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "code--refactor-medium-request_merge_path",
+  "prompt": "httpx_like/request_model.py 里这个 RequestBuilder 只是个小版 request 组装器。现在 headers、cookies、params 和 body 的处理散在一起了，帮我把合并路径整理一下；headers 要按小写 key 合并，params 既可能是 dict 也可能是 (key, value) 列表，list/tuple value 要展开，None 值跳过。json、data、content 同时传多个要报错，最终 build 出来的内容别变。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 390.0000000003274,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336326.4334714,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\workbuddy-bench__code--refactor-medium-request_merge_path__6f080c"
+}

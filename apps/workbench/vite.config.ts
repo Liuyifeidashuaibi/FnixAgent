@@ -22,6 +22,10 @@ export default defineConfig(({ mode }) => {
     host: '127.0.0.1',
     port: 5175,
     strictPort: true,
+    // 临时关闭 HMR：vite 8 + @vitejs/plugin-react 6 的 Fast Refresh preamble 注入
+    // 存在 bug（$RefreshReg$ is not defined），导致首屏渲染崩溃。逐题自动化测试
+    // 每次都完整 reload 页面，不依赖 HMR，故安全关闭。
+    hmr: false,
     proxy: {
       '/api': {
         target: apiTarget,

@@ -44,14 +44,13 @@ jobs:
 
   # ---------------------------------------------------------------------------
   # 类型检查:pyright(basic 基线模式)
-  # 说明: strict 为长期目标;当前存量代码存在类型错误基线(~600),
-  # 该 job 以 continue-on-error 形式持续运行以跟踪收敛趋势,
-  # 硬质量门槛由 lint / test / security 三个 job 承担。
+  # 说明: 当前存量代码存在类型错误基线(.pyright-baseline 文件记录),
+  # CI 运行基线检查脚本,错误数不得超过基线(防止回归)。
+  # 目标:逐步修复存量错误,定期下调基线直到降为 0 后切换为 strict。
   # ---------------------------------------------------------------------------
   typecheck:
     name: Type Check (pyright baseline)
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
 
@@ -63,8 +62,8 @@ jobs:
       - name: Install pyright
         run: pip install pyright
 
-      - name: Pyright type check
-        run: pyright src/fnixagent/
+      - name: Pyright baseline check
+        run: python scripts/pyright_baseline.py
 
   # ---------------------------------------------------------------------------
   # 单元测试 + 集成测试(矩阵:3.11 / 3.12 / 3.13)
@@ -187,12 +186,42 @@ jobs:
           exit 1
 
   # ---------------------------------------------------------------------------
-  # Desktop Tauri — typecheck + Rust compile
+  # 前端测试:vitest 单元测试 + TypeScript 类型检查
   # ---------------------------------------------------------------------------
-  desktop-tauri:
+  frontend-test:
+    name: Frontend Test (vitest + tsc)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Enable corepack
+        run: corepack enable
+
+      - name: Setup pnpm
+        run: corepack prepare pnpm@9.15.9 --activate
+
+      - name: Install Node deps
+        run: pnpm install --frozen-lockfile
+
+      - name: Run vitest
+        working-directory: apps/workbench
+        run: pnpm test
+
+      - name: TypeScript typecheck
+        working-directory: apps/workbench
+        run: pnpm typecheck
+
+  # ---------------------------------------------------------------------------
+  # Workbench Tauri — typecheck + Rust compile
+  # ---------------------------------------------------------------------------
+  workbench-tauri:
     name: Workbench Tauri (typecheck + cargo)
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
 

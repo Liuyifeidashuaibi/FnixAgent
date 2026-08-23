@@ -1,0 +1,6 @@
+<div class="blog-list">
+  <div *ngFor="let blog of blogs" class="blog-item" (click)="onSelect(blog)">
+    <h3>{{ blog.title }}</h3>
+    <p>{{ blog.excerpt }}</p>
+  </div>
+</div>

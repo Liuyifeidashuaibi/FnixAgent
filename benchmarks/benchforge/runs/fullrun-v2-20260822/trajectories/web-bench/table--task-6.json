@@ -1,0 +1,18 @@
+{
+  "dataset": "web-bench",
+  "task_id": "table--task-6",
+  "prompt": "If no selected cell, press Tab and 'Shift+Tab' key to the first cell. Press Tab key to change the selected cell to the next one. The rules are from left col to right col, change to the left of next row if no next cell in current row; change to the first cell of the table if no next row. The rules for 'Shift+Tab' is the opposite of the rules of Tab key.",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 358.99999999946886,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336314.6075277,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\web-bench__table--task-6__f2eebe"
+}

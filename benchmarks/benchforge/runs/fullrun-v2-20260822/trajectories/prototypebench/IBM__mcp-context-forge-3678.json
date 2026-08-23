@@ -1,0 +1,18 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "IBM__mcp-context-forge-3678",
+  "prompt": "## Related Issue\n\nCloses #3524\n\n## Summary\n\n`_update_or_create_resources()` forced `gateway.visibility` on every gateway refresh, silently overwriting resource-specific visibility overrides that were correctly set during initial registration via `register_gateway()`.\n\n<details>\n<summary>Change details</summary>\n\n**The inconsistency**\n\n| Path | Visibility logic | Behaviour |\n|---|---|---|\n| `register_gateway()` (line 961) | `getattr(r, \"visibility\", None) or visibility` | Respects per-resource override ✅ |\n| `_update_or_create_resources()` — update (line 4227) | `gateway.visibility` | Overwrites override ❌ |\n| `_update_or_create_resources()` — create (line 4240) | `gateway.visibility` | Ignores override ❌ |\n\n**Fix**\n\nBoth the update and create paths in `_update_or_create_resources()` now use:\n\n```python\ngetattr(resource, \"visibility\", None) or gateway.visibility\n```\n\nmatching the existing behaviour in `register_gateway()`. When a resource carries no visibility override, gateway visibility is used as before.\n\n**Tests**\n\nUpdated existing tests to explicitly set `resource.visibility = None` where gateway visibility should win. Added two regression tests:\n- Per-resource visibility is preserved on update when `update_visibility=True`\n- Per-resource visibility is used on create in `_update_or_create_resources()`\n\n</details>\n\n---\n\n## Scope\n\n| Requirement | Status |\n|---|---|\n| `_update_or_create_resources()` update path respects per-resource visibility | ✅ |\n| `_update_or_create_resources()` create path respects per-resource visibility | ✅ |\n| Consistent with `register_gateway()` behaviour | ✅ |\n| Regression tests added | ✅ |\n\n---\n\n## 🔬 Steps to Test\n\n```bash\nuv run pytest tests/unit/mcpgateway/services/test_gateway_service.py tests/unit/mcpgateway/services/test_gateway_service_extended.py tests/unit/mcpgateway/services/test_gateway_service_helpers.py -v\n```\n\n---\n\n## 🏷️ Type of Change\n\n- [x] Bug fix\n\n---\n\n## ✅ Checklist\n\n- [x] Code formatted (`make black isort pre-commit`)\n- [x] Tests added/updated for changes\n- [x] No secrets or credentials committed",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 358.99999999946886,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336335.7419748,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\prototypebench__IBM__mcp-context-forge-3678__66e0c3"
+}

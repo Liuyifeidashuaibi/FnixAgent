@@ -21,6 +21,43 @@ from fnixagent.core.run.checkpoint import RunCheckpointStore
 SCHEMA_VERSION = 1
 
 
+def _ev_data_to_dict(d: Any) -> dict[str, Any]:
+    """Normalise RunEvent.data to a plain dict.
+
+    Handles two cases:
+      - plain dict / list / str (returned as-is)
+      - CodingAgentEvent dataclass (fields extracted as camelCase for
+        compatibility with the wire protocol expected by the frontend)
+    """
+    if isinstance(d, dict):
+        return d
+    if isinstance(d, list):
+        return {"list": d}
+    if d is None:
+        return {}
+    # CodingAgentEvent dataclass fields → wire-format camelCase keys
+    if hasattr(d, "file_path"):
+        return {
+            "path": d.file_path or "",
+            "action": d.file_action or "",
+            "diff": d.diff or "",
+            "content": d.content or "",
+            "old_content": d.old_content or "",
+        }
+    if hasattr(d, "review_notes"):
+        return {
+            "review_passed": bool(d.review_passed) if d.review_passed is not None else None,
+            "notes": d.review_notes or "",
+        }
+    if hasattr(d, "result"):
+        # done event with TaskResult
+        r = d.result
+        if hasattr(r, "status"):
+            return {"status": r.status, "review_passed": getattr(r, "review_passed", None)}
+        return {"result": str(r)}
+    return {"raw": str(d)}
+
+
 @dataclass
 class RunEvent:
     """Canonical stream event (AG-UI compatible envelope)."""
@@ -64,11 +101,11 @@ class RunEvent:
         if t == "step_end":
             return {**base, "type": "step_end", "step": d if isinstance(d, dict) else {}}
         if t == "file_change":
-            payload = d if isinstance(d, dict) else {"path": str(d)}
+            payload = _ev_data_to_dict(d)
             return {**base, "type": "file_change", **payload}
         if t == "review":
-            payload = d if isinstance(d, dict) else {}
-            notes = str(payload.get("notes") or "")
+            payload = _ev_data_to_dict(d)
+            notes = str(payload.get("notes") or payload.get("review_notes") or "")
             out = (
                 {**base, "type": "message", "content": notes}
                 if notes
@@ -76,12 +113,12 @@ class RunEvent:
             )
             return out
         if t == "heal":
-            payload = d if isinstance(d, dict) else {}
+            payload = _ev_data_to_dict(d)
             return {**base, "type": "heal", **payload}
         if t == "text" or t == "message":
             return {**base, "type": "message", "content": str(d or "")}
         if t == "done":
-            payload = d if isinstance(d, dict) else {"result": d}
+            payload = _ev_data_to_dict(d)
             return {**base, "type": "done", **payload}
         if t == "error":
             return {
@@ -358,7 +395,18 @@ async def code_agent_source(agent: Any, task: Any) -> AsyncIterator[dict[str, An
     async for ev in agent.streaming_execute(task):
         et = getattr(ev, "type", "") or ""
         if et == "status":
-            yield {"type": "thinking", "data": str(getattr(ev, "status", "") or "")}
+            # Map agent status to a lightweight "status" event (not "thinking").
+            # Previously this was "thinking" which caused the frontend to
+            # concatenate status words (planning+executing → "planningexecuting")
+            # in ThinkingBlock's content via appendBlock's thinking-merge rule.
+            yield {"type": "status", "data": str(getattr(ev, "status", "") or "")}
+        elif et == "thinking":
+            # Agent emits thinking events with a human-readable content string
+            # (e.g. "正在分析任务需求，制定执行计划...").
+            # Extract the content field — without this, the else branch dumps
+            # the entire dataclass __dict__ as the "data" payload, which
+            # to_code_ndjson then str()-ifies into an ugly repr.
+            yield {"type": "thinking", "data": str(getattr(ev, "content", "") or "")}
         elif et == "plan":
             yield {"type": "plan", "data": list(getattr(ev, "steps", None) or [])}
         elif et == "step":

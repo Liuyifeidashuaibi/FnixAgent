@@ -1,0 +1,18 @@
+{
+  "dataset": "swe-bench-lite",
+  "task_id": "sympy__sympy-18835",
+  "prompt": "uniq modifies list argument\nWhen you iterate over a dictionary or set and try to modify it while doing so you get an error from Python:\r\n```python\r\n>>> multiset('THISTLE')\r\n{'T': 2, 'H': 1, 'I': 1, 'S': 1, 'L': 1, 'E': 1}\r\n>>> for i in _:\r\n...   _.pop(i)\r\n...\r\n2\r\nTraceback (most recent call last):\r\n  File \"<stdin>\", line 1, in <module>\r\nRuntimeError: dictionary changed size during iteration\r\n```\r\nIt would be good to do the same thing from within `uniq` because the output will silently be wrong if you modify a passed list:\r\n```python\r\n>>> f=list('THISTLE')\r\n>>> for i in uniq(f):\r\n...   f.remove(i)\r\n...   i\r\n...\r\n'T'\r\n'I'\r\n'L'\r\n```\r\nI think this would entail recording the size at the start and then checking the size and raising a similar RuntimeError if the size changes.\n",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 375.0,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336353.5589643,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\swe-bench-lite__sympy__sympy-18835__0f06e2"
+}

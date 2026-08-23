@@ -1,0 +1,18 @@
+{
+  "dataset": "web-bench",
+  "task_id": "task-14",
+  "prompt": "1) Enable Markdown text input for blog details. Preview the Markdown in Blog.vue. 2) Develop a composable/utils to reuse Markdown-related logic. 3) Prevent XSS attacks. 4) Constraint: DO NOT use any third-party packages; ONLY Vue APIs are permitted.",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787332457.2032843,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\web-bench__task-14__45737b"
+}

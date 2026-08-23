@@ -1,0 +1,30 @@
+diff --git a/src/components/GraphQLDocumentationExplorer.tsx b/src/components/GraphQLDocumentationExplorer.tsx
+index abc1234..def5678 100644
+--- a/src/components/GraphQLDocumentationExplorer.tsx
++++ b/src/components/GraphQLDocumentationExplorer.tsx
+@@ -10,7 +10,12 @@ const GraphQLDocumentationExplorer: React.FC<GraphQLDocumentationExplorerProps>
+   if (!isOpen) return null;
+ 
+   return (
+-    <div className="graphql-doc-explorer">
++    <div 
++      className="graphql-doc-explorer"
++      data-testid="graphql-doc-explorer"
++      role="region"
++      aria-label="GraphQL documentation explorer"
++    >
+       <div className="doc-header">
+         <h3>GraphQL Documentation</h3>
+         <button 
+@@ -18,7 +23,11 @@ const GraphQLDocumentationExplorer: React.FC<GraphQLDocumentationExplorerProps>
+           className="close-button"
+           onClick={onClose}
+           aria-label="Close documentation"
++          data-testid="graphql-doc-close-button"
++          tabIndex={0}
++          onKeyDown={(e) => {
++            if (e.key === 'Enter' || e.key === ' ') e.preventDefault();
++          }}
+         >
+           ×
+         </button>

@@ -18,6 +18,7 @@
 
 from __future__ import annotations
 
+import logging
 import threading
 from typing import Any
 
@@ -32,6 +33,9 @@ from fnixagent.core.skills.market import (
     SkillStatusError,
     SkillVersion,
 )
+
+_logger = logging.getLogger(__name__)
+
 
 router = APIRouter(prefix="/skills", tags=["skills"])
 
@@ -207,6 +211,7 @@ def _seed_builtin_skills(market: SkillMarket) -> None:
             market.approve(entry.id, reviewer_id="seed", comment="内置技能样板(自动发布)")
         except Exception:
             # 单条异常不影响其余条目
+            _logger.debug('Unhandled exception', exc_info=True)
             continue
 
 

@@ -11,8 +11,7 @@
  * 极简新中式：白底 · 细灰顶边线 · 深灰文字 · 小圆点状态色
  */
 
-import { useState } from "react";
-import "./FnixStatusBar.css";
+import './FnixStatusBar.css';
 
 interface Props {
   agentdOk: boolean | null;
@@ -23,7 +22,7 @@ interface Props {
   apiBase: string;
 }
 
-type DotColor = "green" | "yellow" | "red" | "gray";
+type DotColor = 'green' | 'yellow' | 'red' | 'gray';
 
 interface Light {
   color: DotColor;
@@ -31,46 +30,32 @@ interface Light {
   title: string;
 }
 
-export function FnixStatusBar({
-  agentdOk,
-  llmProvider,
-  llmModel,
-  hasApiKey,
-  projectPath,
-}: Props) {
-  // 0. agentd — 后端连通性是执行任务的前提,离线时红色显式提示
-  const agentdLight: Light = (() => {
-    if (agentdOk === true) {
-      return { color: "green", label: "agentd", title: "agentd: 已连接" };
-    }
-    if (agentdOk === false) {
-      return { color: "red", label: "agentd 离线", title: "agentd: 后端未响应，任务将无法执行" };
-    }
-    return { color: "gray", label: "agentd", title: "agentd: 连接中…" };
-  })();
-
-  // 1. LLM — 用户需要知道当前用的什么模型；未配置时柔和引导
-  const llmConfigured = Boolean(llmProvider && llmModel);
-  const llmLabel = llmConfigured ? `${llmProvider} · ${llmModel}` : "LLM 未配置";
-  const llmLight: Light | null = (() => {
-    if (!llmConfigured) {
-      return { color: "gray", label: llmLabel, title: "LLM: 未配置 provider/model" };
-    }
-    if (hasApiKey) {
-      return { color: "green", label: llmLabel, title: `LLM: ${llmProvider} · ${llmModel} (key 已配置)` };
-    }
-    return { color: "yellow", label: llmLabel, title: `LLM: ${llmProvider} · ${llmModel} (无 api_key)` };
-  })();
-
-  // 3. workspace（仅在已选择时显示）
-  const wsLight: Light | null = projectPath
-    ? { color: "green", label: "workspace", title: `workspace: ${projectPath}` }
-    : null;
-
+export function FnixStatusBar({ agentdOk, llmProvider, llmModel, hasApiKey, projectPath }: Props) {
+  // 仅在异常状态下显示信号灯，正常状态隐藏避免冗余
+  // — 后端离线 → 红色警告（必须提示）
+  // — 模型未配置 → 灰色提示
+  // — 无 api_key → 黄色提示
+  // — 一切正常 → 不显示（聊天框已有模型选择，workspace 已在侧栏）
   const lights: Light[] = [];
-  lights.push(agentdLight);
-  if (wsLight) lights.push(wsLight);
-  if (llmLight) lights.push(llmLight);
+
+  if (agentdOk === false) {
+    lights.push({ color: 'red', label: 'agentd 离线', title: 'agentd: 后端未响应，任务将无法执行' });
+  } else if (agentdOk === null) {
+    lights.push({ color: 'gray', label: 'agentd 连接中…', title: 'agentd: 连接中…' });
+  }
+
+  const llmConfigured = Boolean(llmProvider && llmModel);
+  if (!llmConfigured) {
+    lights.push({ color: 'gray', label: 'LLM 未配置', title: 'LLM: 未配置 provider/model' });
+  } else if (!hasApiKey) {
+    lights.push({
+      color: 'yellow',
+      label: `${llmProvider} · ${llmModel} (无 api_key)`,
+      title: `LLM: ${llmProvider} · ${llmModel} (无 api_key)`,
+    });
+  }
+
+  if (lights.length === 0) return null;
 
   return (
     <div className="fnix-status-bar" role="status">

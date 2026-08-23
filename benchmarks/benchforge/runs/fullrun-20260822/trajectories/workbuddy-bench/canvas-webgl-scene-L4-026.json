@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "canvas-webgl-scene-L4-026",
+  "prompt": "# Web-Bench Task T26\n\nPlease build a 3D snow-mountain overlook scene using static HTML/CSS/JavaScript. When the page opens you should see the snow-mountain scene and be able to drag with the mouse to look around, with clear lighting and spatial depth. You can use native Canvas/WebGL or local scripts shipped with the deliverable, but don't rely on external CDNs or network downloads.\n\n## Output\n\nCreate the required artifact inside `/workspace`. The required output path is:\n\n- `/workspace/www/index.html` (declared as `environment/www/index.html`)\n\nDo not place the final answer only in chat; write the runnable artifact files.\n\n## Runtime and Delivery Constraints\n\n- The deliverable must open directly under a static file server; don't rely on a Node.js backend, npm build steps, external CDNs, or network downloads for dependencies.\n- If you need to split out CSS, JavaScript, or data-processing files, put them inside the inspected directory and reference them from the entry HTML using relative paths.\n\n## Public Assets\n\n- `scene-brief`: `/workspace/public-assets/brief/mountain-overlook-scene-brief.md` markdown\n- `dependency-task-chain`: `/workspace/public-assets/brief/dependency-task-chain.md` markdown\n- `camera-lighting-constraints`: `/workspace/public-assets/spec/camera-and-lighting-constraints.yaml` yaml\n- `scene-module-cues`: `/workspace/public-assets/data/scene-module-cues.json` json\n- `scene-graph`: `/workspace/public-assets/data/scene-graph.json` json\n- `scene-build-notes`: `/workspace/public-assets/spec/scene-build-notes.md` text/markdown",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 77.99999999997453,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787332457.370409,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\workbuddy-bench__canvas-webgl-scene-L4-026__1c476b"
+}

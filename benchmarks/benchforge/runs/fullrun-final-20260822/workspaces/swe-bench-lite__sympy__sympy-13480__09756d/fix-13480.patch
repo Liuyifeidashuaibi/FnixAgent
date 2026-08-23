@@ -1,0 +1,5 @@
+--- a/sympy/functions/elementary/hyperbolic.py
++++ b/sympy/functions/elementary/hyperbolic.py
+@@ -589,1 +589,1 @@
+-            if cotm is S.ComplexInfinity:
++            if arg is S.ComplexInfinity:

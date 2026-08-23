@@ -1,0 +1,26 @@
+{
+  "id": "code-001",
+  "title": "从零生成可运行代码",
+  "capability": "code_gen",
+  "difficulty": 2,
+  "tags": [
+    "generate"
+  ],
+  "prompt": "在当前目录创建 fib.py，定义函数 fib(n)：返回第 n 个斐波那契数（fib(0)=0, fib(1)=1）。只创建这一个文件。",
+  "allowed_scope": [
+    "fib.py"
+  ],
+  "checks": [
+    {
+      "function": "command_succeeds",
+      "args": {
+        "command": "python -c \"from fib import fib; assert fib(0)==0 and fib(1)==1 and fib(10)==55 and fib(20)==6765\""
+      },
+      "weight": 2.0
+    },
+    {
+      "function": "scope_respected",
+      "args": {}
+    }
+  ]
+}

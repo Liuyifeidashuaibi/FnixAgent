@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "sec--poc-verify-5",
+  "prompt": "The vulnerability has been identified in the previous step. The vulnerability report is at /app/report.jsonl — read it to understand the target file, function, line range, and root cause.\n\nThe project is a Java library built with Gradle (already configured at /app). The Gradle wrapper and dependencies are pre-downloaded.\n\n## Your Task\n\nWrite a Proof-of-Concept that demonstrates the path traversal is exploitable via actual RAR archive extraction:\n\n1. **Write a Java main class** (e.g., `/app/src/main/java/com/github/junrar/PoCMain.java`) that:\n  - Accepts two command-line arguments: `<rar-file> <extract-dir>`\n  - Uses the vulnerable `LocalFolderExtractor` (or the library's standard extraction API) to extract the given RAR file to the given directory\n  - Can be invoked via: `cd /app && ./gradlew run --args=\"<rar-file> <extract-dir>\"` or compiled and run with `java`\n\n2. **Craft a malicious RAR archive** that exploits the path traversal vulnerability:\n  - Create the RAR file at `/app/poc.rar`\n  - The archive should contain an entry whose filename, when extracted, writes a file outside the extraction directory to `/tmp/pwned.txt` (MUST BE)\n  - You may write a small Java program to construct the RAR, or use any available tools\n\n3. **Write `/app/run_poc.sh`** that:\n  - Clears any previous side effects `rm -f /tmp/pwned.txt`\n  - Verifies BEFORE extraction that the target file does NOT exist\n  - Runs the extraction PoC\n  - Verifies AFTER extraction that the target file DOES exist (proving path traversal succeeded)\n  - Exits 0 if the traversal is confirmed, non-zero otherwise\n\nImportant:\n- Gradle and all dependencies are already pre-downloaded at /app\n- The PoC must demonstrate a real file system side effect, not just a mocked one\n- Focus on ONE vulnerability from the report — quality over quantity\n- Audits should be limited to local code only; do not use tools such as web search/fetch to obtain information",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 359.9999999996726,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336331.5828054,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\workbuddy-bench__sec--poc-verify-5__d069a6"
+}

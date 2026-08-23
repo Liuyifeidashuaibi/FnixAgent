@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "office--research-factor-table-extract-L3-016",
+  "prompt": "你是研究资料组的离线字段整理助理。当前工作区里已经放好一组合成研究资料包：早间研究简报 PDF、晚间更新资讯页 HTML、抽取口径说明、主体/行业字典和因子 schema。请只使用当前工作区提供的静态文件，不运行脚本、不联网、不查询真实行情、不调用券商、交易、邮件、IM 或任何外部接口，不生成投资建议、评级建议、目标价建议、交易动作或消息发送记录。\n请读取 `research_report_morning.pdf`、`research_report_evening.html`、`methodology_note.md`、`company_industry_dictionary.xlsx` 和 `factor_schema.json`，生成两个文件：`output/research_factor_extract.xlsx` 和 `output/research_factor_extract.json`。\n`research_factor_extract.xlsx` 必须包含三个 sheet：`research_points`、`factor_mentions`、`risk_disclosures`。\n`research_points` 的列依次为 point_id、canonical_company_id、canonical_company_name、canonical_sector_name、point_type、effective_source_time、summary_text、source_document、section_or_table、superseded_source。\n`factor_mentions` 的列依次为 factor_row_id、canonical_company_id、factor_id、factor_name、direction、horizon、evidence_text、effective_source_time、source_document、section_or_table、superseded_source。\n`risk_disclosures` 的列依次为 risk_id、canonical_company_id、risk_type、risk_text、source_document、section_or_table。\n`research_factor_extract.json` 必须包含顶层对象 `citation_map`。每个关键字段的 citation key 采用 `<sheet>:<row_id>:<field_name>`，value 至少包含 source_document、section_or_table、snippet_anchor。\n关键口径以 `methodology_note.md` 与 `factor_schema.json` 为准：同一主体 + 同一 factor_id 或 risk_type 出现冲突时，以发布时间更晚且明确修订的资料为准，并在 superseded_source 记录被替换的早间证据编号、表格或章节；方向只能使用 positive、negative、neutral；horizon 必须来自 schema 的枚举；主体、行业和因子名称必须按字典/schema 归一；risk_disclosures 只抽取“风险提示”或明确作为风险因素列示的内容，不抽取评级说明、免责声明、平台 footer、作者声明或相关阅读中的泛化提示。\n\n请读取工作区中的输入文件：`input/research_report_morning.pdf`、`input/research_report_evening.html`、`input/methodology_note.md`、`input/company_industry_dictionary.xlsx`、`input/factor_schema.json`。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 389.9999999994179,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336329.2385983,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\workbuddy-bench__office--research-factor-table-extract-L3-016__c8e616"
+}

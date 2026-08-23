@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Introduction</title>
+    <style>
+        body.dark {
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+        
+        body.light {
+            background-color: #ffffff;
+            color: #000000;
+        }
+    </style>
+</head>
+<body>
+    <h1>Welcome to the Documentation Browser</h1>
+    <p>This is the introduction page. You can navigate to other documentation pages using the address select dropdown or the buttons in the toolbar.</p>
+    <script>
+        // Listen for theme change messages from parent
+        window.addEventListener('message', function(event) {
+            if (event.data.type === 'set-theme') {
+                document.body.className = event.data.theme;
+            }
+        });
+        
+        // Initialize theme on load
+        if (window.parent && window.parent.document.body) {
+            const parentTheme = window.parent.document.body.className;
+            if (parentTheme) {
+                document.body.className = parentTheme;
+            }
+        }
+    </script>
+</body>
+</html>

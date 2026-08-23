@@ -1,0 +1,18 @@
+{
+  "dataset": "vibe-code-bench",
+  "task_id": "case_24_filebrowser",
+  "prompt": "# Build me a Virtual File Browser\n\nI want a file browser/explorer interface in a single HTML file. Think Windows Explorer or macOS Finder, but running entirely in the browser with mock data.\n\n## Core Features\n\n1. **Folder tree** on left sidebar - expandable/collapsible folders\n2. **File listing** in main area - shows files in current folder\n3. **Breadcrumb navigation** at top - click to navigate up\n4. **Different views** - List view and Grid/Icon view toggle\n5. **File icons** - Different icons for folders, files, and file types\n\n## Mock File System\n\nCreate a mock file system with:\n```\n/\n├── Documents/\n│   ├── Reports/\n│   │   ├── Q1_Report.pdf\n│   │   └── Q2_Report.pdf\n│   ├── Notes.txt\n│   └── Budget.xlsx\n├── Pictures/\n│   ├── Vacation/\n│   │   ├── beach.jpg\n│   │   └── sunset.jpg\n│   └── profile.png\n├── Downloads/\n│   ├── installer.exe\n│   └── archive.zip\n└── readme.txt\n```\n\n## Interactions\n\n- **Click folder** - Opens it, shows contents\n- **Double-click file** - Shows file info modal (name, size, type)\n- **Right-click** - Context menu with: Open, Rename, Delete, Properties\n- **Drag & drop** - Move files between folders (optional)\n\n## UI Requirements\n\n- **Toolbar** with: Back, Forward, Up, New Folder, Delete\n- **Search bar** - Filter files by name\n- **Status bar** at bottom - Shows item count, selection info\n- **Sort options** - By name, size, date, type\n\n## Styling\n\n- Modern file browser aesthetic\n- File type icons (use emoji or CSS icons)\n- Selected item highlight\n- Hover effects\n\nSingle HTML file with embedded CSS/JS. No external libraries.",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 344.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336334.1304238,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\vibe-code-bench__case_24_filebrowser__49c2ea"
+}

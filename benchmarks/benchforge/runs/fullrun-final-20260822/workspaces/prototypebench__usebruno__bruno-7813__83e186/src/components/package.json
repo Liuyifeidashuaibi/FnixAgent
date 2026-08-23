@@ -1,0 +1,30 @@
+{
+  "name": "@bruno/selection-list",
+  "version": "1.0.0",
+  "description": "Reusable selection list component for Bruno import workflows",
+  "main": "SelectionList.tsx",
+  "types": "SelectionList.d.ts",
+  "files": [
+    "SelectionList.tsx",
+    "SelectionList.css",
+    "SelectionList.d.ts",
+    "index.ts"
+  ],
+  "keywords": [
+    "bruno",
+    "selection",
+    "import",
+    "collection",
+    "git"
+  ],
+  "author": "Bruno Team",
+  "license": "MIT",
+  "peerDependencies": {
+    "react": ">=16.8.0",
+    "react-dom": ">=16.8.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0"
+  }
+}

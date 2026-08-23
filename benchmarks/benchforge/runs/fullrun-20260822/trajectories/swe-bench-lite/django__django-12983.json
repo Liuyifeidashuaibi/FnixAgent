@@ -1,0 +1,18 @@
+{
+  "dataset": "swe-bench-lite",
+  "task_id": "django__django-12983",
+  "prompt": "Make django.utils.text.slugify() strip dashes and underscores\nDescription\n\t \n\t\t(last modified by Elinaldo do Nascimento Monteiro)\n\t \nBug generation slug\nExample:\nfrom django.utils import text\ntext.slugify(\"___This is a test ---\")\noutput: ___this-is-a-test-\nImprovement after correction\nfrom django.utils import text\ntext.slugify(\"___This is a test ---\")\noutput: this-is-a-test\n​PR\n",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/django/utils/text.py b/django/utils/text.py\n--- a/django/utils/text] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 77.99999999997453,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787332463.6875353,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\swe-bench-lite__django__django-12983__ef8a9a"
+}

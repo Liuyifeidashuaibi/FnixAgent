@@ -1,0 +1,47 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "IBM__mcp-context-forge-3839",
+  "prompt": "Closes #3734\n\n> **Note:** This branch also includes the Layer 2 RBAC token-narrowing fix from #3919 (session-token team narrowing in permission checks).\n\n---\n\n## Overview\n\nThis PR implements **automatic tool discovery** for upstream MCP servers via usage-aware adaptive polling. The gateway now continuously synchronises tool lists from registered servers without any manual intervention — polling frequently-used servers at 1× the base interval and deprioritising idle servers to 3× — reducing unnecessary load while keeping active integrations fresh.\n\nPreviously, tool lists were only refreshed on demand or via manual admin action. With this change, the gateway discovers new, updated, and removed tools automatically, reflecting upstream changes within one poll cycle.\n\n---\n\n## Design Rationale: Polling vs. Push Notifications\n\nThe MCP spec defines `notifications/tools/list_changed` as the canonical mechanism for dynamic tool discovery, and it is a reasonable default for single-session clients. For a gateway operating at scale, persistent-connection notifications introduce a set of problems that polling sidesteps cleanly — this section explains that tradeoff honestly.\n\n### Why persistent notifications don't fit the gateway model\n\n**Notifications require a live transport stream.** The MCP SDK delivers notifications through a `_receive_loop` tied to the open connection. The gateway's refresh path (`_initialize_gateway` → `connect_to_sse_server` / `connect_to_streamablehttp_server`) uses ephemeral connections — open, fetch tools/list, close. No `message_handler` is registered and the notification window is effectively zero.\n\n**Session pools are demand-driven, not proactive.** `MCPSessionPool` does maintain persistent sessions with notification handlers, but sessions are only created when users invoke tools. If no tools have been called against a gateway, no session exists and no notifications are received. Idle sessions are evicted after 600 s (`MCP_SESSION_POOL_IDLE_EVICTION`). The pool covers active user traffic, not passive server monitoring.\n\n**The connection cost scales poorly.** Listening to N upstream servers requires N open TCP sockets and 2N asyncio tasks per worker, plus keepalive traffic and reconnect logic. At realistic deployment sizes:\n\n| Scale | Persistent Notifications | Ephemeral Polling |\n|---|---|---|\n| Connections at rest | N per worker | 0 |\n| asyncio tasks at rest | 2N per worker | 0 |\n| Multi-worker support | ✗ (each worker needs own connections) | ✓ (leader election) |\n| Server restart recovery | Requires explicit reconnect | Next poll picks it up |\n| 1K servers, 4 workers | ~8K connections, ~8K tasks | 0 at rest |\n| 10K servers, 4 workers | ~80K persistent connections | ~10K ephemeral calls/interval, batched |\n\nPolling holds zero file descriptors at rest, works across workers via leader election (`FILELOCK_NAME`), and self-heals automatically when upstream servers restart. The existing health-check infrastructure already provides semaphore-based concurrency control, chunked batching with inter-batch pauses, and per-gateway throttling — this PR builds on that foundation rather than replacing it.\n\n> If the MCP spec's push model becomes viable for large-scale gateway deployments in the future (e.g. via a dedicated notification broker), this polling layer can be replaced without touching the rest of the refresh pipeline.\n\n---\n\n## Background: What Already Exists\n\nThe gateway's health check system already implements:\n\n- ✅ Semaphore-based concurrency control (adaptive limit)\n- ✅ Chunked processing with 50 ms pauses between batches\n- ✅ Per-gateway throttling via `last_refresh_at` timestamps\n- ✅ Lock-based conflict prevention (manual vs. auto-refresh)\n- ✅ Configurable intervals (`HEALTH_CHECK_INTERVAL`, `GATEWAY_AUTO_REFRESH_INTERVAL`)\n\n> **Example:** 100 gateways → 10 concurrent batches with 50 ms pauses = ~5–10 s total check time\n\n---\n\n## Problem\n\nDespite those safeguards, automatic tool discovery was not enabled and all servers were treated equally:\n\n- No automatic synchronisation of tool lists from upstream servers\n- A server receiving 1,000+ requests/day → checked every 300 s\n- A server idle for weeks → also checked every 300 s\n- No differentiation based on real usage patterns\n- Unnecessary polling of servers that rarely if ever change\n\n---\n\n## Solution\n\n### 1. Automatic Tool Discovery via Polling\n\nThe gateway now runs a background polling loop that periodically calls `tools/list` on every registered upstream server. Discovered tools are reconciled against the local registry — additions, updates, and removals are applied automatically. No manual refresh or admin action is required.\n\n### 2. Hot/Cold Server Classification\n\nTo make automatic polling efficient at scale, the gateway analyses the MCP session pool to classify each server into one of two tiers:\n\n| Tier | Criteria | Poll Interval |\n|---|---|---|\n| **Hot** (top 20%) | Recent active sessions, high use count | 1× base interval (300 s default) |\n| **Cold** (remaining 80%) | No recent sessions or low usage | 3× base interval (900 s default) |\n\n**Classification algorithm:**\n\n1. Extract per-server metrics from pooled sessions: `server_last_used`, `active_session_count`, `total_use_count`\n2. Filter to servers with a valid pooled session\n3. Sort by recency (most recently used first); ties broken deterministically\n4. Top 20% (`floor(0.20 × N)`) → **hot**\n5. Remainder → **cold**\n\nClassification is deterministic and grounded entirely in observed usage — no heuristics or guesswork.\n\n### 3. Intelligent Interval Selection\n\nEach server's tier determines its poll frequency:\n\n```python\n# Hot server (top 20% by usage)\nshould_poll = elapsed >= settings.hot_server_check_interval   # 300 s (1× base)\n\n# Cold server (remaining 80%)\nshould_poll = elapsed >= settings.cold_server_check_interval  # 900 s (3× base)\n```\n\n### 4. Multi-Worker Coordination\n\n- **With Redis:** Leader election ensures a single worker classifies servers; all workers read the shared classification from Redis.\n- **Without Redis (`make dev`):** Single-worker mode; classification runs locally — no Redis dependency required for local development.\n\n---\n\n## Configuration\n\nTo enable automatic tool discovery and health checks:\n\n```env\nAUTO_REFRESH_SERVERS=true            # Master switch — enables automatic tool/resource/prompt sync during health checks\nGATEWAY_AUTO_REFRESH_INTERVAL=300    # Tool list refresh interval in seconds (default: 300, minimum: 60)\n```\n\nOptional tuning:\n\n```env\nHOT_COLD_CLASSIFICATION_ENABLED=true    # Hot/cold classification (default: false, requires Redis for multi-worker)\n```\n\nAll poll intervals are derived automatically from `GATEWAY_AUTO_REFRESH_INTERVAL`:\n\n| Server tier | Poll interval |\n|---|---|\n| Hot (top 20% by usage) | 1× base (300 s) |\n| Cold (remaining 80%) | 3× base (900 s) |",
+  "status": "success",
+  "failure_type": "",
+  "failure_evidence": "LLM 判定不可用（[qwen] chat failed: [qwen] request failed (model=qwen3.7-max-2026-05-20): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)），按启发式成功保守处理",
+  "final_response": "Now let me create the hot/cold server classifier module:",
+  "steps": [
+    "Step 0 | 思考: I'll start by understanding the codebase structure and then implement the automatic tool discovery w... | 工具 ✓ ls({\"path\": \".\"}) | 耗时: 1290ms, tokens: 4281",
+    "Step 1 | 思考: The workspace is empty. I need to create the entire implementation from scratch based on the PR desc... | 工具 ✗ web_search({\"query\": \"IBM mcp-context-forge github repository) | 耗时: 7212ms, tokens: 4429",
+    "Step 2 | 思考: The workspace is empty and there's no existing code. Based on the PR description, I need to implemen... | 工具 ✓ write_file({\"file_path\": \"settings.py\", \"content\": \"\\\"\\\"\\\"Con) | 耗时: 9299ms, tokens: 5080",
+    "Step 3 | 思考: Now let me create the hot/cold server classifier module:... | 耗时: 750ms, tokens: 4627"
+  ],
+  "tool_calls": [
+    {
+      "step": 1,
+      "tool": "ls",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'count': 0, 'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\batch-v4-20260822\\\\workspaces\\\\prototypebench__IBM__mcp-context-forge-3839__ade806'})\n(空目录)"
+    },
+    {
+      "step": 2,
+      "tool": "web_search",
+      "args": {},
+      "success": false,
+      "output_preview": "[失败] 搜索失败: "
+    },
+    {
+      "step": 3,
+      "tool": "write_file",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\batch-v4-20260822\\\\workspaces\\\\prototypebench__IBM__mcp-context-forge-3839__ade806\\\\settings.py', 'size': 2578, 'rel_path': 'settings.py', 'mirror': None})\n已写入: settings.py (2578 字符)"
+    }
+  ],
+  "files_written": [
+    "settings.py"
+  ],
+  "total_tokens": 18417,
+  "duration_ms": 18556.244100000185,
+  "error": "",
+  "judge_method": "heuristic",
+  "started_at": 1787382494.0225346,
+  "workspace": "benchmarks\\benchforge\\runs\\batch-v4-20260822\\workspaces\\prototypebench__IBM__mcp-context-forge-3839__ade806"
+}

@@ -1,0 +1,18 @@
+{
+  "dataset": "swe-bench-lite",
+  "task_id": "django__django-12700",
+  "prompt": "Settings are cleaned insufficiently.\nDescription\n\t\nPosting publicly after checking with the rest of the security team.\nI just ran into a case where django.views.debug.SafeExceptionReporterFilter.get_safe_settings() would return several un-cleansed values. Looking at cleanse_setting() I realized that we ​only take care of `dict`s but don't take other types of iterables into account but ​return them as-is.\nExample:\nIn my settings.py I have this:\nMY_SETTING = {\n\t\"foo\": \"value\",\n\t\"secret\": \"value\",\n\t\"token\": \"value\",\n\t\"something\": [\n\t\t{\"foo\": \"value\"},\n\t\t{\"secret\": \"value\"},\n\t\t{\"token\": \"value\"},\n\t],\n\t\"else\": [\n\t\t[\n\t\t\t{\"foo\": \"value\"},\n\t\t\t{\"secret\": \"value\"},\n\t\t\t{\"token\": \"value\"},\n\t\t],\n\t\t[\n\t\t\t{\"foo\": \"value\"},\n\t\t\t{\"secret\": \"value\"},\n\t\t\t{\"token\": \"value\"},\n\t\t],\n\t]\n}\nOn Django 3.0 and below:\n>>> import pprint\n>>> from django.views.debug import get_safe_settings\n>>> pprint.pprint(get_safe_settings()[\"MY_SETTING\"])\n{'else': [[{'foo': 'value'}, {'secret': 'value'}, {'token': 'value'}],\n\t\t [{'foo': 'value'}, {'secret': 'value'}, {'token': 'value'}]],\n 'foo': 'value',\n 'secret': '********************',\n 'something': [{'foo': 'value'}, {'secret': 'value'}, {'token': 'value'}],\n 'token': '********************'}\nOn Django 3.1 and up:\n>>> from django.views.debug import SafeExceptionReporterFilter\n>>> import pprint\n>>> pprint.pprint(SafeExceptionReporterFilter().get_safe_settings()[\"MY_SETTING\"])\n{'else': [[{'foo': 'value'}, {'secret': 'value'}, {'token': 'value'}],\n\t\t [{'foo': 'value'}, {'secret': 'value'}, {'token': 'value'}]],\n 'foo': 'value',\n 'secret': '********************',\n 'something': [{'foo': 'value'}, {'secret': 'value'}, {'token': 'value'}],\n 'token': '********************'}\n",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/django/views/debug.py b/django/views/debug.py\n--- a/django/views/de] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787332463.6007361,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\swe-bench-lite__django__django-12700__5bb143"
+}

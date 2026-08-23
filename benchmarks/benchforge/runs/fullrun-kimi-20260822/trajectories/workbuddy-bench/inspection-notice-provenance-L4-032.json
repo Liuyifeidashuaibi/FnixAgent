@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "inspection-notice-provenance-L4-032",
+  "prompt": "请读取当前工作目录下的项目检查文书文件夹，整理每个项目截至 2026-06-14 的最新有效整改状态，并写入\n`output/project_status.json`。输入目录中同时包含正式整改通知书、正式复查意见书、补充说明、归档旧件/草稿和少量无法匹配到台账项目的文件；不能只做单份安全检查摘录，必须根据文件夹层级、文书状态、关联文号和来源路径判断每个字段的有效来源。\n\n输出 JSON 顶层必须包含 `metadata`、`projects`、`unmatched_files`、`summary` 四个字段。\n\n`metadata` 至少包含：`case_id`、`as_of_date`、`source_root`、`source_files_count`、`output_path`、`resolution_rules`。\n\n`projects` 是数组，每个项目一条记录，字段必须包含：\n- `project_id`\n- `项目名称`\n- `建设单位`\n- `施工单位`\n- `违规类型`\n- `处罚金额`：统一为 `¥18,000.00` 这类格式；不予罚款统一为 `¥0.00`\n- `整改期限`：统一为 ISO 日期 `YYYY-MM-DD`\n- `最新状态`\n- `复查结论`\n- `effective_source_file`：决定该项目最新状态的来源文件路径，必须保留相对路径而不是只写文件名\n- `superseded_source_files`：被该有效判断取代、但与本项目相关的归档/草稿/较早正式文书/未生效补充说明路径\n- `conflict_notes`：简要说明同字段冲突如何解决，特别是金额、期限、复查状态或补充说明与正式文书冲突时的取舍\n\n`unmatched_files` 列出无法归入台账项目或不构成项目文书的文件，每项至少包含 `path` 和 `reason`。\n\n`summary` 至少包含：`project_count`、`completed_count`、`continued_rectification_count`、`pending_recheck_count`、`unmatched_file_count`、`conflict_project_count`、`effective_recheck_count`、`effective_notice_count`。\n\n判定规则：\n1. 先用台账确认项目范围，再遍历项目文件夹；不能把未在台账中的项目直接混入 `projects`。\n2. `formal` 目录下的正式复查意见书如果明确引用某份正式整改通知书，则它决定该项目的最新状态和复查结论；处罚金额和整改期限沿用被引用的正式整改通知，除非复查意见书显式改写。\n3. 没有正式复查意见书的项目，以最新正式整改通知书作为有效来源，状态为等待复查或限期整改中。\n4. `archive` 下的归档旧件、草稿、历史问题不能覆盖更新的正式通知或正式复查意见，即使其中日期、金额或状态看起来更容易读取。\n5. `supplement` 下的补充说明只能作为冲突解释材料；除非正式复查意见书明确引用并采纳，否则不能覆盖正式复查结论、处罚金额或整改期限。\n6. 需要把金额和日期规范化；不要把中文金额、斜杠日期、带时间的期限或“不予罚款”原样混用。\n7. 保持来源路径可追溯，`effective_source_file` 与 `superseded_source_files` 均使用相对输入根目录的路径。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 110.00000000058208,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787334456.7528207,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\workbuddy-bench__inspection-notice-provenance-L4-032__28203d"
+}

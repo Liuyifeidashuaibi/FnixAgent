@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "web--mobile-product-detail-design-L3-047",
+  "prompt": "# Web-Bench Task T47\n\nI'd like a mobile product detail page with product images, selling points, spec selection, price, review summary, and a fixed buy button. Prioritize the 390px mobile experience — information order, spec-selection feedback, and the bottom purchase path should be clear, and the fixed CTA shouldn't cover content. The product image or product visual area should fit the lightweight shell jacket in product.json — at a minimum it should read as apparel, with garment silhouette, material, wear, or light-outdoor product semantics. Don't substitute generic mountain scenery, abstract geometry, or a plain background for the product itself. Overall it should feel credible, clean, and instill purchase confidence — not like a cheap promo page, and don't just cram a desktop page into mobile width.\n\n## Output\n\nCreate the required artifact inside `/workspace`. The required output path is:\n\n- `/workspace/www/index.html` (declared as `environment/www/index.html`)\n\nDo not place the final answer only in chat; write the runnable artifact files.\n\n## Public Assets\n\n- `product`: `/workspace/public-assets/data/product.json` application/json\n- `mobile_wireframe`: `/workspace/public-assets/design/mobile-detail-wireframe.md` text/markdown\n- `product_notes`: `/workspace/public-assets/spec/product-notes.md` text/markdown",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 359.00000000037835,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336322.1825807,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\workbuddy-bench__web--mobile-product-detail-design-L3-047__e08cd7"
+}

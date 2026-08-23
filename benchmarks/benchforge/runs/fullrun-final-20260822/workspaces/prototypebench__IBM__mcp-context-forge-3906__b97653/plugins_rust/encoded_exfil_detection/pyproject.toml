@@ -1,0 +1,31 @@
+[build-system]
+requires = ["maturin>=1.0", "setuptools>=45", "wheel"]
+build-backend = "maturin.buildapi"
+
+[project]
+name = "encoded_exfil_detection_rust"
+version = "0.2.0"
+description = "Rust implementation of encoded exfiltration detection plugin"
+authors = [{name = "IBM", email = "opensource@ibm.com"}]
+license = {text = "Apache-2.0"}
+readme = "README.md"
+requires-python = ">=3.8"
+keywords = ["mcp", "security", "exfiltration", "detection", "rust"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: 3",
+]
+
+[project.urls]
+Homepage = "https://github.com/ibm/mcp-context-forge"
+Repository = "https://github.com/ibm/mcp-context-forge"
+
+[project.dependencies]
+pyo3 = {version = "^0.21", features = ["auto-initialize"]}
+
+[tool.maturin]
+module-name = "encoded_exfil_detection"
+python-source = "src/lib.rs"

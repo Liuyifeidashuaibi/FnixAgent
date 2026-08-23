@@ -1,0 +1,17 @@
+diff --git a/xarray/core/dataset.py b/xarray/core/dataset.py
+--- a/xarray/core/dataset.py
++++ b/xarray/core/dataset.py
+@@ -1234,7 +1234,12 @@ class Dataset(AbstractDataset):
+             if isinstance(value, tuple):
+                 # tuple of (dims, data) or (dims, data, attrs)
+                 dims = value[0]
+-                data = as_compatible_data(value[1])
++                # Preserve dask arrays - avoid eager evaluation
++                # Only convert if not already a Variable or DataArray
++                data = value[1]
++                if not isinstance(data, (Variable, DataArray)):
++                    data = as_compatible_data(data)
++                
+                 attrs = value[2] if len(value) == 3 else None
+                 new_var = Variable(dims, data, attrs)
+             elif isinstance(value, Variable):

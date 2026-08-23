@@ -84,15 +84,15 @@ class TestRouteBasic:
     def test_plan_mode(self):
         d = route(user_input="规划", workspace_kind="general", work_mode="plan", hera_hit_rate=0.6)
         assert d.reasoning_mode == "plan_execute"
-        assert d.max_steps == 25
+        assert d.max_steps == 15
         # hera_hit_rate=0.6 触发高命中率减反思, 2→1
         assert d.max_reflect_rounds == 1
 
     def test_code_workspace(self):
         d = route(user_input="写代码", workspace_kind="code", work_mode="craft")
         assert d.reasoning_mode == "react"
-        assert d.max_steps == 16
-        assert d.max_reflect_rounds == 2
+        assert d.max_steps == 10
+        assert d.max_reflect_rounds == 1
 
     def test_research_workspace(self):
         d = route(user_input="调研", workspace_kind="research", work_mode="craft")
@@ -114,7 +114,7 @@ class TestRouteBasic:
             hera_hit_rate=0.6,  # 避免 HERA 低命中率回路干扰
         )
         assert d.reasoning_mode == "plan_execute"
-        assert d.max_steps == 25
+        assert d.max_steps == 15
         assert d.difficulty_score >= 0.7
 
     def test_low_difficulty_uses_react(self):

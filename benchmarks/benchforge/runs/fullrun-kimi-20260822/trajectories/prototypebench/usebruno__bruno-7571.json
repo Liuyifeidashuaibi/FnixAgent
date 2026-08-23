@@ -1,0 +1,18 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "usebruno__bruno-7571",
+  "prompt": "### Description\r\n\r\n[JIRA](https://usebruno.atlassian.net/browse/BRU-2869)\r\n\r\nThe file upload icon in the multipart form body editor was hidden by default and only appeared after specific conditions were met (key entered,  no text value). This made the file upload feature hard to discover. \r\n\r\n#### Contribution Checklist:\r\n\r\n- [ ] **I've used AI significantly to create this pull request**\r\n- [x] **The pull request only addresses one issue or adds one feature.**\r\n- [x] **The pull request does not introduce any breaking changes**\r\n- [x] **I have added screenshots or gifs to help explain the change if applicable.**\r\n- [x] **I have read the [contribution guidelines](https://github.com/usebruno/bruno/blob/main/contributing.md).**\r\n- [x] **Create an issue and link to the pull request.**\r\n\r\n<img width=\"541\" height=\"248\" alt=\"image\" src=\"https://github.com/user-attachments/assets/2b35751e-8a07-4020-8412-603973f7f7aa\" />\r\n\r\n<img width=\"541\" height=\"248\" alt=\"image\" src=\"https://github.com/user-attachments/assets/bdfacec8-5081-4e05-a26b-93f099de451f\" />\r\n\n\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\n\n## Summary by CodeRabbit\n\n* **Bug Fixes**\n  * Fixed the \"Select file\" button visibility in multipart form fields—it now displays consistently whenever no file is selected, regardless of text input status.\n\n* **Tests**\n  * Added test coverage for upload button visibility in multipart form fields across different interaction scenarios.\n\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/packages/bruno-app/src/components/RequestPane/MultipartFormParams/i] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 77.99999999951979,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787334462.3575315,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\prototypebench__usebruno__bruno-7571__ddfcaf"
+}

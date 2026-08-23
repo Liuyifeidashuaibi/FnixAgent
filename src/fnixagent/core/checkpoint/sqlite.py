@@ -45,6 +45,7 @@ from fnixagent.core.checkpoint.types import (
 )
 
 logger = logging.getLogger(__name__)
+_logger = logger
 
 # ============================================================================
 # SQL Schema
@@ -504,4 +505,4 @@ class SqliteCheckpointer(BaseCheckpointer):
         try:
             self.close()
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)

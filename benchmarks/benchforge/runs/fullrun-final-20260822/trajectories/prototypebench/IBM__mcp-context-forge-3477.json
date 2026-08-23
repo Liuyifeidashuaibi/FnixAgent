@@ -1,0 +1,37 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "IBM__mcp-context-forge-3477",
+  "prompt": "<!--\r\nFor specialized templates, append to your PR URL:\r\n  ?template=bug_fix.md   - Bug fixes\r\n  ?template=feature.md   - New features\r\n  ?template=docs.md      - Documentation\r\n  ?template=plugin.md    - New plugins\r\n\r\nExample: https://github.com/IBM/mcp-context-forge/compare/main...your-branch?expand=1&template=bug_fix.md\r\n-->\r\n\r\n## 🔗 Related Issue\r\nCloses https://github.com/IBM/mcp-context-forge/issues/3368\r\n\r\n---\r\n\r\n## 📝 Summary\r\n\r\n1. Modified `mcpgateway/admin.py `(lines 10764-10777):\r\n\r\n- Added try-catch block around all orjson.loads() calls for form field parsing\r\n- Catches `orjson.JSONDecodeError` and returns a 422 response with descriptive error message\r\n- Affects fields: headers, input_schema, output_schema, annotations, query_mapping, header_mapping, allowlist, plugin_chain_pre, plugin_chain_post\r\n- Error message format: `Invalid JSON in form field: {error details}`\r\n- Applied identical fix to admin_edit_tool endpoint\r\n\r\n2. Added/updated tests in `tests/unit/mcpgateway/test_admin.py`:\r\n\r\n- test_admin_add_tool_with_invalid_query_mapping_json: New test verifying 422 for invalid query_mapping JSON\r\n- test_admin_add_tool_with_invalid_header_mapping_json: New test verifying 422 for invalid header_mapping JSON\r\n- test_admin_add_tool_with_invalid_json: Updated existing test to expect 422 response instead of raised exception\r\n- Added test_admin_edit_tool_with_invalid_headers_json\r\n- Added test_admin_edit_tool_with_invalid_input_schema_json\r\n\r\nTest Results:\r\n\r\nAll 3 new/updated tests pass\r\nAll 17 tests in TestAdminToolRoutes pass\r\nNo regressions introduced\r\n\r\n---\r\n\r\n## 🏷️ Type of Change\r\n- [x] Bug fix\r\n- [ ] Feature / Enhancement\r\n- [ ] Documentation\r\n- [ ] Refactor\r\n- [ ] Chore (deps, CI, tooling)\r\n- [ ] Other (describe below)\r\n\r\n---\r\n\r\n## 🧪 Verification\r\n\r\n| Check                     | Command         | Status |\r\n|---------------------------|-----------------|--------|\r\n| Lint suite                | `make lint`     |      ✅   |\r\n| Unit tests                | `make test`     |    ✅     |\r\n| Coverage ≥ 80%            | `make coverage` |        |\r\n\r\n---\r\n\r\n## ✅ Checklist\r\n- [x] Code formatted (`make black isort pre-commit`)\r\n- [x] Tests added/updated for changes\r\n- [ ] Documentation updated (if applicable)\r\n- [x] No secrets or credentials committed\r\n\r\n---\r\n\r\n## 📓 Notes (optional)\r\n_Screenshots, design decisions, or additional context._",
+  "status": "failure",
+  "failure_type": "mcp_call_error",
+  "failure_evidence": "工具失败率100%",
+  "final_response": "看来 `mcpgateway/admin.py` 和 `tests/unit/mcpgateway/test_admin.py` 文件在当前工作目录下并不存在。请确认这些文件是否已正确放置在了工作区中，或者提供它们的准确路径。如果需要，我可以基于您的描述直接生成相应的代码段。您希望如何继续？如果您可以提供这些文件的内容或更详细的路径信息，我将能够更好地帮助您完成任务。",
+  "steps": [
+    "Step 0 | 思考: 了解了，您提供了一个 PR 模板的内容，看起来是要对 `mcpgateway/admin.py` 文件中的某些部分进行修改，并且增加或更新一些测试用例。根据您的描述，我将执行以下步骤：\n\n1. 修改 ... | 工具 ✗ read_file({\"file_path\": \"mcpgateway/admin.py\", \"offset\": 107) | 耗时: 10292ms, tokens: 3599",
+    "Step 0 | 思考: 了解了，您提供了一个 PR 模板的内容，看起来是要对 `mcpgateway/admin.py` 文件中的某些部分进行修改，并且增加或更新一些测试用例。根据您的描述，我将执行以下步骤：\n\n1. 修改 ... | 工具 ✗ read_file({\"file_path\": \"tests/unit/mcpgateway/test_admin.py) | 耗时: 10293ms, tokens: 3599",
+    "Step 1 | 思考: 看来 `mcpgateway/admin.py` 和 `tests/unit/mcpgateway/test_admin.py` 文件在当前工作目录下并不存在。请确认这些文件是否已正确放置在了工作区中... | 耗时: 4448ms, tokens: 3731"
+  ],
+  "tool_calls": [
+    {
+      "step": 1,
+      "tool": "read_file",
+      "args": {},
+      "success": false,
+      "output_preview": "[失败] 文件不存在: mcpgateway/admin.py"
+    },
+    {
+      "step": 2,
+      "tool": "read_file",
+      "args": {},
+      "success": false,
+      "output_preview": "[失败] 文件不存在: tests/unit/mcpgateway/test_admin.py"
+    }
+  ],
+  "files_written": [],
+  "total_tokens": 7330,
+  "duration_ms": 14750.0,
+  "error": "",
+  "judge_method": "heuristic",
+  "started_at": 1787386650.7690547,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-final-20260822\\workspaces\\prototypebench__IBM__mcp-context-forge-3477__7b12a2"
+}

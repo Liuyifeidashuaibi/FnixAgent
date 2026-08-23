@@ -26,12 +26,16 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import re
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
 from fnixagent.office.base import BaseExpert, ExpertError, ExpertResult
+
+_logger = logging.getLogger(__name__)
+
 
 # 等宽代码字体集合(用于代码块识别)
 _CODE_FONTS: frozenset[str] = frozenset(
@@ -642,7 +646,7 @@ class FormatNormalizer(BaseExpert):
                         if val and val in _CODE_FONTS:
                             return True
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
         return False
 
     @staticmethod
@@ -664,4 +668,4 @@ class FormatNormalizer(BaseExpert):
                     int(c[4:6], 16),
                 )
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)

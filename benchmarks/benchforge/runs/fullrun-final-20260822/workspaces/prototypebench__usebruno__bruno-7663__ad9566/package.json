@@ -1,0 +1,24 @@
+{
+  "name": "bruno",
+  "version": "1.0.0",
+  "description": "A lightweight, open-source API client built for developers.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": ["api", "client", "postman", "rest", "http"],
+  "author": "Bruno Team",
+  "license": "MIT",
+  "dependencies": {
+    "@tauri-apps/api": "^1.0.0",
+    "@tauri-apps/cli": "^1.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.0.0",
+    "vite": "^4.0.0"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "dataset": "swe-bench-lite",
+  "task_id": "sympy__sympy-20212",
+  "prompt": "0**-oo produces 0, the documentation says it should produce zoo\nUsing SymPy 1.5.1, evaluate `0**-oo` produces `0`.\r\n\r\nThe documentation for the Pow class states that it should return `ComplexInfinity`, aka `zoo`\r\n\r\n| expr | value | reason |\r\n| :-- | :-- | :--|\r\n| `0**-oo` | `zoo` | This is not strictly true, as 0**oo may be oscillating between positive and negative values or rotating in the complex plane. It is convenient, however, when the base is positive.|\r\n\n",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/sympy/core/power.py b/sympy/core/power.py\n--- a/sympy/core/power.py] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 77.99999999997453,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787332467.2304053,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\swe-bench-lite__sympy__sympy-20212__b49c75"
+}

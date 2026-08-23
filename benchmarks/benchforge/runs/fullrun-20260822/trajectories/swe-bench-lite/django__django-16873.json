@@ -1,0 +1,18 @@
+{
+  "dataset": "swe-bench-lite",
+  "task_id": "django__django-16873",
+  "prompt": "Template filter `join` should not escape the joining string if `autoescape` is `off`\nDescription\n\t\nConsider the following template code snippet:\n{% autoescape off %}\n{{ some_list|join:some_var }}\n{% endautoescape %}\nin this case, the items inside some_list will not be escaped (matching the expected behavior) but some_var will forcibly be escaped. From the docs for autoescape or join I don't think this is expected behavior.\nThe following testcase illustrates what I think is a bug in the join filter (run inside the template_tests/filter_tests folder):\nfrom django.template.defaultfilters import escape\nfrom django.test import SimpleTestCase\nfrom ..utils import setup\nclass RegressionTests(SimpleTestCase):\n\t@setup({\"join01\": '{{ some_list|join:some_var }}'})\n\tdef test_join01(self):\n\t\tsome_list = [\"<p>Hello World!</p>\", \"beta & me\", \"<script>Hi!</script>\"]\n\t\tsome_var = \"<br/>\"\n\t\toutput = self.engine.render_to_string(\"join01\", {\"some_list\": some_list, \"some_var\": some_var})\n\t\tself.assertEqual(output, escape(some_var.join(some_list)))\n\t@setup({\"join02\": '{% autoescape off %}{{ some_list|join:some_var }}{% endautoescape %}'})\n\tdef test_join02(self):\n\t\tsome_list = [\"<p>Hello World!</p>\", \"beta & me\", \"<script>Hi!</script>\"]\n\t\tsome_var = \"<br/>\"\n\t\toutput = self.engine.render_to_string(\"join02\", {\"some_list\": some_list, \"some_var\": some_var})\n\t\tself.assertEqual(output, some_var.join(some_list))\nResult of this run in current main is:\n.F\n======================================================================\nFAIL: test_join02 (template_tests.filter_tests.test_regression.RegressionTests.test_join02)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n File \"/home/nessita/fellowship/django/django/test/utils.py\", line 443, in inner\n\treturn func(*args, **kwargs)\n\t\t ^^^^^^^^^^^^^^^^^^^^^\n File \"/home/nessita/fellowship/django/tests/template_tests/utils.py\", line 58, in inner\n\tfunc(self)\n File \"/home/nessita/fellowship/django/tests/template_tests/filter_tests/test_regression.py\", line 21, in test_join02\n\tself.assertEqual(output, some_var.join(some_list))\nAssertionError: '<p>Hello World!</p>&lt;br/&gt;beta & me&lt;br/&gt;<script>Hi!</script>' != '<p>Hello World!</p><br/>beta & me<br/><script>Hi!</script>'\n----------------------------------------------------------------------\nRan 2 tests in 0.007s\n",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/django/template/defaultfilters.py b/django/template/defaultfilters.] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 77.99999999997453,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787332464.8706894,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\swe-bench-lite__django__django-16873__ddfe58"
+}

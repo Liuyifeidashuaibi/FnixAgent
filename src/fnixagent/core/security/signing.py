@@ -34,10 +34,14 @@ import base64
 import hashlib
 import io
 import json
+import logging
 import os
 import zipfile
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
+
+_logger = logging.getLogger(__name__)
+
 
 # 可选依赖:cryptography(RSA 签名)
 try:
@@ -295,7 +299,7 @@ class DocumentSigner:
                 if name.endswith(".private.pem"):
                     keys.append(name[: -len(".private.pem")])
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
         return keys
 
     def rotate_key(self, key_id: str) -> bool:

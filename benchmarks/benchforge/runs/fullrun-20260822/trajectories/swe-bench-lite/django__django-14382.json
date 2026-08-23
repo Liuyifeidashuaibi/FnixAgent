@@ -1,0 +1,18 @@
+{
+  "dataset": "swe-bench-lite",
+  "task_id": "django__django-14382",
+  "prompt": "django-admin startapp with trailing slash in directory name results in error\nDescription\n\t\nBash tab-completion appends trailing slashes to directory names. django-admin startapp name directory/ results in the error:\nCommandError: '' is not a valid app directory. Please make sure the directory is a valid identifier.\nThe error is caused by ​line 77 of django/core/management/templates.py by calling basename() on the path with no consideration for a trailing slash:\nself.validate_name(os.path.basename(target), 'directory')\nRemoving potential trailing slashes would solve the problem:\nself.validate_name(os.path.basename(target.rstrip(os.sep)), 'directory')\n",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/django/core/management/templates.py b/django/core/management/templa] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 172.00000000002547,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787332464.0976624,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\swe-bench-lite__django__django-14382__9447e4"
+}

@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #1a1a2e;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .calculator {
+            background: #16213e;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            width: 340px;
+        }
+
+        .display {
+            background: #0f3460;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            text-align: right;
+            min-height: 90px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+        }
+
+        .display .expression {
+            color: #8899aa;
+            font-size: 14px;
+            min-height: 20px;
+            word-break: break-all;
+        }
+
+        .display .result {
+            color: #e2e8f0;
+            font-size: 32px;
+            font-weight: 600;
+            word-break: break-all;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        button {
+            padding: 16px;
+            font-size: 18px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-weight: 500;
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        .btn-number {
+            background: #1a1a3e;
+            color: #e2e8f0;
+        }
+
+        .btn-number:hover {
+            background: #252550;
+        }
+
+        .btn-operator {
+            background: #e94560;
+            color: #fff;
+        }
+
+        .btn-operator:hover {
+            background: #ff6b81;
+        }
+
+        .btn-function {
+            background: #533483;
+            color: #e2e8f0;
+        }
+
+        .btn-function:hover {
+            background: #6a42a0;
+        }
+
+        .btn-clear {
+            background: #e94560;
+            color: #fff;
+        }
+
+        .btn-clear:hover {
+            background: #ff6b81;
+        }
+
+        .btn-equals {
+            background: #0f9b58;
+            color: #fff;
+        }
+
+        .btn-equals:hover {
+            background: #12b866;
+        }
+
+        .btn-zero {
+            grid-column: span 2;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <div class="display">
+            <div class="expression" id="expression"></div>
+            <div class="result" id="result">0</div>
+        </div>
+        <div class="buttons">
+            <button class="btn-clear" id="btn-clear">C</button>
+            <button class="btn-function" id="btn-backspace">⌫</button>
+            <button class="btn-function" id="btn-square">x²</button>
+            <button class="btn-function" id="btn-reciprocal">1/x</button>
+
+            <button class="btn-number" id="btn-7">7</button>
+            <button class="btn-number" id="btn-8">8</button>
+            <button class="btn-number" id="btn-9">9</button>
+            <button class="btn-operator" id="btn-divide">÷</button>
+
+            <button class="btn-number" id="btn-4">4</button>
+            <button class="btn-number" id="btn-5">5</button>
+            <button class="btn-number" id="btn-6">6</button>
+            <button class="btn-operator" id="btn-multiply">×</button>
+
+            <button class="btn-number" id="btn-1">1</button>
+            <button class="btn-number" id="btn-2">2</button>
+            <button class="btn-number" id="btn-3">3</button>
+            <button class="btn-operator" id="btn-subtract">−</button>
+
+            <button class="btn-number btn-zero" id="btn-0">0</button>
+            <button class="btn-number" id="btn-dot">.</button>
+            <button class="btn-operator" id="btn-add">+</button>
+            <button class="btn-equals" id="btn-equals">=</button>
+        </div>
+    </div>
+
+    <script>
+        let currentInput = '0';
+        let expression = '';
+        let shouldResetInput = false;
+        let lastResult = null;
+
+        const resultDisplay = document.getElementById('result');
+        const expressionDisplay = document.getElementById('expression');
+
+        function updateDisplay() {
+            resultDisplay.textContent = currentInput;
+            expressionDisplay.textContent = expression;
+        }
+
+        function inputNumber(num) {
+            if (shouldResetInput) {
+                currentInput = num;
+                shouldResetInput = false;
+            } else if (currentInput === '0' && num !== '.') {
+                currentInput = num;
+            } else {
+                currentInput += num;
+            }
+            updateDisplay();
+        }
+
+        function inputDot() {
+            if (shouldResetInput) {
+                currentInput = '0.';
+                shouldResetInput = false;
+            } else if (!currentInput.includes('.')) {
+                currentInput += '.';
+            }
+            updateDisplay();
+        }
+
+        function inputOperator(op) {
+            const opSymbols = { '+': ' + ', '-': ' − ', '*': ' × ', '/': ' ÷ ' };
+            if (lastResult !== null && shouldResetInput) {
+                expression = String(lastResult) + opSymbols[op];
+            } else {
+                expression += currentInput + opSymbols[op];
+            }
+            shouldResetInput = true;
+            lastResult = null;
+            updateDisplay();
+        }
+
+        function calculate() {
+            let fullExpression = expression + currentInput;
+            let evalExpression = fullExpression
+                .replace(/ × /g, '*')
+                .replace(/ ÷ /g, '/')
+                .replace(/ − /g, '-')
+                .replace(/ \+ /g, '+');
+
+            try {
+                let result = Function('"use strict"; return (' + evalExpression + ')')();
+                if (!isFinite(result)) {
+                    currentInput = 'Error';
+                } else {
+                    result = Math.round(result * 1e12) / 1e12;
+                    currentInput = String(result);
+                    lastResult = result;
+                }
+                expression = '';
+                shouldResetInput = true;
+            } catch (e) {
+                currentInput = 'Error';
+                expression = '';
+                shouldResetInput = true;
+            }
+            updateDisplay();
+        }
+
+        function clear() {
+            currentInput = '0';
+            expression = '';
+            shouldResetInput = false;
+            lastResult = null;
+            updateDisplay();
+        }
+
+        function backspace() {
+            if (currentInput.length > 1) {
+                currentInput = currentInput.slice(0, -1);
+            } else {
+                currentInput = '0';
+            }
+            updateDisplay();
+        }
+
+        function square() {
+            let num = parseFloat(currentInput);
+            let result = num * num;
+            result = Math.round(result * 1e12) / 1e12;
+            expression = '(' + currentInput + ')²';
+            currentInput = String(result);
+            shouldResetInput = true;
+            updateDisplay();
+        }
+
+        function reciprocal() {
+            let num = parseFloat(currentInput);
+            if (num === 0) {
+                currentInput = 'Error';
+                expression = '1/(0)';
+            } else {
+                let result = 1 / num;
+                result = Math.round(result * 1e12) / 1e12;
+                expression = '1/(' + currentInput + ')';
+                currentInput = String(result);
+            }
+            shouldResetInput = true;
+            updateDisplay();
+        }
+
+        // Event listeners
+        document.getElementById('btn-0').addEventListener('click', () => inputNumber('0'));
+        document.getElementById('btn-1').addEventListener('click', () => inputNumber('1'));
+        document.getElementById('btn-2').addEventListener('click', () => inputNumber('2'));
+        document.getElementById('btn-3').addEventListener('click', () => inputNumber('3'));
+        document.getElementById('btn-4').addEventListener('click', () => inputNumber('4'));
+        document.getElementById('btn-5').addEventListener('click', () => inputNumber('5'));
+        document.getElementById('btn-6').addEventListener('click', () => inputNumber('6'));
+        document.getElementById('btn-7').addEventListener('click', () => inputNumber('7'));
+        document.getElementById('btn-8').addEventListener('click', () => inputNumber('8'));
+        document.getElementById('btn-9').addEventListener('click', () => inputNumber('9'));
+        document.getElementById('btn-dot').addEventListener('click', inputDot);
+
+        document.getElementById('btn-add').addEventListener('click', () => inputOperator('+'));
+        document.getElementById('btn-subtract').addEventListener('click', () => inputOperator('-'));
+        document.getElementById('btn-multiply').addEventListener('click', () => inputOperator('*'));
+        document.getElementById('btn-divide').addEventListener('click', () => inputOperator('/'));
+
+        document.getElementById('btn-equals').addEventListener('click', calculate);
+        document.getElementById('btn-clear').addEventListener('click', clear);
+        document.getElementById('btn-backspace').addEventListener('click', backspace);
+        document.getElementById('btn-square').addEventListener('click', square);
+        document.getElementById('btn-reciprocal').addEventListener('click', reciprocal);
+    </script>
+</body>
+</html>

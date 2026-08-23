@@ -14,6 +14,7 @@
 
 import React, { useState } from "react";
 import { ChevronDown, ChevronRight, Loader2 } from "lucide-react";
+import "./ThinkingBlock.css";
 
 interface Props {
   content: string;
@@ -24,7 +25,16 @@ const ThinkingBlock = React.memo(function ThinkingBlock({ content, isStreaming =
   // 分析内容默认折叠：优先展示可验证行动，避免把模型内部文本包装成权威 CoT。
   const [open, setOpen] = useState(false);
 
-  const summary = content.slice(0, 60).replace(/\n/g, " ") + (content.length > 60 ? "…" : "");
+  // D2 产品化打磨：摘要去掉模型内部的 "(Step N)" 前缀与半词截断，
+  // 避免泄露 raw CoT 的元措辞（如 "Wait, I need to…"）给用户。
+  const sanitized = content
+    .replace(/^\s*\(Step\s*\d+\)\s*/g, "")
+    .replace(/\n+/g, " ")
+    .trim();
+  let head = sanitized.slice(0, 60);
+  const lastSpace = head.lastIndexOf(" ");
+  if (head.length === 60 && lastSpace > 30) head = head.slice(0, lastSpace);
+  const summary = head + (sanitized.length > 60 ? "…" : "");
 
   return (
     <div className={`cl-thinking ${isStreaming ? "streaming" : "complete"}`}>
@@ -48,6 +58,7 @@ const ThinkingBlock = React.memo(function ThinkingBlock({ content, isStreaming =
       </button>
       {open && (
         <div className="cl-thinking-body">
+          <p className="cl-thinking-caveat">模型内部分析，可能与实际行为不完全一致，请以产物为准</p>
           <p>{content}{isStreaming && <span className="cl-cursor">▍</span>}</p>
         </div>
       )}

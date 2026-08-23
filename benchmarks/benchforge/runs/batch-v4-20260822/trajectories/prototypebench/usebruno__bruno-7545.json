@@ -1,0 +1,18 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "usebruno__bruno-7545",
+  "prompt": "### Description\r\n\r\n<!-- Explain here the changes your PR introduces and text to help us understand the context of this change. -->\r\n\r\n#### Contribution Checklist:\r\n\r\n- [ ] **I've used AI significantly to create this pull request**\r\n- [ ] **The pull request only addresses one issue or adds one feature.**\r\n- [ ] **The pull request does not introduce any breaking changes**\r\n- [ ] **I have added screenshots or gifs to help explain the change if applicable.**\r\n- [ ] **I have read the [contribution guidelines](https://github.com/usebruno/bruno/blob/main/contributing.md).**\r\n- [ ] **Create an issue and link to the pull request.**\r\n\r\nNote: Keeping the PR small and focused helps make it easier to review and merge. If you have multiple changes you want to make, please consider submitting them as separate pull requests.\r\n\r\n#### Publishing to New Package Managers\r\n\r\nPlease see [here](../publishing.md) for more information.\r\n\n\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\n## Summary by CodeRabbit\n\n* **Refactor**\n  * Per-workspace global environment selection is now persisted and restored separately for each workspace; selections survive restarts and workspace switching.\n  * Workspace config files no longer store active environment entries; legacy selections are migrated into per-workspace persistence.\n  * Closing a workspace clears its per-workspace active global environment selection.\n\n* **Tests**\n  * Added end-to-end tests and fixtures validating migration and per-workspace environment persistence.\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->",
+  "status": "infra_skip",
+  "failure_type": "",
+  "failure_evidence": "基础设施错误(LLM 配额/鉴权)，待配额恢复后重跑: LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-2026-05-20): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"us",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 106.6830000054324,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-2026-05-20): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787382525.0339653,
+  "workspace": "benchmarks\\benchforge\\runs\\batch-v4-20260822\\workspaces\\prototypebench__usebruno__bruno-7545__7e08d6"
+}

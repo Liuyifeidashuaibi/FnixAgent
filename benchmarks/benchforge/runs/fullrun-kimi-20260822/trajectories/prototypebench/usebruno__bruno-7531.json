@@ -1,0 +1,18 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "usebruno__bruno-7531",
+  "prompt": "### Description\r\n\r\nWhen users specify a boundary parameter in their Content-Type header for multipart/mixed requests with TEXT body mode, Bruno now preserves the user-defined boundary instead of generating a new one.\r\n\r\nFixes: https://github.com/usebruno/bruno/issues/7523\r\n[JIRA](https://usebruno.atlassian.net/browse/BRU-2905)\r\n\r\n#### Contribution Checklist:\r\n\r\n- [ ] **I've used AI significantly to create this pull request**\r\n- [ ] **The pull request only addresses one issue or adds one feature.**\r\n- [ ] **The pull request does not introduce any breaking changes**\r\n- [ ] **I have added screenshots or gifs to help explain the change if applicable.**\r\n- [ ] **I have read the [contribution guidelines](https://github.com/usebruno/bruno/blob/main/contributing.md).**\r\n- [ ] **Create an issue and link to the pull request.**\r\n\r\nNote: Keeping the PR small and focused helps make it easier to review and merge. If you have multiple changes you want to make, please consider submitting them as separate pull requests.\r\n\r\n#### Publishing to New Package Managers\r\n\r\nPlease see [here](../publishing.md) for more information.\r\n\r\n\r\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\r\n## Summary by CodeRabbit\r\n\r\n* **Bug Fixes**\r\n  * Preserve custom multipart boundaries in CLI and desktop request handling instead of overwriting them.\r\n\r\n* **New Features**\r\n  * Added a utility to extract boundaries from Content-Type headers for multipart requests.\r\n\r\n* **Tests**\r\n  * Added unit tests for boundary extraction and E2E tests validating custom and auto-generated multipart boundaries.\r\n  * Added a test route to echo incoming request headers for verification.\r\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/packages/bruno-cli/src/runner/run-single-request.js b/packages/brun] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787334461.632149,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\prototypebench__usebruno__bruno-7531__bbf089"
+}

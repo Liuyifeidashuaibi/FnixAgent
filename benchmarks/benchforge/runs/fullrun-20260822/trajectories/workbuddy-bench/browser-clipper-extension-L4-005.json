@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "browser-clipper-extension-L4-005",
+  "prompt": "# Web-Bench Task T05\n\nPlease build a Chrome web-clipper extension that can save the current page's title, link, and a summary of the selected text, with support for tags, notes, list view, and search. It should avoid saving the same page twice, and the sidebar should let you edit or delete saved entries.\n\n## Implementation Requirements\n\nTreat the bundled assets as the source of truth, not as examples:\n\n- Persist clips under the storage shape described in `clip-storage-requirements.json`: `id`, `pageTitle`, `url`, `host`, trimmed `selectedText`, normalized `tags`, `note`, `createdAt`, and `updatedAt`.\n- Use `clip-samples.json` to seed or validate list/search behavior. The sample ids `clip_longtext_001`, `clip_tags_002`, `clip_search_003`, and `clip_history_004` should remain recognizable in the UI or fixture data.\n- Normalize tags using the sample rule: trim whitespace, drop empty values, and dedupe case-insensitively. The raw tag sample `[\" Research \", \"research\", \"\", \"Search\", \"search \"]` should resolve to a non-duplicated tag set.\n- Search and tag filters should compose by intersection. For example, the `quota` search fixture should find `clip_search_003`, while `research` should find both `clip_tags_002` and `clip_history_004`.\n- Unsupported pages such as `file:///LocalResearch/notes.html` or browser-internal pages should show the supplied unsupported-page message and should not create a new clip, while historical clips such as `clip_history_004` remain visible/editable.\n\n## Reviewability Requirement\n\nMake the clip flow easy to audit from the extension package. Include clear in-code, in-page, or adjacent structured evidence that connects the replay in `clip-flow-replay.jsonl` and the search fixtures in `clip-samples.json` to the implemented save/search/delete/unsupported-page behavior. The evidence should let a reviewer confirm saved clip counts, normalized tags, visible/hidden clip ids, storage key/shape, and unsupported-page outcomes, but it does not need a fixed file name or fixed JSON schema.\n\n## Output\n\nCreate the required artifact inside `/workspace`. The required output path is:\n\n- `/workspace/www/manifest.json` (declared as `environment/www/manifest.json`)\n\nDo not place the final answer only in chat; write the runnable artifact files.\n\n## Public Assets\n\n- `product_brief`: `/workspace/public-assets/spec/product-brief.md` text/markdown\n- `manifest_template`: `/workspace/public-assets/spec/manifest-template.json` application/json\n- `clip_storage_requirements`: `/workspace/public-assets/spec/clip-storage-requirements.json` application/json\n- `permissions_matrix`: `/workspace/public-assets/policy/permissions-matrix.md` text/markdown\n- `host_constraints`: `/workspace/public-assets/policy/host-constraints.md` text/markdown\n- `clip_samples`: `/workspace/public-assets/fixtures/clip-samples.json` application/json\n- `sidebar_wireframe`: `/workspace/public-assets/design/sidebar-wireframe.md` text/markdown\n- `clip_flow_replay`: `/workspace/public-assets/replay/clip-flow-replay.jsonl` application/jsonl",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 77.99999999997453,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787332457.3561003,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\workbuddy-bench__browser-clipper-extension-L4-005__f39db8"
+}

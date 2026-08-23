@@ -1,0 +1,18 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "IBM__mcp-context-forge-3325",
+  "prompt": "# 🐛 Bug-fix PR\n\n## 📌 Summary\nFixes intermittent `RuntimeError: Stream consumed` when admin form submissions are processed with detailed request logging enabled.\n\n## 🔁 Reproduction Steps\nIssue: #3313\n\n1. Enable detailed request logging (`LOG_LEVEL=INFO` or lower).\n2. Submit server form data from Admin UI (`/admin/servers`), especially with select-all style payloads.\n3. Endpoint may fail while parsing `await request.form()` due to consumed request stream.\n\n## 🐞 Root Cause\n`RequestLoggingMiddleware` read `await request.body()` and then created a synthetic `Request` object (`new_request`) before calling `call_next`. Under `BaseHTTPMiddleware`, downstream processing uses the original ASGI receive channel, so reconstructing `Request` this way can leave downstream form parsing on a consumed stream.\n\n## 💡 Fix Description\n- Removed synthetic `Request` reconstruction in `request_logging_middleware`.\n- Cached the body on the original request (`request._body = body`).\n- Called `call_next(request)` with the original request object.\n- Added regression coverage:\n  - middleware pipeline/form parsing regression test\n  - deterministic guard asserting the original request object is passed to `call_next`\n  - admin-path form regression test under logging-enabled middleware\n\nCloses #3313\n\n## 🧪 Verification\n\n| Check                                 | Command              | Status |\n|---------------------------------------|----------------------|--------|\n| Lint suite                            | `make lint`          | Not run in this cycle |\n| Unit tests                            | `uv run --no-sync pytest tests/unit/mcpgateway/middleware/test_request_logging_middleware.py -v` | Pass (66 passed) |\n| Coverage ≥ 80 %                       | `make coverage`      | Not run in this cycle |\n| Manual regression no longer fails     | `uv run --no-sync pytest tests/unit/mcpgateway/test_admin.py -k \"stream_consume or logging_enabled\" -v` | Pass (1 selected) |\n\n## 📐 MCP Compliance (if relevant)\n- [x] Matches current MCP spec\n- [x] No breaking change to MCP clients\n\n## ✅ Checklist\n- [ ] Code formatted (`make black isort pre-commit`)\n- [x] No secrets/credentials committed",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 391.00000000053114,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336337.3749301,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\prototypebench__IBM__mcp-context-forge-3325__130cfa"
+}

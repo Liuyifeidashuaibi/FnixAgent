@@ -34,6 +34,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 
 logger = logging.getLogger(__name__)
+_logger = logger
 
 # ---------------------------------------------------------------------------
 # 数据结构
@@ -304,6 +305,7 @@ class DLPGateway:
                         )
                     )
             except Exception:
+                _logger.debug('Unhandled exception', exc_info=True)
                 continue
         return detections
 
@@ -384,7 +386,7 @@ class DLPGateway:
                     return text[0] + "*" * 8
                 return text
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
         # 关键词或其他:统一掩码中间
         if len(text) <= 2:
             return "*" * len(text)
@@ -465,7 +467,7 @@ class DLPGateway:
                 },
             )
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
 
     # -- 内部:默认策略 ----------------------------------------------------
 

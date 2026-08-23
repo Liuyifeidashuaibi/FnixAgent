@@ -16,6 +16,7 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -29,6 +30,9 @@ from fnixagent.core.security.guardrail import (
 from fnixagent.core.security.injection import InjectionGuard
 from fnixagent.core.security.moderation import ContentModerator
 from fnixagent.core.security.sensitive import SensitiveDetector
+
+_logger = logging.getLogger(__name__)
+
 
 # ---------------------------------------------------------------------------
 # Phase 2.5: 安全事件审计日志
@@ -59,7 +63,7 @@ def _audit_security(
             ip_address=ip_address,
         )
     except Exception:
-        pass
+        _logger.debug('Unhandled exception', exc_info=True)
 
 
 @dataclass
@@ -170,7 +174,7 @@ class SecurityEngine:
 
                     record_injection_blocked(injection_type="prompt_injection")
                 except Exception:
-                    pass
+                    _logger.debug('Unhandled exception', exc_info=True)
                 return SecurityCheckResult(
                     passed=False,
                     blocked_reason=blocked_reason,
@@ -200,7 +204,7 @@ class SecurityEngine:
                     for w in words:
                         record_sensitive_hit(category=w)
                 except Exception:
-                    pass
+                    _logger.debug('Unhandled exception', exc_info=True)
                 return SecurityCheckResult(
                     passed=False,
                     blocked_reason=blocked_reason,

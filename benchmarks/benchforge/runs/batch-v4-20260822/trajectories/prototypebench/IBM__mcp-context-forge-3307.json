@@ -1,0 +1,28 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "IBM__mcp-context-forge-3307",
+  "prompt": "## Summary\r\n\r\nWires up the existing (but previously unused) `validate_server_access()` utility into the `/rpc` JSON-RPC handler so that server-scoped tokens can only operate on the server they are scoped to.\r\n\r\n\r\n## Related Issue\r\nCloses #2743\r\n\r\n## Problem\r\n\r\nThe `TokenScopingMiddleware` enforces `scopes.server_id` for REST endpoints by matching URL paths (e.g. `/servers/{id}/tools`). However, `/rpc` is a multiplexed JSON-RPC handler where `server_id` is supplied in the **request body** (`params.server_id`), not the URL. This meant a token scoped to `server_id: \"abc\"` could POST to `/rpc` with `params.server_id: \"xyz\"` and be allowed through.\r\n\r\n## Changes\r\n\r\n### `mcpgateway/main.py`\r\n- Imports `validate_server_access` from `mcpgateway/utils/token_scoping`.\r\n- In `handle_rpc()`, after extracting `server_id` from params, extracts the JWT payload from `request.state._jwt_verified_payload` (stored as a `(token, payload)` tuple) and calls `validate_server_access(token_scopes, server_id)`.\r\n- Returns a `403` HTTP response with a JSON-RPC `{\"code\": -32600}` error body when the token is scoped to a different server.\r\n- The check is skipped when no `server_id` is present in params, preserving existing behaviour for global/unscoped calls.\r\n\r\n### `tests/unit/mcpgateway/test_rpc_tool_invocation.py`\r\nAdds `TestRPCServerIdScoping` with 5 tests:\r\n- HTTP-level `403` returned when `validate_server_access` returns `False`.\r\n- `validate_server_access` is **not** called when `server_id` is absent from params.\r\n- Correct unpacking of `_jwt_verified_payload` tuple.\r\n- Graceful handling of `None` payload (basic auth / no JWT → empty scopes → full access).\r\n- Graceful handling of a JWT payload missing the `scopes` key → no restriction.\r\n\r\n## Acceptance Criteria\r\n\r\n| Criterion | Status |\r\n|---|---|\r\n| Server-scoped token (`server_id: \"abc\"`) rejected for `params.server_id: \"xyz\"` | ✅ |\r\n| Server-scoped token (`server_id: \"abc\"`) allowed for `params.server_id: \"abc\"` | ✅ |\r\n| Global tokens (no `scopes.server_id`) work for all servers | ✅ |\r\n| Unit tests cover the new validation path | ✅ |\r\n| Existing token scoping tests pass | ✅ |",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [
+    "Step 0 | 思考: To address the changes and ensure that server-scoped tokens can only operate on the server they are ... | 工具 ✗ read_file({\"file_path\": \"mcpgateway/main.py\"}) | 耗时: 7355ms, tokens: 3457"
+  ],
+  "tool_calls": [
+    {
+      "step": 1,
+      "tool": "read_file",
+      "args": {},
+      "success": false,
+      "output_preview": "[失败] 文件不存在: mcpgateway/main.py"
+    }
+  ],
+  "files_written": [],
+  "total_tokens": 3457,
+  "duration_ms": 8187.000000000012,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen-max): HTTP 400 (<400> InternalError.Algo.InvalidParameter: messages with role \"tool\" must be a response to a preceeding message with \"tool_calls\".)",
+  "judge_method": "heuristic",
+  "started_at": 1787384845.9000733,
+  "workspace": "benchmarks\\benchforge\\runs\\batch-v4-20260822\\workspaces\\prototypebench__IBM__mcp-context-forge-3307__06dc7d"
+}

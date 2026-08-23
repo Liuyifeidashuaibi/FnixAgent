@@ -1,0 +1,18 @@
+{
+  "dataset": "web-bench",
+  "task_id": "canvas--task-18",
+  "prompt": "A boss spawns 10 seconds after the game starts. This boss looks like a normal enemy but is sized 60*60. It spawns at center of the right edge of the screen and only moves randomly up and down on the right side, staying within the screen bounds, without moving left. This boss has 10 lives. The boss will also fire bullets, which need to be distinguished from the player's bullets. The firing interval of the boss's bullets should be the same as that of the player's. A new boss will spawn 10 seconds after the current boss is defeated. Data is stored in 'store.boss', and the boss's bullets are stored in 'store.bossBullets'. Note: Do not forget to implement the new method.",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 405.99999999994907,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336254.843257,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\web-bench__canvas--task-18__9b0abe"
+}

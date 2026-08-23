@@ -1,0 +1,18 @@
+{
+  "dataset": "swe-bench-lite",
+  "task_id": "django__django-13933",
+  "prompt": "ModelChoiceField does not provide value of invalid choice when raising ValidationError\nDescription\n\t \n\t\t(last modified by Aaron Wiegel)\n\t \nCompared with ChoiceField and others, ModelChoiceField does not show the value of the invalid choice when raising a validation error. Passing in parameters with the invalid value and modifying the default error message for the code invalid_choice should fix this.\nFrom source code:\nclass ModelMultipleChoiceField(ModelChoiceField):\n\t\"\"\"A MultipleChoiceField whose choices are a model QuerySet.\"\"\"\n\twidget = SelectMultiple\n\thidden_widget = MultipleHiddenInput\n\tdefault_error_messages = {\n\t\t'invalid_list': _('Enter a list of values.'),\n\t\t'invalid_choice': _('Select a valid choice. %(value)s is not one of the'\n\t\t\t\t\t\t\t' available choices.'),\n\t\t'invalid_pk_value': _('“%(pk)s” is not a valid value.')\n\t}\n\t...\nclass ModelChoiceField(ChoiceField):\n\t\"\"\"A ChoiceField whose choices are a model QuerySet.\"\"\"\n\t# This class is a subclass of ChoiceField for purity, but it doesn't\n\t# actually use any of ChoiceField's implementation.\n\tdefault_error_messages = {\n\t\t'invalid_choice': _('Select a valid choice. That choice is not one of'\n\t\t\t\t\t\t\t' the available choices.'),\n\t}\n\t...\n",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/django/forms/models.py b/django/forms/models.py\n--- a/django/forms/] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 92.9999999998472,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787334464.2861402,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\swe-bench-lite__django__django-13933__8ddb2a"
+}

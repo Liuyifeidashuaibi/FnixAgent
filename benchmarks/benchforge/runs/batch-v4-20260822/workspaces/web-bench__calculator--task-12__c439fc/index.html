@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculator</title>
+  <style>
+    :root {
+      --bg-body: #1a1a2e;
+      --bg-calc: #16213e;
+      --bg-display: #0f3460;
+      --text-expression: #8899aa;
+      --text-result: #e0e0f0;
+      --bg-number: #1a1a40;
+      --bg-number-hover: #2a2a50;
+      --text-number: #e0e0f0;
+      --bg-operator: #e94560;
+      --bg-operator-hover: #d63a54;
+      --text-operator: #fff;
+      --bg-function: #533483;
+      --bg-function-hover: #6340a0;
+      --text-function: #e0e0f0;
+      --bg-equals: #4cc9f0;
+      --bg-equals-hover: #3ab8df;
+      --text-equals: #1a1a2e;
+      --bg-clear: #e94560;
+      --bg-clear-hover: #d63a54;
+      --text-clear: #fff;
+    }
+
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg-body: #e8ecf1;
+        --bg-calc: #ffffff;
+        --bg-display: #f0f2f5;
+        --text-expression: #6b7280;
+        --text-result: #1a1a2e;
+        --bg-number: #e2e4e9;
+        --bg-number-hover: #d0d3da;
+        --text-number: #1a1a2e;
+        --bg-operator: #e94560;
+        --bg-operator-hover: #d63a54;
+        --text-operator: #fff;
+        --bg-function: #7c5cbf;
+        --bg-function-hover: #6a4aad;
+        --text-function: #fff;
+        --bg-equals: #4cc9f0;
+        --bg-equals-hover: #3ab8df;
+        --text-equals: #1a1a2e;
+        --bg-clear: #e94560;
+        --bg-clear-hover: #d63a54;
+        --text-clear: #fff;
+      }
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg-body);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .calculator {
+      background: var(--bg-calc);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      width: 320px;
+    }
+
+    .display {
+      background: var(--bg-display);
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      text-align: right;
+      min-height: 70px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+
+    .display .expression {
+      color: var(--text-expression);
+      font-size: 14px;
+      min-height: 20px;
+      word-break: break-all;
+    }
+
+    .display .result {
+      color: var(--text-result);
+      font-size: 28px;
+      font-weight: 600;
+      word-break: break-all;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    .buttons button {
+      padding: 16px;
+      font-size: 18px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s, filter 0.15s;
+      font-weight: 500;
+    }
+
+    .buttons button:active {
+      transform: scale(0.95);
+    }
+
+    .btn-number {
+      background: var(--bg-number);
+      color: var(--text-number);
+    }
+    .btn-number:hover { background: var(--bg-number-hover); }
+
+    .btn-operator {
+      background: var(--bg-operator);
+      color: var(--text-operator);
+    }
+    .btn-operator:hover { background: var(--bg-operator-hover); }
+
+    .btn-function {
+      background: var(--bg-function);
+      color: var(--text-function);
+    }
+    .btn-function:hover { background: var(--bg-function-hover); }
+
+    .btn-equals {
+      background: var(--bg-equals);
+      color: var(--text-equals);
+      font-weight: 700;
+    }
+    .btn-equals:hover { background: var(--bg-equals-hover); }
+
+    .btn-clear {
+      background: var(--bg-clear);
+      color: var(--text-clear);
+    }
+    .btn-clear:hover { background: var(--bg-clear-hover); }
+
+    .btn-zero {
+      grid-column: span 2;
+    }
+
+    /* Brighter last button in the first 5 rows (4th, 8th, 12th, 16th, 20th child) */
+    .buttons button:nth-child(4),
+    .buttons button:nth-child(8),
+    .buttons button:nth-child(12),
+    .buttons button:nth-child(16),
+    .buttons button:nth-child(20) {
+      filter: brightness(1.35);
+    }
+    .buttons button:nth-child(4):hover,
+    .buttons button:nth-child(8):hover,
+    .buttons button:nth-child(12):hover,
+    .buttons button:nth-child(16):hover,
+    .buttons button:nth-child(20):hover {
+      filter: brightness(1.5);
+    }
+  </style>
+</head>
+<body>
+  <div class="calculator">
+    <div class="display">
+      <div class="expression" id="expression"></div>
+      <div class="result" id="result">0</div>
+    </div>
+    <div class="buttons">
+      <button class="btn-clear" data-action="clear">C</button>
+      <button class="btn-function" data-action="backspace">⌫</button>
+      <button class="btn-operator" data-action="operator" data-value="%">%</button>
+      <button class="btn-operator" data-action="operator" data-value="/">÷</button>
+
+      <button class="btn-number" data-action="number" data-value="7">7</button>
+      <button class="btn-number" data-action="number" data-value="8">8</button>
+      <button class="btn-number" data-action="number" data-value="9">9</button>
+      <button class="btn-operator" data-action="operator" data-value="*">×</button>
+
+      <button class="btn-number" data-action="number" data-value="4">4</button>
+      <button class="btn-number" data-action="number" data-value="5">5</button>
+      <button class="btn-number" data-action="number" data-value="6">6</button>
+      <button class="btn-operator" data-action="operator" data-value="-">−</button>
+
+      <button class="btn-number" data-action="number" data-value="1">1</button>
+      <button class="btn-number" data-action="number" data-value="2">2</button>
+      <button class="btn-number" data-action="number" data-value="3">3</button>
+      <button class="btn-operator" data-action="operator" data-value="+">+</button>
+
+      <button class="btn-number btn-zero" data-action="number" data-value="0">0</button>
+      <button class="btn-number" data-action="decimal" data-value=".">.</button>
+      <button class="btn-equals" data-action="equals">=</button>
+      <button class="btn-function" data-action="sin">sin</button>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const expressionEl = document.getElementById('expression');
+      const resultEl = document.getElementById('result');
+
+      let currentInput = '0';
+      let expression = '';
+      let shouldResetInput = false;
+
+      function updateDisplay() {
+        resultEl.textContent = currentInput;
+        expressionEl.textContent = expression;
+      }
+
+      function calculate(a, op, b) {
+        a = parseFloat(a);
+        b = parseFloat(b);
+        switch (op) {
+          case '+': return a + b;
+          case '-': return a - b;
+          case '*': return a * b;
+          case '/': return b === 0 ? 'Error' : a / b;
+          case '%': return a % b;
+          default: return b;
+        }
+      }
+
+      function formatNumber(num) {
+        if (typeof num === 'string') return num;
+        if (Number.isInteger(num)) return num.toString();
+        return parseFloat(num.toFixed(10)).toString();
+      }
+
+      document.querySelector('.buttons').addEventListener('click', function (e) {
+        const btn = e.target.closest('button');
+        if (!btn) return;
+
+        const action = btn.dataset.action;
+        const value = btn.dataset.value;
+
+        if (action === 'number') {
+          if (shouldResetInput || currentInput === '0') {
+            currentInput = value;
+            shouldResetInput = false;
+          } else {
+            currentInput += value;
+          }
+        } else if (action === 'decimal') {
+          if (shouldResetInput) {
+            currentInput = '0.';
+            shouldResetInput = false;
+          } else if (!currentInput.includes('.')) {
+            currentInput += '.';
+          }
+        } else if (action === 'operator') {
+          if (expression && !shouldResetInput) {
+            const parts = expression.split(' ');
+            const prev = parseFloat(parts[0]);
+            const op = parts[1];
+            const result = calculate(prev, op, currentInput);
+            currentInput = formatNumber(result);
+            expression = currentInput + ' ' + value;
+          } else {
+            expression = currentInput + ' ' + value;
+          }
+          shouldResetInput = true;
+        } else if (action === 'equals') {
+          if (expression) {
+            const parts = expression.split(' ');
+            const prev = parseFloat(parts[0]);
+            const op = parts[1];
+            const result = calculate(prev, op, currentInput);
+            expression = parts[0] + ' ' + op + ' ' + currentInput + ' =';
+            currentInput = formatNumber(result);
+            shouldResetInput = true;
+          }
+        } else if (action === 'clear') {
+          currentInput = '0';
+          expression = '';
+          shouldResetInput = false;
+        } else if (action === 'backspace') {
+          if (currentInput.length > 1) {
+            currentInput = currentInput.slice(0, -1);
+          } else {
+            currentInput = '0';
+          }
+        } else if (action === 'sin') {
+          const num = parseFloat(currentInput);
+          const result = Math.sin(num);
+          expression = 'sin(' + currentInput + ')';
+          currentInput = formatNumber(result);
+          shouldResetInput = true;
+        }
+
+        updateDisplay();
+      });
+
+      updateDisplay();
+    })();
+  </script>
+</body>
+</html>

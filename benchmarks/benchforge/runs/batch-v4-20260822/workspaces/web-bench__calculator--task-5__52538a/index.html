@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculator</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #1a1a2e;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .calculator {
+      background: #16213e;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      width: 340px;
+    }
+    .display {
+      background: #0f3460;
+      color: #e0e0f0;
+      font-size: 2rem;
+      text-align: right;
+      padding: 16px 20px;
+      border-radius: 10px;
+      margin-bottom: 16px;
+      min-height: 64px;
+      word-break: break-all;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+    }
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+    }
+    button {
+      padding: 14px 0;
+      font-size: 1.1rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background: #1a1a40;
+      color: #e0e0f0;
+      transition: background 0.15s;
+    }
+    button:hover { background: #2a2a5a; }
+    button:active { background: #3a3a6a; }
+    .op { background: #4361ee; color: #fff; }
+    .op:hover { background: #3a56d4; }
+    .equals { background: #e94560; color: #fff; }
+    .equals:hover { background: #d13a54; }
+    .fn { background: #2a2a5a; color: #4cc9f0; }
+    .fn:hover { background: #3a3a7a; }
+    .clear { background: #e94560; color: #fff; }
+    .clear:hover { background: #d13a54; }
+  </style>
+</head>
+<body>
+  <div class="calculator">
+    <div class="display" id="display">0</div>
+    <div class="buttons">
+      <button class="clear" id="btn-clear">C</button>
+      <button class="fn" id="btn-backspace">⌫</button>
+      <button class="fn" id="btn-paren-open">(</button>
+      <button class="fn" id="btn-paren-close">)</button>
+      <button class="op" id="btn-divide">÷</button>
+
+      <button class="fn" id="btn-sin">sin</button>
+      <button class="fn" id="btn-pi">π</button>
+      <button id="btn-7">7</button>
+      <button id="btn-8">8</button>
+      <button id="btn-9">9</button>
+
+      <button class="fn" id="btn-cos">cos</button>
+      <button class="fn" id="btn-tan">tan</button>
+      <button id="btn-4">4</button>
+      <button id="btn-5">5</button>
+      <button id="btn-6">6</button>
+
+      <button class="fn" id="btn-log">log</button>
+      <button class="fn" id="btn-sqrt">√</button>
+      <button id="btn-1">1</button>
+      <button id="btn-2">2</button>
+      <button id="btn-3">3</button>
+
+      <button class="fn" id="btn-pow">x^y</button>
+      <button class="fn" id="btn-dot">.</button>
+      <button id="btn-0">0</button>
+      <button class="op" id="btn-multiply">×</button>
+      <button class="op" id="btn-minus">−</button>
+
+      <button class="op" id="btn-add">+</button>
+      <button class="equals" id="btn-equals" style="grid-column: span 4">=</button>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var display = document.getElementById('display');
+      var expression = '';
+
+      function updateDisplay(text) {
+        display.textContent = text || '0';
+      }
+
+      function appendToExpression(val) {
+        if (expression === '0' || expression === 'Error') expression = '';
+        expression += val;
+        updateDisplay(expression);
+      }
+
+      // Number buttons
+      for (var i = 0; i <= 9; i++) {
+        (function (n) {
+          document.getElementById('btn-' + n).addEventListener('click', function () {
+            appendToExpression(String(n));
+          });
+        })(i);
+      }
+
+      // Operators
+      document.getElementById('btn-add').addEventListener('click', function () { appendToExpression('+'); });
+      document.getElementById('btn-minus').addEventListener('click', function () { appendToExpression('-'); });
+      document.getElementById('btn-multiply').addEventListener('click', function () { appendToExpression('*'); });
+      document.getElementById('btn-divide').addEventListener('click', function () { appendToExpression('/'); });
+      document.getElementById('btn-pow').addEventListener('click', function () { appendToExpression('**'); });
+
+      // Dot
+      document.getElementById('btn-dot').addEventListener('click', function () { appendToExpression('.'); });
+
+      // Parentheses
+      document.getElementById('btn-paren-open').addEventListener('click', function () { appendToExpression('('); });
+      document.getElementById('btn-paren-close').addEventListener('click', function () { appendToExpression(')'); });
+
+      // Functions
+      document.getElementById('btn-sin').addEventListener('click', function () { appendToExpression('Math.sin('); });
+      document.getElementById('btn-cos').addEventListener('click', function () { appendToExpression('Math.cos('); });
+      document.getElementById('btn-tan').addEventListener('click', function () { appendToExpression('Math.tan('); });
+      document.getElementById('btn-log').addEventListener('click', function () { appendToExpression('Math.log10('); });
+      document.getElementById('btn-sqrt').addEventListener('click', function () { appendToExpression('Math.sqrt('); });
+
+      // Pi button — covers (replaces) display content with π value
+      document.getElementById('btn-pi').addEventListener('click', function () {
+        expression = String(Math.PI);
+        updateDisplay(expression);
+      });
+
+      // Clear
+      document.getElementById('btn-clear').addEventListener('click', function () {
+        expression = '';
+        updateDisplay('0');
+      });
+
+      // Backspace
+      document.getElementById('btn-backspace').addEventListener('click', function () {
+        expression = expression.slice(0, -1);
+        updateDisplay(expression || '0');
+      });
+
+      // Equals
+      document.getElementById('btn-equals').addEventListener('click', function () {
+        try {
+          var result = Function('"use strict"; return (' + expression + ')')();
+          expression = String(result);
+          updateDisplay(expression);
+        } catch (e) {
+          updateDisplay('Error');
+          expression = '';
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

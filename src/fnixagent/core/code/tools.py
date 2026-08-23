@@ -46,6 +46,7 @@ Usage:
 from __future__ import annotations
 
 import asyncio
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -55,6 +56,9 @@ from fnixagent.core.code.diff import (
     ChangeSetBuilder,
     DiffEngine,
 )
+
+_logger = logging.getLogger(__name__)
+
 
 # ============================================================================
 # 工具执行结果
@@ -407,7 +411,7 @@ class CodeTools:
             if stub_err:
                 return ToolResult.err(stub_err)
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
 
         # 路径类型检查 (防止写入目录)
         if full.exists() and not full.is_file():
@@ -599,14 +603,24 @@ class CodeTools:
 
         Returns:
             ToolResult — 成功表示无语法错误。
+
+        非 Python 前端项目（web-bench 的 Angular/React/Vue 等，.ts/.html/.css）
+        没有 py_compile 语义：target 指向目录或非 .py 文件时跳过编译，
+        视为成功（前端产物由 UI 预览/测试验证），避免误报「文件不存在」导致整题失败。
         """
         if file_path:
             try:
                 full = self._resolve_path(file_path)
             except ValueError as e:
                 return ToolResult.err(str(e))
+            # 目录（如 src/app）→ 前端工程，py_compile 无意义，跳过。
+            if full.is_dir():
+                return ToolResult.ok(f"跳过编译：{file_path} 是目录（前端/非 Python 工程）")
             if not full.is_file():
                 return ToolResult.err(f"文件不存在: {file_path}")
+            # 非 .py 文件 → 前端/其他语言，跳过 py_compile。
+            if full.suffix.lower() != ".py":
+                return ToolResult.ok(f"跳过编译：{file_path} 非 Python 源码")
             cmd = ["python", "-m", "py_compile", str(full)]
             return await self._run_subprocess(cmd, timeout=60)
 

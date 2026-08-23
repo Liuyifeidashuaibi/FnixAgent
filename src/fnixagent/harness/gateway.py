@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from fnixagent.core.profile import profile_info
@@ -15,6 +16,8 @@ from fnixagent.harness.local_bridge import get_local_bridge
 from fnixagent.harness.paths import fnix_home, sessions_dir
 from fnixagent.harness.session import get_session_store
 from fnixagent.harness.workspace import ensure_home_layout, read_home_config
+
+_logger = logging.getLogger(__name__)
 
 
 def init_harness() -> None:
@@ -24,13 +27,13 @@ def init_harness() -> None:
     try:
         store.compact_old_sessions(max_keep=200)
     except Exception:
-        pass
+        _logger.debug("Unhandled exception", exc_info=True)
     try:
         from fnixagent.harness.config import reload_harness_mcp
 
         reload_harness_mcp()
     except Exception:
-        pass
+        _logger.debug("Unhandled exception", exc_info=True)
 
 
 def get_harness_status() -> dict[str, Any]:
@@ -53,6 +56,7 @@ def get_harness_status() -> dict[str, Any]:
         "ok": True,
         "harness": "fnix-local-harness",
         "home": str(home),
+        "home_dir": {"exists": home.exists(), "path": str(home)},
         "profile": profile_info(),
         "ready": ready,
         "degraded": not sidecar.available,

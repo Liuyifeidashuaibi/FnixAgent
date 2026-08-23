@@ -23,20 +23,8 @@
  *   - 审核流程：submit → approve / deprecate
  */
 
-import { useCallback, useEffect, useState } from "react";
-import {
-  BookOpen,
-  Check,
-  ChevronDown,
-  ChevronRight,
-  Edit3,
-  Plus,
-  RefreshCw,
-  Sparkles,
-  Trash2,
-  Upload,
-  X,
-} from "lucide-react";
+import { useCallback, useEffect, useState } from 'react';
+import { BookOpen, Check, Edit3, Plus, RefreshCw, Sparkles, Trash2, X } from 'lucide-react';
 import {
   deleteHarnessSkill,
   fetchHarnessSkills,
@@ -46,17 +34,17 @@ import {
   type FnixSkillEntry,
   type FnixSkillsList,
   type HarnessSkill,
-} from "../../lib/fnixBridge";
+} from '../../lib/fnixBridge';
 
 interface Props {
   workspace: string;
   onClose: () => void;
 }
 
-type Tab = "static" | "captured";
+type Tab = 'static' | 'captured';
 
 export function SkillManager({ workspace, onClose }: Props) {
-  const [tab, setTab] = useState<Tab>("static");
+  const [tab, setTab] = useState<Tab>('static');
   const [staticSkills, setStaticSkills] = useState<HarnessSkill[]>([]);
   const [capturedEntries, setCapturedEntries] = useState<FnixSkillEntry[]>([]);
   const [busy, setBusy] = useState(false);
@@ -91,14 +79,14 @@ export function SkillManager({ workspace, onClose }: Props) {
   }, []);
 
   useEffect(() => {
-    if (tab === "static") void refreshStatic();
+    if (tab === 'static') void refreshStatic();
     else void refreshCaptured();
   }, [tab, refreshStatic, refreshCaptured]);
 
   // 自动捕获为空时，回退到静态技能 tab（避免用户看到空列表困惑）
   useEffect(() => {
-    if (tab === "captured" && capturedEntries.length === 0) {
-      setTab("static");
+    if (tab === 'captured' && capturedEntries.length === 0) {
+      setTab('static');
     }
   }, [tab, capturedEntries.length]);
 
@@ -108,7 +96,7 @@ export function SkillManager({ workspace, onClose }: Props) {
     try {
       const res = await toggleHarnessSkill(workspace, skill.name, !skill.enabled);
       if (!res.ok) {
-        setError(res.error || "切换失败");
+        setError(res.error || '切换失败');
       } else {
         await refreshStatic();
       }
@@ -130,7 +118,7 @@ export function SkillManager({ workspace, onClose }: Props) {
     try {
       const res = await deleteHarnessSkill(workspace, skill.name);
       if (!res.ok) {
-        setError(res.error || "删除失败");
+        setError(res.error || '删除失败');
       } else {
         await refreshStatic();
       }
@@ -140,7 +128,7 @@ export function SkillManager({ workspace, onClose }: Props) {
   };
 
   return (
-    <aside className="fnix-skill-mgr" role="dialog" aria-label="技能管理">
+    <aside className="fnix-skill-mgr" role="region" aria-label="技能管理">
       <header className="fnix-skill-mgr-head">
         <div className="fnix-skill-mgr-title">
           <BookOpen size={15} />
@@ -150,9 +138,9 @@ export function SkillManager({ workspace, onClose }: Props) {
           <button
             type="button"
             role="tab"
-            aria-selected={tab === "static"}
-            className={`fnix-skill-mgr-tab${tab === "static" ? " on" : ""}`}
-            onClick={() => setTab("static")}
+            aria-selected={tab === 'static'}
+            className={`fnix-skill-mgr-tab${tab === 'static' ? ' on' : ''}`}
+            onClick={() => setTab('static')}
           >
             静态技能（{staticSkills.length}）
           </button>
@@ -160,9 +148,9 @@ export function SkillManager({ workspace, onClose }: Props) {
             <button
               type="button"
               role="tab"
-              aria-selected={tab === "captured"}
-              className={`fnix-skill-mgr-tab${tab === "captured" ? " on" : ""}`}
-              onClick={() => setTab("captured")}
+              aria-selected={tab === 'captured'}
+              className={`fnix-skill-mgr-tab${tab === 'captured' ? ' on' : ''}`}
+              onClick={() => setTab('captured')}
             >
               自动捕获（{capturedEntries.length}）
             </button>
@@ -173,11 +161,11 @@ export function SkillManager({ workspace, onClose }: Props) {
             type="button"
             className="fnix-ibtn sm"
             title="刷新"
-            onClick={() => (tab === "static" ? void refreshStatic() : void refreshCaptured())}
+            onClick={() => (tab === 'static' ? void refreshStatic() : void refreshCaptured())}
           >
-            <RefreshCw size={13} className={busy ? "spinning" : ""} />
+            <RefreshCw size={13} className={busy ? 'spinning' : ''} />
           </button>
-          {tab === "static" && (
+          {tab === 'static' && (
             <button
               type="button"
               className="fnix-ibtn sm"
@@ -203,7 +191,7 @@ export function SkillManager({ workspace, onClose }: Props) {
       )}
 
       <div className="fnix-skill-mgr-body">
-        {tab === "static" ? (
+        {tab === 'static' ? (
           <StaticSkillsList
             skills={staticSkills}
             onToggle={handleToggle}
@@ -276,11 +264,11 @@ function StaticSkillsList({
   return (
     <ul className="fnix-skill-list">
       {skills.map((s) => (
-        <li key={s.path} className={`fnix-skill-card${s.enabled ? "" : " disabled"}`}>
+        <li key={s.path} className={`fnix-skill-card${s.enabled ? '' : ' disabled'}`}>
           <div className="fnix-skill-card-head">
             <span className="fnix-skill-name">{s.name}</span>
             <span className={`fnix-skill-priority priority-${s.priority}`}>{s.priority}</span>
-            <label className="fnix-skill-toggle" title={s.enabled ? "已启用" : "已禁用"}>
+            <label className="fnix-skill-toggle" title={s.enabled ? '已启用' : '已禁用'}>
               <input
                 type="checkbox"
                 checked={s.enabled}
@@ -296,7 +284,9 @@ function StaticSkillsList({
           {s.triggers.length > 0 && (
             <div className="fnix-skill-triggers">
               {s.triggers.slice(0, 6).map((t, i) => (
-                <span key={i} className="fnix-skill-trigger-chip">{t}</span>
+                <span key={i} className="fnix-skill-trigger-chip">
+                  {t}
+                </span>
               ))}
               {s.triggers.length > 6 && <span className="dim">+{s.triggers.length - 6}</span>}
             </div>
@@ -312,7 +302,12 @@ function StaticSkillsList({
               >
                 <Check size={11} /> 删除
               </button>
-              <button type="button" className="fnix-ibtn sm" onClick={onCancelDelete} disabled={busy}>
+              <button
+                type="button"
+                className="fnix-ibtn sm"
+                onClick={onCancelDelete}
+                disabled={busy}
+              >
                 取消
               </button>
             </div>
@@ -358,12 +353,12 @@ function CapturedSkillsList({ entries }: { entries: FnixSkillEntry[] }) {
         <li key={e.id} className="fnix-skill-card">
           <div className="fnix-skill-card-head">
             <span className="fnix-skill-name">{e.display_name || e.name}</span>
-            {e.owner_id === "builtin" && <span className="fnix-skill-sample-tag">内置</span>}
+            {e.owner_id === 'builtin' && <span className="fnix-skill-sample-tag">内置</span>}
             <span className={`fnix-skill-status status-${e.status}`}>{e.status}</span>
           </div>
           {e.description && <p className="fnix-skill-desc">{e.description}</p>}
           <div className="fnix-skill-meta">
-            <span>v{e.latest_version || "—"}</span>
+            <span>v{e.latest_version || '—'}</span>
             <span>·</span>
             <span>{e.install_count} 次安装</span>
             {e.rating > 0 && (
@@ -394,29 +389,29 @@ function SkillEditor({
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const [name, setName] = useState(skill?.name || "");
-  const [description, setDescription] = useState(skill?.description || "");
-  const [triggers, setTriggers] = useState((skill?.triggers || []).join(", "));
-  const [priority, setPriority] = useState<"high" | "normal" | "low">(skill?.priority || "normal");
+  const [name, setName] = useState(skill?.name || '');
+  const [description, setDescription] = useState(skill?.description || '');
+  const [triggers, setTriggers] = useState((skill?.triggers || []).join(', '));
+  const [priority, setPriority] = useState<'high' | 'normal' | 'low'>(skill?.priority || 'normal');
   const [enabled, setEnabled] = useState(skill?.enabled ?? true);
-  const [content, setContent] = useState(skill?.content || "");
+  const [content, setContent] = useState(skill?.content || '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSave = async () => {
     if (!name.trim()) {
-      setError("技能名不能为空");
+      setError('技能名不能为空');
       return;
     }
     if (!content.trim()) {
-      setError("技能内容不能为空");
+      setError('技能内容不能为空');
       return;
     }
     setBusy(true);
     setError(null);
     try {
       const triggersList = triggers
-        .split(",")
+        .split(',')
         .map((t) => t.trim())
         .filter(Boolean);
       const res = await writeHarnessSkill({
@@ -429,7 +424,7 @@ function SkillEditor({
         enabled,
       });
       if (!res.ok) {
-        setError(res.error || "保存失败");
+        setError(res.error || '保存失败');
         return;
       }
       onSaved();
@@ -441,13 +436,13 @@ function SkillEditor({
   // Ctrl+S / Cmd+S 快捷保存
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
         if (!busy) void handleSave();
       }
     };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [busy, name, description, triggers, priority, enabled, content]);
 
@@ -455,7 +450,7 @@ function SkillEditor({
     <div className="fnix-skill-editor-overlay" role="dialog" aria-label="技能编辑器">
       <div className="fnix-skill-editor">
         <header className="fnix-skill-editor-head">
-          <span>{skill ? "编辑技能" : "新建技能"}</span>
+          <span>{skill ? '编辑技能' : '新建技能'}</span>
           <button type="button" className="fnix-ibtn sm" onClick={onClose} title="关闭">
             <X size={13} />
           </button>
@@ -494,7 +489,11 @@ function SkillEditor({
           <div className="fnix-skill-field-row">
             <label className="fnix-skill-field">
               <span className="fnix-skill-field-label">优先级</span>
-              <select value={priority} onChange={(e) => setPriority(e.target.value as "high" | "normal" | "low")} disabled={busy}>
+              <select
+                value={priority}
+                onChange={(e) => setPriority(e.target.value as 'high' | 'normal' | 'low')}
+                disabled={busy}
+              >
                 <option value="high">high</option>
                 <option value="normal">normal</option>
                 <option value="low">low</option>
@@ -515,7 +514,7 @@ function SkillEditor({
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder={"# 技能说明\n\n描述这个技能的应用场景、执行步骤、注意事项等…"}
+              placeholder={'# 技能说明\n\n描述这个技能的应用场景、执行步骤、注意事项等…'}
               disabled={busy}
               rows={12}
             />
@@ -526,7 +525,13 @@ function SkillEditor({
           <button type="button" className="fnix-ibtn sm" onClick={onClose} disabled={busy}>
             取消
           </button>
-          <button type="button" className="fnix-ibtn sm primary" onClick={handleSave} disabled={busy} title="Ctrl+S">
+          <button
+            type="button"
+            className="fnix-ibtn sm primary"
+            onClick={handleSave}
+            disabled={busy}
+            title="Ctrl+S"
+          >
             <Check size={12} />
             保存
           </button>

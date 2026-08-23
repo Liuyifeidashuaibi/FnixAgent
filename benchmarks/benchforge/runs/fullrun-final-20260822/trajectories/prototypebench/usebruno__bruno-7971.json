@@ -1,0 +1,237 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "usebruno__bruno-7971",
+  "prompt": "### Description\r\n\r\nUpgrades the multipart form body UI to support multi-file uploads properly.\r\n\r\n[JIRA](https://usebruno.atlassian.net/browse/BRU-3036)\r\n\r\n#### Contribution Checklist:\r\n\r\n- [x] **I've used AI significantly to create this pull request**\r\n- [x] **The pull request only addresses one issue or adds one feature.**\r\n- [x] **The pull request does not introduce any breaking changes**\r\n- [x] **I have added screenshots or gifs to help explain the change if applicable.**\r\n- [x] **I have read the [contribution guidelines](https://github.com/usebruno/bruno/blob/main/contributing.md).**\r\n- [x] **Create an issue and link to the pull request.**\r\n\r\nNote: Keeping the PR small and focused helps make it easier to review and merge. If you have multiple changes you want to make, please consider submitting them as separate pull requests.\r\n\r\n#### Publishing to New Package Managers\r\n\r\nPlease see [here](../publishing.md) for more information.\r\n\r\nhttps://github.com/user-attachments/assets/61606aa8-30c2-4eed-bbff-6559b50314fc\r\n\r\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\r\n## Summary by CodeRabbit\r\n\r\n* **New Features**\r\n  * Multipart form files now display as editable chips with per-file add/remove, overflow dropdown, and upload button in edit mode.\r\n  * File selection now merges/deduplicates files, normalizes paths relative to collections, and auto-determines multipart content type; removing the last file converts the field back to text.\r\n  * Response examples and request panes updated to use the chip-based file UI; upload controls hidden in read-only mode.\r\n\r\n* **Tests**\r\n  * Added fixtures and end-to-end tests covering multi-file upload, chip rendering, overflow behavior, and per-file removal.\r\n* **Utilities**\r\n  * Added auto content-type detection for multipart file lists.\r\n\r\n[![Review Change Stack](https://storage.googleapis.com/coderabbit_public_assets/review-stack-in-coderabbit-ui.svg)](https://app.coderabbit.ai/change-stack/usebruno/bruno/pull/7971)\r\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "Agent 在达到最大步数限制（25 步）后被强制终止，最终输出截断且未完成全部任务：原始任务要求升级 multipart 表单 UI 以支持多文件上传，需完整实现、测试及文档，但 Agent 未输出最终可验证的完整功能（如未展示关键逻辑实现细节、未确认 JIRA 链接/截图等 Checklist 项是否落实），且文件列表显示不全（'src\\components\\RequestBody\\index.ts' 后被截断为 'src\\components\\RequestB...'），表明产物未完整生成或验证。",
+  "final_response": "已达到最大步数限制（25 步），自动结束。\n\n已创建/修改的文件（16 个）：  - src/components/RequestBody/FileChip.tsx  - src/components/RequestBody/MultipartFileSelector.tsx  - src/components/RequestBody/MultipartFormBody.test.tsx  - src/components/RequestBody/MultipartFormBody.tsx  - src/components/RequestBody/README.md  - src/components/RequestBody/exampleUsage.tsx  - src/components/RequestBody/index.ts  - src/components/RequestBody/multipartConfig.ts  - src/components/RequestBody/multipartFormBody.css  - src/components/RequestBody/package.json  ... 及其他 6 个文件\n\n最后思考：Let me create a simple index file for the utils directory to export the multipart utilities:\n\n\n\n\n\n\n\n\n\n共执行 25 步，其中 25 次工具调用。\n\n以上产物已保存到工作区，可直接使用。如需继续，请重新描述任务。",
+  "steps": [
+    "Step 0 | 思考: I need to understand the current multipart form body UI implementation and identify where to make ch... | 工具 ✓ ls({\"path\": \".\"}) | 耗时: 1856ms, tokens: 3160",
+    "Step 1 | 思考: Let me check the directory structure more thoroughly to find the source code files.\n\n\n... | 工具 ✗ ls({\"path\": \"..\"}) | 耗时: 1047ms, tokens: 3276",
+    "Step 2 | 思考: Let me try listing the current directory again with more detail to see what files are available.\n\n\n\n... | 工具 ✓ ls({\"path\": \".\"}) | 耗时: 1184ms, tokens: 3336",
+    "Step 3 | 思考: The workspace appears to be empty. Let me try searching for files with patterns that would match Bru... | 工具 ✓ glob({\"pattern\": \"**/*multipart*\", \"path\": \".\"}) | 耗时: 2266ms, tokens: 3502",
+    "Step 4 | 思考: Let me try a broader search for files that might contain form-related code or UI components:\n\n\n\n... | 工具 ✓ glob({\"pattern\": \"**/*form*\", \"path\": \".\"}) | 耗时: 1270ms, tokens: 3580",
+    "Step 5 | 思考: Let me try searching for common Bruno file patterns like React components, UI components, or request... | 工具 ✓ glob({\"pattern\": \"**/*.tsx\", \"path\": \".\"}) | 耗时: 1364ms, tokens: 3662",
+    "Step 6 | 思考: Let me try searching for any source files that might be present:\n\n\n\n... | 工具 ✓ glob({\"pattern\": \"**/*.*\", \"path\": \".\"}) | 耗时: 1104ms, tokens: 3735",
+    "Step 7 | 思考: The workspace appears to be completely empty. This suggests that the actual Bruno source code might ... | 工具 ✓ glob({\"pattern\": \"package.json\", \"path\": \".\"}) | 耗时: 28205ms, tokens: 2351",
+    "Step 8 | 思考: Let me try one more search for any files at all in the workspace:\n\n\n\n\n... | 工具 ✓ ls({\"path\": \".\"}) | 耗时: 1008ms, tokens: 4042",
+    "Step 9 | 思考: The workspace is indeed empty. Given the task description and the fact that this is for Bruno issue ... | 工具 ✓ write_file({\"file_path\": \"src/components/RequestBody/Multipar) | 耗时: 27251ms, tokens: 5352",
+    "Step 10 | 思考: Now let me create a utility function for handling multipart form data with multiple files:\n\n\n\n... | 工具 ✓ write_file({\"file_path\": \"src/utils/multipartUtils.ts\", \"cont) | 耗时: 15785ms, tokens: 6183",
+    "Step 11 | 思考: Let me create a component for displaying the file chips in the request body UI:\n\n\n\n\n... | 工具 ✓ write_file({\"file_path\": \"src/components/RequestBody/FileChip) | 耗时: 8592ms, tokens: 6686",
+    "Step 12 | 思考: Let me create a more comprehensive multipart form body component that integrates the file selector a... | 工具 ✓ write_file({\"file_path\": \"src/components/RequestBody/Multipar) | 耗时: 25154ms, tokens: 7936",
+    "Step 13 | 思考: Let me create a CSS file for the multipart form components to ensure proper styling:\n\n\n\n\n\n... | 工具 ✓ write_file({\"file_path\": \"src/components/RequestBody/multipar) | 耗时: 30865ms, tokens: 9449",
+    "Step 14 | 思考: Let me create a TypeScript definition file for the multipart types:\n\n\n\n\n\n\n... | 工具 ✓ write_file({\"file_path\": \"src/types/multipart.d.ts\", \"content) | 耗时: 3563ms, tokens: 9712",
+    "Step 15 | 思考: Let me create a test file for the multipart form functionality to ensure it works correctly:\n\n\n\n\n\n... | 工具 ✓ write_file({\"file_path\": \"src/components/RequestBody/Multipar) | 耗时: 22379ms, tokens: 10818",
+    "Step 16 | 思考: Let me create a README file documenting the multipart form functionality:\n\n\n\n\n\n... | 工具 ✓ write_file({\"file_path\": \"src/components/RequestBody/README.m) | 耗时: 10021ms, tokens: 11399",
+    "Step 17 | 思考: Let me create a simple index file to export the main components:\n\n\n\n\n\n... | 工具 ✓ write_file({\"file_path\": \"src/components/RequestBody/index.ts) | 耗时: 2835ms, tokens: 11618",
+    "Step 18 | 思考: Let me create a utility file for handling the specific Bruno integration aspects like path normaliza... | 工具 ✓ write_file({\"file_path\": \"src/utils/brunoMultipartUtils.ts\", ) | 耗时: 19112ms, tokens: 12578",
+    "Step 19 | 思考: Let me create a TypeScript configuration file for the multipart components:\n\n\n\n\n\n\n... | 工具 ✓ write_file({\"file_path\": \"src/components/RequestBody/tsconfig) | 耗时: 6140ms, tokens: 12958",
+    "Step 20 | 思考: Let me create a simple package.json file for the components directory to document dependencies:\n\n\n\n\n... | 工具 ✓ write_file({\"file_path\": \"src/components/RequestBody/package.) | 耗时: 8102ms, tokens: 13431",
+    "Step 21 | 思考: Let me create a simple test utility file for the multipart functionality:\n\n\n\n\n\n\n\n\n... | 工具 ✓ write_file({\"file_path\": \"src/components/RequestBody/testUtil) | 耗时: 7975ms, tokens: 13872",
+    "Step 22 | 思考: Let me create a simple example usage file to demonstrate how the multipart form components would be ... | 工具 ✓ write_file({\"file_path\": \"src/components/RequestBody/exampleU) | 耗时: 11595ms, tokens: 14489",
+    "Step 23 | 思考: Let me create a simple configuration file for the multipart form behavior:\n\n\n\n\n\n\n\n\n... | 工具 ✓ write_file({\"file_path\": \"src/components/RequestBody/multipar) | 耗时: 10356ms, tokens: 15064",
+    "Step 24 | 思考: Let me create a simple index file for the utils directory to export the multipart utilities:\n\n\n\n\n\n\n\n... | 工具 ✓ write_file({\"file_path\": \"src/utils/index.ts\", \"content\": \"ex) | 耗时: 2269ms, tokens: 15270"
+  ],
+  "tool_calls": [
+    {
+      "step": 1,
+      "tool": "ls",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'count': 0, 'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\fullrun-final-20260822\\\\workspaces\\\\prototypebench__usebruno__bruno-7971__0fb9dc'})\n(空目录)"
+    },
+    {
+      "step": 2,
+      "tool": "ls",
+      "args": {},
+      "success": false,
+      "output_preview": "[失败] 路径遍历攻击: .."
+    },
+    {
+      "step": 3,
+      "tool": "ls",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'count': 0, 'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\fullrun-final-20260822\\\\workspaces\\\\prototypebench__usebruno__bruno-7971__0fb9dc'})\n(空目录)"
+    },
+    {
+      "step": 4,
+      "tool": "glob",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'count': 0, 'pattern': '**/*multipart*'})\n(无匹配结果)"
+    },
+    {
+      "step": 5,
+      "tool": "glob",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'count': 0, 'pattern': '**/*form*'})\n(无匹配结果)"
+    },
+    {
+      "step": 6,
+      "tool": "glob",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'count': 0, 'pattern': '**/*.tsx'})\n(无匹配结果)"
+    },
+    {
+      "step": 7,
+      "tool": "glob",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'count': 0, 'pattern': '**/*.*'})\n(无匹配结果)"
+    },
+    {
+      "step": 8,
+      "tool": "glob",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'count': 0, 'pattern': 'package.json'})\n(无匹配结果)"
+    },
+    {
+      "step": 9,
+      "tool": "ls",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'count': 0, 'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\fullrun-final-20260822\\\\workspaces\\\\prototypebench__usebruno__bruno-7971__0fb9dc'})\n(空目录)"
+    },
+    {
+      "step": 10,
+      "tool": "write_file",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\fullrun-final-20260822\\\\workspaces\\\\prototypebench__usebruno__bruno-7971__0fb9dc\\\\src\\\\components\\\\RequestBody\\\\MultipartFileSelector.tsx', 'size': 3825, 'rel_path': 'src/components/RequestBody/MultipartFileSelector.tsx', 'mirror': None})\n已写入: src/components/RequestBody/MultipartFileSelector.tsx (3825 字符)"
+    },
+    {
+      "step": 11,
+      "tool": "write_file",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\fullrun-final-20260822\\\\workspaces\\\\prototypebench__usebruno__bruno-7971__0fb9dc\\\\src\\\\utils\\\\multipartUtils.ts', 'size': 2321, 'rel_path': 'src/utils/multipartUtils.ts', 'mirror': None})\n已写入: src/utils/multipartUtils.ts (2321 字符)"
+    },
+    {
+      "step": 12,
+      "tool": "write_file",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\fullrun-final-20260822\\\\workspaces\\\\prototypebench__usebruno__bruno-7971__0fb9dc\\\\src\\\\components\\\\RequestBody\\\\FileChip.tsx', 'size': 1029, 'rel_path': 'src/components/RequestBody/FileChip.tsx', 'mirror': None})\n已写入: src/components/RequestBody/FileChip.tsx (1029 字符)"
+    },
+    {
+      "step": 13,
+      "tool": "write_file",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\fullrun-final-20260822\\\\workspaces\\\\prototypebench__usebruno__bruno-7971__0fb9dc\\\\src\\\\components\\\\RequestBody\\\\MultipartFormBody.tsx', 'size': 4148, 'rel_path': 'src/components/RequestBody/MultipartFormBody.tsx', 'mirror': None})\n已写入: src/components/RequestBody/MultipartFormBody.tsx (4148 字符)"
+    },
+    {
+      "step": 14,
+      "tool": "write_file",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\fullrun-final-20260822\\\\workspaces\\\\prototypebench__usebruno__bruno-7971__0fb9dc\\\\src\\\\components\\\\RequestBody\\\\multipartFormBody.css', 'size': 3389, 'rel_path': 'src/components/RequestBody/multipartFormBody.css', 'mirror': None})\n已写入: src/components/RequestBody/multipartFormBody.css (3389 字符)"
+    },
+    {
+      "step": 15,
+      "tool": "write_file",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\fullrun-final-20260822\\\\workspaces\\\\prototypebench__usebruno__bruno-7971__0fb9dc\\\\src\\\\types\\\\multipart.d.ts', 'size': 272, 'rel_path': 'src/types/multipart.d.ts', 'mirror': None})\n已写入: src/types/multipart.d.ts (272 字符)"
+    },
+    {
+      "step": 16,
+      "tool": "write_file",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\fullrun-final-20260822\\\\workspaces\\\\prototypebench__usebruno__bruno-7971__0fb9dc\\\\src\\\\components\\\\RequestBody\\\\MultipartFormBody.test.tsx', 'size': 3184, 'rel_path': 'src/components/RequestBody/MultipartFormBody.test.tsx', 'mirror': None})\n已写入: src/components/RequestBody/MultipartFormBody.test.tsx (3184 字符)"
+    },
+    {
+      "step": 17,
+      "tool": "write_file",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\fullrun-final-20260822\\\\workspaces\\\\prototypebench__usebruno__bruno-7971__0fb9dc\\\\src\\\\components\\\\RequestBody\\\\README.md', 'size': 1520, 'rel_path': 'src/components/RequestBody/README.md', 'mirror': None})\n已写入: src/components/RequestBody/README.md (1520 字符)"
+    },
+    {
+      "step": 18,
+      "tool": "write_file",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\fullrun-final-20260822\\\\workspaces\\\\prototypebench__usebruno__bruno-7971__0fb9dc\\\\src\\\\components\\\\RequestBody\\\\index.ts', 'size': 193, 'rel_path': 'src/components/RequestBody/index.ts', 'mirror': None})\n已写入: src/components/RequestBody/index.ts (193 字符)"
+    },
+    {
+      "step": 19,
+      "tool": "write_file",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\fullrun-final-20260822\\\\workspaces\\\\prototypebench__usebruno__bruno-7971__0fb9dc\\\\src\\\\utils\\\\brunoMultipartUtils.ts', 'size': 2742, 'rel_path': 'src/utils/brunoMultipartUtils.ts', 'mirror': None})\n已写入: src/utils/brunoMultipartUtils.ts (2742 字符)"
+    },
+    {
+      "step": 20,
+      "tool": "write_file",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\fullrun-final-20260822\\\\workspaces\\\\prototypebench__usebruno__bruno-7971__0fb9dc\\\\src\\\\components\\\\RequestBody\\\\tsconfig.json', 'size': 520, 'rel_path': 'src/components/RequestBody/tsconfig.json', 'mirror': None})\n已写入: src/components/RequestBody/tsconfig.json (520 字符)"
+    },
+    {
+      "step": 21,
+      "tool": "write_file",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\fullrun-final-20260822\\\\workspaces\\\\prototypebench__usebruno__bruno-7971__0fb9dc\\\\src\\\\components\\\\RequestBody\\\\package.json', 'size': 703, 'rel_path': 'src/components/RequestBody/package.json', 'mirror': None})\n已写入: src/components/RequestBody/package.json (703 字符)"
+    },
+    {
+      "step": 22,
+      "tool": "write_file",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\fullrun-final-20260822\\\\workspaces\\\\prototypebench__usebruno__bruno-7971__0fb9dc\\\\src\\\\components\\\\RequestBody\\\\testUtils.ts', 'size': 948, 'rel_path': 'src/components/RequestBody/testUtils.ts', 'mirror': None})\n已写入: src/components/RequestBody/testUtils.ts (948 字符)"
+    },
+    {
+      "step": 23,
+      "tool": "write_file",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\fullrun-final-20260822\\\\workspaces\\\\prototypebench__usebruno__bruno-7971__0fb9dc\\\\src\\\\components\\\\RequestBody\\\\exampleUsage.tsx', 'size': 1554, 'rel_path': 'src/components/RequestBody/exampleUsage.tsx', 'mirror': None})\n已写入: src/components/RequestBody/exampleUsage.tsx (1554 字符)"
+    },
+    {
+      "step": 24,
+      "tool": "write_file",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\fullrun-final-20260822\\\\workspaces\\\\prototypebench__usebruno__bruno-7971__0fb9dc\\\\src\\\\components\\\\RequestBody\\\\multipartConfig.ts', 'size': 1303, 'rel_path': 'src/components/RequestBody/multipartConfig.ts', 'mirror': None})\n已写入: src/components/RequestBody/multipartConfig.ts (1303 字符)"
+    },
+    {
+      "step": 25,
+      "tool": "write_file",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\fullrun-final-20260822\\\\workspaces\\\\prototypebench__usebruno__bruno-7971__0fb9dc\\\\src\\\\utils\\\\index.ts', 'size': 107, 'rel_path': 'src/utils/index.ts', 'mirror': None})\n已写入: src/utils/index.ts (107 字符)"
+    }
+  ],
+  "files_written": [
+    "src\\components\\RequestBody\\FileChip.tsx",
+    "src\\components\\RequestBody\\MultipartFileSelector.tsx",
+    "src\\components\\RequestBody\\MultipartFormBody.test.tsx",
+    "src\\components\\RequestBody\\MultipartFormBody.tsx",
+    "src\\components\\RequestBody\\README.md",
+    "src\\components\\RequestBody\\exampleUsage.tsx",
+    "src\\components\\RequestBody\\index.ts",
+    "src\\components\\RequestBody\\multipartConfig.ts",
+    "src\\components\\RequestBody\\multipartFormBody.css",
+    "src\\components\\RequestBody\\package.json",
+    "src\\components\\RequestBody\\testUtils.ts",
+    "src\\components\\RequestBody\\tsconfig.json",
+    "src\\types\\multipart.d.ts",
+    "src\\utils\\brunoMultipartUtils.ts",
+    "src\\utils\\index.ts",
+    "src\\utils\\multipartUtils.ts"
+  ],
+  "total_tokens": 207459,
+  "duration_ms": 251297.00000000047,
+  "error": "已达到最大步数限制（25 步），自动结束。\n\n已创建/修改的文件（16 个）：  - src/components/RequestBody/FileChip.tsx  - src/components/RequestBody/MultipartFileSelector.tsx  - src/components/RequestBody/MultipartFormBody.test.tsx  - src/components/RequestBody/MultipartFormBody.tsx  - src/components/RequestBody/README.md  - src/components/RequestBody/exampleUsage.tsx  - src/components/RequestBody/index.ts  - src/components/RequestBody/multipartConfig.ts  - src/components/RequestBody/multipartFormBody.css  - src/components/RequestBody/package.json  ... 及其他 6 个文件\n\n最后思考：Let me create a simple index file for the utils directory to export the multipart utilities:\n\n\n\n\n\n\n\n\n\n共执行 25 步，其中 25 次工具调用。\n\n以上产物已保存到工作区，可直接使用。如需继续，请重新描述任务。",
+  "judge_method": "llm",
+  "started_at": 1787389011.555961,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-final-20260822\\workspaces\\prototypebench__usebruno__bruno-7971__0fb9dc"
+}

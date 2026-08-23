@@ -1,0 +1,146 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "IBM__mcp-context-forge-3758",
+  "prompt": "# 📋 PR Summary: SSL Context Caching with mTLS Support & HTTP Bypass\r\n\r\n**Branch:** `fix/ssl-context-cache-mtls-rotation`  \r\n**Closes:** #3629, #3579  \r\n**Files Changed:** 12 files | **+331 insertions | -24 deletions**\r\n\r\n---\r\n\r\n## 🎯 Problem Statement\r\n\r\n| Issue | Problem |\r\n|-------|---------|\r\n| #3629 | SSL context created for non-SSL (`http://`) URLs → 49% CPU overhead |\r\n| #3579 NET-01 | Cache key ignores client cert/key → mTLS failures |\r\n| #3579 NET-02 | No certificate rotation mechanism → requires restart |\r\n\r\n---\r\n\r\n## ✅ Solution Overview\r\n\r\n```\r\n┌─────────────────────────────────────────────────────────────────┐\r\n│                    SSL Context Cache Flow                       │\r\n├─────────────────────────────────────────────────────────────────┤\r\n│                                                                 │\r\n│  Tool Invocation ──► Check URL scheme                           │\r\n│                              │                                  │\r\n│                    ┌─────────┴─────────┐                        │\r\n│                    │                   │                        │\r\n│               http://              https://                     │\r\n│                    │                   │                        │\r\n│                    ▼                   ▼                        │\r\n│            Skip SSL ctx         Check cache key                 │\r\n│            (bypass)             (CA + client cert + key)        │\r\n│                                        │                        │\r\n│                              ┌─────────┴─────────┐              │\r\n│                              │                   │              │\r\n│                         Cache hit           Cache miss          │\r\n│                              │                   │              │\r\n│                              ▼                   ▼              │\r\n│                      Return cached         Create SSL context   │\r\n│                      SSL context           + load_cert_chain()  │\r\n│                                            + Store with TTL     │\r\n│                                                                 │\r\n│  Certificate Rotation ──► SIGHUP signal ──► Clear cache         │\r\n└─────────────────────────────────────────────────────────────────┘\r\n```\r\n\r\n---\r\n\r\n## 📁 Files Changed\r\n\r\n| File | Type | Purpose |\r\n|------|------|---------|\r\n| `ssl_context_cache.py` | MODIFIED | Enhanced cache with mTLS + TTL |\r\n| `tool_service.py` | MODIFIED | HTTP bypass + mTLS resolution |\r\n| `main.py` | MODIFIED | SIGHUP handler |\r\n| `schemas.py` | MODIFIED | API schemas for mTLS fields |\r\n| `db.py` | MODIFIED | Gateway model (fields already exist) |\r\n| `config.py` | MODIFIED | Cache configuration |\r\n| `.env.example` | MODIFIED | Config examples |\r\n| `self-signed-certificates.md` | MODIFIED | mTLS documentation |\r\n| `615af4ab94b4_*.py` | NEW | Idempotent migration |\r\n| `test_ssl_context_cache.py` | MODIFIED | Enhanced tests |\r\n| `test_tool_service_coverage.py` | MODIFIED | HTTP bypass tests |\r\n| `.gitignore` | MODIFIED | Ignore patterns |\r\n\r\n---\r\n\r\n## 🔍 Key Changes by File\r\n\r\n### 1. `ssl_context_cache.py` — Core SSL Cache Enhancement\r\n\r\n**Before:**\r\n```python\r\ndef get_cached_ssl_context(ca_certificate: str) -> ssl.SSLContext:\r\n    cert_hash = hashlib.sha256(ca_certificate.encode()).hexdigest()\r\n    ...\r\n```\r\n\r\n**After:**\r\n```python\r\ndef get_cached_ssl_context(\r\n    ca_certificate: str,\r\n    client_cert: str | None = None,  # NEW: mTLS support\r\n    client_key: str | None = None,    # NEW: mTLS support\r\n) -> ssl.SSLContext:\r\n    # Collision-safe hashing with labeled prefixes\r\n    key_hash = hashlib.sha256()\r\n    key_hash.update(b\"ca_cert:\")\r\n    key_hash.update(ca_cert_bytes)\r\n    key_hash.update(b\"|client_cert:\")\r\n    key_hash.update(client_cert_value.encode())\r\n    key_hash.update(b\"|client_key:\")\r\n    key_hash.update(client_key_value.encode())\r\n    \r\n    # mTLS: Load client certificate chain\r\n    if client_cert and client_key:\r\n        ctx.load_cert_chain(certfile=client_cert, keyfile=client_key)\r\n```\r\n\r\n**New Features:**\r\n- ✅ mTLS support via `ctx.load_cert_chain()`\r\n- ✅ Collision-safe cache key (labeled prefixes)\r\n- ✅ TTL-based expiration (`SSL_CONTEXT_CACHE_TTL`)\r\n- ✅ Configurable max size (`SSL_CONTEXT_CACHE_MAX_SIZE`)\r\n\r\n---\r\n\r\n### 2. `tool_service.py` — HTTP Bypass & mTLS Resolution\r\n\r\n**HTTP Bypass (Lines 3986-3994):**\r\n```python\r\n# Skip SSL entirely for http:// URLs\r\nif gateway_url and gateway_url.lower().startswith(\"http://\"):\r\n    ctx = None  # Use default httpx verification\r\nelif valid and gateway_ca_cert:\r\n    ctx = create_ssl_context(\r\n        gateway_ca_cert,\r\n        client_cert=client_cert_value,  # NEW\r\n        client_key=client_key_value,    # NEW\r\n    )\r\nelse:\r\n    ctx = None\r\n```\r\n\r\n**mTLS Resolution (Lines 3918-3930):**\r\n```python\r\n# Resolve client cert from payload or runtime gateway\r\nclient_cert_from_payload = gateway_payload.get(\"client_cert\") if has_gateway else None\r\nclient_key_from_payload = gateway_payload.get(\"client_key\") if has_gateway else None\r\n\r\ngateway_client_cert = client_cert_from_payload\r\ngateway_client_key = client_key_from_payload\r\n\r\nif has_gateway and gateway is not None:\r\n    runtime_gateway_client_cert = getattr(gateway, \"client_cert\", None)\r\n    runtime_gateway_client_key = getattr(gateway, \"client_key\", None)\r\n    if runtime_gateway_client_cert:\r\n        gateway_client_cert = runtime_gateway_client_cert\r\n    if runtime_gateway_client_key:\r\n        gateway_client_key = runtime_gateway_client_key\r\n```\r\n\r\n**Resolves:** #3629 — ~49% CPU reduction for HTTP URLs\r\n\r\n---\r\n\r\n### 3. `main.py` — SIGHUP Handler (Lines 1702-1741)\r\n\r\n```python\r\nasync def _sighup_reload() -> None:\r\n    \"\"\"Clear SSL context cache on SIGHUP for cert rotation.\"\"\"\r\n    try:\r\n        clear_ssl_context_cache()\r\n        logger.info(\"SIGHUP: SSL context cache cleared\")\r\n    except Exception as exc:\r\n        logger.error(f\"SIGHUP handler failed: {exc}\")\r\n\r\ndef _sighup_handler(signum: int, frame: Any) -> None:  # pylint: disable=unused-argument\r\n    \"\"\"Schedule async cache reload (async-safe).\"\"\"\r\n    logger.info(\"Received SIGHUP signal, scheduling SSL context cache refresh\")\r\n    try:\r\n        event_loop = asyncio.get_running_loop()  # Renamed to avoid shadowing\r\n        event_loop.create_task(_sighup_reload())\r\n    except RuntimeError:\r\n        logger.warning(\"SIGHUP received but event loop not running; skipping async reload\")\r\n\r\nsignal.signal(signal.SIGHUP, _sighup_handler)\r\n```\r\n\r\n**Usage:**\r\n```bash\r\n# Rotate certificates without restart\r\nkill -HUP <gateway_pid>\r\n```\r\n\r\n**Resolves:** #3579 NET-02 — Zero-downtime certificate rotation\r\n\r\n---\r\n\r\n### 4. Database Migration\r\n\r\n**File:** `mcpgateway/alembic/versions/615af4ab94b4_add_gateway_client_cert_and_key.py`\r\n\r\n```python\r\ndef upgrade() -> None:\r\n    \"\"\"Idempotent upgrade: adds columns only if missing.\"\"\"\r\n    inspector = sa.inspect(op.get_bind())\r\n    \r\n    if \"gateways\" not in inspector.get_table_names():\r\n        return  # Fresh DB: model creates columns\r\n    \r\n    columns = [col[\"name\"] for col in inspector.get_columns(\"gateways\")]\r\n    \r\n    if \"client_cert\" not in columns:\r\n        op.add_column(\"gateways\", sa.Column(\"client_cert\", sa.Text(), nullable=True))\r\n    \r\n    if \"client_key\" not in columns:\r\n        op.add_column(\"gateways\", sa.Column(\"client_key\", sa.Text(), nullable=True))\r\n```\r\n\r\n**Properties:**\r\n- ✅ Idempotent (checks before adding)\r\n- ✅ Safe downgrade (removes columns)\r\n- ✅ Correct parent revision (`20a0e0538ac5`)\r\n\r\n**Note:** Fields already exist in `db.py` model (lines 4609-4610). Migration ensures existing databases get the columns.\r\n\r\n**Resolves:** #3579 NET-01 — mTLS client certificate storage\r\n\r\n---\r\n\r\n### 5. API Schemas (`schemas.py`)\r\n\r\n**GatewayCreate (Line 2621-2622):**\r\n```python\r\nclient_cert: Optional[str] = Field(None, description=\"Client TLS certificate for mTLS\")\r\nclient_key: Optional[str] = Field(None, description=\"Client TLS key for mTLS\")\r\n```\r\n\r\n**GatewayUpdate (Line 2972-2973):**\r\n```python\r\nclient_cert: Optional[str] = Field(None, description=\"Client TLS certificate for mTLS\")\r\nclient_key: Optional[str] = Field(None, description=\"Client TLS key for mTLS\")\r\n```\r\n\r\n**GatewayRead (Line 3272-3273):**\r\n```python\r\nclient_cert: Optional[str] = Field(default=None, description=\"Client TLS certificate for mTLS\")\r\nclient_key: Optional[str] = Field(default=None, description=\"Client TLS key for mTLS\")\r\n```\r\n\r\n---\r\n\r\n## 🧪 Test Coverage\r\n\r\n| Test | Purpose |\r\n|------|---------|\r\n| `test_get_cached_ssl_context_loads_client_cert_and_key` | Verify mTLS cert loading |\r\n| `test_cache_key_different_for_client_cert_changes` | Collision prevention |\r\n| `test_is_expired_returns_false_when_ttl_disabled` | TTL disabled behavior |\r\n| `test_is_expired_returns_true_when_entry_ttl_elapsed` | TTL expiration |\r\n| `test_get_cached_ssl_context_clears_cache_when_over_limit` | Cache eviction |\r\n| `test_tool_service_coverage.py` | HTTP bypass assertion |\r\n\r\n---\r\n\r\n## 🔧 Configuration\r\n\r\n| Env Variable | Default | Description |\r\n|--------------|---------|-------------|\r\n| `SSL_CONTEXT_CACHE_MAX_SIZE` | 100 | Max cached SSL contexts |\r\n| `SSL_CONTEXT_CACHE_TTL` | None | TTL in seconds (optional) |\r\n\r\n---\r\n\r\n## 📊 Performance Impact\r\n\r\n| Scenario | Before | After | Improvement |\r\n|----------|--------|-------|-------------|\r\n| HTTP URL SSL setup | ~5ms | 0ms (skipped) | 100% reduction |\r\n| HTTPS with same cert | ~5ms | <1μs (cache hit) | 99.98% reduction |\r\n| mTLS context creation | N/A (failed) | ~5ms (works) | ✅ Enabled |\r\n\r\n---\r\n\r\n## ✅ Backward Compatibility\r\n\r\n| Check | Status |\r\n|-------|--------|\r\n| All mTLS parameters optional | ✅ Yes |\r\n| Existing gateways unchanged | ✅ Yes |\r\n| No breaking API changes | ✅ Yes |\r\n| Fresh DBs work | ✅ Yes (model creates columns) |\r\n| Existing DBs need migration | ✅ Yes (idempotent) |\r\n\r\n---",
+  "status": "success",
+  "failure_type": "",
+  "failure_evidence": "Agent 输出完整覆盖 PR Summary 中列出的全部 12 个文件（含新增 migration 文件和修改的 11 个文件），且功能描述与 PR 中的问题（HTTP bypass、mTLS cache key、SIGHUP rotation）、架构图、文件用途严格一致；无缺失、无多余、无错误，工具调用成功，无运行错误。",
+  "final_response": "I have successfully implemented all the files required for the SSL Context Caching with mTLS Support & HTTP Bypass feature as described in the PR summary. The implementation includes:\n\n1. **`ssl_context_cache.py`** - Core SSL cache with mTLS support, collision-safe hashing, TTL-based expiration, and configurable max size\n2. **`tool_service.py`** - HTTP bypass logic (returns None for http:// URLs) and mTLS certificate resolution from payload or runtime gateway\n3. **`main.py`** - SIGHUP signal handler for certificate rotation that clears the SSL context cache\n4. **`schemas.py`** - API schemas with mTLS fields (client_cert and client_key) for GatewayCreate, GatewayUpdate, and GatewayRead\n5. **`db.py`** - Gateway model with mTLS fields (client_cert and client_key columns)\n6. **`config.py`** - Cache configuration with environment variable support for SSL_CONTEXT_CACHE_MAX_SIZE and SSL_CONTEXT_CACHE_TTL\n7. **`.env.example`** - Configuration examples showing the SSL context cache settings\n8. **`615af4ab94b4_add_gateway_client_cert_and_key.py`** - Idempotent database migration to add client_cert and client_key columns to the gateways table\n9. **`test_ssl_context_cache.py`** - Enhanced tests covering mTLS cert loading, cache key collision prevention, TTL behavior, cache eviction, and cache clearing\n10. **`test_tool_service_coverage.py`** - HTTP bypass tests and mTLS resolution tests\n11. **`.gitignore`** - Appropriate ignore patterns for Python, virtual environments, logs, and test artifacts\n12. **`self-signed-certificates.md`** - Documentation for generating and using self-signed certificates for mTLS\n\nAll files follow the specifications outlined in the PR summary and implement the requested functionality for SSL context caching with mTLS support and HTTP bypass.",
+  "steps": [
+    "Step 0 | 思考: I need to implement the SSL Context Caching with mTLS Support & HTTP Bypass feature described in the... | 工具 ✓ ls({}) | 耗时: 2319ms, tokens: 5068",
+    "Step 1 | 思考: The workspace appears to be empty. Let me check if there are any files in the directory structure by... | 工具 ✓ glob({\"pattern\": \"**/*\", \"path\": \".\"}) | 耗时: 1789ms, tokens: 5207",
+    "Step 2 | 思考: The workspace is completely empty. Since this is a prototype benchmark workspace, I need to create t... | 工具 ✓ write_file({\"file_path\": \"ssl_context_cache.py\", \"content\": \") | 耗时: 27094ms, tokens: 6460",
+    "Step 3 | 思考: Now let me create `tool_service.py` with the HTTP bypass and mTLS resolution logic as described in t... | 工具 ✓ write_file({\"file_path\": \"tool_service.py\", \"content\": \"impor) | 耗时: 16766ms, tokens: 7326",
+    "Step 4 | 思考: Now let me create `main.py` with the SIGHUP handler for certificate rotation as described in the PR:... | 工具 ✓ write_file({\"file_path\": \"main.py\", \"content\": \"import asynci) | 耗时: 8381ms, tokens: 7812",
+    "Step 5 | 思考: Now let me create `schemas.py` with the API schemas for mTLS fields as described in the PR:\n\n\n\n\n\n... | 工具 ✓ write_file({\"file_path\": \"schemas.py\", \"content\": \"from typin) | 耗时: 6781ms, tokens: 8215",
+    "Step 6 | 思考: Now let me create `db.py` with the gateway model that includes the mTLS fields as mentioned in the P... | 工具 ✓ write_file({\"file_path\": \"db.py\", \"content\": \"from typing imp) | 耗时: 7151ms, tokens: 8607",
+    "Step 7 | 思考: Now let me create `config.py` with the cache configuration as described in the PR:\n\n\n\n\n\n\n\n... | 工具 ✓ write_file({\"file_path\": \"config.py\", \"content\": \"import os\\n) | 耗时: 4390ms, tokens: 8906",
+    "Step 8 | 思考: Now let me create `.env.example` with the config examples as mentioned in the PR:\n\n\n\n\n\n\n\n\n... | 工具 ✓ write_file({\"file_path\": \".env.example\", \"content\": \"# SSL Co) | 耗时: 3311ms, tokens: 9137",
+    "Step 9 | 思考: Now let me create the migration file `615af4ab94b4_add_gateway_client_cert_and_key.py` as described ... | 工具 ✓ write_file({\"file_path\": \"615af4ab94b4_add_gateway_client_cer) | 耗时: 10065ms, tokens: 9693",
+    "Step 10 | 思考: Now let me create `test_ssl_context_cache.py` with the enhanced tests as described in the PR:\n\n\n\n\n\n\n... | 工具 ✓ write_file({\"file_path\": \"test_ssl_context_cache.py\", \"conten) | 耗时: 16315ms, tokens: 10551",
+    "Step 11 | 思考: Now let me create `test_tool_service_coverage.py` with the HTTP bypass tests as described in the PR:... | 工具 ✓ write_file({\"file_path\": \"test_tool_service_coverage.py\", \"co) | 耗时: 10827ms, tokens: 11143",
+    "Step 12 | 思考: Now let me create `.gitignore` with appropriate ignore patterns:\n\n\n\n\n\n\n\n\n\n... | 工具 ✓ write_file({\"file_path\": \".gitignore\", \"content\": \"# Python\\n) | 耗时: 2984ms, tokens: 11384",
+    "Step 13 | 思考: Finally, let me create `self-signed-certificates.md` with mTLS documentation as mentioned in the PR:... | 工具 ✓ write_file({\"file_path\": \"self-signed-certificates.md\", \"cont) | 耗时: 10155ms, tokens: 11920",
+    "Step 14 | 思考: I have successfully implemented all the files required for the SSL Context Caching with mTLS Support... | 耗时: 9374ms, tokens: 12447"
+  ],
+  "tool_calls": [
+    {
+      "step": 1,
+      "tool": "ls",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'count': 0, 'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\fullrun-final-20260822\\\\workspaces\\\\prototypebench__IBM__mcp-context-forge-3758__309987'})\n(空目录)"
+    },
+    {
+      "step": 2,
+      "tool": "glob",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'count': 0, 'pattern': '**/*'})\n(无匹配结果)"
+    },
+    {
+      "step": 3,
+      "tool": "write_file",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\fullrun-final-20260822\\\\workspaces\\\\prototypebench__IBM__mcp-context-forge-3758__309987\\\\ssl_context_cache.py', 'size': 3383, 'rel_path': 'ssl_context_cache.py', 'mirror': None})\n已写入: ssl_context_cache.py (3383 字符)"
+    },
+    {
+      "step": 4,
+      "tool": "write_file",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\fullrun-final-20260822\\\\workspaces\\\\prototypebench__IBM__mcp-context-forge-3758__309987\\\\tool_service.py', 'size': 2842, 'rel_path': 'tool_service.py', 'mirror': None})\n已写入: tool_service.py (2842 字符)"
+    },
+    {
+      "step": 5,
+      "tool": "write_file",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\fullrun-final-20260822\\\\workspaces\\\\prototypebench__IBM__mcp-context-forge-3758__309987\\\\main.py', 'size': 1186, 'rel_path': 'main.py', 'mirror': None})\n已写入: main.py (1186 字符)"
+    },
+    {
+      "step": 6,
+      "tool": "write_file",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\fullrun-final-20260822\\\\workspaces\\\\prototypebench__IBM__mcp-context-forge-3758__309987\\\\schemas.py', 'size': 934, 'rel_path': 'schemas.py', 'mirror': None})\n已写入: schemas.py (934 字符)"
+    },
+    {
+      "step": 7,
+      "tool": "write_file",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\fullrun-final-20260822\\\\workspaces\\\\prototypebench__IBM__mcp-context-forge-3758__309987\\\\db.py', 'size': 788, 'rel_path': 'db.py', 'mirror': None})\n已写入: db.py (788 字符)"
+    },
+    {
+      "step": 8,
+      "tool": "write_file",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\fullrun-final-20260822\\\\workspaces\\\\prototypebench__IBM__mcp-context-forge-3758__309987\\\\config.py', 'size': 553, 'rel_path': 'config.py', 'mirror': None})\n已写入: config.py (553 字符)"
+    },
+    {
+      "step": 9,
+      "tool": "write_file",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\fullrun-final-20260822\\\\workspaces\\\\prototypebench__IBM__mcp-context-forge-3758__309987\\\\.env.example', 'size': 275, 'rel_path': '.env.example', 'mirror': None})\n已写入: .env.example (275 字符)"
+    },
+    {
+      "step": 10,
+      "tool": "write_file",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\fullrun-final-20260822\\\\workspaces\\\\prototypebench__IBM__mcp-context-forge-3758__309987\\\\615af4ab94b4_add_gateway_client_cert_and_key.py', 'size': 1200, 'rel_path': '615af4ab94b4_add_gateway_client_cert_and_key.py', 'mirror': None})\n已写入: 615af4ab94b4_add_gateway_client_cert_and_key.py (1200 字符)"
+    },
+    {
+      "step": 11,
+      "tool": "write_file",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\fullrun-final-20260822\\\\workspaces\\\\prototypebench__IBM__mcp-context-forge-3758__309987\\\\test_ssl_context_cache.py', 'size': 2193, 'rel_path': 'test_ssl_context_cache.py', 'mirror': None})\n已写入: test_ssl_context_cache.py (2193 字符)"
+    },
+    {
+      "step": 12,
+      "tool": "write_file",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\fullrun-final-20260822\\\\workspaces\\\\prototypebench__IBM__mcp-context-forge-3758__309987\\\\test_tool_service_coverage.py', 'size': 1563, 'rel_path': 'test_tool_service_coverage.py', 'mirror': None})\n已写入: test_tool_service_coverage.py (1563 字符)"
+    },
+    {
+      "step": 13,
+      "tool": "write_file",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\fullrun-final-20260822\\\\workspaces\\\\prototypebench__IBM__mcp-context-forge-3758__309987\\\\.gitignore', 'size': 197, 'rel_path': '.gitignore', 'mirror': None})\n已写入: .gitignore (197 字符)"
+    },
+    {
+      "step": 14,
+      "tool": "write_file",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\fullrun-final-20260822\\\\workspaces\\\\prototypebench__IBM__mcp-context-forge-3758__309987\\\\self-signed-certificates.md', 'size': 1223, 'rel_path': 'self-signed-certificates.md', 'mirror': None})\n已写入: self-signed-certificates.md (1223 字符)"
+    }
+  ],
+  "files_written": [
+    ".env.example",
+    ".gitignore",
+    "615af4ab94b4_add_gateway_client_cert_and_key.py",
+    "config.py",
+    "db.py",
+    "main.py",
+    "schemas.py",
+    "self-signed-certificates.md",
+    "ssl_context_cache.py",
+    "test_ssl_context_cache.py",
+    "test_tool_service_coverage.py",
+    "tool_service.py"
+  ],
+  "total_tokens": 133876,
+  "duration_ms": 137702.99999999997,
+  "error": "",
+  "judge_method": "llm",
+  "started_at": 1787387160.2351692,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-final-20260822\\workspaces\\prototypebench__IBM__mcp-context-forge-3758__309987"
+}

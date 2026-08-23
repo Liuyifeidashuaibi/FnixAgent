@@ -23,10 +23,14 @@
 
 from __future__ import annotations
 
+import logging
 import os
 from dataclasses import dataclass, field
 
 from fnixagent.office.base import BaseExpert, ExpertError, ExpertResult
+
+_logger = logging.getLogger(__name__)
+
 
 # ---------------------------------------------------------------------------
 # 数据结构
@@ -187,7 +191,7 @@ class EditabilityGuard(BaseExpert):
                     report.recommendations.append("如需编辑,请先取消文档保护")
                     report.editable = False
             except Exception:
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
 
             # 检查修订追踪
             try:
@@ -199,7 +203,7 @@ class EditabilityGuard(BaseExpert):
                     report.issues.append("文档启用了修订追踪")
                     report.recommendations.append("修订追踪下编辑会被记录,确认是否需要")
             except Exception:
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
 
         except ExpertError:
             raise

@@ -92,7 +92,7 @@ jobs:
           severity: HIGH,CRITICAL
           format: json
           output: trivy-report.json
-          exit-code: '0'
+          exit-code: '1'
           ignore-unfixed: true
 
       - name: Upload trivy report
@@ -135,33 +135,5 @@ jobs:
           path: gitleaks-report.json
 
   # ---------------------------------------------------------------------------
-  # CodeQL:GitHub CodeQL 代码分析(可选)
+  # CodeQL:由独立的 .github/workflows/codeql.yml 承载,此处不再重复
   # ---------------------------------------------------------------------------
-  codeql:
-    name: CodeQL Analysis
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    permissions:
-      contents: read
-      security-events: write
-      actions: read
-    strategy:
-      fail-fast: false
-      matrix:
-        language: ['python', 'javascript-typescript']
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: ${{ matrix.language }}
-          queries: +security-and-quality
-
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
-        with:
-          category: '/language:${{ matrix.language }}'

@@ -1,0 +1,6 @@
+{
+  "id": "smoke",
+  "name": "FnixForge Smoke Suite",
+  "version": "1.0.0",
+  "description": "3 题快速冒烟：指令遵循 / 代码生成 / 安全。用于首次验证接入是否正确。"
+}

@@ -7,17 +7,17 @@ Copyright (C) 2024-2026 FnixAgent / 刘逸飞. Licensed under PolyForm Noncommer
 
 本软件为**专有软件 (Proprietary Software)**,著作权归 FnixAgent / 刘逸飞
 依法所有。未经著作权人事先书面许可,严禁以任何形式复制、修改、分发、
-商用、衍生创作。具体许可条款详见同目录下的 LIoENSE 文件。
+商用、衍生创作。具体许可条款详见同目录下的 LICENSE 文件。
 
-如需商用,请参考 docs/LIoENSE-oOMMERoIAL.md 的联系流程。
+如需商用,请参考 docs/LICENSE-COMMERCIAL.md 的联系流程。
 
 This software is **PROPRIETARY SOFTWARE**. All rights are reserved by the
 copyright holder FnixAgent / Liu Yifei. Reproduction, modification,
 distribution, commercial use, and creation of derivative works are
-strictly prohibited without prior written permission. See the LIoENSE
+strictly prohibited without prior written permission. See the LICENSE
 file for complete terms.
 
-For commercial licensing, see docs/LIoENSE-oOMMERoIAL.md.
+For commercial licensing, see docs/LICENSE-COMMERCIAL.md.
 
 ================================================================================
 架构 / Architecture
@@ -25,9 +25,9 @@ For commercial licensing, see docs/LIoENSE-oOMMERoIAL.md.
 
 Tauri 2 Desktop (Rust + WebView) → Python agentd → fnix-local sidecar (Rust)
 
-  ┌─────────────┐    IPo     ┌──────────────┐    stdio    ┌─────────────┐
-  │  WebView    │ ◄────────► │  Tauri oore  │ ◄─────────► │  fnix-local │
-  │  (React UI) │  invoke()  │   (Rust)     │  JSON-RPo  │   (Rust)    │
+  ┌─────────────┐    IPC     ┌──────────────┐    stdio    ┌─────────────┐
+  │  WebView    │ ◄────────► │  Tauri Core  │ ◄─────────► │  fnix-local │
+  │  (React UI) │  invoke()  │   (Rust)     │  JSON-RPC   │   (Rust)    │
   └─────────────┘            └──────┬───────┘             └─────────────┘
                                     │
                           ┌─────────▼─────────┐
@@ -36,12 +36,12 @@ Tauri 2 Desktop (Rust + WebView) → Python agentd → fnix-local sidecar (Rust)
                           └───────────────────┘
 
 ================================================================================
-DERIVED WORK NOTIoE / 衍生作品声明
+DERIVED WORK NOTICE / 衍生作品声明
 ================================================================================
 
 apps/workbench (Fnix desktop UI) is derived from PunamIDE (MIT License).
 Original project : https://github.com/mandaloriantrader/PunamIDE
-Original license : apps/workbench/LIoENSE-MIT-PUNAMIDE
+Original license : apps/workbench/LICENSE-MIT-PUNAMIDE
 
 Fnix-specific changes include:
   - Product identity, prompts, settings keys, and data dirs
@@ -55,13 +55,13 @@ NOTE — Despite apps/workbench being derived from a MIT-licensed upstream,
 the rest of this repository (including the Python agentd, fnix-local
 sidecar, all documentation, prompts, skills, configuration, and any other
 files outside apps/workbench) is **independent original work** of the
-copyright holder and is governed by the proprietary LIoENSE.
+copyright holder and is governed by the proprietary LICENSE.
 
-apps/workbench itself is governed by its own LIoENSE-MIT-PUNAMIDE file
+apps/workbench itself is governed by its own LICENSE-MIT-PUNAMIDE file
 located inside that subdirectory; the rest of the repository is NOT MIT.
 
 ================================================================================
-第三方组件版权声明 / Third-Party oomponent Notices
+第三方组件版权声明 / Third-Party Component Notices
 ================================================================================
 
 本软件作为独立产品运行时会**调用 / 链接**若干第三方开源组件。这些组件
@@ -73,7 +73,7 @@ located inside that subdirectory; the rest of the repository is NOT MIT.
 
   (a) 是各自项目独立发布的开源 / 商业软件;
   (b) 本软件通过标准的包管理器 (npm / cargo / pip / uv / system) 获取;
-  (c) 其原始许可证文本随本软件一同分发,详见各组件目录内的 LIoENSE 文件;
+  (c) 其原始许可证文本随本软件一同分发,详见各组件目录内的 LICENSE 文件;
   (d) 其许可证条款的最终解释权归各自权利人所有;
   (e) **不构成本软件源代码的开放授权**;
   (f) **不构成本软件任何部分著作权或专利权的放弃或转移**;
@@ -83,7 +83,7 @@ located inside that subdirectory; the rest of the repository is NOT MIT.
 
 下列组件 (但不限于此) 在运行时被使用:
 
-oore / Runtime
+Core / Runtime
   - Python 3.10-3.13                (PSF License)
   - Tauri 2.x                       (MIT / Apache-2.0)
   - Rust toolchain                  (MIT / Apache-2.0)
@@ -104,20 +104,20 @@ Desktop / Frontend
   - React 18                        (MIT)
   - Vite                            (MIT)
   - TypeScript                      (Apache-2.0)
-  - TailwindoSS                     (MIT)
+  - TailwindCSS                     (MIT)
   - shadcn/ui                       (MIT)
   - Radix UI                        (MIT)
 
-DevOps / oI
+DevOps / CI
   - GitHub Actions (官方 workflow)   (免费使用,非组件)
-  - oodeQL                          (免费,GitHub 集成)
+  - CodeQL                          (免费,GitHub 集成)
   - Dependabot                      (免费,GitHub 集成)
   - Renovate                        (Apache-2.0)
 
 Documentation
   - MkDocs / Material for MkDocs    (BSD-2 / MIT)
 
-完整清单与版本以 `package.json` / `pyproject.toml` / `oargo.toml` /
+完整清单与版本以 `package.json` / `pyproject.toml` / `cargo.toml` /
 `pnpm-lock.yaml` / `uv.lock` 为准。
 
 完整、准确、机器可读的 SBOM (Software Bill of Materials) 将在正式发布时

@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "rootkit-ld-preload-hard-multistep",
+  "prompt": "# Userland rootkit (LD_PRELOAD) 取证分析\n\n容器 `/workdir/samples/` 含真实编译的恶意 .so 与 ld.so.preload 配置，`/workdir/logs/01-host-triage.log` 是主机取证摘录。\n\n请用 `strings`、`readelf`、`nm`、`ripgrep` 分析 libauthpam.so，结合 logs 提取 IoC 并写入 `/workdir/findings.json`：\n```json\n{\"family\":\"rootkit\",\"ioc\":[\"ld.so.preload\",\"libauthpam.so\",\"31337\",\"kworker_evil_\"],\"ttp\":[\"T1014\",\"T1574.006\",\"Rootkit\"],\"severity\":9.5}\n```",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787334458.6481519,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\workbuddy-bench__rootkit-ld-preload-hard-multistep__a21f06"
+}

@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quiz App</title>
+  <style>
+    :root {
+      --bg: #f4f4f4;
+      --bg2: #ffffff;
+      --ink: #333333;
+      --muted: #666666;
+      --accent: #007bff;
+      --accent2: #0056b3;
+      --rule: #dddddd;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg);
+      color: var(--ink);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 600px;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .start-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .start-screen button {
+      padding: 15px 30px;
+      font-size: 18px;
+      background-color: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .start-screen button:hover {
+      background-color: var(--accent2);
+    }
+
+    .question {
+      display: none;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .question.active {
+      display: flex;
+    }
+
+    .question-number {
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .question-text {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .option {
+      padding: 12px;
+      background-color: var(--bg2);
+      border: 1px solid var(--rule);
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s, transform 0.2s;
+    }
+
+    .option:hover {
+      background-color: var(--accent2);
+      transform: scale(1.02);
+    }
+
+    .option.correct {
+      background-color: #d4edda;
+      color: #155739;
+    }
+
+    .option.wrong {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+
+    .score {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .score span {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .end-screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .end-screen.active {
+      display: flex;
+    }
+
+    .end-screen h2 {
+      margin-bottom: 10px;
+    }
+
+    .end-screen button {
+      padding: 10px 20px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="start-screen" id="startScreen">
+      <h1>Welcome to the Quiz App!</h1>
+      <button onclick="startQuiz()">Begin Quiz</button>
+    </div>
+
+    <div class="question" id="questionContainer">
+      <div class="question-number" id="questionNumber">Question 1 of 10</div>
+      <div class="question-text" id="questionText"></div>
+      <div class="options" id="options"></div>
+    </div>
+
+    <div class="score" id="scoreContainer">
+      <span id="score">Score: 0</span>
+    </div>
+
+    <div class="end-screen" id="endScreen">
+      <h2>Quiz Completed!</h2>
+      <p>Your score is: <span id="finalScore">0</span>/10</p>
+      <button onclick="restartQuiz()">Play Again</button>
+    </div>
+  </div>
+
+  <script>
+    const questions = [
+      {
+        question: "What is the capital of Australia?",
+        options: ["Sydney", "Melbourne", "Canberra", "Perth"],
+        answer: "Canberra"
+      },
+      {
+        question: "Which planet is known as the Red Planet?",
+        options: ["Venus", "Mars", "Jupiter", "Saturn"],
+        answer: "Mars"
+      },
+      {
+        question: "Who wrote the play 'Romeo and Juliet'?",
+        options: ["William Shakespeare", "Charles Dickens", "Jane Austen", "Leo Tolstoy"],
+        answer: "William Shakespeare"
+      },
+      {
+        question: "What is the largest mammal in the world?",
+        options: ["Elephant", "Blue Whale", "Giraffe", "Hippopotamus"],
+        answer: "Blue Whale"
+      },
+      {
+        question: "Which country is home to the Great Barrier Reef?",
+        options: ["New Zealand", "Australia", "Brazil", "Indonesia"],
+        answer: "Australia"
+      },
+      {
+        question: "What is the chemical symbol for gold?",
+        options: ["Au", "Ag", "Fe", "Cu"],
+        answer: "Au"
+      },
+      {
+        question: "Who painted the Mona Lisa?",
+        options: ["Vincent van Gogh", "Leonardo da Vinci", "Pablo Picasso", "Claude Monet"],
+        answer: "Leonardo da Vinci"
+      },
+      {
+        question: "What is the smallest country in the world by area?",
+        options: ["Vatican City", "Monaco", "San Marino", "Liechtenstein"],
+        answer: "Vatican City"
+      },
+      {
+        question: "Which famous scientist developed the theory of relativity?",
+        options: ["Isaac Newton", "Albert Einstein", "Galileo Galilei", "Stephen Hawking"],
+        answer: "Albert Einstein"
+      },
+      {
+        question: "What is the largest organ in the human body?",
+        options: ["Heart", "Liver", "Skin", "Lungs"],
+        answer: "Skin"
+      }
+    ];
+
+    let currentQuestion = 0;
+    let score = 0;
+    let userAnswers = [];
+
+    function startQuiz() {
+      document.getElementById('startScreen').style.display = 'none';
+      document.getElementById('questionContainer').classList.add('active');
+      showQuestion();
+    }
+
+    function showQuestion() {
+      const question = questions[currentQuestion];
+      document.getElementById('questionText').textContent = question.question;
+      const optionsContainer = document.getElementById('options');
+      optionsContainer.innerHTML = '';
+
+      question.options.forEach((option, index) => {
+        const optionDiv = document.createElement('div');
+        optionDiv.className = 'option';
+        optionDiv.textContent = option;
+        optionDiv.addEventListener('click', () => selectAnswer(index));
+        optionsContainer.appendChild(optionDiv);
+      });
+
+      document.getElementById('questionNumber').textContent = `Question ${currentQuestion + 1} of 10`;
+    }
+
+    function selectAnswer(index) {
+      const selectedOption = questions[currentQuestion].options[index];
+      const correctAnswer = questions[currentQuestion].answer;
+      const options = document.querySelectorAll('.option');
+
+      options.forEach((option, i) => {
+        if (i === index) {
+          if (selectedOption === correctAnswer) {
+            option.classList.add('correct');
+            score++;
+          } else {
+            option.classList.add('wrong');
+          }
+        } else {
+          if (questions[currentQuestion].options[i] === correctAnswer) {
+            options[i].classList.add('correct');
+          }
+        }
+      });
+
+      userAnswers.push({ question: currentQuestion, answer: selectedOption });
+      setTimeout(() => {
+        nextQuestion();
+      }, 1000);
+    }
+
+    function nextQuestion() {
+      currentQuestion++;
+      if (currentQuestion < questions.length) {
+        showQuestion();
+      } else {
+        endQuiz();
+      }
+    }
+
+    function endQuiz() {
+      document.getElementById('questionContainer').classList.remove('active');
+      document.getElementById('scoreContainer').style.display = 'none';
+      document.getElementById('endScreen').classList.add('active');
+      document.getElementById('finalScore').textContent = score;
+    }
+
+    function restartQuiz() {
+      currentQuestion = 0;
+      score = 0;
+      userAnswers = [];
+      document.getElementById('endScreen').classList.remove('active');
+      document.getElementById('startScreen').style.display = 'flex';
+    }
+  </script>
+</body>
+</html>

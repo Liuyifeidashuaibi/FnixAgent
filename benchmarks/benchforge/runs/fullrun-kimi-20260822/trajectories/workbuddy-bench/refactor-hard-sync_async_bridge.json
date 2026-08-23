@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "refactor-hard-sync_async_bridge",
+  "prompt": "我这里的小版 asgiref bridge 就在 asgiref_like/bridge.py，sync_to_async 和 async_to_sync 的职责现在揉在一起了。帮我把这块整理清楚，外部函数名和调用方式别变；contextvars 要能带过去，thread_sensitive=True 时直接在当前上下文跑，同步/异步函数里抛的异常也要原样传出来，已有事件循环里再调 async_to_sync 要拒掉。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 92.9999999998472,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787334455.6177037,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\workbuddy-bench__refactor-hard-sync_async_bridge__1e4d0f"
+}

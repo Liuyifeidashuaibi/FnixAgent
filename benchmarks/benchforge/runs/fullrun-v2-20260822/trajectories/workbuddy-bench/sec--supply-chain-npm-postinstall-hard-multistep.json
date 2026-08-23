@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "sec--supply-chain-npm-postinstall-hard-multistep",
+  "prompt": "# 供应链投毒：npm postinstall\n\n`/workdir/pkg/ua-parser-js-malicious/` 是被投毒的真实 npm 包结构（package.json + preinstall.js + postinstall.js），`/workdir/logs/01-npm-install-trace.log` 是 npm install 的真实 trace + EDR 告警。\n\n请提取 IoC、family、TTP，写入 `/workdir/findings.json`：\n```json\n{\"family\":\"supply-chain\",\"ioc\":[\"citationsherbe.at\",\"ua-parser-js\",\"jsextension.exe\",\"sdd.dll\"],\"ttp\":[\"T1195.002\",\"T1059\",\"T1496\",\"Supply Chain\"],\"severity\":9.5}\n```",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 360.0000000005821,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336332.4997613,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\workbuddy-bench__sec--supply-chain-npm-postinstall-hard-multistep__e6eed5"
+}

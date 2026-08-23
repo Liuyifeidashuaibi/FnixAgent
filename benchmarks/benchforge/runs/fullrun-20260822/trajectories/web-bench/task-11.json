@@ -1,0 +1,18 @@
+{
+  "dataset": "web-bench",
+  "task_id": "task-11",
+  "prompt": " 1) Add a button with the text 'Random Blogs' in Header to append 100,000 blogs to BlogList at one time. Each blog should have a title formatted in regex 'RandomBlog-[\\d]{12}', digits in title is random. 2) Ensure the page will not stuck when 100000 blogs appended. 3) Constraint: DO NOT USE any third-party packages, ONLY Vue APIs can be used to optimize the performance.",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787332457.1471577,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\web-bench__task-11__b9899f"
+}

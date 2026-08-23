@@ -1,0 +1,15 @@
+[
+  {
+    "dataset": "web-bench",
+    "task_id": "angular/task-1",
+    "prompt": "1) Create components/header/header.component.ts that displays 'Hello Blog' at the top of the page with appealing background color. 2) Create components/main/main.component.ts where content is aligned at the top left and fills the remaining space. 3) Develop components/blog/blog.component.ts that accepts 'title' and 'detail' as input properties. Display mock blog data in main.component.ts using this blog component with the mock data: { title: 'Morning', detail: 'Morning My Friends' }. 3) Include header.component.ts and main.component.ts in app.component.ts 4) The class of title in blog.component.ts is 'blog-title', the width of blog-title is 'fit-content', fontSize is 24px",
+    "meta": {
+      "project": "angular",
+      "level": "easy",
+      "date": "2025-05-12"
+    },
+    "failure_type": "wrong_path",
+    "notes": "agent 仅写入 .fnix/artifacts 镜像(4 个)，未就地修改/新建脚手架文件(new=0, modified=0)",
+    "session_id": "d211025bb9ec4c37"
+  }
+]

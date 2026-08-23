@@ -30,9 +30,13 @@
 from __future__ import annotations
 
 import abc
+import logging
 from typing import Any
 
 from fnixagent.core.messages import Msg
+
+_logger = logging.getLogger(__name__)
+
 
 
 class MiddlewareBase(abc.ABC):
@@ -256,7 +260,7 @@ class SecurityMiddleware(MiddlewareBase):
                 msg.metadata["guardrail_risk_score"] = result.risk_score
         except Exception:
             # Guardrail 异常不应阻塞主流程(降级而非崩溃)
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
         return msg
 
     async def on_response_start(self, msg: Msg, ctx: Any) -> Msg:
@@ -279,7 +283,7 @@ class SecurityMiddleware(MiddlewareBase):
             if result.tripwire_triggered:
                 msg.metadata["guardrail_output_tripwire"] = True
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
         return msg
 
 
@@ -300,7 +304,7 @@ class TracingMiddleware(MiddlewareBase):
             try:
                 ctx.span = self._tracer.start_span("agent_reply")
             except Exception:
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
         return msg
 
     async def on_response_end(self, msg: Msg, ctx: Any) -> Msg:
@@ -309,5 +313,5 @@ class TracingMiddleware(MiddlewareBase):
             try:
                 ctx.span.end()
             except Exception:
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
         return msg

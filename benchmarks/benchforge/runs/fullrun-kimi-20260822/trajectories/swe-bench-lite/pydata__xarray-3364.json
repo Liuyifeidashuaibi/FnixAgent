@@ -1,0 +1,18 @@
+{
+  "dataset": "swe-bench-lite",
+  "task_id": "pydata__xarray-3364",
+  "prompt": "Ignore missing variables when concatenating datasets?\nSeveral users (@raj-kesavan, @richardotis, now myself) have wondered about how to concatenate xray Datasets with different variables.\n\nWith the current `xray.concat`, you need to awkwardly create dummy variables filled with `NaN` in datasets that don't have them (or drop mismatched variables entirely). Neither of these are great options -- `concat` should have an option (the default?) to take care of this for the user.\n\nThis would also be more consistent with `pd.concat`, which takes a more relaxed approach to matching dataframes with different variables (it does an outer join).\n\n",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/xarray/core/concat.py b/xarray/core/concat.py\n--- a/xarray/core/con] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787334466.4499981,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\swe-bench-lite__pydata__xarray-3364__3ca85f"
+}

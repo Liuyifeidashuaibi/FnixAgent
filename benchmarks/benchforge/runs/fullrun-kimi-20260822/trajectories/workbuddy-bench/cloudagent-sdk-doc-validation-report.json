@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "cloudagent-sdk-doc-validation-report",
+  "prompt": "我要核对这套 CloudAgent SDK 文档包的准确性，不是泛泛看一遍 README。请只使用本任务目录内的 SDK 文档核对包，把 `input/workspace/` 里的 docs、examples、静态 API 行为样例、schemas、auth/setup/config notes、existing validation notes、test report/log 和 changelog 逐项对上，生成一份结构化 Markdown 验证报告到：\n\n`input/workspace/output/validation_report.md`\n\n处理要求：\n\n- 只创建或更新 `input/workspace/output/validation_report.md`；不要修改 docs、examples、mock_api、config、reports、CHANGELOG 或任何未列入允许清单的文件。\n- 不需要启动 offline sample interface，不需要访问 live network、private service、真实 registry、真实 API、浏览器、MCP、Skill、私有账号或外部 URL；`127.0.0.1`、`example.invalid`、`registry.local` 只作为静态样例文本处理。\n- 这里不接入真实 personal key / enterprise key；如果材料中出现 placeholder token profile、scope 或 key 类型说明，只按静态样例和 auth boundary 核对，不要生成、请求或填入真实凭证。\n- 报告中请保留必要的 English SDK/API terms，例如 `endpoint`、`operationId`、`schema`、`auth`、`runner:read`、`test report`、`validation report`。\n- 不要只依赖某一个 README、prior notes 或 test log；请在文档、examples、OpenAPI/schema、静态 behavior samples、auth/setup/config、logs 和 changelog 之间交叉核对。\n- 需要区分 product/documentation issue、example issue、security/auth boundary note、setup/environment blocker、known optional/non-issue distractor 和 unresolved question。\n- 对关键结论给出本地文件路径或稳定 anchor/caseId/node ID citations；如果证据冲突或不足，请写入 unresolved questions，不要编造。\n\n`validation_report.md` 至少包含以下部分：\n\n1. Executive summary\n2. Artifact inventory and scope\n3. Claim-to-evidence matrix\n4. Discrepancy findings\n5. Setup/environment blockers separated from product/documentation issues\n6. Security/auth boundary notes\n7. Recommendations\n8. Unresolved questions\n\n最后请用简短中文回复：报告路径、是否只更新了允许的报告文件、是否未访问 live/private service，以及是否还有 unresolved questions。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787334456.3340068,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\workbuddy-bench__cloudagent-sdk-doc-validation-report__4432cb"
+}

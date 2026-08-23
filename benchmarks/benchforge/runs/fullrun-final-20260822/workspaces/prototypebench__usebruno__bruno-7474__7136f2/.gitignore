@@ -1,0 +1,17 @@
+node_modules/
+.env
+.DS_Store
+coverage/
+.nyc_output/
+report.html
+*.log
+build/
+dist/
+out/
+.next/
+.nuxt/
+.cache/
+
+# Test artifacts
+test-results/
+playwright-report/

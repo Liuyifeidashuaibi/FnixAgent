@@ -1,0 +1,5 @@
+--- a/sympy/polys/polytools.py
++++ b/sympy/polys/polytools.py
+@@ -N,M +N,M @@
+-            return list(poly_dict.values())
++            return sorted(poly_dict.values(), key=lambda p: str(p.as_expr()))

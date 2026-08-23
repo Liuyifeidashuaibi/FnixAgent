@@ -1,0 +1,83 @@
+.variable-tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+.variable-tooltip.pinned {
+  z-index: 1000;
+}
+
+.tooltip-content {
+  background-color: #333;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  position: absolute;
+  top: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 1;
+  transition: opacity 0.2s ease-in-out;
+  min-width: 200px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  z-index: 1000;
+}
+
+.tooltip-content:hover {
+  opacity: 1;
+}
+
+.tooltip-value {
+  display: block;
+  margin-bottom: 6px;
+  word-break: break-all;
+  font-family: monospace;
+}
+
+.tooltip-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.copy-button,
+.pin-button {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 4px;
+  border-radius: 2px;
+  transition: background-color 0.2s;
+}
+
+.copy-button:hover,
+.pin-button:hover {
+  background-color: rgba(255,255,255,0.2);
+}
+
+.tooltip-arrow {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px 5px 0 5px;
+  border-style: solid;
+  border-color: #333 transparent transparent transparent;
+}
+
+/* Ensure tooltip stays visible when pinned */
+.variable-tooltip.pinned .tooltip-content {
+  opacity: 1;
+}
+
+/* Prevent dismissal on mouse leave when pinned */
+.variable-tooltip.pinned {
+  pointer-events: auto;
+}
+
+.variable-tooltip.pinned .tooltip-content {
+  pointer-events: auto;
+}

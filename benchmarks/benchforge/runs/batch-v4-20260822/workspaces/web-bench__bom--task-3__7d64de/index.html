@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Documentation Browser</title>
+  <style>
+    body { margin: 0; font-family: sans-serif; }
+    .toolbar { padding: 10px; background: #f0f0f0; border-bottom: 1px solid #ccc; }
+    .toolbar label { margin-right: 8px; font-weight: bold; }
+    iframe { width: 100%; height: calc(100vh - 50px); border: none; }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <label for="address">Address:</label>
+    <select id="address">
+      <option value="docs/intro.html" selected>docs/intro.html</option>
+      <option value="docs/javascript.html">docs/javascript.html</option>
+      <option value="docs/css.html">docs/css.html</option>
+      <option value="docs/html.html">docs/html.html</option>
+      <option value="docs/nodejs.html">docs/nodejs.html</option>
+    </select>
+  </div>
+  <iframe id="content" src="docs/intro.html"></iframe>
+
+  <script>
+    document.getElementById('address').addEventListener('change', function() {
+      document.getElementById('content').src = this.value;
+    });
+  </script>
+</body>
+</html>

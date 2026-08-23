@@ -1,0 +1,18 @@
+{
+  "dataset": "vibe-code-bench",
+  "task_id": "case_16_repostats",
+  "prompt": "# Build me a Git Stats Infographic Generator\n\nCreate a Python script that:\n\n1. Recursively scans the current directory\n2. Calculates:\n   - File count by extension\n   - Total lines of code\n   - Largest files\n   - Directory depth\n3. Generates a **beautiful, single-file HTML infographic** (`stats.html`)\n   - Use CSS Grid/Flexbox for a modern dashboard layout\n   - Use inline SVG for charts (pie chart for file types, bar chart for line counts)\n   - Dark mode aesthetic (vibrant colors on dark background)\n   - Title: \"Codebase Fingerprint\"\n\n**Rules:**\n- Use ONLY Python 3 standard library\n- No external JS libraries (write vanilla JS for any interactions)\n- Single Python file that outputs a single HTML file",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[\"\"\"\nFunctional tests for Git Stats Infographic (case_16_repostats).\n\nTests verif] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 92.9999999998472,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787332461.155033,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\vibe-code-bench__case_16_repostats__3a82fc"
+}

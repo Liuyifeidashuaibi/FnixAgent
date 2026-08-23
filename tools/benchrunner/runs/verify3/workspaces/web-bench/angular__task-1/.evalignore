@@ -1,0 +1,6 @@
+.angular
+angular.json
+tsconfig.json
+tsconfig.app.json
+index.html
+main.ts

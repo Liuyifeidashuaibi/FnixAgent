@@ -1,0 +1,36 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "usebruno__bruno-7762",
+  "prompt": "### Description\r\n\r\nFixes https://github.com/usebruno/bruno/issues/7579\r\n[BRU-3156](https://usebruno.atlassian.net/browse/BRU-3156)\r\n\r\n**Problem:**\r\nBefore we were not able to detect whether the auth mode is \"apikey\", cause api can have dynamic key in headers, so it wasn't determinstic in \"header\" placement.\r\n\r\n<img width=\"450\" height=\"190\" alt=\"Screenshot 2026-04-14 at 10 22 27 PM\" src=\"https://github.com/user-attachments/assets/c03bd2e4-864e-4864-bde0-371ad13cb639\" />\r\n\r\n\r\n**Solution:**\r\nAdd a new field \"apiKeyHeaderName\" that tracks the key for the header added in api key auth mode. This way we can determine if that header exist or not and determine auth mode as \"apikey\".\r\n\r\nAlso added interpolation of this key so that if someone passes a variable like {{apiKey}} it can be expanded in \"apiKeyHeaderName\" as well.\r\n\r\nThis PR adds detection of \"header\" as well as \"query params\" placement.\r\n\r\n<img width=\"486\" height=\"127\" alt=\"Screenshot 2026-04-14 at 10 21 56 PM\" src=\"https://github.com/user-attachments/assets/2a57836a-0a60-4631-8e1d-cbb3a8e671da\" />\r\n\r\n\r\n#### Contribution Checklist:\r\n\r\n- [ ] **I've used AI significantly to create this pull request**\r\n- [x] **The pull request only addresses one issue or adds one feature.**\r\n- [x] **The pull request does not introduce any breaking changes**\r\n- [x] **I have added screenshots or gifs to help explain the change if applicable.**\r\n- [x] **I have read the [contribution guidelines](https://github.com/usebruno/bruno/blob/main/contributing.md).**\r\n- [x] **Create an issue and link to the pull request.**\r\n\r\n\r\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\n## Summary by CodeRabbit\n\n* **New Features**\n  * Dynamic API key header names and values can be defined with variables and will be applied to requests\n  * API key auth is now detected reliably for both header and query-parameter placements\n\n* **Tests**\n  * Added end-to-end and unit tests validating API key header name interpolation and auth-mode detection across runner and client paths\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->",
+  "status": "infra_skip",
+  "failure_type": "",
+  "failure_evidence": "基础设施错误(LLM 配额/鉴权)，待配额恢复后重跑: LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-2026-05-20): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"us",
+  "final_response": "",
+  "steps": [
+    "Step 0 | 思考: I need to understand the issue and implement the fix. Let me start by exploring the codebase to unde... | 工具 ✓ ls({\"path\": \".\"}) | 耗时: 1121ms, tokens: 3319",
+    "Step 1 | 思考: The workspace is empty. I need to clone the Bruno repository first to work on this issue.\n\n... | 工具 ✗ run_command({\"command\": \"git clone https://github.com/usebruno) | 耗时: 6874ms, tokens: 3463"
+  ],
+  "tool_calls": [
+    {
+      "step": 1,
+      "tool": "ls",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'count': 0, 'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\batch-v4-20260822\\\\workspaces\\\\prototypebench__usebruno__bruno-7762__874844'})\n(空目录)"
+    },
+    {
+      "step": 2,
+      "tool": "run_command",
+      "args": {},
+      "success": false,
+      "output_preview": "[失败] 退出码: 1\nCloning into '.'...\nfatal: unable to access 'https://github.com/usebruno/bruno.git/': TLS connect error: error:0A000126:SSL routines::unexpected eof while reading"
+    }
+  ],
+  "files_written": [],
+  "total_tokens": 6782,
+  "duration_ms": 8088.5041000001365,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-2026-05-20): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787382541.7029717,
+  "workspace": "benchmarks\\benchforge\\runs\\batch-v4-20260822\\workspaces\\prototypebench__usebruno__bruno-7762__874844"
+}

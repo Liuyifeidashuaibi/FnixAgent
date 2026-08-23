@@ -30,6 +30,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
 logger = logging.getLogger(__name__)
+_logger = logger
 
 
 # ---------------------------------------------------------------------------
@@ -343,7 +344,7 @@ class SecretManager:
                     if isinstance(data, dict):
                         return data
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
         return {}
 
     def _save_meta(self) -> None:

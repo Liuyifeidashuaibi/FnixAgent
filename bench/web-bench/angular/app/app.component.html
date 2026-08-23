@@ -1,0 +1,5 @@
+<div class="app-container">
+  <app-header (toggleBlogForm)="toggleBlogForm()"></app-header>
+  <app-main></app-main>
+  <app-blog-form [isVisible]="isBlogFormVisible" (close)="closeBlogForm()"></app-blog-form>
+</div>

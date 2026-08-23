@@ -1,0 +1,18 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "IBM__mcp-context-forge-3437",
+  "prompt": "## Summary\n\n- Fixes CSRF origin validation failure behind layered reverse proxies where `X-Forwarded-Proto` / `X-Forwarded-Host` headers reflect internal hops rather than the external scheme/host\n- Extends `_request_origin_matches()` to fall back to `settings.allowed_origins` when the forwarded-header same-origin comparison fails\n- Excludes wildcard entries (`*`, `null`, `\"\"`) from the fallback to preserve fail-closed behavior\n\nCloses #3431",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/charts/mcp-stack/templates/configmap-nginx-proxy.yaml b/charts/mcp-] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 186.99999999989814,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787334461.063817,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\prototypebench__IBM__mcp-context-forge-3437__dbd8e7"
+}

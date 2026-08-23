@@ -1,0 +1,36 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "usebruno__bruno-7470",
+  "prompt": "### Description\r\n\r\n- Fix uncaught \"No collection configuration found\" errors when deleting a collection that has OpenAPI sync configured\r\n- Add fs.existsSync(collectionPath) guards to the change, unlink, and unlinkDir chokidar event handlers\r\n\r\n[JIRA](https://usebruno.atlassian.net/browse/BRU-2862)\r\n\r\n### Problem\r\nWhen deleting an OpenAPI-synced collection, saveBrunoConfig() writes to bruno.json which creates buffered chokidar events (due to awaitWriteFinish with 80ms stability threshold). If the collection directory is removed before those buffered events fire, getCollectionFormat() throws \"No collection configuration found\" — once per .bru file in the collection.\r\n\r\n#### Contribution Checklist:\r\n\r\n- [ ] **I've used AI significantly to create this pull request**\r\n- [ ] **The pull request only addresses one issue or adds one feature.**\r\n- [ ] **The pull request does not introduce any breaking changes**\r\n- [ ] **I have added screenshots or gifs to help explain the change if applicable.**\r\n- [ ] **I have read the [contribution guidelines](https://github.com/usebruno/bruno/blob/main/contributing.md).**\r\n- [ ] **Create an issue and link to the pull request.**\r\n\r\nNote: Keeping the PR small and focused helps make it easier to review and merge. If you have multiple changes you want to make, please consider submitting them as separate pull requests.\r\n\r\n#### Publishing to New Package Managers\r\n\r\nPlease see [here](../publishing.md) for more information.\r\n\r\n\r\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\r\n## Summary by CodeRabbit\r\n\r\n* **Bug Fixes**\r\n  * Made collection watcher more defensive: robustly handles collection/folder deletions, guards edge cases, and logs errors to prevent crashes.\r\n\r\n* **Tests**\r\n  * Added an end-to-end test confirming collection deletion removes UI items and the on-disk directory with no uncaught errors.\r\n  * Added a test utility to automate deleting a collection from the workspace overview.\r\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->",
+  "status": "infra_skip",
+  "failure_type": "",
+  "failure_evidence": "基础设施错误(LLM 配额/鉴权)，待配额恢复后重跑: LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-2026-05-20): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"us",
+  "final_response": "",
+  "steps": [
+    "Step 0 | 思考: Let me understand the issue and find the relevant code.\n\n... | 工具 ✓ grep({\"pattern\": \"No collection configuration found\", \") | 耗时: 1565ms, tokens: 3212",
+    "Step 0 | 思考: Let me understand the issue and find the relevant code.\n\n... | 工具 ✓ grep({\"pattern\": \"getCollectionFormat\", \"output_mode\": ) | 耗时: 1566ms, tokens: 3212"
+  ],
+  "tool_calls": [
+    {
+      "step": 1,
+      "tool": "grep",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'count': 0, 'pattern': 'No collection configuration found'})\n(无匹配)"
+    },
+    {
+      "step": 2,
+      "tool": "grep",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'count': 0, 'pattern': 'getCollectionFormat'})\n(无匹配)"
+    }
+  ],
+  "files_written": [],
+  "total_tokens": 3212,
+  "duration_ms": 1600.9993999978178,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-2026-05-20): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787382521.8197985,
+  "workspace": "benchmarks\\benchforge\\runs\\batch-v4-20260822\\workspaces\\prototypebench__usebruno__bruno-7470__2d5689"
+}

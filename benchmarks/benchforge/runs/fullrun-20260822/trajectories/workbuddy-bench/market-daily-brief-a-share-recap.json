@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "market-daily-brief-a-share-recap",
+  "prompt": "# 采菊东篱·A股收盘复盘修订\n\n你现在按「采菊东篱」盘后复盘的口吻处理这份材料：语言简洁、有结构、不要客套。请只使用本任务目录内已经冻结的盘后资料柜，为示例交易日 `2026-04-17` 修订工作稿，并在当前工作目录根路径生成一个中文 Markdown 文件：`daily_recap.md`。\n\n这次不是联网写实时市场日报，也不生成 PDF。把 `input/` 当作盘后资料柜：先读 `_manifest/` 中的资料清单、来源状态表和取舍口径，再核对 `current/` 下的收盘导出、工作底稿、来源卡和附录；`drafts/` 是待修订工作稿与编辑旁注，`archive/` 只用于解释旧值、被替换来源或历史口径。不要把工作稿、旧快照、维护行、note_only 行、旧日材料或单一口径表直接当成最终结论。\n\n## 输出要求\n\n1. 只生成 `daily_recap.md`，位置为当前工作目录根路径；不要生成 PDF、HTML、截图、附件或其他交付文件。\n2. 报告应像一份紧凑的盘后复盘，建议按以下结构组织：\n   - 资料范围与来源取舍\n   - 一、大盘总览\n   - 二、短线生态指标监测\n   - 三、行业/风格轮动\n   - 四、宽度、换手与技术面简评\n   - 五、情绪温度计\n   - 六、明日观察\n   - 草稿修订要点、叙事与结构化数据对照、来源取舍/更正表、披露与非建议声明\n3. 关键数值、状态取舍、冲突解释和背景判断必须绑定资料柜内的 `source_id`，并说明采用、替换、排除或仅作背景的理由。\n4. 必须修正工作稿中的旧数值、分母不明、别名混用、过强叙事和披露缺口；不要照抄草稿。\n5. 「情绪温度计」和「明日观察」只能基于资料柜内证据做事实性描述。可以写需要继续观察的市场信号，但不得写成买卖、持仓、目标价、收益承诺、组合配置或个性化投资建议。\n\n## 资料与安全边界\n\n- 只使用任务目录内的冻结资料：`input/_manifest/`、`input/current/`、`input/archive/`、`input/drafts/` 以及任务提供的环境说明。\n- 不要调用真实行情系统、外部 API、网络 URL、浏览器、私有终端、账号后台、VPN、PDF 生成技能、附件交付能力或任何实时数据服务。\n- 不要引用资料柜外新闻、真实机构观点、未公开数据或编造数据。\n- 所有内容必须是事实性、描述性复盘；结尾请明确说明本报告仅基于任务目录内离线示例资料，非实时、非投资建议。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787332459.7253237,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\workbuddy-bench__market-daily-brief-a-share-recap__5f8450"
+}

@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "crypto-backtest-chain-L4-002",
+  "prompt": "现在要做一份固定资料包内的 2026Q1 离线加密资产回测状态链复核。工作区里已经放好了冻结导出的中文任务说明、回测配置、期初状态、回放规则、逐交易对小时级 market bars、策略信号事件、订单生命周期事件、账户资金流水和 run manifest。请不要联网，也不要查询实时行情、连接交易所、调用交易 API、下单、撤单、发送 webhook/邮件/IM/通知，或给出投资建议；这次只处理资料包内的静态文件，不做真实市场操作。\n请先阅读 `README_离线回测复核任务.md`、`replay_rules.md` 和 `backtest_config.json`，再结合 `initial_state.json`、`market_bars/*.csv`、`signal_events.jsonl`、`order_events.csv`、`account_ledger.csv` 和 `run_manifest.json`，生成一个新的 Excel 工作簿 `output/crypto_backtest_replay.xlsx`。\n输出 workbook 需要包含六个 sheet：`trade_log`、`daily_positions`、`nav_curve`、`rule_exceptions`、`summary_metrics`、`state_audit`。\n`trade_log` 的列依次为 trade_ref、symbol、strategy_tag、entry_signal_ref、entry_order_ref、entry_time、entry_price、quantity、entry_fee、exit_signal_ref、exit_order_ref、exit_time、exit_price、exit_reason、exit_fee、gross_pnl、net_pnl、holding_hours、trade_status、source_trace。\n`daily_positions` 的列依次为 snapshot_date、symbol、position_ref、quantity、avg_entry_price、last_close、market_value、unrealized_pnl、cash_balance、loss_streak、new_entry_pause_until、position_status、source_trace。\n`nav_curve` 的列依次为 nav_date、cash、position_value、equity、daily_return、drawdown、open_positions、closed_trades_to_date、source_trace。\n`rule_exceptions` 的列依次为 exception_ref、event_time、symbol、exception_type、decision、severity、related_refs、source_trace。\n`summary_metrics` 的列依次为 metric_scope、metric_name、metric_value、source_trace。\n`state_audit` 的列依次为 audit_key、event_time、symbol、rule_applied、input_refs、state_before、state_after、output_refs、audit_result、source_trace。\n关键口径以 `replay_rules.md` 与 `backtest_config.json` 为准：所有时间按 UTC 处理，日终快照为 23:59:59Z；只有 filled、partially_filled 和配置指定的 force_exit 事件能影响持仓和现金；submitted、rejected、canceled、expired 不能当作交易；同一 bar 内按 manual_exit、stop_loss、take_profit、reverse_exit、new_entry 的优先级处理；反向信号只先平掉已有 long，不在同一 bar 新开反向仓；三笔连续 closed loss 后暂停新 entry 六根 bar，但 exit 仍允许；数量、价格、min_notional、手续费、slippage、partial fill 和 force-exit 必须按配置处理；`run_manifest.json` 只能作为粗粒度 sanity check，不能当作答案；source_trace 必须覆盖参与判断的输入来源线索。\n\n请读取工作区中的输入文件：`input/README_离线回测复核任务.md`、`input/backtest_config.json`、`input/initial_state.json`、`input/replay_rules.md`、`input/market_bars/`、`input/signal_events.jsonl`、`input/order_events.csv`、`input/account_ledger.csv`、`input/run_manifest.json`。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787332459.4562604,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\workbuddy-bench__crypto-backtest-chain-L4-002__fc7637"
+}

@@ -168,19 +168,19 @@ def route(
         reason = "Ask 模式：少步 ReAct，专注问答，不写文件"
     elif mode == "plan":
         reasoning_mode = "plan_execute"
-        max_steps = 25
+        max_steps = 15
         max_reflect_rounds = 2
         reason = "Plan 模式：Plan&Execute，先规划再执行"
     elif workspace_kind == "code":
         if difficulty >= 0.7:
             reasoning_mode = "plan_execute"
-            max_steps = 20
+            max_steps = 14
             max_reflect_rounds = 2
             reason = f"Craft 编码高难度任务(diff={difficulty:.2f})：Plan&Execute + {max_steps} 步"
         else:
             reasoning_mode = "react"
-            max_steps = 16
-            max_reflect_rounds = 2
+            max_steps = 10
+            max_reflect_rounds = 1
             reason = f"Craft 编码任务(diff={difficulty:.2f})：ReAct + {max_steps} 步上限，优先 write_file 落盘"
     elif workspace_kind == "research":
         reasoning_mode = "react"
@@ -191,13 +191,13 @@ def route(
         # 通用 craft — 按难度分级
         if difficulty >= 0.7:
             reasoning_mode = "plan_execute"
-            max_steps = 25
+            max_steps = 15
             max_reflect_rounds = 2
             reason = f"高难度任务(diff={difficulty:.2f})：Plan&Execute + {max_steps} 步"
         elif difficulty >= 0.4:
             reasoning_mode = "react"
-            max_steps = 18
-            max_reflect_rounds = 2
+            max_steps = 12
+            max_reflect_rounds = 1
             reason = f"中难度任务(diff={difficulty:.2f})：ReAct + {max_steps} 步"
         else:
             reasoning_mode = "react"

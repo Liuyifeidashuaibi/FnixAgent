@@ -48,8 +48,6 @@ apps/workbench/src-tauri/resources/fnix-local/*
 apps/workbench/src-tauri/resources/agentd/*
 !apps/workbench/src-tauri/resources/agentd/README.md
 packaging/.pyinstaller/
-apps/desktop-tauri/resources/fnixagent-py/
-apps/desktop-tauri/resources/fnix-local/
 apps/desktop/dist/
 apps/desktop/out/
 apps/desktop/release/

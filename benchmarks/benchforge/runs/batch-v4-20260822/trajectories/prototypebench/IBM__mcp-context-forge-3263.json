@@ -1,0 +1,28 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "IBM__mcp-context-forge-3263",
+  "prompt": "## Summary\n\n- Add `TOOL_DESCRIPTION_FORBIDDEN_PATTERNS_ENABLED` (bool, default `true`) to disable all forbidden pattern checks on tool descriptions\n- Add `TOOL_DESCRIPTION_FORBIDDEN_PATTERNS` (JSON array, default: original hardcoded list) to override the list of blocked substrings via env var\n- Fix bug in `GatewayService._update_or_create_tools` where a dict `auth_value` was written directly to a `VARCHAR` column without encoding, causing a `psycopg.ProgrammingError` on gateway refresh/edit\n- Expose both new settings in `docker-compose.yml` so they can be controlled per-deployment\n- Add unit tests covering: default patterns block, disabled allows all, custom patterns, and None passthrough\n\n## Related\n\nCloses #3300\n\nFixes patterns in tool descriptions (e.g. query syntax documentation) being incorrectly blocked, and the 500 error when editing a gateway that has dict-typed auth headers.",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [
+    "Step 0 | 思考: To address the summary, I will perform the following steps:\n\n1. Add a new boolean environment variab... | 工具 ✗ edit_file({\"file_path\": \"docker-compose.yml\", \"old_string\": ) | 耗时: 12475ms, tokens: 3304"
+  ],
+  "tool_calls": [
+    {
+      "step": 1,
+      "tool": "edit_file",
+      "args": {},
+      "success": false,
+      "output_preview": "[失败] 文件不存在: docker-compose.yml"
+    }
+  ],
+  "files_written": [],
+  "total_tokens": 3304,
+  "duration_ms": 13094.000000000051,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen-max): HTTP 400 (<400> InternalError.Algo.InvalidParameter: messages with role \"tool\" must be a response to a preceeding message with \"tool_calls\".)",
+  "judge_method": "heuristic",
+  "started_at": 1787384828.0485082,
+  "workspace": "benchmarks\\benchforge\\runs\\batch-v4-20260822\\workspaces\\prototypebench__IBM__mcp-context-forge-3263__843219"
+}

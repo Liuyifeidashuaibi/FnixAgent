@@ -1,0 +1,18 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "IBM__mcp-context-forge-3701",
+  "prompt": "## :pushpin: Summary\r\nThis PR tightens visibility validation at the schema boundary so only supported enum values are accepted.\r\n\r\nPreviously, several schemas used plain string typing for `visibility`, which allowed arbitrary values such as `invalid_value`, empty strings, or wrong casing to pass validation. This could lead to inconsistent behavior in token-scoping logic that branches on visibility values.\r\n\r\nThe issue was reported for `GatewayUpdate`, but the same pattern existed across related entity schemas. This PR applies a consistent enum-based constraint across those schemas.\r\n\r\nAlso included: a follow-up consistency fix to align Team response typing with Team request enums.\r\n\r\n## :link: Related Issue\r\nCloses: #3525\r\n\r\n## :repeat: Reproduction Steps\r\n```bash\r\ncurl -X PUT /gateways/{id} \\\r\n  -H \"Authorization: Bearer $TOKEN\" \\\r\n  -H \"Content-Type: application/json\" \\\r\n  -d '{\"visibility\": \"invalid_value\"}'\r\n# Before: accepted\r\n# After: 422 validation error\r\n```\r\n\r\n## 🐞 Root Cause\r\nVisibility fields in multiple schemas were typed as unconstrained strings (`str` / `Optional[str]`) while allowed values were only documented in prose. Without a type-level constraint, Pydantic accepted invalid values.\r\n\r\n## :bulb: Fix Description\r\n- Replaced unconstrained visibility string types with `Literal` enums for affected schemas so invalid values are rejected during request/response validation.\r\n- Removed redundant visibility validators that became dead code after the `Literal` migration:\r\n  - `ServerCreate.validate_visibility`\r\n  - `A2AAgentCreate.validate_visibility`\r\n  - `A2AAgentUpdate.validate_visibility`\r\n- Updated tests that previously called removed validator methods directly to use schema instantiation assertions.\r\n- Added broad literal-enum validation coverage (`test_visibility_literal_enum_validation`) for valid and invalid visibility inputs across impacted schemas.\r\n- Follow-up consistency update: `TeamResponse.visibility` now uses Team enum typing (`\"private\" | \"public\"`) to match Team create/update schemas.\r\n\r\n## :test_tube: Verification\r\n| Check | Command | Status |\r\n|---|---|---|\r\n| Targeted visibility/schema unit tests | `python3 -m pytest tests/unit/mcpgateway/test_schemas_validators_extra.py -q` | :white_check_mark: |\r\n| Schema-focused unit subset | `python3 -m pytest tests/unit/mcpgateway/ -k schema` | :white_check_mark: (379 passed, 6 skipped) |\r\n\r\n## :triangular_ruler: MCP Compliance (if relevant)\r\n- [x] Matches current MCP spec\r\n- [x] No breaking change to MCP clients\r\n\r\n## :white_check_mark: Checklist\r\n- [x] Code formatted (`make black isort pre-commit`)\r\n- [x] No secrets/credentials committed",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/mcpgateway/schemas.py b/mcpgateway/schemas.py\nindex af30e7c42..98d8] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787332461.6958802,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\prototypebench__IBM__mcp-context-forge-3701__701d19"
+}

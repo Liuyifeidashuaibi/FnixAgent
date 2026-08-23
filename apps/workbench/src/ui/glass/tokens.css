@@ -25,7 +25,8 @@
   --glass-r-md: 14px;
   --glass-r-lg: 24px;
   --glass-r-pill: 999px;
-  --glass-font: ui-sans-serif, -apple-system, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --glass-font:
+    ui-sans-serif, -apple-system, system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --glass-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
   color: var(--glass-text);
@@ -87,7 +88,9 @@
   place-items: center;
   cursor: pointer;
   flex-shrink: 0;
-  transition: background 0.12s ease, color 0.12s ease;
+  transition:
+    background 0.12s ease,
+    color 0.12s ease;
 }
 .fnix-glass .glass-ibtn:hover:not(:disabled) {
   background: rgba(0, 0, 0, 0.05);
@@ -148,12 +151,17 @@
   font-size: 12.5px;
   font-weight: 550;
   cursor: pointer;
-  transition: background 0.12s ease, color 0.12s ease, box-shadow 0.12s ease;
+  transition:
+    background 0.12s ease,
+    color 0.12s ease,
+    box-shadow 0.12s ease;
 }
 .fnix-glass .glass-seg button.on {
   background: rgba(255, 255, 255, 0.92);
   color: var(--glass-text);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), var(--glass-highlight);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.06),
+    var(--glass-highlight);
 }
 .fnix-glass .glass-seg button:disabled {
   opacity: 0.45;
@@ -205,8 +213,12 @@
   border-radius: 28px;
   border: 1px solid rgba(0, 0, 0, 0.1);
   background: rgba(255, 255, 255, 0.86);
-  box-shadow: var(--glass-highlight), 0 4px 24px rgba(0, 0, 0, 0.06);
-  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+  box-shadow:
+    var(--glass-highlight),
+    0 4px 24px rgba(0, 0, 0, 0.06);
+  transition:
+    box-shadow 0.15s ease,
+    border-color 0.15s ease;
 }
 @supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
   .fnix-glass .glass-composer {
@@ -217,7 +229,9 @@
 }
 .fnix-glass .glass-composer:focus-within {
   border-color: rgba(0, 0, 0, 0.16);
-  box-shadow: var(--glass-highlight), 0 8px 32px rgba(0, 0, 0, 0.1);
+  box-shadow:
+    var(--glass-highlight),
+    0 8px 32px rgba(0, 0, 0, 0.1);
 }
 .fnix-glass .glass-composer.compact {
   width: 100%;
@@ -230,7 +244,9 @@
 }
 
 /* ---- 上传附件：composer 内预览 chips + 用户消息内渲染 ---- */
-.fnix-glass .fnix-attach-input { display: none; }
+.fnix-glass .fnix-attach-input {
+  display: none;
+}
 .fnix-glass .fnix-attach-chips {
   display: flex;
   flex-wrap: wrap;
@@ -254,8 +270,15 @@
   object-fit: cover;
   flex: 0 0 auto;
 }
-.fnix-glass .fnix-attach-fileico { font-size: 20px; line-height: 1; }
-.fnix-glass .fnix-attach-meta { display: flex; flex-direction: column; min-width: 0; }
+.fnix-glass .fnix-attach-fileico {
+  font-size: 20px;
+  line-height: 1;
+}
+.fnix-glass .fnix-attach-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
 .fnix-glass .fnix-attach-name {
   font-size: 12.5px;
   font-weight: 500;
@@ -264,7 +287,10 @@
   text-overflow: ellipsis;
   max-width: 150px;
 }
-.fnix-glass .fnix-attach-size { font-size: 11px; color: #8a8a8e; }
+.fnix-glass .fnix-attach-size {
+  font-size: 11px;
+  color: #8a8a8e;
+}
 .fnix-glass .fnix-attach-x {
   border: none;
   background: transparent;
@@ -274,7 +300,10 @@
   padding: 2px;
   border-radius: 50%;
 }
-.fnix-glass .fnix-attach-x:hover { background: rgba(0, 0, 0, 0.06); color: #1c1c1e; }
+.fnix-glass .fnix-attach-x:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: #1c1c1e;
+}
 .fnix-glass .fnix-msg-attachments {
   display: flex;
   flex-wrap: wrap;
@@ -289,7 +318,10 @@
   text-decoration: none;
   color: inherit;
 }
-.fnix-glass .fnix-msg-att.is-image { flex-direction: column; align-items: flex-start; }
+.fnix-glass .fnix-msg-att.is-image {
+  flex-direction: column;
+  align-items: flex-start;
+}
 .fnix-glass .fnix-msg-att.is-image img {
   width: 160px;
   max-height: 160px;
@@ -305,7 +337,9 @@
   text-overflow: ellipsis;
   max-width: 200px;
 }
-.fnix-glass .fnix-msg-att-ico { font-size: 18px; }
+.fnix-glass .fnix-msg-att-ico {
+  font-size: 18px;
+}
 .fnix-glass .glass-composer textarea {
   width: 100%;
   border: none;
@@ -339,7 +373,9 @@
 }
 .fnix-glass .glass-comp-r {
   justify-content: flex-end;
-  overflow: hidden;
+  /* overflow: hidden 移除 — .fnix-pill 已自带 max-width + overflow + ellipsis，
+     此处 overflow:hidden 会裁剪向上展开的 ModePicker 下拉菜单，
+     导致 Playwright click 的 actionability check 失败 */
 }
 .fnix-glass .glass-pill {
   height: 28px;
@@ -357,7 +393,9 @@
   white-space: nowrap;
   max-width: 200px;
   overflow: hidden;
-  transition: background 0.12s ease, border-color 0.12s ease;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease;
 }
 .fnix-glass .glass-pill > span,
 .fnix-glass .fnix-pill > span {
@@ -380,7 +418,9 @@
   display: grid;
   place-items: center;
   cursor: pointer;
-  transition: transform 0.12s ease, opacity 0.12s ease;
+  transition:
+    transform 0.12s ease,
+    opacity 0.12s ease;
 }
 .fnix-glass .glass-send:not(:disabled):hover {
   transform: scale(1.04);
@@ -588,16 +628,18 @@
  *  - 细线轴：左侧 2px 竖线 + 节点圆点（轴极细，节奏由留白给）
  */
 .fnix-glass .glass-process {
-  --gp-accent: #4a6fa5;          /* 青灰 */
-  --gp-accent-soft: rgba(74, 111, 165, 0.10);
-  --gp-ok: #5a7a5a;              /* 竹青 */
-  --gp-err: #a85751;             /* 赭石 */
-  --gp-ink: #1f2937;             /* 墨色（标题/正文） */
-  --gp-muted: #6b7280;           /* 远山灰（meta/time） */
-  --gp-faint: #9ca3af;           /* 浅灰 */
-  --gp-paper: #f8f6f0;           /* 茶白（细节背景） */
+  --gp-accent: #4a6fa5; /* 青灰 */
+  --gp-accent-soft: rgba(74, 111, 165, 0.1);
+  --gp-ok: #5a7a5a; /* 竹青 */
+  --gp-err: #a85751; /* 赭石 */
+  --gp-ink: #1f2937; /* 墨色（标题/正文） */
+  --gp-muted: #6b7280; /* 远山灰（meta/time） */
+  --gp-faint: #9ca3af; /* 浅灰 */
+  --gp-paper: #f8f6f0; /* 茶白（细节背景） */
   --gp-line: rgba(31, 41, 55, 0.08); /* 细线 */
-  --gp-font-song: "Songti SC", "STSong", "Source Han Serif SC", "Noto Serif CJK SC", "SimSun", ui-serif, Georgia, serif;
+  --gp-font-song:
+    'Songti SC', 'STSong', 'Source Han Serif SC', 'Noto Serif CJK SC', 'SimSun', ui-serif, Georgia,
+    serif;
 
   position: relative;
   border: 1px solid var(--gp-line);
@@ -621,7 +663,7 @@
   font-family: var(--gp-font-song);
   font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.18em;  /* 字距放开，宋韵 */
+  letter-spacing: 0.18em; /* 字距放开，宋韵 */
   color: var(--gp-muted);
   border-bottom: 1px solid var(--gp-line);
 }
@@ -633,7 +675,7 @@
 }
 /* 细线轴：左 22px 处垂直贯穿 */
 .fnix-glass .glass-process-list::before {
-  content: "";
+  content: '';
   position: absolute;
   left: 24px;
   top: 8px;
@@ -685,7 +727,9 @@
   animation: glass-spin 0.9s linear infinite;
 }
 @keyframes glass-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 .fnix-glass .glass-process-body {
   min-width: 0;
@@ -776,7 +820,7 @@
   height: 26px;
   padding: 0 12px;
   border: 1px solid var(--gp-line);
-  border-radius: 4px;  /* 接近宋韵直角 */
+  border-radius: 4px; /* 接近宋韵直角 */
   background: rgba(255, 255, 255, 0.95);
   color: var(--gp-ink);
   font: inherit;
@@ -785,7 +829,9 @@
   font-weight: 500;
   cursor: pointer;
   letter-spacing: 0.06em;
-  transition: border-color 0.15s ease, color 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
 }
 .fnix-glass .glass-process-diff:hover {
   border-color: var(--gp-accent);
@@ -848,7 +894,7 @@
   --glass-bg-strong: rgba(47, 47, 47, 0.92);
   --glass-bg-soft: rgba(36, 36, 36, 0.88);
   --glass-bg-inset: rgba(30, 30, 30, 0.92);
-  --glass-border: rgba(255, 255, 255, 0.10);
+  --glass-border: rgba(255, 255, 255, 0.1);
   --glass-border-2: rgba(255, 255, 255, 0.16);
   --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.08);
   --glass-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);

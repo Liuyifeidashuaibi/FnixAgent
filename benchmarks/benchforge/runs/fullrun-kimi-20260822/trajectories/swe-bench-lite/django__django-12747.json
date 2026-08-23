@@ -1,0 +1,18 @@
+{
+  "dataset": "swe-bench-lite",
+  "task_id": "django__django-12747",
+  "prompt": "QuerySet.Delete - inconsistent result when zero objects deleted\nDescription\n\t\nThe result format of the QuerySet.Delete method is a tuple: (X, Y) \nX - is the total amount of deleted objects (including foreign key deleted objects)\nY - is a dictionary specifying counters of deleted objects for each specific model (the key is the _meta.label of the model and the value is counter of deleted objects of this model).\nExample: <class 'tuple'>: (2, {'my_app.FileAccess': 1, 'my_app.File': 1})\nWhen there are zero objects to delete in total - the result is inconsistent:\nFor models with foreign keys - the result will be: <class 'tuple'>: (0, {})\nFor \"simple\" models without foreign key - the result will be: <class 'tuple'>: (0, {'my_app.BlockLibrary': 0})\nI would expect there will be no difference between the two cases: Either both will have the empty dictionary OR both will have dictionary with model-label keys and zero value.\n",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/django/db/models/deletion.py b/django/db/models/deletion.py\n--- a/d] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 78.99999999972351,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787334463.6976955,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\swe-bench-lite__django__django-12747__9edeb5"
+}

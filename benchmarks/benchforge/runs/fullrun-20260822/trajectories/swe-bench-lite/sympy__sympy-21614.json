@@ -1,0 +1,18 @@
+{
+  "dataset": "swe-bench-lite",
+  "task_id": "sympy__sympy-21614",
+  "prompt": "Wrong Derivative kind attribute\nI'm playing around with the `kind` attribute.\r\n\r\nThe following is correct:\r\n\r\n```\r\nfrom sympy import Integral, Derivative\r\nfrom sympy import MatrixSymbol\r\nfrom sympy.abc import x\r\nA = MatrixSymbol('A', 2, 2)\r\ni = Integral(A, x)\r\ni.kind\r\n# MatrixKind(NumberKind)\r\n```\r\n\r\nThis one is wrong:\r\n```\r\nd = Derivative(A, x)\r\nd.kind\r\n# UndefinedKind\r\n```\n",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/sympy/core/function.py b/sympy/core/function.py\n--- a/sympy/core/fu] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 92.9999999998472,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787332467.3688552,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\swe-bench-lite__sympy__sympy-21614__425207"
+}

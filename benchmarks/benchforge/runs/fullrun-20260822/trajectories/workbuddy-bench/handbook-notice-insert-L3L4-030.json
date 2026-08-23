@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "handbook-notice-insert-L3L4-030",
+  "prompt": "请读取 `employee_handbook.docx` 和 `handbook_change_notice_030.pdf`，把通知中应进入员工手册修订流程的正式更新整理成结构化结果，写入\n`output/handbook_update_state.json`。不要覆盖或重写原 DOCX；本任务只需要输出 JSON 状态表，供后续手册修订使用。\n\n输出 JSON 顶层必须包含 `metadata`、`inserted_updates`、`unchanged_sections`、`excluded_notice_text`、`summary` 五个字段。\n\n`metadata` 至少包含：`case_id`、`handbook_title`、`handbook_version`、`handbook_doc_id`、`notice_doc_id`、`notice_effective_date`、`source_files`、`output_path`。\n\n`inserted_updates` 是数组，仅纳入 PDF 通知中的正式更新。每个元素必须包含：\n- `update_id`：通知中的更新编号；\n- `target_section`：更新应落入的员工手册章标题；\n- `insert_after_heading`：应插入或更新的位置；\n- `normalized_text`：规范化后的正文或结构化记录内容；\n- `object_type`：根据手册当前位置和通知内容判断的对象类型；\n- `preserved_numbering`：是否需要保留/延续原编号；\n- `source_doc`：来源 PDF 文件名。\n\n`unchanged_sections` 列出没有被本次正式更新触及、应保持不变的手册章标题。\n`excluded_notice_text` 列出你识别并排除的通知抬头、抄送、联系人、附件、页脚等非正式更新文本。\n`summary` 至少包含：`total_formal_updates`、`paragraph_updates`、`numbered_list_updates`、`table_row_updates`、`unchanged_section_count`、`excluded_notice_text_count`、`requires_docx_overwrite`。\n\n整理规则：\n1. 只处理 PDF 中明确标为正式更新的内容；主送、抄送、联系人、附件清单、页脚、会议纪要或执行提示不属于手册正文。\n2. 需要根据员工手册现有章、节、小节和表格结构，自行判断每条更新应落入的章标题和插入位置；不要只按通知出现顺序简单追加。\n3. 需要保留通知中显式出现的新增编号、连续编号关系和表格记录结构；不要把列表或表格记录降级成普通段落。\n4. 不做条文重编号、跨章引用重建或多版本修订链推理。\n5. 保持备注性说明自然、简洁，不需要解释所有推理过程。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787332459.620054,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\workbuddy-bench__handbook-notice-insert-L3L4-030__da7181"
+}

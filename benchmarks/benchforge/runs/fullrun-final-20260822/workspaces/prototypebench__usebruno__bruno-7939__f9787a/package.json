@@ -1,0 +1,17 @@
+{
+  "name": "bruno-request-body-extension",
+  "version": "1.0.0",
+  "description": "Extension for Bruno to handle stream-backed request bodies (BRU-3153)",
+  "main": "src/request-body-handler.ts",
+  "types": "src/request-body-handler.ts",
+  "scripts": {
+    "test": "jest",
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.0.0",
+    "jest": "^29.0.0",
+    "ts-jest": "^29.0.0",
+    "typescript": "^4.9.0"
+  }
+}

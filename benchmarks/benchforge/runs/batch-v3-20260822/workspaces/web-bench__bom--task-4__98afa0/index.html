@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browser</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        .toolbar {
+            display: flex;
+            gap: 8px;
+            padding: 10px;
+            background: #f0f0f0;
+            border-bottom: 1px solid #ccc;
+        }
+        .toolbar button {
+            padding: 6px 14px;
+            cursor: pointer;
+            border: 1px solid #999;
+            border-radius: 4px;
+            background: #fff;
+            font-size: 14px;
+        }
+        .toolbar button:hover {
+            background: #e0e0e0;
+        }
+        #content {
+            flex: 1;
+            border: none;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="toolbar">
+        <button class="homepage">Homepage</button>
+        <button class="back">Back</button>
+        <button class="forward">Forward</button>
+        <button class="refresh">Refresh</button>
+    </div>
+    <iframe id="content" src="about:blank"></iframe>
+    <script>
+        const iframe = document.getElementById('content');
+        const history = [];
+        let currentIndex = -1;
+
+        function navigateTo(url) {
+            // Remove any forward history when navigating to a new page
+            if (currentIndex < history.length - 1) {
+                history.splice(currentIndex + 1);
+            }
+            history.push(url);
+            currentIndex = history.length - 1;
+            iframe.src = url;
+        }
+
+        document.querySelector('.homepage').addEventListener('click', function() {
+            navigateTo('docs/intro.html');
+        });
+
+        document.querySelector('.back').addEventListener('click', function() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                iframe.src = history[currentIndex];
+            }
+        });
+
+        document.querySelector('.forward').addEventListener('click', function() {
+            if (currentIndex < history.length - 1) {
+                currentIndex++;
+                iframe.src = history[currentIndex];
+            }
+        });
+
+        document.querySelector('.refresh').addEventListener('click', function() {
+            iframe.src = iframe.src;
+        });
+    </script>
+</body>
+</html>

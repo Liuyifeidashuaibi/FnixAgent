@@ -34,6 +34,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import threading
 import uuid
 from collections.abc import Iterator
@@ -45,6 +46,9 @@ from fnixagent.core.checkpoint.types import (
     CheckpointMetadata,
     CheckpointTuple,
 )
+
+_logger = logging.getLogger(__name__)
+
 
 
 class PostgresCheckpointer(BaseCheckpointer):
@@ -150,7 +154,7 @@ class PostgresCheckpointer(BaseCheckpointer):
                 try:
                     conn.rollback()  # type: ignore[name-defined]
                 except Exception:
-                    pass
+                    _logger.debug('Unhandled exception', exc_info=True)
                 return
 
     def put(
@@ -210,7 +214,7 @@ class PostgresCheckpointer(BaseCheckpointer):
             try:
                 conn.rollback()  # type: ignore[name-defined]
             except Exception:
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
         return new_config
 
     def get_tuple(self, config: dict) -> CheckpointTuple | None:

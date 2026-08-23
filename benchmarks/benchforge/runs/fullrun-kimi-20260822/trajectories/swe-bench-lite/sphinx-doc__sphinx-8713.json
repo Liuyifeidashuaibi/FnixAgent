@@ -1,0 +1,18 @@
+{
+  "dataset": "swe-bench-lite",
+  "task_id": "sphinx-doc__sphinx-8713",
+  "prompt": "napoleon_use_param should also affect \"other parameters\" section\nSubject: napoleon_use_param should also affect \"other parameters\" section\r\n\r\n### Problem\r\nCurrently, napoleon always renders the Other parameters section as if napoleon_use_param was False, see source\r\n```\r\n    def _parse_other_parameters_section(self, section):\r\n        # type: (unicode) -> List[unicode]\r\n        return self._format_fields(_('Other Parameters'), self._consume_fields())\r\n\r\n    def _parse_parameters_section(self, section):\r\n        # type: (unicode) -> List[unicode]\r\n        fields = self._consume_fields()\r\n        if self._config.napoleon_use_param:\r\n            return self._format_docutils_params(fields)\r\n        else:\r\n            return self._format_fields(_('Parameters'), fields)\r\n```\r\nwhereas it would make sense that this section should follow the same formatting rules as the Parameters section.\r\n\r\n#### Procedure to reproduce the problem\r\n```\r\nIn [5]: print(str(sphinx.ext.napoleon.NumpyDocstring(\"\"\"\\ \r\n   ...: Parameters \r\n   ...: ---------- \r\n   ...: x : int \r\n   ...:  \r\n   ...: Other parameters \r\n   ...: ---------------- \r\n   ...: y: float \r\n   ...: \"\"\")))                                                                                                                                                                                      \r\n:param x:\r\n:type x: int\r\n\r\n:Other Parameters: **y** (*float*)\r\n```\r\n\r\nNote the difference in rendering.\r\n\r\n#### Error logs / results\r\nSee above.\r\n\r\n#### Expected results\r\n```\r\n:param x:\r\n:type x: int\r\n\r\n:Other Parameters:  // Or some other kind of heading.\r\n:param: y\r\n:type y: float\r\n```\r\n\r\nAlternatively another separate config value could be introduced, but that seems a bit overkill.\r\n\r\n### Reproducible project / your project\r\nN/A\r\n\r\n### Environment info\r\n- OS: Linux\r\n- Python version: 3.7\r\n- Sphinx version: 1.8.1\r\n\n",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/sphinx/ext/napoleon/docstring.py b/sphinx/ext/napoleon/docstring.py] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 92.9999999998472,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787334467.9940813,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\swe-bench-lite__sphinx-doc__sphinx-8713__ac458b"
+}

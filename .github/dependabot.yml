@@ -1,0 +1,73 @@
+# Dependabot configuration for FnixAgent
+# Docs: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+
+updates:
+  # Python dependencies (pip / requirements.txt)
+  - package-ecosystem: 'pip'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '06:00'
+      timezone: 'Asia/Shanghai'
+    open-pull-requests-limit: 10
+    labels:
+      - 'dependencies'
+      - 'python'
+    commit-message:
+      prefix: 'deps(pip)'
+    groups:
+      dev-deps:
+        patterns:
+          - 'ruff'
+          - 'pyright'
+          - 'pytest*'
+          - 'bandit'
+          - 'pip-audit'
+
+  # npm dependencies (apps/workbench)
+  - package-ecosystem: 'npm'
+    directory: '/apps/workbench'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '06:00'
+      timezone: 'Asia/Shanghai'
+    open-pull-requests-limit: 10
+    labels:
+      - 'dependencies'
+      - 'frontend'
+    commit-message:
+      prefix: 'deps(npm)'
+
+  # GitHub Actions
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '06:00'
+      timezone: 'Asia/Shanghai'
+    open-pull-requests-limit: 5
+    labels:
+      - 'dependencies'
+      - 'ci'
+    commit-message:
+      prefix: 'deps(ci)'
+
+  # Rust dependencies (apps/fnix-local)
+  - package-ecosystem: 'cargo'
+    directory: '/apps/fnix-local'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '06:00'
+      timezone: 'Asia/Shanghai'
+    open-pull-requests-limit: 5
+    labels:
+      - 'dependencies'
+      - 'rust'
+    commit-message:
+      prefix: 'deps(cargo)'

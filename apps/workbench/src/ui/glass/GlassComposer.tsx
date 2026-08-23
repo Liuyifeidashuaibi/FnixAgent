@@ -5,9 +5,9 @@
  * Unauthorized copying, modification, distribution, or use is strictly prohibited.
  */
 
-import { useEffect, useRef, type ReactNode } from "react";
-import { ArrowUp, Square, X } from "lucide-react";
-import type { ChatAttachment } from "../../utils/tauri";
+import { useEffect, useRef, type ReactNode } from 'react';
+import { ArrowUp, Square, X } from 'lucide-react';
+import type { ChatAttachment } from '../../utils/tauri';
 
 export interface GlassComposerProps {
   value: string;
@@ -23,6 +23,8 @@ export interface GlassComposerProps {
   attachments?: ChatAttachment[];
   onRemoveAttachment?: (id: string) => void;
   className?: string;
+  /** 外部禁用发送（如 Code 模式未打开仓库时） */
+  sendDisabled?: boolean;
 }
 
 function formatSize(bytes: number): string {
@@ -37,7 +39,7 @@ export function GlassComposer({
   onSend,
   onStop,
   streaming,
-  placeholder = "输入你的问题…",
+  placeholder = '输入你的问题…',
   autoFocus,
   compact,
   modelSlot,
@@ -45,6 +47,7 @@ export function GlassComposer({
   attachments,
   onRemoveAttachment,
   className,
+  sendDisabled,
 }: GlassComposerProps) {
   const ref = useRef<HTMLTextAreaElement>(null);
 
@@ -58,36 +61,34 @@ export function GlassComposer({
     // Reset to auto first so scrollHeight reflects only the current content
     // (otherwise the height can only ever grow). The textarea has no `rows`
     // attribute — JS fully owns the height to avoid attribute/effect conflict.
-    el.style.height = "auto";
+    el.style.height = 'auto';
     const max = 200;
     const min = compact ? 44 : 28;
     const next = Math.min(max, Math.max(min, el.scrollHeight));
     el.style.height = `${next}px`;
-    el.style.overflowY = el.scrollHeight > next + 1 ? "auto" : "hidden";
+    el.style.overflowY = el.scrollHeight > next + 1 ? 'auto' : 'hidden';
   }, [value, compact]);
 
   // canSend 兼容纯附件发送：父级 sendDraft 已允许「无文本 + 有附件」通过，
   // 此处若不放开会导致发送按钮 disabled、Enter 不触发，用户无法发送纯图片/文件消息
   const hasText = value.trim().length > 0;
   const hasAttachments = !!(attachments && attachments.length > 0);
-  const canSend = (hasText || hasAttachments) && !streaming;
+  const canSend = (hasText || hasAttachments) && !streaming && !sendDisabled;
 
   return (
     <div
-      className={[
-        "glass-composer",
-        compact ? "compact" : "",
-        className,
-      ]
-        .filter(Boolean)
-        .join(" ")}
+      className={['glass-composer', compact ? 'compact' : '', className].filter(Boolean).join(' ')}
     >
       {attachments && attachments.length > 0 ? (
         <div className="fnix-attach-chips">
           {attachments.map((a) => (
-            <div key={a.id} className={`fnix-attach-chip${a.type === "image" ? " is-image" : ""}`}>
-              {a.type === "image" ? (
-                <img className="fnix-attach-thumb" src={`data:${a.mimeType};base64,${a.base64}`} alt={a.name} />
+            <div key={a.id} className={`fnix-attach-chip${a.type === 'image' ? ' is-image' : ''}`}>
+              {a.type === 'image' ? (
+                <img
+                  className="fnix-attach-thumb"
+                  src={`data:${a.mimeType};base64,${a.base64}`}
+                  alt={a.name}
+                />
               ) : (
                 <span className="fnix-attach-fileico" aria-hidden>
                   📄
@@ -117,10 +118,10 @@ export function GlassComposer({
         ref={ref}
         value={value}
         placeholder={placeholder}
-        aria-label={placeholder || "消息输入框"}
+        aria-label={placeholder || '消息输入框'}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={(e) => {
-          if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+          if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
             e.preventDefault();
             if (canSend) onSend();
           }

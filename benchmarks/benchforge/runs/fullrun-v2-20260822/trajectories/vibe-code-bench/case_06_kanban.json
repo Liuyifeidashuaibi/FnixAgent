@@ -1,0 +1,18 @@
+{
+  "dataset": "vibe-code-bench",
+  "task_id": "case_06_kanban",
+  "prompt": "# Build me a Kanban Board\n\nI want a simple Kanban board like Trello:\n\n- Three columns: To Do, In Progress, Done\n- I can add new cards with a title\n- Drag and drop cards between columns\n- Click a card to edit or delete it\n- Cards should have different colors for priority (red=urgent, yellow=medium, green=low)\n- Save everything to localStorage\n\nMake it work with just HTML/CSS/JS. No frameworks needed.",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 375.0,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336333.232547,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\vibe-code-bench__case_06_kanban__6d4aec"
+}

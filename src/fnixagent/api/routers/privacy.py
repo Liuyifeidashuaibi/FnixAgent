@@ -25,6 +25,7 @@ API 路由 - 用户隐私中心(Phase 3.2 / 2.12)。
 from __future__ import annotations
 
 import json
+import logging
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -38,6 +39,9 @@ from fnixagent.services.storage import (
     get_task_store,
     get_user_store,
 )
+
+_logger = logging.getLogger(__name__)
+
 
 router = APIRouter(prefix="/privacy", tags=["privacy"])
 
@@ -75,7 +79,7 @@ def _audit_privacy(
             user_agent=ua,
         )
     except Exception:
-        pass
+        _logger.debug('Unhandled exception', exc_info=True)
 
 
 def _get_request_ip(request: Request) -> str:
@@ -204,7 +208,7 @@ async def export_personal_data(
         user_logs = [log.to_dict() for log in all_logs if log.user_id == user_id][:100]
         audit_data = user_logs
     except Exception:
-        pass
+        _logger.debug('Unhandled exception', exc_info=True)
 
     # 用户基本信息(包含脱敏手机号)
     profile = dict(user.profile or {})

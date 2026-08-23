@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculator</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    display: flex; justify-content: center; align-items: center;
+    min-height: 100vh; background: #f0f0f5; font-family: 'Segoe UI', sans-serif;
+  }
+  .calculator {
+    background: #1a1a2e; border-radius: 16px; padding: 20px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2); width: 280px;
+  }
+  .row { display: flex; gap: 8px; margin-bottom: 8px; }
+  .row:last-child { margin-bottom: 0; }
+  #display {
+    width: 100%; padding: 14px; font-size: 1.4rem; text-align: right;
+    border: none; border-radius: 8px; background: #16213e; color: #e0e0f0;
+    margin-bottom: 8px; outline: none;
+  }
+  button {
+    flex: 1; padding: 14px; font-size: 1.1rem; border: none; border-radius: 8px;
+    cursor: pointer; transition: background 0.15s;
+  }
+  .btn-digit { background: #2a2a4a; color: #e0e0f0; }
+  .btn-digit:hover { background: #3a3a5a; }
+  .btn-op { background: #4361ee; color: #fff; }
+  .btn-op:hover { background: #3a56d4; }
+  .btn-clear { background: #e74c3c; color: #fff; }
+  .btn-clear:hover { background: #c0392b; }
+  .btn-wide { flex: 2; }
+</style>
+</head>
+<body>
+<div class="calculator">
+  <div class="row">
+    <input id="display" type="text" readonly>
+  </div>
+  <div class="row">
+    <button class="btn-digit" data-val="7">7</button>
+    <button class="btn-digit" data-val="8">8</button>
+    <button class="btn-digit" data-val="9">9</button>
+    <button class="btn-op" data-val="/">÷</button>
+  </div>
+  <div class="row">
+    <button class="btn-digit" data-val="4">4</button>
+    <button class="btn-digit" data-val="5">5</button>
+    <button class="btn-digit" data-val="6">6</button>
+    <button class="btn-op" data-val="*">×</button>
+  </div>
+  <div class="row">
+    <button class="btn-digit" data-val="1">1</button>
+    <button class="btn-digit" data-val="2">2</button>
+    <button class="btn-digit" data-val="3">3</button>
+    <button class="btn-op" data-val="-">−</button>
+  </div>
+  <div class="row">
+    <button class="btn-digit" data-val="0">0</button>
+    <button class="btn-digit" data-val=".">.</button>
+    <button class="btn-op" data-val="+">+</button>
+    <button class="btn-op" data-val="=">=</button>
+  </div>
+  <div class="row">
+    <button class="btn-clear btn-wide" id="clearBtn">Clear</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  var display = document.getElementById('display');
+  var expression = '';
+
+  display.value = '';
+
+  document.querySelectorAll('button[data-val]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var val = btn.getAttribute('data-val');
+
+      if (val === '=') {
+        try {
+          var result = Function('"use strict"; return (' + expression + ')')();
+          if (result === undefined || result === null || isNaN(result) || !isFinite(result)) {
+            display.value = 'Error';
+          } else {
+            display.value = String(result);
+            expression = String(result);
+          }
+        } catch (e) {
+          display.value = 'Error';
+          expression = '';
+        }
+      } else {
+        expression += val;
+        display.value = expression;
+      }
+    });
+  });
+
+  document.getElementById('clearBtn').addEventListener('click', function () {
+    expression = '';
+    display.value = '';
+  });
+})();
+</script>
+</body>
+</html>

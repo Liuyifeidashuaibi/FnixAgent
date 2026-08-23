@@ -1,0 +1,2069 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FnixAgent 深度调研报告 · 2026-08-20</title>
+    <style>
+      :root {
+        --bg: #f1f5f9;
+        --card: #ffffff;
+        --border: #e2e8f0;
+        --text: #1e293b;
+        --muted: #64748b;
+        --blue: #2563eb;
+        --blue-bg: #eff6ff;
+        --red: #dc2626;
+        --red-bg: #fef2f2;
+        --orange: #ea580c;
+        --orange-bg: #fff7ed;
+        --amber: #d97706;
+        --amber-bg: #fffbeb;
+        --green: #059669;
+        --green-bg: #ecfdf5;
+        --slate: #475569;
+        --shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+        --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+        --radius: 12px;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.65;
+        font-size: 15px;
+        -webkit-font-smoothing: antialiased;
+      }
+      .wrap {
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 32px 24px 80px;
+      }
+      header.report-head {
+        background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+        color: #fff;
+        border-radius: var(--radius);
+        padding: 40px 36px;
+        margin-bottom: 28px;
+        box-shadow: var(--shadow-lg);
+      }
+      header.report-head h1 {
+        font-size: 28px;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+        margin-bottom: 6px;
+      }
+      header.report-head .sub {
+        font-size: 15px;
+        opacity: 0.88;
+        margin-bottom: 18px;
+      }
+      .head-meta {
+        display: flex;
+        gap: 32px;
+        flex-wrap: wrap;
+        align-items: flex-end;
+      }
+      .score-big {
+        font-size: 56px;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -2px;
+      }
+      .score-big small {
+        font-size: 22px;
+        font-weight: 500;
+        opacity: 0.7;
+      }
+      .score-label {
+        font-size: 12px;
+        opacity: 0.8;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 4px;
+      }
+      .meta-item {
+        font-size: 13px;
+        opacity: 0.85;
+      }
+      .meta-item b {
+        font-weight: 600;
+      }
+      section {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 28px 30px;
+        margin-bottom: 22px;
+        box-shadow: var(--shadow);
+      }
+      section h2 {
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 16px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid var(--blue-bg);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      section h2 .num {
+        background: var(--blue);
+        color: #fff;
+        font-size: 13px;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+      }
+      section h3 {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 18px 0 10px;
+        color: var(--slate);
+      }
+      p {
+        margin-bottom: 10px;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      code {
+        background: #f1f5f9;
+        padding: 1px 6px;
+        border-radius: 4px;
+        font-size: 13px;
+        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        color: #be185d;
+      }
+      .evidence {
+        font-family: 'SFMono-Regular', Consolas, monospace;
+        font-size: 12px;
+        color: var(--blue);
+        background: var(--blue-bg);
+        padding: 1px 5px;
+        border-radius: 3px;
+        white-space: nowrap;
+      }
+      .grid2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+      .grid3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+      }
+      .grid4 {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+      }
+      .stat-card {
+        background: var(--bg);
+        border-radius: 10px;
+        padding: 16px 18px;
+        border: 1px solid var(--border);
+      }
+      .stat-card .v {
+        font-size: 26px;
+        font-weight: 700;
+        color: var(--blue);
+        line-height: 1.1;
+      }
+      .stat-card .l {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 4px;
+      }
+      .stat-card .d {
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 6px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+        margin: 12px 0;
+      }
+      th {
+        background: var(--bg);
+        text-align: left;
+        padding: 9px 12px;
+        font-weight: 600;
+        color: var(--slate);
+        border-bottom: 2px solid var(--border);
+        white-space: nowrap;
+      }
+      td {
+        padding: 9px 12px;
+        border-bottom: 1px solid var(--border);
+        vertical-align: top;
+      }
+      tr:hover td {
+        background: var(--blue-bg);
+      }
+      .tag {
+        display: inline-block;
+        padding: 2px 9px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .tag-s {
+        background: var(--red-bg);
+        color: var(--red);
+      }
+      .tag-m {
+        background: var(--orange-bg);
+        color: var(--orange);
+      }
+      .tag-l {
+        background: var(--green-bg);
+        color: var(--green);
+      }
+      .tag-p0 {
+        background: #1e293b;
+        color: #fff;
+      }
+      .tag-p1 {
+        background: var(--amber);
+        color: #fff;
+      }
+      .tag-p2 {
+        background: var(--blue);
+        color: #fff;
+      }
+      .tag-p3 {
+        background: var(--muted);
+        color: #fff;
+      }
+      .badge {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .b-green {
+        background: var(--green-bg);
+        color: var(--green);
+      }
+      .b-amber {
+        background: var(--amber-bg);
+        color: var(--amber);
+      }
+      .b-red {
+        background: var(--red-bg);
+        color: var(--red);
+      }
+      details {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        margin-bottom: 10px;
+        overflow: hidden;
+      }
+      summary {
+        padding: 12px 16px;
+        font-weight: 600;
+        cursor: pointer;
+        list-style: none;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: var(--bg);
+      }
+      summary::-webkit-details-marker {
+        display: none;
+      }
+      summary::after {
+        content: '▶';
+        margin-left: auto;
+        font-size: 11px;
+        color: var(--muted);
+        transition: transform 0.2s;
+      }
+      details[open] summary::after {
+        transform: rotate(90deg);
+      }
+      details[open] summary {
+        border-bottom: 1px solid var(--border);
+      }
+      .dim-body {
+        padding: 14px 16px;
+      }
+      .finding {
+        display: flex;
+        gap: 10px;
+        padding: 8px 0;
+        border-bottom: 1px solid #f1f5f9;
+      }
+      .finding:last-child {
+        border-bottom: none;
+      }
+      .finding .sev {
+        flex-shrink: 0;
+        width: 54px;
+      }
+      .finding .txt {
+        flex: 1;
+      }
+      .finding .txt b {
+        font-weight: 600;
+      }
+      .callout {
+        border-radius: 8px;
+        padding: 14px 16px;
+        margin: 12px 0;
+        font-size: 13px;
+      }
+      .callout-red {
+        background: var(--red-bg);
+        border-left: 4px solid var(--red);
+      }
+      .callout-amber {
+        background: var(--amber-bg);
+        border-left: 4px solid var(--amber);
+      }
+      .callout-blue {
+        background: var(--blue-bg);
+        border-left: 4px solid var(--blue);
+      }
+      .callout-green {
+        background: var(--green-bg);
+        border-left: 4px solid var(--green);
+      }
+      .flex {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .center {
+        text-align: center;
+      }
+      .tl {
+        display: flex;
+        gap: 0;
+        margin: 18px 0;
+        overflow-x: auto;
+      }
+      .tl-step {
+        flex: 1;
+        min-width: 130px;
+        text-align: center;
+        position: relative;
+        padding: 0 4px;
+      }
+      .tl-step:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        top: 18px;
+        right: -50%;
+        width: 100%;
+        height: 3px;
+        background: var(--border);
+        z-index: 0;
+      }
+      .tl-dot {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 8px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #fff;
+        position: relative;
+        z-index: 1;
+      }
+      .tl-title {
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 2px;
+      }
+      .tl-desc {
+        font-size: 11px;
+        color: var(--muted);
+        line-height: 1.4;
+      }
+      .p0 {
+        background: #1e293b;
+      }
+      .p1 {
+        background: var(--amber);
+      }
+      .p2 {
+        background: var(--blue);
+      }
+      .p3 {
+        background: var(--muted);
+      }
+      footer {
+        text-align: center;
+        color: var(--muted);
+        font-size: 12px;
+        padding: 24px;
+      }
+      .impact-bar {
+        height: 8px;
+        border-radius: 4px;
+        background: var(--border);
+        overflow: hidden;
+        display: inline-block;
+        vertical-align: middle;
+        width: 60px;
+      }
+      .impact-fill {
+        height: 100%;
+        border-radius: 4px;
+      }
+      @media (max-width: 720px) {
+        .grid2,
+        .grid3,
+        .grid4 {
+          grid-template-columns: 1fr;
+        }
+        .head-meta {
+          gap: 16px;
+        }
+        header.report-head {
+          padding: 28px 22px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="report-head">
+        <h1>FnixAgent 项目深度调研报告</h1>
+        <div class="sub">Tauri 2 + Python + Rust 三进程 AI 桌面工作台 · 全维度源码级审计</div>
+        <div class="head-meta">
+          <div>
+            <div class="score-label">综合评分</div>
+            <div class="score-big">6.4<small> / 10</small></div>
+          </div>
+          <div class="meta-item">版本：<b>v1.0.0 GA</b></div>
+          <div class="meta-item">审计日期：<b>2026-08-20</b></div>
+          <div class="meta-item">代码规模：<b>~18.5 万行</b></div>
+          <div class="meta-item">严重问题：<b style="color: #fca5a5">15 项</b></div>
+        </div>
+      </header>
+
+      <!-- ========== 1 执行摘要 ========== -->
+      <section>
+        <h2><span class="num">1</span>执行摘要</h2>
+        <p>
+          FnixAgent 是一个 <b>local-first、BYOK 的 AI 桌面工作台</b>，采用三进程架构（Tauri 桌面 +
+          Python agentd + Rust fnix-local），覆盖 Work（办公任务）和
+          Code（代码审查）双模式，并内置自进化内核（KTG/STP/MFP）。项目刚完成 v1.0.0 GA
+          发版，代码规模约 <b>18.5 万行</b>（Python 14 万 + 前端 2.4 万 + Rust 2.1 万），测试 1826
+          个。
+        </p>
+        <p>
+          总体评价：<b>工程基础设施成熟、自进化内核是真实实现而非空壳、安全纵深设计扎实</b>，但存在<b>系统性的"文档与实现脱节"</b>（ARCHITECTURE.md
+          / DEVELOPMENT.md / NOTICE / fnix-local README 均与实际代码不符）、<b>CI 质量门禁虚化</b
+          >（前端测试不在 CI、pyright/Trivy/CodeQL 均
+          continue-on-error）、<b>过度工程与僵尸代码</b>（core 膨胀至 44 子目录、3 套 MCP
+          server、遗留 desktop-tauri
+          工程）三类深层问题。属于"工具链完善但工程纪律未完全落地"的中上水平。
+        </p>
+        <div class="callout callout-amber">
+          <b>五大核心发现：</b>
+          <ol style="margin: 6px 0 0 18px">
+            <li>
+              <b>架构漂移</b>：ARCHITECTURE.md 描述的 7
+              层企业架构（Celery/ES/K8s）在代码中<b>零引用</b>，实际是 local-first
+              桌面应用。文档描述的是停滞在 0.5.0 的未完成云部署愿景。
+            </li>
+            <li>
+              <b>凭据明文暴露</b>：本地 <code>.env</code> 含真实 GLM/DashScope API
+              密钥明文（虽未提交 git，但磁盘无加密保护）。
+            </li>
+            <li>
+              <b>CI 门禁全面虚化</b>：前端测试完全不进 CI，pyright/Trivy/CodeQL 均被设为永不失败，17
+              个 dependabot 分支堆积无配置文件。
+            </li>
+            <li>
+              <b>僵尸代码与重复实现</b>：format_converter stub 假成功未清理、3 套 MCP server、遗留
+              desktop-tauri 工程、13 个空目录骨架。
+            </li>
+            <li>
+              <b>NOTICE 文件字符腐蚀</b>：大面积 C→o、L→o 替换导致 "LICENSE"→"LIoENSE"
+              等，引用的文件路径不存在。
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- ========== 2 项目概览 ========== -->
+      <section>
+        <h2><span class="num">2</span>项目概览与量化数据</h2>
+        <div class="grid4" style="margin-bottom: 14px">
+          <div class="stat-card">
+            <div class="v">400</div>
+            <div class="l">Python 源文件</div>
+            <div class="d">src/fnixagent · 140,365 行</div>
+          </div>
+          <div class="stat-card">
+            <div class="v">105</div>
+            <div class="l">前端 TS/TSX 文件</div>
+            <div class="d">apps/workbench · 24,055 行</div>
+          </div>
+          <div class="stat-card">
+            <div class="v">21,246</div>
+            <div class="l">Rust 代码行</div>
+            <div class="d">workbench 19,827 + fnix-local 626</div>
+          </div>
+          <div class="stat-card">
+            <div class="v">1,826</div>
+            <div class="l">Python 测试函数</div>
+            <div class="d">151 文件 · 28,675 行</div>
+          </div>
+        </div>
+        <div class="grid4" style="margin-bottom: 14px">
+          <div class="stat-card">
+            <div class="v">15</div>
+            <div class="l">src 一级模块</div>
+            <div class="d">core 占 64%（266 文件）</div>
+          </div>
+          <div class="stat-card">
+            <div class="v">18</div>
+            <div class="l">API 路由数</div>
+            <div class="d">文档仅描述 4 个</div>
+          </div>
+          <div class="stat-card">
+            <div class="v">16</div>
+            <div class="l">CI Workflow 数</div>
+            <div class="d">含 4 处 continue-on-error</div>
+          </div>
+          <div class="stat-card">
+            <div class="v">~160</div>
+            <div class="l">真实人工源码文件</div>
+            <div class="d">apps 2892 文件中 75% 是捆绑运行时</div>
+          </div>
+        </div>
+        <h3>技术栈</h3>
+        <table>
+          <tr>
+            <th>层</th>
+            <th>选型</th>
+            <th>规模/说明</th>
+          </tr>
+          <tr>
+            <td>桌面壳</td>
+            <td>Tauri 2</td>
+            <td>React 19 + Tailwind 4 + TS 6.0 + Radix（声明但未实际引入）</td>
+          </tr>
+          <tr>
+            <td>Agent 运行时</td>
+            <td>Python 3.11+ / FastAPI 0.141.1</td>
+            <td>LangGraph 编排 + 自研调度器</td>
+          </tr>
+          <tr>
+            <td>本地 sidecar</td>
+            <td>Rust / axum</td>
+            <td>fnix-local :8710（README 描述与实现脱节）</td>
+          </tr>
+          <tr>
+            <td>存储</td>
+            <td>SQLite + Markdown（standalone）</td>
+            <td>Profile 系统可切换至 PG/Redis（cloud）</td>
+          </tr>
+          <tr>
+            <td>自进化内核</td>
+            <td>KTG/STP/MFP</td>
+            <td>真实实现：topology 1,438 行 + skills 1,815 行 + flywheel 1,922 行</td>
+          </tr>
+          <tr>
+            <td>测试</td>
+            <td>pytest + vitest + Playwright</td>
+            <td>后端 1826 测试 / 前端仅 7 单测 + 3 E2E</td>
+          </tr>
+          <tr>
+            <td>CI/CD</td>
+            <td>GitHub Actions</td>
+            <td>16 workflow，但核心门禁多处被绕过</td>
+          </tr>
+        </table>
+      </section>
+
+      <!-- ========== 3 评分总览 ========== -->
+      <section>
+        <h2><span class="num">3</span>维度评分总览</h2>
+        <div class="flex" style="align-items: flex-start; gap: 30px">
+          <div style="flex: 0 0 340px">
+            <svg viewBox="0 0 360 340" width="340" height="340" style="max-width: 100%">
+              <!-- 雷达图 -->
+              <g transform="translate(180,175)">
+                <!-- 网格 -->
+                <polygon
+                  points="0,-130 113,-65 113,65 0,130 -113,65 -113,-65"
+                  fill="none"
+                  stroke="#e2e8f0"
+                  stroke-width="1"
+                />
+                <polygon
+                  points="0,-104 90,-52 90,52 0,104 -90,52 -90,-52"
+                  fill="none"
+                  stroke="#e2e8f0"
+                  stroke-width="1"
+                />
+                <polygon
+                  points="0,-78 68,-39 68,39 0,78 -68,39 -68,-39"
+                  fill="none"
+                  stroke="#e2e8f0"
+                  stroke-width="1"
+                />
+                <polygon
+                  points="0,-52 45,-26 45,26 0,52 -45,26 -45,-26"
+                  fill="none"
+                  stroke="#e2e8f0"
+                  stroke-width="1"
+                />
+                <polygon
+                  points="0,-26 23,-13 23,13 0,26 -23,13 -23,-13"
+                  fill="none"
+                  stroke="#e2e8f0"
+                  stroke-width="1"
+                />
+                <!-- 轴线 -->
+                <line x1="0" y1="0" x2="0" y2="-130" stroke="#e2e8f0" />
+                <line x1="0" y1="0" x2="113" y2="-65" stroke="#e2e8f0" />
+                <line x1="0" y1="0" x2="113" y2="65" stroke="#e2e8f0" />
+                <line x1="0" y1="0" x2="0" y2="130" stroke="#e2e8f0" />
+                <line x1="0" y1="0" x2="-113" y2="65" stroke="#e2e8f0" />
+                <line x1="0" y1="0" x2="-113" y2="-65" stroke="#e2e8f0" />
+                <!-- 数据 (满分10, 8维度) 架构7 Python6.5 前端Rust7 安全7 测试CI6 依赖7 文档4 部署6 -->
+                <!-- 比例: value/10*130 -->
+                <polygon
+                  points="0,-91 73.5,-42.3 73.5,42.3 0,91 -79.1,45.5 -64.2,-37"
+                  fill="rgba(37,99,235,0.18)"
+                  stroke="#2563eb"
+                  stroke-width="2"
+                />
+                <!-- 数据点 -->
+                <circle cx="0" cy="-91" r="3.5" fill="#2563eb" />
+                <circle cx="73.5" cy="-42.3" r="3.5" fill="#2563eb" />
+                <circle cx="73.5" cy="42.3" r="3.5" fill="#2563eb" />
+                <circle cx="0" cy="91" r="3.5" fill="#2563eb" />
+                <circle cx="-79.1" cy="45.5" r="3.5" fill="#2563eb" />
+                <circle cx="-64.2" cy="-37" r="3.5" fill="#2563eb" />
+                <!-- 标签 -->
+                <text
+                  x="0"
+                  y="-145"
+                  text-anchor="middle"
+                  font-size="11"
+                  fill="#475569"
+                  font-weight="600"
+                >
+                  架构设计 7.0
+                </text>
+                <text
+                  x="130"
+                  y="-72"
+                  text-anchor="middle"
+                  font-size="11"
+                  fill="#475569"
+                  font-weight="600"
+                >
+                  Python 6.5
+                </text>
+                <text
+                  x="130"
+                  y="78"
+                  text-anchor="middle"
+                  font-size="11"
+                  fill="#475569"
+                  font-weight="600"
+                >
+                  前端/Rust 7.0
+                </text>
+                <text
+                  x="0"
+                  y="152"
+                  text-anchor="middle"
+                  font-size="11"
+                  fill="#475569"
+                  font-weight="600"
+                >
+                  安全 7.0
+                </text>
+                <text
+                  x="-130"
+                  y="78"
+                  text-anchor="middle"
+                  font-size="11"
+                  fill="#475569"
+                  font-weight="600"
+                >
+                  测试CI 6.0
+                </text>
+                <text
+                  x="-150"
+                  y="-25"
+                  text-anchor="middle"
+                  font-size="11"
+                  fill="#dc2626"
+                  font-weight="700"
+                >
+                  文档 4.0
+                </text>
+                <!-- 中心标签 -->
+                <text
+                  x="0"
+                  y="-4"
+                  text-anchor="middle"
+                  font-size="20"
+                  fill="#1e293b"
+                  font-weight="800"
+                >
+                  6.4
+                </text>
+                <text x="0" y="14" text-anchor="middle" font-size="9" fill="#94a3b8">综合</text>
+              </g>
+            </svg>
+            <p class="muted center" style="font-size: 12px; margin-top: -8px">
+              fnix-local（5.5）和 desktop-tauri（4.0）单独评估，未纳入雷达主轴
+            </p>
+          </div>
+          <div style="flex: 1; min-width: 280px">
+            <table>
+              <tr>
+                <th>维度</th>
+                <th>评分</th>
+                <th>一句话</th>
+              </tr>
+              <tr>
+                <td>架构设计</td>
+                <td><span class="badge b-green">7.0</span></td>
+                <td>三进程合理、自进化内核真实，但 core 膨胀 + 文档脱节</td>
+              </tr>
+              <tr>
+                <td>Python 代码质量</td>
+                <td><span class="badge b-amber">6.5</span></td>
+                <td>类型注解 88%，但 1070 行函数 + 360 处吞异常</td>
+              </tr>
+              <tr>
+                <td>前端代码</td>
+                <td><span class="badge b-green">7.5</span></td>
+                <td>TS 极严格、any 仅 8 处，但单测薄弱</td>
+              </tr>
+              <tr>
+                <td>Rust 主后端</td>
+                <td><span class="badge b-green">7.0</span></td>
+                <td>46 模块零占位、150+ IPC 命令，但 lib.rs 2823 行</td>
+              </tr>
+              <tr>
+                <td>Rust fnix-local</td>
+                <td><span class="badge b-amber">5.5</span></td>
+                <td>README 严重失实 + 命令黑名单可绕过</td>
+              </tr>
+              <tr>
+                <td>desktop-tauri</td>
+                <td><span class="badge b-red">4.0</span></td>
+                <td>遗留工程、版本漂移、曾有 RCE 漏洞</td>
+              </tr>
+              <tr>
+                <td>安全</td>
+                <td><span class="badge b-green">7.0</span></td>
+                <td>加密栈扎实，但 .env 明文密钥 + CI 扫描降级</td>
+              </tr>
+              <tr>
+                <td>测试与 CI/CD</td>
+                <td><span class="badge b-amber">6.0</span></td>
+                <td>后端测试充足，但前端裸奔 + 门禁虚化</td>
+              </tr>
+              <tr>
+                <td>依赖管理</td>
+                <td><span class="badge b-green">7.0</span></td>
+                <td>CVE 修补好、分层清晰，但 pytest 混入运行时</td>
+              </tr>
+              <tr>
+                <td>文档完整性</td>
+                <td><span class="badge b-red">4.0</span></td>
+                <td>README/SECURITY 好，但 ARCHITECTURE/DEV/NOTICE 失实</td>
+              </tr>
+              <tr>
+                <td>部署运维</td>
+                <td><span class="badge b-amber">6.0</span></td>
+                <td>Terraform/Helm 实质内容，但版本/端口混乱</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== 4 严重问题清单 ========== -->
+      <section>
+        <h2><span class="num">4</span>严重问题清单（15 项）</h2>
+        <p class="muted" style="font-size: 13px">
+          按影响维度归类，每项附源码证据路径。严重 = 影响正确性/安全/可维护性或误导使用者。
+        </p>
+        <table>
+          <tr>
+            <th>#</th>
+            <th>类别</th>
+            <th>问题</th>
+            <th>证据</th>
+            <th>优先级</th>
+          </tr>
+          <tr>
+            <td>S1</td>
+            <td>文档脱节</td>
+            <td>
+              <b>ARCHITECTURE.md 描述的 Celery/ES/K8s 在代码中零引用</b>。grep
+              "celery"/"elasticsearch"/"kubernetes" 返回 0 结果。文档将 cloud
+              架构呈现为唯一架构，实际默认运行 standalone。
+            </td>
+            <td><span class="evidence">ARCHITECTURE.md:111,69,73</span></td>
+            <td><span class="tag tag-p0">P0</span></td>
+          </tr>
+          <tr>
+            <td>S2</td>
+            <td>安全</td>
+            <td>
+              <b>.env 含明文真实 API 密钥</b>（GLM_API_KEY、DASHSCOPE_API_KEY）。虽未提交
+              git（.gitignore 已排除，git log 验证无历史），但磁盘明文、POSIX 无加密保护。
+            </td>
+            <td><span class="evidence">.env:3,9</span></td>
+            <td><span class="tag tag-p0">P0</span></td>
+          </tr>
+          <tr>
+            <td>S3</td>
+            <td>CI/CD</td>
+            <td>
+              <b>前端测试完全不进 CI</b>。7 个 vitest + 3 个 Playwright spec 无任何 workflow
+              运行（grep 零匹配）。workbench 前端回归完全无保护。
+            </td>
+            <td><span class="evidence">ci.yml:192-243</span></td>
+            <td><span class="tag tag-p0">P0</span></td>
+          </tr>
+          <tr>
+            <td>S4</td>
+            <td>CI/CD</td>
+            <td>
+              <b>CI 安全扫描被静默降级为非阻塞</b>。pyright continue-on-error（ci.yml:54）、Trivy
+              exit-code:0（security.yml:95）、CodeQL continue-on-error（security.yml:143）。
+            </td>
+            <td><span class="evidence">ci.yml:54 / security.yml:95,143</span></td>
+            <td><span class="tag tag-p0">P0</span></td>
+          </tr>
+          <tr>
+            <td>S5</td>
+            <td>僵尸代码</td>
+            <td>
+              <b>format_converter stub 假成功未清理</b>。4 个转换函数返回
+              {"success":true,"engine":"stub"} 但不写文件，团队已标注"严重失信"并用 ConverterExpert
+              替代，但 stub 仍被 __init__.py 导出。
+            </td>
+            <td><span class="evidence">business/converter/format_converter.py:145-189</span></td>
+            <td><span class="tag tag-p0">P0</span></td>
+          </tr>
+          <tr>
+            <td>S6</td>
+            <td>重复实现</td>
+            <td>
+              <b>3 套独立 MCP server 实现</b
+              >：core/mcp/server.py（557行自研JSON-RPC）、mcp_server.py（432行FastMCP
+              SDK）、tasks/mcp_server.py（796行继承BaseExpert），设计理念冲突、维护负担 3 倍。
+            </td>
+            <td><span class="evidence">pyproject.toml:66-68</span></td>
+            <td><span class="tag tag-p1">P1</span></td>
+          </tr>
+          <tr>
+            <td>S7</td>
+            <td>代码质量</td>
+            <td>
+              <b>超长函数圈复杂度灾难</b>。run_work_stream 单函数 1070
+              行（work_pipeline.py:861-1930），run_stream 684
+              行（core/agent/loop.py:648-1331），无法测试/审查。
+            </td>
+            <td><span class="evidence">services/work_pipeline.py:861</span></td>
+            <td><span class="tag tag-p1">P1</span></td>
+          </tr>
+          <tr>
+            <td>S8</td>
+            <td>文档脱节</td>
+            <td>
+              <b>fnix-local README 与实现完全脱节</b>。README 描述 stdio JSON-RPC + AllowList +
+              setrlimit + seccomp，实际是 axum HTTP + 朴素字符串过滤。命令黑名单用 contains()
+              可被变量拼接/编码绕过。
+            </td>
+            <td><span class="evidence">apps/fnix-local/README.md vs src/main.rs:498-509</span></td>
+            <td><span class="tag tag-p0">P0</span></td>
+          </tr>
+          <tr>
+            <td>S9</td>
+            <td>僵尸代码</td>
+            <td>
+              <b>desktop-tauri 遗留工程</b>。package.json 自认 "Legacy"，TS 5.5/vite 5.4（vs
+              workbench 6.0/8.0），曾有 fs_delete/shell_exec RCE 漏洞被移除，与 workbench 职责重叠。
+            </td>
+            <td><span class="evidence">apps/desktop-tauri/package.json</span></td>
+            <td><span class="tag tag-p1">P1</span></td>
+          </tr>
+          <tr>
+            <td>S10</td>
+            <td>文档脱节</td>
+            <td>
+              <b>NOTICE 文件大面积字符腐蚀</b>。C→o、L→o 替换致
+              "LICENSE"→"LIoENSE"、"COMMERCIAL"→"oOMMERoIAL"、"CodeQL"→"oodeQL"，引用路径
+              docs/LIoENSE-oOMMERoIAL.md 不存在。
+            </td>
+            <td><span class="evidence">NOTICE:10,12,20,29,39,44,64,101</span></td>
+            <td><span class="tag tag-p0">P0</span></td>
+          </tr>
+          <tr>
+            <td>S11</td>
+            <td>文档脱节</td>
+            <td>
+              <b>docs/DEVELOPMENT.md 严重过时</b>。FastAPI 0.104（实际 0.141）、version 1.1.0（实际
+              1.0.0）、引用 make dev/seed/docker-up 等不存在的 target、测试数 105。
+            </td>
+            <td><span class="evidence">docs/DEVELOPMENT.md:15-16,912-929</span></td>
+            <td><span class="tag tag-p1">P1</span></td>
+          </tr>
+          <tr>
+            <td>S12</td>
+            <td>部署</td>
+            <td>
+              <b>K8s 部署版本/端口/健康路径三重不一致</b>。manifest 用 v0.5.0+port
+              7891+/v1/health；Helm 用 v1.0.0+port 8000+/health；镜像路径也不同。
+            </td>
+            <td><span class="evidence">deploy/kubernetes/fnixagent-agentd.yaml:11,44,48</span></td>
+            <td><span class="tag tag-p1">P1</span></td>
+          </tr>
+          <tr>
+            <td>S13</td>
+            <td>架构</td>
+            <td>
+              <b>office/ 与 business/ 职责重叠</b>。converter.py、word.py 在两处都有实现（office
+              10,673 行 vs business 4,460 行），同时注册到 ToolRegistry，行为不一致风险高。
+            </td>
+            <td>
+              <span class="evidence"
+                >office/converter.py vs business/converter/format_converter.py</span
+              >
+            </td>
+            <td><span class="tag tag-p1">P1</span></td>
+          </tr>
+          <tr>
+            <td>S14</td>
+            <td>安全</td>
+            <td>
+              <b>审计日志查询失败被静默吞掉</b>。privacy.py:206 except Exception:
+              pass，审计数据缺失时用户无法察觉，形成安全盲区。
+            </td>
+            <td><span class="evidence">api/routers/privacy.py:206</span></td>
+            <td><span class="tag tag-p0">P0</span></td>
+          </tr>
+          <tr>
+            <td>S15</td>
+            <td>CI/CD</td>
+            <td>
+              <b>dependabot 配置缺失 + 17 分支堆积</b>。.github/dependabot.yml 不存在，但 origin 有
+              17 个 dependabot 远程分支（含 cryptography-50.0.0、fastapi-0.139.0
+              等关键升级）未合并。
+            </td>
+            <td><span class="evidence">.github/（无 dependabot.yml）</span></td>
+            <td><span class="tag tag-p0">P0</span></td>
+          </tr>
+        </table>
+      </section>
+
+      <!-- ========== 5 问题优先级矩阵 ========== -->
+      <section>
+        <h2><span class="num">5</span>问题优先级矩阵</h2>
+        <p class="muted" style="font-size: 13px">
+          纵轴 = 严重程度，横轴 = 修复成本。用于决定"先做什么"。
+        </p>
+        <svg
+          viewBox="0 0 720 400"
+          width="100%"
+          style="max-width: 720px; margin: 12px auto; display: block"
+        >
+          <!-- 象限背景 -->
+          <rect x="40" y="20" width="320" height="160" fill="#fef2f2" rx="6" />
+          <rect x="360" y="20" width="320" height="160" fill="#fffbeb" rx="6" />
+          <rect x="40" y="180" width="320" height="160" fill="#ecfdf5" rx="6" />
+          <rect x="360" y="180" width="320" height="160" fill="#eff6ff" rx="6" />
+          <!-- 轴标签 -->
+          <text x="200" y="14" text-anchor="middle" font-size="11" fill="#dc2626" font-weight="700">
+            高严重 · 低成本 → 立即修复
+          </text>
+          <text x="520" y="14" text-anchor="middle" font-size="11" fill="#d97706" font-weight="700">
+            高严重 · 高成本 → 重点投入
+          </text>
+          <text
+            x="200"
+            y="358"
+            text-anchor="middle"
+            font-size="11"
+            fill="#059669"
+            font-weight="700"
+          >
+            低严重 · 低成本 → 顺手清理
+          </text>
+          <text
+            x="520"
+            y="358"
+            text-anchor="middle"
+            font-size="11"
+            fill="#2563eb"
+            font-weight="700"
+          >
+            低严重 · 高成本 → 长期规划
+          </text>
+          <text
+            x="20"
+            y="100"
+            text-anchor="middle"
+            font-size="10"
+            fill="#94a3b8"
+            transform="rotate(-90 20 100)"
+          >
+            严重程度
+          </text>
+          <text x="360" y="375" text-anchor="middle" font-size="10" fill="#94a3b8">修复成本 →</text>
+          <!-- 问题气泡 (左上: 高严重低成本) -->
+          <g font-size="10" fill="#1e293b">
+            <circle cx="90" cy="60" r="20" fill="#dc2626" fill-opacity=".15" stroke="#dc2626" />
+            <text x="90" y="63" text-anchor="middle">NOTICE</text>
+            <circle cx="160" cy="95" r="20" fill="#dc2626" fill-opacity=".15" stroke="#dc2626" />
+            <text x="160" y="98" text-anchor="middle">stub</text>
+            <circle cx="230" cy="60" r="22" fill="#dc2626" fill-opacity=".15" stroke="#dc2626" />
+            <text x="230" y="63" text-anchor="middle">密钥轮换</text>
+            <circle cx="300" cy="100" r="22" fill="#dc2626" fill-opacity=".15" stroke="#dc2626" />
+            <text x="300" y="103" text-anchor="middle">dependabot</text>
+            <circle cx="120" cy="140" r="18" fill="#dc2626" fill-opacity=".15" stroke="#dc2626" />
+            <text x="120" y="143" text-anchor="middle">audit</text>
+            <circle cx="280" cy="150" r="20" fill="#dc2626" fill-opacity=".15" stroke="#dc2626" />
+            <text x="280" y="153" text-anchor="middle">CI扫描</text>
+          </g>
+          <!-- 右上: 高严重高成本 -->
+          <g font-size="10" fill="#1e293b">
+            <circle cx="430" cy="60" r="26" fill="#d97706" fill-opacity=".18" stroke="#d97706" />
+            <text x="430" y="58" text-anchor="middle">ARCH</text>
+            <text x="430" y="70" text-anchor="middle">重写</text>
+            <circle cx="520" cy="110" r="26" fill="#d97706" fill-opacity=".18" stroke="#d97706" />
+            <text x="520" y="108" text-anchor="middle">前端</text>
+            <text x="520" y="120" text-anchor="middle">测试CI</text>
+            <circle cx="610" cy="65" r="22" fill="#d97706" fill-opacity=".18" stroke="#d97706" />
+            <text x="610" y="63" text-anchor="middle">core</text>
+            <text x="610" y="75" text-anchor="middle">拆分</text>
+            <circle cx="600" cy="150" r="22" fill="#d97706" fill-opacity=".18" stroke="#d97706" />
+            <text x="600" y="148" text-anchor="middle">office</text>
+            <text x="600" y="160" text-anchor="middle">合并</text>
+            <circle cx="440" cy="150" r="22" fill="#d97706" fill-opacity=".18" stroke="#d97706" />
+            <text x="440" y="148" text-anchor="middle">MCP</text>
+            <text x="440" y="160" text-anchor="middle">统一</text>
+          </g>
+          <!-- 左下: 低严重低成本 -->
+          <g font-size="10" fill="#1e293b">
+            <circle cx="90" cy="220" r="18" fill="#059669" fill-opacity=".15" stroke="#059669" />
+            <text x="90" y="223" text-anchor="middle">空目录</text>
+            <circle cx="170" cy="260" r="18" fill="#059669" fill-opacity=".15" stroke="#059669" />
+            <text x="170" y="263" text-anchor="middle">Mutex</text>
+            <circle cx="250" cy="220" r="18" fill="#059669" fill-opacity=".15" stroke="#059669" />
+            <text x="250" y="223" text-anchor="middle">tsconfig</text>
+            <circle cx="310" cy="280" r="20" fill="#059669" fill-opacity=".15" stroke="#059669" />
+            <text x="310" y="283" text-anchor="middle">环境变量</text>
+          </g>
+          <!-- 右下: 低严重高成本 -->
+          <g font-size="10" fill="#1e293b">
+            <circle cx="430" cy="230" r="24" fill="#2563eb" fill-opacity=".15" stroke="#2563eb" />
+            <text x="430" y="228" text-anchor="middle">LangGraph</text>
+            <text x="430" y="240" text-anchor="middle">节点</text>
+            <circle cx="530" cy="280" r="22" fill="#2563eb" fill-opacity=".15" stroke="#2563eb" />
+            <text x="530" y="278" text-anchor="middle">E2E</text>
+            <text x="530" y="290" text-anchor="middle">补充</text>
+            <circle cx="620" cy="235" r="22" fill="#2563eb" fill-opacity=".15" stroke="#2563eb" />
+            <text x="620" y="233" text-anchor="middle">pyright</text>
+            <text x="620" y="245" text-anchor="middle">收敛</text>
+            <circle cx="460" cy="300" r="20" fill="#2563eb" fill-opacity=".15" stroke="#2563eb" />
+            <text x="460" y="303" text-anchor="middle">类型注解</text>
+          </g>
+        </svg>
+      </section>
+
+      <!-- ========== 6 各维度详情 ========== -->
+      <section>
+        <h2><span class="num">6</span>各维度详情</h2>
+
+        <details open>
+          <summary>🏗️ 架构设计 · 评分 7.0</summary>
+          <div class="dim-body">
+            <div class="callout callout-green">
+              <b>核心优势：</b>Profile 系统优雅桥接 local-first 与企业架构（<span class="evidence"
+                >core/profile.py:25-81</span
+              >）；自进化内核 KTG/STP/MFP 是真实实现（topology 1,438 行 + skills 1,815 行 + flywheel
+              1,922 行）；引擎与业务解耦原则得到遵守（core/ 零 import business/）；LangGraph 5
+              节点图编排合理。
+            </div>
+            <h3>问题</h3>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-s">严重</span></div>
+              <div class="txt">
+                <b>ARCHITECTURE.md 描述的组件代码中零实现</b>：Celery、Elasticsearch、Kubernetes
+                grep 返回 0 结果；tasks/ 实际是自研任务 DSL 引擎（5,479 行）而非 Celery
+                异步任务。<span class="evidence">ARCHITECTURE.md:111,237</span>
+              </div>
+            </div>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-s">严重</span></div>
+              <div class="txt">
+                <b>office/ 与 business/ 职责重叠</b>：converter.py、word.py 两处实现，同时注册到
+                ToolRegistry，维护成本翻倍。<span class="evidence"
+                  >office/converter.py vs business/converter/format_converter.py</span
+                >
+              </div>
+            </div>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-s">严重</span></div>
+              <div class="txt">
+                <b>core/ 模块严重膨胀</b>：44 个一级子目录、266 文件（占全库 64%），含 ARCHITECTURE
+                未提及的 agent/agentos/autonomy/benchmark/ci/debug 等；core/agent.py 文件与
+                core/agent/ 包并存易混淆。
+              </div>
+            </div>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-m">中等</span></div>
+              <div class="txt">
+                <b>LangGraph 节点为简化占位</b>：perceive_node 用 split() 空格分词非 LLM
+                意图解析；execute_node 对所有工具传 {} 空参数。<span class="evidence"
+                  >graph/nodes.py:48,228</span
+                >
+              </div>
+            </div>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-m">中等</span></div>
+              <div class="txt">
+                <b>API 路由 18 个 vs 文档 4 个</b>：实际注册
+                auth/chat/work/harness/documents/tasks/admin/rbac/audit/privacy/dashboard/agentos/coding/chat_agent/benchmark/skills/memory。<span
+                  class="evidence"
+                  >main.py:316-333</span
+                >
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <details>
+          <summary>🐍 Python 代码质量 · 评分 6.5</summary>
+          <div class="dim-body">
+            <div class="callout callout-green">
+              <b>核心优势：</b>类型注解返回覆盖率 88%（4080/4605 函数）；ruff 56 条 ignore
+              规则逐条附中文注释；文档字符串质量高；0 个 bare except；硬编码密钥仅 2 处占位符。
+            </div>
+            <h3>问题</h3>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-s">严重</span></div>
+              <div class="txt">
+                <b>超长函数</b>：run_work_stream 1070 行、run_stream 684
+                行、register_office_work_tools 482 行。<span class="evidence"
+                  >services/work_pipeline.py:861 / core/agent/loop.py:648</span
+                >
+              </div>
+            </div>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-s">严重</span></div>
+              <div class="txt">
+                <b>format_converter stub 假成功</b>：4 个函数返回 success:true 但不写文件，仍被
+                __init__.py 导出。<span class="evidence"
+                  >business/converter/format_converter.py:145-189</span
+                >
+              </div>
+            </div>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-s">严重</span></div>
+              <div class="txt">
+                <b>3 套 MCP server</b>：自研 JSON-RPC / FastMCP SDK / BaseExpert 继承，维护 3 倍。
+              </div>
+            </div>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-s">严重</span></div>
+              <div class="txt">
+                <b>审计日志查询失败被静默吞掉</b>：<span class="evidence"
+                  >api/routers/privacy.py:206</span
+                >
+              </div>
+            </div>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-m">中等</span></div>
+              <div class="txt">
+                <b>18 个上帝文件 >1000 行</b>：Top5
+                work_pipeline(1940)、core/code/agent.py(1893)、auth.py(1804)、collection_pipeline(1792)、agent_optimizer(1695)。
+              </div>
+            </div>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-m">中等</span></div>
+              <div class="txt">
+                <b>360 处静默吞异常（23%）</b>：1567 个 except handler 中 309 个 pass + 47
+                continue，无日志无 re-raise。
+              </div>
+            </div>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-m">中等</span></div>
+              <div class="txt">
+                <b>13 个空目录骨架未清理</b>：session/sandbox/plugins/nlp/hooks/domain/debug 等无
+                __init__.py。
+              </div>
+            </div>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-l">轻微</span></div>
+              <div class="txt"><b>TODO 仅 10 处</b>，技术债标记管理不足（FIXME/HACK 均为 0）。</div>
+            </div>
+          </div>
+        </details>
+
+        <details>
+          <summary>🖥️ 前端 + Rust 代码 · 评分 7.5 / 7.0 / 5.5 / 4.0</summary>
+          <div class="dim-body">
+            <div class="callout callout-green">
+              <b>前端优势：</b>TS strict 极严格、any 仅 8 处且合理；零 TODO/FIXME；Rust 后端零
+              unimplemented!/todo!、46 模块覆盖 LLM 三路流式 + 150+ IPC 命令；能力门控
+              fail-closed；Zustand 4 store + FSM 守卫。
+            </div>
+            <h3>问题</h3>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-s">严重</span></div>
+              <div class="txt">
+                <b>fnix-local README 与实现完全脱节</b>：README 称 stdio JSON-RPC + AllowList +
+                setrlimit + seccomp，实际是 axum HTTP + 朴素 contains()
+                过滤；命令黑名单可被变量拼接/编码绕过。<span class="evidence"
+                  >apps/fnix-local/src/main.rs:498-509</span
+                >
+              </div>
+            </div>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-s">严重</span></div>
+              <div class="txt">
+                <b>desktop-tauri 遗留工程</b>：自认 Legacy，版本漂移（TS 5.5 vs 6.0），曾有 RCE
+                漏洞移除痕迹。<span class="evidence">apps/desktop-tauri/package.json</span>
+              </div>
+            </div>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-m">中等</span></div>
+              <div class="txt">
+                <b>lib.rs 2823 行</b>：LLM 三路流式逻辑内联，应拆分到 llm/ 子模块。
+              </div>
+            </div>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-m">中等</span></div>
+              <div class="txt">
+                <b>fnix-local Mutex 6 处 unwrap</b>：panic 传播风险，应改 map_err。
+              </div>
+            </div>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-m">中等</span></div>
+              <div class="txt">
+                <b>e2e 仅 3 个 spec</b>：无 Work/Code 模式功能流、文件操作、Agent
+                交互覆盖。前端单测仅 7 文件 311 行，零组件/hook 测试。
+              </div>
+            </div>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-m">中等</span></div>
+              <div class="txt">
+                <b>tsconfig 严格度不一致</b>：base 设 noUnusedLocals:true，app.json 覆盖为 false。
+              </div>
+            </div>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-l">轻微</span></div>
+              <div class="txt">
+                <b>无 Radix UI</b>：README 声称用 Radix 但 package.json 无依赖，缺少焦点陷阱/roving
+                tabindex。
+              </div>
+            </div>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-l">轻微</span></div>
+              <div class="txt">
+                <b>"vector_hits" 命名误导</b>：实为子串匹配，无嵌入/向量。<span class="evidence"
+                  >apps/fnix-local/src/main.rs:429-444</span
+                >
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <details>
+          <summary>🛡️ 安全 · 评分 7.0</summary>
+          <div class="dim-body">
+            <div class="callout callout-green">
+              <b>核心优势：</b>Argon2id + AES-256-GCM + RSA-2048-OAEP + HKDF-SHA256 加密栈；双令牌
+              JWT（2h access + 7d refresh）+ jti 黑名单 + 设备指纹；生产环境护栏拒绝弱 JWT
+              密钥；Windows DPAPI 静态加密；5 策略 InjectionGuard + OutputJudge + 三层
+              guardrail；预提交 detect-secrets + gitleaks 双扫描。
+            </div>
+            <h3>问题</h3>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-s">严重</span></div>
+              <div class="txt">
+                <b>.env 含明文真实 API 密钥</b>（GLM + DashScope）。未提交 git 但磁盘明文，POSIX
+                无加密。<span class="evidence">.env:3,9</span>
+              </div>
+            </div>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-m">中等</span></div>
+              <div class="txt">
+                <b>CI 安全扫描被静默降级</b>：CodeQL continue-on-error、Trivy exit-code:0、gitleaks
+                report continue-on-error。<span class="evidence">security.yml:95,125,143</span>
+              </div>
+            </div>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-m">中等</span></div>
+              <div class="txt">
+                <b>硬编码开发默认值</b>：JWT_SECRET_KEY、signing password、SVID key、owner token
+                均有弱默认回退；仅 JWT 有生产护栏。<span class="evidence"
+                  >token.py:45 / signing.py:479 / identity.py:551 / auth.py:329</span
+                >
+              </div>
+            </div>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-m">中等</span></div>
+              <div class="txt">
+                <b>JWT 密钥模块导入时获取</b>：早于 dotenv 加载，可能用陈旧值。<span
+                  class="evidence"
+                  >token.py:45</span
+                >
+              </div>
+            </div>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-m">中等</span></div>
+              <div class="txt">
+                <b>Python 沙箱 exec() + 正则静态检查可绕过</b>：代码自身承认"纯 Python 沙箱无法 100%
+                安全"。OS 级沙箱（bwrap/Seatbelt）是真正的隔离层。
+              </div>
+            </div>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-m">中等</span></div>
+              <div class="txt">
+                <b>认证端点无速率限制</b>：/register、/owner/login 等缺限流，owner login
+                用已知默认令牌尤脆弱。
+              </div>
+            </div>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-l">轻微</span></div>
+              <div class="txt">
+                <b>standalone 模式无鉴权</b>：伪造 payload
+                {"sub":"desktop"}，本地可接受但端口暴露有风险。<span class="evidence"
+                  >auth.py:211-220</span
+                >
+              </div>
+            </div>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-l">轻微</span></div>
+              <div class="txt">
+                <b>签名密钥库固定盐值</b>：PBKDF2 用硬编码 _SALT，可预计算彩虹表。<span
+                  class="evidence"
+                  >signing.py:80</span
+                >
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <details>
+          <summary>🧪 测试与 CI/CD · 评分 6.0</summary>
+          <div class="dim-body">
+            <div class="callout callout-green">
+              <b>核心优势：</b>后端 1826 测试函数、28,675 行、99 unit + 10 integration；pytest
+              配置规范（--strict-markers）；CI 矩阵覆盖 Python 3.11/3.12/3.13；pre-commit ruff +
+              detect-secrets + gitleaks；社区治理 workflow
+              齐全（stale/labeler/release-drafter/first-interaction）。
+            </div>
+            <h3>问题</h3>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-s">严重</span></div>
+              <div class="txt">
+                <b>前端测试完全不在 CI</b>：7 vitest + 3 Playwright 无 workflow 运行。<span
+                  class="evidence"
+                  >ci.yml 无 vitest/playwright</span
+                >
+              </div>
+            </div>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-s">严重</span></div>
+              <div class="txt">
+                <b>pyright 整 job continue-on-error</b>：类型检查从不拦截，729
+                存量错误无人监控收敛。<span class="evidence">ci.yml:54</span>
+              </div>
+            </div>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-s">严重</span></div>
+              <div class="txt">
+                <b>Trivy exit-code:0</b>：HIGH/CRITICAL 漏洞不阻断 CI。<span class="evidence"
+                  >security.yml:95</span
+                >
+              </div>
+            </div>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-s">严重</span></div>
+              <div class="txt">
+                <b>dependabot.yml 不存在 + 17 分支堆积</b>：含 cryptography-50.0.0、fastapi-0.139.0
+                等关键升级。
+              </div>
+            </div>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-m">中等</span></div>
+              <div class="txt">
+                <b>CodeQL 两个 workflow 重复运行</b>：codeql.yml + security.yml:140-167，且后者
+                continue-on-error，浪费额度。
+              </div>
+            </div>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-m">中等</span></div>
+              <div class="txt">
+                <b>7 个测试目录/文件不在 CI</b
+                >：tests/e2e/（639行）、tests/contract/、test_coding_e2e(458行)、test_agentos_e2e(814行)
+                等仅本地 make test 覆盖。
+              </div>
+            </div>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-m">中等</span></div>
+              <div class="txt">
+                <b>ruff 全局 ignore 58 条</b>：S110/S112（except pass/continue）掩盖 360
+                处吞异常中的真实 bug。
+              </div>
+            </div>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-l">轻微</span></div>
+              <div class="txt"><b>markdown-link-check fail_on_error:no</b>：链接腐坏不阻断。</div>
+            </div>
+          </div>
+        </details>
+
+        <details>
+          <summary>📦 依赖 / 📚 文档 / 🚢 部署 · 评分 7.0 / 4.0 / 6.0</summary>
+          <div class="dim-body">
+            <div class="callout callout-green">
+              <b>依赖优势：</b>CVE 修补意识强（requirements.txt 注释记录
+              fastapi/cryptography/requests CVE）；core/optional 分层清晰，standalone 零外部服务；JS
+              依赖全栈最新（React 19.2 / TS 6.0 / Vite 8）。
+            </div>
+            <div class="callout callout-green">
+              <b>部署优势：</b>Terraform 417 行实质内容（VPC/EKS/RDS）；backup.sh 460 行企业级；Helm
+              Chart 完整；K8s 安全加固（runAsNonRoot/seccomp/drop ALL）。
+            </div>
+            <h3>问题</h3>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-s">严重</span></div>
+              <div class="txt">
+                <b>NOTICE 文件字符腐蚀</b>：C→o、L→o 大面积替换，引用路径不存在。<span
+                  class="evidence"
+                  >NOTICE:10,12,20,29,39,44,64,101</span
+                >
+              </div>
+            </div>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-s">严重</span></div>
+              <div class="txt">
+                <b>ARCHITECTURE.md 描述另一套系统</b>：7 层企业架构含多租户/企业微信/钉钉/ERP，与
+                README local-first 矛盾。
+              </div>
+            </div>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-s">严重</span></div>
+              <div class="txt">
+                <b>DEVELOPMENT.md 严重过时</b>：版本号、依赖版本、Makefile
+                target、测试数全部不符。<span class="evidence"
+                  >docs/DEVELOPMENT.md:15-16,912-929</span
+                >
+              </div>
+            </div>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-s">严重</span></div>
+              <div class="txt">
+                <b>K8s 部署版本/端口/健康路径三重不一致</b>：0.5.0 vs 1.0.0、7891 vs
+                8000、/v1/health vs /health。
+              </div>
+            </div>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-s">严重</span></div>
+              <div class="txt">
+                <b>docker-compose.prod.yml 蜂巢化未实现</b>：4 个"服务"实际跑完整 FastAPI，nginx
+                已配路由但注释说"勿依赖分流"。<span class="evidence"
+                  >deploy/docker/docker-compose.prod.yml:211</span
+                >
+              </div>
+            </div>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-m">中等</span></div>
+              <div class="txt">
+                <b>pytest 混入运行时依赖</b>：standalone 用户安装时也拉入测试框架。<span
+                  class="evidence"
+                  >requirements.txt:67-69</span
+                >
+              </div>
+            </div>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-m">中等</span></div>
+              <div class="txt">
+                <b>@sentry/react 与"无遥测"声明矛盾</b>：README 声明 No telemetry 但依赖 Sentry
+                SDK。
+              </div>
+            </div>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-m">中等</span></div>
+              <div class="txt">
+                <b>CONTRIBUTING.md 自相矛盾</b>：声明不接受贡献但含详细开发规范和许可条款。
+              </div>
+            </div>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-m">中等</span></div>
+              <div class="txt">
+                <b
+                  >pyproject.toml license 字段 "Proprietary" 与 LICENSE 文件 PolyForm Noncommercial
+                  不一致</b
+                >。
+              </div>
+            </div>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-m">中等</span></div>
+              <div class="txt">
+                <b>INDEX.md 5 个死链</b>：引用 ARCHITECTURE_LOCAL_HARNESS.md / BETA_RELEASE.md /
+                agent-research-report.md 等不存在文件。
+              </div>
+            </div>
+            <div class="finding">
+              <div class="sev"><span class="tag tag-l">轻微</span></div>
+              <div class="txt">
+                <b>docs 5381 文件真相</b>：仅 61 个真实文档（54 md + 6 svg），5320 个是未跟踪的
+                docs/internal/.venv/ 实验环境产物。
+              </div>
+            </div>
+          </div>
+        </details>
+      </section>
+
+      <!-- ========== 7 深层问题分析 ========== -->
+      <section>
+        <h2><span class="num">7</span>深层问题分析</h2>
+
+        <h3>① 架构漂移：双形态策略执行不完整</h3>
+        <p>
+          项目实际采用了 <b>Profile 系统</b>（standalone / local-stack /
+          cloud）来桥接桌面与企业两种形态——这在技术上是合理的。问题在于执行不完整：
+        </p>
+        <ul style="margin: 6px 0 12px 20px">
+          <li>
+            <b>ARCHITECTURE.md 描述的是 cloud 目标架构但未标注</b>，将 Celery/ES/K8s
+            呈现为已实现，实际代码零引用
+          </li>
+          <li>
+            <b>云部署方案停滞在 0.5.0</b>：K8s manifest 版本号、端口、健康路径均未随 1.0.0 更新
+          </li>
+          <li>
+            <b>蜂巢化拆分有 shell 无内核</b>：nginx/compose 已配置 4 个 upstream，但 FastAPI 无
+            --service 入口，4 个容器跑相同代码
+          </li>
+          <li><b>未完成的云部署代码混在主仓库</b>，对桌面用户造成认知负担</li>
+        </ul>
+        <div class="callout callout-blue">
+          <b>结论：</b>不是"矛盾"而是"双形态策略执行不完整"。local-first
+          是当前产品形态，云部署是停滞的愿景。建议将云部署移至 <code>deploy/cloud/</code> 并标注
+          experimental，或完整实现并随版本同步。
+        </div>
+
+        <h3>② 文档与实现脱节：系统性问题</h3>
+        <table>
+          <tr>
+            <th>文档</th>
+            <th>脱节程度</th>
+            <th>核心矛盾</th>
+          </tr>
+          <tr>
+            <td>ARCHITECTURE.md</td>
+            <td><span class="tag tag-s">严重</span></td>
+            <td>描述企业 7 层架构，实际 local-first 桌面；Celery/ES/K8s 零引用</td>
+          </tr>
+          <tr>
+            <td>DEVELOPMENT.md</td>
+            <td><span class="tag tag-s">严重</span></td>
+            <td>版本/依赖/target/测试数全部过时</td>
+          </tr>
+          <tr>
+            <td>NOTICE</td>
+            <td><span class="tag tag-s">严重</span></td>
+            <td>字符腐蚀 + 引用过时信息（React 18、不存在的文件）</td>
+          </tr>
+          <tr>
+            <td>fnix-local README</td>
+            <td><span class="tag tag-s">严重</span></td>
+            <td>描述 JSON-RPC/seccomp，实际 HTTP/朴素过滤</td>
+          </tr>
+          <tr>
+            <td>INDEX.md</td>
+            <td><span class="tag tag-m">中等</span></td>
+            <td>5 个死链引用不存在的文件</td>
+          </tr>
+          <tr>
+            <td>CONTRIBUTING.md</td>
+            <td><span class="tag tag-m">中等</span></td>
+            <td>不接受贡献但含详细开发规范</td>
+          </tr>
+        </table>
+
+        <h3>③ CI 质量门禁虚化</h3>
+        <p>CI 名义上有 16 个 workflow，但核心质量门禁的实际拦截力被系统性弱化：</p>
+        <div class="grid2">
+          <div class="callout callout-red">
+            <b>完全失效：</b><br />• 前端测试不进 CI（vitest/playwright 零匹配）<br />• pyright job
+            级 continue-on-error（ci.yml:54）<br />• desktop-tauri job 级
+            continue-on-error（ci.yml:195）
+          </div>
+          <div class="callout callout-amber">
+            <b>降级为非阻塞：</b><br />• Trivy exit-code:0（security.yml:95）<br />• CodeQL
+            continue-on-error（security.yml:143）<br />• markdown-link-check fail_on_error:no<br />•
+            codecov fail_ci_if_error:false
+          </div>
+        </div>
+
+        <h3>④ 过度工程与僵尸代码</h3>
+        <table>
+          <tr>
+            <th>类型</th>
+            <th>具体</th>
+            <th>证据</th>
+          </tr>
+          <tr>
+            <td>模块膨胀</td>
+            <td>core/ 44 子目录 266 文件，含 13 个空目录骨架</td>
+            <td>src/fnixagent/core/</td>
+          </tr>
+          <tr>
+            <td>重复实现</td>
+            <td>3 套 MCP server / office+business 双实现 / 文件工具 3 处重复</td>
+            <td>pyproject.toml:66-68</td>
+          </tr>
+          <tr>
+            <td>遗留工程</td>
+            <td>desktop-tauri 自认 Legacy，版本漂移，曾有 RCE</td>
+            <td>apps/desktop-tauri/package.json</td>
+          </tr>
+          <tr>
+            <td>僵尸代码</td>
+            <td>format_converter stub 假成功 / stage1-4 占位别名文件(各9行) / 双命名别名</td>
+            <td>business/converter/format_converter.py:145</td>
+          </tr>
+          <tr>
+            <td>未实现愿景</td>
+            <td>蜂巢化 / K8s / Terraform cloud 栈 / vLLM</td>
+            <td>deploy/docker/docker-compose.prod.yml:211</td>
+          </tr>
+        </table>
+      </section>
+
+      <!-- ========== 8 技术债量化 ========== -->
+      <section>
+        <h2><span class="num">8</span>技术债量化</h2>
+        <div class="grid4" style="margin-bottom: 14px">
+          <div class="stat-card">
+            <div class="v">18</div>
+            <div class="l">超 1000 行文件</div>
+            <div class="d">最大 1940 行(work_pipeline)</div>
+          </div>
+          <div class="stat-card">
+            <div class="v">360</div>
+            <div class="l">静默吞异常</div>
+            <div class="d">占 except 的 23%</div>
+          </div>
+          <div class="stat-card">
+            <div class="v">729</div>
+            <div class="l">pyright 存量错误</div>
+            <div class="d">basic 模式，无人收敛</div>
+          </div>
+          <div class="stat-card">
+            <div class="v">58</div>
+            <div class="l">ruff 全局 ignore</div>
+            <div class="d">含 S110/S112 安全规则</div>
+          </div>
+        </div>
+        <div class="grid4" style="margin-bottom: 14px">
+          <div class="stat-card">
+            <div class="v">3</div>
+            <div class="l">重复 MCP server</div>
+            <div class="d">557+432+796 行</div>
+          </div>
+          <div class="stat-card">
+            <div class="v">13</div>
+            <div class="l">空目录骨架</div>
+            <div class="d">无 __init__.py</div>
+          </div>
+          <div class="stat-card">
+            <div class="v">17</div>
+            <div class="l">堆积 dependabot 分支</div>
+            <div class="d">无配置文件</div>
+          </div>
+          <div class="stat-card">
+            <div class="v">4</div>
+            <div class="l">continue-on-error 位置</div>
+            <div class="d">+3 处等效"永不失败"</div>
+          </div>
+        </div>
+        <h3>超长文件 Top 10（&gt;1000 行）</h3>
+        <table>
+          <tr>
+            <th>#</th>
+            <th>文件</th>
+            <th>行数</th>
+            <th>模块</th>
+          </tr>
+          <tr>
+            <td>1</td>
+            <td><code>services/work_pipeline.py</code></td>
+            <td>1940</td>
+            <td>services</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td><code>core/code/agent.py</code></td>
+            <td>1893</td>
+            <td>core/code</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td><code>api/routers/auth.py</code></td>
+            <td>1804</td>
+            <td>api</td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td><code>core/intelligence/collection_pipeline.py</code></td>
+            <td>1792</td>
+            <td>core/intelligence</td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td><code>core/intelligence/agent_optimizer.py</code></td>
+            <td>1695</td>
+            <td>core/intelligence</td>
+          </tr>
+          <tr>
+            <td>6</td>
+            <td><code>core/agent/loop.py</code></td>
+            <td>1690</td>
+            <td>core/agent</td>
+          </tr>
+          <tr>
+            <td>7</td>
+            <td><code>office/parser.py</code></td>
+            <td>1661</td>
+            <td>office</td>
+          </tr>
+          <tr>
+            <td>8</td>
+            <td><code>core/tools/workspace.py</code></td>
+            <td>1466</td>
+            <td>core/tools</td>
+          </tr>
+          <tr>
+            <td>9</td>
+            <td><code>office/word.py</code></td>
+            <td>1458</td>
+            <td>office</td>
+          </tr>
+          <tr>
+            <td>10</td>
+            <td><code>api/routers/work.py</code></td>
+            <td>1253</td>
+            <td>api</td>
+          </tr>
+        </table>
+      </section>
+
+      <!-- ========== 9 改进路线图 ========== -->
+      <section>
+        <h2><span class="num">9</span>改进路线图</h2>
+        <div class="tl">
+          <div class="tl-step">
+            <div class="tl-dot p0">P0</div>
+            <div class="tl-title">立即修复</div>
+            <div class="tl-desc">
+              密钥轮换<br />NOTICE 修复<br />stub 删除<br />audit 日志修复<br />dependabot 配置
+            </div>
+          </div>
+          <div class="tl-step">
+            <div class="tl-dot p0">P0</div>
+            <div class="tl-title">CI 门禁</div>
+            <div class="tl-desc">
+              前端测试入CI<br />移除 Trivy exit-0<br />移除 CodeQL 重复<br />收敛 continue-on-error
+            </div>
+          </div>
+          <div class="tl-step">
+            <div class="tl-dot p1">P1</div>
+            <div class="tl-title">文档对齐</div>
+            <div class="tl-desc">
+              重写 ARCHITECTURE<br />更新 DEVELOPMENT<br />重写 fnix-local README<br />修复 INDEX
+              死链
+            </div>
+          </div>
+          <div class="tl-step">
+            <div class="tl-dot p1">P1</div>
+            <div class="tl-title">代码重构</div>
+            <div class="tl-desc">
+              拆分超长函数<br />统一 MCP server<br />合并 office/business<br />归档 desktop-tauri
+            </div>
+          </div>
+          <div class="tl-step">
+            <div class="tl-dot p2">P2</div>
+            <div class="tl-title">质量提升</div>
+            <div class="tl-desc">
+              收紧 ruff ignore<br />补充 E2E 测试<br />统一部署版本<br />清理空目录
+            </div>
+          </div>
+          <div class="tl-step">
+            <div class="tl-dot p3">P3</div>
+            <div class="tl-title">长期治理</div>
+            <div class="tl-desc">core 拆分<br />pyright 收敛<br />类型注解提升<br />云部署归档</div>
+          </div>
+        </div>
+
+        <h3>P0 · 立即修复（本周）</h3>
+        <table>
+          <tr>
+            <th>#</th>
+            <th>动作</th>
+            <th>问题</th>
+            <th>成本</th>
+          </tr>
+          <tr>
+            <td>1</td>
+            <td>轮换 .env 中的 GLM + DashScope API 密钥</td>
+            <td>S2 安全</td>
+            <td><span class="tag tag-l">低</span></td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>修复 NOTICE 文件字符腐蚀 + 更新过时信息</td>
+            <td>S10 文档</td>
+            <td><span class="tag tag-l">低</span></td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td>删除 format_converter.py stub（已被 ConverterExpert 替代）</td>
+            <td>S5 僵尸代码</td>
+            <td><span class="tag tag-l">低</span></td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td>修复 privacy.py:206 审计日志静默吞异常</td>
+            <td>S14 安全</td>
+            <td><span class="tag tag-l">低</span></td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td>创建 .github/dependabot.yml + 合并/关闭 17 个堆积分支</td>
+            <td>S15 CI</td>
+            <td><span class="tag tag-l">低</span></td>
+          </tr>
+          <tr>
+            <td>6</td>
+            <td>前端测试接入 CI（新增 frontend-test job）</td>
+            <td>S3 CI</td>
+            <td><span class="tag tag-m">中</span></td>
+          </tr>
+          <tr>
+            <td>7</td>
+            <td>移除 Trivy exit-code:0、CodeQL 重复 + continue-on-error</td>
+            <td>S4 CI</td>
+            <td><span class="tag tag-m">中</span></td>
+          </tr>
+        </table>
+
+        <h3>P1 · 近期修复（2-4 周）</h3>
+        <table>
+          <tr>
+            <th>#</th>
+            <th>动作</th>
+            <th>问题</th>
+            <th>成本</th>
+          </tr>
+          <tr>
+            <td>8</td>
+            <td>重写 ARCHITECTURE.md（拆分 standalone/cloud，标注未实现）</td>
+            <td>S1 文档</td>
+            <td><span class="tag tag-m">中</span></td>
+          </tr>
+          <tr>
+            <td>9</td>
+            <td>更新 DEVELOPMENT.md（版本/依赖/target/测试数）</td>
+            <td>S11 文档</td>
+            <td><span class="tag tag-l">低</span></td>
+          </tr>
+          <tr>
+            <td>10</td>
+            <td>重写 fnix-local README 或升级实现（加白名单/资源限额）</td>
+            <td>S8 文档/安全</td>
+            <td><span class="tag tag-m">中</span></td>
+          </tr>
+          <tr>
+            <td>11</td>
+            <td>拆分 run_work_stream(1070行) + run_stream(684行)</td>
+            <td>S7 代码</td>
+            <td><span class="tag tag-m">中</span></td>
+          </tr>
+          <tr>
+            <td>12</td>
+            <td>统一 3 套 MCP server 为 1 套</td>
+            <td>S6 重复</td>
+            <td><span class="tag tag-m">中</span></td>
+          </tr>
+          <tr>
+            <td>13</td>
+            <td>归档/删除 desktop-tauri 遗留工程</td>
+            <td>S9 僵尸</td>
+            <td><span class="tag tag-l">低</span></td>
+          </tr>
+          <tr>
+            <td>14</td>
+            <td>统一 K8s 部署版本/端口/健康路径至 1.0.0</td>
+            <td>S12 部署</td>
+            <td><span class="tag tag-l">低</span></td>
+          </tr>
+          <tr>
+            <td>15</td>
+            <td>合并 office/ 与 business/（消除重复 converter/word）</td>
+            <td>S13 架构</td>
+            <td><span class="tag tag-m">中</span></td>
+          </tr>
+        </table>
+
+        <h3>P2 · 中期优化（1-2 月）</h3>
+        <table>
+          <tr>
+            <th>#</th>
+            <th>动作</th>
+            <th>成本</th>
+          </tr>
+          <tr>
+            <td>16</td>
+            <td>收紧 ruff S110/S112 为 per-file-ignores（仅 tests 放宽）</td>
+            <td><span class="tag tag-l">低</span></td>
+          </tr>
+          <tr>
+            <td>17</td>
+            <td>补充 E2E 测试（chat-send/review-apply/project-switch）</td>
+            <td><span class="tag tag-m">中</span></td>
+          </tr>
+          <tr>
+            <td>18</td>
+            <td>解决 @sentry/react 与"无遥测"矛盾</td>
+            <td><span class="tag tag-l">低</span></td>
+          </tr>
+          <tr>
+            <td>19</td>
+            <td>统一 tsconfig 严格度（noUnusedLocals 改回 true）</td>
+            <td><span class="tag tag-l">低</span></td>
+          </tr>
+          <tr>
+            <td>20</td>
+            <td>fnix-local Mutex unwrap 改 map_err + 命令过滤加白名单</td>
+            <td><span class="tag tag-m">中</span></td>
+          </tr>
+          <tr>
+            <td>21</td>
+            <td>认证端点加速率限制</td>
+            <td><span class="tag tag-l">低</span></td>
+          </tr>
+        </table>
+
+        <h3>P3 · 长期治理（季度）</h3>
+        <table>
+          <tr>
+            <th>#</th>
+            <th>动作</th>
+            <th>成本</th>
+          </tr>
+          <tr>
+            <td>22</td>
+            <td>core/ 拆分：intelligence/security 提升为顶层模块，44→~15 子目录</td>
+            <td><span class="tag tag-s">高</span></td>
+          </tr>
+          <tr>
+            <td>23</td>
+            <td>pyright 基线收敛：729 存量错误逐模块清零</td>
+            <td><span class="tag tag-s">高</span></td>
+          </tr>
+          <tr>
+            <td>24</td>
+            <td>完善 LangGraph 节点（LLM 意图解析 + tool_call 参数）</td>
+            <td><span class="tag tag-m">中</span></td>
+          </tr>
+          <tr>
+            <td>25</td>
+            <td>云部署方案归档至 deploy/cloud/ 或完整实现</td>
+            <td><span class="tag tag-s">高</span></td>
+          </tr>
+          <tr>
+            <td>26</td>
+            <td>建立函数行数 CI 门槛（防 &gt;100 行函数再生）</td>
+            <td><span class="tag tag-l">低</span></td>
+          </tr>
+        </table>
+      </section>
+
+      <!-- ========== 10 结论 ========== -->
+      <section>
+        <h2><span class="num">10</span>结论</h2>
+        <div class="callout callout-blue">
+          <p>
+            <b>FnixAgent 是一个有真实技术深度的 local-first AI 工作台</b
+            >，自进化内核（KTG/STP/MFP）是经过验证的真实实现而非空壳，安全纵深设计（Argon2id/AES-256-GCM/双令牌
+            JWT/InjectionGuard/OS 级沙箱）高于同类项目平均水平，前端 TS 严格度极高（any 仅 8
+            处）、Rust 后端零占位符。这些是项目的核心价值所在。
+          </p>
+        </div>
+        <div class="callout callout-amber">
+          <p><b>但项目的"工程纪律"尚未完全匹配其技术野心。</b>三大系统性问题需要优先治理：</p>
+          <ol style="margin: 6px 0 0 18px">
+            <li>
+              <b>文档与实现脱节</b>：6
+              份核心文档与实际代码不符，会持续误导使用者和新开发者。这是当前最紧迫的问题（文档评分仅
+              4.0）。
+            </li>
+            <li>
+              <b>CI 门禁虚化</b>：7 处 continue-on-error/exit-code:0
+              让质量门禁形同虚设，前端完全裸奔。这让 v1.0.0 GA 的质量背书缺乏 CI 证据支撑。
+            </li>
+            <li>
+              <b>过度工程与僵尸代码</b>：core 膨胀 + 3 套 MCP + 遗留工程 +
+              未实现云部署，增加了维护负担和认知成本。
+            </li>
+          </ol>
+        </div>
+        <div class="callout callout-green">
+          <p>
+            <b>好消息是：大部分严重问题修复成本低。</b>15 项严重问题中，7
+            项属于"高严重低成本"象限（密钥轮换、NOTICE 修复、stub 删除、audit 修复、dependabot
+            配置等），可在本周内完成。CI 门禁修复和文档对齐是 2-4 周内的重点投入方向。
+          </p>
+        </div>
+        <p style="margin-top: 14px">
+          <b>综合建议：</b>项目技术底座扎实，建议以"文档对齐 → CI 门禁修复 →
+          代码重构"的顺序推进治理，优先消除误导性文档和失效门禁，再逐步消化技术债。完成 P0+P1
+          后，项目可从"工具链完善但纪律未落地"升级为"工程纪律与技术深度匹配"的成熟状态。
+        </p>
+      </section>
+
+      <footer>
+        FnixAgent 深度调研报告 · 生成于 2026-08-20 · 综合评分 6.4/10<br />
+        审计范围：E:\FNIX\FnixAgent · 基于 6 路并行源码级调研 · 所有结论附 path:行号 证据
+      </footer>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,14 @@
+Add -c short option for --collect-only
+
+diff --git a/_pytest/config/argparsing.py b/_pytest/config/argparsing.py
+--- a/_pytest/config/argparsing.py
++++ b/_pytest/config/argparsing.py
+@@ -123,6 +123,6 @@
+         group.addoption(
+-            "--collect-only",
++            "-c", "--collect-only",
+             action="store_true",
+             dest="collectonly",
+             default=False,
+             help="Only collect tests, don't execute them.",
+         )

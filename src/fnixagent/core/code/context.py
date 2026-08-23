@@ -29,11 +29,15 @@ Usage:
 
 from __future__ import annotations
 
+import logging
 import re
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 from typing import Any
+
+_logger = logging.getLogger(__name__)
+
 
 # ============================================================================
 # 数据结构
@@ -397,7 +401,7 @@ class ContextBuilder:
                 if ruff_cfg:
                     return self._format_ruff_config(ruff_cfg)
             except Exception:
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
         except ImportError:
             pass
 

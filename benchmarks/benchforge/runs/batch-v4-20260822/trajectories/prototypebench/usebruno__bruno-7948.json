@@ -1,0 +1,28 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "usebruno__bruno-7948",
+  "prompt": "### Description\r\n\r\n[JIRA](https://usebruno.atlassian.net/browse/BRU-3327)\r\n\r\n#### Contribution Checklist:\r\n\r\n- [ ] **I've used AI significantly to create this pull request**\r\n- [ ] **The pull request only addresses one issue or adds one feature.**\r\n- [ ] **The pull request does not introduce any breaking changes**\r\n- [ ] **I have added screenshots or gifs to help explain the change if applicable.**\r\n- [ ] **I have read the [contribution guidelines](https://github.com/usebruno/bruno/blob/main/contributing.md).**\r\n- [ ] **Create an issue and link to the pull request.**\r\n\r\nNote: Keeping the PR small and focused helps make it easier to review and merge. If you have multiple changes you want to make, please consider submitting them as separate pull requests.\r\n\r\n#### Publishing to New Package Managers\r\n\r\nPlease see [here](../publishing.md) for more information.\r\n\n\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\n\n## Summary by CodeRabbit\n\n## Release Notes\n\n* **Bug Fixes**\n  * Request tabs now correctly synchronize with collection items, ensuring proper tab state when navigating between different requests\n\n* **Tests**\n  * Added comprehensive automated tests to verify request pane tab interactivity and UI state restoration after application restart\n  * Tests validate persistence behavior across different request types to ensure reliable user experience\n\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->",
+  "status": "infra_skip",
+  "failure_type": "",
+  "failure_evidence": "基础设施错误(LLM 配额/鉴权)，待配额恢复后重跑: LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-2026-05-20): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"us",
+  "final_response": "",
+  "steps": [
+    "Step 0 | 思考: Let me understand the task. This is a PR for Bruno (an API client) related to JIRA ticket BRU-3327, ... | 工具 ✓ ls({\"path\": \".\"}) | 耗时: 1649ms, tokens: 3062"
+  ],
+  "tool_calls": [
+    {
+      "step": 1,
+      "tool": "ls",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'count': 0, 'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\batch-v4-20260822\\\\workspaces\\\\prototypebench__usebruno__bruno-7948__bf691a'})\n(空目录)"
+    }
+  ],
+  "files_written": [],
+  "total_tokens": 3062,
+  "duration_ms": 1708.9677000039956,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-2026-05-20): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787382550.9114113,
+  "workspace": "benchmarks\\benchforge\\runs\\batch-v4-20260822\\workspaces\\prototypebench__usebruno__bruno-7948__bf691a"
+}

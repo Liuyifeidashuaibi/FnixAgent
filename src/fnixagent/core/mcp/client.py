@@ -25,6 +25,7 @@ from __future__ import annotations
 import asyncio
 import itertools
 import json
+import logging
 import os
 import threading
 import time
@@ -43,6 +44,9 @@ from fnixagent.core.mcp.types import (
     MCPToolDef,
     MCPTransport,
 )
+
+_logger = logging.getLogger(__name__)
+
 
 # ---------------------------------------------------------------------------
 # 异常
@@ -146,7 +150,7 @@ class _StdioTransport(_BaseTransport):
                 self._proc.kill()
                 await self._proc.wait()
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
         finally:
             self._proc = None
 
@@ -341,7 +345,7 @@ class MCPClient:
                 )
                 await self._transport.send(notif)
             except Exception:
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
         finally:
             await self._safe_close()
             self._connected = False
@@ -536,7 +540,7 @@ class MCPClient:
         try:
             await self._transport.send(notif)
         except Exception:
-            pass  # 通知失败不阻断
+            _logger.debug('Unhandled exception', exc_info=True)  # 通知失败不阻断
 
     async def _call_method(
         self,
@@ -611,7 +615,7 @@ class MCPClient:
             try:
                 await self._transport.close()
             except Exception:
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
             self._transport = None
 
     def _run_async(self, coro):

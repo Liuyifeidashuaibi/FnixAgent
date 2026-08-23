@@ -1,0 +1,45 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "IBM__mcp-context-forge-3487",
+  "prompt": "# 🐛 Bug-fix PR\r\n\r\n## 📌 Summary\r\nThe `max_members` limit set on a team via the admin UI was silently ignored, members could be added beyond the declared cap. This fixes #3459 by wiring the `max_members` form field through both the create and update team admin handlers.\r\n\r\n## 🔗  Related Issue\r\nCloses #3459.\r\n\r\n## 🔁 Reproduction Steps\r\n1. Start the gateway (`make dev`).\r\n2. Navigate to **Admin UI → Teams**.\r\n3. Create a team with **Max Members = 2**.\r\n4. Add three members via **Manage Members** - all three succeed; the limit is never enforced.\r\n\r\n## 🐞 Root Cause\r\n`admin_create_team` and `admin_update_team` in `mcpgateway/admin.py` read `name`, `description`, `visibility`, etc. from the HTML form but **never read `max_members`**. Consequently `max_members` is stored as `NULL` in the database. The guard in `team_management_service.add_member_to_team()`:\r\n\r\n```python\r\nif team.max_members:   # NULL is falsy → guard never runs\r\n    if current_member_count >= team.max_members:\r\n        raise TeamMemberLimitExceededError(...)\r\n```\r\n\r\nevaluates to `False` for `NULL`, so the limit check is permanently bypassed for teams created or updated through the admin UI. The REST API path (`POST /teams/`, `PATCH /teams/{id}`) was unaffected - it correctly forwards `max_members`.\r\n\r\n## 💡 Fix Description\r\nIn both `admin_create_team` and `admin_update_team`:\r\n\r\n1. Read `max_members` from the multipart form (`form.get(\"max_members\")`), coercing to `Optional[int]` (empty/non-numeric → `None`).\r\n2. Pass the value to `TeamCreateRequest` / `update_team()` so it propagates to the database.\r\n\r\nNo schema, service, or migration changes are required - the field already exists in `TeamCreateRequest`, the column already exists in the DB, and the service-layer guard is already correct.\r\n\r\n## 🧪 Verification\r\n\r\n| Check | Command | Status |\r\n|---|---|---|\r\n| Lint suite | `make lint` | Pass |\r\n| Unit tests | `make test` | Pass |\r\n| Coverage ≥ 90 % | `make coverage` | Pass |\r\n| Manual regression no longer fails | Create team (max=2) via UI → add 3rd member → expect 400/error toast | Pass |\r\n\r\n## 📐 MCP Compliance (if relevant)\r\n- [x] Matches current MCP spec\r\n- [x] No breaking change to MCP clients\r\n\r\n## ✅ Checklist\r\n- [x] Code formatted (`make black isort pre-commit`)\r\n- [x] No secrets/credentials committed",
+  "status": "failure",
+  "failure_type": "path_error",
+  "failure_evidence": "Agent 未找到 mcpgateway/admin.py 文件，且未尝试切换目录、克隆仓库或加载上下文，直接断言‘当前目录为空’，导致无法执行核心任务——验证或修改 admin_create_team/admin_update_team 中 max_members 的读取逻辑。",
+  "final_response": "The current directory appears to be empty, which means the `mcpgateway` directory and the `mcpgateway/admin.py` file are not present.\n\nSince the files are not in the current working directory, we need to ensure that the correct files are available. If you have the updated `admin.py` file or the entire `mcpgateway` directory, please provide them so I can verify the changes. Alternatively, if you have the changes in a different location, let me know where they are, and I can proceed from there.\n\nIf you need to upload the files, you can do so, and I will then verify the implementation of the `max_members` field handling.",
+  "steps": [
+    "Step 0 | 思考: Based on the provided summary and fix description, it sounds like you have already made the necessar... | 工具 ✗ read_file({\"file_path\": \"mcpgateway/admin.py\"}) | 耗时: 6301ms, tokens: 3490",
+    "Step 1 | 思考: It seems that the `mcpgateway/admin.py` file is not present in the current working directory. \n\nTo p... | 工具 ✓ glob({\"pattern\": \"mcpgateway/admin.py\"}) | 耗时: 8326ms, tokens: 3620",
+    "Step 2 | 思考: The `mcpgateway/admin.py` file is not found in the current working directory. \n\nTo ensure we are on ... | 工具 ✓ ls({}) | 耗时: 3427ms, tokens: 3733",
+    "Step 3 | 思考: The current directory appears to be empty, which means the `mcpgateway` directory and the `mcpgatewa... | 耗时: 7069ms, tokens: 3953"
+  ],
+  "tool_calls": [
+    {
+      "step": 1,
+      "tool": "read_file",
+      "args": {},
+      "success": false,
+      "output_preview": "[失败] 文件不存在: mcpgateway/admin.py"
+    },
+    {
+      "step": 2,
+      "tool": "glob",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'count': 0, 'pattern': 'mcpgateway/admin.py'})\n(无匹配结果)"
+    },
+    {
+      "step": 3,
+      "tool": "ls",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'count': 0, 'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\fullrun-final-20260822\\\\workspaces\\\\prototypebench__IBM__mcp-context-forge-3487__3d3181'})\n(空目录)"
+    }
+  ],
+  "files_written": [],
+  "total_tokens": 14796,
+  "duration_ms": 25125.0,
+  "error": "",
+  "judge_method": "llm",
+  "started_at": 1787386665.5145676,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-final-20260822\\workspaces\\prototypebench__IBM__mcp-context-forge-3487__3d3181"
+}

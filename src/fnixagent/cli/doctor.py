@@ -8,9 +8,13 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import shutil
 import sys
+
+_logger = logging.getLogger(__name__)
+
 
 
 def _ok(msg: str) -> None:
@@ -112,7 +116,7 @@ def run_doctor() -> int:
                 if ":" in hostport:
                     ports.append(int(hostport.rsplit(":", 1)[-1]))
             except Exception:
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
     for p in (8003, 8011, 8000):
         if p not in ports:
             ports.append(p)

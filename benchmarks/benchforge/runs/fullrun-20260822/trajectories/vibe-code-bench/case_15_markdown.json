@@ -1,0 +1,18 @@
+{
+  "dataset": "vibe-code-bench",
+  "task_id": "case_15_markdown",
+  "prompt": "# Build me a Markdown Editor\n\nCreate a split-pane markdown editor:\n\n- Left side: text input for markdown\n- Right side: live preview of rendered HTML\n- Support for:\n  - Headers (# ## ###)\n  - Bold (**text**) and italic (*text*)\n  - Lists (- and 1. 2. 3.)\n  - Links [text](url)\n  - Code blocks ```code```\n  - Blockquotes (>)\n- Save/load from localStorage\n- Dark mode toggle\n- Export as HTML button\n\nSingle HTML file.",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[\"\"\"\nFunctional tests for Markdown Editor (case_15_markdown).\n\nTests verify actua] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787332461.1220348,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\vibe-code-bench__case_15_markdown__cfdb78"
+}

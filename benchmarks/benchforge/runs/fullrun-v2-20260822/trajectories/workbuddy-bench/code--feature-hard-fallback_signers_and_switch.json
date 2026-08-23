@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "code--feature-hard-fallback_signers_and_switch",
+  "prompt": "我们做 key rotation 时，希望新 signer 验不过还能尝试几套旧 signer。帮 Serializer 支持 `fallback_signers`，配置形式尽量跟现有 signer 参数风格贴近，最后的签名错误也别丢信息；fallback 配置处理最好能单独覆盖。把 fallback_signers 的主流程和单独覆盖入口也补到测试里。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 359.9999999996726,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336324.9534602,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\workbuddy-bench__code--feature-hard-fallback_signers_and_switch__d25a45"
+}

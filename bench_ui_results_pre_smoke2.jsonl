@@ -1,0 +1,1 @@
+{"dataset": "vibe-code-bench", "task_id": "case_01_pomodoro", "subset": "eval", "workspace": "C:\\Users\\liuyi\\.fnix\\workspaces\\bench\\vibe-code-bench\\case_01_pomodoro", "status": "success", "detail": "⚠️ attempt to write a readonly database", "duration_s": 14.1, "files_written": [".fnix/rules.md", ".fnix/skills/README.md"], "artifacts": [], "ts": "2026-08-23T00:59:12"}

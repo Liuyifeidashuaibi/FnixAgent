@@ -1,0 +1,15 @@
+diff --git a/requests/models.py b/requests/models.py
+index abc1234..def5678 100644
+--- a/requests/models.py
++++ b/requests/models.py
+@@ -620,7 +620,11 @@ class Response(object):
+         # Special case if streaming.
+         if self._content_consumed:
+             raise StreamConsumedError()
+-        for chunk in self.raw.stream(chunk_size, decode_content=decode_content):
++
++        try:
++            for chunk in self.raw.stream(chunk_size, decode_content=decode_content):
++                yield chunk
++        except (IOError, OSError, socket.error) as e:
+             raise ConnectionError(e)

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Panel</title>
+</head>
+<body>
+    <h1>Admin Panel</h1>
+    
+    <!-- Create Team Modal -->
+    <div id="create-team-modal">
+        <h2>Create New Team</h2>
+        <form id="create-team-form">
+            <label for="team-name">Team Name:</label>
+            <input type="text" id="team-name" name="team_name" required>
+            
+            <label for="max-members">Maximum Members:</label>
+            <input type="number" 
+                   id="max-members" 
+                   name="max_members" 
+                   min="1" 
+                   {% if is_admin %}
+                   <!-- Admins have no max limit -->
+                   {% else %}
+                   max="{{ max_members_per_team }}"
+                   {% endif %}
+                   value="{{ (50 if is_admin else [50, max_members_per_team]|min) }}"
+                   required>
+            
+            <p class="helper-text">
+                {% if is_admin %}
+                    Optional. Admins can set any limit.
+                {% else %}
+                    Optional, defaults to {{ max_members_per_team }}.
+                {% endif %}
+            </p>
+            
+            <button type="submit">Save Team</button>
+        </form>
+    </div>
+    
+    <!-- Edit Team Modal -->
+    <div id="edit-team-modal">
+        <h2>Edit Team</h2>
+        <form id="edit-team-form">
+            <label for="edit-team-name">Team Name:</label>
+            <input type="text" 
+                   id="edit-team-name" 
+                   name="team_name" 
+                   value="{{ team.name }}" 
+                   required>
+            
+            <label for="edit-max-members">Maximum Members:</label>
+            <input type="number" 
+                   id="edit-max-members" 
+                   name="max_members" 
+                   min="1" 
+                   {% if is_admin %}
+                   <!-- Admins have no max limit -->
+                   {% else %}
+                   max="{{ max_members_per_team }}"
+                   {% endif %}
+                   value="{{ team.max_members }}"
+                   required>
+            
+            <p class="helper-text">
+                {% if is_admin %}
+                    Optional. Admins can set any limit.
+                {% else %}
+                    Optional, defaults to {{ max_members_per_team }}.
+                {% endif %}
+            </p>
+            
+            <button type="submit">Update Team</button>
+        </form>
+    </div>
+</body>
+</html>

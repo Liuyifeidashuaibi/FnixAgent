@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Documentation Browser</title>
+  <style>
+    body { margin: 0; font-family: sans-serif; }
+    .toolbar { padding: 10px; background: #f0f0f0; border-bottom: 1px solid #ccc; display: flex; align-items: center; gap: 8px; }
+    .toolbar label { margin-right: 8px; font-weight: bold; }
+    .toolbar button {
+      padding: 4px 12px;
+      cursor: pointer;
+      border: 1px solid #999;
+      background: #fff;
+      border-radius: 3px;
+      font-size: 14px;
+    }
+    .toolbar button:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+    iframe { width: 100%; height: calc(100vh - 50px); border: none; }
+
+    .menu {
+      position: absolute;
+      background: #fff;
+      border: 1px solid #ccc;
+      box-shadow: 2px 2px 6px rgba(0,0,0,0.2);
+      z-index: 1000;
+      min-width: 200px;
+      padding: 4px 0;
+      display: none;
+    }
+    .menu .menu-item {
+      padding: 6px 16px;
+      cursor: pointer;
+      white-space: nowrap;
+      font-size: 14px;
+    }
+    .menu .menu-item:hover {
+      background: #e0e0ff;
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <button id="back-btn" disabled>&#9664; Back</button>
+    <button id="forward-btn" disabled>&#9654; Forward</button>
+    <label for="address">Address:</label>
+    <select id="address">
+      <option value="docs/intro.html" selected>docs/intro.html</option>
+      <option value="docs/javascript.html">docs/javascript.html</option>
+      <option value="docs/css.html">docs/css.html</option>
+      <option value="docs/html.html">docs/html.html</option>
+      <option value="docs/nodejs.html">docs/nodejs.html</option>
+    </select>
+  </div>
+  <iframe id="content" src="docs/intro.html"></iframe>
+
+  <div class="menu forward-menu"></div>
+
+  <script>
+    (function() {
+      var backHistory = [];
+      var forwardHistory = [];
+      var currentUrl = 'docs/intro.html';
+      var iframe = document.getElementById('content');
+      var addressSelect = document.getElementById('address');
+      var backBtn = document.getElementById('back-btn');
+      var forwardBtn = document.getElementById('forward-btn');
+      var forwardMenu = document.querySelector('.menu.forward-menu');
+
+      function updateButtons() {
+        backBtn.disabled = backHistory.length === 0;
+        forwardBtn.disabled = forwardHistory.length === 0;
+      }
+
+      function navigateTo(url) {
+        if (url === currentUrl) return;
+        backHistory.push(currentUrl);
+        currentUrl = url;
+        forwardHistory = [];
+        iframe.src = url;
+        addressSelect.value = url;
+        updateButtons();
+      }
+
+      // Address bar change
+      addressSelect.addEventListener('change', function() {
+        navigateTo(this.value);
+      });
+
+      // Back button
+      backBtn.addEventListener('click', function() {
+        if (backHistory.length === 0) return;
+        forwardHistory.push(currentUrl);
+        currentUrl = backHistory.pop();
+        iframe.src = currentUrl;
+        addressSelect.value = currentUrl;
+        updateButtons();
+      });
+
+      // Forward button (left click)
+      forwardBtn.addEventListener('click', function() {
+        if (forwardHistory.length === 0) return;
+        backHistory.push(currentUrl);
+        currentUrl = forwardHistory.pop();
+        iframe.src = currentUrl;
+        addressSelect.value = currentUrl;
+        updateButtons();
+      });
+
+      // Forward button right-click: show forward history menu
+      forwardBtn.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+        if (forwardHistory.length === 0) return;
+
+        // Build menu items — newest first
+        forwardMenu.innerHTML = '';
+        // forwardHistory: last element is the newest (most recently pushed)
+        for (var i = forwardHistory.length - 1; i >= 0; i--) {
+          var item = document.createElement('div');
+          item.className = 'menu-item';
+          item.textContent = forwardHistory[i];
+          item.setAttribute('data-url', forwardHistory[i]);
+          forwardMenu.appendChild(item);
+        }
+
+        // Position the menu near the forward button
+        var rect = forwardBtn.getBoundingClientRect();
+        forwardMenu.style.left = rect.left + 'px';
+        forwardMenu.style.top = (rect.bottom + 2) + 'px';
+        forwardMenu.style.display = 'block';
+      });
+
+      // Click on a menu item to navigate
+      forwardMenu.addEventListener('click', function(e) {
+        var target = e.target;
+        if (target.classList.contains('menu-item')) {
+          var url = target.getAttribute('data-url');
+          // Move current to back history
+          backHistory.push(currentUrl);
+          // Remove this url and everything newer from forwardHistory
+          var idx = forwardHistory.indexOf(url);
+          if (idx !== -1) {
+            // Items after idx in forwardHistory are newer entries
+            // They should go to back history (in correct order)
+            for (var j = forwardHistory.length - 1; j > idx; j--) {
+              backHistory.push(forwardHistory[j]);
+            }
+            forwardHistory = forwardHistory.slice(0, idx);
+          }
+          currentUrl = url;
+          iframe.src = currentUrl;
+          addressSelect.value = currentUrl;
+          updateButtons();
+          forwardMenu.style.display = 'none';
+        }
+      });
+
+      // Hide menu when clicking elsewhere
+      document.addEventListener('click', function(e) {
+        if (!forwardMenu.contains(e.target) && e.target !== forwardBtn) {
+          forwardMenu.style.display = 'none';
+        }
+      });
+
+      // Hide menu on Escape
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          forwardMenu.style.display = 'none';
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

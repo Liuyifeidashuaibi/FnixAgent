@@ -1,0 +1,18 @@
+{
+  "dataset": "web-bench",
+  "task_id": "expressjs--task-7",
+  "prompt": "1) In libs/setup.sql, Create User Table , setup User Table with two initial users: 1. username: admin, password: 123456, role: admin, coin: 0 2. username: user, password: 123456, role: user, coin: 1000; 2) POST /api/auth to login into system with example payload {username: 'xxx', password: 'xxx'} and example response { success: true }  3) GET /api/auth to get the full information of current user, example response {'username': 'xxx', 'role': 'xxx', 'coin': xxx}, if not login, return 401 status 4) use 'jose' to generate JWT in cookie by key: 'TOKEN', the payload of JWT follow example{'username': 'xxx', 'role': 'xxx'}, secret is 'WEBBENCH-SECRET', use default HS256 algorithm and expired in 1 hour.",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 359.00000000037835,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336282.0999687,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\web-bench__expressjs--task-7__292cc1"
+}

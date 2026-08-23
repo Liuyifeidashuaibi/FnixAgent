@@ -1,0 +1,18 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "usebruno__bruno-7675",
+  "prompt": "### Description\r\n\r\nReplaces the arrow / cancel icons on the HTTP , GraphQL and WebSocket URL bars with labeled Send and Cancel buttons. \r\n\r\n[JIRA](https://usebruno.atlassian.net/browse/BRU-3042)\r\n\r\n### Screenshots\r\n<img width=\"1241\" height=\"200\" alt=\"image\" src=\"https://github.com/user-attachments/assets/bdd86eb8-a936-429f-80f9-4668f071bde7\" />\r\n<img width=\"1241\" height=\"226\" alt=\"image\" src=\"https://github.com/user-attachments/assets/84282b07-557f-4e5a-8d0f-01a1bb25cddf\" />\r\n<img width=\"1241\" height=\"226\" alt=\"image\" src=\"https://github.com/user-attachments/assets/913ccd1a-1713-4c72-877b-b78817ffa5c0\" />\r\n\r\n\r\n#### Contribution Checklist:\r\n\r\n- [ ] **I've used AI significantly to create this pull request**\r\n- [ ] **The pull request only addresses one issue or adds one feature.**\r\n- [ ] **The pull request does not introduce any breaking changes**\r\n- [ ] **I have added screenshots or gifs to help explain the change if applicable.**\r\n- [ ] **I have read the [contribution guidelines](https://github.com/usebruno/bruno/blob/main/contributing.md).**\r\n- [ ] **Create an issue and link to the pull request.**\r\n\r\nNote: Keeping the PR small and focused helps make it easier to review and merge. If you have multiple changes you want to make, please consider submitting them as separate pull requests.\r\n\r\n#### Publishing to New Package Managers\r\n\r\nPlease see [here](../publishing.md) for more information.\r\n\r\n\r\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\r\n## Summary by CodeRabbit\r\n\r\n* **New Features**\r\n  * Added a unified Send/Cancel button with clear loading and cancel behavior for request controls.\r\n* **Style**\r\n  * Moved border/radius styling into input groups and improved alignment and spacing of URL/WebSocket input areas and action controls.\r\n* **Tests**\r\n  * Updated UI tests to use more reliable test-id based selectors for triggering send.\r\n* **Documentation**\r\n  * Updated testing guide examples to reflect the new send-action selector.\r\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/packages/bruno-app/src/components/RequestPane/QueryUrl/StyledWrappe] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 77.99999999997453,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787332462.7140603,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\prototypebench__usebruno__bruno-7675__f60430"
+}

@@ -1,0 +1,18 @@
+{
+  "dataset": "swe-bench-lite",
+  "task_id": "django__django-13230",
+  "prompt": "Add support for item_comments to syndication framework\nDescription\n\t\nAdd comments argument to feed.add_item() in syndication.views so that item_comments can be defined directly without having to take the detour via item_extra_kwargs .\nAdditionally, comments is already explicitly mentioned in the feedparser, but not implemented in the view.\n",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/django/contrib/syndication/views.py b/django/contrib/syndication/vi] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 108.99999999946886,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787334463.8988318,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\swe-bench-lite__django__django-13230__b3173b"
+}

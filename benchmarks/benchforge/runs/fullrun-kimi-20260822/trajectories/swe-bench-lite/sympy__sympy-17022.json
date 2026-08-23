@@ -1,0 +1,18 @@
+{
+  "dataset": "swe-bench-lite",
+  "task_id": "sympy__sympy-17022",
+  "prompt": "Lambdify misinterprets some matrix expressions\nUsing lambdify on an expression containing an identity matrix gives us an unexpected result:\r\n\r\n```python\r\n>>> import numpy as np\r\n>>> n = symbols('n', integer=True)\r\n>>> A = MatrixSymbol(\"A\", n, n)\r\n>>> a = np.array([[1, 2], [3, 4]])\r\n>>> f = lambdify(A, A + Identity(n))\r\n>>> f(a)\r\narray([[1.+1.j, 2.+1.j],\r\n       [3.+1.j, 4.+1.j]])\r\n```\r\n\r\nInstead, the output should be  `array([[2, 2], [3, 5]])`, since we're adding an identity matrix to the array. Inspecting the globals and source code of `f` shows us why we get the result:\r\n\r\n```python\r\n>>> import inspect\r\n>>> print(inspect.getsource(f))\r\ndef _lambdifygenerated(A):\r\n    return (I + A)\r\n>>> f.__globals__['I']\r\n1j\r\n```\r\n\r\nThe code printer prints `I`, which is currently being interpreted as a Python built-in complex number. The printer should support printing identity matrices, and signal an error for unsupported expressions that might be misinterpreted.\n",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/sympy/printing/pycode.py b/sympy/printing/pycode.py\n--- a/sympy/pri] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787334468.969781,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\swe-bench-lite__sympy__sympy-17022__d7ebd9"
+}

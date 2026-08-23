@@ -1,0 +1,18 @@
+{
+  "dataset": "web-bench",
+  "task_id": "form--task-1",
+  "prompt": "JS class Question constructor params are: title (string), name (string), and has a member 'root'. 'Question.root' is a fieldset (class 'q', id equals to param name) contains a title legend (class 'q-title') and a body container (class 'q-body'). Save codes to es-module 'common/Question.js' imported by 'index.js'. Create a Question instance (title 'sample empty question') and prepend its root to the form, save codes to 'index.js'.",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 344.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336289.83172,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\web-bench__form--task-1__910820"
+}

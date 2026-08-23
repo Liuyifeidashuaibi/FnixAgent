@@ -1,0 +1,18 @@
+{
+  "dataset": "swe-bench-lite",
+  "task_id": "matplotlib__matplotlib-23913",
+  "prompt": "legend draggable as keyword\n<!--To help us understand and resolve your issue, please fill out the form to the best of your ability.-->\r\n<!--You can feel free to delete the sections that do not apply.-->\r\n\r\n### Feature request\r\n\r\n**There is not keyword to make legend draggable at creation**\r\n\r\n<!--A short 1-2 sentences that succinctly describes the bug-->\r\n\r\nIs there a code reason why one can not add a \"draggable=True\" keyword to the __init__ function for Legend?  This would be more handy than having to call it after legend creation.  And, naively, it would seem simple to do.  But maybe there is a reason why it would not work?\n",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/lib/matplotlib/legend.py b/lib/matplotlib/legend.py\n--- a/lib/matpl] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787334465.7610507,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\swe-bench-lite__matplotlib__matplotlib-23913__472567"
+}

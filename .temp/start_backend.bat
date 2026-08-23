@@ -1,0 +1,1 @@
+cd /d E:\FNIX\FnixAgent && set PYTHONHOME= && set PYTHONPATH=E:\FNIX\FnixAgent\src && E:\FNIX\FnixAgent\.venv\Scripts\python.exe -m fnixagent.main serve --no-reload > backend_serve.log 2> backend_err.log

@@ -10,16 +10,21 @@
  * Path A: download → key → workspace → Work/Code.
  */
 
-import { useState } from "react";
-import { CheckCircle2, FolderOpen, KeyRound, Loader2, X } from "lucide-react";
-import { ensureFnixWorkspace, pingAgentd, syncHarnessConfig, testHarnessLlm } from "../../lib/fnixBridge";
-import { LOCAL_LLM } from "./localLlm";
+import { useState } from 'react';
+import { CheckCircle2, FolderOpen, KeyRound, Loader2, X } from 'lucide-react';
+import {
+  ensureFnixWorkspace,
+  pingAgentd,
+  syncHarnessConfig,
+  testHarnessLlm,
+} from '../../lib/fnixBridge';
+import { LOCAL_LLM } from './localLlm';
 
-const STORAGE_KEY = "fnix.onboarding.done";
+const STORAGE_KEY = 'fnix.onboarding.done';
 
 export function isOnboardingDone(): boolean {
   try {
-    return localStorage.getItem(STORAGE_KEY) === "1";
+    return localStorage.getItem(STORAGE_KEY) === '1';
   } catch {
     return true;
   }
@@ -27,7 +32,7 @@ export function isOnboardingDone(): boolean {
 
 export function markOnboardingDone(): void {
   try {
-    localStorage.setItem(STORAGE_KEY, "1");
+    localStorage.setItem(STORAGE_KEY, '1');
   } catch {
     /* ignore */
   }
@@ -51,10 +56,10 @@ interface Props {
 type Step = 1 | 2 | 3;
 
 export function OnboardingWizard({
-  initialKey = "",
+  initialKey = '',
   initialModel = LOCAL_LLM.model,
   initialBaseUrl = LOCAL_LLM.baseUrl,
-  projectPath = "",
+  projectPath = '',
   onPickFolder,
   onComplete,
   onSkip,
@@ -67,8 +72,8 @@ export function OnboardingWizard({
   const [testing, setTesting] = useState(false);
   const [testOk, setTestOk] = useState<boolean | null>(null);
   const [toast, setToast] = useState<string | null>(null);
-  const [agentdOk, setAgentdOk] = useState<boolean | null>(null);
   const [testPreview, setTestPreview] = useState<string | null>(null);
+  const [, setAgentdOk] = useState<boolean | null>(null);
   const [skipWarning, setSkipWarning] = useState<string | null>(null);
 
   const runTest = async () => {
@@ -81,12 +86,12 @@ export function OnboardingWizard({
       setAgentdOk(alive);
       if (!alive) {
         setTestOk(false);
-        setToast("本地服务正在启动中，请稍候重试测试连接");
+        setToast('本地服务正在启动中，请稍候重试测试连接');
         return;
       }
       if (!apiKey.trim()) {
         setTestOk(false);
-        setToast("请填写 API Key");
+        setToast('请填写 API Key');
         return;
       }
       const res = await testHarnessLlm({
@@ -96,9 +101,9 @@ export function OnboardingWizard({
         api_key: apiKey.trim(),
       });
       setTestOk(res.ok);
-      setToast(res.ok ? "连接成功" : res.error || "连接失败");
+      setToast(res.ok ? '连接成功' : res.error || '连接失败');
       if (res.ok) {
-        const preview = (res.preview || "").trim();
+        const preview = (res.preview || '').trim();
         if (preview) {
           // 前 50 字预览，让用户确认 Key 真的能用
           setTestPreview(preview.slice(0, 50));
@@ -141,7 +146,7 @@ export function OnboardingWizard({
     const hasKey = Boolean(apiKey.trim());
     const hasFolder = Boolean(folder.trim());
     if (!hasKey && !hasFolder) {
-      setSkipWarning("请至少填写 API Key 或选择文件夹");
+      setSkipWarning('请至少填写 API Key 或选择文件夹');
       return;
     }
     markOnboardingDone();
@@ -168,15 +173,15 @@ export function OnboardingWizard({
         ) : null}
 
         <div className="fnix-onboard-progress" aria-hidden="true">
-          <div
-            className="fnix-onboard-progress-fill"
-            style={{ width: `${(step / 3) * 100}%` }}
-          />
+          <div className="fnix-onboard-progress-fill" style={{ width: `${(step / 3) * 100}%` }} />
         </div>
 
         <div className="fnix-onboard-steps">
           {[1, 2, 3].map((n) => (
-            <span key={n} className={`fnix-onboard-dot${step === n ? " on" : step > n ? " done" : ""}`}>
+            <span
+              key={n}
+              className={`fnix-onboard-dot${step === n ? ' on' : step > n ? ' done' : ''}`}
+            >
               {n}
             </span>
           ))}
@@ -208,14 +213,21 @@ export function OnboardingWizard({
                 <input value={baseUrl} onChange={(e) => setBaseUrl(e.target.value)} />
               </label>
             </details>
-            {toast && <div className={`fnix-onboard-toast${testOk === false ? " bad" : ""}`}>{toast}</div>}
+            {toast && (
+              <div className={`fnix-onboard-toast${testOk === false ? ' bad' : ''}`}>{toast}</div>
+            )}
             {testPreview && (
               <div className="fnix-onboard-preview" title="前 50 字预览，确认 Key 可用">
                 预览：{testPreview}
               </div>
             )}
             <div className="fnix-onboard-actions">
-              <button type="button" className="fnix-set-save ghost" disabled={testing} onClick={() => void runTest()}>
+              <button
+                type="button"
+                className="fnix-set-save ghost"
+                disabled={testing}
+                onClick={() => void runTest()}
+              >
                 {testing ? <Loader2 size={14} className="spin" /> : null}
                 测试连接
               </button>
@@ -237,10 +249,12 @@ export function OnboardingWizard({
             <h2>
               <FolderOpen size={18} /> 工作区
             </h2>
-            <p className="fnix-onboard-hint">选一个本地文件夹作为项目根目录（Code 需要；Work 也可交付到此）。</p>
+            <p className="fnix-onboard-hint">
+              选一个本地文件夹作为项目根目录（Code 需要；Work 也可交付到此）。
+            </p>
             <div className="fnix-info-card">
               <b>当前路径</b>
-              <span>{folder || "尚未选择"}</span>
+              <span>{folder || '尚未选择'}</span>
             </div>
             <div className="fnix-onboard-actions">
               <button type="button" className="fnix-set-save ghost" onClick={() => setStep(1)}>
@@ -251,7 +265,7 @@ export function OnboardingWizard({
                 选择文件夹
               </button>
               <button type="button" className="fnix-set-save" onClick={() => setStep(3)}>
-                {folder ? "下一步" : "跳过（稍后选择）"}
+                {folder ? '下一步' : '跳过（稍后选择）'}
               </button>
             </div>
           </section>

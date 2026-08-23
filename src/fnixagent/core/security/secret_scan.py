@@ -39,6 +39,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
 logger = logging.getLogger(__name__)
+_logger = logger
 
 # ---------------------------------------------------------------------------
 # 审计钩子(异常吞掉)
@@ -63,7 +64,7 @@ def _audit_secret_leak(finding: SecretFinding) -> None:
             },
         )
     except Exception:
-        pass
+        _logger.debug('Unhandled exception', exc_info=True)
 
 
 # ---------------------------------------------------------------------------
@@ -324,6 +325,7 @@ class SecretScanner:
                                 finding.file_path = fpath
                                 result.findings.append(finding)
                     except Exception:
+                        _logger.debug('Unhandled exception', exc_info=True)
                         continue
             # 去重并审计
             result.findings = self._dedupe(result.findings)

@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scientific Calculator</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  display: flex; justify-content: center; align-items: center;
+  min-height: 100vh; background: #1a1a2e; font-family: 'Segoe UI', sans-serif;
+}
+.calculator {
+  background: #16213e; border-radius: 16px; padding: 20px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5); width: 360px;
+}
+.display {
+  background: #0f3460; border-radius: 12px; padding: 16px 20px;
+  margin-bottom: 16px; text-align: right; min-height: 90px;
+  display: flex; flex-direction: column; justify-content: flex-end;
+}
+.expression {
+  color: #8899aa; font-size: 14px; min-height: 20px;
+  word-break: break-all;
+}
+.result {
+  color: #e0e0e0; font-size: 32px; font-weight: 300;
+  word-break: break-all; margin-top: 4px;
+}
+.controls {
+  display: flex; gap: 8px; margin-bottom: 12px;
+}
+.controls button {
+  flex: 1; padding: 8px; border: none; border-radius: 8px;
+  font-size: 13px; cursor: pointer; font-weight: 600;
+  transition: all 0.2s;
+}
+#toggle {
+  background: #533483; color: #fff;
+}
+#toggle:hover { background: #6a42a0; }
+#mode {
+  background: #e94560; color: #fff;
+}
+#mode:hover { background: #ff6b81; }
+.buttons {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+.buttons button {
+  padding: 14px 8px; border: none; border-radius: 10px;
+  font-size: 16px; cursor: pointer; transition: all 0.15s;
+  font-weight: 500;
+}
+.btn-num {
+  background: #1a1a3e; color: #e0e0e0;
+}
+.btn-num:hover { background: #2a2a5e; }
+.btn-op {
+  background: #533483; color: #fff;
+}
+.btn-op:hover { background: #6a42a0; }
+.btn-func {
+  background: #0f3460; color: #8899aa; font-size: 13px;
+}
+.btn-func:hover { background: #1a4a7a; }
+.btn-eq {
+  background: #e94560; color: #fff;
+}
+.btn-eq:hover { background: #ff6b81; }
+.btn-clear {
+  background: #c0392b; color: #fff;
+}
+.btn-clear:hover { background: #e74c3c; }
+
+/* Basic mode: show only first 5 rows */
+.basic-mode .buttons .sci-row {
+  display: none;
+}
+</style>
+</head>
+<body>
+<div class="calculator" id="calculator">
+  <div class="display">
+    <div class="expression" id="expression"></div>
+    <div class="result" id="result">0</div>
+  </div>
+  <div class="controls">
+    <button id="toggle">DEG</button>
+    <button id="mode">basic</button>
+  </div>
+  <div class="buttons" id="buttons">
+    <!-- Row 1: Scientific functions -->
+    <button class="btn-func sci-row" data-action="sin">sin</button>
+    <button class="btn-func sci-row" data-action="cos">cos</button>
+    <button class="btn-func sci-row" data-action="tan">tan</button>
+    <button class="btn-func sci-row" data-action="log">log</button>
+    <button class="btn-func sci-row" data-action="ln">ln</button>
+    <!-- Row 2: More scientific functions -->
+    <button class="btn-func sci-row" data-action="sqrt">√</button>
+    <button class="btn-func sci-row" data-action="pow">x^y</button>
+    <button class="btn-func sci-row" data-action="pi">π</button>
+    <button class="btn-func sci-row" data-action="e">e</button>
+    <button class="btn-func sci-row" data-action="fact">x!</button>
+    <!-- Row 3: Clear, parens, operators -->
+    <button class="btn-clear" data-action="clear">AC</button>
+    <button class="btn-func" data-action="lparen">(</button>
+    <button class="btn-func" data-action="rparen">)</button>
+    <button class="btn-func" data-action="percent">%</button>
+    <button class="btn-op" data-action="op" data-op="/">÷</button>
+    <!-- Row 4: 7 8 9 × -->
+    <button class="btn-num" data-action="num" data-val="7">7</button>
+    <button class="btn-num" data-action="num" data-val="8">8</button>
+    <button class="btn-num" data-action="num" data-val="9">9</button>
+    <button class="btn-op" data-action="op" data-op="*">×</button>
+    <button class="btn-clear" data-action="backspace">⌫</button>
+    <!-- Row 5: 4 5 6 - -->
+    <button class="btn-num" data-action="num" data-val="4">4</button>
+    <button class="btn-num" data-action="num" data-val="5">5</button>
+    <button class="btn-num" data-action="num" data-val="6">6</button>
+    <button class="btn-op" data-action="op" data-op="-">−</button>
+    <button class="btn-op" data-action="op" data-op="+">+</button>
+    <!-- Row 6: 1 2 3 = (extra rows hidden in basic mode) -->
+    <button class="btn-num" data-action="num" data-val="1">1</button>
+    <button class="btn-num" data-action="num" data-val="2">2</button>
+    <button class="btn-num" data-action="num" data-val="3">3</button>
+    <button class="btn-num" data-action="num" data-val="0">0</button>
+    <button class="btn-eq" data-action="equals">=</button>
+    <!-- Row 7: dot, +/- -->
+    <button class="btn-num" data-action="dot">.</button>
+    <button class="btn-func" data-action="negate">±</button>
+    <button class="btn-eq" data-action="equals" style="grid-column: span 3">=</button>
+  </div>
+</div>
+
+<script>
+(function() {
+  const expressionEl = document.getElementById('expression');
+  const resultEl = document.getElementById('result');
+  const toggleBtn = document.getElementById('toggle');
+  const modeBtn = document.getElementById('mode');
+  const calculator = document.getElementById('calculator');
+
+  let expression = '';
+  let isDeg = true;
+  let isScientific = true;
+
+  // Toggle DEG/RAD
+  toggleBtn.addEventListener('click', function() {
+    isDeg = !isDeg;
+    toggleBtn.textContent = isDeg ? 'DEG' : 'RAD';
+  });
+
+  // Toggle Scientific/Basic mode
+  modeBtn.addEventListener('click', function() {
+    isScientific = !isScientific;
+    if (isScientific) {
+      modeBtn.textContent = 'basic';
+      calculator.classList.remove('basic-mode');
+    } else {
+      modeBtn.textContent = 'scientific';
+      calculator.classList.add('basic-mode');
+    }
+  });
+
+  // Factorial
+  function factorial(n) {
+    if (n < 0) return NaN;
+    if (n === 0 || n === 1) return 1;
+    let r = 1;
+    for (let i = 2; i <= n; i++) r *= i;
+    return r;
+  }
+
+  // Trig helpers
+  function toRad(x) { return isDeg ? x * Math.PI / 180 : x; }
+
+  function evaluate(expr) {
+    try {
+      // Replace display symbols with JS
+      let e = expr
+        .replace(/×/g, '*')
+        .replace(/÷/g, '/')
+        .replace(/−/g, '-')
+        .replace(/π/g, '(' + Math.PI + ')')
+        .replace(/e(?![x])/g, '(' + Math.E + ')');
+
+      // Handle functions
+      e = e.replace(/sin\(([^)]+)\)/g, function(_, v) {
+        return 'Math.sin(' + toRad(1) + '*(' + v + '))';
+      });
+      e = e.replace(/cos\(([^)]+)\)/g, function(_, v) {
+        return 'Math.cos(' + toRad(1) + '*(' + v + '))';
+      });
+      e = e.replace(/tan\(([^)]+)\)/g, function(_, v) {
+        return 'Math.tan(' + toRad(1) + '*(' + v + '))';
+      });
+      e = e.replace(/log\(([^)]+)\)/g, 'Math.log10($1)');
+      e = e.replace(/ln\(([^)]+)\)/g, 'Math.log($1)');
+      e = e.replace(/sqrt\(([^)]+)\)/g, 'Math.sqrt($1)');
+
+      // Handle factorial
+      e = e.replace(/(\d+)!/g, 'factorial($1)');
+
+      // Handle ^ 
+      e = e.replace(/\^/g, '**');
+
+      let result = new Function('factorial', 'return ' + e)(factorial);
+      if (isNaN(result) || !isFinite(result)) return 'Error';
+      // Round to avoid floating point issues
+      return parseFloat(result.toPrecision(12)).toString();
+    } catch(err) {
+      return 'Error';
+    }
+  }
+
+  // Button click handler
+  document.getElementById('buttons').addEventListener('click', function(ev) {
+    const btn = ev.target.closest('button');
+    if (!btn) return;
+    const action = btn.dataset.action;
+
+    if (action === 'num') {
+      expression += btn.dataset.val;
+    } else if (action === 'op') {
+      expression += btn.dataset.op === '*' ? '×' : btn.dataset.op === '/' ? '÷' : btn.dataset.op === '-' ? '−' : btn.dataset.op;
+    } else if (action === 'dot') {
+      expression += '.';
+    } else if (action === 'clear') {
+      expression = '';
+      resultEl.textContent = '0';
+      expressionEl.textContent = '';
+      return;
+    } else if (action === 'backspace') {
+      // Remove last char (handle multi-char tokens)
+      const funcs = ['sin(','cos(','tan(','log(','ln(','sqrt('];
+      let removed = false;
+      for (const f of funcs) {
+        if (expression.endsWith(f)) {
+          expression = expression.slice(0, -f.length);
+          removed = true;
+          break;
+        }
+      }
+      if (!removed) expression = expression.slice(0, -1);
+    } else if (action === 'lparen') {
+      expression += '(';
+    } else if (action === 'rparen') {
+      expression += ')';
+    } else if (action === 'percent') {
+      expression += '%';
+    } else if (action === 'negate') {
+      // Wrap current number in negation
+      expression = '(-' + expression + ')';
+    } else if (action === 'sin') {
+      expression += 'sin(';
+    } else if (action === 'cos') {
+      expression += 'cos(';
+    } else if (action === 'tan') {
+      expression += 'tan(';
+    } else if (action === 'log') {
+      expression += 'log(';
+    } else if (action === 'ln') {
+      expression += 'ln(';
+    } else if (action === 'sqrt') {
+      expression += 'sqrt(';
+    } else if (action === 'pow') {
+      expression += '^';
+    } else if (action === 'pi') {
+      expression += 'π';
+    } else if (action === 'e') {
+      expression += 'e';
+    } else if (action === 'fact') {
+      expression += '!';
+    } else if (action === 'equals') {
+      expressionEl.textContent = expression + ' =';
+      const result = evaluate(expression);
+      resultEl.textContent = result;
+      if (result !== 'Error') expression = result;
+      return;
+    }
+
+    expressionEl.textContent = expression;
+    // Live preview
+    if (expression) {
+      const preview = evaluate(expression);
+      if (preview !== 'Error') resultEl.textContent = preview;
+    } else {
+      resultEl.textContent = '0';
+    }
+  });
+})();
+</script>
+</body>
+</html>

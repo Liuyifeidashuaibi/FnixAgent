@@ -23,12 +23,16 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import re
 from typing import Any
 
 from fnixagent.core.knowledge.pipeline import PipelineContext, PipelineStep
 from fnixagent.core.text import estimate_tokens, tokenize
+
+_logger = logging.getLogger(__name__)
+
 
 # ---------------------------------------------------------------------------
 # Step 1: OCRStep
@@ -550,7 +554,7 @@ class EmbedStep(PipelineStep):
                 # 用户可通过 options 注入自定义 embedder
                 pass
             except Exception:
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
         # 降级到 HashingEmbedder(零依赖)
         from fnixagent.core.retrieval.embedder import HashingEmbedder
 

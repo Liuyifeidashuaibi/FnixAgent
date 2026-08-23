@@ -20,6 +20,8 @@
 
 from __future__ import annotations
 
+import logging
+
 from fnixagent.core.topology.graph import TopologyGraph
 from fnixagent.core.types import (
     EdgeType,
@@ -28,6 +30,9 @@ from fnixagent.core.types import (
     TopologyNode,
     TopologyPath,
 )
+
+_logger = logging.getLogger(__name__)
+
 
 # 路径搜索默认向下展开的边类型(从 L2 向 L3/L4)
 DOWNWARD_EDGE_TYPES: tuple[EdgeType, ...] = (
@@ -277,6 +282,7 @@ class TopologySearch:
             try:
                 node = self._graph.get_node(node_id)
             except Exception:
+                _logger.debug('Unhandled exception', exc_info=True)
                 continue
             if node.node_type != NodeType.CONSTRAINT:
                 continue

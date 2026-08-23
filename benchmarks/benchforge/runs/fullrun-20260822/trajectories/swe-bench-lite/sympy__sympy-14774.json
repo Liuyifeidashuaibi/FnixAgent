@@ -1,0 +1,18 @@
+{
+  "dataset": "swe-bench-lite",
+  "task_id": "sympy__sympy-14774",
+  "prompt": "Latex printer does not support full inverse trig function names for acsc and asec\nFor example\r\n`latex(asin(x), inv_trig_style=\"full\")` works as expected returning `'\\\\arcsin{\\\\left (x \\\\right )}'`\r\nBut `latex(acsc(x), inv_trig_style=\"full\")` gives `'\\\\operatorname{acsc}{\\\\left (x \\\\right )}'` instead of `'\\\\operatorname{arccsc}{\\\\left (x \\\\right )}'`\r\n\r\nA fix seems to be to change line 743 of sympy/printing/latex.py from\r\n`inv_trig_table = [\"asin\", \"acos\", \"atan\", \"acot\"]` to\r\n`inv_trig_table = [\"asin\", \"acos\", \"atan\", \"acsc\", \"asec\", \"acot\"]`\n",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/sympy/printing/latex.py b/sympy/printing/latex.py\n--- a/sympy/print] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787332466.854061,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\swe-bench-lite__sympy__sympy-14774__c075cf"
+}

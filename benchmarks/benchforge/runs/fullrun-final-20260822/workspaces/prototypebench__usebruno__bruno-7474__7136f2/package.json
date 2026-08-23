@@ -1,0 +1,13 @@
+{
+  "name": "bruno",
+  "version": "1.0.0",
+  "description": "Bruno - Open source API client",
+  "main": "index.js",
+  "scripts": {
+    "test:e2e": "playwright test",
+    "test:e2e:watch": "playwright test --watch"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0"
+  }
+}

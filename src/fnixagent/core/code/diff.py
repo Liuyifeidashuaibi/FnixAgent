@@ -38,6 +38,7 @@ from __future__ import annotations
 
 import difflib
 import hashlib
+import logging
 import time
 from dataclasses import dataclass, field
 from enum import Enum
@@ -45,6 +46,9 @@ from pathlib import Path
 from uuid import uuid4
 
 from fnixagent.core.agent.types import utcnow_iso
+
+_logger = logging.getLogger(__name__)
+
 
 # ============================================================================
 # 变更类型与数据结构
@@ -424,7 +428,7 @@ class DiffEngine:
                         self._rollback_one(done)
                     except Exception:
                         # 回滚失败不阻断, 尽力恢复
-                        pass
+                        _logger.debug('Unhandled exception', exc_info=True)
                 duration = time.perf_counter() - start
                 return ApplyResult(
                     success=False,

@@ -1,0 +1,14 @@
+diff --git a/django/views/debug.py b/django/views/debug.py
+index 0000000..1111111 100644
+--- a/django/views/debug.py
++++ b/django/views/debug.py
+@@ -1,5 +1,7 @@
+ def cleanse_setting(key, value):
+     """Cleanse an individual setting key/value of sensitive content."""
+     if key and isinstance(key, str) and key.upper() in SENSITIVE_SETTINGS:
+         return '********************'
+     if isinstance(value, dict):
+         return {k: cleanse_setting(k, v) for k, v in value.items()}
++    elif isinstance(value, (list, tuple, set, frozenset)):
++        return type(value)(cleanse_setting(None, item) for item in value)
+     return value

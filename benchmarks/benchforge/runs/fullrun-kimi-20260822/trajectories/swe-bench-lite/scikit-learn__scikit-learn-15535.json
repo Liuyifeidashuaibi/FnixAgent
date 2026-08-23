@@ -1,0 +1,18 @@
+{
+  "dataset": "swe-bench-lite",
+  "task_id": "scikit-learn__scikit-learn-15535",
+  "prompt": "regression in input validation of clustering metrics\n```python\r\nfrom sklearn.metrics.cluster import mutual_info_score\r\nimport numpy as np\r\n\r\nx = np.random.choice(['a', 'b'], size=20).astype(object)\r\nmutual_info_score(x, x)\r\n```\r\nValueError: could not convert string to float: 'b'\r\n\r\nwhile\r\n```python\r\nx = np.random.choice(['a', 'b'], size=20)\r\nmutual_info_score(x, x)\r\n```\r\nworks with a warning?\r\n\r\nthis worked in 0.21.1 without a warning (as I think it should)\r\n\r\n\r\nEdit by @ogrisel: I removed the `.astype(object)` in the second code snippet.\n",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/sklearn/metrics/cluster/_supervised.py b/sklearn/metrics/cluster/_s] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 78.00000000042928,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787334467.5286477,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\swe-bench-lite__scikit-learn__scikit-learn-15535__422f74"
+}

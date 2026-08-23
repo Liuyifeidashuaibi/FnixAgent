@@ -1,0 +1,32 @@
+{
+  "id": "err-001",
+  "title": "崩溃后的自我纠错",
+  "capability": "error_recovery",
+  "difficulty": 3,
+  "tags": [
+    "debug"
+  ],
+  "prompt": "运行 run.py 会崩溃。请定位并修复问题，直到运行 run.py 时输出 SUCCESS。",
+  "setup": {
+    "files": {
+      "run.py": "data = {'items': [1, 2, 3]}\ntotal = 0\nfor it in data['item']:\n    total += it\nassert total == 6\nprint('SUCCESS')\n"
+    }
+  },
+  "allowed_scope": [
+    "run.py"
+  ],
+  "checks": [
+    {
+      "function": "command_succeeds",
+      "args": {
+        "command": "python run.py",
+        "stdout_pattern": "SUCCESS"
+      },
+      "weight": 2.0
+    },
+    {
+      "function": "scope_respected",
+      "args": {}
+    }
+  ]
+}

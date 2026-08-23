@@ -1,0 +1,18 @@
+{
+  "dataset": "vibe-code-bench",
+  "task_id": "case_19_control_center",
+  "prompt": "# Build me a Project Control Center\n\nCreate a high-end web dashboard that looks like a native desktop application:\n\n**Aesthetics:**\n- Glassmorphism (blurred backgrounds, subtle borders)\n- Vertical sidebar with active/hover states\n- Main area with \"Widgets\" (cards)\n- Smooth micro-animations on hover\n\n**Widgets to Include:**\n- **Active Projects**: A list of cards with progress bars\n- **Recent Activity**: A vertical timeline of events\n- **Quick Links**: Grid of icons for common tools\n- **Task List**: Mini to-do list with checkboxes\n\n**Interactivity:**\n- Sidebar allows \"switching\" views (Home, Projects, Settings) - use JS to swap content without reload\n- Add a \"New Project\" button that pops up a clean modal\n- Persist tasks in localStorage\n\nSingle HTML file, pure CSS/JS. Make it feel \"Premium\".",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 375.0,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336333.823981,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\vibe-code-bench__case_19_control_center__ec73ab"
+}

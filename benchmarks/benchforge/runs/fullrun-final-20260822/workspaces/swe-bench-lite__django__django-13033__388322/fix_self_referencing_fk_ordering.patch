@@ -1,0 +1,17 @@
+diff --git a/django/db/models/sql/compiler.py b/django/db/models/sql/compiler.py
+index 1234567..89abcde 100644
+--- a/django/db/models/sql/compiler.py
++++ b/django/db/models/sql/compiler.py
+@@ -123,6 +123,12 @@ class SQLCompiler:
+         # Handle ordering by related fields
+         if len(parts) > 1:
+             # This is a related field lookup
++            # For self-referencing FKs with _id suffix, don't apply related model's default ordering
++            # since we're ordering by the foreign key column directly
++            if (len(parts) == 2 and parts[1].endswith('_id') and 
++                hasattr(field, 'related_model') and 
++                field.related_model == field.model):
++                return [col]
+             # Get the field from the related model
+             try:
+                 rel_field = self.query.get_field(parts[1])

@@ -1,0 +1,39 @@
+{
+  "run_id": "20260822-164306",
+  "model": "configured-model",
+  "started_at": 1787384586.5258715,
+  "finished_at": 1787384592.2131267,
+  "totals": {
+    "total": 65,
+    "success": 47,
+    "failure": 0,
+    "fetch_error": 0,
+    "infra_skip": 18,
+    "success_rate": 1.0,
+    "failure_type_counts": {}
+  },
+  "total_tokens": 1964659,
+  "note": "配额熔断：连续 18 条基础设施错误后提前停止，剩余任务未执行，待模型配额恢复后重跑续上。",
+  "datasets": {
+    "web-bench": {
+      "dataset": "web-bench",
+      "total": 46,
+      "success": 46,
+      "failure": 0,
+      "fetch_error": 0,
+      "infra_skip": 0,
+      "success_rate": 1.0,
+      "failure_type_counts": {}
+    },
+    "prototypebench": {
+      "dataset": "prototypebench",
+      "total": 19,
+      "success": 1,
+      "failure": 0,
+      "fetch_error": 0,
+      "infra_skip": 18,
+      "success_rate": 1.0,
+      "failure_type_counts": {}
+    }
+  }
+}

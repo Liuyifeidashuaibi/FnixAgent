@@ -39,6 +39,7 @@ from fnixagent.api.routers import (
     coding,
     dashboard,
     documents,
+    forge,
     harness,
     memory,
     privacy,
@@ -152,7 +153,7 @@ async def lifespan(app: FastAPI):
 
         load_dotenv(override=False)
     except Exception:
-        pass
+        _logger.debug('Unhandled exception', exc_info=True)
     # 自进化内核(KTG+STP+MFP)是产品护城河，默认与办公调度器一并启动
     # legacy=仅调度器; evolve=仅图; both=双模(默认，保证 Work 主路径可用进化)
     mode = os.getenv("FNIXAGENT_MODE", "both").lower()
@@ -254,7 +255,7 @@ async def lifespan(app: FastAPI):
 
         await stop_work_job_worker_async()
     except Exception:
-        pass
+        _logger.debug('Unhandled exception', exc_info=True)
     if profile_info()["profile"] != "standalone":
         from fnixagent.core.security.auth.ldap_sync import stop_ldap_sync_scheduler
 
@@ -329,6 +330,7 @@ app.include_router(agentos.router, prefix="/api/v1")
 app.include_router(coding.router, prefix="/api/v1")
 app.include_router(chat_agent.router, prefix="/api/v1")
 app.include_router(benchmark.router, prefix="/api/v1")
+app.include_router(forge.router, prefix="/api/v1")
 app.include_router(skills.router, prefix="/api/v1")
 app.include_router(memory.router, prefix="/api/v1")
 
@@ -403,9 +405,14 @@ async def get_stats(request: Request):
 # 开发模式(debug=True)或 standalone 形态下 auth_required=False;
 # cloud 生产模式 auth_required=True,未鉴权请求 fail-closed。
 # uvicorn 引用 fnixagent.main:app,此处置换为包裹后的 ASGI 应用。
+import logging
+
 from fnixagent.core.gateway.capability import CapabilityMiddleware
 from fnixagent.core.gateway.middleware import GatewayMiddleware
 from fnixagent.core.profile import is_standalone
+
+_logger = logging.getLogger(__name__)
+
 
 _settings = Settings()
 # Standalone / debug：本机模式无需 JWT（自主设计 自托管）
@@ -596,7 +603,7 @@ def _build_agent_loop(shell, workspace_root: str, max_steps: int = 30):
                 try:
                     return await kernel._llm_backend.chat(messages, tools=tools)
                 except Exception:
-                    pass
+                    _logger.debug('Unhandled exception', exc_info=True)
             return {
                 "choices": [
                     {
@@ -698,6 +705,37 @@ def main():
     mcp_parser.add_argument("--host", default=None, help="HTTP 绑定地址")
     mcp_parser.add_argument("--port", "-p", type=int, default=None, help="HTTP 端口")
 
+    # ---- forge (FnixForge: 他人 Agent 测评与自动修复) ----
+    forge_parser = subparsers.add_parser("forge", help="FnixForge: 用 benchmark 测评/修复第三方 Agent")
+    forge_sub = forge_parser.add_subparsers(dest="forge_cmd", help="forge 子命令")
+
+    forge_sub.add_parser("suites", help="列出内置 benchmark 套件")
+
+    probe_p = forge_sub.add_parser("probe", help="探测目标 Agent 的调用方式")
+    probe_p.add_argument("target", help="目标 Agent 项目目录")
+    probe_p.add_argument("--write", action="store_true", help="将推断配置写入目标目录 forge.config.json")
+
+    test_p = forge_sub.add_parser("test", help="只测评（不修改目标项目）")
+    test_p.add_argument("target", help="目标 Agent 项目目录")
+    test_p.add_argument("--suite", "-s", default="core", help="套件名（默认 core）")
+    test_p.add_argument("--config", "-c", default=None, help="适配器配置 JSON 文件路径")
+    test_p.add_argument("--report", "-r", default=None, help="报告输出路径（生成 .json + .html）")
+    test_p.add_argument("--keep", action="store_true", help="保留每题沙箱供排查")
+
+    fix_p = forge_sub.add_parser("fix", help="测评 + 自动修复 + 复测闭环")
+    fix_p.add_argument("target", help="目标 Agent 项目目录")
+    fix_p.add_argument("--suite", "-s", default="core", help="套件名（默认 core）")
+    fix_p.add_argument("--config", "-c", default=None, help="适配器配置 JSON 文件路径")
+    fix_p.add_argument("--rounds", "-n", type=int, default=3, help="修复-复测最大轮次（默认 3）")
+    fix_p.add_argument("--threshold", type=float, default=90.0, help="生产级阈值（默认 90%%）")
+    fix_p.add_argument("--report", "-r", default=None, help="报告输出路径（生成 .json + .html）")
+    fix_p.add_argument("--keep", action="store_true", help="保留每题沙箱供排查")
+
+    # ---- bench (BenchForge 全量评测) ----
+    from fnixagent.bench.cli import register_bench_subcommand
+
+    register_bench_subcommand(subparsers)
+
     # ---- local (fnix-local sidecar) ----
     local_parser = subparsers.add_parser("local", help="启动 fnix-local sidecar")
     local_parser.add_argument("--host", default=None, help="绑定地址 (默认 127.0.0.1)")
@@ -726,12 +764,23 @@ def main():
 
         run_dashboard(host=args.host, port=args.port, open_browser=not args.no_open)
         return
+    if args.command == "forge":
+        from fnixagent.cli.forge_cmd import run_forge
+
+        if not getattr(args, "forge_cmd", None):
+            forge_parser.print_help()
+            return
+        raise SystemExit(run_forge(args))
     if args.command == "model":
         from fnixagent.cli.model_cmd import run_model
 
         raise SystemExit(
             run_model(provider=args.provider, model=args.model, base_url=args.base_url)
         )
+    if args.command == "bench":
+        from fnixagent.bench.cli import dispatch_bench
+
+        raise SystemExit(dispatch_bench(args))
     if args.command == "serve":
         _run_serve(args)
     elif args.command == "chat":

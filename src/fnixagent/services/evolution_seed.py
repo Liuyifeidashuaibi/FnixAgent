@@ -14,11 +14,15 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from fnixagent.core.skills.protocol import SkillBindingProtocol
 from fnixagent.core.topology.graph import TopologyGraph
 from fnixagent.core.types import EdgeType, NodeType, SkillLevel, TopologyLayer
+
+_logger = logging.getLogger(__name__)
+
 
 # L2 概念 → 主技能（可一对多：额外技能写在 sibling_skills）
 _OFFICE_CONCEPTS: list[dict[str, Any]] = [
@@ -148,7 +152,7 @@ def seed_office_topology(
             protocol.bind(spec["id"], spec["skill"], SkillLevel.BASIC)
             stats["bindings"] += 1
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
 
         # 兄弟技能：再建平行 L2 概念节点绑定（STP 一概念一技能）
         for i, sib in enumerate(spec.get("sibling_skills") or []):
@@ -170,7 +174,7 @@ def seed_office_topology(
                 graph.add_edge(spec["id"], sib_id, EdgeType.DERIVES, weight=0.6)
                 stats["edges"] += 1
             except Exception:
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
 
         for rule_id, rule_text in spec.get("rules") or []:
             try:
@@ -185,7 +189,7 @@ def seed_office_topology(
                 graph.add_edge(spec["id"], rule_id, EdgeType.PRECONDITION, weight=0.7)
                 stats["edges"] += 1
             except Exception:
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
 
         for fact_id, fact_text in spec.get("facts") or []:
             try:
@@ -202,7 +206,7 @@ def seed_office_topology(
                 graph.add_edge(parent, fact_id, EdgeType.DERIVES, weight=0.65)
                 stats["edges"] += 1
             except Exception:
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
 
     return stats
 

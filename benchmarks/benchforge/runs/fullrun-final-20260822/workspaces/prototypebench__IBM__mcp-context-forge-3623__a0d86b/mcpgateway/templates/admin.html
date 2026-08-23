@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <style>
+        .error-message {
+            background-color: #ffebee;
+            color: #c62828;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border-left: 4px solid #c62828;
+        }
+        
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #333;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 4px;
+            z-index: 1000;
+            transform: translateX(150%);
+            transition: transform 0.3s ease-in-out;
+        }
+        
+        .toast.show {
+            transform: translateX(0);
+        }
+        
+        .join-button[disabled] {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <h1>Admin Dashboard</h1>
+        
+        <div id="feature-flags-section">
+            <h2>Feature Flags</h2>
+            <div id="feature-flags-status"></div>
+            <button id="toggle-join-requests">Toggle Team Join Requests</button>
+        </div>
+        
+        <div id="team-join-section">
+            <h2>Team Join Requests</h2>
+            <div id="join-request-form">
+                <label for="user-id">User ID:</label>
+                <input type="number" id="user-id" value="1">
+                <label for="team-id">Team ID:</label>
+                <input type="number" id="team-id" value="1">
+                <button id="request-join-team" class="join-button">Request to Join Team</button>
+            </div>
+            <div id="join-request-status"></div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast">Network error occurred</div>
+
+    <script>
+        // Get feature flags on page load
+        async function loadFeatureFlags() {
+            try {
+                const response = await fetch('/admin/feature-flags');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const flags = await response.json();
+                
+                const flagsStatus = document.getElementById('feature-flags-status');
+                flagsStatus.innerHTML = `
+                    <p>Allow Team Join Requests: ${flags.allow_team_join_requests ? 'Enabled' : 'Disabled'}</p>
+                `;
+                
+                // Disable join button if feature is disabled
+                const joinButton = document.getElementById('request-join-team');
+                joinButton.disabled = !flags.allow_team_join_requests;
+                
+                // Update button text based on feature flag
+                joinButton.textContent = flags.allow_team_join_requests ? 
+                    'Request to Join Team' : 
+                    'Team Join Requests Disabled';
+                
+            } catch (error) {
+                console.error('Error loading feature flags:', error);
+                showError(`Failed to load feature flags: ${error.message}`);
+            }
+        }
+
+        // Toggle feature flag
+        document.getElementById('toggle-join-requests').addEventListener('click', async function() {
+            try {
+                const flags = await getFeatureFlags();
+                const enabled = !flags.allow_team_join_requests;
+                
+                const response = await fetch(`/admin/feature-flags/allow_team_join_requests/toggle`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({enabled})
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                await loadFeatureFlags();
+                
+            } catch (error) {
+                console.error('Error toggling feature flag:', error);
+                showError(`Failed to toggle feature flag: ${error.message}`);
+            }
+        });
+
+        // Request to join team
+        document.getElementById('request-join-team').addEventListener('click', async function() {
+            try {
+                const userId = parseInt(document.getElementById('user-id').value);
+                const teamId = parseInt(document.getElementById('team-id').value);
+                
+                if (isNaN(userId) || isNaN(teamId)) {
+                    throw new Error('User ID and Team ID must be numbers');
+                }
+                
+                const response = await fetch(`/teams/${teamId}/join-requests`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({user_id: userId})
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || `HTTP ${response.status} error`);
+                }
+                
+                const result = await response.json();
+                
+                const statusDiv = document.getElementById('join-request-status');
+                statusDiv.innerHTML = `<div class="success-message">${result.message}</div>`;
+                
+            } catch (error) {
+                console.error('Error requesting to join team:', error);
+                
+                // Show toast notification for network errors
+                if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                    showToast('Network error occurred');
+                } else {
+                    showError(`Join request failed: ${error.message}`);
+                }
+            }
+        });
+
+        // Helper functions
+        async function getFeatureFlags() {
+            const response = await fetch('/admin/feature-flags');
+            return await response.json();
+        }
+
+        function showError(message) {
+            const statusDiv = document.getElementById('join-request-status');
+            statusDiv.innerHTML = `<div class="error-message">${message}</div>`;
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', loadFeatureFlags);
+    </script>
+</body>
+</html>

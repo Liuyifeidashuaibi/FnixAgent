@@ -1,0 +1,33 @@
+{
+  "name": "bruno-scroll-persistence",
+  "version": "1.0.0",
+  "description": "Scroll position persistence for Bruno request editor panes",
+  "main": "src/components/RequestEditor/index.js",
+  "types": "src/components/RequestEditor/index.d.ts",
+  "scripts": {
+    "test:scroll": "jest src/components/RequestEditor/__tests__/ScrollPositionManager.test.js",
+    "test:all": "jest src/components/RequestEditor/__tests__/"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.0",
+    "jest": "^29.5.0",
+    "ts-jest": "^29.1.0"
+  },
+  "keywords": [
+    "bruno",
+    "api-testing",
+    "scroll-position",
+    "persistence",
+    "react"
+  ],
+  "author": "Bruno Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/usebruno/bruno"
+  }
+}

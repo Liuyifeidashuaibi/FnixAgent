@@ -1,0 +1,29 @@
+[
+  {
+    "dataset": "vibe-code-bench",
+    "task_id": "case_01_pomodoro",
+    "prompt": "# Build me a Pomodoro Timer\n\nI want a simple pomodoro timer web page. When I open it in my browser:\n\n- There's a big countdown display showing 25:00\n- A Start button to begin the timer\n- The timer counts down second by second\n- When it hits 0, it plays a sound (use a beep) and switches to a 5-minute break\n- After the break, it goes back to 25 minutes\n- Show which session I'm on (Work 1, Break 1, Work 2, etc.)\n- Let me pause and reset\n\nJust make it a single HTML file I can open in my browser. Make it look nice with some CSS - maybe a tomato red theme since it's pomodoro.\n",
+    "meta": {
+      "case": "case_01_pomodoro"
+    },
+    "failure_type": "incomplete_output",
+    "notes": "agent 完成但未产出任何文件/产物",
+    "session_id": "14119e4e8fdf4d9e"
+  },
+  {
+    "dataset": "workbuddy-bench",
+    "task_id": "code/api_contract-hard-markup_errors",
+    "prompt": "markup 解析这块现在遇到坏标签时有时直接吞掉，调用方不好定位。麻烦把 parse/render/escape 的行为固定：正常嵌套能解析，未闭合和错配要抛带 code/position 的错误。",
+    "meta": {
+      "subset": "code",
+      "name": "workbuddy/api_contract-hard-markup_errors",
+      "difficulty": "hard",
+      "category": "api-contract",
+      "subcategory": "markup-error-contract",
+      "repo": "Textualize/rich"
+    },
+    "failure_type": "incomplete_output",
+    "notes": "agent 完成但未产出任何文件/产物",
+    "session_id": "4177f01356244ebb"
+  }
+]

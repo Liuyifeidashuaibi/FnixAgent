@@ -1,0 +1,10 @@
+--- a/django/db/models/deletion.py
++++ b/django/db/models/deletion.py
+@@ -324,6 +324,7 @@ class Collector:
+         collector = self
+         deleted_counter = Counter()
++        for model in collector.data:
++            deleted_counter[model._meta.label] = 0
+         for model, instances in collector.data.items():
+             query = sql.DeleteQuery(model)
+             query.delete_batch([obj.pk for obj in instances], using=using, **kwargs)

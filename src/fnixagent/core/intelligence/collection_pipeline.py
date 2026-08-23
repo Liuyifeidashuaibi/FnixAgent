@@ -66,6 +66,7 @@ from pathlib import Path
 import httpx
 
 logger = logging.getLogger(__name__)
+_logger = logger
 
 # ============================================================
 # 信息源注册表 — 30+ 源完整定义
@@ -1083,6 +1084,7 @@ class UnifiedCollector:
                             )
                         )
                 except Exception:
+                    _logger.debug('Unhandled exception', exc_info=True)
                     continue
 
         except Exception as e:
@@ -1255,7 +1257,7 @@ class UnifiedCollector:
                 )
                 return items
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
 
         # 回退: 直接抓取
         try:
@@ -1625,7 +1627,7 @@ class IntelligentScheduler:
                 self._last_collection = state.get("last_collection", {})
                 self._source_activity = state.get("source_activity", {})
             except Exception:
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
 
     def _save_state(self):
         """保存调度状态"""

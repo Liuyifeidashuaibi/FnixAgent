@@ -1,0 +1,12 @@
+{
+  "artifact_root_dir": null,
+  "artifacts": [],
+  "created_at": "2026-08-22T16:31:38.946835+00:00",
+  "current_turn_id": "local_auto_recovery_8fdbb101-3dbd-4f64-8352-5e967f2b4dc9_91cb8989-b760-4199-8119-1cb7e406103f",
+  "delivery_status": null,
+  "execution_status": "running",
+  "schema_version": 1,
+  "session_id": "91cb8989-b760-4199-8119-1cb7e406103f",
+  "task_id": "91cb8989-b760-4199-8119-1cb7e406103f",
+  "updated_at": "2026-08-22T16:46:56.853932+00:00"
+}

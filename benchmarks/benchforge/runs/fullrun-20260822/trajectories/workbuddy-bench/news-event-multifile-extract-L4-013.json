@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "news-event-multifile-extract-L4-013",
+  "prompt": "现在要做一份离线财经资讯事件抽取归档。工作区里已经放好了冻结的中文资讯导出包、政策发布 PDF、主体别名字典和事件口径规则。请不要联网，也不要调用行情、交易、券商、邮件、IM、外部搜索或任何外部接口；这次只做离线资料整理，不做投资建议、买卖建议或真实市场操作。\n请先阅读 `event_rules.yml` 和 `entity_dictionary.xlsx`，再阅读 `news_packet/` 下的 TXT、MD、PDF 和备注文件。需要按规则识别 2026-04-10 至 2026-04-11 目标日期窗口内的财经事件，完成主体别名归一、事件分类、跨文件重复报道合并、页面噪声过滤、非事件/非目标项归档和来源引用记录。事件日期应来自事件正文、披露日期、数据期发布日期或政策发布/会议日期；不要把页面发布时间、导出时间、文件名日期或推荐模块当作事件日期。\n最后生成两个输出文件：`output/events.xlsx` 和 `output/news_event_summary.md`。`events.xlsx` 需要包含四个 sheet：`events`、`entity_mentions`、`category_summary`、`unclassified_items`。\n`events` 的列为 event_id、event_date、category、category_zh、canonical_entity_or_topic、core_fact、source_files、citation_anchors、merged_source_count。`entity_mentions` 的列为 canonical_entity、alias_seen、entity_type、source_file、source_section、first_mention_order。`category_summary` 的列为 category、category_zh、event_count、merged_source_count、notes。`unclassified_items` 的列为 item_id、source_file、source_section、reason_code、evidence_snippet。\n`news_event_summary.md` 需要包含“事件总览”“分类统计”“合并与排除说明”“来源备注”四个小节，并与 workbook 中的事件数量、分类统计、重复合并和排除原因保持一致。引用锚点使用 source_file、页面或章节标题、短 snippet 即可；不要要求完整长句逐字复制。\n\n请读取工作区中的输入文件：`input/event_rules.yml`、`input/entity_dictionary.xlsx`、`input/news_packet/page_exports/morning_finance_page_0410.md`、`input/news_packet/page_exports/a_share_flash_stream_0410.txt`、`input/news_packet/page_exports/evening_notice_rollup_0410.md`、`input/news_packet/page_exports/market_data_brief_0411.txt`、`input/news_packet/page_exports/weekend_preview_page_0412.md`、`input/news_packet/policy_docs/policy_meeting_release.pdf`、`input/news_packet/source_logs/export_manifest.txt`、`input/news_packet/source_logs/crawler_notes_ignored.txt`、`input/news_packet/misc/city_service_notice_0410.txt`、`input/news_packet/misc/product_ad_snippets.txt`。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 92.9999999998472,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787332459.743805,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\workbuddy-bench__news-event-multifile-extract-L4-013__a8c462"
+}

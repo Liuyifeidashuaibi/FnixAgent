@@ -8,12 +8,16 @@
 
 from __future__ import annotations
 
+import logging
 import webbrowser
 from typing import Any
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
+
+_logger = logging.getLogger(__name__)
+
 
 DASHBOARD_HTML = """<!DOCTYPE html>
 <html lang="zh-CN">
@@ -278,5 +282,5 @@ def run_dashboard(*, host: str = "127.0.0.1", port: int = 9119, open_browser: bo
         try:
             webbrowser.open(url)
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
     uvicorn.run(create_dashboard_app(), host=host, port=port, log_level="info")

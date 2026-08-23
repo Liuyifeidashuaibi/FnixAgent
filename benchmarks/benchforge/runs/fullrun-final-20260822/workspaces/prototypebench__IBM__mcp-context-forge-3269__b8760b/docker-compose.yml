@@ -1,0 +1,4 @@
+services:
+  pgbouncer:
+    environment:
+      - CLIENT_IDLE_TIMEOUT=120

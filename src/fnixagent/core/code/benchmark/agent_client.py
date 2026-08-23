@@ -9,12 +9,16 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+
+_logger = logging.getLogger(__name__)
+
 
 
 @dataclass
@@ -227,4 +231,4 @@ def ensure_workspace(base: str, workspace: Path) -> None:
     try:
         http_json(base, "POST", "/api/v1/harness/workspace/ensure", {"workspace": str(workspace)})
     except Exception:
-        pass
+        _logger.debug('Unhandled exception', exc_info=True)

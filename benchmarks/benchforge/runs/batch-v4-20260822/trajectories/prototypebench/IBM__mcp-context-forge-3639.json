@@ -1,0 +1,39 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "IBM__mcp-context-forge-3639",
+  "prompt": "# Add MCP Plugin Session Reconnection\r\n\r\n## 🎯 Overview\r\n\r\nImplements automatic session reconnection for MCP external plugins to handle plugin restarts gracefully.\r\n\r\n**Closes:** #2796\r\n\r\n## 📋 Problem\r\n\r\nWhen an external MCP plugin restarts, the next request fails with \"Session terminated\" error and no recovery mechanism exists. This causes plugin failures that require manual intervention.\r\n\r\n## ✅ Solution\r\n\r\nAdded automatic reconnection logic with exponential backoff that:\r\n1. Detects session termination errors (McpError or PluginError with \"session terminated\")\r\n2. Cleans up stale session state\r\n3. Reconnects to the plugin server (up to 3 attempts with 0.1s base delay)\r\n4. Retries the original request once after successful reconnection\r\n\r\n## 🔧 Changes\r\n\r\n### Configuration (`mcpgateway/plugins/framework/models.py`)\r\n- Added `reconnect_attempts: int = 3` to `MCPClientConfig`\r\n- Added `reconnect_delay: float = 0.1` to `MCPClientConfig`\r\n\r\n### Core Logic (`mcpgateway/plugins/framework/external/mcp/client.py`)\r\n- Added `_cleanup_session()` method to reset session state\r\n- Added `_reconnect_session()` method with exponential backoff\r\n- Updated `invoke_hook()` to catch and retry on session termination\r\n- Supports both STREAMABLEHTTP and STDIO transports\r\n\r\n### Tests (`tests/unit/mcpgateway/plugins/framework/external/mcp/test_client_reconnect.py`)\r\n- 12 comprehensive tests covering:\r\n  - Configuration loading\r\n  - Session cleanup\r\n  - Reconnection with backoff\r\n  - Error handling for both transports\r\n  - Retry exhaustion scenarios\r\n\r\n## 🧪 Testing\r\n\r\n```bash\r\n# All tests pass\r\npytest tests/unit/mcpgateway/plugins/framework/external/mcp/test_client_reconnect.py -v\r\n# 12 passed\r\n\r\n```\r\n\r\n## 📊 Implementation Details\r\n\r\n**Error Detection:**\r\n- Catches `McpError` from mcp library\r\n- Catches `PluginError` with \"session terminated\" message\r\n- Hybrid approach ensures broad compatibility\r\n\r\n**Reconnection Strategy:**\r\n- Linear backoff: 0.1s → 0.2s → 0.3s (delay increases by `reconnect_delay` per attempt)\r\n- Single retry after successful reconnection\r\n- Re-raises original error if all reconnection attempts fail\r\n\r\n**Transport Support:**\r\n- ✅ STREAMABLEHTTP (HTTP/SSE)\r\n- ✅ STDIO (subprocess)\r\n\r\n## 🔍 Design Decisions\r\n\r\n1. **Follows Unix socket client pattern** - Maintains consistency with existing reconnection implementation in `external/unix/client.py`\r\n2. **Linear backoff** - Simpler than exponential, sufficient for plugin restart scenarios\r\n3. **Single retry** - Avoids cascading retries while providing recovery for transient failures\r\n4. **Preserves original error** - Re-raises the original PluginError (not reconnection error) for better debugging\r\n\r\n## ⚠️ Breaking Changes\r\n\r\n### **None.** This is a backward-compatible enhancement.\r\n\r\n## 📝 Checklist\r\n\r\n- [x] Code follows project style guidelines (black, isort, flake8)\r\n- [x] Tests added and passing\r\n- [x] Documentation updated (docstrings)\r\n- [x] Commits signed with DCO\r\n- [x] No breaking changes\r\n\r\n## 🔗 Related Issues\r\n\r\n- Closes #2796\r\n- Related to Unix socket reconnection implementation in `external/unix/client.py`",
+  "status": "failure",
+  "failure_type": "mcp_call_error",
+  "failure_evidence": "任务执行过程中出现了LLM调用失败，导致没有生成预期的最终输出。",
+  "final_response": "",
+  "steps": [
+    "Step 0 | 思考: To implement the automatic session reconnection for MCP external plugins, I will follow the steps ou... | 工具 ✓ write_file({\"file_path\": \"mcpgateway/plugins/framework/models) | 耗时: 21686ms, tokens: 4324",
+    "Step 0 | 思考: To implement the automatic session reconnection for MCP external plugins, I will follow the steps ou... | 工具 ✓ write_file({\"file_path\": \"mcpgateway/plugins/framework/extern) | 耗时: 21688ms, tokens: 4324"
+  ],
+  "tool_calls": [
+    {
+      "step": 1,
+      "tool": "write_file",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\batch-v4-20260822\\\\workspaces\\\\prototypebench__IBM__mcp-context-forge-3639__73de97\\\\mcpgateway\\\\plugins\\\\framework\\\\models.py', 'size': 112, 'rel_path': 'mcpgateway/plugins/framework/models.py', 'mirror': None})\n已写入: mcpgateway/plugins/framework/models.py (112 字符)"
+    },
+    {
+      "step": 2,
+      "tool": "write_file",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\batch-v4-20260822\\\\workspaces\\\\prototypebench__IBM__mcp-context-forge-3639__73de97\\\\mcpgateway\\\\plugins\\\\framework\\\\external\\\\mcp\\\\client.py', 'size': 1419, 'rel_path': 'mcpgateway/plugins/framework/external/mcp/client.py', 'mirror': None})\n已写入: mcpgateway/plugins/framework/external/mcp/client.py (1419 字符)"
+    }
+  ],
+  "files_written": [
+    "mcpgateway\\plugins\\framework\\external\\mcp\\client.py",
+    "mcpgateway\\plugins\\framework\\models.py"
+  ],
+  "total_tokens": 4324,
+  "duration_ms": 22375.0,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen-max): HTTP 400 (<400> InternalError.Algo.InvalidParameter: messages with role \"tool\" must be a response to a preceeding message with \"tool_calls\".)",
+  "judge_method": "llm",
+  "started_at": 1787384933.6585886,
+  "workspace": "benchmarks\\benchforge\\runs\\batch-v4-20260822\\workspaces\\prototypebench__IBM__mcp-context-forge-3639__73de97"
+}

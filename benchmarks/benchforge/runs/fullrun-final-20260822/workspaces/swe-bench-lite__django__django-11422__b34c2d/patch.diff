@@ -1,0 +1,9 @@
+diff --git a/django/utils/autoreload.py b/django/utils/autoreload.py
+index abc1234..def5678 100644
+--- a/django/utils/autoreload.py
++++ b/django/utils/autoreload.py
+@@ -140,6 +140,7 @@ def gen_filenames():
+         yield settings_module.__file__
+     if main_module is not None and hasattr(main_module, '__file__'):
+         yield main_module.__file__
++    yield get_main_module_path()

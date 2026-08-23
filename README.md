@@ -93,6 +93,22 @@ Most AI tools force you to choose between **convenience** (cloud SaaS, your data
 - **SkillEvaluator** (9 dimensions) + **SkillEvolver** (ratcheted) — quality only goes up.
 - **HumanInTheLoop** — three-layer confirmation gate for high-risk operations.
 
+### 🔥 FnixForge — forge other people's agents up to production grade
+
+Something Codex / Claude Code / TRAE / WorkBuddy **don't** ship: point FnixAgent at the
+(half-finished) agent *you're* building, and FnixForge runs it against professional
+benchmarks, clusters the failures, **patches your agent's code under a git guard**, and
+re-runs everything — rolling back any fix that regresses — round after round until
+**PRODUCTION READY**.
+
+- **19-task core suite** (+ smoke): instruction following, precise file edit, codegen,
+  tool use, multi-step, context retrieval, output contracts, error recovery,
+  **safety / adversarial**, Chinese semantics.
+- **Deterministic checks** (no LLM judging), per-task sandboxes, scope/protected violation detection.
+- Any agent shape: CLI / HTTP / Python — `fnixagent forge probe --write` auto-wires it.
+- CLI `fnixagent forge probe|test|fix` · API `/api/v1/forge/*` (SSE) · HTML capability-matrix reports.
+- Docs: [docs/forge.md](docs/forge.md) · Demo: `fnixagent forge fix benchmarks/forge/sample-agent --suite core`
+
 ### 🛡️ Security & privacy
 
 - **Local-first**: data and sessions stay in `~/.fnix/` and `{workspace}/.fnix/`.

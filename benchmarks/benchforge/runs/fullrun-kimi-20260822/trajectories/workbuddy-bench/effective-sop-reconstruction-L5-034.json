@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "effective-sop-reconstruction-L5-034",
+  "prompt": "请读取当前工作目录下的 SOP 受控文件包，按截至 2026-07-15、适用区域“华东二仓”的口径，\n重建 QS-SOP-034《来料接收与质量放行》的当前有效 SOP 状态，并写入\n`output/effective_sop.json`。输入文件夹中包含基础 SOP、签署版区域附录、监管通知、FAQ、\n附录表、归档旧版、未签署草案和说明文件；不能只摘录某一份文件，必须按来源权限、\n生效状态、适用区域和附件绑定关系合并为可审计的 SOP 对象图。\n\n输出 JSON 顶层必须包含 `metadata`、`effective_sections`、`inactive_steps`、\n`appendix_bindings`、`summary` 五个字段。\n\n`metadata` 至少包含：\n- `case_id`：\"case_effective_sop_reconstruction_034\"\n- `as_of_date`：\"2026-07-15\"\n- `target_region`：\"华东二仓\"\n- `source_root`：\"input\"\n- `source_files_count`：输入业务文件数量\n- `output_path`：\"output/effective_sop.json\"\n- `authority_order`：按高到低列出 regulator_notice / signed_addendum / base_sop / faq_clarification\n- `excluded_statuses`：列出 archive / draft\n- `current_sop_code`：\"QS-SOP-034\"\n- `source_docs_used`：实际进入当前有效状态判断的相对路径列表\n\n`effective_sections` 是数组，每个元素代表一个当前有效 SOP section，字段必须包含：\n- `section_id`\n- `title`\n- `steps`：数组；每个 step 至少包含 `step_id`、`text`、`source_doc`、`authority_level`\n- `warnings`：数组；每个 warning 至少包含 `warning_id`、`text`、`source_doc`\n- `tables`：本 section 绑定的 appendix/table id 数组\n- `source_doc`：决定该 section 当前有效状态的主要来源相对路径\n- `authority_level`：regulator_notice / signed_addendum / base_sop / faq_clarification 之一\n- `applicable_region`\n- `replaced_steps`：被当前 section 规则取代但仍需追溯的 step_id 数组\n\n`inactive_steps` 是数组，每项至少包含：\n- `step_id`\n- `original_section`\n- `inactive_reason`\n- `replaced_by`：替代它的当前有效 step_id；无直接替代时为 null\n- `source_doc`\n\n`appendix_bindings` 是数组，每项至少包含：\n- `table_id`\n- `title`\n- `bound_sections`\n- `source_doc`\n- `authority_level`\n- `binding_status`\n- `required_rows`\n- `binding_notes`\n\n`summary` 至少包含：`section_count`、`active_step_count`、`warning_count`、\n`section_table_reference_count`、`appendix_binding_count`、`inactive_step_count`、\n`notice_overridden_step_count`、`faq_clarification_count`、`archive_or_draft_excluded_count`、\n`source_documents_used_count`。\n\n判定规则：\n1. 来源权限顺序为：监管通知 > 已签署区域附录 > 基础 SOP > FAQ。FAQ 只能澄清记录格式或术语，\n   不能覆盖硬性规则；归档旧版和未签署草案不得成为当前有效步骤。\n2. 基础 SOP 提供全国默认 section 结构；华东二仓签署附录只在其适用区域内覆盖对应步骤和附件要求。\n3. 监管通知 NQI-2026-19 在截至日期前已生效，凡与基础 SOP、签署附录或 FAQ 冲突时，均以监管通知为准。\n4. 被取代的基础步骤、区域附录步骤、FAQ 旧口径、归档旧版步骤和未签署草案建议不能被丢弃；必须进入\n   `inactive_steps`，并说明 inactive_reason、source_doc 与 replaced_by。\n5. warning boxes 与 appendix/table 绑定是 SOP 对象的一部分，不能只输出纯文本步骤。\n6. APP-B 中的旧 FAQ 示例行不得作为当前温控断点阈值；低温来料温控阈值应采用监管通知后的 20 分钟规则。\n7. APP-D 只适用于华东二仓冷链交接字段，不能错误绑定到温控隔离判定；APP-C 用于异常等级与升级时限。\n8. 输出中的 `source_doc` 均使用相对输入根目录的路径，不要只写文件名。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787334456.5693045,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\workbuddy-bench__effective-sop-reconstruction-L5-034__7d35fb"
+}

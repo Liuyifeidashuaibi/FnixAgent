@@ -1,0 +1,37 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "IBM__mcp-context-forge-3404",
+  "prompt": "<!--\r\nFor specialized templates, append to your PR URL:\r\n  ?template=bug_fix.md   - Bug fixes\r\n  ?template=feature.md   - New features\r\n  ?template=docs.md      - Documentation\r\n  ?template=plugin.md    - New plugins\r\n\r\nExample: https://github.com/IBM/mcp-context-forge/compare/main...your-branch?expand=1&template=bug_fix.md\r\n-->\r\n\r\n## 🔗 Related Issue\r\nCloses https://github.com/IBM/mcp-context-forge/issues/3234\r\n\r\n---\r\n\r\n## 📝 Summary\r\n\r\n- mcpgateway/admin.py (line 2222): Changed default value of `include_inactive` parameter from `False` to `True` in `admin_servers_partial_html()`\r\n\r\n- mcpgateway/admin.py (line 8536): Changed default value of include_inactive `parameter` from `False` to `True` in `admin_gateways_partial_html()`\r\n\r\n- tests/unit/mcpgateway/test_admin.py (line 8219): Added test `test_admin_servers_partial_html_default_includes_inactive()` to verify servers show inactive by default\r\n\r\n- tests/unit/mcpgateway/test_admin.py (line 8827): Added test `test_admin_gateways_partial_html_default_includes_inactive()` to verify gateways show inactive by default\r\n\r\nTest verification:\r\n\r\n- Tests fail without the fix: Both new tests fail with `AssertionError: Expected include_inactive default to be True, but got False`\r\n- Tests pass with the fix applied\r\n\r\n---\r\n\r\n## 🏷️ Type of Change\r\n- [ ] Bug fix\r\n- [x] Feature / Enhancement\r\n- [ ] Documentation\r\n- [ ] Refactor\r\n- [ ] Chore (deps, CI, tooling)\r\n- [ ] Other (describe below)\r\n\r\n---\r\n\r\n## 🧪 Verification\r\n\r\n| Check                     | Command         | Status |\r\n|---------------------------|-----------------|--------|\r\n| Lint suite                | `make lint`     |    ✅     |\r\n| Unit tests                | `make test`     |   ✅      |\r\n| Coverage ≥ 80%            | `make coverage` |        |\r\n\r\n---\r\n\r\n## ✅ Checklist\r\n- [x] Code formatted (`make black isort pre-commit`)\r\n- [x] Tests added/updated for changes\r\n- [ ] Documentation updated (if applicable)\r\n- [x] No secrets or credentials committed\r\n\r\n---\r\n\r\n## 📓 Notes (optional)\r\n_Screenshots, design decisions, or additional context._",
+  "status": "failure",
+  "failure_type": "path_error",
+  "failure_evidence": "Agent 指出目标文件不存在于当前工作空间，表明在指定路径上执行任务时遇到了问题。",
+  "final_response": "It seems that the files `mcpgateway/admin.py` and `tests/unit/mcpgateway/test_admin.py` do not exist in the current workspace. \n\nCould you please verify if these files are located in a different directory or if there's another path I should be looking at? If they're supposed to be in this workspace, we might need to create them first before proceeding with the changes. Could you provide more details on this?",
+  "steps": [
+    "Step 0 | 思考: I understand the task. You want me to make the following changes:\n\n1. In `mcpgateway/admin.py`:\n   -... | 工具 ✓ glob({\"pattern\": \"mcpgateway/admin.py\"}) | 耗时: 6462ms, tokens: 3442",
+    "Step 0 | 思考: I understand the task. You want me to make the following changes:\n\n1. In `mcpgateway/admin.py`:\n   -... | 工具 ✓ glob({\"pattern\": \"tests/unit/mcpgateway/test_admin.py\"}) | 耗时: 6462ms, tokens: 3442",
+    "Step 1 | 思考: It seems that the files `mcpgateway/admin.py` and `tests/unit/mcpgateway/test_admin.py` do not exist... | 耗时: 3998ms, tokens: 3597"
+  ],
+  "tool_calls": [
+    {
+      "step": 1,
+      "tool": "glob",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'count': 0, 'pattern': 'mcpgateway/admin.py'})\n(无匹配结果)"
+    },
+    {
+      "step": 2,
+      "tool": "glob",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'count': 0, 'pattern': 'tests/unit/mcpgateway/test_admin.py'})\n(无匹配结果)"
+    }
+  ],
+  "files_written": [],
+  "total_tokens": 7039,
+  "duration_ms": 10469.000000000051,
+  "error": "",
+  "judge_method": "llm",
+  "started_at": 1787386563.1427915,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-final-20260822\\workspaces\\prototypebench__IBM__mcp-context-forge-3404__a91e56"
+}

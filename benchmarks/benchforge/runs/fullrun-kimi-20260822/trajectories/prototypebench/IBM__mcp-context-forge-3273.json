@@ -1,0 +1,18 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "IBM__mcp-context-forge-3273",
+  "prompt": "Signed-off-by: NAYANA.R <nayana.r7813@gmail.com>\r\n\r\ncloses #3051 \r\nImplemented full fix for parameterized MIME handling in validation logic: accepts valid MIME parameters and still rejects malformed/unsafe formats in validators.py.\r\n\r\nUpdated admin UX guidance for UI resources so MIME helper text is contextual (shown for ui:// resource flows on MIME focus) in admin.html and admin.js.\r\n\r\nAdded and refined unit coverage for MIME validation in test_validators_advanced.py.\r\n\r\nAdded and refined e2e coverage for admin resource create/list persistence of parameterized MIME values in test_admin_apis.py.\r\n\r\nRemoved profile-specific example bias from docs/tests and generalized cases to avoid single hardcoded MIME dependencies.",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/mcpgateway/common/validators.py b/mcpgateway/common/validators.py\ni] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 92.9999999998472,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787334461.3627923,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\prototypebench__IBM__mcp-context-forge-3273__4d3ce0"
+}

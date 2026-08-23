@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Documentation Browser</title>
+  <style>
+    body { margin: 0; font-family: sans-serif; }
+    .toolbar { padding: 10px; background: #f0f0f0; border-bottom: 1px solid #ccc; display: flex; align-items: center; gap: 16px; }
+    .toolbar label { margin-right: 8px; font-weight: bold; }
+    .reading-time { font-size: 14px; color: #555; }
+    iframe { width: 100%; height: calc(100vh - 50px); border: none; }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <label for="address">Address:</label>
+    <select id="address">
+      <option value="docs/intro.html" selected>docs/intro.html</option>
+      <option value="docs/javascript.html">docs/javascript.html</option>
+      <option value="docs/css.html">docs/css.html</option>
+      <option value="docs/html.html">docs/html.html</option>
+      <option value="docs/nodejs.html">docs/nodejs.html</option>
+    </select>
+    <span class="reading-time">Reading Time: 0.0s</span>
+  </div>
+  <iframe id="content" src="docs/intro.html"></iframe>
+
+  <script>
+    (function() {
+      var readingTimeEl = document.querySelector('.reading-time');
+      var addressSelect = document.getElementById('address');
+      var elapsed = 0;
+      var lastTick = null;
+      var timerId = null;
+
+      function updateDisplay() {
+        readingTimeEl.textContent = 'Reading Time: ' + elapsed.toFixed(1) + 's';
+      }
+
+      function startTimer() {
+        if (timerId) return;
+        lastTick = Date.now();
+        timerId = setInterval(function() {
+          var now = Date.now();
+          elapsed += (now - lastTick) / 1000;
+          lastTick = now;
+          updateDisplay();
+        }, 100);
+      }
+
+      function stopTimer() {
+        if (timerId) {
+          clearInterval(timerId);
+          timerId = null;
+          // Account for time since last tick
+          if (lastTick) {
+            var now = Date.now();
+            elapsed += (now - lastTick) / 1000;
+            lastTick = null;
+            updateDisplay();
+          }
+        }
+      }
+
+      function resetTimer() {
+        stopTimer();
+        elapsed = 0;
+        updateDisplay();
+        if (!document.hidden) {
+          startTimer();
+        }
+      }
+
+      // Reset reading time when doc page changes
+      addressSelect.addEventListener('change', function() {
+        document.getElementById('content').src = this.value;
+        resetTimer();
+      });
+
+      // Pause recording when page is hidden, resume when visible
+      document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+          stopTimer();
+        } else {
+          startTimer();
+        }
+      });
+
+      // Start timer on load
+      startTimer();
+      updateDisplay();
+    })();
+  </script>
+</body>
+</html>

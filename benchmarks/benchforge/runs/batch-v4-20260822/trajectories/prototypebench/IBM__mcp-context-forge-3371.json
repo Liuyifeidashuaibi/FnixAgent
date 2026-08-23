@@ -1,0 +1,28 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "IBM__mcp-context-forge-3371",
+  "prompt": "## 🔗 Related Issue\r\nCloses #3365 \r\n\r\n  ---\r\n  📝 Summary\r\n\r\n  _execute_forwarded_request() now gates on HTTP status code before parsing the response body. Non-2xx       \r\n  responses with non-JSON-RPC bodies (e.g. 401 {\"detail\":\"...\"}) are mapped to JSON-RPC errors instead of    \r\n  silently returning {\"result\": {}}. The two session-affinity tests that depended on localhost port state are\r\n   now hermetic via mocked HTTP responses, and two new test cases cover the non-2xx error mapping paths.     \r\n\r\n ---\r\n\r\n  ## 🏷️ Type of Change\r\n  - [x] Bug fix\r\n  - [ ] Feature / Enhancement\r\n  - [ ] Documentation\r\n  - [ ] Refactor\r\n  - [ ] Chore (deps, CI, tooling)\r\n  - [ ] Other (describe below)\r\n\r\n   ---\r\n\r\n  ## 🧪 Verification\r\n\r\n  | Check                     | Command         | Status |\r\n  |---------------------------|-----------------|--------|\r\n  | Lint suite                | `make lint`     | ✅     |\r\n  | Unit tests                | `make test`     | ✅     |\r\n  | Coverage ≥ 80%            | `make coverage`  |\r\n\r\n  ---\r\n\r\n  ## ✅ Checklist\r\n  - [x] Code formatted (`make black isort pre-commit`)\r\n  - [x] Tests added/updated for changes\r\n  - [ ] Documentation updated (if applicable)\r\n  - [x] No secrets or credentials committed\r\n\r\n  ---\r\n  📓 Notes (optional)\r\n\r\n  Files changed:\r\n  - mcpgateway/services/mcp_session_pool.py — Added HTTP status check before response parsing in\r\n  _execute_forwarded_request()\r\n  - tests/e2e/test_session_pool_e2e.py — Mocked httpx.AsyncClient in existing tests, added\r\n  test_execute_forwarded_request_returns_error_on_non_2xx_non_jsonrpc and\r\n  test_execute_forwarded_request_propagates_jsonrpc_error_on_non_2xx",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [
+    "Step 0 | 思考: 了解了，根据提供的信息，这个改动主要是在 `_execute_forwarded_request()` 方法中增加了对 HTTP 状态码的检查，并且在遇到非 2xx 的响应时，不再尝试解析响应体而是直... | 工具 ✗ read_file({\"file_path\": \"mcpgateway/services/mcp_session_poo) | 耗时: 7327ms, tokens: 3313"
+  ],
+  "tool_calls": [
+    {
+      "step": 1,
+      "tool": "read_file",
+      "args": {},
+      "success": false,
+      "output_preview": "[失败] 文件不存在: mcpgateway/services/mcp_session_pool.py"
+    }
+  ],
+  "files_written": [],
+  "total_tokens": 3313,
+  "duration_ms": 8031.000000000063,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen-max): HTTP 400 (<400> InternalError.Algo.InvalidParameter: messages with role \"tool\" must be a response to a preceeding message with \"tool_calls\".)",
+  "judge_method": "heuristic",
+  "started_at": 1787384856.488636,
+  "workspace": "benchmarks\\benchforge\\runs\\batch-v4-20260822\\workspaces\\prototypebench__IBM__mcp-context-forge-3371__3df028"
+}

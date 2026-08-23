@@ -1,0 +1,18 @@
+{
+  "dataset": "swe-bench-lite",
+  "task_id": "scikit-learn__scikit-learn-11281",
+  "prompt": "Should mixture models have a clusterer-compatible interface\nMixture models are currently a bit different. They are basically clusterers, except they are probabilistic, and are applied to inductive problems unlike many clusterers. But they are unlike clusterers in API:\r\n* they have an `n_components` parameter, with identical purpose to `n_clusters`\r\n* they do not store the `labels_` of the training data\r\n* they do not have a `fit_predict` method\r\n\r\nAnd they are almost entirely documented separately.\r\n\r\nShould we make the MMs more like clusterers?\n",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/sklearn/mixture/base.py b/sklearn/mixture/base.py\n--- a/sklearn/mix] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787334467.213439,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\swe-bench-lite__scikit-learn__scikit-learn-11281__ba73c1"
+}

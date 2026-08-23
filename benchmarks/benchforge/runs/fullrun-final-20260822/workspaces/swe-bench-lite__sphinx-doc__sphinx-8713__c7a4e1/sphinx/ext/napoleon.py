@@ -1,0 +1,7 @@
+    def _parse_other_parameters_section(self, section):
+        # type: (unicode) -> List[unicode]
+        fields = self._consume_fields()
+        if self._config.napoleon_use_param:
+            return self._format_docutils_params(fields)
+        else:
+            return self._format_fields(_('Other Parameters'), fields)

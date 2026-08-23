@@ -1,0 +1,45 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "IBM__mcp-context-forge-3463",
+  "prompt": "# 🐛 Bug-fix PR\r\n\r\nCloses #3411\r\n\r\n## 📌 Summary\r\nFixed a visibility leak in the admin UI where users could see team-scoped and private MCP servers, tools, resources, and prompts from other teams when the \"View Public\" checkbox was enabled. Previously, enabling this checkbox would remove the `team_id` filter entirely, exposing all accessible items across the platform and violating the selected team's isolation boundary. This change introduces an `include_public` parameter to explicitly overlay globally public items on top of the current team's items while securely maintaining team isolation.\r\n\r\n## 🔁 Reproduction Steps\r\n1. **Login in Context Forge UI**\r\n2. **Create MCP server under Team1** with Visibility: `team` (team-scoped)\r\n3. **Navigate to create virtual server from Team2** (initially, only Team2's MCP servers are visible)\r\n4. **Enable checkbox:** \"View Public — Include publicly available MCP servers, tools, resources, and prompts\"\r\n5. **Observe the bug:** Team1's team-scoped and private servers are incorrectly listed alongside Team2's servers and globally public servers.\r\n\r\nNow: Only the selected team's items + all public items are visible.\r\n\r\n## 🐞 Root Cause\r\n\r\nFrontend:\r\nThe root cause originated in the frontend JavaScript `mcpgateway/static/admin.js`. \r\nWhen the \"View Public\" checkbox was checked, the logic would deliberately strip the `team_id` parameter from the API request to fetch all public items. \r\n\r\nBackend:\r\nHowever, the backend `mcpgateway/admin.py`, when receiving a request without a `team_id`, would fall back to yielding *all* items the user technically had access to across the system, rather than strictly merging the selected team's items with public items. This broke the intended multi-tenancy boundary for the active UI view. Need a backend api such that it returns only team items + public items.\r\n\r\n\r\n## 💡 Fix Description\r\n\r\n- **Backend API Filters `mcpgateway/admin.py`:**\r\nIntroduced a new `include_public` boolean query parameter across all listing and search endpoints for gateways, tools, resources, and prompts. When `team_id` is specified with `include_public=true`, the backend now explicitly enforces an `OR` condition yielding only `[selected team's items] + [globally public items]`.\r\n\r\n- **Frontend URL Mutation `mcpgateway/static/admin.js`:** \r\nModified the behavior of the \"View Public\" checkbox to preserve the `team_id` in the query string and instead toggle the `include_public=true` parameter.\r\n\r\n- **Stateful Pagination `mcpgateway/templates/`:** \r\nUpdated the HTMX `hx-get` attributes in the infinite scroll templates (`*_selector_items.html`) so that both `team_id` and `include_public` query parameters survive across paginated requests.\r\n\r\n- **Test Coverage:** Added extensive unit tests (`test_admin.py`) for the new access condition overlays and template injections, and refactored frontend JS tests (`admin-view-public.test.js` & `admin-edit-server-selection.test.js`) to assert proper URL param generation.\r\n\r\n## 🧪 Verification\r\n\r\n| Check                                 | Command              | Status |\r\n|---------------------------------------|----------------------|--------|\r\n| Lint suite                            | `make lint`          |   ✅     |\r\n| Unit tests                            | `make test`          |     ✅   |\r\n| Coverage ≥ 80 %                       | `make coverage`      |     ✅   |\r\n| Manual regression no longer fails     | steps / screenshots  |    ✅    |\r\n\r\n## 📐 MCP Compliance (if relevant)\r\n- [x] Matches current MCP spec\r\n- [x] No breaking change to MCP clients\r\n\r\n## ✅ Checklist\r\n- [x] Code formatted (`make black isort pre-commit`)\r\n- [x] No secrets/credentials committed",
+  "status": "failure",
+  "failure_type": "path_error",
+  "failure_evidence": "Agent未能找到所需的代码文件，表明其可能未正确处理或识别项目路径。",
+  "final_response": "当前工作区看起来是空的，没有 `mcpgateway` 目录或其他相关文件。为了继续处理这个问题，我需要确认是否提供了正确的项目路径或代码库。\n\n请确认以下几点：\n1. 你是否已经将相关的代码文件添加到了当前的工作目录？\n2. 如果使用了版本控制系统（如 Git），是否已经拉取了最新的代码？\n\n如果这些文件确实存在于其他位置，请提供正确的路径或文件内容，以便我可以继续进行检查和修改。如果你能提供具体的文件内容，我也可以直接基于提供的内容进行验证。",
+  "steps": [
+    "Step 0 | 思考: 根据你的描述，你已经完成了对 `mcpgateway/admin.py` 和 `mcpgateway/static/admin.js` 以及相关模板文件的修复，并且增加了相应的测试覆盖。现在需要确认这... | 工具 ✗ read_file({\"file_path\": \"mcpgateway/admin.py\"}) | 耗时: 7816ms, tokens: 3674",
+    "Step 1 | 思考: 看来 `mcpgateway/admin.py` 文件不存在于当前目录下。这可能是因为路径不正确或文件尚未被添加到此工作区。为了继续，我将尝试查找与 `mcpgateway` 相关的 Python 文... | 工具 ✓ glob({\"pattern\": \"mcpgateway/**/*.py\"}) | 耗时: 4083ms, tokens: 3796",
+    "Step 2 | 思考: 在当前工作区中没有找到匹配 `mcpgateway/**/*.py` 模式的文件，这意味着可能没有 `mcpgateway` 目录或相关的 Python 文件。为了进一步确认，我将尝试列出根目录的内容... | 工具 ✓ ls({}) | 耗时: 3222ms, tokens: 3909",
+    "Step 3 | 思考: 当前工作区看起来是空的，没有 `mcpgateway` 目录或其他相关文件。为了继续处理这个问题，我需要确认是否提供了正确的项目路径或代码库。\n\n请确认以下几点：\n1. 你是否已经将相关的代码文件添加... | 耗时: 5359ms, tokens: 4109"
+  ],
+  "tool_calls": [
+    {
+      "step": 1,
+      "tool": "read_file",
+      "args": {},
+      "success": false,
+      "output_preview": "[失败] 文件不存在: mcpgateway/admin.py"
+    },
+    {
+      "step": 2,
+      "tool": "glob",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'count': 0, 'pattern': 'mcpgateway/**/*.py'})\n(无匹配结果)"
+    },
+    {
+      "step": 3,
+      "tool": "ls",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'count': 0, 'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\fullrun-final-20260822\\\\workspaces\\\\prototypebench__IBM__mcp-context-forge-3463__a90938'})\n(空目录)"
+    }
+  ],
+  "files_written": [],
+  "total_tokens": 15488,
+  "duration_ms": 20485.000000000127,
+  "error": "",
+  "judge_method": "llm",
+  "started_at": 1787386628.7913597,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-final-20260822\\workspaces\\prototypebench__IBM__mcp-context-forge-3463__a90938"
+}

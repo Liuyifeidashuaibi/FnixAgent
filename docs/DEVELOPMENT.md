@@ -10,20 +10,20 @@
 
 ### 1.1 技术栈
 
-| 层级 | 技术选型 |
-|------|----------|
-| Web 框架 | FastAPI 0.104 + Uvicorn |
-| 数据校验 | Pydantic 2.5 / pydantic-settings |
-| ORM | SQLAlchemy 2.0(DeclarativeBase) |
-| 数据库 | PostgreSQL 16 |
-| 缓存 | Redis 7 |
-| 向量库 | Milvus(混合检索) |
-| 对象存储 | MinIO |
-| 搜索引擎 | Elasticsearch 8 |
-| LLM | GLM /  LLM / Qwen( LLM 兼容接口) |
-| 鉴权 | JWT(HS256,纯标准库实现) |
-| 容器化 | Docker / Docker Compose |
-| 测试 | pytest + pytest-asyncio + FastAPI TestClient |
+| 层级         | 技术选型                                           |
+| ------------ | -------------------------------------------------- |
+| Web 框架     | FastAPI 0.141 + Uvicorn                            |
+| 数据校验     | Pydantic 2 / pydantic-settings                     |
+| 桌面运行时   | Tauri 2 + React/TypeScript + Vite                  |
+| 本地 sidecar | Rust + axum 0.8 (fnix-local)                       |
+| 数据库       | SQLite (sqlite3) [规划中: PostgreSQL]              |
+| 缓存         | 进程内内存 [规划中: Redis]                         |
+| 向量库       | FAISS / 内存检索 [规划中: Milvus]                  |
+| 对象存储     | 本地文件系统 [规划中: MinIO]                       |
+| 搜索引擎     | 内存全文检索 [规划中: Elasticsearch]               |
+| LLM          | GLM / OpenAI / Qwen / DashScope                    |
+| 鉴权         | Argon2id + AES-256-GCM + 双令牌 JWT + RSA 密钥交换 |
+| 测试         | pytest + pytest-asyncio + FastAPI TestClient       |
 
 ### 1.2 七层架构
 
@@ -68,9 +68,9 @@ FNIXAGENT/
 │   ├── services/              # 服务层(桥接核心引擎与 API)
 │   │   ├── service.py         # AgentScheduler 构建与单例
 │   │   └── storage.py         # 业务存储(User/Document/Task/ApiKey Store)
-│   ├── adapters/              # 基础设施适配器
-│   │   ├── db/postgres.py     # PostgreSQL 适配器
-│   │   └── cache/redis.py     # Redis 适配器
+│   ├── adapters/              # 基础设施适配器 [规划中]
+│   │   ├── db/postgres.py     # PostgreSQL 适配器 [规划中]
+│   │   └── cache/redis.py     # Redis 适配器 [规划中]
 │   └── models/                # 数据模型
 │       ├── db/models.py       # SQLAlchemy ORM 实体
 │       └── domain/entities.py # 领域对象(dataclass)
@@ -79,8 +79,8 @@ FNIXAGENT/
 │   ├── prompts/*.yaml         # Prompt 模板
 │   └── security/*.yaml        # 安全配置(敏感词)
 ├── tests/                     # 测试
-├── deploy/docker/             # 部署(Dockerfile)
-├── docker-compose.yml         # 容器编排
+├── deploy/docker/             # 部署(Dockerfile) [规划中]
+├── docker-compose.yml         # 容器编排 [规划中]
 ├── Makefile                   # 构建命令
 ├── requirements.txt           # 依赖清单
 └── .env.example               # 环境变量模板
@@ -90,91 +90,95 @@ FNIXAGENT/
 
 #### 2.2.1 LLM 基础服务(`core/llm/`)
 
-| 文件 | 职责 | 关键类/函数 |
-|------|------|-------------|
-| `base.py` | LLM Provider 抽象基类 | `BaseLLMProvider`(抽象方法 `_do_chat`/`_do_stream`)、`LLMRequest` |
-| `router.py` | 多模型路由 | `LLMRouter`(加权/轮询/故障转移策略)、`RouteStrategy` 枚举 |
-| `providers/openai_compat.py` |  LLM 兼容 Provider | ` LLMCompatibleProvider`、`GLMProvider`、` LLMProvider`、`QwenProvider`、`MockLLMProvider` |
-| `cache.py` | 响应缓存 | `LLMCache`(基于 prompt 哈希) |
-| `circuit.py` | 熔断器 | `CircuitBreaker`(closed/open/half-open 三态) |
-| `rate_limiter.py` | 限流器 | `TokenBucketRateLimiter`(令牌桶算法) |
-| `billing.py` | Token 计费 | `BillingTracker`(按模型计价) |
+| 文件                         | 职责                  | 关键类/函数                                                                                |
+| ---------------------------- | --------------------- | ------------------------------------------------------------------------------------------ |
+| `base.py`                    | LLM Provider 抽象基类 | `BaseLLMProvider`(抽象方法 `_do_chat`/`_do_stream`)、`LLMRequest`                          |
+| `router.py`                  | 多模型路由            | `LLMRouter`(加权/轮询/故障转移策略)、`RouteStrategy` 枚举                                  |
+| `providers/openai_compat.py` | LLM 兼容 Provider     | ` LLMCompatibleProvider`、`GLMProvider`、` LLMProvider`、`QwenProvider`、`MockLLMProvider` |
+| `cache.py`                   | 响应缓存              | `LLMCache`(基于 prompt 哈希)                                                               |
+| `circuit.py`                 | 熔断器                | `CircuitBreaker`(closed/open/half-open 三态)                                               |
+| `rate_limiter.py`            | 限流器                | `TokenBucketRateLimiter`(令牌桶算法)                                                       |
+| `billing.py`                 | Token 计费            | `BillingTracker`(按模型计价)                                                               |
 
 **路由策略**:
+
 - `WEIGHTED`:按权重分配(默认)
 - `ROUND_ROBIN`:轮询
 - `FAILOVER`:主备切换
 
-**Provider 优先级**:GLM(weight=2.0) >  LLM(weight=1.0) > Qwen(weight=1.0) > Mock(无 API Key 时回退)
+**Provider 优先级**:GLM(weight=2.0) > LLM(weight=1.0) > Qwen(weight=1.0) > Mock(无 API Key 时回退)
 
 #### 2.2.2 三层记忆引擎(`core/memory/`)
 
-| 文件 | 层级 | 职责 | 关键类 |
-|------|------|------|--------|
-| `short_term.py` | 短期 | 滑动窗口对话历史(token 预算裁剪) | `ShortTermMemory`(`add`/`get_messages`/`clear`) |
-| `long_term.py` | 长期 | 向量化语义记忆(跨会话检索) | `LongTermMemory`(`add`/`search`/`cleanup_expired`) |
-| `entity.py` | 实体 | 结构化业务事实(用户画像/论文/项目) | `EntityMemory`(`upsert`/`get`/`list_by_type`) |
-| `manager.py` | 统一管理 | 组合三层,注入 Prompt | `MemoryManager`(`save`/`load_context`/`search`) |
+| 文件            | 层级     | 职责                               | 关键类                                             |
+| --------------- | -------- | ---------------------------------- | -------------------------------------------------- |
+| `short_term.py` | 短期     | 滑动窗口对话历史(token 预算裁剪)   | `ShortTermMemory`(`add`/`get_messages`/`clear`)    |
+| `long_term.py`  | 长期     | 向量化语义记忆(跨会话检索)         | `LongTermMemory`(`add`/`search`/`cleanup_expired`) |
+| `entity.py`     | 实体     | 结构化业务事实(用户画像/论文/项目) | `EntityMemory`(`upsert`/`get`/`list_by_type`)      |
+| `manager.py`    | 统一管理 | 组合三层,注入 Prompt               | `MemoryManager`(`save`/`load_context`/`search`)    |
 
 **安全(OWASP ASI06 记忆投毒防护)**:
+
 - 实体类型白名单:`user_profile`/`paper`/`project`/`note`/`task`/`document`/`knowledge`
 - 字段白名单:每种实体类型仅允许预定义字段
 
 #### 2.2.3 工具执行平台(`core/tools/`)
 
-| 文件 | 职责 | 关键类/函数 |
-|------|------|-------------|
-| `protocol.py` | 工具协议 | `ToolMetadata`(name/description/category/input_schema)、`validate_arguments()` |
-| `registry.py` | 工具注册中心 | `ToolRegistry`(`register`/`get`/`has`/`list_tools`/`list_for_llm`/`unregister`) |
-| `executor.py` | 工具执行器 | `ToolExecutor`(`execute(ToolCall) -> ToolResult`,DAG 编排) |
-| `sandbox/code_sandbox.py` | 代码沙箱 | 隔离执行用户代码 |
-| `sandbox/policy.py` | 沙箱策略 | 资源限制/权限分级 |
+| 文件                      | 职责         | 关键类/函数                                                                     |
+| ------------------------- | ------------ | ------------------------------------------------------------------------------- |
+| `protocol.py`             | 工具协议     | `ToolMetadata`(name/description/category/input_schema)、`validate_arguments()`  |
+| `registry.py`             | 工具注册中心 | `ToolRegistry`(`register`/`get`/`has`/`list_tools`/`list_for_llm`/`unregister`) |
+| `executor.py`             | 工具执行器   | `ToolExecutor`(`execute(ToolCall) -> ToolResult`,DAG 编排)                      |
+| `sandbox/code_sandbox.py` | 代码沙箱     | 隔离执行用户代码                                                                |
+| `sandbox/policy.py`       | 沙箱策略     | 资源限制/权限分级                                                               |
 
 **工具权限分级**:`LOW`(只读)/`MIDDLE`(读写)/`HIGH`(系统操作)
 
 #### 2.2.4 规划与推理引擎(`core/reasoning/`)
 
-| 文件 | 模式 | 职责 | 关键类 |
-|------|------|------|--------|
-| `react.py` | ReAct | 思考-行动-观察循环 | `ReActReasoning` |
-| `plan_execute.py` | Plan & Execute | 先规划再分步执行 | `PlanExecuteReasoning` |
-| `self_reflect.py` | Self-Reflect | 自我反思校验 | `SelfReflectReasoning` |
-| `selector.py` | 自动选择 | 依据任务复杂度选模式 | `ReasoningSelector` |
-| `base.py` | 抽象基类 | 统一接口 | `BaseReasoning` |
+| 文件              | 模式           | 职责                 | 关键类                 |
+| ----------------- | -------------- | -------------------- | ---------------------- |
+| `react.py`        | ReAct          | 思考-行动-观察循环   | `ReActReasoning`       |
+| `plan_execute.py` | Plan & Execute | 先规划再分步执行     | `PlanExecuteReasoning` |
+| `self_reflect.py` | Self-Reflect   | 自我反思校验         | `SelfReflectReasoning` |
+| `selector.py`     | 自动选择       | 依据任务复杂度选模式 | `ReasoningSelector`    |
+| `base.py`         | 抽象基类       | 统一接口             | `BaseReasoning`        |
 
 **选择策略**:
+
 - 简单任务(单工具)→ ReAct
 - 复杂任务(多工具/多步)→ Plan & Execute
 - 高质量要求 → 叠加 Self-Reflect
 
 #### 2.2.5 反思纠错引擎(`core/reflection/`)
 
-| 文件 | 职责 | 关键类 |
-|------|------|--------|
-| `validator.py` | 结果校验 | `ResultValidator`(完整性/逻辑性/安全性检查) |
+| 文件           | 职责       | 关键类                                        |
+| -------------- | ---------- | --------------------------------------------- |
+| `validator.py` | 结果校验   | `ResultValidator`(完整性/逻辑性/安全性检查)   |
 | `replanner.py` | 失败重规划 | `Replanner`(`replan()`,最多 `max_replans` 次) |
 
 #### 2.2.6 合规与安全引擎(`core/security/`)
 
-| 文件 | 职责 | 关键类 |
-|------|------|--------|
-| `engine.py` | 安全引擎入口 | `SecurityEngine`(`check_input`/`review_output`) |
-| `sensitive.py` | 敏感词检测 | `SensitiveDetector`(基于 `config/security/sensitive_words.yaml`) |
-| `injection.py` | 注入防护 | `InjectionGuard`(Prompt Injection 检测) |
-| `moderation.py` | 内容审核 | `ContentModerator`(违规内容识别) |
-| `desensitize.py` | 脱敏 | `Desensitizer`(手机号/邮箱/身份证脱敏) |
+| 文件             | 职责         | 关键类                                                           |
+| ---------------- | ------------ | ---------------------------------------------------------------- |
+| `engine.py`      | 安全引擎入口 | `SecurityEngine`(`check_input`/`review_output`)                  |
+| `sensitive.py`   | 敏感词检测   | `SensitiveDetector`(基于 `config/security/sensitive_words.yaml`) |
+| `injection.py`   | 注入防护     | `InjectionGuard`(Prompt Injection 检测)                          |
+| `moderation.py`  | 内容审核     | `ContentModerator`(违规内容识别)                                 |
+| `desensitize.py` | 脱敏         | `Desensitizer`(手机号/邮箱/身份证脱敏)                           |
 
 **安全纵深六道关卡**:网关鉴权 → 输入安全引擎 → 工具权限分级 → 沙箱隔离 → 输出审核 → 审计落库
 
 #### 2.2.7 Agent 调度中枢(`core/orchestrator/`)
 
-| 文件 | 职责 | 关键类 |
-|------|------|--------|
-| `context.py` | 上下文容器 | `OrchestratorContext`(注入全部引擎引用) |
-| `lifecycle.py` | 生命周期 | `Lifecycle`(7 步流水线) |
-| `scheduler.py` | 调度入口 | `AgentScheduler`(`process-> AgentResponse`) |
+| 文件           | 职责       | 关键类                                      |
+| -------------- | ---------- | ------------------------------------------- |
+| `context.py`   | 上下文容器 | `OrchestratorContext`(注入全部引擎引用)     |
+| `lifecycle.py` | 生命周期   | `Lifecycle`(7 步流水线)                     |
+| `scheduler.py` | 调度入口   | `AgentScheduler`(`process-> AgentResponse`) |
 
 **生命周期 7 步**:
+
 1. `_step1_security` 输入安全检查
 2. `_step2_memory_load` 记忆检索
 3. `_step3_reasoning_select` 推理模式选择
@@ -185,24 +189,25 @@ FNIXAGENT/
 
 #### 2.2.8 Prompt 管理引擎(`core/prompt/`)
 
-| 文件 | 职责 | 关键类 |
-|------|------|--------|
-| `manager.py` | 模板管理 | `PromptManager`(分层模板/版本控制) |
+| 文件         | 职责        | 关键类                                                    |
+| ------------ | ----------- | --------------------------------------------------------- |
+| `manager.py` | 模板管理    | `PromptManager`(分层模板/版本控制)                        |
 | `builder.py` | Prompt 构建 | `PromptBuilder`(role/constraint/tools/memory/format 分层) |
 
 #### 2.2.9 向量检索引擎(`core/retrieval/`)
 
-| 文件 | 职责 | 关键类 |
-|------|------|--------|
-| `embedder.py` | Embedding | `BaseEmbedder`、`HashingEmbedder`(无依赖回退) |
-| `vectorstore.py` | 向量存储 | `InMemoryVectorStore`(内存回退) |
-| `hybrid.py` | 混合检索 | `HybridRetriever`(向量 + 关键词) |
+| 文件             | 职责      | 关键类                                        |
+| ---------------- | --------- | --------------------------------------------- |
+| `embedder.py`    | Embedding | `BaseEmbedder`、`HashingEmbedder`(无依赖回退) |
+| `vectorstore.py` | 向量存储  | `InMemoryVectorStore`(内存回退)               |
+| `hybrid.py`      | 混合检索  | `HybridRetriever`(向量 + 关键词)              |
 
 ### 2.3 API 层(`api/`)
 
 #### 2.3.1 请求/响应模型(`api/schemas/models.py`)
 
 通用响应:
+
 - `BaseResponse`: `success`/`message`/`data`/`error`
 - `ErrorResponse`: `success=False`/`error`/`detail`/`code`
 
@@ -210,30 +215,31 @@ FNIXAGENT/
 
 #### 2.3.2 路由(`api/routers/`)
 
-| 文件 | 前缀 | 端点数 | 说明 |
-|------|------|--------|------|
-| `auth.py` | `/api/v1/auth` | 9 | 用户鉴权管理 |
-| `chat.py` | `/api/v1/chat` | 6 | Agent 对话 |
-| `documents.py` | `/api/v1/documents` | 8 | 文档管理 |
-| `tasks.py` | `/api/v1/tasks` | 12 | 任务管理 |
-| `tools.py` | `/api/v1/tools` | 8 | 工具管理 |
+| 文件           | 前缀                | 端点数 | 说明         |
+| -------------- | ------------------- | ------ | ------------ |
+| `auth.py`      | `/api/v1/auth`      | 9      | 用户鉴权管理 |
+| `chat.py`      | `/api/v1/chat`      | 6      | Agent 对话   |
+| `documents.py` | `/api/v1/documents` | 8      | 文档管理     |
+| `tasks.py`     | `/api/v1/tasks`     | 12     | 任务管理     |
+| `tools.py`     | `/api/v1/tools`     | 8      | 工具管理     |
 
 ### 2.4 业务能力层(`business/`)
 
-| 模块 | 工具 | 说明 |
-|------|------|------|
-| `search/arxiv.py` | `search_arxiv`/`search_semantic_scholar`/`search_paper` | arXiv Atom XML 解析 + 跨源去重 + 排序 |
-| `word/editor.py` | `create_doc`/`edit_doc`/`format_doc` | Word 文档编辑(python-docx) |
-| `converter/format_converter.py` | `convert_format` | 格式转换(PDF/DOCX/TXT/Markdown) |
+| 模块                            | 工具                                                    | 说明                                  |
+| ------------------------------- | ------------------------------------------------------- | ------------------------------------- |
+| `search/arxiv.py`               | `search_arxiv`/`search_semantic_scholar`/`search_paper` | arXiv Atom XML 解析 + 跨源去重 + 排序 |
+| `word/editor.py`                | `create_doc`/`edit_doc`/`format_doc`                    | Word 文档编辑(python-docx)            |
+| `converter/format_converter.py` | `convert_format`                                        | 格式转换(PDF/DOCX/TXT/Markdown)       |
 
 ### 2.5 服务层(`services/`)
 
-| 文件 | 职责 | 关键函数 |
-|------|------|----------|
-| `service.py` | 调度器构建 | `build_scheduler()`、`get_scheduler()`、`reset_scheduler()` |
-| `storage.py` | 业务存储 | `UserStore`/`ApiKeyStore`/`DocumentStore`/`TaskStore`(内存实现,线程安全) |
+| 文件         | 职责       | 关键函数                                                                 |
+| ------------ | ---------- | ------------------------------------------------------------------------ |
+| `service.py` | 调度器构建 | `build_scheduler()`、`get_scheduler()`、`reset_scheduler()`              |
+| `storage.py` | 业务存储   | `UserStore`/`ApiKeyStore`/`DocumentStore`/`TaskStore`(内存实现,线程安全) |
 
 **存储特性**:
+
 - 密码哈希:PBKDF2-HMAC-SHA256,100000 轮迭代
 - 文档落盘:`data/uploads/<id>_<filename>`
 - 任务生命周期:`pending → running → succeeded/failed/cancelled`
@@ -242,33 +248,33 @@ FNIXAGENT/
 
 #### ORM 实体(`models/db/models.py`)
 
-| 表名 | 说明 | 关键字段 |
-|------|------|----------|
-| `tenants` | 租户 | id/name/plan/quota_tokens |
-| `users` | 用户 | id/tenant_id/username/email/password_hash/role/profile |
-| `api_credentials` | API 凭证 | id/user_id/api_key_hash/scopes/expires_at |
-| `sessions` | 会话 | id/user_id/title/context/status |
-| `messages` | 消息 | id/session_id/role/content/content_type/trace_id |
-| `tasks` | 任务 | id/session_id/intent/reasoning_mode/status/plan/result |
-| `task_steps` | 任务步骤 | id/task_id/step_no/description/tool_name/status |
-| `tool_executions` | 工具执行 | id/task_id/tool_name/arguments/result/status/duration_ms |
-| `tools` | 工具元数据 | id/name/description/category/input_schema/permission_level |
-| `documents` | 文档 | id/user_id/name/doc_type/source/object_key/checksum |
-| `knowledge_chunks` | 知识分块 | id/document_id/chunk_index/content/vector_id |
-| `entities` | 实体记忆 | id/tenant_id/entity_type/name/attributes |
-| `entity_relations` | 实体关系 | source_id/target_id/relation/weight |
-| `reflection_logs` | 反思记录 | id/task_id/check_type/passed/reason/suggestion |
-| `audit_logs` | 安全审计 | id/tenant_id/user_id/action/detail/trace_id |
-| `prompt_templates` | Prompt 模板 | id/name/version/layer/content/is_active |
-| `billing_records` | 计费 | id/user_id/model/token_input/token_output/cost |
-| `feedbacks` | 用户反馈 | id/message_id/rating/comment/tags |
+| 表名               | 说明        | 关键字段                                                   |
+| ------------------ | ----------- | ---------------------------------------------------------- |
+| `tenants`          | 租户        | id/name/plan/quota_tokens                                  |
+| `users`            | 用户        | id/tenant_id/username/email/password_hash/role/profile     |
+| `api_credentials`  | API 凭证    | id/user_id/api_key_hash/scopes/expires_at                  |
+| `sessions`         | 会话        | id/user_id/title/context/status                            |
+| `messages`         | 消息        | id/session_id/role/content/content_type/trace_id           |
+| `tasks`            | 任务        | id/session_id/intent/reasoning_mode/status/plan/result     |
+| `task_steps`       | 任务步骤    | id/task_id/step_no/description/tool_name/status            |
+| `tool_executions`  | 工具执行    | id/task_id/tool_name/arguments/result/status/duration_ms   |
+| `tools`            | 工具元数据  | id/name/description/category/input_schema/permission_level |
+| `documents`        | 文档        | id/user_id/name/doc_type/source/object_key/checksum        |
+| `knowledge_chunks` | 知识分块    | id/document_id/chunk_index/content/vector_id               |
+| `entities`         | 实体记忆    | id/tenant_id/entity_type/name/attributes                   |
+| `entity_relations` | 实体关系    | source_id/target_id/relation/weight                        |
+| `reflection_logs`  | 反思记录    | id/task_id/check_type/passed/reason/suggestion             |
+| `audit_logs`       | 安全审计    | id/tenant_id/user_id/action/detail/trace_id                |
+| `prompt_templates` | Prompt 模板 | id/name/version/layer/content/is_active                    |
+| `billing_records`  | 计费        | id/user_id/model/token_input/token_output/cost             |
+| `feedbacks`        | 用户反馈    | id/message_id/rating/comment/tags                          |
 
 ### 2.7 基础设施适配器(`adapters/`)
 
-| 文件 | 职责 | 关键类 |
-|------|------|--------|
+| 文件             | 职责       | 关键类                                                                     |
+| ---------------- | ---------- | -------------------------------------------------------------------------- |
 | `db/postgres.py` | PostgreSQL | `DatabaseAdapter`(`session()`/`add`/`query`/`get_by_id`/`update`/`delete`) |
-| `cache/redis.py` | Redis | `RedisAdapter`(`get`/`set`/`delete`/`expire`) |
+| `cache/redis.py` | Redis      | `RedisAdapter`(`get`/`set`/`delete`/`expire`)                              |
 
 ---
 
@@ -286,6 +292,7 @@ FNIXAGENT/
 #### POST `/auth/register` — 注册用户
 
 **入参**:
+
 ```json
 {
   "username": "string (3-64 字符,必填)",
@@ -296,6 +303,7 @@ FNIXAGENT/
 ```
 
 **出参**(`200`):
+
 ```json
 {
   "id": 1,
@@ -313,11 +321,13 @@ FNIXAGENT/
 #### POST `/auth/login` — 用户登录
 
 **入参**:
+
 ```json
-{"username": "alice", "password": "secret123"}
+{ "username": "alice", "password": "secret123" }
 ```
 
 **出参**(`200`):
+
 ```json
 {
   "access_token": "eyJhbGci...",
@@ -347,8 +357,9 @@ FNIXAGENT/
 #### PUT `/auth/profile` — 更新用户画像
 
 **入参**(body):
+
 ```json
-{"research_area": "NLP", "timezone": "Asia/Shanghai"}
+{ "research_area": "NLP", "timezone": "Asia/Shanghai" }
 ```
 
 **出参**(`200`): `{"success": true, "message": "Profile updated", "data": {...}}`
@@ -358,6 +369,7 @@ FNIXAGENT/
 #### GET `/auth/quota` — 查询 Token 配额
 
 **出参**(`200`):
+
 ```json
 {
   "user_id": 1,
@@ -372,6 +384,7 @@ FNIXAGENT/
 #### POST `/auth/apikey` — 创建 API Key
 
 **出参**(`200`):
+
 ```json
 {
   "id": 1,
@@ -397,8 +410,9 @@ FNIXAGENT/
 #### GET `/auth/apikey/list` — 列出 API Key
 
 **出参**(`200`): API Key 列表(不含明文)
+
 ```json
-[{"id": 1, "scopes": ["chat"], "created_at": "...", "expires_at": "...", "revoked": false}]
+[{ "id": 1, "scopes": ["chat"], "created_at": "...", "expires_at": "...", "revoked": false }]
 ```
 
 ### 3.3 对话接口(`/chat`)
@@ -406,13 +420,21 @@ FNIXAGENT/
 #### POST `/chat/session` — 创建会话
 
 **入参**:
+
 ```json
-{"title": "论文检索会话", "context": {}}
+{ "title": "论文检索会话", "context": {} }
 ```
 
 **出参**(`200`):
+
 ```json
-{"id": "abc123def456", "title": "论文检索会话", "status": "active", "created_at": "...", "updated_at": "..."}
+{
+  "id": "abc123def456",
+  "title": "论文检索会话",
+  "status": "active",
+  "created_at": "...",
+  "updated_at": "..."
+}
 ```
 
 ---
@@ -420,6 +442,7 @@ FNIXAGENT/
 #### POST `/chat/message` — 发送消息(非流式)
 
 **入参**:
+
 ```json
 {
   "session_id": 1,
@@ -430,6 +453,7 @@ FNIXAGENT/
 ```
 
 **出参**(`200`):
+
 ```json
 {
   "session_id": 1,
@@ -448,6 +472,7 @@ FNIXAGENT/
 **入参**: 同 `/chat/message`
 
 **出参**(`application/x-ndjson` 流):
+
 ```
 {"chunk_type":"thought","content":"思考中...","done":false}
 {"chunk_type":"action","content":"search_paper","done":false}
@@ -459,8 +484,18 @@ FNIXAGENT/
 #### GET `/chat/session/{session_id}/history` — 会话历史
 
 **出参**(`200`): 消息列表
+
 ```json
-[{"id": 0, "session_id": 1, "role": "user", "content": "...", "content_type": "text", "created_at": "..."}]
+[
+  {
+    "id": 0,
+    "session_id": 1,
+    "role": "user",
+    "content": "...",
+    "content_type": "text",
+    "created_at": "..."
+  }
+]
 ```
 
 ---
@@ -474,6 +509,7 @@ FNIXAGENT/
 #### GET `/chat/session/{session_id}/context` — 会话上下文
 
 **出参**(`200`):
+
 ```json
 {"success": true, "data": {"session_id": 1, "tool_count": 7, "available_tools": [...], "llm_providers": [...]}}
 ```
@@ -483,10 +519,12 @@ FNIXAGENT/
 #### POST `/documents/upload` — 上传文档
 
 **入参**(`multipart/form-data`):
+
 - `file`: 文件(必填)
 - `metadata`: JSON 元数据(可选)
 
 **出参**(`200`):
+
 ```json
 {
   "id": 1,
@@ -505,8 +543,9 @@ FNIXAGENT/
 #### POST `/documents/create` — 创建文档记录
 
 **入参**:
+
 ```json
-{"name": "report.pdf", "doc_type": "pdf", "metadata": {}}
+{ "name": "report.pdf", "doc_type": "pdf", "metadata": {} }
 ```
 
 **出参**: 同 upload(来源为 `generated`)
@@ -530,19 +569,25 @@ FNIXAGENT/
 #### POST `/documents/{document_id}/process` — 处理文档
 
 **入参**:
+
 ```json
 {
   "document_id": 1,
   "operation": "summarize",
-  "params": {"target_format": "docx"}
+  "params": { "target_format": "docx" }
 }
 ```
 
 **支持的 operation**: `summarize`/`extract_tables`/`convert`/`extract_text`/`translate`
 
 **出参**(`200`):
+
 ```json
-{"success": true, "message": "...", "data": {"document_id": 1, "operation": "summarize", "summary": "..."}}
+{
+  "success": true,
+  "message": "...",
+  "data": { "document_id": 1, "operation": "summarize", "summary": "..." }
+}
 ```
 
 ---
@@ -562,12 +607,21 @@ FNIXAGENT/
 #### GET `/documents/{document_id}/metadata` — 文档元数据
 
 **出参**(`200`):
+
 ```json
 {
-  "id": 1, "name": "paper.pdf", "doc_type": "pdf", "source": "upload",
-  "object_key": "1_paper.pdf", "mime_type": "application/pdf",
-  "size_bytes": 1024, "checksum": "sha256hex...",
-  "created_at": "...", "metadata": {}, "user_id": 0, "deleted": false
+  "id": 1,
+  "name": "paper.pdf",
+  "doc_type": "pdf",
+  "source": "upload",
+  "object_key": "1_paper.pdf",
+  "mime_type": "application/pdf",
+  "size_bytes": 1024,
+  "checksum": "sha256hex...",
+  "created_at": "...",
+  "metadata": {},
+  "user_id": 0,
+  "deleted": false
 }
 ```
 
@@ -576,17 +630,25 @@ FNIXAGENT/
 #### POST `/tasks/` 或 `/tasks/create` — 创建任务
 
 **入参**:
+
 ```json
-{"session_id": 1, "intent": "论文检索", "reasoning_mode": "react"}
+{ "session_id": 1, "intent": "论文检索", "reasoning_mode": "react" }
 ```
 
 `reasoning_mode`: `react`/`plan_execute`/`self_reflect`(默认 `react`)
 
 **出参**(`200`):
+
 ```json
 {
-  "id": 1, "session_id": 1, "intent": "论文检索", "reasoning_mode": "react",
-  "status": "pending", "created_at": "...", "started_at": null, "finished_at": null
+  "id": 1,
+  "session_id": 1,
+  "intent": "论文检索",
+  "reasoning_mode": "react",
+  "status": "pending",
+  "created_at": "...",
+  "started_at": null,
+  "finished_at": null
 }
 ```
 
@@ -609,8 +671,9 @@ FNIXAGENT/
 #### GET `/tasks/{task_id}/status` — 任务状态
 
 **出参**(`200`):
+
 ```json
-{"task_id": 1, "status": "running", "progress": 0.5, "current_step": 2, "total_steps": 4}
+{ "task_id": 1, "status": "running", "progress": 0.5, "current_step": 2, "total_steps": 4 }
 ```
 
 ---
@@ -618,8 +681,20 @@ FNIXAGENT/
 #### GET `/tasks/{task_id}/steps` — 任务步骤
 
 **出参**(`200`):
+
 ```json
-[{"step_no": 1, "description": "搜索论文", "tool_name": "search_paper", "status": "success", "started_at": "...", "finished_at": "...", "result": null, "error": ""}]
+[
+  {
+    "step_no": 1,
+    "description": "搜索论文",
+    "tool_name": "search_paper",
+    "status": "success",
+    "started_at": "...",
+    "finished_at": "...",
+    "result": null,
+    "error": ""
+  }
+]
 ```
 
 ---
@@ -643,8 +718,9 @@ FNIXAGENT/
 #### POST `/tasks/{task_id}/complete` — 标记完成
 
 **入参**(body,可选):
+
 ```json
-{"answer": "任务结果数据"}
+{ "answer": "任务结果数据" }
 ```
 
 **出参**(`200`): TaskResponse(status=`succeeded`)
@@ -678,6 +754,7 @@ FNIXAGENT/
 #### POST `/tools/register` — 注册工具
 
 **入参**:
+
 ```json
 {
   "name": "my_tool",
@@ -712,11 +789,13 @@ FNIXAGENT/
 #### POST `/tools/execute` — 执行工具
 
 **入参**:
+
 ```json
-{"tool_name": "search_arxiv", "arguments": {"query": "NLP"}, "task_id": null, "step_id": null}
+{ "tool_name": "search_arxiv", "arguments": { "query": "NLP" }, "task_id": null, "step_id": null }
 ```
 
 **出参**(`200`):
+
 ```json
 {"execution_id": 0, "tool_name": "search_arxiv", "status": "success", "result": {...}, "duration_ms": 123.45, "error": null}
 ```
@@ -738,6 +817,7 @@ FNIXAGENT/
 #### GET `/tools/{tool_name}/schema` — 工具 Schema
 
 **出参**(`200`):
+
 ```json
 {"name": "...", "description": "...", "input_schema": {...}, "output_schema": {...}, "permission_level": "low", "timeout_ms": 30000, "rate_limit": null}
 ```
@@ -750,12 +830,12 @@ FNIXAGENT/
 
 ### 3.7 根路由
 
-| 方法 | 路径 | 说明 | 出参 |
-|------|------|------|------|
-| GET | `/` | 服务信息 | `{"name": "FnixAgent", "version": "1.1.0", "status": "running", "docs": "/docs"}` |
-| GET | `/health` | 健康检查 | `{"status": "healthy", "service": "fnixagent", "uptime": "..."}` |
-| GET | `/stats` | 运行统计 | `{"llm": {...}, "memory": {...}, "tools": {"count": N}}` |
-| GET | `/docs` | Swagger UI | 交互式 API 文档 |
+| 方法 | 路径      | 说明       | 出参                                                                              |
+| ---- | --------- | ---------- | --------------------------------------------------------------------------------- |
+| GET  | `/`       | 服务信息   | `{"name": "FnixAgent", "version": "1.0.0", "status": "running", "docs": "/docs"}` |
+| GET  | `/health` | 健康检查   | `{"status": "healthy", "service": "fnixagent", "uptime": "..."}`                  |
+| GET  | `/stats`  | 运行统计   | `{"llm": {...}, "memory": {...}, "tools": {"count": N}}`                          |
+| GET  | `/docs`   | Swagger UI | 交互式 API 文档                                                                   |
 
 ---
 
@@ -763,9 +843,11 @@ FNIXAGENT/
 
 ### 4.1 环境要求
 
-- **Python**: 3.11+
-- **Docker**: 20.10+(容器化部署)
-- **Docker Compose**: 2.0+(编排)
+- **Python**: 3.13+
+- **Node.js**: 20+ (前端构建)
+- **Rust**: 1.75+ (fnix-local sidecar, 可选)
+- **Docker**: 20.10+(容器化部署, 可选)
+- **Docker Compose**: 2.0+(编排, 可选)
 - **操作系统**: Linux / macOS / Windows
 
 ### 4.2 方式一:本地开发部署(无需 Docker)
@@ -828,7 +910,7 @@ python scripts/seed_tools.py
 
 ```bash
 # 方式 A:Makefile
-make dev
+make run
 
 # 方式 B:直接运行
 python src/fnixagent/main.py
@@ -849,7 +931,7 @@ curl http://localhost:8000/health
 open http://localhost:8000/docs
 ```
 
-### 4.3 方式二:Docker Compose 完整部署(推荐生产)
+### 4.3 方式二:Docker Compose 完整部署 [规划中 — Cloud 扩展]
 
 #### 步骤 1:配置环境变量
 
@@ -895,7 +977,7 @@ docker-compose down
 docker-compose down -v --remove-orphans
 ```
 
-### 4.4 方式三:Docker 单镜像构建
+### 4.4 方式三:Docker 单镜像构建 [规划中]
 
 ```bash
 # 构建镜像
@@ -911,21 +993,22 @@ docker run -d \
 
 ### 4.5 Makefile 命令速查
 
-| 命令 | 说明 |
-|------|------|
-| `make install` | 安装依赖 |
-| `make dev` | 启动开发服务 |
-| `make test` | 运行测试(带覆盖率) |
-| `make lint` | 代码检查(ruff) |
-| `make migrate` | 数据库迁移 |
-| `make seed` | 导入种子数据 |
-| `make docker-up` | Docker Compose 启动 |
-| `make docker-down` | Docker Compose 停止 |
-| `make docker-clean` | Docker 完全清理(含数据卷) |
-| `make build` | 构建 Docker 镜像 |
-| `make run` | 运行 Docker 容器 |
-| `make logs` | 查看应用日志 |
-| `make clean` | 清理缓存文件 |
+| 命令               | 说明                     |
+| ------------------ | ------------------------ |
+| `make install`     | 安装生产依赖             |
+| `make install-dev` | 安装开发依赖(含测试工具) |
+| `make run`         | 启动开发服务             |
+| `make test`        | 运行测试                 |
+| `make test-cov`    | 运行测试(带覆盖率)       |
+| `make lint`        | 代码检查(ruff)           |
+| `make format`      | 代码格式化(ruff format)  |
+| `make migrate`     | 数据库迁移(升级)         |
+| `make gen-secrets` | 生成密钥对(RSA/Argon2)   |
+| `make deploy`      | 部署(Standalone)         |
+| `make deploy-prod` | 部署(生产模式)           |
+| `make deploy-ps`   | 查看部署进程状态         |
+| `make deploy-logs` | 查看部署日志             |
+| `make deploy-down` | 停止部署                 |
 
 ### 4.6 测试
 
@@ -949,18 +1032,18 @@ export PYTHONPATH=src    # Linux/macOS
 
 ### 4.7 生产部署清单
 
-| 检查项 | 说明 |
-|--------|------|
-| □ 修改 JWT_SECRET_KEY | 生产环境必须使用强随机密钥 |
-| □ 配置 LLM API Key | 至少配置一个(GLM/ LLM/Qwen) |
-| □ 配置数据库密码 | PostgreSQL/Redis/MinIO 密码 |
-| □ 启用 HTTPS | Nginx 反向代理配置 TLS |
-| □ 配置 CORS | 限制 `allow_origins` 为可信域名 |
-| □ 启用监控 | Prometheus + Grafana + Jaeger |
-| □ 数据备份 | 配置 PostgreSQL/MinIO 定期备份 |
-| □ 日志收集 | 配置日志轮转与集中收集 |
-| □ 资源限制 | Docker 容器 CPU/内存限制 |
-| □ 健康检查 | 配置 `/health` 探针 |
+| 检查项                | 说明                            |
+| --------------------- | ------------------------------- |
+| □ 修改 JWT_SECRET_KEY | 生产环境必须使用强随机密钥      |
+| □ 配置 LLM API Key    | 至少配置一个(GLM/ LLM/Qwen)     |
+| □ 配置数据库密码      | PostgreSQL/Redis/MinIO 密码     |
+| □ 启用 HTTPS          | Nginx 反向代理配置 TLS          |
+| □ 配置 CORS           | 限制 `allow_origins` 为可信域名 |
+| □ 启用监控            | Prometheus + Grafana + Jaeger   |
+| □ 数据备份            | 配置 PostgreSQL/MinIO 定期备份  |
+| □ 日志收集            | 配置日志轮转与集中收集          |
+| □ 资源限制            | Docker 容器 CPU/内存限制        |
+| □ 健康检查            | 配置 `/health` 探针             |
 
 ### 4.8 常见问题
 
@@ -974,7 +1057,7 @@ A: 可以。系统自动回退到 `MockLLMProvider`,返回基于规则的简单�
 A: 可以。`services/storage.py` 提供内存存储实现,所有业务功能可用,但数据不持久化。
 
 **Q: 如何切换 LLM Provider?**
-A: 在 `.env` 中配置对应的 API Key(`GLM_API_KEY`/`OPENAI_API_KEY`/`QWEN_API_KEY`),重启服务即可。优先级:GLM >  LLM > Qwen > Mock。
+A: 在 `.env` 中配置对应的 API Key(`GLM_API_KEY`/`OPENAI_API_KEY`/`QWEN_API_KEY`),重启服务即可。优先级:GLM > LLM > Qwen > Mock。
 
 **Q: 文档上传到哪里?**
 A: 默认落盘到 `data/uploads/` 目录。生产环境可对接 MinIO(配置 `MINIO_ENDPOINT`)。
@@ -1020,4 +1103,4 @@ api/ → services/ → core/ + business/
 
 ---
 
-*文档版本:1.0 · 最后更新:2026-07-03*
+_文档版本:1.0 · 最后更新:2026-07-03_

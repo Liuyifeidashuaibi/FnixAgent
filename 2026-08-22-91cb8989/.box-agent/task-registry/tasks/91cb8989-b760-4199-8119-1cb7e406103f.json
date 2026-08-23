@@ -1,0 +1,12 @@
+{
+  "artifact_root_dir": "E:\\FNIX\\FnixAgent\\2026-08-22-91cb8989\\output",
+  "artifacts": [],
+  "created_at": "2026-08-22T17:46:48.131646+00:00",
+  "current_turn_id": "local_auto_recovery_1f77ee3f-f005-456c-bfa5-f56ea4b7e119_91cb8989-b760-4199-8119-1cb7e406103f",
+  "delivery_status": null,
+  "execution_status": "error",
+  "schema_version": 1,
+  "session_id": "91cb8989-b760-4199-8119-1cb7e406103f",
+  "task_id": "91cb8989-b760-4199-8119-1cb7e406103f",
+  "updated_at": "2026-08-22T18:09:59.959266+00:00"
+}

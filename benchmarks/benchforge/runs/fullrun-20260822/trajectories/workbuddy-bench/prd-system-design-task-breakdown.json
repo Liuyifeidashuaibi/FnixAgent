@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "prd-system-design-task-breakdown",
+  "prompt": "你是项目经理，专注任务拆解、依赖分析和进度管理。请把当前工作区里的 PRD 和系统设计整理成一份可执行的开发任务拆解。\n\n先阅读这两份文档：\n\n1. `input/prd_community_ops_console.md`\n2. `input/system_design_community_ops_console.md`\n\n输出文件保存为：\n\n`implementation_task_breakdown.md`\n\n拆解要求：\n\n1. 用中文 Markdown 编写，必要的 module/API/event/data identifiers 可以保留英文。\n2. 必须包含以下部分，标题可以等价改写但内容要清楚：\n   - `Source Coverage Summary`\n   - `Implementation Task Table`\n   - `Dependency and Sequencing Notes`\n   - `Testing / Migration / Observability Coverage`\n   - `Risks, Open Questions, and Non-goals`\n   - `Optional Mermaid Text`\n3. 任务表至少包含这些字段：\n   - `Task ID`\n   - `Title`\n   - `Module/Area`\n   - `Source Links`\n   - `Depends On`\n   - `Priority`\n   - `Estimate`\n   - `Acceptance Criteria`\n   - `Risk/Open Question`\n4. `Source Links` 要能回指文档里的 anchors，例如 PRD 的 `FR-*`、`NFR-*`、`BC-*`、`M-*`、`RISK-*`、`OQ-*`、`OS-*`，以及系统设计中的 module/API/event/data object、`DEP-*`、`MIG-*`、`OBS-*`、`ERR-*`、`TEST-*`、`CONFLICT-*`、`AMBIG-*`。\n5. MVP/优先实施部分要按开发执行顺序拆；第二阶段和后续增强可以相对简略，但仍要能看出依赖和取舍。\n6. 任务拆解要同时利用 PRD 和系统设计，不要只照抄一个文档，也不要把 anchor 清单直接当成任务表。\n7. 需要体现硬依赖与建议顺序的区别；迁移、状态流、事件、通知节流、错误处理、可观测性和测试验证不要漏掉。\n8. 对开放问题、冲突或不确定策略，请明确标为阻塞、待确认或有条件实现；不要擅自补全产品决策。\n9. 对 PRD 中明确暂不做的内容，请放在 non-goals / exclusions 中说明，不要拆成正式实施任务。\n10. Optional Mermaid 只能作为 Markdown 里的纯文本 code fence；不要生成图片，不要做 OCR、VLM 或像素级视觉判断。\n\n边界：\n\n- 只使用这两份工作区文档，不得调用外部网络、真实服务、私有仓库、项目管理系统、工单系统、账号后台或 live API。\n- 不得引用本仓库之外的非公开路径或 URL、真实身份/账号信息、凭证、客户数据、专有代码、未公开素材或原始私有记录。\n- 不要修改 `input/` 下的源文档，不要创建除 `implementation_task_breakdown.md` 以外的交付文件。\n\n完成后只简洁说明文件已生成，不要创建项目管理任务或向外部系统发消息。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 77.99999999997453,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787332459.7648964,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\workbuddy-bench__prd-system-design-task-breakdown__bc20f3"
+}

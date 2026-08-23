@@ -1,0 +1,9 @@
+version: '3.8'
+services:
+  app:
+    image: my-app:latest
+    environment:
+      - TOOL_DESCRIPTION_FORBIDDEN_PATTERNS_ENABLED=true
+      - TOOL_DESCRIPTION_FORBIDDEN_PATTERNS='["forbidden_pattern_1", "forbidden_pattern_2"]'
+    ports:
+      - "8000:8000"

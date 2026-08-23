@@ -1,0 +1,18 @@
+{
+  "dataset": "swe-bench-lite",
+  "task_id": "sympy__sympy-14774",
+  "prompt": "Latex printer does not support full inverse trig function names for acsc and asec\nFor example\r\n`latex(asin(x), inv_trig_style=\"full\")` works as expected returning `'\\\\arcsin{\\\\left (x \\\\right )}'`\r\nBut `latex(acsc(x), inv_trig_style=\"full\")` gives `'\\\\operatorname{acsc}{\\\\left (x \\\\right )}'` instead of `'\\\\operatorname{arccsc}{\\\\left (x \\\\right )}'`\r\n\r\nA fix seems to be to change line 743 of sympy/printing/latex.py from\r\n`inv_trig_table = [\"asin\", \"acos\", \"atan\", \"acot\"]` to\r\n`inv_trig_table = [\"asin\", \"acos\", \"atan\", \"acsc\", \"asec\", \"acot\"]`\n",
+  "status": "infra_skip",
+  "failure_type": "",
+  "failure_evidence": "基础设施错误(LLM 配额/鉴权)，待配额恢复后重跑: LLM 调用失败: [glm] chat failed: [glm] request failed (model=glm-4.5-flash): HTTP 429 (您的账户已达到速率限制，请您控制请求频率)",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 2764.999999999418,
+  "error": "LLM 调用失败: [glm] chat failed: [glm] request failed (model=glm-4.5-flash): HTTP 429 (您的账户已达到速率限制，请您控制请求频率)",
+  "judge_method": "heuristic",
+  "started_at": 1787391797.3561997,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-final-20260822\\workspaces\\swe-bench-lite__sympy__sympy-14774__53510d"
+}

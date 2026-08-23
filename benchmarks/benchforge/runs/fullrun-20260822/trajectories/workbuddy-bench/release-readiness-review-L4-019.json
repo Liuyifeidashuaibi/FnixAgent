@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "release-readiness-review-L4-019",
+  "prompt": "# Web-Bench Task T19\n\nPlease do a pre-launch review of this marketing landing page, focusing on mobile, keyboard accessibility, semantic structure, CTA clarity, and regression risk.\n\n## Grounded Release Review\n\nMake the report easy to audit from the supplied snapshot assets. For every blocker or major finding, include the DOM selector, file line, viewport note, or other bundled evidence that lets a teammate reproduce the issue. Pair severity with measurable evidence and user impact, give a concrete remediation target, and describe the retest that would close the finding.\n\nCover mobile layout, keyboard/focus behavior, semantic structure and CTA exposure, contrast or target sizing where relevant, motion/reduced-motion behavior, and screen-reader/ARIA concerns. Treat unsupported measurements, duplicate root causes, and findings contradicted by the supplied files as release-review problems.\n\n## Output\n\nCreate the required artifact inside `/workspace`. The required output path is:\n\n- `/workspace/submission/report.md` (declared as `environment/submission/report.md`)\n\nDo not place the final answer only in chat; write the runnable artifact files.\n\n## Public Assets\n\n- `release_brief`: `/workspace/public-assets/release/release-brief.md` markdown\n- `page_index`: `/workspace/public-assets/page_snapshot/landing_page_preview/index.html` html\n- `page_styles`: `/workspace/public-assets/page_snapshot/landing_page_preview/styles.css` css\n- `page_script`: `/workspace/public-assets/page_snapshot/landing_page_preview/app.js` javascript\n- `viewport_dom_summary`: `/workspace/public-assets/viewport_text/viewport-dom-summary.json` json\n- `review_guidance`: `/workspace/public-assets/review/review-guidance.md` markdown\n- `brand_copy_notes`: `/workspace/public-assets/review/brand-copy-notes.md` markdown\n- `release_review_brief`: `/workspace/public-assets/spec/release-review-brief.md` markdown",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787332457.970645,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\workbuddy-bench__release-readiness-review-L4-019__a63cef"
+}

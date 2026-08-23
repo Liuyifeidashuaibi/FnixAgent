@@ -1,0 +1,28 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "IBM__mcp-context-forge-3396",
+  "prompt": "## 📌 Summary\r\nClicking **Next Page** in any Admin UI table after a search (Tools, Gateways, Resources, Prompts, Servers, A2A Agents) produces a blank/broken table instead of showing the next page of results. This breaks pagination entirely whenever search results span more than one page.\r\n\r\n## 🔗 Related Issue\r\nCloses #3394 \r\n\r\n## 🐞 Root Cause\r\n`pagination_controls.html` defaults `swapStyle` to `innerHTML` when no `hx_swap` variable is set by the caller. After the first search, `loadSearchablePanel()` replaces `<div id=\"tools-table\">` (a wrapper div) with `<table id=\"tools-table\">` via `outerHTML` swap. From that point on, `loadPage()` fires `htmx.ajax` with `swap: 'innerHTML'` targeting `<table id=\"tools-table\">`. An `innerHTML` swap on a `<table>` with a response body that starts with `<table>` produces invalid nested HTML — the browser automatically ejects the inner table as a sibling, leaving the visible table empty.\r\n\r\nThe bug affects all six entity tables: Tools, Servers, Resources, Prompts, Gateways, A2A Agents.\r\n\r\n## 🔁 Reproducing the bug\r\n\r\nI have added 50+ tools with the name pattern \"search-repro-....\", when I try searching with the keyword 'search', it should show more pages but the next pages aren't loading.\r\n\r\nhttps://github.com/user-attachments/assets/4679f6b4-b8b3-46b6-be2a-33f6012b7c2c\r\n\r\n\r\n## 💡 Fix Description\r\nAdded `{% set hx_swap = 'outerHTML' %}` before `{% include 'pagination_controls.html' %}` in the OOB pagination block of each of the six affected partial templates. This sets `swapStyle: 'outerHTML'` in the Alpine component at render time, so `loadPage()` correctly replaces the entire `<table>` element rather than setting its inner HTML.\r\n\r\nKey design points:\r\n- The fix is in the partial templates only — `pagination_controls.html` itself is unchanged and remains `innerHTML` by default for callers with non-table targets (e.g. tokens, which targets a `<div>`).\r\n- The pagination controls `<div>` is a sibling of the table, not inside it, so `outerHTML` swap never destroys the controls.\r\n- `loadSearchablePanel()` always uses `outerHTML` explicitly — unaffected.\r\n- The OOB `hx-swap-oob` mechanism is independent of `swapStyle` — unaffected.\r\n\r\n## 🧪 Verification\r\n\r\n| Check | Command | Status |\r\n|---------------------------------------|----------------------|--------|\r\n| Lint suite | `make lint` | Pass |\r\n| Unit tests | `make test` | Pass |\r\n| Coverage ≥ 90 % | `make coverage` | Pass |\r\n| Manual: search 55+ tools → click Next Page → page 2 loads | Browser — Tools tab | Pass |\r\n| Manual: search 55+ gateways → click Next Page → page 2 loads | Browser — Gateways tab | Pass |\r\n| Manual: page size change still works after outerHTML swap | Browser — change to 10/page | Pass |\r\n| Manual: tokens Next Page still works (innerHTML, unchanged) | Browser — Tokens tab | Pass |\r\n\r\n## 📐 MCP Compliance (if relevant)\r\n- [x] Matches current MCP spec\r\n- [x] No breaking change to MCP clients\r\n\r\n## ✅ Checklist\r\n- [x] Code formatted (`make black isort pre-commit`)\r\n- [x] No secrets/credentials committed",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [
+    "Step 0 | 思考: To address the issue as described, we need to modify the six affected partial templates by adding `{... | 工具 ✓ glob({\"pattern\": \"*-table.html\", \"path\": \".\"}) | 耗时: 12655ms, tokens: 3762"
+  ],
+  "tool_calls": [
+    {
+      "step": 1,
+      "tool": "glob",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'count': 0, 'pattern': '*-table.html'})\n(无匹配结果)"
+    }
+  ],
+  "files_written": [],
+  "total_tokens": 3762,
+  "duration_ms": 13342.99999999996,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen-max): HTTP 400 (<400> InternalError.Algo.InvalidParameter: messages with role \"tool\" must be a response to a preceeding message with \"tool_calls\".)",
+  "judge_method": "heuristic",
+  "started_at": 1787384858.7753775,
+  "workspace": "benchmarks\\benchforge\\runs\\batch-v4-20260822\\workspaces\\prototypebench__IBM__mcp-context-forge-3396__4cdc38"
+}

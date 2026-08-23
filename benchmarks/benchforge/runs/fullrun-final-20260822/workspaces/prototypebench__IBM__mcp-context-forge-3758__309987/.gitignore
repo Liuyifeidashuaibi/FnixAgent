@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Virtual Environment
+venv/
+env/
+.env
+
+# Logs
+*.log
+
+# SSL Context Cache
+.ssl_context_cache*
+
+# Test artifacts
+test-results/
+
+# IDE
+.vscode/
+.idea/

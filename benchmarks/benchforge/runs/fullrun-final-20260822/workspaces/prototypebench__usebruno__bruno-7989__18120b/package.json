@@ -1,0 +1,30 @@
+{
+  "name": "bruno-snapshot-example-index",
+  "version": "1.0.0",
+  "description": "Minor refactor to allow example's index to be stored in the snapshot to allow restores",
+  "main": "src/containers/Collection/index.js",
+  "types": "src/containers/Collection/index.d.ts",
+  "scripts": {
+    "test": "jest src/utils/snapshot.test.js",
+    "lint": "eslint . --ext .js,.jsx",
+    "build": "babel src --out-dir lib --presets @babel/preset-env"
+  },
+  "keywords": [
+    "bruno",
+    "api-client",
+    "snapshot",
+    "example-index"
+  ],
+  "author": "Bruno Team",
+  "license": "MIT",
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.22.0",
+    "@babel/preset-env": "^7.22.0",
+    "jest": "^29.5.0",
+    "eslint": "^8.40.0"
+  }
+}

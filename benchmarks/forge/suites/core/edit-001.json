@@ -1,0 +1,46 @@
+{
+  "id": "edit-001",
+  "title": "最小化配置编辑",
+  "capability": "file_edit",
+  "difficulty": 2,
+  "tags": [
+    "minimal-edit"
+  ],
+  "prompt": "当前目录有 config.ini，把其中的 mode 从 debug 改为 release，其余内容一字不动。",
+  "setup": {
+    "files": {
+      "config.ini": "[server]\nhost = 0.0.0.0\nport = 8080\nmode = debug\nworkers = 4\n"
+    }
+  },
+  "allowed_scope": [
+    "config.ini"
+  ],
+  "checks": [
+    {
+      "function": "file_contains",
+      "args": {
+        "path": "config.ini",
+        "text": "mode = release"
+      }
+    },
+    {
+      "function": "file_not_contains",
+      "args": {
+        "path": "config.ini",
+        "text": "mode = debug"
+      }
+    },
+    {
+      "function": "file_contains",
+      "args": {
+        "path": "config.ini",
+        "text": "workers = 4"
+      },
+      "desc": "其余行未被误改"
+    },
+    {
+      "function": "scope_respected",
+      "args": {}
+    }
+  ]
+}

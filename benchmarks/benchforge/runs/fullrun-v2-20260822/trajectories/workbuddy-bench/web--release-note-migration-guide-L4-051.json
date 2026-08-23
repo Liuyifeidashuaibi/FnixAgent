@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "web--release-note-migration-guide-L4-051",
+  "prompt": "# Web-Bench Task T51\n\nUsing the PRD diff, commit summary, and deprecated-fields table, put together customer-readable release notes and generate an admin migration checklist.\n\n\n## Release Pack Evidence Expectations\n\nMake the release pack reviewable from the submitted files. Any load-bearing field name, API, owner role, deadline, customer segment, exception, mitigation, or checklist status should point back to a concrete source row, heading, commit note, schema requirement, or support-exception line. That evidence can appear in `sourceRef` values, prose citations, checklist notes, risk entries, or a small review notes file; do not rely on unsupported summaries that a release captain cannot audit.\n\n## Output\n\nCreate the required artifact inside `/workspace`. The required output path is:\n\n- `/workspace/submission/release-pack` (declared as `environment/submission/release-pack/`)\n\nThe release pack must include these files at minimum:\n\n- `/workspace/submission/release-pack/release_note.md`\n- `/workspace/submission/release-pack/migration-checklist.json`\n- `/workspace/submission/release-pack/migration-guide.md`\n- `/workspace/submission/release-pack/risk-register.json`\n- `/workspace/submission/release-pack/customer-email.md`\n\n`migration-checklist.json` should follow the attached schema and include action, ownerRole, dueDate, sourceRef, and status for each migration item. Do not put the migration guide only inside the release note; create the separate Markdown file above.\n\nDo not place the final answer only in chat; write the runnable artifact files.\n\n## Public Assets\n\n- `prd_diff`: `/workspace/public-assets/source/prd-diff.md` text/markdown\n- `commits`: `/workspace/public-assets/source/commit-summary.md` text/markdown\n- `breaking_changes`: `/workspace/public-assets/source/breaking-changes.csv` text/csv\n- `output_schema`: `/workspace/public-assets/spec/checklist-schema.json` application/json\n- `customer_segments`: `/workspace/public-assets/source/customer-segments.csv` text/csv\n- `support_exceptions`: `/workspace/public-assets/source/support-exceptions.md` text/markdown\n- `release_pack_product_notes`: `/workspace/public-assets/spec/release-pack-product-notes.md` text/markdown",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 375.0,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336322.5876667,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\workbuddy-bench__web--release-note-migration-guide-L4-051__1ad9b5"
+}

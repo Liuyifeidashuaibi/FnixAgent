@@ -2571,13 +2571,47 @@ body,
   line-height: 1.4;
 }
 
-/* Spec 3: ArtifactCanvas 容器 + 多产物切换器 */
-.wb-preview-canvas {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 4px 2px;
-  min-height: 480px;
+/* ── WorkspaceChip — 输入框底栏内的工作区选择 chip（和附件按钮并排） ── */
+.fnix-ws-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 5px;
+  border: 1px solid var(--border, rgba(0, 0, 0, 0.08));
+  background: transparent;
+  font-size: 11px;
+  line-height: 1;
+  color: var(--muted, #6b7280);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  max-width: 200px;
+  white-space: nowrap;
+}
+.fnix-ws-chip:hover {
+  background: var(--surface-2, rgba(0, 0, 0, 0.05));
+  border-color: var(--border-hover, rgba(0, 0, 0, 0.15));
+}
+.fnix-ws-chip > svg {
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+.fnix-ws-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fnix-ws-caret {
+  opacity: 0.35;
+}
+.theme-dark .fnix-ws-chip {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.08);
+  color: var(--muted, #9ca3af);
+}
+.theme-dark .fnix-ws-chip:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.14);
 }
 .wb-preview-canvas .fnix-canvas {
   flex: 1;
@@ -9754,6 +9788,114 @@ body.fnx-studio-resizing .fnx-studio {
   background: rgba(255, 255, 255, 0.04);
 }
 
+/* ── WorkspaceChip — 输入框底栏内的工作区选择按钮 ── */
+.fnix-ws-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 7px;
+  border-radius: 6px;
+  border: 1px solid var(--border, rgba(0, 0, 0, 0.08));
+  background: transparent;
+  font-size: 11px;
+  line-height: 1;
+  color: var(--muted, #6b7280);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  max-width: 200px;
+  white-space: nowrap;
+}
+.fnix-ws-chip:hover {
+  background: var(--surface-2, rgba(0, 0, 0, 0.05));
+  border-color: var(--border-hover, rgba(0, 0, 0, 0.15));
+}
+.fnix-ws-chip svg {
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+.fnix-ws-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fnix-ws-caret {
+  opacity: 0.35;
+}
+.theme-dark .fnix-ws-chip {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.08);
+  color: var(--muted, #9ca3af);
+}
+.theme-dark .fnix-ws-chip:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+/* ── 任务状态点 ── */
+.fnix-dot {
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-right: 1px;
+}
+.fnix-dot.done {
+  background: #10b981;
+  opacity: 0.7;
+}
+.fnix-dot.failed {
+  background: #ef4444;
+  opacity: 0.8;
+}
+.fnix-dot.idle {
+  background: #9ca3af;
+  opacity: 0.4;
+}
+.fnix-dot.running {
+  background: #f59e0b;
+  opacity: 0.9;
+  animation: fnix-dot-pulse 1.4s ease-in-out infinite;
+}
+@keyframes fnix-dot-pulse {
+  0%, 100% { opacity: 0.4; transform: scale(0.85); }
+  50% { opacity: 0.9; transform: scale(1.1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fnix-dot.running { animation: none; opacity: 0.7; }
+}
+
+/* ── 工作空间分组标题 ── */
+.fnix-ws-group {
+  margin-bottom: 2px;
+}
+.fnix-ws-group-h {
+  padding: 10px 12px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── 极简空态 ── */
+.fnix-ts-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 32px 20px;
+  text-align: center;
+  color: var(--faint);
+}
+.fnix-ts-empty-ico {
+  opacity: 0.3;
+}
+.fnix-ts-empty p {
+  font-size: 12px;
+  margin: 0;
+}
+
 /* L3: 引导式空态 — 图标瓷砖 + 文案 */
 .fnix-side-empty {
   display: flex;
@@ -10341,4 +10483,181 @@ body.fnx-studio-resizing .fnx-studio {
 }
 .fnix-root.theme-dark .fnix-md code.md-code-block {
   background: #121317;
+}
+
+/* ── 全页面左下角固定设置/诊断 ── */
+.fnix-global-foot {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 10px;
+}
+.fnix-global-settings {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--faint);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.fnix-global-settings:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--fg);
+}
+.theme-dark .fnix-global-settings {
+  color: rgba(255, 255, 255, 0.45);
+}
+.theme-dark .fnix-global-settings:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* ── 加号菜单 workspace 项 ── */
+.fnix-attach-ws {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+.fnix-attach-ws-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fnix-attach-ws-check {
+  flex-shrink: 0;
+  color: var(--work);
+  opacity: 0.7;
+}
+
+/* ── 工作空间分组展开/收起 ── */
+.fnix-ws-group-h {
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.fnix-ws-chevron {
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+  opacity: 0.5;
+}
+.fnix-ws-chevron.open {
+  transform: rotate(90deg);
+}
+.fnix-ws-group-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fnix-ws-group-count {
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--faint);
+  opacity: 0.6;
+  margin-left: 2px;
+}
+
+/* ── 全页面左下角固定设置/诊断 ── */
+.fnix-global-foot {
+  position: fixed;
+  bottom: 12px;
+  left: 12px;
+  z-index: 50;
+  display: flex;
+  gap: 4px;
+  pointer-events: auto;
+}
+.fnix-global-settings {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--faint);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.fnix-global-settings:hover {
+  background: var(--bg-soft);
+  color: var(--muted);
+}
+.theme-dark .fnix-global-settings {
+  color: var(--faint);
+}
+.theme-dark .fnix-global-settings:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--muted);
+}
+
+/* ── 加号菜单 workspace 显示 ── */
+.fnix-attach-ws {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+.fnix-attach-ws-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 180px;
+}
+.fnix-attach-ws-check {
+  color: var(--work);
+  flex-shrink: 0;
+}
+
+/* ── 工作空间分组展开/收起 ── */
+.fnix-ws-group-h {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 10px 12px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--faint);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.fnix-ws-group-h:hover {
+  color: var(--muted);
+}
+.fnix-ws-chevron {
+  flex-shrink: 0;
+  transition: transform 0.2s;
+  opacity: 0.5;
+}
+.fnix-ws-chevron.open {
+  transform: rotate(90deg);
+}
+.fnix-ws-group-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fnix-ws-group-count {
+  font-size: 10px;
+  font-weight: 500;
+  opacity: 0.5;
+  flex-shrink: 0;
 }

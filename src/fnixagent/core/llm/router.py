@@ -30,6 +30,7 @@ P2-9 降级链示例:
 
 from __future__ import annotations
 
+import logging
 import random
 import threading
 import time
@@ -54,6 +55,9 @@ from fnixagent.core.llm.capability import (
 from fnixagent.core.llm.circuit import CircuitBreaker
 from fnixagent.core.llm.limiter import TokenBucketRateLimiter
 from fnixagent.core.types import LLMResponse
+
+_logger = logging.getLogger(__name__)
+
 
 # ---------------------------------------------------------------------------
 # 路由策略
@@ -534,7 +538,7 @@ class LLMRouter:
 
             trace = get_provider().get_current_trace()
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
 
         if trace is not None:
             from fnixagent.core.observability.tracing import LLMSpanData
@@ -568,7 +572,7 @@ class LLMRouter:
 
                 record_llm_error(provider=entry.provider.name, error_type=type(exc).__name__)
             except Exception:
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
             raise
         latency_ms = (time.monotonic() - t0) * 1000
 
@@ -592,7 +596,7 @@ class LLMRouter:
                         completion_tokens=completion_tokens,
                     )
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
 
         # 记录成功
         entry.circuit.record_success()

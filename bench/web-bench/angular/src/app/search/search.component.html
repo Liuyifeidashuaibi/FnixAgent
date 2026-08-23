@@ -1,0 +1,7 @@
+<input 
+  type="text" 
+  [(ngModel)]="searchTerm" 
+  (keyup.enter)="onSearch()" 
+  (input)="onSearch()"
+  placeholder="Search Blogs" 
+  style="width: 200px; box-sizing: border-box; padding: 8px; margin: 5px; border: 1px solid #ccc; border-radius: 4px;">

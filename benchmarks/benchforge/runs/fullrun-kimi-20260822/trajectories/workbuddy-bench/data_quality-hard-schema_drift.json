@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "data_quality-hard-schema_drift",
+  "prompt": "线上 batch 的字段经常悄悄变，等训练报错才发现太晚了。麻烦补一个 schema drift 检查：按 expected_schema 看缺字段、多字段、类型不对和枚举越界，能输出每行问题，也要给一个按字段汇总的报告；正常行别被误伤。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 78.00000000042928,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787334454.7137756,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\workbuddy-bench__data_quality-hard-schema_drift__21328c"
+}

@@ -1,0 +1,28 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "IBM__mcp-context-forge-3981",
+  "prompt": "# 🐛 Bug-fix PR\r\n\r\n## 📌 Summary\r\n\r\n<img width=\"391\" height=\"193\" alt=\"Screenshot 2026-04-02 at 00 00 57\" src=\"https://github.com/user-attachments/assets/681ff39f-5893-4dc9-a0c3-bbdabff248c5\" />\r\n\r\nCloses #3980\r\n\r\n## 🔁 Reproduction Steps\r\n1. Login as an Admin user in the Admin UI\r\n2. Create a public team\r\n3. Create a non-admin user\r\n4. Logout, then login as the new (non-admin) user\r\n5. Request to create the public team\r\n\r\n## 🐞 Root Cause\r\nThe team permission check returned `[]` when `team_id` was out of token scope, incorrectly discarding global and personal roles needed for the join endpoint.\r\n\r\n## 💡 Fix Description                                                                                                                                                                                                                                                    Changed the guard to skip adding out-of-scope team roles while preserving global and personal roles in the scope conditions.\r\n\r\n## 🧪 Verification\r\n\r\n| Check                                 | Command              | Status |\r\n|---------------------------------------|----------------------|--------|\r\n| Lint suite                            | `make lint`          |    ✅    |\r\n| Unit tests                            | `make test`          |    ✅    |\r\n| Coverage ≥ 80 %                       | `make coverage`      |    ✅    |\r\n| Manual regression no longer fails     | steps / screenshots  |    ✅    |\r\n\r\n## ✅ Checklist\r\n- [X] Code formatted (`make black isort pre-commit`)\r\n- [X] No secrets/credentials committed",
+  "status": "infra_skip",
+  "failure_type": "",
+  "failure_evidence": "基础设施错误(LLM 配额/鉴权)，待配额恢复后重跑: LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-2026-05-20): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"us",
+  "final_response": "",
+  "steps": [
+    "Step 0 | 思考: I need to understand the bug and find the relevant code. Let me start by examining the workspace str... | 工具 ✓ ls({\"path\": \".\"}) | 耗时: 1145ms, tokens: 3085"
+  ],
+  "tool_calls": [
+    {
+      "step": 1,
+      "tool": "ls",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'count': 0, 'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\batch-v4-20260822\\\\workspaces\\\\prototypebench__IBM__mcp-context-forge-3981__6168d0'})\n(空目录)"
+    }
+  ],
+  "files_written": [],
+  "total_tokens": 3085,
+  "duration_ms": 1179.8114999983227,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-2026-05-20): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787382512.6073453,
+  "workspace": "benchmarks\\benchforge\\runs\\batch-v4-20260822\\workspaces\\prototypebench__IBM__mcp-context-forge-3981__6168d0"
+}

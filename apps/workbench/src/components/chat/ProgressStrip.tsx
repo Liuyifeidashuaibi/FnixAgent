@@ -25,7 +25,7 @@
  * - 紧凑一行，不占用太多空间
  */
 
-import { Loader2, Check } from "lucide-react";
+import { Loader2, Check } from 'lucide-react';
 
 export interface ProgressStripProps {
   /** 当前步骤号（1-based） */
@@ -45,20 +45,32 @@ export default function ProgressStrip({
   isComplete,
 }: ProgressStripProps) {
   // 确定模式：Step N/M；不确定模式：Step N
-  const stepLabel = totalSteps
-    ? `Step ${currentStep}/${totalSteps}`
-    : `Step ${currentStep}`;
+  const stepLabel = totalSteps ? `Step ${currentStep}/${totalSteps}` : `Step ${currentStep}`;
+
+  // 后端 step_start/step_end 事件中 description 字段可能等于 "Step N/M" 或 "Step N/M (done)"/"Step N/M (error)"，
+  // 这些都与 stepLabel 重复或仅多了状态尾缀，不应重复渲染。
+  const stepPattern = /^Step\s+\d+\/?\d*(\s*\([^)]*\))?$/i;
+  const showDescription =
+    description && description !== stepLabel && !stepPattern.test(description.trim());
 
   return (
-    <div className={`cl-progress-strip ${isComplete ? "complete" : ""}`} role="status" aria-live="polite">
+    <div
+      className={`cl-progress-strip ${isComplete ? 'complete' : ''}`}
+      role="status"
+      aria-live="polite"
+    >
       {isComplete ? (
         <Check size={11} className="cl-progress-check" />
       ) : (
         <Loader2 size={11} className="cl-progress-spinner spin" />
       )}
       <span className="cl-progress-step">{stepLabel}</span>
-      <span className="cl-progress-sep">·</span>
-      <span className="cl-progress-desc">{description}</span>
+      {showDescription && (
+        <>
+          <span className="cl-progress-sep">·</span>
+          <span className="cl-progress-desc">{description}</span>
+        </>
+      )}
     </div>
   );
 }

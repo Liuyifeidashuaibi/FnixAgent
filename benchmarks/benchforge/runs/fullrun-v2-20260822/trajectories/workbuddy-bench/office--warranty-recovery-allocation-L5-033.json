@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "office--warranty-recovery-allocation-L5-033",
+  "prompt": "请读取工作目录中的 `warranty_claims.xlsx`、`event_chain_log.csv`、`return_inspection.xlsx`、`policy_versions.xlsx`、`contract_exceptions.csv`、`historical_recovery.csv` 与 `README_recovery_rules.txt`，为集团售后供应商保修追偿分摊生成一个新的 xlsx 文件 `output/warranty_recovery_allocation.xlsx`。输出必须包含 `可追偿明细`、`不可追偿或待核查`、`供应商追偿汇总` 三个 sheet，且只能围绕供应商保修追偿分摊做数据处理，不要额外做税务、会计分录或自由法律解释。\n\n`可追偿明细` 的列依次为：claim_id, event_chain_id, supplier, policy_version, contract_exception, 责任比例, 维修成本, 已追偿金额, 本次可追偿金额, 分摊说明。`不可追偿或待核查` 的列依次为：claim_id, 原因类型, 触发规则, 缺失证据, next_action。`供应商追偿汇总` 的列依次为：supplier, claim_count, gross_repair_cost, already_recovered, 本次可追偿, 待核查金额。\n\n规则口径限定为且仅为五个核心规则族：1) policy versioning，按索赔台账的故障日期在 `policy_versions.xlsx` 中选择政策版本；本案例最多只有 PV1-2026Q1 和 PV2-2026Q2 两个政策版本，边界为故障日期 >= 2026-04-01 使用 PV2，否则使用 PV1。2) contract override，`contract_exceptions.csv` 最多只有两类合同例外：`CAP_AMOUNT` 封顶和 `SPLIT_OVERRIDE` 分摊改写；命中例外时必须覆盖默认政策金额或默认责任分摊。3) event-chain closure，`event_chain_log.csv` 必须同时存在 REPAIR_CLOSED=DONE、RETURN_INSPECTED=PASSED、RECOVERY_READY=READY，且不能存在 HOLD_OPEN=OPEN；否则进入 `不可追偿或待核查`，原因类型填 `事件链未闭环`。4) duplicate recovery prevention，`historical_recovery.csv` 仅 `status=已入账` 的历史追偿金额可扣减；草稿、作废和非本批次记录不得扣减。若已入账金额覆盖该 claim/supplier 可追偿额，则不再进入可追偿明细，进入 `不可追偿或待核查`，原因类型填 `重复追偿`。5) supplier allocation split，`return_inspection.xlsx` 的 `责任链明细` 中只有 `evidence_state=采纳` 的供应商参与分摊，`排除` 行不得进入输出；`维修成本` 列写该供应商分摊后的维修成本，不是整单维修成本。\n\n计算顺序为：先确认事件链闭环；再按采纳责任链确定 supplier 与默认分摊；再按故障日期选择 policy_version 和责任比例；再应用合同例外（分摊改写或封顶）；再扣减已入账历史追偿；最后输出本次可追偿金额。本次可追偿金额不得为负数，金额保留两位小数。分摊说明应简要说明默认/合同改写分摊、政策比例、封顶和已追偿扣减（如有）。\n\n汇总口径：`claim_count` 是该供应商涉及的可追偿或待核查 claim 去重数量；`gross_repair_cost` 是供应商分摊后的维修成本暴露，事件链未闭环按申报供应商归集全额；`already_recovered` 仅汇总已入账历史追偿；`本次可追偿` 汇总可追偿明细中的本次可追偿金额；`待核查金额` 只汇总事件链未闭环或缺责任证据等需要补证的维修成本，重复追偿已覆盖的记录为 0。\n\n输入中包含非本批次和被排除/草稿/作废记录作为干扰项；不要把这些记录写入输出或用于扣减。`warranty_claims.xlsx` 分两个 sheet，列名有中文和英文差异，请按语义读取，不要固定列位置。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 375.0,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336329.7151933,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\workbuddy-bench__office--warranty-recovery-allocation-L5-033__639c4d"
+}

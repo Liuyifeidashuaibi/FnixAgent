@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "stock-fund-return-compare-L3-010",
+  "prompt": "你是数据整理助理。现在要做一份离线历史区间收益对比工作簿。工作区里已经放好了合成的产品映射表、区间配置、股票日线行情导出和基金历史净值导出。请不要联网，也不要调用实时行情、券商、交易、邮件、IM、外部搜索或任何外部接口；这次只处理资料包内静态文件，不做收益预测、产品推荐、买卖建议、组合配置建议、目标价观点或真实投资建议。\n请读取 `product_map.xlsx`、`interval_config.json`、`stock_prices.csv` 和 `fund_nav.xlsx`，生成一个新的 Excel 工作簿 `output/stock_fund_return_compare.xlsx`。\n输出 workbook 需要包含四个 sheet：`aligned_returns`、`missing_date_exceptions`、`ranked_comparison`、`summary`。\n`aligned_returns` 的列依次为 interval_id、产品ID、资产类型、展示名称、源代码、start_observation_date、end_observation_date、start_value、end_value、interval_return、rank_in_interval、source_trace。\n`missing_date_exceptions` 的列依次为 interval_id、产品ID、资产类型、源代码、exception_category、interval_start_date、interval_end_date、first_available_date_in_window、last_available_date_in_window、source_trace。\n`ranked_comparison` 的列依次为 interval_id、rank_in_interval、产品ID、资产类型、展示名称、interval_return、start_observation_date、end_observation_date。\n`summary` 的列依次为 interval_id、资产类型、active_product_count、valid_return_count、exception_count、avg_interval_return、top_product_id、exception_breakdown。每个 interval_id 都需要输出三行 summary：资产类型分别为 `股票`、`基金`、`all`；其中 `all` 表示该区间全部纳入产品合计。\n关键口径以 `interval_config.json` 为准：只处理 `product_map.xlsx` 中 `纳入标记 = Y` 的产品；股票收益使用 `stock_prices.csv` 的 `收盘` 字段；基金收益使用 `fund_nav.xlsx` 的 `累计净值` 字段，不要使用 `单位净值` 或 `日增长率` 累乘替代；起点观察值取区间起始日当天或之后、且仍在区间内的第一条可用记录；终点观察值取区间结束日当天或之前、且仍在区间内的最后一条可用记录；若源代码在对应来源表中不存在，写入 `source_code_not_found`；若该产品源代码存在但区间内没有任何可用记录，按 config 的 exception_assignment_policy 写入对应异常类别；不要填 0、不要外推、不要跨区间取数。区间收益公式为 `end_value / start_value - 1`，按 config 的小数位四舍五入。排名在每个 interval_id 内单独计算，先按 interval_return 降序，再按 `产品ID` 升序打破并列。summary 要能与前三个明细 sheet 的数量、均值、第一名和异常类别计数互相核对。\n\n请读取工作区中的输入文件：`input/product_map.xlsx`、`input/interval_config.json`、`input/stock_prices.csv`、`input/fund_nav.xlsx`。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787332459.9317703,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\workbuddy-bench__stock-fund-return-compare-L3-010__e918d9"
+}

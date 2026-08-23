@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "snake-gameplay-implementation-L3-010",
+  "prompt": "# Web-Bench Task T10\n\nBased on the player feedback, difficulty parameters, and input rules in the attachments, please build a Snake mini-game. The arrow-key controls, difficulty tiers, turn buffering, and speed pacing all need to match the spec — no accidental reverse moves and no dropped inputs.\n\n## Output\n\nCreate the required artifact inside `/workspace`. The required output path is:\n\n- `/workspace/www/index.html` (declared as `environment/www/index.html`)\n\nDo not place the final answer only in chat; write the runnable artifact files.\n\n## Runtime and Delivery Constraints\n\n- The deliverable must be openable directly under a static file server. Don't rely on a Node.js backend, npm build steps, external CDNs, or fetching dependencies over the network.\n- If you need to split out CSS, JavaScript, or data files, place them inside the inspected directory and reference them with relative paths from the entry HTML.\n\n## Public Assets\n\n- `player_feedback_transcript`: `/workspace/public-assets/feedback/player-feedback-transcript.md` text/markdown\n- `difficulty_parameter_table`: `/workspace/public-assets/spec/difficulty-parameter-table.csv` text/csv\n- `input_and_turn_rules`: `/workspace/public-assets/spec/input-buffer-and-turn-rules.md` text/markdown\n- `gameplay_baseline_metrics`: `/workspace/public-assets/data/gameplay-baseline-metrics.json` application/json\n- `frame_timing_samples`: `/workspace/public-assets/data/frame-timing-samples.csv` text/csv\n- `playtest_checklist`: `/workspace/public-assets/repro/playtest-checklist.md` text/markdown\n- `deterministic_gameplay_trace`: `/workspace/public-assets/replay/deterministic-gameplay-trace.jsonl` application/jsonl\n- `gameplay_rebuild_notes`: `/workspace/public-assets/spec/gameplay-rebuild-notes.md` text/markdown",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 92.9999999998472,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787334454.108907,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\workbuddy-bench__snake-gameplay-implementation-L3-010__38ccec"
+}

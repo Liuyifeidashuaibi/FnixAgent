@@ -31,10 +31,14 @@ from __future__ import annotations
 
 import base64
 import io
+import logging
 from functools import lru_cache
 from typing import Any
 
 from fnixagent.office.base import BaseExpert, ExpertError, ExpertResult
+
+_logger = logging.getLogger(__name__)
+
 
 # 支持的图表类型
 _CHART_TYPES = {"bar", "line", "pie", "scatter", "area", "radar", "heatmap", "histogram"}
@@ -191,7 +195,7 @@ class ChartExpert(BaseExpert):
                 try:
                     plt.close(fig)
                 except Exception:
-                    pass
+                    _logger.debug('Unhandled exception', exc_info=True)
 
     # ------------------------------------------------------------------
     # 从 CSV 创建

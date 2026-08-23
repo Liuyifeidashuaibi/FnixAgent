@@ -1,0 +1,18 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "usebruno__bruno-7762",
+  "prompt": "### Description\r\n\r\nFixes https://github.com/usebruno/bruno/issues/7579\r\n[BRU-3156](https://usebruno.atlassian.net/browse/BRU-3156)\r\n\r\n**Problem:**\r\nBefore we were not able to detect whether the auth mode is \"apikey\", cause api can have dynamic key in headers, so it wasn't determinstic in \"header\" placement.\r\n\r\n<img width=\"450\" height=\"190\" alt=\"Screenshot 2026-04-14 at 10 22 27 PM\" src=\"https://github.com/user-attachments/assets/c03bd2e4-864e-4864-bde0-371ad13cb639\" />\r\n\r\n\r\n**Solution:**\r\nAdd a new field \"apiKeyHeaderName\" that tracks the key for the header added in api key auth mode. This way we can determine if that header exist or not and determine auth mode as \"apikey\".\r\n\r\nAlso added interpolation of this key so that if someone passes a variable like {{apiKey}} it can be expanded in \"apiKeyHeaderName\" as well.\r\n\r\nThis PR adds detection of \"header\" as well as \"query params\" placement.\r\n\r\n<img width=\"486\" height=\"127\" alt=\"Screenshot 2026-04-14 at 10 21 56 PM\" src=\"https://github.com/user-attachments/assets/2a57836a-0a60-4631-8e1d-cbb3a8e671da\" />\r\n\r\n\r\n#### Contribution Checklist:\r\n\r\n- [ ] **I've used AI significantly to create this pull request**\r\n- [x] **The pull request only addresses one issue or adds one feature.**\r\n- [x] **The pull request does not introduce any breaking changes**\r\n- [x] **I have added screenshots or gifs to help explain the change if applicable.**\r\n- [x] **I have read the [contribution guidelines](https://github.com/usebruno/bruno/blob/main/contributing.md).**\r\n- [x] **Create an issue and link to the pull request.**\r\n\r\n\r\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\n## Summary by CodeRabbit\n\n* **New Features**\n  * Dynamic API key header names and values can be defined with variables and will be applied to requests\n  * API key auth is now detected reliably for both header and query-parameter placements\n\n* **Tests**\n  * Added end-to-end and unit tests validating API key header name interpolation and auth-mode detection across runner and client paths\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/packages/bruno-cli/src/runner/interpolate-vars.js b/packages/bruno-] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787332462.3780684,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\prototypebench__usebruno__bruno-7762__5555de"
+}

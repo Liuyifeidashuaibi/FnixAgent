@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "product_analytics-hard-ab_test_analysis",
+  "prompt": "结账页文案实验跑完了，我想先知道新版有没有更好。数据里有曝光和购买事件，麻烦帮我算每组转化、收入和一个简单结论，别把很久以后的购买也算进去。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 78.00000000042928,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787334455.374753,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\workbuddy-bench__product_analytics-hard-ab_test_analysis__013fe0"
+}

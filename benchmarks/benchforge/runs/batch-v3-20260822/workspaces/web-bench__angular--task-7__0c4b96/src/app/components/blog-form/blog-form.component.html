@@ -1,0 +1,12 @@
+<form [formGroup]="blogForm" (ngSubmit)="onSubmit()">
+  <div>
+    <label for="title">Title</label>
+    <input id="title" formControlName="title" placeholder="Blog title" />
+    <span *ngIf="duplicateError" class="duplicate-error">{{ duplicateError }}</span>
+  </div>
+  <div>
+    <label for="content">Content</label>
+    <textarea id="content" formControlName="content" placeholder="Blog content"></textarea>
+  </div>
+  <button type="submit" [disabled]="blogForm.invalid">Submit</button>
+</form>

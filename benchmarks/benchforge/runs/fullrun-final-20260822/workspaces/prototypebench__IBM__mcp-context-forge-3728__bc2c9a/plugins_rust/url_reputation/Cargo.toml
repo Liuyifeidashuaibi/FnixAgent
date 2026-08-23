@@ -1,0 +1,15 @@
+[package]
+name = "url_reputation_rust"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "url_reputation_rust"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.21", features = ["auto-initialize"] }
+regex = "1.10"
+
+[dev-dependencies]
+test-case = "3.2"

@@ -119,12 +119,23 @@ class Message:
     name: str | None = None  # tool 角色时的工具名
     metadata: dict[str, Any] = field(default_factory=dict)
     token_count: int | None = None  # 由 tokenizer 回填
+    # Bug-037: assistant 消息声明的工具调用 / tool 消息对应的调用 ID。
+    # 缺失时严格校验的 provider（qwen-max 等）对 role=tool 消息直接 400
+    # "must be a response to a preceeding message with tool_calls"。
+    tool_calls: list[dict[str, Any]] | None = None
+    tool_call_id: str | None = None
 
     def to_llm_dict(self) -> dict[str, Any]:
         """转换为 LLM provider 通用的 dict 结构。"""
         d: dict[str, Any] = {"role": self.role.value, "content": self.content}
         if self.name:
             d["name"] = self.name
+        # Bug-037: 透传工具调用上下文，保证 assistant(tool_calls) 与
+        # 后续 role=tool(tool_call_id) 消息成对出现、序列完整。
+        if self.tool_calls:
+            d["tool_calls"] = self.tool_calls
+        if self.tool_call_id:
+            d["tool_call_id"] = self.tool_call_id
         return d
 
 

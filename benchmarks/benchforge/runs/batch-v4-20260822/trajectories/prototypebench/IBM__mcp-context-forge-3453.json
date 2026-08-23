@@ -1,0 +1,60 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "IBM__mcp-context-forge-3453",
+  "prompt": "## 🔗 Related Issue\r\nCloses #3401\r\n\r\n---\r\n\r\n## 📝 Summary\r\n\r\nSQLite stores `datetime` values without timezone info (naive datetimes), while PostgreSQL preserves timezone-aware datetimes. This caused a `TypeError` when comparing a naive `locked_until` value against the timezone-aware result of `utc_now()`, which silently broke the Admin UI users list whenever any user had a non-null `locked_until` — showing zero users instead of the full list.\r\n\r\n**Root cause:** `is_account_locked()` in `db.py` was comparing `utc_now()` (timezone-aware) directly against `self.locked_until` (naive on SQLite), raising a `TypeError` that propagated up and caused the user list to render empty.\r\n\r\n**Fix:**\r\n- `EmailUser.is_account_locked()` now normalises a naive `locked_until` to UTC before comparison, making it safe on both SQLite and PostgreSQL.\r\n- `admin.py` and `schemas.py` now delegate lock status to `user.is_account_locked()` instead of duplicating the comparison inline — eliminating the two divergent call sites that had the same bug.\r\n\r\n---\r\n\r\n## 🏷️ Type of Change\r\n- [X] Bug fix\r\n- [ ] Feature / Enhancement\r\n- [ ] Documentation\r\n- [ ] Refactor\r\n- [ ] Chore (deps, CI, tooling)\r\n\r\n---\r\n\r\n## 🧪 Verification\r\n\r\n| Check                     | Command         | Status |\r\n|---------------------------|-----------------|--------|\r\n| Lint suite                | `make lint`     |        |\r\n| Unit tests                | `make test`     |        |\r\n| Coverage ≥ 80%            | `make coverage` |        |\r\n\r\n---\r\n\r\n## ✅ Checklist\r\n- [✅] Code formatted (`make black isort pre-commit`)\r\n- [✅] Tests added/updated for changes\r\n- [ ] Documentation updated (if applicable)\r\n- [✅] No secrets or credentials committed\r\n\r\n---\r\n\r\n## 📓 Notes\r\n\r\n**Affected files:**\r\n- `mcpgateway/db.py` — `is_account_locked()` normalises naive datetimes from SQLite before comparison\r\n- `mcpgateway/admin.py` — `_render_user_card_html` uses `user.is_account_locked()` instead of inline comparison\r\n- `mcpgateway/schemas.py` — `EmailUserResponse.from_email_user()` uses `user.is_account_locked()` instead of inline comparison\r\n- `tests/unit/mcpgateway/test_db.py` — new tests for naive and aware datetime paths in `is_account_locked()`\r\n- `tests/unit/mcpgateway/test_admin.py` — mock objects updated with `is_account_locked` method\r\n\r\n<img width=\"1859\" height=\"331\" alt=\"Admin UI users list previously rendered empty when any user had a lockout record in SQLite\" src=\"https://github.com/user-attachments/assets/84519df0-06e2-428d-a258-a707dbbf2cf8\" />",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [
+    "Step 0 | 思考: 了解了这个问题的背景和修复方案后，接下来我会按照你的描述来验证并确保所有提到的改动已经正确地应用到了代码中。这包括检查`mcpgateway/db.py`, `mcpgateway/admin.py`... | 工具 ✗ read_file({\"file_path\": \"mcpgateway/db.py\"}) | 耗时: 10635ms, tokens: 3615",
+    "Step 0 | 思考: 了解了这个问题的背景和修复方案后，接下来我会按照你的描述来验证并确保所有提到的改动已经正确地应用到了代码中。这包括检查`mcpgateway/db.py`, `mcpgateway/admin.py`... | 工具 ✗ read_file({\"file_path\": \"mcpgateway/admin.py\"}) | 耗时: 10636ms, tokens: 3615",
+    "Step 0 | 思考: 了解了这个问题的背景和修复方案后，接下来我会按照你的描述来验证并确保所有提到的改动已经正确地应用到了代码中。这包括检查`mcpgateway/db.py`, `mcpgateway/admin.py`... | 工具 ✗ read_file({\"file_path\": \"mcpgateway/schemas.py\"}) | 耗时: 10637ms, tokens: 3615",
+    "Step 0 | 思考: 了解了这个问题的背景和修复方案后，接下来我会按照你的描述来验证并确保所有提到的改动已经正确地应用到了代码中。这包括检查`mcpgateway/db.py`, `mcpgateway/admin.py`... | 工具 ✗ read_file({\"file_path\": \"tests/unit/mcpgateway/test_db.py\"}) | 耗时: 10638ms, tokens: 3615",
+    "Step 0 | 思考: 了解了这个问题的背景和修复方案后，接下来我会按照你的描述来验证并确保所有提到的改动已经正确地应用到了代码中。这包括检查`mcpgateway/db.py`, `mcpgateway/admin.py`... | 工具 ✗ read_file({\"file_path\": \"tests/unit/mcpgateway/test_admin.py) | 耗时: 10638ms, tokens: 3615"
+  ],
+  "tool_calls": [
+    {
+      "step": 1,
+      "tool": "read_file",
+      "args": {},
+      "success": false,
+      "output_preview": "[失败] 文件不存在: mcpgateway/db.py"
+    },
+    {
+      "step": 2,
+      "tool": "read_file",
+      "args": {},
+      "success": false,
+      "output_preview": "[失败] 文件不存在: mcpgateway/admin.py"
+    },
+    {
+      "step": 3,
+      "tool": "read_file",
+      "args": {},
+      "success": false,
+      "output_preview": "[失败] 文件不存在: mcpgateway/schemas.py"
+    },
+    {
+      "step": 4,
+      "tool": "read_file",
+      "args": {},
+      "success": false,
+      "output_preview": "[失败] 文件不存在: tests/unit/mcpgateway/test_db.py"
+    },
+    {
+      "step": 5,
+      "tool": "read_file",
+      "args": {},
+      "success": false,
+      "output_preview": "[失败] 文件不存在: tests/unit/mcpgateway/test_admin.py"
+    }
+  ],
+  "files_written": [],
+  "total_tokens": 3615,
+  "duration_ms": 11187.000000000011,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen-max): HTTP 400 (<400> InternalError.Algo.InvalidParameter: messages with role \"tool\" must be a response to a preceeding message with \"tool_calls\".)",
+  "judge_method": "heuristic",
+  "started_at": 1787384876.9304144,
+  "workspace": "benchmarks\\benchforge\\runs\\batch-v4-20260822\\workspaces\\prototypebench__IBM__mcp-context-forge-3453__c403e2"
+}

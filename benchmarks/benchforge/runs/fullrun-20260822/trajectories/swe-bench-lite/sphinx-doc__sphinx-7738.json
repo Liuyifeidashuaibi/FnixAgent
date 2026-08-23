@@ -1,0 +1,18 @@
+{
+  "dataset": "swe-bench-lite",
+  "task_id": "sphinx-doc__sphinx-7738",
+  "prompt": "overescaped trailing underscore on attribute with napoleon\n**Describe the bug**\r\nAttribute name `hello_` shows up as `hello\\_` in the html (visible backslash) with napoleon.\r\n\r\n**To Reproduce**\r\nSteps to reproduce the behavior:\r\n\r\nempty `__init__.py`\r\n`a.py` contains\r\n```python\r\nclass A:\r\n    \"\"\"\r\n    Attributes\r\n    ----------\r\n    hello_: int\r\n        hi\r\n    \"\"\"\r\n    pass\r\n```\r\nrun `sphinx-quickstart`\r\nadd `'sphinx.ext.autodoc', 'sphinx.ext.napoleon'` to extensions in conf.py.\r\nadd `.. autoclass:: a.A` to index.rst\r\nPYTHONPATH=. make clean html\r\nopen _build/html/index.html in web browser and see the ugly backslash.\r\n\r\n**Expected behavior**\r\nNo backslash, a similar output to what I get for\r\n```rst\r\n    .. attribute:: hello_\r\n        :type: int\r\n\r\n        hi\r\n```\r\n(the type shows up differently as well, but that's not the point here)\r\nOlder versions like 2.4.3 look ok to me.\r\n\r\n**Environment info**\r\n- OS: Linux debian testing\r\n- Python version: 3.8.3\r\n- Sphinx version: 3.0.4\r\n- Sphinx extensions:  sphinx.ext.autodoc, sphinx.ext.napoleon\r\n- Extra tools:\n",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/sphinx/ext/napoleon/docstring.py b/sphinx/ext/napoleon/docstring.py] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 92.9999999998472,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787332466.2881875,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\swe-bench-lite__sphinx-doc__sphinx-7738__e324da"
+}

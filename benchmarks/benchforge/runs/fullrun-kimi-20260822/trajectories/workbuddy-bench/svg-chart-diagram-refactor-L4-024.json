@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "svg-chart-diagram-refactor-L4-024",
+  "prompt": "# Web-Bench Task T24\n\nPlease change this grouped bar chart into a stacked bar, add quarterly total labels, drop the error bars, and tidy up the legend.\n\nUse the attached CSV as the chart's data source or as an explicit data table that drives the rendered SVG/HTML. Segment heights and quarterly total labels should come from the same data path, so changing a row in the source data would update the visible stack and its total together rather than requiring separate hand edits.\n\n## Output\n\nCreate the required artifact inside `/workspace`. The required output path is:\n\n- `/workspace/submission/chart.html` (declared as `environment/submission/chart.html`)\n\nDo not place the final answer only in chat; write the runnable artifact files.\n\n## Public Assets\n\n- `source-chart`: `/workspace/public-assets/source_chart/source-chart.xml` xml_source\n- `edit-brief`: `/workspace/public-assets/instructions/edit-brief.md` markdown\n- `source-data`: `/workspace/public-assets/data/chart-data.csv` csv\n- `target-chart-spec`: `/workspace/public-assets/spec/target-chart-spec.json` json\n- `chart-production-notes`: `/workspace/public-assets/spec/chart-production-notes.md` markdown",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787334454.2078161,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\workbuddy-bench__svg-chart-diagram-refactor-L4-024__1e133e"
+}

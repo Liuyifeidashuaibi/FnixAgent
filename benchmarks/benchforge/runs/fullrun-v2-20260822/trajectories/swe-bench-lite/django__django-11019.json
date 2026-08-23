@@ -1,0 +1,18 @@
+{
+  "dataset": "swe-bench-lite",
+  "task_id": "django__django-11019",
+  "prompt": "Merging 3 or more media objects can throw unnecessary MediaOrderConflictWarnings\nDescription\n\t\nConsider the following form definition, where text-editor-extras.js depends on text-editor.js but all other JS files are independent:\nfrom django import forms\nclass ColorPicker(forms.Widget):\n\tclass Media:\n\t\tjs = ['color-picker.js']\nclass SimpleTextWidget(forms.Widget):\n\tclass Media:\n\t\tjs = ['text-editor.js']\nclass FancyTextWidget(forms.Widget):\n\tclass Media:\n\t\tjs = ['text-editor.js', 'text-editor-extras.js', 'color-picker.js']\nclass MyForm(forms.Form):\n\tbackground_color = forms.CharField(widget=ColorPicker())\n\tintro = forms.CharField(widget=SimpleTextWidget())\n\tbody = forms.CharField(widget=FancyTextWidget())\nDjango should be able to resolve the JS files for the final form into the order text-editor.js, text-editor-extras.js, color-picker.js. However, accessing MyForm().media results in:\n/projects/django/django/forms/widgets.py:145: MediaOrderConflictWarning: Detected duplicate Media files in an opposite order:\ntext-editor-extras.js\ntext-editor.js\n MediaOrderConflictWarning,\nMedia(css={}, js=['text-editor-extras.js', 'color-picker.js', 'text-editor.js'])\nThe MediaOrderConflictWarning is a result of the order that the additions happen in: ColorPicker().media + SimpleTextWidget().media produces Media(css={}, js=['color-picker.js', 'text-editor.js']), which (wrongly) imposes the constraint that color-picker.js must appear before text-editor.js.\nThe final result is particularly unintuitive here, as it's worse than the \"naïve\" result produced by Django 1.11 before order-checking was added (color-picker.js, text-editor.js, text-editor-extras.js), and the pair of files reported in the warning message seems wrong too (aren't color-picker.js and text-editor.js the wrong-ordered ones?)\n",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 375.0,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336340.8804953,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\swe-bench-lite__django__django-11019__eb3186"
+}

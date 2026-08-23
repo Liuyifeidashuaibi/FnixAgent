@@ -18,11 +18,15 @@ LDAP 配置存储层(Phase 2.2)。
 
 from __future__ import annotations
 
+import logging
 import threading
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
 from fnixagent.core.security.auth.ldap import LDAPConfig
+
+_logger = logging.getLogger(__name__)
+
 
 # ---------------------------------------------------------------------------
 # DTO
@@ -251,6 +255,7 @@ class PgLDAPConfigStore:
                     data = self._json.loads(r.value)
                     result.append(self._dict_to_dto(data))
                 except Exception:
+                    _logger.debug('Unhandled exception', exc_info=True)
                     continue
             return result
 

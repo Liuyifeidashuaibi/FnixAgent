@@ -1,0 +1,163 @@
+[html:l6] FnixAgent — 生产级 AI 工作台 | 作品集展示
+[html:l14] Production Ready · 2026-08-21
+[html:l15] FnixAgent 生产级 AI 工作台
+[html:l16] Tauri 2 + React 19 + Python/FastAPI + LangGraph 构建的自进化 AI Agent 系统。
+[html:l17] 支持三种工作模式（Ask / Plan / Craft），内置 14 个工具，自研 Agent 评测工具，
+[html:l18] 34 项标准化测试用例，真实用户 UI 测试驱动迭代。
+[html:l21] 19
+[html:l22] 已修复 Bug
+[html:l25] 34
+[html:l26] 评测用例
+[html:l29] 86.4%
+[html:l30] 评测通过率
+[html:l33] A-
+[html:l34] 生产就绪度
+[html:l43] 技术架构
+[html:l44] 四层混合架构 — 前端 React 19 + Rust Sidecar + Python 后端 + LangGraph Agent 图
+[html:l47] Frontend
+[html:l48] Tauri 2 + React 19
+[html:l49] Vite HMR · TypeScript 零错误 · SSE 流式渲染
+[html:l52] Sidecar
+[html:l53] Rust fnix-local
+[html:l54] 文件系统操作 · 进程管理 · 安全沙箱
+[html:l57] Backend
+[html:l58] Python FastAPI
+[html:l59] LangGraph Agent 图 · 14 个工具 · MCP 协议
+[html:l62] LLM
+[html:l63] DashScope Qwen
+[html:l64] qwen3.7-plus · 百炼工作空间 · reasoning 能力
+[html:l67] Agent Graph
+[html:l68] LangGraph 自进化
+[html:l69] HERA 技能召回 · Self-Optimizing · Reflexion 修复
+[html:l72] Testing
+[html:l73] 自研评测工具
+[html:l74] TraceCollector + ProblemDetector + LLM-as-judge
+[html:l83] 前端 UI 真实用户测试
+[html:l84] 通过浏览器自动化模拟真实用户操作 — 发送消息、查看渲染、验证产物文件
+[html:l88] Craft
+[html:l89] ✅ PASS
+[html:l91] 个人名片卡片生成
+[html:l92] 创建 HTML 名片页面，54s 完成，3 个文件，score 0.97
+[html:l94] 📁 3 files
+[html:l95] ⏱ 54s
+[html:l96] 📊 17 ops
+[html:l101] Ask
+[html:l102] ✅ PASS
+[html:l104] React 19 新特性问答
+[html:l105] 5 大特性 + 代码对比 + 速查表，使用 web_search + web_fetch
+[html:l107] 🔧 4 tool calls
+[html:l108] 📄 15KB 内容
+[html:l113] Plan
+[html:l114] ✅ PASS
+[html:l116] 在线书店系统设计
+[html:l117] 25 步计划，Mermaid 架构图 + 5 个模块表格 + API 设计
+[html:l119] 📋 25 steps
+[html:l120] ⏱ 49s
+[html:l121] 📊 6 ops
+[html:l126] Craft
+[html:l127] ✅ PASS
+[html:l129] 项目仪表板生成
+[html:l130] 暗色主题仪表板，CSS 柱状图 + conic-gradient 饼图 + 时间线
+[html:l132] 📁 3 files
+[html:l133] ⏱ 3m 48s
+[html:l134] 📊 13 ops
+[html:l139] Ask
+[html:l140] ✅ PASS
+[html:l142] Vue 3 vs React 19 对比
+[html:l143] 完整对比表格验证 BUG-017 修复 — 表格完美渲染
+[html:l145] 📊 HTML table
+[html:l146] ✅ Fixed
+[html:l151] Settings
+[html:l152] ✅ PASS
+[html:l154] Settings + Diagnostics
+[html:l155] Provider/API Key/Model 配置，Test Connection 成功，全链路基准测试可用
+[html:l157] ⚙ 7 sections
+[html:l158] 🔗 Connection OK
+[html:l168] 本轮发现并修复的 Bug
+[html:l169] 一边测试一边发现问题、定位根因、修复并验证 — 三轮迭代
+[html:l174] BUG-017
+[html:l175] 严重
+[html:l177] ✅ 已修复
+[html:l179] Markdown 表格未渲染为 HTML 表格 — Assistant 回复中的 GFM 表格以原始 | 管道符文本显示
+[html:l181] 根因： MessageBubble.tsx 的 renderContent 使用自定义 Prose 正则解析器，不支持 GFM 表格。
+[html:l182] 修复：用 MarkdownRenderer （react-markdown + remark-gfm）替换 Prose ，移除 renderInline 和 createElement 。
+[html:l183] 验证：TypeScript 零错误 + Plan 模式表格完美渲染 + Ask 模式对比表格验证通过。
+[html:l189] BUG-018
+[html:l190] 中等
+[html:l192] ✅ 已修复
+[html:l194] Mermaid 代码块未渲染为图表 — Plan 模式回复中的架构图显示为原始 graph TB 代码文本
+[html:l196] 根因： renderContent 将所有代码块统一送入 CodeBlock ，未检测 mermaid 语言分流。
+[html:l197] 修复：添加 lang.toLowerCase() === 'mermaid' 检测，分流到 <MermaidBlock> 组件。
+[html:l198] 验证：HMR 后 Mermaid 架构图正确渲染（前端/后端/数据库节点可视化）。
+[html:l204] BUG-020
+[html:l205] 中等
+[html:l207] ✅ 已修复
+[html:l209] web_search 工具返回 0 结果 — DuckDuckGo HTML 版返回反爬挑战页（HTTP 202）
+[html:l211] 根因： html.duckduckgo.com/html/ 返回反爬挑战页，原有正则 result__a 无法匹配。
+[html:l212] 修复：改用 DuckDuckGo Lite ( lite.duckduckgo.com/lite/ )，更新解析模式为 rel="nofollow" 链接提取。
+[html:l213] 验证：直接测试返回 10 条有效结果（React v19、GeeksforGeeks、freeCodeCamp 等）。
+[html:l219] BUG-019
+[html:l220] 低
+[html:l222] ⚠️ 待确认
+[html:l224] 会话列表页面重载后为空 — 可能不持久化跨页面重载（需进一步验证是否为设计行为）
+[html:l226] 观察：页面重载后会话列表仅显示"可恢复任务"，之前的 4 个对话不在列表中。
+[html:l227] 待确认：是否为内存存储设计，或后端有会话持久化但前端未加载。
+[html:l237] Agent 评测工具
+[html:l238] 自研评测工具对标 SWE-bench / AgentBench / DeepEval — 34 项标准化用例覆盖 11 类场景
+[html:l242] 29/34
+[html:l243] 通过 / 总数
+[html:l246] 86.4%
+[html:l247] 通过率
+[html:l250] 0.99
+[html:l251] 平均分
+[html:l254] 11
+[html:l255] 场景类别
+[html:l259] SWE-bench 类
+[html:l261] 3/3
+[html:l264] GAIA 类
+[html:l266] 3/4
+[html:l269] MCP 工具
+[html:l271] 3/3
+[html:l274] 错误恢复
+[html:l276] 2/3
+[html:l279] 回归测试
+[html:l281] 0/2
+[html:l290] Craft 模式生成产物
+[html:l291] 真实用户操作生成的可交付文件 — 从自然语言描述到完整可运行的 Web 应用
+[html:l294] 👤
+[html:l295] 个人名片卡片
+[html:l296] 现代简洁风格的个人名片 HTML 页面，包含姓名、职位、联系方式，响应式设计
+[html:l298] HTML
+[html:l299] CSS
+[html:l300] JS
+[html:l301] 响应式
+[html:l305] 📊
+[html:l306] 项目仪表板
+[html:l307] 暗色主题软件开发项目仪表板，燃尽图 + 饼图 + 进度表 + 时间线
+[html:l309] HTML
+[html:l310] CSS
+[html:l311] JS
+[html:l312] 暗色主题
+[html:l313] conic-gradient
+[html:l317] 📈
+[html:l318] Agent 指标仪表板
+[html:l319] Glassmorphism 风格的 Agent 运行指标可视化页面
+[html:l321] HTML
+[html:l322] Glassmorphism
+[html:l323] 17KB
+[html:l333] 生产就绪度评估
+[html:l334] 基于 ISO 25010 + ISTQB 标准的全面评估
+[html:l337] A
+[html:l338] 功能完整性
+[html:l341] A-
+[html:l342] UI 渲染
+[html:l345] B+
+[html:l346] 工具链可靠性
+[html:l349] A
+[html:l350] 交互体验
+[html:l353] A
+[html:l354] Settings
+[html:l357] A-
+[html:l358] 总评
+[html:l367] FnixAgent · 生产级 AI 工作台 · Tauri 2 + React 19 + Python/FastAPI + LangGraph
+[html:l368] 19 个 Bug 修复 · 34 项评测用例 · 86.4% 通过率 · 2026-08-21

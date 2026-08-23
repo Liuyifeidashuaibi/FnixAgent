@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "atmosphere-game-L4-035",
+  "prompt": "# Web-Bench Task T35\n\nBuild a small web game with the theme \"Deep Sea Exploration\": the player uses the keyboard to steer a submarine forward, dodging obstacles and collecting glowing jellyfish. There needs to be score feedback and a way to restart after losing. Overall I want an immersive deep-sea adventure vibe — the visuals should feel mysterious, flowing, glowing, with spatial depth — but those visual effects can't get in the way of the player's judgment. The end result should feel like a genuinely playable little game, not a static showcase page or just a page with background animation.\n\n## Output\n\nCreate the required artifact inside `/workspace`. The required output path is:\n\n- `/workspace/www/index.html` (declared as `environment/www/index.html`)\n\nDo not place the final answer only in chat; write the runnable artifact files.\n\n## Public Assets\n\n- `game_design_brief`: `/workspace/public-assets/brief/game-design-brief.md` text/markdown\n- `visual_atmosphere_notes`: `/workspace/public-assets/brief/visual-atmosphere-notes.md` text/markdown\n- `gameplay_mechanics`: `/workspace/public-assets/spec/gameplay-mechanics.yaml` text/yaml\n- `entity_catalog`: `/workspace/public-assets/data/entity-catalog.yaml` text/yaml\n\n- `product_notes`: `/workspace/public-assets/spec/product-notes.md` text/markdown",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 77.99999999997453,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787332457.3071797,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\workbuddy-bench__atmosphere-game-L4-035__94c180"
+}

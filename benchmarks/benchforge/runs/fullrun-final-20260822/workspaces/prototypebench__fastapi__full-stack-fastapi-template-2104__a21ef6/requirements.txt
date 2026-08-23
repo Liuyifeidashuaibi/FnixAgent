@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+pydantic
+pwdlib
+argon2-cffi
+pytest

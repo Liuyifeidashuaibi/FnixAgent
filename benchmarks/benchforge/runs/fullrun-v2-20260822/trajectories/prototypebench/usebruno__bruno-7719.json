@@ -1,0 +1,18 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "usebruno__bruno-7719",
+  "prompt": "### Description\r\n\r\n[JIRA](https://usebruno.atlassian.net/browse/BRU-2932)\r\n\r\nEnable users to add multiple WebSocket messages within a single request. Messages are displayed as collapsible accordions with individual type selection, send, rename, and delete actions. Supports both BRU and YML file formats.\r\n\r\n#### Contribution Checklist:\r\n\r\n- [x] **I've used AI significantly to create this pull request**\r\n- [x] **The pull request only addresses one issue or adds one feature.**\r\n- [x] **The pull request does not introduce any breaking changes**\r\n- [x] **I have added screenshots or gifs to help explain the change if applicable.**\r\n- [x] **I have read the [contribution guidelines](https://github.com/usebruno/bruno/blob/main/contributing.md).**\r\n- [x] **Create an issue and link to the pull request.**\r\n\r\n\r\nhttps://github.com/user-attachments/assets/43ff12f0-ec1f-4bbf-ac01-b0add8571795\r\n\r\n\n\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\n## Summary by CodeRabbit\n\n* **New Features**\n  * Multi-message WebSocket support with accordion-style per-message panels, inline name editing, per-message type selector, header send button, and editor prettify; new messages default to JSON and auto-expand.\n\n* **Compatibility**\n  * Import/export and automatic migration between single-message and multi-message formats preserved for both BRU and YAML; names and types are retained.\n\n* **Tests**\n  * End-to-end test suites and fixtures covering multi-message workflows, CRUD, migration, persistence, and send/connect behavior.\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 344.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336340.0963743,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\prototypebench__usebruno__bruno-7719__060e92"
+}

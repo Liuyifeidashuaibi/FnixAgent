@@ -1,0 +1,18 @@
+{
+  "dataset": "vibe-code-bench",
+  "task_id": "case_17_legal",
+  "prompt": "# Build me a Legal Case Search Workspace\n\nCreate a single-file interactive web application for \"Vibe-Law\":\n\n**Features:**\n- A search bar to \"query\" case law\n- A results list showing mock cases (Title, Court, Date, Preview Snippet)\n- Clicking a case opens a \"Detail View\" (split pane or modal)\n- In the Detail View:\n  - Show a \"Summary\" tab and a \"Full Text\" tab\n  - \"Extract Entities\" button (simulated: highlights names/dates in text)\n  - \"Notes\" sidebar where I can save specific snippets (using localStorage)\n- Visual Style: Very professional, \"Dark mode legal\" (deep blues/charcoals), high-density information but clean.\n\n**Rules:**\n- Interactive single HTML file\n- Mock 10-15 legal cases in JavaScript\n- No external libraries",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[\"\"\"\nFunctional tests for Legal Case Search (case_17_legal).\n\nTests verify actual] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 92.9999999998472,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787332461.1663797,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\vibe-code-bench__case_17_legal__aad024"
+}

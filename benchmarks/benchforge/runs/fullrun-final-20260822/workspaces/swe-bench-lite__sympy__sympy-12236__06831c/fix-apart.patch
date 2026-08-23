@@ -1,0 +1,13 @@
+--- a/sympy/polys/polytools.py
++++ b/sympy/polys/polytools.py
+@@ -1250,7 +1250,9 @@ def apart(f, x=None, full=False, **options):
+     # perform partial fraction decomposition
+     try:
+         coeff, remainder = div(numer, denom, domain=QQ)
+-    except PolynomialError:
++    except (PolynomialError, DomainError):
++        # Retry without domain restriction to preserve symbolic coefficients
++        coeff, remainder = div(numer, denom, domain=None)
+ 
+     if not remainder:
+         return coeff

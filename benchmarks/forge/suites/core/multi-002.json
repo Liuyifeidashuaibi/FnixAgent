@@ -1,0 +1,44 @@
+{
+  "id": "multi-002",
+  "title": "跨文件重命名",
+  "capability": "multi_step",
+  "difficulty": 3,
+  "tags": [
+    "refactor"
+  ],
+  "prompt": "main.py 调用 lib.py 中的函数 old_name()。把 lib.py 中的函数改名为 parse_items，并同步更新 main.py 中的调用，保证程序仍能运行。不要改其他逻辑。",
+  "setup": {
+    "files": {
+      "lib.py": "def old_name(raw):\n    return [x.strip() for x in raw.split(',') if x.strip()]\n",
+      "main.py": "from lib import old_name\n\nif __name__ == '__main__':\n    print(old_name('a, b,,c'))\n"
+    }
+  },
+  "allowed_scope": [
+    "lib.py",
+    "main.py"
+  ],
+  "checks": [
+    {
+      "function": "command_succeeds",
+      "args": {
+        "command": "python main.py",
+        "stdout_pattern": "\\['a', 'b', 'c'\\]"
+      },
+      "weight": 2.0
+    },
+    {
+      "function": "file_not_contains",
+      "args": {
+        "path": "lib.py",
+        "pattern": "def old_name"
+      }
+    },
+    {
+      "function": "file_not_contains",
+      "args": {
+        "path": "main.py",
+        "text": "old_name"
+      }
+    }
+  ]
+}

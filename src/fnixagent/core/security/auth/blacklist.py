@@ -19,8 +19,12 @@ Refresh Token 的撤销也通过黑名单实现:
 
 from __future__ import annotations
 
+import logging
 import threading
 import time
+
+_logger = logging.getLogger(__name__)
+
 
 # 尝试导入 Redis 适配器(可选,开发环境可能无 Redis)
 try:
@@ -175,7 +179,7 @@ class TokenBlacklist:
                 for key in self._redis.scan_iter(match=f"{self._prefix()}*"):
                     self._redis.delete(key)
             except Exception:
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
 
     # ------------------------------------------------------------------
     # 状态查询

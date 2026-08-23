@@ -1,0 +1,18 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "IBM__mcp-context-forge-3564",
+  "prompt": "Closes: #3555\r\n# 🐛 Bug-fix PR\r\n\r\n## 📌 Summary\r\n\r\nFixed admin logout behavior to redirect browser users to the login page while maintaining OIDC front-channel logout compliance.\r\n\r\n### Root causes\r\n\r\nUser Experience: Users manually navigating to /admin/logout in browser are now automatically redirected to login page\r\n\r\n\r\n## 🔁 Reproduction Steps\r\n\r\n1. Log in to the app\r\n2. Manually enter admin/logout into browser\r\n3. Page will clear and show 'Logged out' message\r\n\r\n## 💡 Fix Description\r\n\r\n`mcpgateway/admin.py`\r\n- Added browser detection in `_admin_logout()` using the Accept header\r\n- GET requests with Accept: text/html (browser navigation) now redirect to /admin/login (303)\r\n- GET requests without Accept: text/html (OIDC front-channel callbacks) return 200 OK per OIDC spec\r\n- POST requests continue to redirect to /admin/login after clearing cookies\r\n\r\n`tests/unit/mcpgateway/test_admin_module.py`\r\n - Enhanced test_admin_logout_paths() to cover all three logout scenarios:\r\n - POST request → 303 redirect to login\r\n - GET with Accept: text/html (browser) → 303 redirect to login\r\n - GET without Accept: text/html (OIDC) → 200 OK\r\n\r\n\r\n## 🧪 Verification\r\n\r\n| Check                                 | Command              | Status |\r\n|---------------------------------------|----------------------|--------|\r\n| Lint suite                            | `make lint`          |     ✅     |\r\n| Unit tests                            | `make test`          |     ✅     |\r\n| Coverage ≥ 80 %                       | `make coverage`      |     ✅     |\r\n| Manual regression no longer fails     | steps / screenshots  |        |\r\n\r\n## 📐 MCP Compliance (if relevant)\r\n- [ ] Matches current MCP spec\r\n- [ ] No breaking change to MCP clients\r\n\r\n## ✅ Checklist\r\n- [ ] Code formatted (`make black isort pre-commit`)\r\n- [ ] No secrets/credentials committed",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/docs/docs/manage/sso-microsoft-entra-id-tutorial.md b/docs/docs/man] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 78.00000000042928,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787334460.7558134,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\prototypebench__IBM__mcp-context-forge-3564__9eca93"
+}

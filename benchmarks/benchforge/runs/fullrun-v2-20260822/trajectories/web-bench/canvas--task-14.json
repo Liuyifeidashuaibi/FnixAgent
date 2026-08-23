@@ -1,0 +1,18 @@
+{
+  "dataset": "web-bench",
+  "task_id": "canvas--task-14",
+  "prompt": "Every 5 seconds, there is a probability of generating an elliptical gravity field on the ground, with the height of the ellipse center at ground level, moves with floor. The width of the gravity field is three times the pipe spacing, height is 40, with a probability of 'store.fieldRandomRate' (default value 0.25, variable). The data of the field stores in 'store.field', and there will only be one field on the canvas at the same time, when the x of the bird is within the range of the field, it takes effect. The field type 'Zero': has a color that transitions from blue on the outside to black in the middle, The entire field glows with obvious special effects, the effect is that the bird's velocity will not > 0 within this distance.",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 359.9999999996726,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336253.5861115,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\web-bench__canvas--task-14__f8268e"
+}

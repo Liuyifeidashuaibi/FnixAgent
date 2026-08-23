@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import logging
 import time
 from datetime import UTC, datetime
 from pathlib import Path
@@ -37,6 +38,9 @@ from .loop_engine import LoopExecutor, LoopRegistry, NudgeEngine
 from .memory_manager import IntelligenceMemoryManager
 from .self_judge import SelfJudge
 from .skill_marketplace import SkillMarketplace
+
+_logger = logging.getLogger(__name__)
+
 
 
 def _now_iso() -> str:
@@ -128,7 +132,7 @@ class IntelligenceIntegrator:
             )
             self.guard.set_baseline(baseline)
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
 
     # ============================================================
     # 执行前: Nudge 注入 (L1 循环工程 + L5 记忆召回)
@@ -162,7 +166,7 @@ class IntelligenceIntegrator:
                         f"{i}. [{m.get('memory_type', 'episodic')}] {m.get('content', '')[:200]}"
                     )
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
 
         try:
             # L1 NudgeEngine: 检测重复任务模式 → 推动技能创建
@@ -171,7 +175,7 @@ class IntelligenceIntegrator:
                 parts.append("\n## Intelligence Nudge (L1 循环工程层)")
                 parts.append(f"检测到 {occurrence_count} 次类似操作, 建议沉淀为可复用技能。")
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
 
         try:
             # L1 LoopRegistry: 注入系统预定义 Loop 提示 (轻量, 不实际执行)
@@ -179,7 +183,7 @@ class IntelligenceIntegrator:
             if sys_loop is not None:
                 parts.append(f"\n<!-- Loop 提示: {sys_loop.name} — {sys_loop.description} -->")
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
 
         return "\n".join(parts) if parts else ""
 
@@ -243,9 +247,9 @@ class IntelligenceIntegrator:
                     result["degraded"] = True
                     result["circular_evolution"] = True
             except Exception:
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
 
         # ---- 2. L7 自我审判层: 评估进化周期 ----
         try:
@@ -265,7 +269,7 @@ class IntelligenceIntegrator:
                 "overall_score": getattr(verdict, "overall_score", 0.0),
             }
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
 
         # ---- 3. 若退化: 跳过后续进化, 记录告警 ----
         if result["degraded"]:
@@ -281,7 +285,7 @@ class IntelligenceIntegrator:
                 )
                 result["memory_saved"] = True
             except Exception:
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
             self._history.append(
                 {
                     "ts": _now_iso(),
@@ -325,7 +329,7 @@ class IntelligenceIntegrator:
                 )
                 result["skill_created"] = skill is not None
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
 
         # ---- 6. L5 记忆层: 沉淀本次进化经验 ----
         try:
@@ -343,7 +347,7 @@ class IntelligenceIntegrator:
             )
             result["memory_saved"] = saved is not None
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
 
         self._history.append(
             {
@@ -388,7 +392,7 @@ class IntelligenceIntegrator:
                     if isinstance(v, (int, float)):
                         metrics[k] = float(v)
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
 
         snap_id = hashlib.md5(
             f"{trace_record.get('user_input', '')}_{time.time()}".encode()

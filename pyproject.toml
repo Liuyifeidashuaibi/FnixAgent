@@ -130,8 +130,7 @@ ignore = [
     "UP042",  # str-enum 迁移破坏性大,暂不强制
     "N806",   # 函数内常量命名(如 HTTP/JSON 等缩写)
     "N818",   # 异常名后缀 (本项目已有命名规范)
-    "S110",   # try-except-pass (best-effort 清理是常态)
-    "S112",   # try-except-continue (循环容错是常态)
+    # S110/S112 已移至 per-file-ignores: src 中禁止静默吞异常, tests 中允许
     "SIM105", # contextlib.suppress 可读性争议
     "SIM108", # 三元表达式可读性争议
     "SIM103", # needless-bool 重构收益低

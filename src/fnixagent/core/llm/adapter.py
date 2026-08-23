@@ -93,7 +93,7 @@ class LLMAdapter:
             model_name: 模型名 (为空时使用默认值)
             provider_name: 提供商名 (为空时自动检测)
             timeout: 单条 LLM 请求超时(秒)；为空时取环境变量 FNIX_LLM_TIMEOUT，默认 120s
-            fallback_models: 模型熔断兜底链；主模型出现纼权/配额类终态错误
+            fallback_models: 模型熔断兜底链；主模型出现授权/配额类终态错误
                 (HTTP 401/403/404, insufficient_quota 等) 时自动切换到下一模型。
                 为空时依次从 ~/.fnix/config.toml `model_fallbacks`、环境变量
                 LLM_MODEL_FALLBACKS / BENCH_MODEL_FALLBACKS (逗号分隔) 读取。
@@ -132,11 +132,11 @@ class LLMAdapter:
             if isinstance(cfg_fb, (list, tuple)):
                 self._fallback_models = [str(m) for m in cfg_fb if str(m).strip()]
             else:
-                env_fb = os.getenv("LLM_MODEL_FALLBACKS", "") or os.getenv("BENCH_MODEL_FALLBACKS", "")
+                env_fb = os.getenv("LLM_MODEL_FALLBACKS", "") or os.getenv(
+                    "BENCH_MODEL_FALLBACKS", ""
+                )
                 if env_fb:
-                    self._fallback_models = [
-                        m.strip() for m in env_fb.split(",") if m.strip()
-                    ]
+                    self._fallback_models = [m.strip() for m in env_fb.split(",") if m.strip()]
 
         # 优先使用显式 / harness 配置
         if self._api_key:
@@ -226,13 +226,16 @@ class LLMAdapter:
 
     @staticmethod
     def _is_terminal_model_error(exc: LLMError) -> bool:
-        """判断是否为模型级终态错误（纼权/配额/模型不存在），不可靠重试解决。"""
+        """判断是否为模型级终态错误（授权/配额/模型不存在），不可靠重试解决。"""
         msg = str(exc)
         return any(
             marker in msg
             for marker in (
-                "HTTP 401", "HTTP 403", "HTTP 404",
-                "insufficient_quota", "invalid_api_key",
+                "HTTP 401",
+                "HTTP 403",
+                "HTTP 404",
+                "insufficient_quota",
+                "invalid_api_key",
             )
         )
 
@@ -240,9 +243,7 @@ class LLMAdapter:
         """切换到下一个兜底模型；无可用兜底时返回 False。"""
         if self._provider is None:
             return False
-        candidates = [
-            m for m in self._fallback_models if m and m != (self._model_name or "")
-        ]
+        candidates = [m for m in self._fallback_models if m and m != (self._model_name or "")]
         if self._fallback_cursor >= len(candidates):
             return False
         prev = self._model_name or "<default>"
@@ -251,7 +252,9 @@ class LLMAdapter:
         import logging
 
         logging.getLogger(__name__).warning(
-            "模型 %s 纼权/配额不可用，自动切换兜底模型 %s", prev, next_model,
+            "模型 %s 授权/配额不可用，自动切换兜底模型 %s",
+            prev,
+            next_model,
         )
         self._model_name = next_model
         self._provider = OpenAICompatibleProvider(
@@ -319,11 +322,16 @@ class LLMAdapter:
             )
 
         # 将 raw dict 消息转换为 Message 对象
+        # Bug-037: 必须透传 tool_calls / tool_call_id——assistant 声明的
+        # 工具调用与 role=tool 结果的配对关系一旦丢失，严格校验的模型
+        # （qwen-max 等）直接 400 "must be a response to tool_calls"。
         msg_objects = [
             Message(
                 role=MessageRole(m.get("role", "user")),
                 content=str(m.get("content", "")),
                 name=m.get("name"),
+                tool_calls=m.get("tool_calls") or None,
+                tool_call_id=m.get("tool_call_id"),
             )
             for m in messages
         ]
@@ -334,6 +342,9 @@ class LLMAdapter:
         # — 检测规则保守：仅对 Qwen3 系列 / qwen-plus-latest / qwen-turbo-latest /
         #   qwen3-max-preview / QwQ / DeepSeek-R1 / DeepSeek-V3.1+ / GLM-4.5+ 注入
         # — 不支持的模型忽略此参数（DashScope 会拒绝未知参数，所以必须严格筛选）
+        # Bug-034: qwen3.7+ 模型默认启用思考模式（即使不传 enable_thinking），
+        # 导致每次调用多消耗 200+ reasoning tokens 且响应时间大幅增加。
+        # 对不在显式启用列表中的 Qwen3.x 模型，传 enable_thinking=false 关闭默认思考。
         model_name = (model or self._model_name or "").lower()
         enable_thinking_models = (
             "qwen3-",
@@ -352,9 +363,19 @@ class LLMAdapter:
         )
         should_enable_thinking = any(m in model_name for m in enable_thinking_models)
 
+        # glm-4.7 系列(含 glm-4.7-flash)是推理模型：即使不传 enable_thinking，
+        # 智谱端默认也会进入思考模式，把全部 max_tokens 花在 reasoning_content 上，
+        # 导致 content 为空、finish_reason=length，进而 write 工具产出空源码被校验拦截。
+        # 编码/工具调用场景必须显式关闭思考，确保 content 真正产出代码。
+        is_glm47 = "glm-4.7" in model_name or model_name == "glm-4.7"
+
         extra_params: dict[str, Any] = {}
         if should_enable_thinking:
             extra_params["enable_thinking"] = True
+        elif "qwen3." in model_name or "qwen3-" in model_name or is_glm47:
+            # Qwen3.7+ / glm-4.7 默认启用思考，显式关闭以减少延迟和 token 消耗，
+            # 避免 reasoning_content 吞掉 content 预算导致空输出。
+            extra_params["enable_thinking"] = False
 
         request = LLMRequest(
             model=model or self._model_name or "",
@@ -367,7 +388,7 @@ class LLMAdapter:
 
         # Sync httpx providers block the event loop if awaited directly —
         # always offload so /health and other requests stay responsive.
-        # 熔断兜底：主模型遇到纼权/配额类终态错误时自动切换兜底模型重试。
+        # 熔断兜底：主模型遇到授权/配额类终态错误时自动切换兜底模型重试。
         while True:
             request.model = model or self._model_name or ""
             provider = self._provider

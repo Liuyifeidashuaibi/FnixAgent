@@ -1,0 +1,18 @@
+{
+  "dataset": "swe-bench-lite",
+  "task_id": "sphinx-doc__sphinx-8474",
+  "prompt": "v3.3 upgrade started generating \"WARNING: no number is assigned for table\" warnings\nWe've updated to Sphinx 3.3 in our documentation, and suddenly the following warning started popping up in our builds when we build either `singlehtml` or `latex`.:\r\n\r\n`WARNING: no number is assigned for table:`\r\n\r\nI looked through the changelog but it didn't seem like there was anything related to `numref` that was changed, but perhaps I missed something? Could anyone point me to a change in the numref logic so I can figure out where these warnings are coming from?\n",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/sphinx/domains/std.py b/sphinx/domains/std.py\n--- a/sphinx/domains/] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 92.9999999998472,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787332466.3606682,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\swe-bench-lite__sphinx-doc__sphinx-8474__76eb22"
+}

@@ -1,0 +1,20 @@
+<div class="blog-list-container">
+  <h3 class="list-title">Blog Posts</h3>
+  <ul class="blog-list">
+    <li 
+      *ngFor="let blog of blogs"
+      class="blog-item"
+      [class.selected]="blog.id === selectedBlogId"
+      (click)="selectBlog(blog)"
+    >
+      <div class="blog-item-content">
+        <h4 class="blog-title">{{ blog.title }}</h4>
+        <p class="blog-excerpt">{{ blog.excerpt }}</p>
+        <div class="blog-meta">
+          <span class="blog-category">{{ blog.category }}</span>
+          <span class="blog-date">{{ blog.date }}</span>
+        </div>
+      </div>
+    </li>
+  </ul>
+</div>

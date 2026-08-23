@@ -1,0 +1,18 @@
+{
+  "dataset": "web-bench",
+  "task_id": "task-8",
+  "prompt": "1) Add 'Delete' appealing red button (.delete-btn) in top&right of Blog.vue. When clicked, delete selected Blog and select the first blog. 2) The logic of Delete is encapsulated in a composable composables/useDelete.ts.",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 92.9999999998472,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787332457.1105835,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\web-bench__task-8__f175f3"
+}

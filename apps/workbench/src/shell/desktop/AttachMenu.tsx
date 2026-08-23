@@ -1,26 +1,30 @@
 /**
  * Copyright (C) 2026 FnixAgent. All rights reserved.
  * Software Name: FnixAgent 智能工作台系统 V1.0
- * This software and its source code are proprietary and confidential.
+ * This software and its source code is proprietary and confidential.
  * Unauthorized copying, modification, distribution, or use is strictly prohibited.
  */
 
 /**
- * Composer 「+」菜单 — 上传附件入口（照片 / 文件 / 文件夹）。
+ * Composer 「+」菜单 — 上传附件 + 选择工作区文件夹，统一入口。
  * 复用浏览器/WebView 原生 <input type=file>，在桌面端(Tauri WebView)与浏览器预览下均可工作。
  */
 
 import { useEffect, useRef, useState } from "react";
-import { FileUp, FolderOpen, Plus } from "lucide-react";
+import { FileUp, FolderOpen, Plus, Check } from "lucide-react";
 import { GlassIconButton } from "../../ui/glass";
 
 interface Props {
   compact?: boolean;
   onPickFiles?: (files: FileList) => void;
   onPickFolder?: () => void;
+  /** 当前工作区路径 */
+  projectPath?: string;
+  /** 当前工作区显示名 */
+  projectLabel?: string;
 }
 
-export function AttachMenu({ compact, onPickFiles, onPickFolder }: Props) {
+export function AttachMenu({ compact, onPickFiles, onPickFolder, projectPath, projectLabel }: Props) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -77,7 +81,14 @@ export function AttachMenu({ compact, onPickFiles, onPickFolder }: Props) {
             }}
           >
             <FolderOpen size={15} />
-            添加文件夹
+            {projectPath ? (
+              <span className="fnix-attach-ws">
+                <span className="fnix-attach-ws-name">{projectLabel || projectPath}</span>
+                <Check size={13} className="fnix-attach-ws-check" />
+              </span>
+            ) : (
+              "选择工作区文件夹"
+            )}
           </button>
         </div>
       )}

@@ -1,0 +1,8 @@
+<div class="blog-list">
+  <h2>Blog Posts</h2>
+  <div class="blog-card" *ngFor="let blog of blogs">
+    <h3 appTruncateTitle>{{ blog.title }}</h3>
+    <p class="blog-date">{{ blog.date | date:'mediumDate' }}</p>
+    <p class="blog-excerpt">{{ blog.excerpt }}</p>
+  </div>
+</div>

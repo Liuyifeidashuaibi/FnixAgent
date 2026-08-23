@@ -1,0 +1,61 @@
+{
+  "run_id": "20260822-171327",
+  "model": "configured-model",
+  "started_at": 1787386407.5515206,
+  "finished_at": 1787392101.01776,
+  "totals": {
+    "total": 309,
+    "success": 121,
+    "failure": 155,
+    "fetch_error": 0,
+    "infra_skip": 33,
+    "success_rate": 0.4384,
+    "failure_type_counts": {
+      "requirement_misunderstanding": 97,
+      "mcp_call_error": 11,
+      "incomplete_output": 32,
+      "context_loss": 4,
+      "path_error": 9,
+      "crash": 1,
+      "other": 1
+    }
+  },
+  "total_tokens": 17664089,
+  "note": "配额熔断：连续 0 条基础设施错误后提前停止，剩余任务未执行，待模型配额恢复后重跑续上。",
+  "datasets": {
+    "prototypebench": {
+      "dataset": "prototypebench",
+      "total": 123,
+      "success": 40,
+      "failure": 82,
+      "fetch_error": 0,
+      "infra_skip": 1,
+      "success_rate": 0.3279,
+      "failure_type_counts": {
+        "requirement_misunderstanding": 44,
+        "mcp_call_error": 7,
+        "incomplete_output": 20,
+        "context_loss": 3,
+        "path_error": 8
+      }
+    },
+    "swe-bench-lite": {
+      "dataset": "swe-bench-lite",
+      "total": 186,
+      "success": 81,
+      "failure": 73,
+      "fetch_error": 0,
+      "infra_skip": 32,
+      "success_rate": 0.526,
+      "failure_type_counts": {
+        "requirement_misunderstanding": 53,
+        "mcp_call_error": 4,
+        "incomplete_output": 12,
+        "context_loss": 1,
+        "path_error": 1,
+        "crash": 1,
+        "other": 1
+      }
+    }
+  }
+}

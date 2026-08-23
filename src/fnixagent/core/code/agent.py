@@ -1506,14 +1506,17 @@ class CodingAgent:
             notes_parts.append("缺少交付文件（请 write 完整源码）: " + ", ".join(missing))
 
         # 1–2. 编译 / 测试
-        # preview 下不落盘：用预览 content 做 py_compile；pytest 跳过（由 Accept 后 FCS 判）
+        # preview 下不落盘：用 VFS content 做 py_compile；pytest 在临时目录运行
         compile_passed = True
         test_passed = True
         if preview:
             compile_passed, compile_notes = self._preview_compile_check(steps)
             if not compile_passed:
                 notes_parts.append(compile_notes)
-            test_passed = True
+            # BUG-10 修复：preview 模式下也运行 pytest（将 VFS 文件写入临时目录）
+            test_passed, test_notes = await self._preview_test_check(steps)
+            if not test_passed:
+                notes_parts.append(test_notes)
         else:
             compile_result = await self._tools.compile_check()
             compile_passed = compile_result.success
@@ -1627,6 +1630,97 @@ class CodingAgent:
         if errors:
             return False, "预览编译失败: " + "; ".join(errors[:3])
         return True, ""
+
+    async def _preview_test_check(self, steps: list[TaskStep]) -> tuple[bool, str]:
+        """preview 模式下将 VFS 文件写入临时目录后运行 pytest（BUG-10 修复）。
+
+        策略：
+            1. 从 VFS 获取所有文件快照
+            2. 筛选 test_*.py / *_test.py 文件
+            3. 无测试文件 → 跳过（返回 True，与非 preview 的 _has_pytest_targets 逻辑对齐）
+            4. 有测试文件 → 将所有 VFS 文件写入临时目录（保留目录结构），运行 pytest
+            5. 退出码 5（no tests collected）也视为跳过
+            6. 清理临时目录
+
+        Returns:
+            (passed, notes) — passed=True 表示测试通过或无测试需运行
+        """
+        import shutil
+        import tempfile
+        from pathlib import Path
+
+        # 从 VFS 获取所有文件
+        vfs_files = self._vfs.snapshot()
+        if not vfs_files:
+            # VFS 为空：回退检查磁盘上是否有测试文件
+            # 如果磁盘上也没有，直接跳过
+            if not self._tools._has_pytest_targets():
+                return True, ""
+            # 磁盘有测试文件但 VFS 为空 → 说明只做了 edit 而非 write
+            # 此时 preview 模式下无法可靠运行测试，跳过
+            return True, "跳过预览测试：VFS 无完整文件快照（仅编辑已有文件）"
+
+        # 筛选测试文件
+        test_exts = (".py",)
+        test_patterns = ("test_", "_test.py")
+        has_test_files = any(
+            any(pat in path for pat in test_patterns) and path.endswith(test_exts)
+            for path in vfs_files
+        )
+        if not has_test_files:
+            return True, "跳过预览测试：VFS 中无 test_*.py / *_test.py 文件"
+
+        # 创建临时目录，写入所有 VFS 文件（保留相对路径结构）
+        tmp_dir = Path(tempfile.mkdtemp(prefix="fnix_preview_test_"))
+        try:
+            for rel_path, content in vfs_files.items():
+                if not rel_path.endswith((".py", ".txt", ".cfg", ".ini", ".toml", ".json")):
+                    continue
+                dest = tmp_dir / rel_path
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                dest.write_text(content, encoding="utf-8", errors="replace")
+
+            # 运行 pytest
+            cmd = ["python", "-m", "pytest", "-x", "--tb=short", "-q"]
+            try:
+                proc = await asyncio.create_subprocess_exec(
+                    *cmd,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                    cwd=str(tmp_dir),
+                )
+            except (FileNotFoundError, OSError) as e:
+                return True, f"跳过预览测试：无法启动 pytest ({e})"
+
+            try:
+                stdout_bytes, stderr_bytes = await asyncio.wait_for(
+                    proc.communicate(), timeout=120
+                )
+            except TimeoutError:
+                try:
+                    proc.kill()
+                except ProcessLookupError:
+                    pass
+                await proc.wait()
+                return False, "预览测试超时 (120s)"
+
+            stdout_text = stdout_bytes.decode("utf-8", errors="replace") if stdout_bytes else ""
+            stderr_text = stderr_bytes.decode("utf-8", errors="replace") if stderr_bytes else ""
+
+            # pytest exit code 5 = no tests collected → 跳过
+            if proc.returncode == 5 or "no tests ran" in stdout_text.lower():
+                return True, "跳过预览测试：未收集到用例"
+
+            if proc.returncode != 0:
+                detail = stdout_text.strip() or stderr_text.strip()
+                # 截取最后几行关键信息
+                lines = (detail or "").strip().splitlines()
+                summary = "\n".join(lines[-15:]) if len(lines) > 15 else detail
+                return False, f"预览测试失败 (退出码 {proc.returncode}):\n{summary}"
+
+            return True, ""
+        finally:
+            shutil.rmtree(tmp_dir, ignore_errors=True)
 
     def _deliverable_present(self, target: str, steps: list[TaskStep]) -> bool:
         """磁盘或 preview step.result 是否已有该文件。"""

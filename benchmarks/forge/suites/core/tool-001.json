@@ -1,0 +1,38 @@
+{
+  "id": "tool-001",
+  "title": "环境观察与枚举",
+  "capability": "tool_use",
+  "difficulty": 2,
+  "tags": [
+    "observe"
+  ],
+  "prompt": "查看当前目录中有哪些文件（不含子目录），把文件名逐行写入 listing.txt，按字母升序，一行一个文件名。",
+  "setup": {
+    "files": {
+      "zebra.txt": "z",
+      "apple.txt": "a",
+      "mango.txt": "m"
+    }
+  },
+  "allowed_scope": [
+    "listing.txt",
+    "*.txt"
+  ],
+  "checks": [
+    {
+      "function": "file_exists",
+      "args": {
+        "path": "listing.txt"
+      }
+    },
+    {
+      "function": "file_contains",
+      "args": {
+        "path": "listing.txt",
+        "pattern": "apple\\.txt\\nmango\\.txt\\nzebra\\.txt"
+      },
+      "weight": 2.0,
+      "desc": "内容升序且完整"
+    }
+  ]
+}

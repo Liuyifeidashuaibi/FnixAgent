@@ -1,0 +1,403 @@
+[html:l6] FnixAgent 功能测试报告 — 对标 ISO/IEC 25010
+[html:l11] FnixAgent 功能测试报告
+[html:l13] 对标 ISO/IEC 25010:2023 质量模型 · 测试日期 2026-08-21 · 测试环境：Python 3.13 + Vite 5176 +
+[html:l14] fnix-local :8710
+[html:l19] 6.8
+[html:l21] 综合评分：6.8 / 10
+[html:l23] 较上一轮代码审计（6.4→8.0 修复后）有所回退：核心功能链路存在 3 个 P0 级阻断 bug
+[html:l31] 23
+[html:l32] 通过
+[html:l35] 3
+[html:l36] P0 阻断
+[html:l39] 4
+[html:l40] P1 警告
+[html:l43] 30
+[html:l44] 总测试项
+[html:l49] ISO/IEC 25010 质量特性评估
+[html:l52] 功能适用性 Functional Suitability
+[html:l53] 4/10
+[html:l54] 核心 Work/Chat 流式功能不可用（BYOK key 不生效），会话恢复失败
+[html:l57] 性能效率 Performance Efficiency
+[html:l58] 8/10
+[html:l59] API 响应
+[html:l62] 兼容性 Compatibility
+[html:l63] 8/10
+[html:l64] Chrome/Vite 代理正常，跨模式切换无冲突
+[html:l67] 可靠性 Reliability
+[html:l68] 5/10
+[html:l69] 服务连续运行稳定，但会话恢复失败、fnix-local 需手动启动
+[html:l72] 安全性 Security
+[html:l73] 8/10
+[html:l74] JWT 双令牌、RSA-2048 加密、API Key password type（已修复）
+[html:l77] 维护性 Maintainability
+[html:l78] 7/10
+[html:l79] 代码已清理至 8.0 水平，CI 门禁硬化完成
+[html:l82] 可移植性 Portability
+[html:l83] 7/10
+[html:l84] Tauri 跨平台、Python venv 独立、fnix-local Rust 编译
+[html:l87] 可用性 Usability
+[html:l88] 6/10
+[html:l89] UI 整体清晰，但 search 无输入框、sidebar 折叠无视觉反馈
+[html:l94] 测试方法论
+[html:l96] 参考标准
+[html:l99] ISO/IEC 25010:2023 — 软件产品质量模型（8 大质量特性 + 31 子特性）
+[html:l102] ISTQB 功能测试流程 — Smoke Test → Functional Test → Integration Test →
+[html:l103] UAT
+[html:l106] 测试金字塔 — 70% Unit / 20% Integration / 10% E2E（本次执行 E2E 层）
+[html:l109] BrowserStack 桌面应用功能测试清单 — 页面加载、交互、状态、错误处理
+[html:l112] 测试工具链
+[html:l115] 浏览器自动化 — dumate-browser-cli (IAB 模式) + Playwright JS eval
+[html:l117] API 测试 — curl + Python JSON 解析
+[html:l118] 安全审计 — DOM input type 检查 + JWT token 验证 + .env 审查
+[html:l120] 诊断面板 — 内置 Diagnostics 面板 + /api/v1/work/status 全链路状态
+[html:l126] 1. Smoke Test（冒烟测试）
+[html:l127] 验证应用最基本功能是否可用，对标 ISO 25010 功能完整性子特性。
+[html:l132] 测试项
+[html:l133] 预期
+[html:l134] 实际
+[html:l135] 状态
+[html:l140] 页面加载
+[html:l141] 标题显示 "Fnix"
+[html:l142] document.title = "Fnix"
+[html:l143] PASS
+[html:l146] 后端健康检查
+[html:l147] /health 返回 200 + JSON
+[html:l148] {"status":"healthy","version":"1.0.0"}
+[html:l149] PASS
+[html:l152] fnix-local sidecar
+[html:l153] :8710/health 返回 200
+[html:l154] {"ok":true,"runtime":"rust","version":"0.1.1-rust"}
+[html:l155] PASS
+[html:l158] Work 模式默认选中
+[html:l159] tab aria-selected="true"
+[html:l160] Work selected=true, Code selected=false
+[html:l161] PASS
+[html:l164] Code 模式切换
+[html:l165] 标题变为 "Fnix Code"
+[html:l166] document.title = "Fnix Code"
+[html:l167] PASS
+[html:l170] 状态栏显示
+[html:l171] 显示当前 LLM provider + model
+[html:l172] agentdqwen · qwen-plus-latest
+[html:l173] PASS
+[html:l176] 发送按钮初始状态
+[html:l177] textarea 为空时 disabled
+[html:l178] disabled=true (空文本时)
+[html:l179] PASS
+[html:l182] 发送按钮激活
+[html:l183] 输入文本后变 enabled
+[html:l184] disabled=false (有文本时)
+[html:l185] PASS
+[html:l188] textarea 可用性
+[html:l189] 未禁用，placeholder 正确
+[html:l190] disabled=false, placeholder="描述要构建或交付的内容…"
+[html:l191] PASS
+[html:l194] 会话列表加载
+[html:l195] 显示已有会话
+[html:l196] 4 个会话，含时间戳
+[html:l197] PASS
+[html:l200] 控制台无错误
+[html:l201] console 无 error 级别日志
+[html:l202] 仅 React DevTools info，0 errors
+[html:l203] PASS
+[html:l207] Smoke Test 结果：11/11 通过
+[html:l210] 2. API 接口测试
+[html:l211] 逐个验证后端 REST API 端点，对标 ISO 25010 功能正确性与接口互操作性。
+[html:l213] 2.1 公开端点（无需认证）
+[html:l217] 端点
+[html:l218] 方法
+[html:l219] 关键结果
+[html:l220] 状态
+[html:l225] /health
+[html:l226] GET
+[html:l227] healthy, v1.0.0, standalone
+[html:l228] PASS
+[html:l231] /api/v1/work/status
+[html:l232] GET
+[html:l233] KTG/STP/MFP=true, 31 nodes, degraded=true (sidecar offline→fixed)
+[html:l234] WARN
+[html:l237] /api/v1/work/sessions
+[html:l238] GET
+[html:l239] 50 sessions returned
+[html:l240] PASS
+[html:l243] /api/v1/chat/session
+[html:l244] POST
+[html:l245] 创建 session id=31fb960c, status=active
+[html:l246] PASS
+[html:l249] /api/v1/harness/config
+[html:l250] GET
+[html:l251] provider=qwen, has_api_key=true, encrypted_at_rest=true
+[html:l252] PASS
+[html:l255] /api/v1/auth/pubkey
+[html:l256] GET
+[html:l257] RSA-2048-OAEP-SHA256
+[html:l258] PASS
+[html:l261] /api/v1/auth/register
+[html:l262] POST
+[html:l263] 注册成功, id=63, role=user
+[html:l264] PASS
+[html:l267] /api/v1/auth/login
+[html:l268] POST
+[html:l269] JWT access_token + refresh_token
+[html:l270] PASS
+[html:l273] /api/v1/memory/stats
+[html:l274] GET
+[html:l275] short_term=2, long_term=1, entities=0
+[html:l276] PASS
+[html:l279] /api/v1/chat/topology/stats
+[html:l280] GET
+[html:l281] 31 nodes, 30 edges, 0 deprecated
+[html:l282] PASS
+[html:l287] 2.2 认证端点（Bearer Token）
+[html:l291] 端点
+[html:l292] 方法
+[html:l293] 关键结果
+[html:l294] 状态
+[html:l299] /api/v1/auth/me
+[html:l300] GET
+[html:l301] id=63, username=testuser, role=user
+[html:l302] PASS
+[html:l305] /api/v1/agentos/ps
+[html:l306] GET
+[html:l307] success=true, output=[] (无活跃进程)
+[html:l308] PASS
+[html:l311] /api/v1/agentos/guardrail/list
+[html:l312] GET
+[html:l313] 2 guardrails, input=1, output=1, all enabled
+[html:l314] PASS
+[html:l317] /api/v1/agentos/skill/list
+[html:l318] GET
+[html:l319] 0 skills (空库)
+[html:l320] WARN
+[html:l323] /api/v1/admin/config
+[html:l324] GET
+[html:l325] "需要管理员权限" (user 角色无权)
+[html:l326] PASS
+[html:l331] 2.3 流式功能端点（核心链路）
+[html:l335] 端点
+[html:l336] 方法
+[html:l337] 关键结果
+[html:l338] 状态
+[html:l343] /api/v1/work/stream
+[html:l344] POST
+[html:l345] "请先在 Desktop 设置中填写您自己的 API Key（Fnix 仅支持 BYOK）"
+[html:l346] FAIL
+[html:l349] /api/v1/chat/stream
+[html:l350] POST
+[html:l351] 同上 BYOK 错误
+[html:l352] FAIL
+[html:l355] /api/v1/coding/status
+[html:l356] GET
+[html:l357] 404 Not Found
+[html:l358] FAIL
+[html:l364] BYOK Bug 根因分析： /api/v1/harness/config 报告
+[html:l365] has_api_key=true, encrypted_at_rest=true ， 说明 API Key
+[html:l366] 已通过前端设置面板存储且加密。但 llm_policy.py:resolve_api_key() 检查的是
+[html:l367] os.getenv("DASHSCOPE_API_KEY") 等环境变量，而 .env 中所有 Key
+[html:l368] 值为空（上轮安全修复清空）。 前端 localStorage 中存储的加密 Key 未被后端 work stream
+[html:l369] 读取——存在 配置源断裂 。
+[html:l373] 3. 功能测试（Functional Test）
+[html:l375] 3.1 Work 模式 — 网站生成
+[html:l379] 步骤
+[html:l380] 预期
+[html:l381] 实际
+[html:l382] 状态
+[html:l387] 输入任务文本
+[html:l388] textarea 接受输入
+[html:l389] React 受控组件正常更新
+[html:l390] PASS
+[html:l393] 发送按钮激活
+[html:l394] disabled → enabled
+[html:l395] glass-send disabled=false
+[html:l396] PASS
+[html:l399] 点击发送
+[html:l400] 触发 /work/stream 流式请求
+[html:l401] 请求发送，返回 BYOK 错误
+[html:l402] FAIL
+[html:l405] LLM 响应流
+[html:l406] 流式返回生成内容
+[html:l407] 无响应（API Key 不生效）
+[html:l408] FAIL
+[html:l411] 产物文件生成
+[html:l412] 在 workspace 生成 HTML
+[html:l413] 无产物
+[html:l414] FAIL
+[html:l419] 3.2 Code 模式
+[html:l423] 步骤
+[html:l424] 预期
+[html:l425] 实际
+[html:l426] 状态
+[html:l431] 切换到 Code 模式
+[html:l432] 标题变 "Fnix Code", placeholder 变化
+[html:l433] title="Fnix Code", placeholder="描述要做的代码修改…"
+[html:l434] PASS
+[html:l437] 提示文案
+[html:l438] "在仓库中开始新任务"
+[html:l439] 正确显示
+[html:l440] PASS
+[html:l443] 代码执行
+[html:l444] 可发送代码修改任务
+[html:l445] 同 BYOK 错误，无法执行
+[html:l446] FAIL
+[html:l451] 3.3 会话恢复
+[html:l455] 步骤
+[html:l456] 预期
+[html:l457] 实际
+[html:l458] 状态
+[html:l463] 点击已有会话
+[html:l464] 加载历史消息
+[html:l465] {"detail":"cannot rebuild messages from events"}
+[html:l466] FAIL
+[html:l469] 显示重试按钮
+[html:l470] 提供重试入口
+[html:l471] "重试" 按钮出现
+[html:l472] PASS
+[html:l475] checkpoint 恢复提示
+[html:l476] 提示恢复中断任务
+[html:l477] "恢复中断的任务 70501171"
+[html:l478] WARN
+[html:l484] 4. UI/UX 测试
+[html:l488] 测试项
+[html:l489] 预期
+[html:l490] 实际
+[html:l491] 状态
+[html:l496] 设置面板打开
+[html:l497] dialog 出现，含 8 个 tab
+[html:l498] General/Models/MCP/Skills/Memory/Diagnostics/About + Save
+[html:l499] PASS
+[html:l502] Provider 下拉
+[html:l503] 5 个选项
+[html:l504] GLM/DashScope/DeepSeek/OpenAI/自定义
+[html:l505] PASS
+[html:l508] Test Connection 按钮
+[html:l509] 可点击测试
+[html:l510] 按钮存在且 enabled
+[html:l511] PASS
+[html:l514] 诊断面板
+[html:l515] 显示系统状态
+[html:l516] 后台引擎已就绪 / 配置目录无法检测 / 增强组件已连接 / 模型密钥已配置
+[html:l517] WARN
+[html:l520] 侧栏折叠
+[html:l521] 侧栏宽度变化或隐藏
+[html:l522] 点击后出现 expand 按钮但宽度不变（260px→260px）
+[html:l523] WARN
+[html:l526] 搜索功能 (Ctrl+K)
+[html:l527] 出现搜索输入框
+[html:l528] 按钮可点击但无输入框出现
+[html:l529] WARN
+[html:l532] 新任务按钮
+[html:l533] 可创建新任务
+[html:l534] 按钮存在且 enabled
+[html:l535] PASS
+[html:l538] 模式切换标题
+[html:l539] Work→"Fnix", Code→"Fnix Code"
+[html:l540] 正确切换
+[html:l541] PASS
+[html:l547] 5. 安全测试
+[html:l551] 测试项
+[html:l552] 预期
+[html:l553] 实际
+[html:l554] 状态
+[html:l559] API Key 输入框 type
+[html:l560] type="password"
+[html:l561] type=password ✓（上轮 bug 已修复）
+[html:l562] PASS
+[html:l565] JWT 认证
+[html:l566] Bearer token 验证
+[html:l567] access_token (277 chars) + refresh_token
+[html:l568] PASS
+[html:l571] 密码加密
+[html:l572] RSA-2048-OAEP-SHA256
+[html:l573] public_key 返回正确
+[html:l574] PASS
+[html:l577] API Key 加密存储
+[html:l578] encrypted_at_rest=true
+[html:l579] harness/config 确认
+[html:l580] PASS
+[html:l583] .env 文件 Key 值
+[html:l584] 空值（已清空）
+[html:l585] GLM_API_KEY=, DASHSCOPE_API_KEY=（空）
+[html:l586] PASS
+[html:l589] 管理员权限隔离
+[html:l590] user 角色不能访问 admin
+[html:l591] "需要管理员权限"
+[html:l592] PASS
+[html:l595] Guardrail 运行状态
+[html:l596] input + output guardrails 启用
+[html:l597] 2/2 enabled
+[html:l598] PASS
+[html:l601] API Key DOM 暴露
+[html:l602] 不在 DOM 中明文显示
+[html:l603] type=password 隐藏，但 .value 仍含完整 key（HTML 固有限制）
+[html:l604] WARN
+[html:l610] 6. 问题清单与修复建议
+[html:l614] P0-01: BYOK API Key 配置源断裂 — Work/Chat 流式功能完全不可用
+[html:l615] P0
+[html:l618] 前端设置面板存储的加密 API Key 未被后端
+[html:l619] llm_policy.py:resolve_api_key() 读取。后端只检查
+[html:l620] os.getenv() 环境变量，而 .env 中 Key 值已清空。
+[html:l623] 复现：
+[html:l624] curl -X POST /api/v1/work/stream -d '{"user_input":"hello"}' -H "Authorization: Bearer
+[html:l625] $TOKEN"
+[html:l626] → {"chunk_type":"error","content":"请先在 Desktop 设置中填写您自己的 API Key（Fnix 仅支持
+[html:l627] BYOK）"}
+[html:l630] 修复方向： 在 llm_policy.py:resolve_api_key() 中增加从
+[html:l631] harness 加密存储读取 Key 的回退路径，或在前端发送 work/stream 请求时附带请求级
+[html:l632] llm.api_key （从 localStorage 解密后传入）。
+[html:l638] P0-02: 会话恢复失败 — "cannot rebuild messages from events"
+[html:l639] P0
+[html:l642] 点击已有会话时，后端无法从事件存储重建消息列表，导致历史会话不可查看。
+[html:l645] 复现： 在侧栏点击任意已有会话 → 页面显示
+[html:l646] {"detail":"cannot rebuild messages from events"}
+[html:l649] 修复方向： 检查 harness/session.py 中的
+[html:l650] rebuild_messages_from_events() 函数，可能事件序列化格式变更后未做向后兼容。
+[html:l656] P0-03: /api/v1/coding/status 返回 404
+[html:l657] P0
+[html:l660] Code 模式的后端状态端点不存在，前端 Code 模式可能无法正确获取状态。
+[html:l663] 修复方向： 在 api/routers/ 中注册 coding
+[html:l664] 路由，或确认前端是否使用了不同的端点路径。
+[html:l670] P1-01: 侧栏折叠无视觉反馈
+[html:l671] P1
+[html:l674] 点击折叠按钮后， .fnix-side-expand 按钮出现，但 aside 宽度从
+[html:l675] 260px 未变。可能是 CSS transition 未生效或折叠逻辑仅改变内容不改变容器。
+[html:l681] P1-02: 搜索功能 (Ctrl+K) 无输入框
+[html:l682] P1
+[html:l685] 点击搜索按钮后，DOM 中未出现
+[html:l686] input[type=search] 或任何搜索输入框元素。可能是搜索组件未渲染或使用了非 input
+[html:l687] 方案。
+[html:l693] P1-03: fnix-local sidecar 不自动启动
+[html:l694] P1
+[html:l697] 后端启动后 work/status 报 degraded=true, fnix_local_offline=true 。需手动运行
+[html:l698] apps/fnix-local/target/release/fnix-local.exe 才恢复。Tauri
+[html:l699] 桌面端可能通过进程管理自动拉起，但浏览器预览模式不会。
+[html:l705] P1-04: 诊断面板 — 配置目录无法检测
+[html:l706] P1
+[html:l709] Diagnostics 面板显示"配置目录缺失，重启客户端即可自动生成"。浏览器预览模式下 Tauri
+[html:l710] 的配置目录逻辑未执行。
+[html:l716] P2-01: Skill 库为空 (0 skills)
+[html:l717] P2
+[html:l720] /api/v1/agentos/skill/list 返回空列表。项目代码中有 skill
+[html:l721] 加载逻辑，但运行时未注册任何 skill。
+[html:l726] 7. 测试环境
+[html:l727] 后端: Python 3.13, port 8003, PID 1562/33324/17028
+[html:l728] 前端: Vite 8.1.5, port 5176 (5175 被占用)
+[html:l729] Sidecar: fnix-local 0.1.1-rust, port 8710, PID 1759
+[html:l730] OS: Windows 11, x64
+[html:l731] 浏览器: IAB (内置浏览器) / Playwright
+[html:l732] Auth: testuser (id=63, role=user)
+[html:l733] LLM: DashScope qwen-plus-latest (BYOK, key stored in UI)
+[html:l734] .env: GLM_API_KEY=, DASHSCOPE_API_KEY= (cleared for security)
+[html:l737] 8. 结论
+[html:l740] 核心发现： FnixAgent 在基础设施层面（API 路由、认证、安全、UI
+[html:l741] 框架）已达到较高成熟度， Smoke Test 11/11 通过，安全修复确认有效。但 核心功能链路存在阻断级 bug —— BYOK Key 配置源断裂导致 Work/Chat
+[html:l742] 流式功能完全不可用，会话恢复失败导致用户无法查看历史。
+[html:l746] 与上轮对比： 上一轮代码审计修复后评分为 8.0/10（代码层面）。
+[html:l747] 本次功能测试暴露了代码审计无法发现的 运行时配置断裂 问题，回退至 6.8/10。
+[html:l748] 修复 P0-01（BYOK Key 读取）后预计可恢复至 8.0+，修复 P0-02（会话恢复）后可达 8.5+。
+[html:l751] 修复优先级：
+[html:l753] P0-01 （BYOK Key 断裂）— 阻断所有 LLM 功能，必须最先修复
+[html:l754] P0-02 （会话恢复）— 影响用户体验和连续性
+[html:l755] P0-03 （coding/status 404）— 影响 Code 模式状态获取
+[html:l756] P1-01~04 — UI/UX 打磨，不影响核心功能
+[html:l761] FnixAgent 功能测试报告 · 测试执行：DuMate 自动化测试 · 2026-08-21 00:15 CST
+[html:l762] 测试标准：ISO/IEC 25010:2023 + ISTQB 功能测试流程 · 报告版本：v1.0

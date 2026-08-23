@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iframe Navigation with Navigation API</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: #1a73e8;
+      color: white;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      font-size: 1.25rem;
+      font-weight: 500;
+    }
+
+    .nav-bar {
+      background: white;
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .nav-btn {
+      padding: 8px 16px;
+      border: 1px solid #dadce0;
+      border-radius: 4px;
+      background: white;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .nav-btn:hover:not(:disabled) {
+      background: #f1f3f4;
+      border-color: #1a73e8;
+    }
+
+    .nav-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .nav-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .url-bar {
+      flex: 1;
+      padding: 8px 12px;
+      border: 1px solid #dadce0;
+      border-radius: 4px;
+      font-size: 14px;
+      color: #333;
+      background: #f8f9fa;
+    }
+
+    .content-frame {
+      flex: 1;
+      border: none;
+      background: white;
+      margin: 16px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .page-links {
+      padding: 24px;
+    }
+
+    .page-links h2 {
+      margin-bottom: 16px;
+      color: #333;
+    }
+
+    .page-links a {
+      display: block;
+      padding: 12px 16px;
+      margin-bottom: 8px;
+      background: #e8f0fe;
+      color: #1a73e8;
+      text-decoration: none;
+      border-radius: 4px;
+      transition: background 0.2s;
+    }
+
+    .page-links a:hover {
+      background: #d2e3fc;
+    }
+
+    .status-bar {
+      padding: 8px 24px;
+      background: #f8f9fa;
+      border-top: 1px solid #e0e0e0;
+      font-size: 12px;
+      color: #666;
+      display: flex;
+      gap: 16px;
+    }
+
+    .status-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .status-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #34a853;
+    }
+
+    .status-indicator.disabled {
+      background: #9aa0a6;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Iframe Navigation Demo</h1>
+  </header>
+
+  <div class="nav-bar">
+    <button id="backBtn" class="nav-btn" disabled>
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+      Back
+    </button>
+    <button id="forwardBtn" class="nav-btn" disabled>
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg>
+      Forward
+    </button>
+    <input type="text" id="urlBar" class="url-bar" readonly>
+  </div>
+
+  <iframe id="contentFrame" class="content-frame" src="page1.html"></iframe>
+
+  <div class="status-bar">
+    <div class="status-item">
+      <span id="backIndicator" class="status-indicator disabled"></span>
+      <span>Back: <span id="backStatus">Disabled</span></span>
+    </div>
+    <div class="status-item">
+      <span id="forwardIndicator" class="status-indicator disabled"></span>
+      <span>Forward: <span id="forwardStatus">Disabled</span></span>
+    </div>
+    <div class="status-item">
+      <span>History Length: <span id="historyLength">1</span></span>
+    </div>
+  </div>
+
+  <script>
+    // Custom history tracking for iframe navigation
+    const iframeHistory = [];
+    let currentIndex = -1;
+
+    const backBtn = document.getElementById('backBtn');
+    const forwardBtn = document.getElementById('forwardBtn');
+    const urlBar = document.getElementById('urlBar');
+    const contentFrame = document.getElementById('contentFrame');
+    const backIndicator = document.getElementById('backIndicator');
+    const forwardIndicator = document.getElementById('forwardIndicator');
+    const backStatus = document.getElementById('backStatus');
+    const forwardStatus = document.getElementById('forwardStatus');
+    const historyLength = document.getElementById('historyLength');
+
+    function updateNavigationState() {
+      const canGoBack = currentIndex > 0;
+      const canGoForward = currentIndex < iframeHistory.length - 1;
+
+      backBtn.disabled = !canGoBack;
+      forwardBtn.disabled = !canGoForward;
+
+      backIndicator.className = canGoBack ? 'status-indicator' : 'status-indicator disabled';
+      forwardIndicator.className = canGoForward ? 'status-indicator' : 'status-indicator disabled';
+
+      backStatus.textContent = canGoBack ? 'Enabled' : 'Disabled';
+      forwardStatus.textContent = canGoForward ? 'Enabled' : 'Disabled';
+      historyLength.textContent = iframeHistory.length;
+
+      if (currentIndex >= 0 && currentIndex < iframeHistory.length) {
+        urlBar.value = iframeHistory[currentIndex];
+      }
+    }
+
+    function navigateTo(url) {
+      // Remove any forward history when navigating to a new page
+      if (currentIndex < iframeHistory.length - 1) {
+        iframeHistory.splice(currentIndex + 1);
+      }
+
+      iframeHistory.push(url);
+      currentIndex = iframeHistory.length - 1;
+
+      contentFrame.src = url;
+      updateNavigationState();
+    }
+
+    // Use Navigation API if available, fallback to custom implementation
+    if (window.navigation) {
+      // Listen for navigation events
+      window.navigation.addEventListener('navigate', (event) => {
+        // Handle navigation within the iframe context
+        if (event.destination.url) {
+          const url = new URL(event.destination.url);
+          const page = url.pathname.split('/').pop() || 'page1.html';
+          if (page.endsWith('.html')) {
+            event.preventDefault();
+            navigateTo(page);
+          }
+        }
+      });
+
+      // Handle back/forward using Navigation API
+      backBtn.addEventListener('click', () => {
+        if (currentIndex > 0) {
+          currentIndex--;
+          contentFrame.src = iframeHistory[currentIndex];
+          updateNavigationState();
+        }
+      });
+
+      forwardBtn.addEventListener('click', () => {
+        if (currentIndex < iframeHistory.length - 1) {
+          currentIndex++;
+          contentFrame.src = iframeHistory[currentIndex];
+          updateNavigationState();
+        }
+      });
+    } else {
+      // Fallback without Navigation API
+      backBtn.addEventListener('click', () => {
+        if (currentIndex > 0) {
+          currentIndex--;
+          contentFrame.src = iframeHistory[currentIndex];
+          updateNavigationState();
+        }
+      });
+
+      forwardBtn.addEventListener('click', () => {
+        if (currentIndex < iframeHistory.length - 1) {
+          currentIndex++;
+          contentFrame.src = iframeHistory[currentIndex];
+          updateNavigationState();
+        }
+      });
+    }
+
+    // Listen for iframe load events to sync history
+    contentFrame.addEventListener('load', () => {
+      const currentSrc = contentFrame.src.split('/').pop();
+      if (currentIndex >= 0 && iframeHistory[currentIndex] !== currentSrc) {
+        // If iframe navigated independently, update our history
+        navigateTo(currentSrc);
+      }
+    });
+
+    // Initialize with first page
+    navigateTo('page1.html');
+  </script>
+</body>
+</html>

@@ -19,8 +19,10 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import os
+import time
 import uuid
 from collections.abc import AsyncGenerator
 from typing import Any
@@ -127,6 +129,58 @@ def _ndjson_line(data: dict[str, Any]) -> str:
         单行 JSON 字符串 (末尾带换行符)。
     """
     return json.dumps(data, ensure_ascii=False, default=str) + "\n"
+
+
+_END = object()
+
+
+async def _hb_stream(
+    src: AsyncGenerator, interval: float = 5.0
+) -> AsyncGenerator:
+    """安全心跳包装: queue 生产者/消费者, 静默超 interval 秒产出心跳(None)。
+
+    背景: /chat/agent 长 LLM 调用(thinking/review)期间 CodingAgent 不产出
+    事件, 若前端 idle-timeout 守卫(原 5 分钟)在这段静默内未收到任何字节,
+    会 abort 连接, 把仍在正常工作的任务误判为「连接超时」失败。
+
+    不能直接 asyncio.wait_for 戳 async 生成器 —— 超时会取消生成器内部
+    进行中的 LLM 调用。queue 模式让生产者持续运行, 消费者只做超时等待:
+      - 静默超 interval → yield None (心跳, 保活长连接)
+      - 有事件 → 原样 yield (顺序不变)
+    """
+    q: asyncio.Queue = asyncio.Queue()
+    last_emit = time.monotonic()
+
+    async def _producer() -> None:
+        try:
+            async for ev in src:
+                await q.put(ev)
+        finally:
+            await q.put(_END)
+
+    prod = asyncio.create_task(_producer())
+    try:
+        while True:
+            timeout = max(0.2, interval - (time.monotonic() - last_emit))
+            try:
+                ev = await asyncio.wait_for(q.get(), timeout=timeout)
+            except asyncio.TimeoutError:
+                yield None
+                last_emit = time.monotonic()
+                continue
+            if ev is _END:
+                break
+            last_emit = time.monotonic()
+            yield ev
+    finally:
+        if not prod.done():
+            prod.cancel()
+        try:
+            await prod
+        except asyncio.CancelledError:
+            pass
+        # 生产者若因源生成器异常而失败, await prod 会把异常重新抛出,
+        # 由端点外层 except 统一转成 error/done 事件, 与原始行为一致。
 
 
 def _is_admin_payload(payload: dict | None) -> bool:
@@ -313,27 +367,44 @@ async def _stream_agent_response(
         from fnixagent.core.run.engine import code_agent_source
 
         engine = RunEngine(store=RunCheckpointStore())
-        async for event in engine.run_stream(
-            code_agent_source(agent, task),
-            channel="code",
-            session_id=sid,
-            # Spec 4: meta 持久化, resume 时用于恢复 workspace / llm
-            meta={
-                "user_input": task_description[:500],
-                "workspace": workspace,
-                "llm": llm_dict,
-            },
+        async for event in _hb_stream(
+            engine.run_stream(
+                code_agent_source(agent, task),
+                channel="code",
+                session_id=sid,
+                # Spec 4: meta 持久化, resume 时用于恢复 workspace / llm
+                meta={
+                    "user_input": task_description[:500],
+                    "workspace": workspace,
+                    "llm": llm_dict,
+                },
+            )
         ):
-            if event.type == "file_change" and isinstance(event.data, dict):
-                changes.append(
-                    {
-                        "path": event.data.get("path"),
-                        "action": event.data.get("action"),
-                        "diff": event.data.get("diff"),
-                        "content": event.data.get("content"),
-                        "old_content": event.data.get("old_content"),
-                    }
-                )
+            if event is None:  # 心跳保活 (长 LLM 静默期间重置前端 idle 守卫)
+                yield _ndjson_line({"type": "heartbeat", "data": {"ts": time.time()}})
+                continue
+            if event.type == "file_change":
+                # 支持 dataclass (CodingAgentEvent) 和 dict 两种 event.data 形态
+                if hasattr(event.data, "file_path"):
+                    changes.append(
+                        {
+                            "path": event.data.file_path or "",
+                            "action": event.data.file_action or "",
+                            "diff": event.data.diff or "",
+                            "content": event.data.content or "",
+                            "old_content": event.data.old_content or "",
+                        }
+                    )
+                elif isinstance(event.data, dict):
+                    changes.append(
+                        {
+                            "path": event.data.get("path"),
+                            "action": event.data.get("action"),
+                            "diff": event.data.get("diff"),
+                            "content": event.data.get("content"),
+                            "old_content": event.data.get("old_content"),
+                        }
+                    )
             line = event.to_code_ndjson()
             if event.type == "done":
                 line["changes"] = changes

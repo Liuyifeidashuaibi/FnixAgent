@@ -1,0 +1,18 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "usebruno__bruno-7640",
+  "prompt": "### Description\r\n\r\n - Handle empty row file selection                                                                    \r\n - Move clear file (X) icon to the right side of the file name                                                                                   \r\n - Fix upload button hover color  \r\n \r\n [JIRA](https://usebruno.atlassian.net/browse/BRU-2869)\r\n  \r\n#### Contribution Checklist:\r\n\r\n- [ ] **I've used AI significantly to create this pull request**\r\n- [ ] **The pull request only addresses one issue or adds one feature.**\r\n- [ ] **The pull request does not introduce any breaking changes**\r\n- [ ] **I have added screenshots or gifs to help explain the change if applicable.**\r\n- [ ] **I have read the [contribution guidelines](https://github.com/usebruno/bruno/blob/main/contributing.md).**\r\n- [ ] **Create an issue and link to the pull request.**\r\n\r\n\r\nhttps://github.com/user-attachments/assets/d3a59a16-954f-4fde-83fa-b644fb1a894d\r\n\r\n\r\n\n\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\n## Summary by CodeRabbit\n\n* **Bug Fixes**\n  * File-selection for multipart form parameters now correctly updates an existing entry or adds a new file entry when browsing, ensuring the selected file appears in the form.\n\n* **Style**\n  * Polished upload and clear buttons (layout, spacing, muted/default hover colors; clear uses danger hover) and adjusted file-name cell ordering for consistent display.\n\n* **Tests**\n  * Added an end-to-end test validating multipart form file selection and that uploaded filenames display correctly.\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/packages/bruno-app/src/components/RequestPane/MultipartFormParams/S] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 77.99999999951979,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787334462.2970994,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\prototypebench__usebruno__bruno-7640__3b89d9"
+}

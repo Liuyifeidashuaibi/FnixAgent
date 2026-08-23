@@ -1,0 +1,26 @@
+{
+  "id": "inst-002",
+  "title": "字符串变换指令",
+  "capability": "instruction_following",
+  "difficulty": 2,
+  "tags": [
+    "transform"
+  ],
+  "prompt": "把字符串 fnix-forge-rocks 转换成全大写，并用连字符替换下划线（若有），结果写入当前目录的 shout.txt，文件中只包含转换结果这一行，不要加引号或说明。",
+  "allowed_scope": [
+    "shout.txt"
+  ],
+  "checks": [
+    {
+      "function": "file_equals",
+      "args": {
+        "path": "shout.txt",
+        "content": "FNIX-FORGE-ROCKS"
+      }
+    },
+    {
+      "function": "scope_respected",
+      "args": {}
+    }
+  ]
+}

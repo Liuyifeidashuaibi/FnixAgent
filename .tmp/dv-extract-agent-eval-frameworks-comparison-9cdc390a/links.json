@@ -1,0 +1,198 @@
+[
+ {
+  "url": "https://github.com/confident-ai/deepeval",
+  "where": [
+   "源码",
+   "源码引用"
+  ],
+  "source": "rel"
+ },
+ {
+  "url": "https://deepeval.com/",
+  "where": [
+   "源码",
+   "源码引用"
+  ],
+  "source": "rel"
+ },
+ {
+  "url": "https://deepeval.com/docs/metrics-introduction",
+  "where": [
+   "源码",
+   "源码引用"
+  ],
+  "source": "rel"
+ },
+ {
+  "url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+  "where": [
+   "源码"
+  ],
+  "source": "text"
+ },
+ {
+  "url": "https://api.moonshot.cn/v1",
+  "where": [
+   "源码"
+  ],
+  "source": "text"
+ },
+ {
+  "url": "http://localhost:8000/api/agent/run",
+  "where": [
+   "源码"
+  ],
+  "source": "text"
+ },
+ {
+  "url": "https://github.com/THUDM/AgentBench",
+  "where": [
+   "源码",
+   "源码引用"
+  ],
+  "source": "rel"
+ },
+ {
+  "url": "https://arxiv.org/abs/2308.03688",
+  "where": [
+   "源码",
+   "源码引用"
+  ],
+  "source": "rel"
+ },
+ {
+  "url": "https://llmbench.ai/agent",
+  "where": [
+   "源码",
+   "源码引用"
+  ],
+  "source": "rel"
+ },
+ {
+  "url": "http://localhost:8000/api",
+  "where": [
+   "源码"
+  ],
+  "source": "text"
+ },
+ {
+  "url": "https://github.com/modelscope/evalscope",
+  "where": [
+   "源码",
+   "源码引用"
+  ],
+  "source": "rel"
+ },
+ {
+  "url": "https://modelscope.cn/docs/model-evaluation/get-started/basic-usage",
+  "where": [
+   "源码",
+   "源码引用"
+  ],
+  "source": "rel"
+ },
+ {
+  "url": "https://modelscope.cn/docs/model-evaluation/third-party/swe-bench",
+  "where": [
+   "源码",
+   "源码引用"
+  ],
+  "source": "rel"
+ },
+ {
+  "url": "https://github.com/langchain-ai/langsmith-sdk",
+  "where": [
+   "源码",
+   "源码引用"
+  ],
+  "source": "rel"
+ },
+ {
+  "url": "https://docs.smith.langchain.com/",
+  "where": [
+   "源码",
+   "源码引用"
+  ],
+  "source": "rel"
+ },
+ {
+  "url": "https://github.com/langchain-ai/agentevals",
+  "where": [
+   "源码",
+   "源码引用"
+  ],
+  "source": "rel"
+ },
+ {
+  "url": "https://github.com/princeton-pli/hal-harness",
+  "where": [
+   "源码",
+   "源码引用"
+  ],
+  "source": "rel"
+ },
+ {
+  "url": "https://github.com/ucsb-mlsec/terminal-bench-env",
+  "where": [
+   "源码",
+   "源码引用"
+  ],
+  "source": "rel"
+ },
+ {
+  "url": "https://www.confident-ai.com/",
+  "where": [
+   "源码",
+   "源码引用"
+  ],
+  "source": "rel"
+ },
+ {
+  "url": "https://github.com/THUDM/VisualAgentBench",
+  "where": [
+   "源码",
+   "源码引用"
+  ],
+  "source": "rel"
+ },
+ {
+  "url": "https://www.modelscope.cn/learn/5053",
+  "where": [
+   "源码",
+   "源码引用"
+  ],
+  "source": "rel"
+ },
+ {
+  "url": "https://github.com/langchain-ai/langsmith-cookbook",
+  "where": [
+   "源码",
+   "源码引用"
+  ],
+  "source": "rel"
+ },
+ {
+  "url": "https://www.langchain.com/pricing",
+  "where": [
+   "源码",
+   "源码引用"
+  ],
+  "source": "rel"
+ },
+ {
+  "url": "https://github.com/mirros-lab/harnesseval-w",
+  "where": [
+   "源码",
+   "源码引用"
+  ],
+  "source": "rel"
+ },
+ {
+  "url": "https://github.com/opensquilla/claw-swe-bench",
+  "where": [
+   "源码",
+   "源码引用"
+  ],
+  "source": "rel"
+ }
+]

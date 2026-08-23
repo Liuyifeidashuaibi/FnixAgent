@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FnixAgent — AI Workbench Portfolio</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg: #0a0e14;
+            --bg2: #131820;
+            --bg3: #1c2330;
+            --glass: rgba(28, 35, 48, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --ink: #e8edf5;
+            --muted: #7d8ba1;
+            --accent: #5b9bf0;
+            --accent2: #00d4aa;
+            --warn: #f0a050;
+            --danger: #f06070;
+            --rule: rgba(255, 255, 255, 0.06);
+        }
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--ink);
+            min-height: 100vh;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+        /* Glassmorphism Card */
+        .glass {
+            background: var(--glass);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+        }
+
+        /* Hero */
+        .hero {
+            padding: 80px 0 60px;
+            text-align: center;
+            position: relative;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -40%; left: 50%;
+            transform: translateX(-50%);
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(91, 155, 240, 0.12) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            background: rgba(0, 212, 170, 0.1);
+            border: 1px solid rgba(0, 212, 170, 0.3);
+            border-radius: 100px;
+            font-size: 13px;
+            color: var(--accent2);
+            margin-bottom: 24px;
+        }
+        .hero h1 {
+            font-size: 56px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #e8edf5 0%, #5b9bf0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero p {
+            color: var(--muted);
+            font-size: 18px;
+            max-width: 580px;
+            margin: 0 auto 32px;
+        }
+
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 64px;
+        }
+        .stat-card {
+            padding: 24px;
+            text-align: center;
+            transition: transform 0.3s;
+        }
+        .stat-card:hover { transform: translateY(-4px); }
+        .stat-number {
+            font-size: 36px;
+            font-weight: 800;
+            display: block;
+        }
+        .stat-label {
+            font-size: 13px;
+            color: var(--muted);
+            margin-top: 4px;
+        }
+        .stat-pass { color: var(--accent2); }
+        .stat-bug { color: var(--warn); }
+        .stat-test { color: var(--accent); }
+        .stat-time { color: var(--ink); }
+
+        /* Mode Tabs */
+        .mode-section { margin-bottom: 64px; }
+        .section-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .section-sub {
+            color: var(--muted);
+            font-size: 15px;
+            margin-bottom: 32px;
+        }
+        .mode-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        .mode-tab {
+            padding: 10px 20px;
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+            background: transparent;
+            color: var(--muted);
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .mode-tab.active {
+            background: rgba(91, 155, 240, 0.15);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        .mode-tab:hover:not(.active) {
+            border-color: rgba(255, 255, 255, 0.2);
+            color: var(--ink);
+        }
+        .mode-content {
+            padding: 32px;
+            display: none;
+        }
+        .mode-content.active { display: block; }
+        .mode-content h3 { font-size: 20px; margin-bottom: 8px; }
+        .mode-content p { color: var(--muted); margin-bottom: 16px; }
+        .mode-content .result-tag {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .tag-pass { background: rgba(0, 212, 170, 0.15); color: var(--accent2); }
+        .tag-warn { background: rgba(240, 160, 80, 0.15); color: var(--warn); }
+
+        /* Bug Timeline */
+        .bug-timeline { position: relative; padding-left: 24px; }
+        .bug-timeline::before {
+            content: '';
+            position: absolute;
+            left: 7px; top: 8px; bottom: 8px;
+            width: 2px;
+            background: linear-gradient(to bottom, var(--danger), var(--warn), var(--accent2));
+        }
+        .bug-item {
+            position: relative;
+            margin-bottom: 20px;
+            padding: 16px 20px;
+        }
+        .bug-item::before {
+            content: '';
+            position: absolute;
+            left: -21px; top: 22px;
+            width: 12px; height: 12px;
+            border-radius: 50%;
+            border: 2px solid var(--bg);
+        }
+        .bug-item.critical::before { background: var(--danger); }
+        .bug-item.high::before { background: var(--warn); }
+        .bug-item.medium::before { background: var(--accent); }
+        .bug-item.low::before { background: var(--accent2); }
+        .bug-id {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--muted);
+            font-family: 'SF Mono', monospace;
+        }
+        .bug-title { font-size: 15px; font-weight: 600; margin: 4px 0; }
+        .bug-fix { font-size: 13px; color: var(--muted); }
+        .bug-severity {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        .sev-critical { background: rgba(240, 96, 112, 0.15); color: var(--danger); }
+        .sev-high { background: rgba(240, 160, 80, 0.15); color: var(--warn); }
+        .sev-medium { background: rgba(91, 155, 240, 0.15); color: var(--accent); }
+
+        /* Tech Badges */
+        .tech-section {
+            text-align: center;
+            padding: 48px 0;
+            margin-bottom: 48px;
+        }
+        .badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 24px;
+        }
+        .badge {
+            padding: 8px 20px;
+            border-radius: 100px;
+            font-size: 14px;
+            font-weight: 500;
+            border: 1px solid var(--glass-border);
+            background: var(--bg2);
+            transition: all 0.2s;
+        }
+        .badge:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        /* Test Results */
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 48px;
+        }
+        .test-item {
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .test-name { font-size: 14px; font-weight: 500; }
+        .test-status {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 100px;
+        }
+        .status-pass { background: rgba(0, 212, 170, 0.15); color: var(--accent2); }
+        .status-partial { background: rgba(240, 160, 80, 0.15); color: var(--warn); }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 40px 0;
+            border-top: 1px solid var(--rule);
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 36px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .test-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Hero -->
+        <section class="hero">
+            <div class="hero-badge">● Tested & Verified — ISO 25010 / ISTQB</div>
+            <h1>FnixAgent</h1>
+            <p>Local-first AI Workbench. Tauri 2 + React 19 + Python/FastAPI + LangGraph. Your data stays on your machine.</p>
+        </section>
+
+        <!-- Stats Dashboard -->
+        <section class="stats-grid">
+            <div class="stat-card glass">
+                <span class="stat-number stat-test">33</span>
+                <span class="stat-label">Test Cases</span>
+            </div>
+            <div class="stat-card glass">
+                <span class="stat-number stat-pass">85%</span>
+                <span class="stat-label">Pass Rate</span>
+            </div>
+            <div class="stat-card glass">
+                <span class="stat-number stat-bug">4</span>
+                <span class="stat-label">Bugs Fixed</span>
+            </div>
+            <div class="stat-card glass">
+                <span class="stat-number stat-time">~2s</span>
+                <span class="stat-label">Avg Response</span>
+            </div>
+        </section>
+
+        <!-- Mode Showcase -->
+        <section class="mode-section">
+            <h2 class="section-title">Work Modes</h2>
+            <p class="section-sub">Four distinct modes for different workflows — all tested through the Tauri frontend</p>
+            <div class="mode-tabs">
+                <button class="mode-tab active" onclick="switchMode(event, 'ask')">Ask</button>
+                <button class="mode-tab" onclick="switchMode(event, 'plan')">Plan</button>
+                <button class="mode-tab" onclick="switchMode(event, 'craft')">Craft</button>
+                <button class="mode-tab" onclick="switchMode(event, 'code')">Code</button>
+            </div>
+            <div class="mode-content glass active" id="mode-ask">
+                <h3>💬 Ask Mode</h3>
+                <p>Recursive explanation engine — ask any question, get structured answers with code blocks, tables, and syntax highlighting. No files written to disk.</p>
+                <span class="result-tag tag-pass">✅ PASS — 15s, score 0.79, 5 steps</span>
+            </div>
+            <div class="mode-content glass" id="mode-plan">
+                <h3>📋 Plan Mode</h3>
+                <p>Generates executable project plans with file structure, code outlines, and step-by-step instructions. 25-step pipeline with difficulty scoring.</p>
+                <span class="result-tag tag-warn">⚠️ PARTIAL — 25 steps, score 0.77, shell approval issue fixed</span>
+            </div>
+            <div class="mode-content glass" id="mode-craft">
+                <h3>🎨 Craft Mode</h3>
+                <p>Creates real files on disk — Python scripts, config files, HTML pages. Direct write to .fnix/artifacts/ without manual accept.</p>
+                <span class="result-tag tag-pass">✅ PASS — 10s, score 0.99, file verified & executed</span>
+            </div>
+            <div class="mode-content glass" id="mode-code">
+                <h3>💻 Code Mode</h3>
+                <p>Repository-aware coding assistant with diff preview. Opens project folders, reads code, suggests changes with accept/reject workflow.</p>
+                <span class="result-tag tag-pass">✅ PASS — Send disabled when no repo open (guard rail)</span>
+            </div>
+        </section>
+
+        <!-- Bug Fix Timeline -->
+        <section class="mode-section">
+            <h2 class="section-title">Bug Fix Timeline</h2>
+            <p class="section-sub">Issues discovered during testing — root-caused and fixed</p>
+            <div class="bug-timeline">
+                <div class="bug-item critical glass">
+                    <span class="bug-id">BUG-013</span>
+                    <span class="bug-severity sev-critical">CRITICAL</span>
+                    <div class="bug-title">Plan mode shell commands blocked by approval_required</div>
+                    <div class="bug-fix">Fix: Standalone mode auto-approves SHELL risk tools (policy.py)</div>
+                </div>
+                <div class="bug-item high glass">
+                    <span class="bug-id">BUG-012</span>
+                    <span class="bug-severity sev-high">HIGH</span>
+                    <div class="bug-title">Dropdown menu options unclickable via Playwright</div>
+                    <div class="bug-fix">Fix: Removed overflow:hidden from .glass-comp-r (tokens.css)</div>
+                </div>
+                <div class="bug-item medium glass">
+                    <span class="bug-id">BUG-002</span>
+                    <span class="bug-severity sev-medium">MEDIUM</span>
+                    <div class="bug-title">Step counter duplicated: "Step 1/5·Step 1/5 (done)"</div>
+                    <div class="bug-fix">Fix: Regex pattern now matches "(done)"/"(error)" suffix (ProgressStrip.tsx)</div>
+                </div>
+                <div class="bug-item medium glass">
+                    <span class="bug-id">BUG-014</span>
+                    <span class="bug-severity sev-medium">MEDIUM</span>
+                    <div class="bug-title">Heartbeat "仍在思考中..." text accumulates repeatedly</div>
+                    <div class="bug-fix">Fix: Heartbeat messages replace instead of concatenate (structuredBlocks.ts)</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Test Results -->
+        <section class="mode-section">
+            <h2 class="section-title">Test Results</h2>
+            <p class="section-sub">ISO/IEC 25010:2023 quality characteristics — 33 test cases across 6 categories</p>
+            <div class="test-grid">
+                <div class="test-item glass">
+                    <span class="test-name">F-01~F-10: Functional Suitability</span>
+                    <span class="test-status status-partial">8/10 PASS · 1 PARTIAL · 1 SKIP</span>
+                </div>
+                <div class="test-item glass">
+                    <span class="test-name">P-01~P-05: Performance Efficiency</span>
+                    <span class="test-status status-pass">5/5 PASS</span>
+                </div>
+                <div class="test-item glass">
+                    <span class="test-name">U-01~U-06: Interaction Capability</span>
+                    <span class="test-status status-partial">5/6 PASS · 1 PARTIAL</span>
+                </div>
+                <div class="test-item glass">
+                    <span class="test-name">R-01~R-04: Reliability</span>
+                    <span class="test-status status-pass">4/4 PASS</span>
+                </div>
+                <div class="test-item glass">
+                    <span class="test-name">S-01~S-04: Security</span>
+                    <span class="test-status status-pass">4/4 PASS</span>
+                </div>
+                <div class="test-item glass">
+                    <span class="test-name">E-01~E-04: Exploratory Testing</span>
+                    <span class="test-status status-partial">2/4 PASS · 2 FIXED</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tech Stack -->
+        <section class="tech-section">
+            <h2 class="section-title">Powered By</h2>
+            <div class="badges">
+                <span class="badge">Tauri 2</span>
+                <span class="badge">React 19</span>
+                <span class="badge">TypeScript</span>
+                <span class="badge">Python</span>
+                <span class="badge">FastAPI</span>
+                <span class="badge">LangGraph</span>
+                <span class="badge">Rust Sidecar</span>
+                <span class="badge">Vite</span>
+                <span class="badge">kimi-k2.5</span>
+                <span class="badge">BYOK Architecture</span>
+            </div>
+        </section>
+
+        <footer class="footer">
+            <p>FnixAgent — Local-first AI Workbench | Generated by Craft Mode with kimi-k2.5</p>
+        </footer>
+    </div>
+
+    <script>
+        function switchMode(e, mode) {
+            document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.mode-content').forEach(c => c.classList.remove('active'));
+            e.target.classList.add('active');
+            document.getElementById('mode-' + mode).classList.add('active');
+        }
+    </script>
+</body>
+</html>

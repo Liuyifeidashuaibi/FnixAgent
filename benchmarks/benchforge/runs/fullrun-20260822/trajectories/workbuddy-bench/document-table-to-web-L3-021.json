@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "document-table-to-web-L3-021",
+  "prompt": "# Web-Bench Task T21\n\nCould you turn the HTML snapshot in the attachments into clean Markdown? This is for a docs migration workflow, so the result needs to preserve the article structure and source meaning rather than summarizing or rewriting it. Please also produce a small transformation ledger (`delta.json`) that lets a reviewer connect each non-trivial conversion choice back to the source.\n\n\n## Transformation Traceability\n\nKeep `/workspace/submission/delta.json` concrete enough for review and include a readable trace section in `output.md`. The trace should connect non-trivial conversion choices back to the source HTML and resource map: tables, code blocks, inline-code clusters, media notes, removed boilerplate, definition lists, blockquotes, mapped images, and kbd spans when present. Use source line ranges or stable source elements and target Markdown locations where useful, but do not rely on a fixed row schema.\n\n## Output\n\nCreate the required artifacts inside `/workspace`:\n\n- `/workspace/submission/output.md` (declared as `environment/submission/output.md`) - the converted document.\n- `/workspace/submission/delta.json` (declared as `environment/submission/delta.json`) - the transformation ledger.\n\nDo not place the final answer only in chat; write the runnable artifact files.\n\n## Conversion expectations\n\n1. Start `output.md` with a compact YAML frontmatter block declaring the source, the policy you chose for `<kbd>` spans, the policy you chose for definition lists, and how the file was generated.\n2. Keep the article body in source order with a single top-level title and the original subsection hierarchy. Remove site chrome such as navigation, breadcrumbs, promo blocks, theme/search controls, and footer feedback.\n3. Convert source tables to readable GFM tables without losing headers, rows, captions, or span semantics. For cells that span multiple rows or columns, flatten the meaning into a rectangular Markdown table rather than dropping a slot.\n4. Convert fenced samples and inline code into Markdown code syntax. Apply any `<kbd>` policy consistently across the document.\n5. Preserve text-first media descriptions from the resource map as prose. Only emit Markdown image syntax for resources that are actually mapped to a file.\n6. Preserve definition-list and blockquote structure in a consistent Markdown or HTML-passthrough style when those elements appear in the source.\n7. Keep `delta.json` concrete enough for review: it should enumerate each transformed source element that needed a structural decision, with source and target line ranges that point to the relevant snippets.\n\n## Public Assets\n\n- `source-html`: `/workspace/public-assets/source_docs/source.html` html\n- `resource-map`: `/workspace/public-assets/source_docs/resource-map.json` json\n- `markdown-style-guide`: `/workspace/public-assets/instructions/markdown-style.md` markdown",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787332457.5802042,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\workbuddy-bench__document-table-to-web-L3-021__d17e82"
+}

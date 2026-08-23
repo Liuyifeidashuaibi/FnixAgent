@@ -1,0 +1,33 @@
+{
+  "id": "out-001",
+  "title": "严格 JSON 输出契约",
+  "capability": "output_contract",
+  "difficulty": 2,
+  "tags": [
+    "json-schema"
+  ],
+  "prompt": "在 result.json 中写入严格结构的计算结果：2+3*4 的值。格式必须恰好为 {\"status\": \"ok\", \"value\": <数值>}，value 为 JSON 数字而非字符串。",
+  "allowed_scope": [
+    "result.json"
+  ],
+  "checks": [
+    {
+      "function": "file_json_field",
+      "args": {
+        "path": "result.json",
+        "pointer": "status",
+        "equals": "ok"
+      }
+    },
+    {
+      "function": "file_json_field",
+      "args": {
+        "path": "result.json",
+        "pointer": "value",
+        "equals": 14
+      },
+      "weight": 2.0,
+      "desc": "value 必须是数字 14"
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "IBM__mcp-context-forge-3371",
+  "prompt": "## 🔗 Related Issue\r\nCloses #3365 \r\n\r\n  ---\r\n  📝 Summary\r\n\r\n  _execute_forwarded_request() now gates on HTTP status code before parsing the response body. Non-2xx       \r\n  responses with non-JSON-RPC bodies (e.g. 401 {\"detail\":\"...\"}) are mapped to JSON-RPC errors instead of    \r\n  silently returning {\"result\": {}}. The two session-affinity tests that depended on localhost port state are\r\n   now hermetic via mocked HTTP responses, and two new test cases cover the non-2xx error mapping paths.     \r\n\r\n ---\r\n\r\n  ## 🏷️ Type of Change\r\n  - [x] Bug fix\r\n  - [ ] Feature / Enhancement\r\n  - [ ] Documentation\r\n  - [ ] Refactor\r\n  - [ ] Chore (deps, CI, tooling)\r\n  - [ ] Other (describe below)\r\n\r\n   ---\r\n\r\n  ## 🧪 Verification\r\n\r\n  | Check                     | Command         | Status |\r\n  |---------------------------|-----------------|--------|\r\n  | Lint suite                | `make lint`     | ✅     |\r\n  | Unit tests                | `make test`     | ✅     |\r\n  | Coverage ≥ 80%            | `make coverage`  |\r\n\r\n  ---\r\n\r\n  ## ✅ Checklist\r\n  - [x] Code formatted (`make black isort pre-commit`)\r\n  - [x] Tests added/updated for changes\r\n  - [ ] Documentation updated (if applicable)\r\n  - [x] No secrets or credentials committed\r\n\r\n  ---\r\n  📓 Notes (optional)\r\n\r\n  Files changed:\r\n  - mcpgateway/services/mcp_session_pool.py — Added HTTP status check before response parsing in\r\n  _execute_forwarded_request()\r\n  - tests/e2e/test_session_pool_e2e.py — Mocked httpx.AsyncClient in existing tests, added\r\n  test_execute_forwarded_request_returns_error_on_non_2xx_non_jsonrpc and\r\n  test_execute_forwarded_request_propagates_jsonrpc_error_on_non_2xx",
+  "status": "failure",
+  "failure_type": "mcp_call_error",
+  "failure_evidence": "工具失败率50%",
+  "final_response": "通过 `glob` 搜索，我们没有找到任何匹配的文件。这表明可能当前工作目录中确实不存在这些文件，或者文件名与提供的信息不完全一致。\n\n既然直接查找文件的方法没有成功，我建议采取以下步骤：\n1. 确认实际的文件路径和名称。\n2. 如果文件存在于其他位置，请提供正确的路径。\n3. 如果文件确实不在这个工作区，那么请确认是否需要在本地或其他环境中进行这些验证步骤。\n\n如果你能提供更多关于文件位置的信息，我可以继续帮助你完成剩下的任务。如果文件应该存在但未找到，可能需要检查是否正确地同步了代码库或分支。",
+  "steps": [
+    "Step 0 | 思考: 根据提供的信息，你已经完成了一个关于 `mcpgateway/services/mcp_session_pool.py` 的更改，并且更新了相应的测试用例。现在需要确保所有提到的验证步骤通过，并且检查... | 工具 ✗ read_file({\"file_path\": \"mcpgateway/services/mcp_session_poo) | 耗时: 9324ms, tokens: 3413",
+    "Step 0 | 思考: 根据提供的信息，你已经完成了一个关于 `mcpgateway/services/mcp_session_pool.py` 的更改，并且更新了相应的测试用例。现在需要确保所有提到的验证步骤通过，并且检查... | 工具 ✗ read_file({\"file_path\": \"tests/e2e/test_session_pool_e2e.py\") | 耗时: 9324ms, tokens: 3413",
+    "Step 1 | 思考: 看来在当前目录下没有找到 `mcpgateway/services/mcp_session_pool.py` 和 `tests/e2e/test_session_pool_e2e.py` 文件。这可能... | 工具 ✓ glob({\"pattern\": \"**/mcp_session_pool.py\"}) | 耗时: 5585ms, tokens: 3596",
+    "Step 1 | 思考: 看来在当前目录下没有找到 `mcpgateway/services/mcp_session_pool.py` 和 `tests/e2e/test_session_pool_e2e.py` 文件。这可能... | 工具 ✓ glob({\"pattern\": \"**/test_session_pool_e2e.py\"}) | 耗时: 5587ms, tokens: 3596",
+    "Step 2 | 思考: 通过 `glob` 搜索，我们没有找到任何匹配的文件。这表明可能当前工作目录中确实不存在这些文件，或者文件名与提供的信息不完全一致。\n\n既然直接查找文件的方法没有成功，我建议采取以下步骤：\n1. 确认... | 耗时: 5423ms, tokens: 3800"
+  ],
+  "tool_calls": [
+    {
+      "step": 1,
+      "tool": "read_file",
+      "args": {},
+      "success": false,
+      "output_preview": "[失败] 文件不存在: mcpgateway/services/mcp_session_pool.py"
+    },
+    {
+      "step": 2,
+      "tool": "read_file",
+      "args": {},
+      "success": false,
+      "output_preview": "[失败] 文件不存在: tests/e2e/test_session_pool_e2e.py"
+    },
+    {
+      "step": 3,
+      "tool": "glob",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'count': 0, 'pattern': '**/mcp_session_pool.py'})\n(无匹配结果)"
+    },
+    {
+      "step": 4,
+      "tool": "glob",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'count': 0, 'pattern': '**/test_session_pool_e2e.py'})\n(无匹配结果)"
+    }
+  ],
+  "files_written": [],
+  "total_tokens": 10809,
+  "duration_ms": 20344.00000000005,
+  "error": "",
+  "judge_method": "heuristic",
+  "started_at": 1787386542.8026872,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-final-20260822\\workspaces\\prototypebench__IBM__mcp-context-forge-3371__833ea8"
+}

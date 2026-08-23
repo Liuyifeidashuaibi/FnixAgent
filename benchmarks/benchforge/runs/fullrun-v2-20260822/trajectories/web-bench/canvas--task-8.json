@@ -1,0 +1,18 @@
+{
+  "dataset": "web-bench",
+  "task_id": "canvas--task-8",
+  "prompt": "Refactor code, split into multiple files, use ES modules: index.html; style.css; main.js for init and game loop; constants.js for constants; render.js for drawing; store.js for store, keep state in 'window.store'; util.js; event.js for events; Add comments to explain code. Note: Avoid losing context between files; do not confuse assets resources with objects in the store, record assets in 'store.assets'; keep store in window; store dpr in the store; init store before anything; after updateStore, obtain the new store object to avoid using old data; Do not omit the code. Do not write game logic in the store; Remember to consider the method parameters when binding and unbinding events",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 389.9999999994179,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336252.1045,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\web-bench__canvas--task-8__6e1ede"
+}

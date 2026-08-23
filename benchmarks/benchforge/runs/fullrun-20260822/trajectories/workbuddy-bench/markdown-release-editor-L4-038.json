@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "markdown-release-editor-L4-038",
+  "prompt": "# Web-Bench Task T38\n\nI want to build a release-note editor — write Markdown on the left, live preview on the right, with support for inserting templates, checking required sections, and exporting both the Markdown and a structured summary.\n\n## Output\n\nCreate the required artifact inside `/workspace`. The required output path is:\n\n- `/workspace/www/index.html` (declared as `environment/www/index.html`)\n\nDo not place the final answer only in chat; write the runnable artifact files.\n\nThe editor must support these workflows:\n\n- Load the provided draft and insert the full release template with eight required sections.\n- Show concrete missing-section warnings for the current Markdown.\n- Render a readable preview that updates after editing.\n- Generate/export both the current Markdown and a summary JSON matching `summary-schema.json`.\n- Validate all three scenarios from `scenario-matrix.json`, deriving distinct `missingSections` and `riskLevel` results from the content and risk rules rather than from fixed labels.\n- Persist the edited draft or selected scenario in localStorage and restore it after page reload.\n\n## Public Assets\n\n- `release_template`: `/workspace/public-assets/templates/release-template.md` text/markdown\n- `required_sections`: `/workspace/public-assets/spec/required-sections.json` application/json\n- `draft`: `/workspace/public-assets/fixtures/draft.md` text/markdown\n- `summary_schema`: `/workspace/public-assets/spec/summary-schema.json` application/json\n- `scenario_matrix`: `/workspace/public-assets/fixtures/scenario-matrix.json` application/json\n- `release_editor_notes`: `/workspace/public-assets/spec/release-editor-product-notes.md` text/markdown",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 92.9999999998472,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787332457.7887378,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\workbuddy-bench__markdown-release-editor-L4-038__606066"
+}

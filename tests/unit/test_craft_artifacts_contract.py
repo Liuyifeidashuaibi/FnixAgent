@@ -35,8 +35,9 @@ def test_write_file_craft_artifacts_redirect(tmp_path: Path):
     )
     res = tools.write_file("hello.html", html, craft_artifacts=True)
     assert res.success, res.error
+    # Craft 模式：文件写到自然路径 + 镜像到 .fnix/artifacts/ 供预览面板
     assert (tmp_path / ".fnix" / "artifacts" / "hello.html").is_file()
-    assert not (tmp_path / "hello.html").exists()
+    assert (tmp_path / "hello.html").is_file()
 
 
 def test_normalize_evolution_merges_and_flags():

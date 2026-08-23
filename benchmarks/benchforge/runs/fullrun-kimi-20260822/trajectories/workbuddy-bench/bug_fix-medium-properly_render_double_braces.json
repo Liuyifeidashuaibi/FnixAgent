@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "bug_fix-medium-properly_render_double_braces",
+  "prompt": "我看 HTML 报告时发现 Python 3.12 的 f-string 双花括号显示坏了，页面上源码和原文件不一致。麻烦把这类高亮输出修正确，别为了它改整体样式。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 78.00000000042928,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787334454.62044,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\workbuddy-bench__bug_fix-medium-properly_render_double_braces__cd64c4"
+}

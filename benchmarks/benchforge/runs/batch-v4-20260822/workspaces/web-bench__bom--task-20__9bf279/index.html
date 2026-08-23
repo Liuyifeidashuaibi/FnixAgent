@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Documentation</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Documentation</h1>
+    <div class="search-bar">
+      <label for="keyword-input">Keyword:</label>
+      <input type="text" id="keyword-input" class="keyword" placeholder="Type to highlight matches...">
+      <span id="match-count"></span>
+    </div>
+  </header>
+
+  <main id="content">
+    <section>
+      <h2>Getting Started</h2>
+      <p>Welcome to the documentation. This guide will help you understand the core concepts and features of our platform. Whether you are a beginner or an experienced developer, you will find useful information here.</p>
+      <p>To get started, make sure you have the required tools installed. You will need a modern web browser, a code editor, and Node.js version 16 or higher. Follow the installation instructions below to set up your development environment.</p>
+    </section>
+
+    <section>
+      <h2>Installation</h2>
+      <p>Install the package using your preferred package manager. We support npm, yarn, and pnpm. Run the following command in your terminal:</p>
+      <pre><code>npm install @example/core</code></pre>
+      <p>After installation, verify that everything is working correctly by running the test suite. The test command will execute all unit tests and integration tests, providing a summary of the results.</p>
+    </section>
+
+    <section>
+      <h2>Configuration</h2>
+      <p>Configuration is managed through a JSON file located at the root of your project. You can customize various settings including the theme, language, and plugin options.</p>
+      <p>The configuration file supports environment-specific overrides. Use the <code>env</code> key to define settings for development, staging, and production environments. Each environment can have its own database connection, API endpoints, and feature flags.</p>
+    </section>
+
+    <section>
+      <h2>API Reference</h2>
+      <p>The API provides a set of RESTful endpoints for managing resources. All requests must include a valid authentication token in the Authorization header. Responses are returned in JSON format.</p>
+      <p>Rate limiting is applied to all API endpoints. The default limit is 100 requests per minute per API key. If you exceed this limit, you will receive a 429 status code. Contact support to request a higher rate limit for your application.</p>
+    </section>
+
+    <section>
+      <h2>Troubleshooting</h2>
+      <p>If you encounter issues during installation, check the common problems section below. Most issues are related to missing dependencies or incorrect Node.js versions.</p>
+      <p>For runtime errors, enable debug logging by setting the <code>DEBUG</code> environment variable to <code>true</code>. This will output detailed information about the application state, including request and response data, database queries, and cache operations.</p>
+    </section>
+  </main>
+
+  <script src="highlight.js"></script>
+</body>
+</html>

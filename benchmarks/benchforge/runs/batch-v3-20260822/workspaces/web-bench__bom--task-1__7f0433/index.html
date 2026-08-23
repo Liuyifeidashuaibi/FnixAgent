@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browser</title>
+    <style>
+        .browser {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .topbar {
+            flex: 0 0 auto;
+        }
+        .content {
+            flex: 1;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="browser">
+        <div class="topbar"></div>
+        <iframe class="content" name="content"></iframe>
+    </div>
+</body>
+</html>

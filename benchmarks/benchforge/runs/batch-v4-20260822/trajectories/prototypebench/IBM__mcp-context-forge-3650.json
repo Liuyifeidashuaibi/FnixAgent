@@ -1,0 +1,52 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "IBM__mcp-context-forge-3650",
+  "prompt": "# 🐛 Bug-fix PR\r\n\r\n## 📌 Summary\r\nThe \"Maximum Members\" field in the **Create Team** and **Edit Team** modals has `max=\"1000\"` hardcoded in the HTML. The `MAX_MEMBERS_PER_TEAM` environment variable (default: `100`) is correctly read by the backend but is never surfaced to the admin UI, so:\r\n\r\n- When `MAX_MEMBERS_PER_TEAM > 1000`: the form rejects values above 1000, preventing creation of teams larger than 1000 even though the backend allows it.\r\n- When `MAX_MEMBERS_PER_TEAM < 1000`: the form allows values up to 1000, so a non-admin user can set `max_members` well above the configured limit.\r\n\r\nCloses #3589\r\n\r\n## 🔁 Reproduction Steps\r\n1. Set `MAX_MEMBERS_PER_TEAM=30` in `.env`.\r\n2. Start the app (`make dev`).\r\n3. Log in to the Admin UI as a non-admin user.\r\n4. Navigate to the **Teams** tab → **Create new team**.\r\n5. Set **Maximum Members** to `500` (above the env setting but below 1000).\r\n6. Click **Save**.\r\n\r\n**Observed:** Team is created with `max_members=500` — the env cap of `30` is silently bypassed by the UI.\r\n\r\n**Alternative path (`MAX_MEMBERS_PER_TEAM > 1000`):**\r\n\r\n1. Set `MAX_MEMBERS_PER_TEAM=2000`.\r\n2. Try to set **Maximum Members** to `1500`.\r\n3. Browser rejects the input: \"Value must be ≤ 1000\".\r\n\r\n---\r\n\r\n## Acceptance Criteria\r\n\r\n- [ ] For **admin users**, the \"Maximum Members\" input in the Create Team modal has no `max` attribute.\r\n- [ ] For **non-admin users**, the input has `max` set to `MAX_MEMBERS_PER_TEAM`.\r\n- [ ] The same admin/non-admin distinction applies in the **Edit Team** modal.\r\n- [ ] The default `value` in the Create modal is `min(50, MAX_MEMBERS_PER_TEAM)`.\r\n- [ ] Helper text accurately reflects the limit:\r\n  - Admin: e.g. `\"Optional. Admins can set any limit.\"`\r\n  - Non-admin: e.g. `\"Optional, defaults to {MAX_MEMBERS_PER_TEAM}.\"`\r\n- [ ] Changing `MAX_MEMBERS_PER_TEAM` in the env and restarting reflects the new value without code changes.\r\n- [ ] `min=\"1\"` is preserved on all inputs (regression guard).\r\n\r\n\r\n## 🐞 Root Cause\r\nTwo locations have `max=\"1000\"` hardcoded instead of reading from `settings.max_members_per_team`:\r\n\r\n| File | Context |\r\n|------|---------|\r\n| `mcpgateway/templates/admin.html` | Create Team modal — `<input type=\"number\" name=\"max_members\" min=\"1\" max=\"1000\" ...>` |\r\n| `mcpgateway/admin.py` | Edit Team modal — Python f-string: `<input type=\"number\" name=\"max_members\" min=\"1\" max=\"1000\" ...>` |\r\n\r\nAdditionally, `max_members_per_team` is never passed to the admin template context in `admin.py` (main page render at ~line 3628), so Jinja2 cannot reference it.\r\n\r\n\r\n## 💡 Fix Description\r\nThe \"Maximum Members\" input in the Create Team and Edit Team modals had max=\"1000\" hardcoded, causing two problems:\r\n- non-admin users could set max_members above `MAX_MEMBERS_PER_TEAM`\r\n- when `MAX_MEMBERS_PER_TEAM` > 1000, the browser rejected valid values\r\n\r\nFix by surfacing the setting to the UI with role-aware behaviour:\r\n- admins: no max attribute (no browser-side cap, matching `max_members` in the backend)\r\n- non-admins: max attribute set to `MAX_MEMBERS_PER_TEAM` (default 100)\r\n\r\nThe default value in the Create modal is min(50, `MAX_MEMBERS_PER_TEAM`)\r\nso tighter operator-configured limits are respected out of the box.\r\n\r\n## 🧪 Verification\r\n\r\n| Check                                 | Command              | Status |\r\n|---------------------------------------|----------------------|--------|\r\n| Lint suite                            | `make lint`          |        |\r\n| Unit tests                            | `make test`          |        |\r\n| Coverage ≥ 80 %                       | `make coverage`      |        |\r\n| Manual regression no longer fails     | steps / screenshots  |        |\r\n\r\n\r\n## ✅ Checklist\r\n- [ ] Code formatted (`make black isort pre-commit`)\r\n- [ ] No secrets/credentials committed",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [
+    "Step 0 | 思考: I'll start by examining the relevant files to understand the current code structure.\n\n... | 工具 ✗ read_file({\"file_path\": \"mcpgateway/templates/admin.html\", \") | 耗时: 2149ms, tokens: 3833",
+    "Step 0 | 思考: I'll start by examining the relevant files to understand the current code structure.\n\n... | 工具 ✗ grep({\"pattern\": \"max_members.*max=\\\"1000\\\"\", \"path\": \") | 耗时: 2151ms, tokens: 3833",
+    "Step 1 | 工具 ✓ ls({}) | 耗时: 657ms, tokens: 3772",
+    "Step 2 | 思考: The workspace is empty. I need to find or clone the repository first. Let me search for the project.... | 工具 ✓ web_search({\"query\": \"IBM mcp-context-forge github repository) | 耗时: 2797ms, tokens: 3918"
+  ],
+  "tool_calls": [
+    {
+      "step": 1,
+      "tool": "read_file",
+      "args": {},
+      "success": false,
+      "output_preview": "[失败] 文件不存在: mcpgateway/templates/admin.html"
+    },
+    {
+      "step": 2,
+      "tool": "grep",
+      "args": {},
+      "success": false,
+      "output_preview": "[失败] 目录不存在: mcpgateway"
+    },
+    {
+      "step": 3,
+      "tool": "ls",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'count': 0, 'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\batch-v4-20260822\\\\workspaces\\\\prototypebench__IBM__mcp-context-forge-3650__4e9b99'})\n(空目录)"
+    },
+    {
+      "step": 4,
+      "tool": "web_search",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'query': 'IBM mcp-context-forge github repository', 'results_count': 0})\n(无搜索结果, 建议用 web_fetch 直接抓取已知 URL)"
+    }
+  ],
+  "files_written": [],
+  "total_tokens": 11523,
+  "duration_ms": 6452.9999999999745,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen-max): HTTP 400 (<400> InternalError.Algo.InvalidParameter: messages with role \"tool\" must be a response to a preceeding message with \"tool_calls\".)",
+  "judge_method": "heuristic",
+  "started_at": 1787385210.80796,
+  "workspace": "benchmarks\\benchforge\\runs\\batch-v4-20260822\\workspaces\\prototypebench__IBM__mcp-context-forge-3650__4e9b99"
+}

@@ -1,7 +1,7 @@
 """
 飞轮 ③ 元反思修正环单元测试。
 
-测试模块: fnixagent.core.flywheel.stage3_reflection
+测试模块: fnixagent.core.flywheel.reflection
 覆盖:
     - should_trigger(): 触发间隔判断
     - 三维评估: 路径质量/技能准确率/知识完整性
@@ -17,7 +17,7 @@
 
 import pytest
 
-from fnixagent.core.flywheel.stage3_reflection import (
+from fnixagent.core.flywheel.reflection import (
     MISSING_KNOWLEDGE_CONFIDENCE,
     MetaReflectionFlywheel,
 )

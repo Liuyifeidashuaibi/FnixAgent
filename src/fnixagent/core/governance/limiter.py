@@ -37,6 +37,7 @@ import time
 from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
+_logger = logger
 
 # ============================================================================
 # 数据结构
@@ -312,7 +313,7 @@ class MultiLayerRateLimiter:
 
             record_rate_limit_triggered(limiter_type="governance")
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
 
     def _acquire_locked(self, user_id: str, tool_name: str, now: float) -> bool:
         """核心扣减逻辑(调用者需持 self._lock)。

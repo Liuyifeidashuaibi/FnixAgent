@@ -11,11 +11,19 @@
  * 弹出文件列表 popover（桌面环境读取本地文件，浏览器 dev 显示提示）。
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
-import type { ChatAttachment } from "../../utils/tauri";
-import { GlassComposer } from "../../ui/glass";
-import { AttachMenu } from "./AttachMenu";
-import { isTauriDesktop } from "./desktopEnv";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type ReactNode,
+} from 'react';
+import type { ChatAttachment } from '../../utils/tauri';
+import { GlassComposer } from '../../ui/glass';
+import { AttachMenu } from './AttachMenu';
+import { isTauriDesktop } from './desktopEnv';
 
 interface Props {
   value: string;
@@ -26,13 +34,19 @@ interface Props {
   placeholder?: string;
   autoFocus?: boolean;
   compact?: boolean;
-  /** Composer 底栏右侧插槽（模型 pill / 模式切换等）。父级始终通过此 slot 传入。 */
+  /** Composer 底栏右侧插槽（模型 pill 等）。父级始终通过此 slot 传入。 */
   modelSlot?: ReactNode;
+  /** Composer 底栏左侧额外插槽（WorkModePicker 等），在加号菜单之后 */
+  leftExtraSlot?: ReactNode;
   attachments?: ChatAttachment[];
   onPickFiles?: (files: FileList) => void;
   onRemoveAttachment?: (id: string) => void;
   onPickFolder?: () => void;
   projectPath?: string;
+  /** 工作区显示名（传入加号菜单显示当前 workspace） */
+  projectLabel?: string;
+  /** 外部禁用发送（如 Code 模式未打开仓库时） */
+  sendDisabled?: boolean;
 }
 
 interface MentionItem {
@@ -58,42 +72,42 @@ interface MentionTrigger {
 
 /** Directories to skip when walking the project tree. */
 const IGNORE_DIRS = new Set([
-  "node_modules",
-  ".git",
-  ".svn",
-  ".hg",
-  ".next",
-  ".nuxt",
-  ".turbo",
-  ".parcel-cache",
-  "dist",
-  "build",
-  "out",
-  "target",
-  "debug",
-  "release",
-  ".cache",
-  ".venv",
-  "venv",
-  "env",
-  "__pycache__",
-  ".idea",
-  ".vscode",
-  ".fnix",
-  ".fnix_cache",
-  "coverage",
-  ".angular",
-  ".svelte-kit",
-  ".gradle",
-  ".maven",
-  ".terraform",
+  'node_modules',
+  '.git',
+  '.svn',
+  '.hg',
+  '.next',
+  '.nuxt',
+  '.turbo',
+  '.parcel-cache',
+  'dist',
+  'build',
+  'out',
+  'target',
+  'debug',
+  'release',
+  '.cache',
+  '.venv',
+  'venv',
+  'env',
+  '__pycache__',
+  '.idea',
+  '.vscode',
+  '.fnix',
+  '.fnix_cache',
+  'coverage',
+  '.angular',
+  '.svelte-kit',
+  '.gradle',
+  '.maven',
+  '.terraform',
 ]);
 
 const MAX_MENTION_ITEMS = 8;
 const MAX_QUERY_LEN = 80;
 
 function pathSeparator(parent: string): string {
-  return parent.includes("\\") && !parent.includes("/") ? "\\" : "/";
+  return parent.includes('\\') && !parent.includes('/') ? '\\' : '/';
 }
 
 function joinPath(parent: string, name: string): string {
@@ -104,7 +118,7 @@ function joinPath(parent: string, name: string): string {
 function relativePath(projectPath: string, fullPath: string): string {
   if (!fullPath.startsWith(projectPath)) return fullPath;
   let rel = fullPath.slice(projectPath.length);
-  while (rel.startsWith("\\") || rel.startsWith("/")) rel = rel.slice(1);
+  while (rel.startsWith('\\') || rel.startsWith('/')) rel = rel.slice(1);
   return rel || fullPath;
 }
 
@@ -118,8 +132,8 @@ function detectMention(value: string, cursor: number): MentionTrigger | null {
   let i = cursor - 1;
   while (i >= 0) {
     const ch = value[i]!;
-    if (ch === "@") {
-      const before = i > 0 ? value[i - 1]! : " ";
+    if (ch === '@') {
+      const before = i > 0 ? value[i - 1]! : ' ';
       const atLineStart = i === 0;
       const validBefore = atLineStart || /\s/.test(before);
       if (!validBefore) return null;
@@ -142,7 +156,7 @@ function detectMention(value: string, cursor: number): MentionTrigger | null {
  * 浏览器 dev 模式下会抛错，由调用方显示提示。
  */
 async function listProjectFiles(projectPath: string): Promise<MentionItem[]> {
-  const { readDir } = await import("@tauri-apps/plugin-fs");
+  const { readDir } = await import('@tauri-apps/plugin-fs');
   const result: MentionItem[] = [];
 
   const walk = async (dir: string, depth: number): Promise<void> => {
@@ -185,10 +199,7 @@ function filterItems(items: MentionItem[], query: string): MentionItem[] {
       .slice(0, MAX_MENTION_ITEMS);
   }
   const matched = items.filter((it) => {
-    return (
-      it.name.toLowerCase().includes(q) ||
-      it.relPath.toLowerCase().includes(q)
-    );
+    return it.name.toLowerCase().includes(q) || it.relPath.toLowerCase().includes(q);
   });
   // Prefer name matches over path-only matches, files over dirs.
   matched.sort((a, b) => {
@@ -207,30 +218,33 @@ export function Composer({
   onSend,
   onStop,
   streaming,
-  placeholder = "输入你的问题…",
+  placeholder = '输入你的问题…',
   autoFocus,
   compact,
   modelSlot,
+  leftExtraSlot,
   attachments,
   onPickFiles,
   onRemoveAttachment,
   onPickFolder,
   projectPath,
+  projectLabel,
+  sendDisabled,
 }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [mentionOpen, setMentionOpen] = useState(false);
   const [mentionRange, setMentionRange] = useState<MentionRange | null>(null);
-  const [mentionQuery, setMentionQuery] = useState("");
+  const [mentionQuery, setMentionQuery] = useState('');
   const [mentionItems, setMentionItems] = useState<MentionItem[]>([]);
   const [mentionActive, setMentionActive] = useState(0);
   const [mentionLoading, setMentionLoading] = useState(false);
   const [mentionError, setMentionError] = useState<string | null>(null);
   const filesCacheRef = useRef<MentionItem[] | null>(null);
-  const lastProjectRef = useRef<string>("");
+  const lastProjectRef = useRef<string>('');
 
   const getCursor = useCallback((): number => {
-    const ta = wrapRef.current?.querySelector<HTMLTextAreaElement>("textarea");
-    return ta ? ta.selectionStart ?? value.length : value.length;
+    const ta = wrapRef.current?.querySelector<HTMLTextAreaElement>('textarea');
+    return ta ? (ta.selectionStart ?? value.length) : value.length;
   }, [value.length]);
 
   /** Detect @ trigger whenever value changes. */
@@ -244,7 +258,7 @@ export function Composer({
     } else if (mentionOpen) {
       setMentionOpen(false);
       setMentionRange(null);
-      setMentionQuery("");
+      setMentionQuery('');
       setMentionItems([]);
       setMentionActive(0);
       // 清空 mentionError：否则一旦设置过错误（如"桌面环境支持 @file 补全"），
@@ -260,19 +274,19 @@ export function Composer({
     if (lastProjectRef.current && lastProjectRef.current !== projectPath) {
       filesCacheRef.current = null;
     }
-    lastProjectRef.current = projectPath || "";
+    lastProjectRef.current = projectPath || '';
   }, [projectPath]);
 
   /** Load files when mention opens (one-shot per project). */
   useEffect(() => {
     if (!mentionOpen) return;
     if (!projectPath) {
-      setMentionError("请先打开一个项目文件夹");
+      setMentionError('请先打开一个项目文件夹');
       setMentionItems([]);
       return;
     }
     if (!isTauriDesktop()) {
-      setMentionError("桌面环境支持 @file 补全");
+      setMentionError('桌面环境支持 @file 补全');
       setMentionItems([]);
       return;
     }
@@ -290,7 +304,7 @@ export function Composer({
       })
       .catch(() => {
         if (cancelled) return;
-        setMentionError("读取文件列表失败");
+        setMentionError('读取文件列表失败');
         setMentionLoading(false);
       });
     return () => {
@@ -313,7 +327,7 @@ export function Composer({
   const closeMention = useCallback(() => {
     setMentionOpen(false);
     setMentionRange(null);
-    setMentionQuery("");
+    setMentionQuery('');
     setMentionItems([]);
     setMentionActive(0);
     // 同步清空 mentionError（与 detectMention 关闭分支保持一致）
@@ -332,7 +346,7 @@ export function Composer({
       closeMention();
       // Restore focus + cursor after React updates the textarea.
       requestAnimationFrame(() => {
-        const ta = wrapRef.current?.querySelector<HTMLTextAreaElement>("textarea");
+        const ta = wrapRef.current?.querySelector<HTMLTextAreaElement>('textarea');
         if (ta) {
           ta.focus();
           ta.selectionStart = newCursor;
@@ -347,23 +361,17 @@ export function Composer({
   const onKeyDownCapture = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
       if (!mentionOpen) return;
-      if (e.key === "ArrowDown") {
+      if (e.key === 'ArrowDown') {
         e.preventDefault();
         e.stopPropagation();
-        setMentionActive((i) =>
-          mentionItems.length === 0 ? 0 : (i + 1) % mentionItems.length,
-        );
-      } else if (e.key === "ArrowUp") {
+        setMentionActive((i) => (mentionItems.length === 0 ? 0 : (i + 1) % mentionItems.length));
+      } else if (e.key === 'ArrowUp') {
         e.preventDefault();
         e.stopPropagation();
         setMentionActive((i) =>
           mentionItems.length === 0 ? 0 : (i - 1 + mentionItems.length) % mentionItems.length,
         );
-      } else if (
-        e.key === "Enter" &&
-        !e.shiftKey &&
-        !e.nativeEvent.isComposing
-      ) {
+      } else if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
         e.preventDefault();
         e.stopPropagation();
         if (mentionItems.length > 0) {
@@ -373,7 +381,7 @@ export function Composer({
         } else {
           closeMention();
         }
-      } else if (e.key === "Escape") {
+      } else if (e.key === 'Escape') {
         e.preventDefault();
         e.stopPropagation();
         closeMention();
@@ -398,7 +406,7 @@ export function Composer({
           type="button"
           role="option"
           aria-selected={i === mentionActive}
-          className={`fnix-mention-item${i === mentionActive ? " active" : ""}`}
+          className={`fnix-mention-item${i === mentionActive ? ' active' : ''}`}
           onMouseEnter={() => setMentionActive(i)}
           onMouseDown={(e) => {
             e.preventDefault();
@@ -416,14 +424,7 @@ export function Composer({
         {body}
       </div>
     );
-  }, [
-    mentionOpen,
-    mentionError,
-    mentionLoading,
-    mentionItems,
-    mentionActive,
-    selectMention,
-  ]);
+  }, [mentionOpen, mentionError, mentionLoading, mentionItems, mentionActive, selectMention]);
 
   return (
     <div className="fnix-composer-wrap" ref={wrapRef} onKeyDownCapture={onKeyDownCapture}>
@@ -440,8 +441,18 @@ export function Composer({
         modelSlot={modelSlot}
         attachments={attachments}
         onRemoveAttachment={onRemoveAttachment}
+        sendDisabled={sendDisabled}
         leftSlot={
-          <AttachMenu compact={compact} onPickFiles={onPickFiles} onPickFolder={onPickFolder} />
+          <>
+            <AttachMenu
+              compact={compact}
+              onPickFiles={onPickFiles}
+              onPickFolder={onPickFolder}
+              projectPath={projectPath}
+              projectLabel={projectLabel}
+            />
+            {leftExtraSlot}
+          </>
         }
       />
       {popover}

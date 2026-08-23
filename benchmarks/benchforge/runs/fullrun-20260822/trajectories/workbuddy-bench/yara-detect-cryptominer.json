@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "yara-detect-cryptominer",
+  "prompt": "<task>\nAnalyze the malicious binary at `/app/challenge/malware` and the benign reference\nbinaries in `/app/challenge/benign/`, then write a YARA rule that detects the\nmalware while producing no false positives on the benign samples.\n</task>\n\n<instructions>\n1. Reverse engineer `/app/challenge/malware` to determine its core malicious\n  capability and the in-file indicators that express it. Some strings are\n  obfuscated rather than stored in plaintext — recover how they are encoded.\n2. Examine every binary under `/app/challenge/benign/` to understand which\n  characteristics are shared with the malware and must NOT be used as detection\n  anchors.\n3. Write your YARA rule to `/logs/artifacts/detection.yar`. It must match the\n  malware and must not match any benign sample.\n4. Write your analysis to `/logs/artifacts/analysis.json` (schema in <output>).\n5. Write results incrementally — save each artifact as soon as it is ready, not\n  only at the end.\n</instructions>\n\n<output>\nWrite two files to `/logs/artifacts/`:\n\n- `detection.yar` — a syntactically valid YARA rule file (compatible with the\n  `yara` 4.x CLI). It MUST compile, match `/app/challenge/malware`, and match\n  none of the benign binaries. Prefer encoded byte-pattern anchors that survive\n  in the file over decoded plaintext that is only present at runtime. Do NOT\n  anchor on the sample's filename or path.\n\n- `analysis.json` — a JSON object with exactly these fields:\n  - `malware_type` — string. Short classification of the malware.\n  - `detection_strategy` — string. What in-file patterns the rule targets and why.\n  - `unique_indicators` — array of strings. Indicators present in the malware but\n    absent from the benign samples.\n  - `description` — string. Brief summary of the analysis.\n</output>\n\n<hints>\n- The malware simulates a cryptominer. Several configuration strings are encoded\n  in the binary and decoded at runtime, so they do not appear as plaintext.\n- Look for a single-byte XOR decoding routine and the encoded blobs it consumes.\n- A benign sample may share coarse behavior (e.g. CPU pinning) with the malware,\n  and another may even echo the same surface words/phrases as plaintext —\n  detection must rest on the malware's unique encoded indicators, not on shared\n  behavior or shared plaintext strings.\n- Anchor on the encoded bytes as they appear in the file, using YARA hex\n  byte-pattern strings (`{ .. .. }`).\n</hints>",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 92.9999999998472,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787332460.9085934,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\workbuddy-bench__yara-detect-cryptominer__d3151e"
+}

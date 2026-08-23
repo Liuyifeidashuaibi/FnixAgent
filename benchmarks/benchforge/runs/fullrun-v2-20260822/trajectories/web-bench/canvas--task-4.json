@@ -1,0 +1,18 @@
+{
+  "dataset": "web-bench",
+  "task_id": "canvas--task-4",
+  "prompt": "Render pipe pairs using 'assets/pipeUp.png' and 'assets/pipeDown.png' at shared x-coordinates. Maintain 120-240px vertical gap between pipes, with gap's top edge >80px from canvas top and < (height/2 - 80). Space pipe groups 200px apart horizontally. Continuously generate pipes from right, translating -4px per frame. Store in window.store: bird coordinates, pipe data (x, topHeight, bottomY, width, passed), and floor height. Pipes should be rendered behind other elements and the floor is at the top layer.",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 359.00000000037835,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336248.6018097,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\web-bench__canvas--task-4__057a17"
+}

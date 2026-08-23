@@ -77,7 +77,7 @@ if (aggressive) run('cargo cache -a');
 // --- Project build artifacts (on repo drive, usually E:) ---
 console.log('\nProject artifacts:');
 const projectDirs = [
-  'apps/desktop-tauri/src-tauri/target',
+  'apps/workbench/src-tauri/target',
   'apps/fnix-local/target',
   'node_modules/.cache',
   '.pytest_cache',

@@ -19,11 +19,14 @@
 from __future__ import annotations
 
 import ast
+import logging
 import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+
+_logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -87,7 +90,7 @@ def validate_python_file(path: Path) -> ValidationResult:
         if not has_def:
             issues.append("未定义任何函数或类")
     except Exception:
-        pass
+        _logger.debug("Unhandled exception", exc_info=True)
 
     return ValidationResult(
         path=str(path),
@@ -562,10 +565,13 @@ def block_path_traversal(
         try:
             ws_abs = Path(workspace).resolve()
             p_abs = Path(path).resolve()
-            # 必须在 workspace 内 (或 .fnix/artifacts 内)
+            # 允许: workspace 内, 或 workspace/.fnix/artifacts 内
             ws_str = str(ws_abs)
             p_str = str(p_abs)
-            if not (p_str == ws_str or p_str.startswith(ws_str + os.sep)):
+            artifacts_str = str(ws_abs / ".fnix" / "artifacts")
+            inside_workspace = p_str == ws_str or p_str.startswith(ws_str + os.sep)
+            inside_artifacts = p_str.startswith(artifacts_str + os.sep)
+            if not (inside_workspace or inside_artifacts):
                 return GuardrailFunctionOutput(
                     tripwire_triggered=True,
                     reject_reason=f"路径越界: {path} 不在 workspace {workspace} 内",

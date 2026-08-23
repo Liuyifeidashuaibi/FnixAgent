@@ -1,0 +1,18 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "IBM__mcp-context-forge-3476",
+  "prompt": "# 🐛 Bug-fix PR\n\n---\n\n## 📌 Summary\nWhen a gateway's visibility is updated (e.g. `public` → `team`), the change was not propagated to its linked tools, prompts, and resources if the upstream MCP server was unreachable. This caused a visibility mismatch where the gateway would be `team`-scoped while its tools/prompts/resources remained `public`.\n\nCloses #3475\n\n## 🔁 Reproduction Steps\n1. Register a gateway with `visibility: \"public\"`\n2. Take the upstream MCP server offline\n3. Update the gateway via `PUT /gateways/{id}` with `visibility: \"team\"`\n4. Observe: gateway is `team` but linked tools/prompts/resources are still `public`\n\n## 🐞 Root Cause\nIn `gateway_service.py:update_gateway`, visibility propagation to linked items happened inside a `try` block gated on `_initialize_gateway` succeeding (network call). If the upstream was unreachable, the exception was caught and propagation was skipped entirely. Also contained a duplicate visibility assignment.\n\n## 💡 Fix Description\n- Moved visibility propagation to run immediately after the gateway's own visibility is set, before the `_initialize_gateway` try block\n- Iterates over `gateway.tools`, `gateway.resources`, and `gateway.prompts` (already eager-loaded) and sets their visibility directly\n- Removed the duplicate `gateway.visibility` assignment\n\n## 🧪 Verification\n\n| Check                                 | Command              | Status |\n|---------------------------------------|----------------------|--------|\n| Lint suite                            | `make lint`          | ✅     |\n| Unit tests                            | `make test`          | ✅     |\n| New regression test                   | `pytest ...test_update_gateway_visibility_propagates_when_init_fails` | ✅ |\n\n## ✅ Checklist\n- [x] Code formatted (`make black isort pre-commit`)\n- [x] No secrets/credentials committed\n- [x] TDD: test written first, verified failing, then fix applied",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/mcpgateway/services/gateway_service.py b/mcpgateway/services/gatewa] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787334460.8944867,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\prototypebench__IBM__mcp-context-forge-3476__e06d9b"
+}

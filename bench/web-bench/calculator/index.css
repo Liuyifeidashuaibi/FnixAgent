@@ -1,0 +1,12 @@
+.sin-btn {
+  background-color: #ff6348;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  margin: 5px;
+  cursor: pointer;
+}
+
+.sin-btn:hover {
+  background-color: #e74c3c;
+}

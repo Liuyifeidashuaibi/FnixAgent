@@ -22,8 +22,12 @@ Prompt 注入防护 (Injection Guard)。
 from __future__ import annotations
 
 import base64
+import logging
 import re
 from dataclasses import dataclass, field
+
+_logger = logging.getLogger(__name__)
+
 
 # ---------------------------------------------------------------------------
 # 模块级预编译正则(避免每次 check() 重复编译,提升检测性能)
@@ -175,7 +179,7 @@ class InjectionGuard:
                     return (0.95, "Base64 隐藏指令: 解码含可疑关键词")
             except Exception:
                 # 解码失败,跳过(非 Base64 或编码异常)
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
         # Unicode 零宽字符检测(用于绕过关键词过滤)
         if _ZERO_WIDTH_PATTERN.search(text):
             return (0.7, "Unicode 零宽字符注入")

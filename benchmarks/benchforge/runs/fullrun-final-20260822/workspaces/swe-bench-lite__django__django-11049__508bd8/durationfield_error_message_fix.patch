@@ -1,0 +1,26 @@
+diff --git a/django/db/models/fields/__init__.py b/django/db/models/fields/__init__.py
+--- a/django/db/models/fields/__init__.py
++++ b/django/db/models/fields/__init__.py
+@@ -1234,7 +1234,7 @@ class DurationField(Field):
+         if value is None:
+             return value
+         try:
+-            raise ValidationError('Enter a valid duration. Format: "[DD] [HH:[MM:]]ss[.uuuuuu]".', params={'value': value})
++            raise ValidationError('Enter a valid duration. Format: "[DD] [[HH:]MM:]ss[.uuuuuu]".', params={'value': value})
+         except ValueError as e:
+             raise ValidationError(
+                 'Enter a valid duration. Format: "[DD] [[HH:]MM:]ss[.uuuuuu]".',
+@@ -1245,7 +1245,7 @@ class DurationField(Field):
+     def __init__(self, verbose_name=None, name=None, **kwargs):
+         # Set default help_text explaining the format
+         if 'help_text' not in kwargs:
+-            kwargs['help_text'] = 'Format: "[DD] [HH:[MM:]]ss[.uuuuuu]"'
++            kwargs['help_text'] = 'Format: "[DD] [[HH:]MM:]ss[.uuuuuu]"'
+         super().__init__(verbose_name, name, **kwargs)
+
+# The fix corrects the duration format string to properly reflect:
+# - DD (days) is optional
+# - HH (hours) is optional, but required if MM (minutes) is present without DD
+# - MM (minutes) is optional, but required if ss (seconds) is present without HH
+# - ss (seconds) is mandatory
+# - uuuuuu (microseconds) is optional

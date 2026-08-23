@@ -6,7 +6,6 @@
 FnixAgent/
 ├── apps/
 │   ├── workbench/          # 唯一日常桌面：UI + src-tauri（pnpm dev）
-│   ├── desktop-tauri/      # 遗留打包壳（勿与 workbench 同时开）
 │   └── fnix-local/         # Rust 本地 sidecar（索引/沙箱，可降级）
 ├── src/fnixagent/          # Python agentd（默认 :8003）与 CLI
 ├── packages/

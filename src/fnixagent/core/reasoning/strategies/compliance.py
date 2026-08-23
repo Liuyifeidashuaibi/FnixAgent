@@ -27,10 +27,14 @@ BUG 修复:
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from fnixagent.core.reasoning.strategies.base import BaseStrategy, StrategyContext
 from fnixagent.core.types import ExecutionTrace, ReasoningMode
+
+_logger = logging.getLogger(__name__)
+
 
 
 class ComplianceStrategy(BaseStrategy):
@@ -117,7 +121,7 @@ class ComplianceStrategy(BaseStrategy):
             self._write_compliance_audit(ctx, trace)
         except Exception:
             # 审计写入失败不影响主流程(生产环境应 fail-safe + 告警)
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
         return trace
 
     def estimate_cost(self, ctx: StrategyContext) -> dict[str, Any]:
@@ -189,4 +193,4 @@ class ComplianceStrategy(BaseStrategy):
             )
         except Exception:
             # AuditLogger 不可用时,降级打印(生产环境应 fail-safe)
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)

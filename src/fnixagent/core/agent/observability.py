@@ -18,12 +18,16 @@ Observability - 可观测性 (Observability)
 
 from __future__ import annotations
 
+import logging
 from collections import defaultdict, deque
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
 from fnixagent.core.agent.types import utcnow_iso
+
+_logger = logging.getLogger(__name__)
+
 
 
 @dataclass
@@ -140,6 +144,7 @@ class ObservabilityManager:
             try:
                 hook(event, payload)
             except Exception:
+                _logger.debug('Unhandled exception', exc_info=True)
                 continue
 
     # --- Span 管理 ---

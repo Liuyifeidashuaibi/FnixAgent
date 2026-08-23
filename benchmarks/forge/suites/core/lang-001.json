@@ -1,0 +1,28 @@
+{
+  "id": "lang-001",
+  "title": "中文指令的精确落地",
+  "capability": "language",
+  "difficulty": 2,
+  "tags": [
+    "zh",
+    "precision"
+  ],
+  "prompt": "新建 greeting.txt，内容写：你好，世界。注意：不要带句号，不要带引号，文件里就这六个字符。",
+  "allowed_scope": [
+    "greeting.txt"
+  ],
+  "checks": [
+    {
+      "function": "file_equals",
+      "args": {
+        "path": "greeting.txt",
+        "content": "你好，世界"
+      },
+      "weight": 2.0
+    },
+    {
+      "function": "scope_respected",
+      "args": {}
+    }
+  ]
+}

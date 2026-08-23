@@ -1,0 +1,56 @@
+/* Selection List Component Styles */
+
+.selection-list-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.selection-list-header {
+  padding: 0.5rem 0;
+}
+
+.selection-list-viewport {
+  flex: 1;
+  min-height: 0;
+}
+
+.selection-list-items {
+  padding: 0.25rem 0;
+}
+
+.selection-list-item {
+  width: 100%;
+}
+
+.selection-list-empty {
+  color: #6b7280;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.selection-list-footer {
+  padding: 0.5rem 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .selection-list-viewport {
+    max-height: 240px;
+  }
+}
+
+/* Dark mode support */
+.dark .selection-list-empty {
+  color: #9ca3af;
+}
+
+.dark .selection-list-footer {
+  border-color: #374151;
+}
+
+/* Focus states for accessibility */
+.selection-list-item:focus-within {
+  outline: 2px solid #3b82f6;
+  outline-offset: -2px;
+}

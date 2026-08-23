@@ -1,0 +1,18 @@
+{
+  "dataset": "web-bench",
+  "task_id": "nosql--task-18",
+  "prompt": "1) Add a .refund-button in Order Detail Page when order is paid; 2) When .refund-button is clicked, change the order status to 'Refund Reviewing'; 3) Create /admin/orders for admin to manage all orders, with a unique identifier #admin_order_{order_id}; 4) Add a .pass-refund-review-button in #admin_order_{order_id} if the order is under 'Refund Reviewing'; 5) When .pass-refund-review-button is clicked, update the order status to 'Refund Passed' and ensure that the Coin is refunded to the user's account. 6) In Home page, add .home-go-order-portal-link to navigate to /admin/orders. 7) Create CSS files to beautify CSS. Constraint: DO NOT use a third-party UI library.",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 360.0000000005821,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336298.3834345,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\web-bench__nosql--task-18__177975"
+}

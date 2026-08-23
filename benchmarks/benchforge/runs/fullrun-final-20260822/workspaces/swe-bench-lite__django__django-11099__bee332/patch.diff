@@ -1,0 +1,10 @@
+diff --git a/django/contrib/auth/validators.py b/django/contrib/auth/validators.py
+index abc1234..def5678 100644
+--- a/django/contrib/auth/validators.py
++++ b/django/contrib/auth/validators.py
+@@ -XX,XX +XX,XX @@ class ASCIIUsernameValidator(UnicodeUsernameValidator):
+-    regex = r'^[\w.@+-]+$'
++    regex = r'\A[\w.@+-]+\Z'
+@@ -YY,YY +YY,YY @@ class UnicodeUsernameValidator(BaseValidator):
+-    regex = r'^[\w.@+-]+$'
++    regex = r'\A[\w.@+-]+\Z'

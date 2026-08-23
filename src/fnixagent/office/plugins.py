@@ -24,6 +24,7 @@
 
 from __future__ import annotations
 
+import logging
 import threading
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -33,6 +34,9 @@ from fnixagent.office.converter_protocol import (
     ConverterRegistry,
     create_default_registry,
 )
+
+_logger = logging.getLogger(__name__)
+
 
 # ---------------------------------------------------------------------------
 # 插件元数据
@@ -135,6 +139,7 @@ class PluginManager:
                         new_entries.append(entry)
             except Exception:
                 # 单个插件加载失败,跳过,不影响其他插件
+                _logger.debug('Unhandled exception', exc_info=True)
                 continue
         return new_entries
 
@@ -271,5 +276,6 @@ class PluginManager:
                     registry.register(converter, name=entry.meta.name)
             except Exception:
                 # 插件工厂失败:跳过,不影响其他插件
+                _logger.debug('Unhandled exception', exc_info=True)
                 continue
         return registry

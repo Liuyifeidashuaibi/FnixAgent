@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Node.js Documentation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+        h1 {
+            color: #68a063;
+            border-bottom: 2px solid #68a063;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #4a7c44;
+        }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        pre {
+            background-color: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: #68a063;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h1>Node.js Documentation</h1>
+
+    <h2>What is Node.js?</h2>
+    <p>Node.js is an open-source, cross-platform JavaScript runtime environment that executes JavaScript code outside a web browser. It was created by Ryan Dahl in 2009 and is built on Chrome's V8 JavaScript engine.</p>
+
+    <h2>Key Features</h2>
+    <ul>
+        <li><strong>Asynchronous & Event-Driven:</strong> All APIs in Node.js are asynchronous and non-blocking.</li>
+        <li><strong>Very Fast:</strong> Built on Google Chrome's V8 JavaScript Engine, making it extremely fast.</li>
+        <li><strong>Single Threaded but Highly Scalable:</strong> Uses event looping to handle thousands of concurrent connections.</li>
+        <li><strong>NPM (Node Package Manager):</strong> The world's largest ecosystem of open-source libraries.</li>
+    </ul>
+
+    <h2>Getting Started</h2>
+    <p>Create a simple HTTP server:</p>
+    <pre>
+const http = require('http');
+
+const server = http.createServer((req, res) => {
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'text/plain');
+    res.end('Hello World\n');
+});
+
+server.listen(3000, () => {
+    console.log('Server running at http://localhost:3000/');
+});
+    </pre>
+
+    <h2>Core Modules</h2>
+    <p>Node.js comes with several built-in modules:</p>
+    <ul>
+        <li><code>fs</code> - File system operations</li>
+        <li><code>http</code> - HTTP server and client</li>
+        <li><code>path</code> - File path manipulation</li>
+        <li><code>os</code> - Operating system information</li>
+        <li><code>events</code> - Event emitter pattern</li>
+    </ul>
+
+    <h2>Package Management</h2>
+    <p>Use NPM to install packages:</p>
+    <pre>
+npm install express
+npm install lodash
+npm install mongoose
+    </pre>
+
+    <a href="intro.html" class="back-link">← Back to Documentation Index</a>
+</body>
+</html>

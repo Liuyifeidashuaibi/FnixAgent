@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import time
 from typing import Any
 
@@ -30,6 +31,62 @@ from fnixagent.core.types import LLMResponse, MessageRole, TokenUsage
 
 # 单次响应体大小上限(字节),超过则拒绝解析以防 OOM
 _MAX_RESPONSE_BYTES = 32 * 1024 * 1024  # 32 MiB
+
+# JSON 合法转义字符（含 \uXXXX 的 u）
+_VALID_JSON_ESCAPES = frozenset('"\\/bfnrtu')
+
+
+def _repair_json_escapes(text: str) -> str:
+    """修复 LLM 输出 tool_call 参数里常见的非法 JSON 转义。
+
+    模型（如 qwen-turbo）偶发在参数里写 ``\\d``、``\\s``（正则）或行尾孤立 ``\\``，
+    均不是合法 JSON 转义 → json.loads 报 "Invalid escape"。这里把
+    ``\\x``(x 非合法转义) 补成 ``\\\\x``，保留字面反斜杠语义后再解析。
+    """
+    out: list[str] = []
+    i = 0
+    n = len(text)
+    while i < n:
+        ch = text[i]
+        if ch != "\\":
+            out.append(ch)
+            i += 1
+            continue
+        if i + 1 < n:
+            nxt = text[i + 1]
+            if nxt in _VALID_JSON_ESCAPES:
+                out.append(ch)
+                out.append(nxt)
+            else:
+                # 非法转义：补反斜杠成 \\x（字面反斜杠 + x）
+                out.append("\\\\")
+                out.append(nxt)
+            i += 2
+        else:
+            # 行尾孤立反斜杠
+            out.append("\\\\")
+            i += 1
+    return "".join(out)
+
+
+def _parse_tool_args_json(raw: str) -> dict:
+    """宽容解析 tool_call 参数：先严格解析，失败则修复非法转义后重试。"""
+    s = raw.strip()
+    if not s:
+        return {}
+    try:
+        args = json.loads(s)
+    except json.JSONDecodeError:
+        repaired = _repair_json_escapes(s)
+        try:
+            args = json.loads(repaired)
+        except json.JSONDecodeError:
+            # 仍失败：降级为原始字符串参数（避免整个响应失败），
+            # 由工具层自行处理/报错，任务可继续或重试
+            return {"value": raw}
+    if not isinstance(args, dict):
+        return {"value": args}
+    return args
 
 
 class OpenAICompatibleProvider(BaseLLMProvider):
@@ -91,13 +148,25 @@ class OpenAICompatibleProvider(BaseLLMProvider):
         self._client = None  # 延迟初始化
 
     def _get_client(self):
-        """延迟初始化 httpx 客户端(避免无网络环境启动失败)。"""
+        """延迟初始化 httpx 客户端(避免无网络环境启动失败)。
+
+        SSL 适配: 部分云端 API 网关(如阿里云百炼 MaaS)在 TLS 握手阶段
+        会请求重协商(renegotiation)。OpenSSL 3.0+ 默认禁用 legacy
+        renegotiation,导致 ``SSL: UNEXPECTED_EOF_WHILE_READING`` 错误。
+        此处显式启用 ``OP_LEGACY_SERVER_CONNECT`` 以兼容此类服务器。
+        """
         if self._client is None:
             try:
                 import httpx
             except ImportError as exc:
                 raise LLMError("httpx is required for OpenAICompatibleProvider") from exc
-            self._client = httpx.Client(timeout=self._timeout)
+            import ssl as _ssl
+
+            _ssl_ctx = _ssl.create_default_context()
+            _legacy_reneg = getattr(_ssl, "OP_LEGACY_SERVER_CONNECT", None)
+            if _legacy_reneg is not None:
+                _ssl_ctx.options |= _legacy_reneg
+            self._client = httpx.Client(timeout=self._timeout, verify=_ssl_ctx)
         return self._client
 
     def _do_chat(self, request: LLMRequest, messages: list[dict]) -> LLMResponse:
@@ -271,6 +340,32 @@ class OpenAICompatibleProvider(BaseLLMProvider):
             except Exception:
                 reasoning_content = ""
 
+        # Bug-Fix: DeepSeek-V4-Flash (硅基流动) 等推理模型会把思考链内联进
+        # content (形如 "<think>思考</think>回答" 或省略开标签的 "思考</think>回答"),
+        # 而不放在独立的 reasoning_content 字段。下游 JSON 解析器
+        # (CodingAgent._parse_plan / _parse_review) 会被思考文本里的花括号/关键词
+        # 干扰, 导致计划解析失败或审查误判。这里统一剥离内联思考块,
+        # 并入 reasoning_content 供前端 ProcessTimeline 折叠展示。
+        if content and ("<think>" in content or "</think>" in content):
+            inline_think = ""
+            _t = re.search(r"<think>(.*?)</think>", content, re.DOTALL)
+            if _t:
+                inline_think = _t.group(1)
+                content = (content[: _t.start()] + content[_t.end() :]).strip()
+            elif "</think>" in content:
+                # 省略开标签: 开标签前的内容视为思考, 之后为正式回答
+                _head, _sep, _tail = content.partition("</think>")
+                inline_think = _head
+                content = _tail.strip()
+            else:
+                # 只有开标签 (响应被 max_tokens 截断在思考阶段):
+                # 全部内容都是未闭合的思考, content 置空交由上层按空响应处理
+                _head, _sep, _tail = content.partition("<think>")
+                inline_think = _head + _tail
+                content = _head.strip()
+            if inline_think.strip() and not reasoning_content:
+                reasoning_content = inline_think.strip()
+
         # 提取工具调用
         tool_calls_raw = message.get("tool_calls", [])
         tool_calls = []
@@ -284,7 +379,7 @@ class OpenAICompatibleProvider(BaseLLMProvider):
                 elif isinstance(args_raw, (bytes, bytearray)):
                     args = json.loads(args_raw.decode("utf-8") or "{}")
                 elif isinstance(args_raw, str):
-                    args = json.loads(args_raw) if args_raw.strip() else {}
+                    args = _parse_tool_args_json(args_raw)
                 elif args_raw is None:
                     args = {}
                 else:

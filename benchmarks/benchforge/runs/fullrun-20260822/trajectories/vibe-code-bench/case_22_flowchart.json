@@ -1,0 +1,18 @@
+{
+  "dataset": "vibe-code-bench",
+  "task_id": "case_22_flowchart",
+  "prompt": "# Build me a Flowchart Editor\n\nI want a visual flowchart/diagram editor in a single HTML file. Think simple Lucidchart or draw.io.\n\n## Core Features\n\n1. **Canvas area** - Large workspace where diagrams are drawn\n2. **Shape palette** - Sidebar with shapes to add:\n   - Rectangle (process)\n   - Diamond (decision)\n   - Oval (start/end)\n   - Parallelogram (input/output)\n3. **Drag shapes from palette** onto canvas\n4. **Move shapes** by dragging on canvas\n5. **Connect shapes** - Click and drag from one shape to another to create arrows\n6. **Edit text** - Double-click shape to edit its label\n7. **Delete** - Select and press Delete, or right-click menu\n\n## Connection Lines\n\n- Arrows should connect from edge of source to edge of target\n- Lines should update when shapes are moved\n- Straight lines are fine (curved optional)\n- Arrowhead at target end\n\n## UI Requirements\n\n- **Toolbar** at top or side with: New, Delete, Zoom In/Out\n- **Shape palette** on left side\n- **Canvas** in center, should be scrollable/pannable\n- **Selected shape** shows resize handles or highlight\n- Grid background (optional but nice)\n\n## Behavior\n\n- Shapes snap to grid (optional)\n- Undo/Redo with Ctrl+Z / Ctrl+Y (optional but nice)\n- Export as SVG or PNG (optional)\n\n## Technical\n\n- Use SVG or Canvas for rendering\n- Vanilla JavaScript, no libraries\n- Single HTML file with embedded CSS/JS\n\nMake it look professional - modern UI with shadows, clean colors.",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[\"\"\"\nFunctional tests for Flowchart Editor (case_22_flowchart).\n\nV3 Tests - Discr] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787332461.219979,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\vibe-code-bench__case_22_flowchart__d6fd6a"
+}

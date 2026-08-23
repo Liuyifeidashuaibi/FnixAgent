@@ -1,7 +1,7 @@
 """
 飞轮 ① 感知-执行环单元测试。
 
-测试模块: fnixagent.core.flywheel.stage1_perception
+测试模块: fnixagent.core.flywheel.perception
 覆盖:
     - PerceptionFlywheel.run(): 完整感知-执行流程(使用 mock graph)
     - PerceptionFlywheel.run_stream(): 流式执行
@@ -14,7 +14,7 @@
 # This software and its source code are proprietary and confidential.
 # Unauthorized copying, modification, distribution, or use is strictly prohibited.
 
-from fnixagent.core.flywheel.stage1_perception import (
+from fnixagent.core.flywheel.perception import (
     PerceptionFlywheel,
     trace_from_dict,
     trace_to_dict,

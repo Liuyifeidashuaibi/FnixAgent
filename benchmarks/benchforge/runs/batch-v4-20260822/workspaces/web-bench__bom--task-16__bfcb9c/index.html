@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Main Page — Theme Demo</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #1a1a2e;
+      --card-bg: #f0f0f5;
+      --accent: #4361ee;
+      --accent-hover: #3a56d4;
+      --border: #d1d1e0;
+      --shadow: rgba(0, 0, 0, 0.08);
+    }
+
+    [data-theme="dark"] {
+      --bg: #1a1a2e;
+      --text: #e0e0f0;
+      --card-bg: #16213e;
+      --accent: #4cc9f0;
+      --accent-hover: #3ab8df;
+      --border: #2a2a4a;
+      --shadow: rgba(0, 0, 0, 0.3);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      transition: background 0.3s, color 0.3s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+    }
+
+    header {
+      width: 100%;
+      max-width: 800px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+
+    h1 { font-size: 1.8rem; }
+
+    .theme-toggle {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 0.6rem 1.2rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .theme-toggle:hover { background: var(--accent-hover); }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      width: 100%;
+      max-width: 800px;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 2px 8px var(--shadow);
+      transition: background 0.3s, border-color 0.3s;
+    }
+
+    .card h2 { margin-bottom: 0.5rem; }
+    .card p { line-height: 1.6; opacity: 0.85; }
+
+    .open-btn {
+      display: inline-block;
+      margin-top: 1rem;
+      background: var(--accent);
+      color: #fff;
+      text-decoration: none;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      border: none;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .open-btn:hover { background: var(--accent-hover); }
+
+    .status {
+      margin-top: 1rem;
+      font-size: 0.85rem;
+      opacity: 0.6;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>📄 Documentation Hub</h1>
+    <button class="theme-toggle" id="themeToggle">🌙 Dark Mode</button>
+  </header>
+
+  <div class="card">
+    <h2>Getting Started</h2>
+    <p>Learn how to set up and configure the project. This guide covers installation, basic usage, and common patterns.</p>
+    <button class="open-btn" data-doc="doc.html?title=Getting+Started&section=setup">Open in New Window ↗</button>
+  </div>
+
+  <div class="card">
+    <h2>API Reference</h2>
+    <p>Complete API documentation with examples, parameter descriptions, and return types for all public methods.</p>
+    <button class="open-btn" data-doc="doc.html?title=API+Reference&section=api">Open in New Window ↗</button>
+  </div>
+
+  <div class="card">
+    <h2>Advanced Guide</h2>
+    <p>Deep dive into advanced topics like customization, plugins, performance optimization, and deployment strategies.</p>
+    <button class="open-btn" data-doc="doc.html?title=Advanced+Guide&section=advanced">Open in New Window ↗</button>
+  </div>
+
+  <p class="status" id="status">No doc windows opened yet.</p>
+
+  <script>
+    (function () {
+      const html = document.documentElement;
+      const toggleBtn = document.getElementById('themeToggle');
+      const statusEl = document.getElementById('status');
+
+      // Track all opened doc windows
+      const openWindows = [];
+
+      function getCurrentTheme() {
+        return html.getAttribute('data-theme') || 'light';
+      }
+
+      // Broadcast theme to all open doc windows via postMessage
+      function broadcastTheme(theme) {
+        for (let i = openWindows.length - 1; i >= 0; i--) {
+          const win = openWindows[i];
+          if (win && !win.closed) {
+            win.postMessage({ type: 'theme-change', theme: theme }, '*');
+          } else {
+            // Remove closed windows from tracking
+            openWindows.splice(i, 1);
+          }
+        }
+        updateStatus();
+      }
+
+      function updateStatus() {
+        const active = openWindows.filter(w => w && !w.closed).length;
+        statusEl.textContent = active > 0
+          ? `${active} doc window(s) open — theme synced via postMessage.`
+          : 'No doc windows opened yet.';
+      }
+
+      // Toggle theme
+      toggleBtn.addEventListener('click', function () {
+        const newTheme = getCurrentTheme() === 'light' ? 'dark' : 'light';
+        html.setAttribute('data-theme', newTheme);
+        toggleBtn.textContent = newTheme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
+
+        // Broadcast the new theme to all child windows
+        broadcastTheme(newTheme);
+      });
+
+      // Listen for doc-ready messages from child windows and respond with current theme
+      window.addEventListener('message', function (event) {
+        if (event.data && event.data.type === 'doc-ready') {
+          // Send current theme to the newly opened doc window
+          if (event.source && !event.source.closed) {
+            event.source.postMessage({ type: 'theme-change', theme: getCurrentTheme() }, '*');
+          }
+        }
+      });
+
+      // Open doc pages in new windows
+      document.querySelectorAll('.open-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          const docUrl = btn.getAttribute('data-doc');
+          const newWin = window.open(docUrl, '_blank', 'width=700,height=600');
+
+          if (newWin) {
+            openWindows.push(newWin);
+            updateStatus();
+          }
+        });
+      });
+
+      // Periodically clean up closed window references
+      setInterval(updateStatus, 3000);
+    })();
+  </script>
+</body>
+</html>

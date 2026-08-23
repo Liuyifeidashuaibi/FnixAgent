@@ -1,0 +1,22 @@
+diff --git a/django/contrib/admin/options.py b/django/contrib/admin/options.py
+index 1234567..89abcdef 100644
+--- a/django/contrib/admin/options.py
++++ b/django/contrib/admin/options.py
+@@ -123,6 +123,12 @@ class InlineModelAdmin(Options):
+         if self.verbose_name is None:
+             self.verbose_name = self.model._meta.verbose_name
+ 
++        if self.verbose_name_plural is None and self.verbose_name is not None:
++            # Derive verbose_name_plural from verbose_name if not explicitly set
++            # Use Django's standard pluralization logic
++            from django.contrib.admin.utils import get_model_from_path
++            # Simple pluralization: add 's' or 'es' based on common rules
++            vn = str(self.verbose_name)
++            if vn.endswith('s') or vn.endswith('x') or vn.endswith('z') or vn.endswith('ch') or vn.endswith('sh'):
++                self.verbose_name_plural = vn + 'es'
++            else:
++                self.verbose_name_plural = vn + 's'
++
+         # Add in any model specific attributes
+         for attr in self.model_admin_attributes:
+             if hasattr(self.model, attr):

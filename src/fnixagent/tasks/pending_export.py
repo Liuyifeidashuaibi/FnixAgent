@@ -23,11 +23,15 @@
 from __future__ import annotations
 
 import csv
+import logging
 import uuid
 from dataclasses import dataclass
 from typing import Any
 
 from fnixagent.office.base import BaseExpert, ExpertError, ExpertResult
+
+_logger = logging.getLogger(__name__)
+
 
 # ---------------------------------------------------------------------------
 # 数据结构
@@ -341,7 +345,7 @@ class PendingExporter(BaseExpert):
                 try:
                     wb.close()
                 except Exception:
-                    pass
+                    _logger.debug('Unhandled exception', exc_info=True)
 
     def export_csv(
         self,
@@ -463,7 +467,7 @@ class PendingExporter(BaseExpert):
                 try:
                     wb.close()
                 except Exception:
-                    pass
+                    _logger.debug('Unhandled exception', exc_info=True)
 
     # ------------------------------------------------------------------
     # 统计

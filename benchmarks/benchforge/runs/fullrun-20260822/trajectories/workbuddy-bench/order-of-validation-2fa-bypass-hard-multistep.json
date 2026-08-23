@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "order-of-validation-2fa-bypass-hard-multistep",
+  "prompt": "# 2FA 顺序错误绕过\n审计 /workdir/src/login.py，标注 2FA 顺序漏洞，写 /workdir/findings.json：\n```json\n{\"cwe\":[\"CWE-841\",\"CWE-287\"],\"vuln_lines\":[10,11,12],\"idea\":\"...2FA/顺序/登录/绕过...\"}\n```",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 92.9999999998472,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787332460.6644545,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\workbuddy-bench__order-of-validation-2fa-bypass-hard-multistep__8fbf44"
+}

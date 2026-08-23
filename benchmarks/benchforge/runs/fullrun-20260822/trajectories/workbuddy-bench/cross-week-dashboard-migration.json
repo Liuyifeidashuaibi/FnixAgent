@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "cross-week-dashboard-migration",
+  "prompt": "你是一个沉稳、靠谱、严谨的运营周报助理。请只使用本任务目录内的 Week 21 运营迁移资料包，把 Week 20 的工作状态迁移到 Week 21；交付要简洁直接，不要写成泛泛的分析报告。\n\n先读并确认边界：\n\n- `input/weekly_ops_workspace/README_先读我.md`\n- `input/weekly_ops_workspace/00_calendar/`\n- `input/weekly_ops_workspace/file_roles_and_preservation.md`\n\n执行以下操作：\n\n1. 更新 `input/weekly_ops_workspace/01_reports/2026-W21_ops_report_template.md`。\n2. 同步 `input/weekly_ops_workspace/02_dashboard/status_dashboard.html`：可见 DOM 文本、`data-*` 状态、summary counts、reminder anchors，以及内嵌的 `chart-spec-status-mix` JSON 和 `data-binding-map` JSON 都要和周报一致。\n3. 整理 `input/weekly_ops_workspace/03_reminders/week21_followups_draft.txt`，让提醒内容和 Week 21 周报、dashboard 状态对齐。\n\n迁移口径：\n\n- 以 Week 20 运营周报、Week 21 template、calendar/config、team calendar notes、oncall handover、vendor window note、reminder draft 和 dashboard HTML 交叉核对；不要只复制一个表，也不要只改其中一个文件。\n- completed 历史项只保留为历史上下文，不要重新打开成 active work。\n- unresolved/open、deferred、blocked、follow-up 和 watch-only 事项，按工作区日历、来源优先级和提醒规则跨周承接；未确认或只有观察价值的内容要保留边界说明，不要写成已完成。\n- 如果来源冲突，按优先级处理：calendar/config 和 Week 20 narrative 高于 scratch export；sent reminder history 和 archive 只能作为背景，不要覆盖新周迁移口径。\n- Dashboard 是 text-first 状态看板，不是截图或视觉设计任务。同步 DOM/text、`data-item-id`、`data-state`、`data-target-section`、summary counts、reminder anchors、`chart-spec-status-mix` JSON 和 `data-binding-map` JSON；不要做 OCR、VLM、像素级检查或视觉重绘。\n- Reminder draft 需要体现 no-meeting day 的提前/改期规则、partner check-in timing、blocked 外部审批、deferred reason，以及不应提醒的 completed/noise/stale export 项。\n\n文件边界：\n\n- 只能修改这三个目标文件：\n  - `input/weekly_ops_workspace/01_reports/2026-W21_ops_report_template.md`\n  - `input/weekly_ops_workspace/02_dashboard/status_dashboard.html`\n  - `input/weekly_ops_workspace/03_reminders/week21_followups_draft.txt`\n- 不要修改、移动、删除或覆盖 `00_calendar/`、`01_reports/archive/`、`02_dashboard/assets/`、`03_reminders/sent/`、`04_notes/`、`tmp/`、`README_先读我.md` 或 `file_roles_and_preservation.md`。\n- 不要把所有信息合并成一个新文件；不要创建额外交付物、额外汇总文件、检查文件、PPT/deck/image、外部调用记录或另建状态台账。\n\n最后请用简短中文回复：更新了哪些文件、哪些项目被跨周承接、哪些冲突或待确认状态仍保持边界，并确认未修改非目标文件。不要访问外部 API、网页、浏览器、远程业务系统、私有账号、VPN 或其他工作区外系统；不要引用本工作区材料之外的事实，不要写入 private paths、private URLs、账号标识、credentials、tokens 或未公开材料。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787332459.4510508,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\workbuddy-bench__cross-week-dashboard-migration__14a70f"
+}

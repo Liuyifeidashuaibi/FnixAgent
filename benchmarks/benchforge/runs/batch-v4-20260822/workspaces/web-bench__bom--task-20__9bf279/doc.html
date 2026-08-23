@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Documentation</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #1a1a2e;
+      --card-bg: #f0f0f5;
+      --accent: #4361ee;
+      --accent-hover: #3a56d4;
+      --border: #d1d1e0;
+      --shadow: rgba(0, 0, 0, 0.08);
+      --highlight-bg: #ffe066;
+      --highlight-text: #1a1a2e;
+    }
+
+    [data-theme="dark"] {
+      --bg: #1a1a2e;
+      --text: #e0e0f0;
+      --card-bg: #16213e;
+      --accent: #4cc9f0;
+      --accent-hover: #3ab8df;
+      --border: #2a2a4a;
+      --shadow: rgba(0, 0, 0, 0.3);
+      --highlight-bg: #f0a500;
+      --highlight-text: #1a1a2e;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      transition: background 0.3s, color 0.3s;
+      padding: 2rem;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .toolbar label {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    input.keyword {
+      flex: 1;
+      min-width: 200px;
+      padding: 0.5rem 0.8rem;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      font-size: 1rem;
+      background: var(--card-bg);
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s, background 0.3s, color 0.3s;
+    }
+
+    input.keyword:focus {
+      border-color: var(--accent);
+    }
+
+    .match-count {
+      font-size: 0.85rem;
+      opacity: 0.7;
+      white-space: nowrap;
+    }
+
+    .doc-content {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 2px 8px var(--shadow);
+      transition: background 0.3s, border-color 0.3s;
+      line-height: 1.8;
+    }
+
+    .doc-content h1 {
+      font-size: 1.6rem;
+      margin-bottom: 1rem;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 0.5rem;
+    }
+
+    .doc-content h2 {
+      font-size: 1.25rem;
+      margin: 1.5rem 0 0.5rem;
+    }
+
+    .doc-content p {
+      margin-bottom: 1rem;
+      opacity: 0.9;
+    }
+
+    .doc-content code {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 0.15em 0.4em;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+
+    .doc-content pre {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      overflow-x: auto;
+      margin-bottom: 1rem;
+    }
+
+    .doc-content pre code {
+      background: none;
+      border: none;
+      padding: 0;
+    }
+
+    mark.highlight {
+      background: var(--highlight-bg);
+      color: var(--highlight-text);
+      border-radius: 2px;
+      padding: 0 1px;
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <label for="keywordInput">🔍 Keyword:</label>
+    <input type="text" class="keyword" id="keywordInput" placeholder="Type to highlight matches…">
+    <span class="match-count" id="matchCount"></span>
+  </div>
+
+  <div class="doc-content" id="docContent">
+    <h1 id="docTitle">Documentation</h1>
+
+    <h2>Overview</h2>
+    <p>This documentation provides a comprehensive guide to using the platform. Whether you are a beginner or an experienced developer, you will find useful information to help you build powerful applications.</p>
+
+    <h2>Installation</h2>
+    <p>To get started, install the package using your preferred package manager. The installation process is straightforward and takes only a few minutes.</p>
+    <pre><code>npm install @platform/core @platform/cli</code></pre>
+    <p>After installation, verify everything is working by running the following command in your terminal:</p>
+    <pre><code>npx platform --version</code></pre>
+
+    <h2>Configuration</h2>
+    <p>The configuration file allows you to customize the behavior of the platform. You can define themes, plugins, and environment-specific settings. The configuration supports both JSON and YAML formats.</p>
+    <p>Key configuration options include:</p>
+    <p><code>theme</code> — Controls the visual appearance of the application. Choose from built-in themes or create your own custom theme.</p>
+    <p><code>plugins</code> — Extend functionality through the plugin system. Plugins can hook into lifecycle events and modify behavior.</p>
+    <p><code>environment</code> — Define environment variables and deployment targets. Supports development, staging, and production configurations.</p>
+
+    <h2>API Reference</h2>
+    <p>The API provides a set of methods for interacting with the platform programmatically. All methods return Promises and support both async/await and callback patterns.</p>
+    <p>The <code>initialize()</code> method sets up the platform instance with the provided configuration. It must be called before any other API method.</p>
+    <p>The <code>render()</code> method takes a component tree and renders it to the specified target element. It supports server-side rendering and hydration.</p>
+    <p>The <code>destroy()</code> method cleans up all resources, removes event listeners, and unmounts the application from the DOM.</p>
+
+    <h2>Deployment</h2>
+    <p>Deploying your application is simple and flexible. The platform supports multiple deployment targets including static hosting, serverless functions, and containerized environments. Use the built-in CLI command to build and deploy in a single step.</p>
+    <pre><code>npx platform deploy --target production</code></pre>
+    <p>For advanced deployment scenarios, refer to the deployment guide which covers custom build pipelines, environment variables, and rollback strategies.</p>
+  </div>
+
+  <script>
+    (function () {
+      const keywordInput = document.querySelector('input.keyword');
+      const docContent = document.getElementById('docContent');
+      const matchCountEl = document.getElementById('matchCount');
+
+      // Store original text nodes for restoration
+      let originalHTML = docContent.innerHTML;
+
+      /**
+       * Remove all existing highlights and restore original text content.
+       */
+      function clearHighlights() {
+        // Find all mark.highlight elements and unwrap them
+        const marks = docContent.querySelectorAll('mark.highlight');
+        marks.forEach(function (mark) {
+          const parent = mark.parentNode;
+          while (mark.firstChild) {
+            parent.insertBefore(mark.firstChild, mark);
+          }
+          parent.removeChild(mark);
+          // Normalize to merge adjacent text nodes
+          parent.normalize();
+        });
+      }
+
+      /**
+       * Highlight all occurrences of keyword in the doc content using the Range API.
+       * Returns the number of matches found.
+       */
+      function highlightKeyword(keyword) {
+        clearHighlights();
+
+        if (!keyword || keyword.length === 0) {
+          matchCountEl.textContent = '';
+          return 0;
+        }
+
+        const lowerKeyword = keyword.toLowerCase();
+        let matchCount = 0;
+
+        // Walk through all text nodes in docContent
+        const walker = document.createTreeWalker(
+          docContent,
+          NodeFilter.SHOW_TEXT,
+          null,
+          false
+        );
+
+        const textNodes = [];
+        let node;
+        while (node = walker.nextNode()) {
+          textNodes.push(node);
+        }
+
+        // Process each text node
+        textNodes.forEach(function (textNode) {
+          const text = textNode.textContent;
+          const lowerText = text.toLowerCase();
+          let startIndex = 0;
+
+          // Find all occurrences in this text node
+          while (true) {
+            const index = lowerText.indexOf(lowerKeyword, startIndex);
+            if (index === -1) break;
+
+            // Use Range API to select the matched text
+            const range = document.createRange();
+            range.setStart(textNode, index);
+            range.setEnd(textNode, index + keyword.length);
+
+            // Create highlight element
+            const mark = document.createElement('mark');
+            mark.className = 'highlight';
+
+            // Wrap the range content with the mark element
+            range.surroundContents(mark);
+
+            matchCount++;
+
+            // After surroundContents, the text node is split.
+            // We need to continue searching in the remaining text after the mark.
+            // The textNode now only contains text before the match.
+            // The text after the match is in mark.nextSibling.
+            const afterMark = mark.nextSibling;
+            if (afterMark && afterMark.nodeType === Node.TEXT_NODE) {
+              // Continue searching in the remaining text
+              const remainingText = afterMark.textContent;
+              const lowerRemaining = remainingText.toLowerCase();
+              let nextIndex = lowerRemaining.indexOf(lowerKeyword);
+
+              while (nextIndex !== -1) {
+                const range2 = document.createRange();
+                range2.setStart(afterMark, nextIndex);
+                range2.setEnd(afterMark, nextIndex + keyword.length);
+
+                const mark2 = document.createElement('mark');
+                mark2.className = 'highlight';
+                range2.surroundContents(mark2);
+
+                matchCount++;
+
+                const afterMark2 = mark2.nextSibling;
+                if (afterMark2 && afterMark2.nodeType === Node.TEXT_NODE) {
+                  // Update references to continue searching
+                  const remainingText2 = afterMark2.textContent;
+                  const lowerRemaining2 = remainingText2.toLowerCase();
+                  nextIndex = lowerRemaining2.indexOf(lowerKeyword);
+                  // We need to reassign for the loop but since we can't reassign afterMark in forEach,
+                  // we break and handle via recursion-like approach below
+                  break;
+                } else {
+                  break;
+                }
+              }
+            }
+
+            break; // Break outer while since surroundContents splits the node
+          }
+        });
+
+        // Second pass: handle any remaining matches that were missed due to node splitting
+        // Re-walk to catch all
+        clearHighlights();
+        matchCount = 0;
+
+        const walker2 = document.createTreeWalker(
+          docContent,
+          NodeFilter.SHOW_TEXT,
+          null,
+          false
+        );
+
+        const textNodes2 = [];
+        while (node = walker2.nextNode()) {
+          textNodes2.push(node);
+        }
+
+        textNodes2.forEach(function (textNode) {
+          highlightInNode(textNode, keyword, lowerKeyword, function () { matchCount++; });
+        });
+
+        matchCountEl.textContent = matchCount > 0
+          ? matchCount + ' match' + (matchCount !== 1 ? 'es' : '')
+          : 'No matches';
+
+        return matchCount;
+      }
+
+      /**
+       * Recursively highlight keyword in a single text node using Range API.
+       */
+      function highlightInNode(textNode, keyword, lowerKeyword, onMatch) {
+        const text = textNode.textContent;
+        const lowerText = text.toLowerCase();
+        const index = lowerText.indexOf(lowerKeyword);
+
+        if (index === -1) return;
+
+        // Create a Range for the matched portion
+        const range = document.createRange();
+        range.setStart(textNode, index);
+        range.setEnd(textNode, index + keyword.length);
+
+        // Create the highlight wrapper
+        const mark = document.createElement('mark');
+        mark.className = 'highlight';
+
+        // Use Range API surroundContents to wrap the match
+        range.surroundContents(mark);
+        onMatch();
+
+        // After surroundContents, the text after the match is in mark.nextSibling
+        const afterNode = mark.nextSibling;
+        if (afterNode && afterNode.nodeType === Node.TEXT_NODE) {
+          highlightInNode(afterNode, keyword, lowerKeyword, onMatch);
+        }
+      }
+
+      // Listen for input events on the keyword field
+      keywordInput.addEventListener('input', function () {
+        highlightKeyword(this.value.trim());
+      });
+
+      // Listen for theme changes from parent window via postMessage
+      window.addEventListener('message', function (event) {
+        if (event.data && event.data.type === 'theme-change') {
+          document.documentElement.setAttribute('data-theme', event.data.theme);
+        }
+      });
+
+      // Set page title from URL params
+      const params = new URLSearchParams(window.location.search);
+      const title = params.get('title');
+      if (title) {
+        document.getElementById('docTitle').textContent = title;
+        document.title = title + ' — Documentation';
+      }
+    })();
+  </script>
+</body>
+</html>

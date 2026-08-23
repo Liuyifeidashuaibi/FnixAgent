@@ -1,0 +1,61 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "IBM__mcp-context-forge-3453",
+  "prompt": "## 🔗 Related Issue\r\nCloses #3401\r\n\r\n---\r\n\r\n## 📝 Summary\r\n\r\nSQLite stores `datetime` values without timezone info (naive datetimes), while PostgreSQL preserves timezone-aware datetimes. This caused a `TypeError` when comparing a naive `locked_until` value against the timezone-aware result of `utc_now()`, which silently broke the Admin UI users list whenever any user had a non-null `locked_until` — showing zero users instead of the full list.\r\n\r\n**Root cause:** `is_account_locked()` in `db.py` was comparing `utc_now()` (timezone-aware) directly against `self.locked_until` (naive on SQLite), raising a `TypeError` that propagated up and caused the user list to render empty.\r\n\r\n**Fix:**\r\n- `EmailUser.is_account_locked()` now normalises a naive `locked_until` to UTC before comparison, making it safe on both SQLite and PostgreSQL.\r\n- `admin.py` and `schemas.py` now delegate lock status to `user.is_account_locked()` instead of duplicating the comparison inline — eliminating the two divergent call sites that had the same bug.\r\n\r\n---\r\n\r\n## 🏷️ Type of Change\r\n- [X] Bug fix\r\n- [ ] Feature / Enhancement\r\n- [ ] Documentation\r\n- [ ] Refactor\r\n- [ ] Chore (deps, CI, tooling)\r\n\r\n---\r\n\r\n## 🧪 Verification\r\n\r\n| Check                     | Command         | Status |\r\n|---------------------------|-----------------|--------|\r\n| Lint suite                | `make lint`     |        |\r\n| Unit tests                | `make test`     |        |\r\n| Coverage ≥ 80%            | `make coverage` |        |\r\n\r\n---\r\n\r\n## ✅ Checklist\r\n- [✅] Code formatted (`make black isort pre-commit`)\r\n- [✅] Tests added/updated for changes\r\n- [ ] Documentation updated (if applicable)\r\n- [✅] No secrets or credentials committed\r\n\r\n---\r\n\r\n## 📓 Notes\r\n\r\n**Affected files:**\r\n- `mcpgateway/db.py` — `is_account_locked()` normalises naive datetimes from SQLite before comparison\r\n- `mcpgateway/admin.py` — `_render_user_card_html` uses `user.is_account_locked()` instead of inline comparison\r\n- `mcpgateway/schemas.py` — `EmailUserResponse.from_email_user()` uses `user.is_account_locked()` instead of inline comparison\r\n- `tests/unit/mcpgateway/test_db.py` — new tests for naive and aware datetime paths in `is_account_locked()`\r\n- `tests/unit/mcpgateway/test_admin.py` — mock objects updated with `is_account_locked` method\r\n\r\n<img width=\"1859\" height=\"331\" alt=\"Admin UI users list previously rendered empty when any user had a lockout record in SQLite\" src=\"https://github.com/user-attachments/assets/84519df0-06e2-428d-a258-a707dbbf2cf8\" />",
+  "status": "failure",
+  "failure_type": "mcp_call_error",
+  "failure_evidence": "工具失败率100%",
+  "final_response": "由于沙箱环境的安全限制，我们无法直接通过执行命令来运行测试或检查覆盖率。作为替代方案，你可以手动在本地环境中运行这些验证步骤：\n\n1. 运行 Lint 套件：\n   ```bash\n   make lint\n   ```\n\n2. 运行单元测试：\n   ```bash\n   make test\n   ```\n\n3. 检查覆盖率是否达到或超过 80%：\n   ```bash\n   make coverage\n   ```\n\n请在你的本地开发环境中执行上述命令，并确保所有检查都通过。\n\n如果你需要进一步的帮助，例如如何设置本地开发环境或者解释如何阅读测试和覆盖率报告，请告诉我。否则，一旦你确认这些步骤成功完成，你就可以提交这个修复了。",
+  "steps": [
+    "Step 0 | 思考: 根据提供的信息，你已经修复了由于 `datetime` 的时区问题导致的错误，并且更新了相关的测试。现在需要验证这些改动是否解决了问题并且没有引入新的问题。让我们来执行你所列出的验证步骤：\n\n1. 运... | 工具 ✗ run_command({\"command\": \"make lint\", \"cwd\": \"E:\\\\FNIX\\\\FnixAge) | 耗时: 9506ms, tokens: 3640",
+    "Step 0 | 思考: 根据提供的信息，你已经修复了由于 `datetime` 的时区问题导致的错误，并且更新了相关的测试。现在需要验证这些改动是否解决了问题并且没有引入新的问题。让我们来执行你所列出的验证步骤：\n\n1. 运... | 工具 ✗ run_command({\"command\": \"make test\", \"cwd\": \"E:\\\\FNIX\\\\FnixAge) | 耗时: 9507ms, tokens: 3640",
+    "Step 0 | 思考: 根据提供的信息，你已经修复了由于 `datetime` 的时区问题导致的错误，并且更新了相关的测试。现在需要验证这些改动是否解决了问题并且没有引入新的问题。让我们来执行你所列出的验证步骤：\n\n1. 运... | 工具 ✗ run_command({\"command\": \"make coverage\", \"cwd\": \"E:\\\\FNIX\\\\Fni) | 耗时: 9507ms, tokens: 3640",
+    "Step 1 | 思考: 看起来在尝试运行 `make` 命令时遇到了限制，因为当前环境不允许执行 `powershell` 或其他可能的系统命令。这可能是由于安全策略或沙箱配置所致。\n\n考虑到这个限制，我们可以尝试使用 Py... | 工具 ✗ run_command({\"command\": \"pytest\", \"cwd\": \"E:\\\\FNIX\\\\FnixAgent\\) | 耗时: 7992ms, tokens: 4049",
+    "Step 1 | 思考: 看起来在尝试运行 `make` 命令时遇到了限制，因为当前环境不允许执行 `powershell` 或其他可能的系统命令。这可能是由于安全策略或沙箱配置所致。\n\n考虑到这个限制，我们可以尝试使用 Py... | 工具 ✗ run_command({\"command\": \"coverage run -m pytest && coverage re) | 耗时: 7993ms, tokens: 4049",
+    "Step 2 | 思考: 由于沙箱环境的安全限制，我们无法直接通过执行命令来运行测试或检查覆盖率。作为替代方案，你可以手动在本地环境中运行这些验证步骤：\n\n1. 运行 Lint 套件：\n   ```bash\n   make l... | 耗时: 6708ms, tokens: 4276"
+  ],
+  "tool_calls": [
+    {
+      "step": 1,
+      "tool": "run_command",
+      "args": {},
+      "success": false,
+      "output_preview": "[失败] 执行失败: 禁止执行危险命令 `powershell`。\n沙箱环境不允许执行此系统命令。\n"
+    },
+    {
+      "step": 2,
+      "tool": "run_command",
+      "args": {},
+      "success": false,
+      "output_preview": "[失败] 执行失败: 禁止执行危险命令 `powershell`。\n沙箱环境不允许执行此系统命令。\n"
+    },
+    {
+      "step": 3,
+      "tool": "run_command",
+      "args": {},
+      "success": false,
+      "output_preview": "[失败] 执行失败: 禁止执行危险命令 `powershell`。\n沙箱环境不允许执行此系统命令。\n"
+    },
+    {
+      "step": 4,
+      "tool": "run_command",
+      "args": {},
+      "success": false,
+      "output_preview": "[失败] 执行失败: 禁止执行危险命令 `powershell`。\n沙箱环境不允许执行此系统命令。\n"
+    },
+    {
+      "step": 5,
+      "tool": "run_command",
+      "args": {},
+      "success": false,
+      "output_preview": "[失败] 执行失败: 禁止执行危险命令 `powershell`。\n沙箱环境不允许执行此系统命令。\n"
+    }
+  ],
+  "files_written": [],
+  "total_tokens": 11965,
+  "duration_ms": 24219.00000000005,
+  "error": "",
+  "judge_method": "heuristic",
+  "started_at": 1787386626.3321714,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-final-20260822\\workspaces\\prototypebench__IBM__mcp-context-forge-3453__bed183"
+}

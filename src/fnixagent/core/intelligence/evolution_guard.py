@@ -51,6 +51,7 @@ from enum import Enum
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
+_logger = logger
 
 # ============================================================
 # 安全等级和信号
@@ -584,7 +585,7 @@ class RollbackManager:
             try:
                 self._snapshots = json.loads(snap_file.read_text(encoding="utf-8"))
             except Exception:
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
 
     def _save_snapshots(self):
         """持久化快照"""

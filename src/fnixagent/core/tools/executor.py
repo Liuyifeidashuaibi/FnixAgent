@@ -22,6 +22,7 @@
 
 from __future__ import annotations
 
+import logging
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -46,6 +47,9 @@ from fnixagent.core.types import (
     ToolPermission,
     ToolResult,
 )
+
+_logger = logging.getLogger(__name__)
+
 
 
 class ToolExecutor:
@@ -123,7 +127,7 @@ class ToolExecutor:
                 if result is not None:
                     return result
             except Exception:
-                pass  # Hook 异常不阻断主流程
+                _logger.debug('Unhandled exception', exc_info=True)  # Hook 异常不阻断主流程
         return None
 
     def _run_after_hooks(self, call: ToolCall, result: ToolResult) -> ToolResult:
@@ -134,7 +138,7 @@ class ToolExecutor:
                 if modified is not None:
                     result = modified
             except Exception:
-                pass  # Hook 异常不阻断主流程
+                _logger.debug('Unhandled exception', exc_info=True)  # Hook 异常不阻断主流程
         return result
 
     # -- 执行器选择(P0-05) ------------------------------------------------
@@ -167,7 +171,7 @@ class ToolExecutor:
 
             trace = get_provider().get_current_trace()
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
 
         if trace is not None:
             from fnixagent.core.observability.tracing import ToolSpanData
@@ -312,7 +316,7 @@ class ToolExecutor:
                             tool_name=call.name, duration_seconds=duration_ms / 1000, success=True
                         )
                     except Exception:
-                        pass
+                        _logger.debug('Unhandled exception', exc_info=True)
                     # P0-4: 成功时更新 ToolCall 状态
                     call.state = ToolCallState.SUCCESS
                     result = ToolResult(
@@ -335,7 +339,7 @@ class ToolExecutor:
 
                         record_tool_error(tool_name=call.name, error_type="timeout")
                     except Exception:
-                        pass
+                        _logger.debug('Unhandled exception', exc_info=True)
                     # 超时可重试:检查 retry_policy
                     if retry_policy is not None and retry_policy.should_retry(last_error, attempt):
                         delay = retry_policy.compute_delay(attempt)
@@ -359,7 +363,7 @@ class ToolExecutor:
 
                         record_tool_error(tool_name=call.name, error_type=type(exc).__name__)
                     except Exception:
-                        pass
+                        _logger.debug('Unhandled exception', exc_info=True)
                     # 异常可重试:检查 retry_policy
                     if retry_policy is not None and retry_policy.should_retry(exc, attempt):
                         delay = retry_policy.compute_delay(attempt)

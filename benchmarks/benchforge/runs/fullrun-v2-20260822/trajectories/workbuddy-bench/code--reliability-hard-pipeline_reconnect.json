@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "code--reliability-hard-pipeline_reconnect",
+  "prompt": "redis pipeline 遇到连接断开后状态有点乱，有时 watch 还残留，有时命令被重复执行。麻烦把 reconnect 后可安全重放和不能重放的情况分清楚，执行完也要清理 pipeline 状态。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 405.99999999994907,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336326.4449623,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\workbuddy-bench__code--reliability-hard-pipeline_reconnect__0e7efc"
+}

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentation Viewer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        .header {
+            background: #333;
+            color: #fff;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .header h1 {
+            margin-bottom: 10px;
+        }
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .controls label {
+            font-weight: bold;
+            color: #ccc;
+        }
+        #address {
+            padding: 8px 12px;
+            font-size: 14px;
+            border: 1px solid #555;
+            border-radius: 4px;
+            background: #444;
+            color: #fff;
+            min-width: 250px;
+        }
+        .content-wrapper {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            overflow: hidden;
+            background: #fff;
+        }
+        #content {
+            width: 100%;
+            height: 70vh;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Documentation Viewer</h1>
+        <div class="controls">
+            <label for="address">Address:</label>
+            <select id="address">
+                <option value="docs/intro.html" selected>docs/intro.html</option>
+                <option value="docs/javascript.html">docs/javascript.html</option>
+                <option value="docs/css.html">docs/css.html</option>
+                <option value="docs/html.html">docs/html.html</option>
+                <option value="docs/nodejs.html">docs/nodejs.html</option>
+            </select>
+        </div>
+    </div>
+    <div class="content-wrapper">
+        <iframe id="content" src="docs/intro.html"></iframe>
+    </div>
+    <script>
+        document.getElementById('address').addEventListener('change', function() {
+            document.getElementById('content').src = this.value;
+        });
+    </script>
+</body>
+</html>

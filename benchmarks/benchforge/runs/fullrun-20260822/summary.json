@@ -1,0 +1,77 @@
+{
+  "run_id": "20260822-021133",
+  "model": "configured-model",
+  "started_at": 1787332293.1177115,
+  "finished_at": 1787332469.0927713,
+  "totals": {
+    "total": 1406,
+    "success": 15,
+    "failure": 1391,
+    "fetch_error": 0,
+    "success_rate": 0.0107,
+    "failure_type_counts": {
+      "incomplete_output": 940,
+      "requirement_misunderstanding": 451
+    }
+  },
+  "total_tokens": 2540339,
+  "note": "",
+  "datasets": {
+    "web-bench": {
+      "dataset": "web-bench",
+      "total": 684,
+      "success": 15,
+      "failure": 669,
+      "fetch_error": 0,
+      "success_rate": 0.0219,
+      "failure_type_counts": {
+        "incomplete_output": 669
+      }
+    },
+    "workbuddy-bench": {
+      "dataset": "workbuddy-bench",
+      "total": 269,
+      "success": 0,
+      "failure": 269,
+      "fetch_error": 0,
+      "success_rate": 0.0,
+      "failure_type_counts": {
+        "incomplete_output": 269
+      }
+    },
+    "vibe-code-bench": {
+      "dataset": "vibe-code-bench",
+      "total": 30,
+      "success": 0,
+      "failure": 30,
+      "fetch_error": 0,
+      "success_rate": 0.0,
+      "failure_type_counts": {
+        "requirement_misunderstanding": 30
+      }
+    },
+    "prototypebench": {
+      "dataset": "prototypebench",
+      "total": 123,
+      "success": 0,
+      "failure": 123,
+      "fetch_error": 0,
+      "success_rate": 0.0,
+      "failure_type_counts": {
+        "requirement_misunderstanding": 121,
+        "incomplete_output": 2
+      }
+    },
+    "swe-bench-lite": {
+      "dataset": "swe-bench-lite",
+      "total": 300,
+      "success": 0,
+      "failure": 300,
+      "fetch_error": 0,
+      "success_rate": 0.0,
+      "failure_type_counts": {
+        "requirement_misunderstanding": 300
+      }
+    }
+  }
+}

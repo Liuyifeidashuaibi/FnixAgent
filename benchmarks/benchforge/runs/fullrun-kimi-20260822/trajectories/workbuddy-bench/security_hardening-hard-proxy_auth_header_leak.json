@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "security_hardening-hard-proxy_auth_header_leak",
+  "prompt": "我在接代理和重定向这块时发现 header 处理不够稳，Authorization/Cookie 这类东西可能被带到不该去的地方。麻烦把 proxy header、普通请求 header、跨站 redirect 的边界收紧。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787334456.0171785,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\workbuddy-bench__security_hardening-hard-proxy_auth_header_leak__9be495"
+}

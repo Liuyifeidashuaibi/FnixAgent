@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP Context Forge - Tool Refresh</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; margin: 2rem; }
+        .refresh-btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 0.5rem 0;
+        }
+        .refresh-btn:hover {
+            background-color: #0056b3;
+        }
+        .refresh-btn:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .status {
+            margin-top: 1rem;
+            padding: 0.5rem;
+            border-radius: 4px;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .loading { background-color: #fff3cd; color: #856404; }
+    </style>
+</head>
+<body>
+    <h1>MCP Context Forge</h1>
+    
+    <div id="gateway-section">
+        <h2>Gateway Management</h2>
+        <div class="gateway-item">
+            <h3>Gateway ID: gateway-123</h3>
+            <button class="refresh-btn" 
+                    hx-post="/gateway/gateway-123/refresh/tools" 
+                    hx-target="#tools-status" 
+                    hx-swap="innerHTML">
+                Refresh Tools
+            </button>
+            <div id="tools-status" class="status"></div>
+        </div>
+    </div>
+
+    <div id="tools-section">
+        <h2>Available Tools</h2>
+        <div id="tools-list">
+            <p>Loading tools...</p>
+        </div>
+    </div>
+
+    <script>
+        // Auto-refresh tools list when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            htmx.ajax('GET', '/tools/list', {target: '#tools-list'});
+        });
+    </script>
+</body>
+</html>

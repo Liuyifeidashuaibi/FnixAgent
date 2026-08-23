@@ -1,0 +1,38 @@
+{
+  "id": "edit-002",
+  "title": "函数级缺陷修复",
+  "capability": "file_edit",
+  "difficulty": 2,
+  "tags": [
+    "bug-fix"
+  ],
+  "prompt": "当前目录的 calc.py 中 add(a, b) 的实现有 bug（它在做减法）。请修复为正确的加法，保持函数签名不变，不要新增其他文件。",
+  "setup": {
+    "files": {
+      "calc.py": "def add(a, b):\n    return a - b\n\ndef mul(a, b):\n    return a * b\n"
+    }
+  },
+  "allowed_scope": [
+    "calc.py"
+  ],
+  "checks": [
+    {
+      "function": "command_succeeds",
+      "args": {
+        "command": "python -c \"from calc import add, mul; assert add(2, 3) == 5; assert mul(2, 3) == 6; assert add(-1, 1) == 0\""
+      },
+      "weight": 2.0
+    },
+    {
+      "function": "file_contains",
+      "args": {
+        "path": "calc.py",
+        "pattern": "def add\\("
+      }
+    },
+    {
+      "function": "scope_respected",
+      "args": {}
+    }
+  ]
+}

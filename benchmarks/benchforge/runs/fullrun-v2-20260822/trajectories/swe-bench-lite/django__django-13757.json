@@ -1,0 +1,18 @@
+{
+  "dataset": "swe-bench-lite",
+  "task_id": "django__django-13757",
+  "prompt": "Using __isnull=True on a KeyTransform should not match JSON null on SQLite and Oracle\nDescription\n\t\nThe KeyTransformIsNull lookup borrows the logic from HasKey for isnull=False, which is correct. If isnull=True, the query should only match objects that do not have the key. The query is correct for MariaDB, MySQL, and PostgreSQL. However, on SQLite and Oracle, the query also matches objects that have the key with the value null, which is incorrect.\nTo confirm, edit tests.model_fields.test_jsonfield.TestQuerying.test_isnull_key. For the first assertion, change\n\t\tself.assertSequenceEqual(\n\t\t\tNullableJSONModel.objects.filter(value__a__isnull=True),\n\t\t\tself.objs[:3] + self.objs[5:],\n\t\t)\nto\n\t\tself.assertSequenceEqual(\n\t\t\tNullableJSONModel.objects.filter(value__j__isnull=True),\n\t\t\tself.objs[:4] + self.objs[5:],\n\t\t)\nThe test previously only checks with value__a which could not catch this behavior because the value is not JSON null.\n",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 359.00000000037835,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336343.6516893,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\swe-bench-lite__django__django-13757__10ac48"
+}

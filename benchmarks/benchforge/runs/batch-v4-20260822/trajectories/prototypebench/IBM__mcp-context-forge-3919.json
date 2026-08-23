@@ -1,0 +1,36 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "IBM__mcp-context-forge-3919",
+  "prompt": "<!--\r\nFor specialized templates, append to your PR URL:\r\n  ?template=bug_fix.md   - Bug fixes\r\n  ?template=feature.md   - New features\r\n  ?template=docs.md      - Documentation\r\n  ?template=plugin.md    - New plugins\r\n\r\nExample: https://github.com/IBM/mcp-context-forge/compare/main...your-branch?expand=1&template=bug_fix.md\r\n-->\r\n\r\n## 🔗 Related Issue\r\nCloses #3799\r\n\r\n---\r\n\r\n## 📝 Summary\r\n\r\nFixes a security gap in the two-layer RBAC model where session-token team narrowing (Layer 1 / visibility) was not enforced in permission checks (Layer 2 / RBAC).\r\n\r\n**Problem:** When `check_any_team=True`, `PermissionService.check_permission()` aggregated permissions from ALL of a user's team-scoped roles, ignoring the `token_teams` narrowing applied at Layer 1. This allowed a session narrowed to team A to satisfy RBAC checks using roles the user holds in team B.\r\n\r\n**Example scenario:**\r\n- User has `developer` role in team A (`tools.read`, `tools.execute`)\r\n- User has `team_admin` role in team B (`teams.*`, `tools.create`, etc.)\r\n- User creates session narrowed to team A via JWT `teams: [\"A\"]`\r\n- **Before:** Layer 1 scoped to team A, but Layer 2 granted `teams.*` from team B\r\n- **After:** Both layers correctly restricted to team A permissions only\r\n\r\n**Solution:** Filter team-scoped roles in `_get_user_roles()` to only include roles from teams specified in `token_teams` when `include_all_teams=True` and `token_teams` is non-empty. Updated cache key generation to prevent cross-contamination between different narrowing scopes.\r\n\r\n---\r\n\r\n## 🏷️ Type of Change\r\n- [ ] Bug fix\r\n- [x] Feature / Enhancement\r\n- [ ] Documentation\r\n- [ ] Refactor\r\n- [ ] Chore (deps, CI, tooling)\r\n- [ ] Other (describe below)\r\n\r\n---\r\n\r\n## 🧪 Verification\r\n\r\n| Check                     | Command         | Status |\r\n|---------------------------|-----------------|--------|\r\n| Lint suite                | `make lint`     |    Passed ✅    |\r\n| Unit tests                | `make test`     |     Passed ✅   |\r\n| Coverage ≥ 80%            | `make coverage` |    Passed ✅    |\r\n\r\n---\r\n\r\n## ✅ Checklist\r\n- [x] Code formatted (`make black isort pre-commit`)\r\n- [x] Tests added/updated for changes\r\n- [x] Documentation updated (if applicable)\r\n- [x] No secrets or credentials committed\r\n\r\n---\r\n\r\n## 📓 Notes\r\n\r\n**Changes Made**\r\n`mcpgateway/services/permission_service.py`:\r\n\r\n1. `get_user_permissions()` (line 212):\r\n- Added `token_teams: Optional[List[str]] = None` parameter\r\n- Updated docstring to document Layer 2 enforcement behavior\r\n- Modified cache key generation (lines 241-244) to include `token_teams` for proper isolation\r\n- Pass `token_teams` to `_get_user_roles()` (line 253)\r\n\r\n2. `_get_user_roles()` (line 461):\r\n- Added `token_teams: Optional[List[str]] = None` parameter\r\n- Updated docstring to explain narrowing enforcement\r\n- Added filtering logic (lines 505-512) to restrict team-scoped roles when `include_all_teams=True` and `token_teams` is non-empty\r\n3. `check_permission()` (line 134):\r\n- Pass `token_teams=token_teams` to `get_user_permissions()`\r\n\r\n`tests/unit/mcpgateway/services/test_permission_service_token_narrowing.py` (NEW):\r\nCreated comprehensive unit test suite with 16 tests covering:\r\n\r\n**1. Cache Key Generation (4 tests):**\r\n- Cache key includes `token_teams` to prevent cross-contamination\r\n- Different `token_teams` produce different cache keys\r\n- Token teams are sorted in cache key for consistency\r\n- Un-narrowed sessions (`token_teams=None`) use base cache key\r\n\r\n**2. Role Filtering (4 tests):**\r\n- `_get_user_roles()` filters by `token_teams` when narrowed\r\n- No filtering when `token_teams` is None (un-narrowed)\r\n- No filtering when `token_teams` is empty list (public-only)\r\n- Global team roles (`scope_id=None`) preserved when narrowed\r\n\r\n**3. End-to-End Permission Checks (8 tests):**\r\n- Narrowed session restricts to `token_teams` only\r\n- Un-narrowed session uses all team roles\r\n- Public-only token has no team permissions\r\n- Admin bypass unaffected by narrowing\r\n- Public-only blocks `admin.*` even for admin users\r\n- Multiple teams in `token_teams` aggregates from all specified\r\n- Specific `team_id` overrides `token_teams`\r\n\r\nTest Results: All 16 new tests pass ✅",
+  "status": "infra_skip",
+  "failure_type": "",
+  "failure_evidence": "基础设施错误(LLM 配额/鉴权)，待配额恢复后重跑: LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-2026-05-20): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"us",
+  "final_response": "",
+  "steps": [
+    "Step 0 | 思考: I'll implement the security fix for the two-layer RBAC model. Let me start by examining the existing... | 工具 ✗ read_file({\"file_path\": \"mcpgateway/services/permission_serv) | 耗时: 1342ms, tokens: 3797",
+    "Step 1 | 工具 ✓ glob({\"pattern\": \"**/permission_service.py\"}) | 耗时: 825ms, tokens: 3813"
+  ],
+  "tool_calls": [
+    {
+      "step": 1,
+      "tool": "read_file",
+      "args": {},
+      "success": false,
+      "output_preview": "[失败] 文件不存在: mcpgateway/services/permission_service.py"
+    },
+    {
+      "step": 2,
+      "tool": "glob",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'count': 0, 'pattern': '**/permission_service.py'})\n(无匹配结果)"
+    }
+  ],
+  "files_written": [],
+  "total_tokens": 7610,
+  "duration_ms": 2200.6809000013163,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-2026-05-20): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787382511.1239152,
+  "workspace": "benchmarks\\benchforge\\runs\\batch-v4-20260822\\workspaces\\prototypebench__IBM__mcp-context-forge-3919__271eba"
+}

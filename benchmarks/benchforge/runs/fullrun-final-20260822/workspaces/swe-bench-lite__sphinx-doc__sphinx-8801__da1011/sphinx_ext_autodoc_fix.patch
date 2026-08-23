@@ -1,0 +1,37 @@
+diff --git a/sphinx/ext/autodoc/documenters.py b/sphinx/ext/autodoc/documenters.py
+index 1234567..89abcde 100644
+--- a/sphinx/ext/autodoc/documenters.py
++++ b/sphinx/ext/autodoc/documenters.py
+@@ -123,6 +123,7 @@ class ClassDocumenter(Documenter):
+         # Check if the attribute has a docstring
+         doc = self.get_attr(obj, attr, None)
+         if doc is not None and not inspect.isfunction(doc) and not inspect.ismethod(doc):
++            # Check for inline comments on annotation-only attributes
+             if hasattr(obj, '__dict__') and attr in obj.__dict__:
+                 # This is an instance attribute, check for inline comment
+                 pass
+@@ -130,6 +131,25 @@ class ClassDocumenter(Documenter):
+         # For inherited members, check the source code for inline comments
+         if not hasattr(obj, '__dict__') or attr not in obj.__dict__:
+             # Check parent classes
++            import ast
++            try:
++                # Get source code and parse for annotation-only attributes with inline comments
++                source = inspect.getsource(obj)
++                tree = ast.parse(source)
++                for node in ast.walk(tree):
++                    if isinstance(node, ast.AnnAssign):
++                        if hasattr(node, 'target') and hasattr(node.target, 'id'):
++                            if node.target.id == attr:
++                                # Check if there's an inline comment on this line
++                                lines = source.split('\n')
++                                if (hasattr(node, 'lineno') and 
++                                    node.lineno <= len(lines) and 
++                                    '#:' in lines[node.lineno-1]):
++                                    return True  # Consider as documented
++            except (OSError, TypeError, SyntaxError):
++                pass
++
+         # Original logic for checking docstrings
+         if doc is not None:
+             return True

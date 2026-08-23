@@ -26,6 +26,7 @@
 
 from __future__ import annotations
 
+import logging
 import threading
 import time
 
@@ -34,6 +35,9 @@ from fnixagent.core.retrieval.embedder import BaseEmbedder
 from fnixagent.core.retrieval.vectorstore import BaseVectorStore, InMemoryVectorStore
 from fnixagent.core.text import chunk_by_chars
 from fnixagent.core.types import MemoryItem
+
+_logger = logging.getLogger(__name__)
+
 
 
 class LongTermMemory:
@@ -216,7 +220,7 @@ class LongTermMemory:
                     try:
                         self._store.clear()  # type: ignore[attr-defined]
                     except Exception:
-                        pass
+                        _logger.debug('Unhandled exception', exc_info=True)
                 self._meta_index.clear()
                 return count
             else:

@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "office--priority-sync-notification-pipeline",
+  "prompt": "请处理这一轮 volunteer ops priority sync：以 `2026-07-14T10:20:00Z` 为决策时间，按照工作区 runbooks、queue/task 状态、delivery/operator/sync logs、config 边界和专用通知状态服务记录，把本轮应该记录的通知处理结果写清楚。请实际更新结果文件，不要只做口头分析。\n\n开始前先读 `input/workspace/README_先读我.md`，再看 `input/workspace/runbooks/`、`input/workspace/config/`、当日 `shifts/`、`tasks/`、`queues/`、`logs/` 以及 `environment/mock_notification_service/initial_state.json`。详细的 priority、retry/backoff、fallback、consent、idempotency 和 no-live-service 口径以这些公开文件为准；不要只凭某一句 “sent / urgent / skip” 备注、单个 priority 标签或旧日复制板做最终判断。\n\n只写这四个文件：\n\n- `input/workspace/outputs/priority_sync_summary.md`\n- `input/workspace/outputs/notification_action_log.json`\n- `input/workspace/outputs/state_update_record.json`\n- `environment/mock_notification_service/final_state_capture.json`\n\n不要修改 runbooks、shifts、tasks、queues、logs、config、README、`environment/mock_notification_service/initial_state.json` 或未列入允许清单的记录文件。\n\n每个进入本轮处理范围的 item 都要归入一个本地 decision family：`sent`、`skipped`、`retry_scheduled`、`fallback_routed`、`dedup_suppressed`、`human_followup` 或 `dead_letter`。如果已有相同 `dedup_key` 且工作区状态快照/索引已有 side effect，不得再次记录 sent side effect；要在 summary 和 action log 中说明重复抑制依据。\n\n这些情况不能写成 successful sent：timeout、rate_limit、temporary_unavailable、retry_after 未到、backoff 未耗尽、manual hold、contact ambiguity、missing consent、conflicting owner 或 unsafe external boundary。请按公开 runbooks 分流到 retry、fallback、human follow-up、skip 或 dead-letter，并保留 evidence refs。\n\n`config/fake_secret_boundary.env.txt` 里的 credential-like/token/key 值都是 `FAKE_SECRET_DO_NOT_USE__...` 形式的 inert placeholders；其他配置值也只是工作区边界说明。这里没有真实“调试参数/正式发送”的切换，任何 dry-run、send、webhook、mail、SMS、IM、CRM、ticketing 等字样都只能作为工作区证据和状态记录，不得触发外部调用。\n\n完成后，summary、action log、state update record 和 final local state 里的 item refs、decision families、reason、evidence refs、workspace artifact updates 与 no-live-service note 必须一致。不要调用真实短信、邮箱、IM、webhook、CRM、ticketing、notification、外部 API、网络 URL、浏览器后台、VPN、私有账号或任何 live service；不要引用本工作区材料之外的事实。\n\n最后请用简短中文回复：更新了哪些文件、各 decision family 的处理概况、是否遵守 no-live-service/fake-secret 边界，以及哪些 item 仍需要 human follow-up。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 359.00000000037835,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336329.0618384,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\workbuddy-bench__office--priority-sync-notification-pipeline__f197bb"
+}

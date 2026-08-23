@@ -34,6 +34,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
 logger = logging.getLogger(__name__)
+_logger = logger
 
 # 可选依赖:PyYAML(剧本文件解析)
 try:
@@ -146,7 +147,7 @@ def _audit_playbook(
 
         AuditLogger().log(action=action, detail=detail or {})
     except Exception:
-        pass
+        _logger.debug('Unhandled exception', exc_info=True)
 
 
 # ---------------------------------------------------------------------------
@@ -538,7 +539,7 @@ class PlaybookEngine:
 
                 invalidate_user_permission_cache(int(user_id))
             except Exception:
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
             return {"success": True, "user_id": user_id}
         except Exception as exc:
             return {"success": False, "error": str(exc)}
@@ -554,7 +555,7 @@ class PlaybookEngine:
             for name in mgr.check_rotation():
                 revoked.append(name)
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
         # 记录撤销事件到审计日志(已在 _execute_action 中记录)
         return {"success": True, "scope": scope, "revoked": revoked}
 

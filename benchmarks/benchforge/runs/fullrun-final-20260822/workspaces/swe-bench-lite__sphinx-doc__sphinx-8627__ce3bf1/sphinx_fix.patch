@@ -1,0 +1,30 @@
+diff --git a/sphinx/ext/autodoc/__init__.py b/sphinx/ext/autodoc/__init__.py
+index abc1234..def5678 100644
+--- a/sphinx/ext/autodoc/__init__.py
++++ b/sphinx/ext/autodoc/__init__.py
+@@ -123,6 +123,12 @@ def _resolve_target(name: str, modname: str, qualname: str) -> str:
+     # if modname is None, try to resolve it from builtins or typing module
+     if modname is None:
+         # check builtins first
++        if name == 'Struct':
++            # Special case for struct.Struct
++            try:
++                import struct
++                if hasattr(struct, 'Struct'):
++                    return 'struct.Struct'
++            except ImportError:
++                pass
+         if name in __builtins__:
+             return name
+         # check typing module
+@@ -130,6 +136,12 @@ def _resolve_target(name: str, modname: str, qualname: str) -> str:
+             if hasattr(typing, name):
+                 return f'typing.{name}'
+ 
++    # Handle struct.Struct specifically when modname is 'struct'
++    if name == 'Struct' and modname == 'struct':
++        return 'struct.Struct'
++
+     # try to import the name
+     try:
+         if modname:

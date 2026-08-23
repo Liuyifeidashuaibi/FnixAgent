@@ -1,0 +1,15 @@
+{
+  "name": "bruno-prototype",
+  "version": "0.1.0",
+  "description": "Bruno prototype implementation for BRU-3444 and BRU-3448",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "echo \"No tests yet\""
+  },
+  "keywords": ["bruno", "api", "testing", "cache", "snapshots"],
+  "author": "Bruno Team",
+  "license": "MIT",
+  "dependencies": {}
+}

@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "office--html-report-quadrant-ppt",
+  "prompt": "基于工作区里的这份季度运营材料包，做一页适合高层汇报的四象限 PPT。\n\n需要读取：\n\n- `input/01_青穗街区季度运营报告_源文.html`\n- `input/02_指标与图表数据_工作簿.xlsx`\n- `input/03_chart_bindings.json`\n- `input/04_四象限草稿预览.html`\n- `input/05_修订说明_两轮摘录.md`\n- `input/06_空白四象限版式模板.pptx`\n- `input/07_董事会问题与呈现口径.md`\n\n输出一个新的单页 PPTX：\n\n`output/qingsui_q2_quadrant_board.pptx`\n\n页面要求：\n\n1. 采用一页 16:9 四象限结构，四个象限分别是：服务覆盖与触达、办理效率与积压、资源投入与预算节奏、风险纠偏与下季动作。\n2. 以 HTML 报告为主要内容来源，用 XLSX 和 `chart_bindings.json` 核对指标、图表和来源绑定；草稿预览、两轮修订说明和董事会问题口径用于修订，不要把它们当成定稿清单。\n3. 页面可见文字要像董事会材料：中文短句、标题、标签、必要数值和简短判断即可。不要把工作簿原表、HTML 原段落、JSON 片段、文件名、行号、调试日志或批量 ID 清单堆进正文。\n4. 每个象限都要保留可追溯来源。可以用可见 source chip、speaker notes、shape alt text/name/description 或文档元数据记录 HTML anchor、metric_id 或 chart_id 绑定；需要覆盖 H-117、H-205、H-304、H-402，以及 CH-01、CH-02、CH-03、CH-04。\n5. 注意区分本季事实、旧稿、预测、支撑项和干扰材料；按修订说明处理旧绑定、预测口径、支撑指标和被替换的草稿表述，不要把非本季实绩或背景口径写成当前主结论。\n\n边界：\n\n- 不要修改任何原始输入文件。\n- 只使用材料包内文件，不需要联网，不要使用外部模板、私有服务、账号后台或未提供素材。\n- 不要使用 OCR、VLM、截图识别、图片理解或像素级视觉判断。\n- 只输出可打开的 PPTX 文件，不要输出说明文档、Markdown、PDF、图片或文本摘要。\n\n完成后只简洁说明输出文件路径和是否生成成功。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 375.0,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336328.4808612,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\workbuddy-bench__office--html-report-quadrant-ppt__179ace"
+}

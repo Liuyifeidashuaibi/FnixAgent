@@ -1,0 +1,26 @@
+{
+  "info": {
+    "_postman_id": "67890",
+    "name": "Query API Key Collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "API Key Query Request",
+      "request": {
+        "method": "GET",
+        "url": "https://api.example.com/data",
+        "auth": {
+          "type": "apikey",
+          "apikey": [
+            {
+              "key": "api_key",
+              "value": "{{apiKey}}",
+              "in": "query"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

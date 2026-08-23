@@ -45,7 +45,12 @@ except ImportError as e:
     )
     raise
 
+import logging
+
 import httpx
+
+_logger = logging.getLogger(__name__)
+
 
 # 延迟导入 fnixagent 模块（避免 MCP 子进程启动时硬依赖）
 
@@ -223,7 +228,7 @@ def skill_detail(name: str, workspace: str | None = None) -> str:
             if s.name == name:
                 return s.content
     except Exception:
-        pass
+        _logger.debug('Unhandled exception', exc_info=True)
 
     try:
         from fnixagent.core.skills import SkillLibrary
@@ -235,7 +240,7 @@ def skill_detail(name: str, workspace: str | None = None) -> str:
 
                 return str(asdict(sk))
     except Exception:
-        pass
+        _logger.debug('Unhandled exception', exc_info=True)
 
     return f"skill not found: {name}"
 

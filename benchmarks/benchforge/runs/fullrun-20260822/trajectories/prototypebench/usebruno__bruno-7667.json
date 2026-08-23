@@ -1,0 +1,18 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "usebruno__bruno-7667",
+  "prompt": "### Description\r\n\r\n[JIRA](https://usebruno.atlassian.net/browse/BRU-3008)\r\n\r\nFix graphql doc close button\r\n\r\n#### Contribution Checklist:\r\n\r\n- [ ] **I've used AI significantly to create this pull request**\r\n- [x] **The pull request only addresses one issue or adds one feature.**\r\n- [x] **The pull request does not introduce any breaking changes**\r\n- [x] **I have added screenshots or gifs to help explain the change if applicable.**\r\n- [x] **I have read the [contribution guidelines](https://github.com/usebruno/bruno/blob/main/contributing.md).**\r\n- [x] **Create an issue and link to the pull request.**\r\n\r\n\r\nhttps://github.com/user-attachments/assets/b50742ea-d282-4c46-9156-72f3ec9796ba\r\n\n\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\n## Summary by CodeRabbit\n\n* **Bug Fixes**\n  * Documentation Explorer close control now explicitly sets the docs panel visibility (fixes unreliable toggle behavior) and includes a test target on the close control.\n\n* **Tests**\n  * Added an end-to-end test verifying the Documentation Explorer can be opened and closed during GraphQL request workflows.\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/packages/bruno-app/src/components/RequestTabPanel/index.js b/packag] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 92.9999999998472,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787332462.7356124,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\prototypebench__usebruno__bruno-7667__24b1f2"
+}

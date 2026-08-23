@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "office--fund-product-table-normalize-L3-017",
+  "prompt": "你是产品运营数据整理助理。工作区里已经放好一批合成基金产品资料概要 PDF、内部运营备注、费率导出 workbook、风险等级映射 workbook 和标准 schema。请不要联网，也不要调用基金公司、行情、券商、交易、邮件、IM、外部搜索或任何外部接口；这次只做资料包内静态文档/表格归一，不做基金推荐、产品配置判断、实时查询、目录创建或消息发送。\n请读取 `fund_product_summaries/` 下的四份产品资料概要 PDF、`ops_profile_notes.md`、`raw_fee_table.xlsx`、`risk_codebook.xlsx` 和 `standard_schema.json`，生成一个新的 Excel 工作簿 `output/fund_product_normalized.xlsx`。\n输出 workbook 需要包含四个 sheet：`product_comparison`、`fee_schedule`、`risk_level_mapping`、`exceptions`。\n`product_comparison` 的列依次为 canonical_product_id、canonical_product_name、share_class、product_code、fund_type、operation_mode、open_frequency、min_holding_days、strategy_summary、risk_return_feature_text、standard_risk_level、sales_suitability_bucket、esg_tag_internal、source_trace。\n`fee_schedule` 的列依次为 canonical_product_id、share_class、fee_section、fee_type、investor_group、condition、fee_value、fee_unit、fee_status、charge_party、effective_date、source_trace。\n`risk_level_mapping` 的列依次为 canonical_product_id、share_class、source_risk_label、standard_risk_level、risk_order、sales_suitability_bucket、risk_return_feature_text、mapping_source。\n`exceptions` 的列依次为 exception_id、canonical_product_id、share_class、exception_type、field_name、source_value、resolution_action、source_trace。\n关键口径以 `standard_schema.json` 为准：用 `raw_fee_table.xlsx` 的 `product_aliases` 和内部备注中的别名把来源名称映射到 canonical_product_id + share_class；费用必须保留 sales_fee、operation_fee、comprehensive_fee 的 fee_section 来源；bp/year 按 schema 转成 percent_per_year 数值，固定每笔费用保留为 CNY_per_txn，不收取的申购费写 fee_value=0 且 fee_status=waived。`fee_schedule` 的默认字段也按 schema 填写：sales_fee 的 charge_party 为“销售机构”、effective_date 为“2026-06-01”；operation_fee 的 investor_group 为“全部投资群体”、condition 为“annual_rate”；comprehensive_fee 的 investor_group 为“全部投资群体”、condition 为“annualized_estimate”、charge_party 为“产品资产”、effective_date 为“2026-06-01”。风险等级、risk_order 和 sales_suitability_bucket 必须通过 `risk_codebook.xlsx` 映射；PDF 中的风险收益特征法律表述只进入 risk_return_feature_text，不得单独推断标准风险等级。冲突按 schema 的 conflict_priority 处理：risk_codebook、raw_fee_table 和产品概要中带生效日期的说明优先于陈旧内部备注。管理费或综合费率来源值为空时，不要补猜或用隐藏假设重算，写入 exceptions。渠道优惠只作为 fee_waiver_note 异常提示，不覆盖标准费率。ESG 只可进入 esg_tag_internal，不得混入费用、风险等级或销售适配字段。管理人、托管人、资料查询方式、网址/电话、推荐、配置、实时查询和消息发送等 scoped_out_fields 不写入前三个主表；如需要记录边界，只能在 exceptions 中作为 scoped_out_field 说明。\n\n请读取工作区中的输入文件：`input/fund_product_summaries/anqiao_income_A_summary.pdf`、`input/fund_product_summaries/anqiao_income_C_summary.pdf`、`input/fund_product_summaries/baizhou_growth_A_summary.pdf`、`input/fund_product_summaries/chengyue_balanced_A_summary.pdf`、`input/ops_profile_notes.md`、`input/raw_fee_table.xlsx`、`input/risk_codebook.xlsx`、`input/standard_schema.json`。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 375.0,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336328.3186748,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\workbuddy-bench__office--fund-product-table-normalize-L3-017__cbc776"
+}

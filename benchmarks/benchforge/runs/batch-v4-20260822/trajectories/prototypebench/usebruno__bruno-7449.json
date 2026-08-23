@@ -1,0 +1,37 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "usebruno__bruno-7449",
+  "prompt": "### Description\r\nFixes #2467 partially\r\n[Jira](https://usebruno.atlassian.net/browse/BRU-2749)\r\n\r\n<img width=\"547\" height=\"253\" alt=\"Screenshot 2026-03-16 at 6 35 17 PM\" src=\"https://github.com/user-attachments/assets/13a9b324-b4b0-49c3-b4bb-473957784a78\" />\r\n\r\n\r\nhttps://github.com/user-attachments/assets/3590cdab-24d6-4f25-b92c-4f2112864a14\r\n\r\n\r\n\r\nThis PR introduces two improvements:\r\n\r\n**1. Enhanced ScriptError display with source context and navigation**\r\n\r\nWhen a pre-request, post-response, or test script throws an error, the ScriptError card now shows:\r\n- **Error type and source file** — displays the error class name (e.g. `TypeError`, `ReferenceError`) and the relative path to the file where the error occurred\r\n- **Code snippet with line highlighting** — shows surrounding lines from the source file with the error line highlighted, using block-relative line numbers that match what users see in the CodeMirror editor\r\n- **Stack trace** — formatted and adjusted stack frames for easier debugging\r\n- **Collapsible sections** — error details and stack trace can be expanded/collapsed\r\n\r\nThe error context is computed in the Electron main process (`buildErrorContext`) by:\r\n1. Parsing error location from the stack trace (supporting both Node VM and QuickJS sandboxes)\r\n2. Adjusting line numbers to account for script composition (collection + folder + request scripts)\r\n3. Resolving segment errors to the correct source file (collection.bru, folder.bru, or request.bru)\r\n4. Computing block-relative line numbers so they match the CodeMirror editor (line 1 = start of script block)\r\n\r\nNew files:\r\n- `CodeSnippet` component — reusable code display with line numbers and error highlighting\r\n- `source-context.js` utility — groups and formats error context for display\r\n- `error-formatter.js` — error location parsing, line adjustment, and stack trace formatting\r\n- `collection.js` utilities — functions to find script block start/end lines in `.bru` and `.yml` files\r\n\r\n**2. Remove auto-commenting of untranslated pm commands during import**\r\n\r\nPreviously, when importing a Postman collection, any `pm.*` API calls that couldn't be translated to Bruno equivalents were commented out with `//` prefixes. This was confusing because users couldn't tell which lines were original comments vs auto-disabled code.\r\n\r\nNow untranslated `pm.*` calls are left as-is in the imported script. They will throw clear runtime errors if executed, which is more transparent than silently commenting them out.\r\n\r\n#### Contribution Checklist:\r\n\r\n- [x] **I've used AI significantly to create this pull request**\r\n- [x] **The pull request only addresses one issue or adds one feature.**\r\n- [x] **The pull request does not introduce any breaking changes**\r\n- [ ] **I have added screenshots or gifs to help explain the change if applicable.**\r\n- [x] **I have read the [contribution guidelines](https://github.com/usebruno/bruno/blob/main/contributing.md).**\r\n- [ ] **Create an issue and link to the pull request.**\r\n\r\nNote: Keeping the PR small and focused helps make it easier to review and merge. If you have multiple changes you want to make, please consider submitting them as separate pull requests.\r\n\r\n#### Publishing to New Package Managers\r\n\r\nPlease see [here](../publishing.md) for more information.\r\n\r\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\r\n## Summary by CodeRabbit\r\n\r\n* **New Features**\r\n  * Code snippet viewer with line numbers, multi-hunk support, and error/warning highlighting.\r\n  * Script error UI now shows per-context error cards with source labels, navigable file paths, and expandable stack traces.\r\n  * Script editor tabs now persist across views via central state.\r\n\r\n* **Improvements**\r\n  * Richer error context and more accurate script-to-source mapping; improved script merging and metadata for better error locations.\r\n  * Expanded utility exports for error/line helpers.\r\n\r\n* **Bug Fixes**\r\n  * Preserved Postman-style runtime commands instead of commenting them out.\r\n\r\n* **Tests**\r\n  * Added unit and end-to-end coverage for code snippets, script errors, and source-context utilities.\r\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->",
+  "status": "failure",
+  "failure_type": "mcp_call_error",
+  "failure_evidence": "工具失败率50%",
+  "final_response": "Let me try to fetch the Bruno repository directly from GitHub to understand the codebase structure.",
+  "steps": [
+    "Step 0 | 思考: I need to understand the current state of the workspace and what changes are needed based on this PR... | 工具 ✓ ls({\"path\": \".\"}) | 耗时: 1102ms, tokens: 3717",
+    "Step 1 | 思考: The workspace is empty. I need to understand what this PR is about and implement the changes describ... | 工具 ✗ web_search({\"query\": \"usebruno bruno github BRU-2749 ScriptEr) | 耗时: 7131ms, tokens: 3898",
+    "Step 2 | 思考: Let me try to fetch the Bruno repository directly from GitHub to understand the codebase structure.... | 耗时: 907ms, tokens: 3886"
+  ],
+  "tool_calls": [
+    {
+      "step": 1,
+      "tool": "ls",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'count': 0, 'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\batch-v4-20260822\\\\workspaces\\\\prototypebench__usebruno__bruno-7449__23d22c'})\n(空目录)"
+    },
+    {
+      "step": 2,
+      "tool": "web_search",
+      "args": {},
+      "success": false,
+      "output_preview": "[失败] 搜索失败: "
+    }
+  ],
+  "files_written": [],
+  "total_tokens": 11501,
+  "duration_ms": 9142.98140000028,
+  "error": "",
+  "judge_method": "heuristic",
+  "started_at": 1787382515.889325,
+  "workspace": "benchmarks\\benchforge\\runs\\batch-v4-20260822\\workspaces\\prototypebench__usebruno__bruno-7449__23d22c"
+}

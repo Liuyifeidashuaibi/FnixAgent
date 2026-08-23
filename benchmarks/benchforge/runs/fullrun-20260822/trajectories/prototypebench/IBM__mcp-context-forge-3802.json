@@ -1,0 +1,18 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "IBM__mcp-context-forge-3802",
+  "prompt": "# ✨ Feature / Enhancement PR\r\n\r\n## 🔗 Epic / Issue\r\n\r\nCloses #3765\r\n\r\n---\r\n\r\n## 🚀 Summary (1-2 sentences)\r\nAdds buttons for refreshing an MCP server's tools\r\n\r\n<img width=\"448\" height=\"525\" alt=\"Screenshot 2026-03-20 at 22 29 34\" src=\"https://github.com/user-attachments/assets/eeda9b6b-254a-43f3-9792-8bfe8eed63e4\" />\r\n<img width=\"1471\" height=\"791\" alt=\"Screenshot 2026-03-20 at 23 24 53\" src=\"https://github.com/user-attachments/assets/76a9c8be-59a2-4b3f-bea0-c2b7ed58c9a9\" />\r\n<img width=\"1471\" height=\"793\" alt=\"Screenshot 2026-03-20 at 23 25 18\" src=\"https://github.com/user-attachments/assets/ab3f96db-95af-4217-9c33-fcb0f84e85fd\" />\r\n\r\n\r\n---\r\n\r\n## 🧪 Checks\r\n\r\n- [X] `make lint` passes\r\n- [X] `make test` passes\r\n- [X] CHANGELOG updated (if user-facing)\r\n\r\n---\r\n\r\n## 📓 Notes (optional)\r\nPiggybacks (partially) #3519, to prevent an overclutered actions section\r\n\r\n```mermaid\r\nflowchart TD\r\n    A[Client] -->|POST /gateway/gateway_id/refresh/tools| B(MCPGateway)\r\n    B -->|/tools/list| C[MCP]\r\n    B -->|Response - HTMX| A\r\n```",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/.secrets.baseline b/.secrets.baseline\nindex 77f0f7461..93ed38c86 10] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 79.00000000017826,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787332461.576298,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\prototypebench__IBM__mcp-context-forge-3802__745549"
+}

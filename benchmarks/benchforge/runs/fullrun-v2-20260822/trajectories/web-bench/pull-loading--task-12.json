@@ -1,0 +1,18 @@
+{
+  "dataset": "web-bench",
+  "task_id": "pull-loading--task-12",
+  "prompt": "devices['Pixel 7'] ,Get the offset property of body, scroll down 500px, and scroll to the bottom. Get the offset of div#noticeTxt, the property top is about == 920",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 359.9999999996726,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336299.5499117,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\web-bench__pull-loading--task-12__1cc2eb"
+}

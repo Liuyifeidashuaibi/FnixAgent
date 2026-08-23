@@ -1,0 +1,18 @@
+{
+  "dataset": "web-bench",
+  "task_id": "canvas--task-9",
+  "prompt": "Randomly spawn items in the middle of pipe gaps with item size 20*20. Spawn rate controlled by 'store.randomRate' (default 0.25, variable). Items move with pipes and store in pipe object with properties (x, y, type, collected). Item 'Shield': appears as filled green diamond, grants protective shield effect. When collected, displays spiked gear ring around bird (lineWidth 5, radius 1.5 * birdWidth) and sets 'isProtected' and 'shieldEndTime' in store. Shield provides 5 seconds invincibility, ring flashes during final second. Shield giving the bird invincibility without losing lives. Collecting another Shield while active resets duration to 5 seconds.",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 359.00000000037835,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336252.4364252,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\web-bench__canvas--task-9__b44136"
+}

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Benchforge</title>
+<style>
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  background: #1e1e2e;
+  color: #cdd6f4;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  overflow: hidden;
+}
+
+/* ── Explorer (full-viewport flex container) ── */
+.explorer {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+}
+
+/* ── Left bar (file tree / sidebar) ── */
+.leftbar {
+  width: 300px;
+  min-width: 300px;
+  max-width: 300px;
+  background: #181825;
+  border-right: 1px solid #313244;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+/* ── Editor area ── */
+.editor {
+  flex: 1;
+  background: #1e1e2e;
+  color: #a6adc8;
+  border: none;
+  outline: none;
+  resize: none;
+  padding: 16px 24px;
+  font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  tab-size: 2;
+}
+
+.editor::placeholder {
+  color: #585b70;
+}
+
+/* scrollbar styling */
+.leftbar::-webkit-scrollbar,
+.editor::-webkit-scrollbar {
+  width: 6px;
+}
+
+.leftbar::-webkit-scrollbar-thumb,
+.editor::-webkit-scrollbar-thumb {
+  background: #45475a;
+  border-radius: 3px;
+}
+
+/* section headings inside leftbar */
+.leftbar h3 {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #7f849c;
+  margin-bottom: 8px;
+  margin-top: 16px;
+}
+
+.leftbar h3:first-child {
+  margin-top: 0;
+}
+
+/* file list items */
+.file-list {
+  list-style: none;
+}
+
+.file-list li {
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-list li:hover {
+  background: #313244;
+}
+
+.file-list li.active {
+  background: #45475a;
+}
+
+.file-list li .icon {
+  display: inline-block;
+  width: 16px;
+  margin-right: 4px;
+  text-align: center;
+  opacity: 0.6;
+}
+</style>
+</head>
+<body>
+
+<div class="explorer">
+
+  <!-- ── Left Bar ── -->
+  <aside class="leftbar">
+    <h3>Explorer</h3>
+    <ul class="file-list">
+      <li><span class="icon">📁</span> src/</li>
+      <li style="padding-left: 20px"><span class="icon">📄</span> main.ts</li>
+      <li style="padding-left: 20px"><span class="icon">📄</span> utils.ts</li>
+      <li style="padding-left: 20px"><span class="icon">📄</span> index.html</li>
+      <li><span class="icon">📁</span> components/</li>
+      <li style="padding-left: 20px"><span class="icon">📄</span> Header.vue</li>
+      <li style="padding-left: 20px"><span class="icon">📄</span> Footer.vue</li>
+      <li><span class="icon">📄</span> package.json</li>
+      <li><span class="icon">📄</span> tsconfig.json</li>
+      <li><span class="icon">📄</span> README.md</li>
+    </ul>
+
+    <h3>Search</h3>
+    <input type="text" placeholder="Find in files…"
+           style="width:100%; padding:6px 10px; background:#181825; border:1px solid #313244;
+                  color:#cdd6f4; border-radius:4px; font-size:13px; outline:none;">
+  </aside>
+
+  <!-- ── Editor ── -->
+  <textarea class="editor" spellcheck="false"
+            placeholder="// Start editing here…
+
+import { greet } from './utils';
+
+console.log(greet('world'));"></textarea>
+
+</div>
+
+</body>
+</html>

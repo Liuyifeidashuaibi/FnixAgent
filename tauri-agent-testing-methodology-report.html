@@ -1,0 +1,2012 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tauri 2 + AI Agent 桌面应用测试方法论调研报告</title>
+    <style>
+      :root {
+        --bg: #0f1419;
+        --surface: #1a2027;
+        --surface2: #222b35;
+        --border: #2d3744;
+        --text: #e6edf3;
+        --text-dim: #9aa7b4;
+        --text-mute: #6b7785;
+        --blue: #58a6ff;
+        --green: #3fb950;
+        --yellow: #d29922;
+        --red: #f85149;
+        --purple: #bc8cff;
+        --orange: #ff9e64;
+        --cyan: #39d0d8;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei',
+          sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.75;
+        font-size: 15.5px;
+        -webkit-font-smoothing: antialiased;
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 0 24px 80px;
+      }
+      h1 {
+        font-size: 1.85rem;
+        margin: 48px 0 6px;
+        line-height: 1.3;
+        background: linear-gradient(120deg, var(--blue), var(--purple));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .subtitle {
+        color: var(--text-dim);
+        font-size: 0.95rem;
+        margin-bottom: 8px;
+      }
+      .meta {
+        color: var(--text-mute);
+        font-size: 0.82rem;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 20px;
+        margin-bottom: 32px;
+      }
+      h2 {
+        font-size: 1.4rem;
+        margin: 44px 0 14px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid var(--blue);
+        color: var(--blue);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      h2 .num {
+        background: var(--blue);
+        color: var(--bg);
+        font-size: 0.95rem;
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+      }
+      h3 {
+        font-size: 1.15rem;
+        margin: 28px 0 10px;
+        color: var(--purple);
+      }
+      h4 {
+        font-size: 1rem;
+        margin: 20px 0 8px;
+        color: var(--cyan);
+      }
+      p {
+        margin: 10px 0;
+      }
+      strong {
+        color: var(--orange);
+      }
+      code {
+        background: var(--surface2);
+        padding: 2px 7px;
+        border-radius: 5px;
+        font-size: 0.86em;
+        color: var(--green);
+        font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+      }
+      pre {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 16px 18px;
+        overflow-x: auto;
+        margin: 14px 0;
+        font-size: 0.84rem;
+        line-height: 1.6;
+      }
+      pre code {
+        background: none;
+        padding: 0;
+        color: var(--text);
+        font-size: inherit;
+      }
+      ul,
+      ol {
+        margin: 10px 0 10px 24px;
+      }
+      li {
+        margin: 5px 0;
+      }
+      a {
+        color: var(--blue);
+        text-decoration: none;
+        border-bottom: 1px dotted var(--blue);
+      }
+      a:hover {
+        border-bottom-style: solid;
+      }
+      blockquote {
+        border-left: 3px solid var(--yellow);
+        background: rgba(210, 153, 34, 0.08);
+        padding: 12px 18px;
+        margin: 14px 0;
+        border-radius: 0 8px 8px 0;
+        color: var(--text-dim);
+      }
+      blockquote strong {
+        color: var(--yellow);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 16px 0;
+        font-size: 0.9rem;
+      }
+      th {
+        background: var(--surface2);
+        color: var(--cyan);
+        text-align: left;
+        padding: 10px 14px;
+        border: 1px solid var(--border);
+        font-weight: 600;
+      }
+      td {
+        padding: 9px 14px;
+        border: 1px solid var(--border);
+        vertical-align: top;
+      }
+      tr:nth-child(even) td {
+        background: rgba(255, 255, 255, 0.02);
+      }
+      .tag {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 12px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        margin: 0 3px;
+      }
+      .t-unit {
+        background: rgba(63, 185, 80, 0.15);
+        color: var(--green);
+        border: 1px solid rgba(63, 185, 80, 0.3);
+      }
+      .t-int {
+        background: rgba(88, 166, 255, 0.15);
+        color: var(--blue);
+        border: 1px solid rgba(88, 166, 255, 0.3);
+      }
+      .t-e2e {
+        background: rgba(248, 81, 73, 0.15);
+        color: var(--red);
+        border: 1px solid rgba(248, 81, 73, 0.3);
+      }
+      .t-agent {
+        background: rgba(188, 140, 255, 0.15);
+        color: var(--purple);
+        border: 1px solid rgba(188, 140, 255, 0.3);
+      }
+      .t-static {
+        background: rgba(57, 208, 216, 0.15);
+        color: var(--cyan);
+        border: 1px solid rgba(57, 208, 216, 0.3);
+      }
+      .callout {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-left: 4px solid var(--green);
+        border-radius: 8px;
+        padding: 16px 20px;
+        margin: 18px 0;
+      }
+      .callout.warn {
+        border-left-color: var(--yellow);
+      }
+      .callout.key {
+        border-left-color: var(--purple);
+      }
+      .callout h4 {
+        margin-top: 0;
+      }
+      .src {
+        font-size: 0.8rem;
+        color: var(--text-mute);
+        margin-top: 4px;
+      }
+      .src a {
+        color: var(--text-mute);
+        border-color: var(--text-mute);
+      }
+      .diagram {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 24px;
+        margin: 18px 0;
+        text-align: center;
+      }
+      .ref-list {
+        font-size: 0.88rem;
+      }
+      .ref-list li {
+        margin: 8px 0;
+        color: var(--text-dim);
+      }
+      .toc {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px 26px;
+        margin: 24px 0;
+      }
+      .toc h3 {
+        margin-top: 0;
+        color: var(--cyan);
+      }
+      .toc ol {
+        margin: 8px 0 0 22px;
+      }
+      .toc a {
+        border-bottom: none;
+      }
+      .badge-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin: 12px 0;
+      }
+      hr {
+        border: none;
+        border-top: 1px solid var(--border);
+        margin: 36px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Tauri 2 + AI Agent 桌面应用测试方法论调研报告</h1>
+    <p class="subtitle">Rust 后端 + React 前端 + Python/FastAPI AI Agent 后端的分层测试策略</p>
+    <p class="meta">
+      适用项目：FnixAgent（Tauri 2 + React 19 + Python/FastAPI + LangGraph） · 调研日期：2026-08-21
+      · 来源：Tauri 官方文档 / ISTQB / ISO 25010 / DeepEval / 学术 Benchmark
+    </p>
+
+    <div class="toc">
+      <h3>目录</h3>
+      <ol>
+        <li><a href="#s0">核心结论速览</a></li>
+        <li><a href="#s1">测试金字塔模型：经典金字塔 / Testing Trophy / 蜂巢模型</a></li>
+        <li><a href="#s2">各层测试的具体做法：单元 / 集成 / E2E / 前端 UI</a></li>
+        <li><a href="#s3">Tauri 应用的特殊测试方式</a></li>
+        <li><a href="#s4">AI Agent 应用的专项测试</a></li>
+        <li><a href="#s5">结论：FnixAgent 应该怎么分层测试</a></li>
+        <li><a href="#s6">参考来源</a></li>
+      </ol>
+    </div>
+
+    <!-- ============ 核心结论 ============ -->
+    <h2 id="s0"><span class="num">0</span>核心结论速览</h2>
+
+    <div class="callout key">
+      <h4>三句话结论</h4>
+      <ol>
+        <li>
+          <strong>前端、后端、Agent 评测是三条独立的测试线</strong>，分别验证「UI 渲染与交互」「API
+          契约与业务逻辑」「AI 决策与工具调用质量」，通过<strong>集成测试</strong>在 API
+          边界汇合，而非在 UI 层强行打通。
+        </li>
+        <li>
+          <strong>Agent 评测必须通过 API（FastAPI 端点）进行</strong>，不通过 UI。所有主流
+          Benchmark（SWE-bench、AgentBench、DeepEval）都是 API/CLI 接入——因为 Agent
+          评测需要可复现、可批量、可自动判分，UI 自动化会引入非确定性噪声。
+        </li>
+        <li>
+          <strong>前端 UI 全量 E2E 不是必须的</strong>。开发模式下前端就是 Vite Web
+          服务（localhost），React 组件测试用 vitest + Testing Library 覆盖绝大多数场景；只在「跨
+          Tauri IPC 边界的关键用户流」上用 tauri-driver 做<strong>少量冒烟级 E2E</strong>。
+        </li>
+      </ol>
+    </div>
+
+    <div class="badge-row" style="margin-top: 18px">
+      <span class="tag t-static">静态检查 TypeScript+Clippy+Ruff</span>
+      <span class="tag t-unit">单元测试 vitest / pytest / cargo test</span>
+      <span class="tag t-int">集成测试（主力层）</span>
+      <span class="tag t-agent">Agent 评测 DeepEval（API 接入）</span>
+      <span class="tag t-e2e">E2E tauri-driver（少量冒烟）</span>
+    </div>
+
+    <table>
+      <tr>
+        <th>测试线</th>
+        <th>主要工具</th>
+        <th>测什么</th>
+        <th>接入方式</th>
+        <th>占比建议</th>
+      </tr>
+      <tr>
+        <td><strong>前端</strong></td>
+        <td>vitest + Testing Library</td>
+        <td>组件渲染、交互逻辑、状态管理</td>
+        <td>jsdom（不开浏览器）</td>
+        <td>~30%</td>
+      </tr>
+      <tr>
+        <td><strong>后端 API</strong></td>
+        <td>pytest + httpx</td>
+        <td>端点契约、业务逻辑、错误处理</td>
+        <td>直接调 FastAPI</td>
+        <td>~30%</td>
+      </tr>
+      <tr>
+        <td><strong>Rust 命令</strong></td>
+        <td>cargo test</td>
+        <td>Tauri Command 逻辑、状态管理</td>
+        <td>原生 Rust 测试</td>
+        <td>~10%</td>
+      </tr>
+      <tr>
+        <td><strong>Agent 评测</strong></td>
+        <td>DeepEval / 自建 EvalRunner</td>
+        <td>任务完成度、工具调用、规划质量</td>
+        <td>FastAPI 端点（API）</td>
+        <td>~25%</td>
+      </tr>
+      <tr>
+        <td><strong>E2E 冒烟</strong></td>
+        <td>tauri-driver + WebdriverIO</td>
+        <td>关键用户流、IPC 边界</td>
+        <td>真实 Tauri 应用</td>
+        <td>~5%</td>
+      </tr>
+    </table>
+
+    <!-- ============ 1 测试金字塔 ============ -->
+    <h2 id="s1"><span class="num">1</span>测试金字塔模型</h2>
+
+    <h3>1.1 经典测试金字塔（Mike Cohn, 2009）</h3>
+    <p>
+      Mike Cohn 在《Succeeding with
+      Agile》中提出测试金字塔，将自动化测试分为三层，<strong>每层宽度与测试数量成正比</strong>：
+    </p>
+
+    <div class="diagram">
+      <svg width="420" height="260" viewBox="0 0 420 260">
+        <!-- E2E top -->
+        <polygon points="210,20 250,90 170,90" fill="#f85149" opacity="0.85" />
+        <text x="210" y="65" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">
+          E2E
+        </text>
+        <text x="210" y="80" text-anchor="middle" fill="#fff" font-size="10">~10%</text>
+        <!-- Integration middle -->
+        <polygon points="170,90 250,90 290,170 130,170" fill="#58a6ff" opacity="0.85" />
+        <text x="210" y="135" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">
+          Integration
+        </text>
+        <text x="210" y="152" text-anchor="middle" fill="#fff" font-size="10">~20%</text>
+        <!-- Unit base -->
+        <polygon points="130,170 290,170 330,240 90,240" fill="#3fb950" opacity="0.85" />
+        <text x="210" y="210" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">
+          Unit
+        </text>
+        <text x="210" y="228" text-anchor="middle" fill="#fff" font-size="10">~70%</text>
+        <!-- labels -->
+        <text x="345" y="55" fill="#f85149" font-size="11">少 · 慢 · 贵</text>
+        <text x="345" y="135" fill="#58a6ff" font-size="11">中</text>
+        <text x="345" y="210" fill="#3fb950" font-size="11">多 · 快 · 便宜</text>
+      </svg>
+      <p style="color: var(--text-dim); font-size: 0.85rem; margin-top: 8px">
+        图 1：经典测试金字塔 — 底宽顶窄，数量从多到少
+      </p>
+    </div>
+
+    <ul>
+      <li>
+        <strong>单元测试（底层，~70%）</strong
+        >：测试单个函数/类/方法的行为，不依赖外部组件，可在数秒内运行数千个。
+      </li>
+      <li>
+        <strong>集成测试（中层，~20%）</strong>：验证多个组件协作（如代码与数据库、API
+        检索），关注组件间的接口边界。
+      </li>
+      <li>
+        <strong>端到端测试（顶层，~10%）</strong>：启动完整应用模拟真实用户操作（点击、输入、断言
+        UI），最全面但最慢、最贵、最难维护。
+      </li>
+    </ul>
+    <p class="src">
+      来源：Mike Cohn《Succeeding with Agile》(2009)；Ham Vocke "Test Pyramid" (<a
+        href="https://martinfowler.com/articles/practical-test-pyramid.html"
+        target="_blank"
+        >martinfowler.com</a
+      >)
+    </p>
+
+    <h3>1.2 Testing Trophy 模型（Kent C. Dodds）</h3>
+    <p>
+      Kent C. Dodds 针对现代前端应用提出 Testing
+      Trophy，<strong>核心主张是"写最多的集成测试"</strong>，而非最多的单元测试。他认为测试的目标不是覆盖率，而是<strong>信心（confidence）</strong>：
+    </p>
+
+    <div class="diagram">
+      <svg width="300" height="280" viewBox="0 0 300 280">
+        <!-- trophy shape: wider middle -->
+        <!-- E2E (top, small) -->
+        <path d="M 120 20 L 180 20 L 175 55 L 125 55 Z" fill="#f85149" opacity="0.85" />
+        <text x="150" y="42" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">
+          E2E
+        </text>
+        <!-- Integration (big middle) -->
+        <path d="M 125 55 L 175 55 L 235 150 L 65 150 Z" fill="#58a6ff" opacity="0.9" />
+        <text x="150" y="110" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">
+          Integration
+        </text>
+        <text x="150" y="128" text-anchor="middle" fill="#fff" font-size="10">(最多)</text>
+        <!-- Unit -->
+        <path d="M 65 150 L 235 150 L 210 200 L 90 200 Z" fill="#3fb950" opacity="0.85" />
+        <text x="150" y="180" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">
+          Unit
+        </text>
+        <!-- Static (base) -->
+        <path d="M 90 200 L 210 200 L 195 240 L 105 240 Z" fill="#39d0d8" opacity="0.85" />
+        <text x="150" y="225" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">
+          Static
+        </text>
+        <!-- stem -->
+        <rect x="140" y="240" width="20" height="20" fill="#9aa7b4" opacity="0.6" />
+        <rect x="110" y="258" width="80" height="8" rx="3" fill="#9aa7b4" opacity="0.6" />
+      </svg>
+      <p style="color: var(--text-dim); font-size: 0.85rem; margin-top: 8px">
+        图 2：Testing Trophy — 集成测试最厚，单元和 E2E 较薄
+      </p>
+    </div>
+
+    <table>
+      <tr>
+        <th>层级</th>
+        <th>工具示例</th>
+        <th>验证什么</th>
+        <th>信心 / 成本比</th>
+      </tr>
+      <tr>
+        <td><span class="tag t-static">静态</span></td>
+        <td>TypeScript / ESLint / Clippy / Ruff</td>
+        <td>类型错误、语法、编码规范</td>
+        <td>极低成本捕获低级错误</td>
+      </tr>
+      <tr>
+        <td><span class="tag t-unit">单元</span></td>
+        <td>vitest / pytest / cargo test</td>
+        <td>单一函数/纯逻辑的输入输出</td>
+        <td>快但信心有限（隔离了上下文）</td>
+      </tr>
+      <tr>
+        <td><span class="tag t-int">集成</span></td>
+        <td>Testing Library / httpx</td>
+        <td>多组件协作、真实边界交互</td>
+        <td><strong>最佳信心/成本比</strong></td>
+      </tr>
+      <tr>
+        <td><span class="tag t-e2e">E2E</span></td>
+        <td>Playwright / tauri-driver</td>
+        <td>完整用户流的端到端验证</td>
+        <td>信心最高但成本也最高</td>
+      </tr>
+    </table>
+
+    <blockquote>
+      <strong>Dodds 的关键洞察：</strong>"写测试是为了获得对代码的信心，而非追求覆盖率数字。"
+      集成测试在"覆盖真实交互"与"维护成本"之间取得了最佳平衡——它不像单元测试那样过度隔离（失去上下文真实性），也不像
+      E2E 那样需要启动整个系统（太慢太贵）。
+    </blockquote>
+    <p class="src">
+      来源：Kent C. Dodds "Static vs Unit vs Integration vs E2E Testing" (<a
+        href="https://kentcdodds.com/blog/static-vs-unit-vs-integration-vs-e2e-tests"
+        target="_blank"
+        >kentcdodds.com</a
+      >)；"The Testing Trophy and Testing Classifications" (<a
+        href="https://kentcdodds.com/blog/the-testing-trophy-and-testing-classifications"
+        target="_blank"
+        >kentcdodds.com</a
+      >)
+    </p>
+
+    <h3>1.3 Testing Honeycomb（Spotify 蜂巢模型）</h3>
+    <p>
+      Spotify
+      工程团队针对<strong>微服务架构</strong>提出蜂巢模型，指出传统金字塔在微服务下"崩塌"——因为服务间依赖不可控、测试环境不稳定、变更影响范围大。蜂巢模型将<strong>集成/契约测试</strong>进一步加厚，单元测试层变薄：
+    </p>
+
+    <ul>
+      <li><strong>单元测试层（薄）</strong>：只测纯函数和独立模块，不追求 70% 的夸张比例。</li>
+      <li><strong>集成 / 契约测试层（最厚）</strong>：服务间接口契约、组件组合验证是核心。</li>
+      <li><strong>端到端测试层（薄）</strong>：只保留关键路径的冒烟测试。</li>
+    </ul>
+    <p>
+      对于 FnixAgent 这类<strong>多后端架构</strong>（Rust + Python + React
+      三条技术栈），蜂巢模型的思路比经典金字塔更适用——因为三栈之间的"接缝"（IPC 边界、HTTP
+      边界）恰恰是 Bug 高发区，需要重点用集成测试覆盖。
+    </p>
+    <p class="src">
+      来源：Spotify Testing Honeycomb；综述见
+      <a href="https://engineering.atspotify.com/2018/01/testing-of-microservices/" target="_blank"
+        >engineering.atspotify.com</a
+      >（微服务测试实践）
+    </p>
+
+    <h3>1.4 桌面应用的特殊考虑</h3>
+    <p>桌面应用与纯 Web 应用相比，测试多了以下维度：</p>
+    <table>
+      <tr>
+        <th>差异点</th>
+        <th>Web 应用</th>
+        <th>桌面应用（Tauri）</th>
+      </tr>
+      <tr>
+        <td>运行环境</td>
+        <td>浏览器（标准统一）</td>
+        <td>
+          <strong>原生 WebView</strong>（Windows=WebView2, macOS=WKWebView,
+          Linux=WebKitGTK），行为有平台差异
+        </td>
+      </tr>
+      <tr>
+        <td>后端</td>
+        <td>远程服务器</td>
+        <td><strong>本地 Rust 进程</strong>（Tauri Command 通过 IPC 调用）</td>
+      </tr>
+      <tr>
+        <td>系统能力</td>
+        <td>受浏览器沙箱限制</td>
+        <td>文件系统、剪贴板、系统通知、全局快捷键等<strong>原生 API</strong></td>
+      </tr>
+      <tr>
+        <td>分发形态</td>
+        <td>始终是 Web 服务</td>
+        <td>打包为<strong>原生可执行文件</strong>（.exe/.dmg/.deb）</td>
+      </tr>
+      <tr>
+        <td>更新机制</td>
+        <td>服务端部署即更新</td>
+        <td>需要<strong> updater 插件</strong>和版本管理</td>
+      </tr>
+    </table>
+    <p>
+      这意味着桌面应用额外需要测试：<strong>跨平台 WebView 一致性</strong>、<strong
+        >Tauri IPC 通信</strong
+      >、<strong>原生 API 调用</strong>、<strong>打包后行为</strong>。
+    </p>
+
+    <!-- ============ 2 各层测试 ============ -->
+    <h2 id="s2"><span class="num">2</span>各层测试的具体做法</h2>
+
+    <h3>2.1 单元测试：各语言各测什么</h3>
+
+    <h4>Python 端（pytest）— FastAPI / LangGraph 后端</h4>
+    <table>
+      <tr>
+        <th>测什么</th>
+        <th>示例</th>
+        <th>不测什么</th>
+      </tr>
+      <tr>
+        <td>纯函数 / 工具函数</td>
+        <td>prompt 模板拼接、参数校验、配置解析</td>
+        <td>实际 LLM 调用（用 mock）</td>
+      </tr>
+      <tr>
+        <td>数据模型 / 序列化</td>
+        <td>Pydantic 模型校验、枚举转换</td>
+        <td>数据库实际读写</td>
+      </tr>
+      <tr>
+        <td>LangGraph 节点纯逻辑</td>
+        <td>状态转换函数、条件路由判断</td>
+        <td>完整 Graph 执行（放集成）</td>
+      </tr>
+      <tr>
+        <td>解析 / 转换逻辑</td>
+        <td>工具调用结果解析、JSON 提取</td>
+        <td>外部 API 真实请求</td>
+      </tr>
+    </table>
+    <pre><code># tests/test_tools.py
+def test_parse_tool_result_valid_json():
+    raw = '{"status": "ok", "data": [1, 2, 3]}'
+    result = parse_tool_result(raw)
+    assert result["status"] == "ok"
+    assert result["data"] == [1, 2, 3]</code></pre>
+
+    <h4>React 前端（vitest）— 组件与逻辑</h4>
+    <table>
+      <tr>
+        <th>测什么</th>
+        <th>示例</th>
+        <th>不测什么</th>
+      </tr>
+      <tr>
+        <td>纯逻辑 / hooks</td>
+        <td>useDebounce、useLocalStorage、状态 reducer</td>
+        <td>样式 / 视觉外观</td>
+      </tr>
+      <tr>
+        <td>工具函数</td>
+        <td>格式化、日期处理、权限判断</td>
+        <td>第三方库内部行为</td>
+      </tr>
+      <tr>
+        <td>简单组件（无副作用）</td>
+        <td>Button 渲染 props、Badge 条件显示</td>
+        <td>组件 + API 组合（放集成）</td>
+      </tr>
+    </table>
+
+    <h4>Rust 端（cargo test）— Tauri 后端</h4>
+    <table>
+      <tr>
+        <th>测什么</th>
+        <th>示例</th>
+        <th>不测什么</th>
+      </tr>
+      <tr>
+        <td>Tauri Command 纯逻辑</td>
+        <td>文件路径处理、配置读写逻辑、状态管理</td>
+        <td>完整 Tauri 应用启动</td>
+      </tr>
+      <tr>
+        <td>数据处理</td>
+        <td>序列化 / 反序列化、数据转换</td>
+        <td>WebView 渲染</td>
+      </tr>
+      <tr>
+        <td>跨平台条件编译</td>
+        <td><code>#[cfg(target_os)]</code> 分支逻辑</td>
+        <td>原生 OS API 实际调用</td>
+      </tr>
+    </table>
+    <pre><code>// src-tauri/src/commands.rs
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn test_sanitize_path_rejects_traversal() {
+        assert!(sanitize_path("../../etc/passwd").is_err());
+        assert!(sanitize_path("data/config.json").is_ok());
+    }
+}</code></pre>
+
+    <div class="callout">
+      <h4>单元测试的共同原则</h4>
+      <ul>
+        <li><strong>不依赖外部服务</strong>：LLM、数据库、文件系统都用 mock 或 fixture。</li>
+        <li><strong>快</strong>：数千个测试在数秒内跑完，作为开发时的即时反馈。</li>
+        <li><strong>隔离</strong>：一个测试失败不应导致其他测试级联失败。</li>
+        <li><strong>确定性</strong>：相同输入永远相同输出，不依赖时间/随机/网络。</li>
+      </ul>
+    </div>
+
+    <h3>2.2 集成测试：API 端点 + 组件交互</h3>
+    <p>
+      集成测试是 Testing Trophy
+      和蜂巢模型共同推荐的<strong>主力层</strong>，验证"多个组件协作时是否正确"。
+    </p>
+
+    <h4>后端 API 集成测试（pytest + httpx / TestClient）</h4>
+    <pre><code># tests/test_api_integration.py
+from fastapi.testclient import TestClient
+from app.main import app
+from unittest.mock import AsyncMock, patch
+
+client = TestClient(app)
+
+def test_chat_endpoint_returns_stream():
+    with patch("app.routes.chat.run_agent") as mock_run:
+        mock_run.return_value = AsyncMock()
+        mock_run.return_value.__aiter__.return_value = iter([
+            {"type": "token", "content": "Hello"},
+            {"type": "done", "content": ""}
+        ])
+        response = client.post("/api/chat", json={"message": "hi"})
+        assert response.status_code == 200
+        assert "Hello" in response.text
+
+def test_tool_call_endpoint_validates_params():
+    response = client.post("/api/tools/call", json={"tool": "", "args": {}})
+    assert response.status_code == 422  # 参数校验失败</code></pre>
+    <p>
+      测什么：<strong>端点契约</strong>（请求/响应格式、状态码、错误处理）、<strong>中间件链</strong>（鉴权、限流、日志）、<strong
+        >LangGraph 编排</strong
+      >（mock 掉 LLM，验证节点流转和状态转换）。
+    </p>
+
+    <h4>前端组件集成测试（vitest + Testing Library）</h4>
+    <pre><code>// src/__tests__/ChatPanel.test.tsx
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { ChatPanel } from "../components/ChatPanel";
+
+// mock 掉 API 调用，验证组件 + mock API 的交互
+jest.mock("../api/client", () => ({
+  sendMessage: jest.fn().mockResolvedValue({ reply: "你好" }),
+}));
+
+test("用户输入消息后显示回复", async () => {
+  render(&lt;ChatPanel /&gt;);
+  await userEvent.type(screen.getByPlaceholderText("输入消息"), "你好");
+  await userEvent.click(screen.getByRole("button", { name: "发送" }));
+  expect(await screen.findByText("你好")).toBeInTheDocument();
+});</code></pre>
+    <p>
+      测什么：<strong>组件 + API mock 的交互</strong
+      >、<strong>用户操作流</strong>（输入→点击→断言结果）、<strong>状态流转</strong>（loading→success→error）。这里<strong>不打开真实浏览器</strong>，用
+      jsdom 模拟 DOM。
+    </p>
+
+    <h3>2.3 E2E 测试：Playwright / tauri-driver / Cypress</h3>
+    <table>
+      <tr>
+        <th>工具</th>
+        <th>适用场景</th>
+        <th>能否测 Tauri</th>
+        <th>特点</th>
+      </tr>
+      <tr>
+        <td><strong>tauri-driver + WebdriverIO</strong></td>
+        <td>Tauri 原生应用 E2E（官方推荐）</td>
+        <td><strong>是（首选）</strong></td>
+        <td>驱动原生 WebView，可测 Tauri IPC</td>
+      </tr>
+      <tr>
+        <td>Playwright</td>
+        <td>纯 Web 前端 E2E</td>
+        <td>部分（仅 dev 模式前端）</td>
+        <td>跨浏览器、auto-wait、并行快</td>
+      </tr>
+      <tr>
+        <td>Cypress</td>
+        <td>纯 Web 前端 E2E</td>
+        <td>部分（仅 dev 模式前端）</td>
+        <td>开发体验好，但仅 Chromium 内核</td>
+      </tr>
+    </table>
+
+    <div class="callout warn">
+      <h4>关键区分</h4>
+      <p>
+        <strong>Playwright / Cypress 只能驱动「浏览器」</strong>，无法驱动 Tauri 的原生 WebView
+        窗口，也无法测试 Tauri
+        IPC（<code>invoke()</code>）、系统通知、文件对话框等原生能力。要测真正的 Tauri 应用，必须用
+        <strong>tauri-driver</strong>（WebDriver 协议）+ WebdriverIO。
+      </p>
+    </div>
+
+    <h3>2.4 前端 UI 测试：何时真正打开浏览器</h3>
+    <p>这是最关键的实践判断——<strong>大部分前端测试不需要打开浏览器</strong>：</p>
+
+    <table>
+      <tr>
+        <th>场景</th>
+        <th>需要打开浏览器吗</th>
+        <th>用什么</th>
+      </tr>
+      <tr>
+        <td>组件渲染、props 传递、条件显示</td>
+        <td><strong style="color: var(--red)">不需要</strong></td>
+        <td>vitest + jsdom</td>
+      </tr>
+      <tr>
+        <td>用户交互流（输入、点击、表单提交）</td>
+        <td><strong style="color: var(--red)">不需要</strong></td>
+        <td>vitest + Testing Library + jsdom</td>
+      </tr>
+      <tr>
+        <td>组件 + API mock 的集成</td>
+        <td><strong style="color: var(--red)">不需要</strong></td>
+        <td>vitest + MSW（mock service worker）</td>
+      </tr>
+      <tr>
+        <td>样式 / 视觉回归 / 布局</td>
+        <td><strong style="color: var(--yellow)">需要</strong></td>
+        <td>Playwright 截图对比 / Percy</td>
+      </tr>
+      <tr>
+        <td>跨 WebView 平台一致性</td>
+        <td><strong style="color: var(--green)">需要</strong></td>
+        <td>tauri-driver</td>
+      </tr>
+      <tr>
+        <td>Tauri IPC / 原生 API 交互</td>
+        <td><strong style="color: var(--green)">需要</strong></td>
+        <td>tauri-driver（唯一选择）</td>
+      </tr>
+      <tr>
+        <td>关键用户流端到端冒烟</td>
+        <td><strong style="color: var(--green)">需要</strong></td>
+        <td>tauri-driver</td>
+      </tr>
+    </table>
+
+    <blockquote>
+      <strong>Dodds 原则的延伸应用：</strong
+      >"如果你能用更低层级的测试获得同样的信心，就不要用更高层级的。"
+      打开浏览器是最贵的操作——启动慢、易 flaky、调试难。jsdom 已能模拟 95% 的 DOM
+      行为，只有真正依赖浏览器引擎或原生平台能力的测试才需要开浏览器。
+    </blockquote>
+
+    <!-- ============ 3 Tauri 特殊测试 ============ -->
+    <h2 id="s3"><span class="num">3</span>Tauri 应用的特殊测试方式</h2>
+
+    <h3>3.1 Tauri 官方推荐：tauri-driver + WebDriver</h3>
+    <p>
+      Tauri 官方推荐使用 <strong>tauri-driver</strong>，它是一个实现了
+      <strong>WebDriver 协议</strong>的代理，将 WebDriver 命令转发给各平台的原生 WebView 驱动：
+    </p>
+
+    <table>
+      <tr>
+        <th>平台</th>
+        <th>原生 WebView</th>
+        <th>WebDriver 驱动</th>
+      </tr>
+      <tr>
+        <td>Windows</td>
+        <td>Microsoft Edge WebView2</td>
+        <td><code>msedgedriver.exe</code></td>
+      </tr>
+      <tr>
+        <td>macOS</td>
+        <td>WKWebView (Safari 内核)</td>
+        <td>系统内置 safaridriver</td>
+      </tr>
+      <tr>
+        <td>Linux</td>
+        <td>WebKitGTK</td>
+        <td><code>WebKitWebDriver</code></td>
+      </tr>
+    </table>
+
+    <div class="diagram">
+      <svg width="600" height="180" viewBox="0 0 600 180">
+        <!-- test script -->
+        <rect x="10" y="60" width="120" height="50" rx="8" fill="#58a6ff" opacity="0.85" />
+        <text x="70" y="82" text-anchor="middle" fill="#fff" font-size="12" font-weight="600">
+          WebdriverIO
+        </text>
+        <text x="70" y="98" text-anchor="middle" fill="#fff" font-size="10">测试脚本</text>
+        <!-- arrow -->
+        <line
+          x1="130"
+          y1="85"
+          x2="190"
+          y2="85"
+          stroke="#9aa7b4"
+          stroke-width="2"
+          marker-end="url(#arr)"
+        />
+        <!-- tauri-driver -->
+        <rect x="195" y="55" width="130" height="60" rx="8" fill="#d29922" opacity="0.85" />
+        <text x="260" y="80" text-anchor="middle" fill="#fff" font-size="12" font-weight="600">
+          tauri-driver
+        </text>
+        <text x="260" y="97" text-anchor="middle" fill="#fff" font-size="10">WebDriver 代理</text>
+        <!-- arrow -->
+        <line
+          x1="325"
+          y1="85"
+          x2="385"
+          y2="85"
+          stroke="#9aa7b4"
+          stroke-width="2"
+          marker-end="url(#arr)"
+        />
+        <!-- native driver -->
+        <rect x="390" y="30" width="110" height="40" rx="8" fill="#3fb950" opacity="0.7" />
+        <text x="445" y="55" text-anchor="middle" fill="#fff" font-size="10">msedgedriver</text>
+        <rect x="390" y="75" width="110" height="40" rx="8" fill="#3fb950" opacity="0.7" />
+        <text x="445" y="100" text-anchor="middle" fill="#fff" font-size="10">safaridriver</text>
+        <rect x="390" y="120" width="110" height="40" rx="8" fill="#3fb950" opacity="0.7" />
+        <text x="445" y="145" text-anchor="middle" fill="#fff" font-size="10">WebKitWebDriver</text>
+        <!-- WebView -->
+        <line
+          x1="500"
+          y1="50"
+          x2="545"
+          y2="50"
+          stroke="#9aa7b4"
+          stroke-width="1.5"
+          marker-end="url(#arr)"
+        />
+        <line
+          x1="500"
+          y1="95"
+          x2="545"
+          y2="95"
+          stroke="#9aa7b4"
+          stroke-width="1.5"
+          marker-end="url(#arr)"
+        />
+        <line
+          x1="500"
+          y1="140"
+          x2="545"
+          y2="140"
+          stroke="#9aa7b4"
+          stroke-width="1.5"
+          marker-end="url(#arr)"
+        />
+        <text
+          x="572"
+          y="95"
+          text-anchor="middle"
+          fill="#9aa7b4"
+          font-size="10"
+          transform="rotate(90 572 95)"
+        >
+          原生 WebView
+        </text>
+        <defs>
+          <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+            <path d="M0,0 L8,4 L0,8 Z" fill="#9aa7b4" />
+          </marker>
+        </defs>
+      </svg>
+      <p style="color: var(--text-dim); font-size: 0.85rem; margin-top: 8px">
+        图 3：tauri-driver 架构 — WebdriverIO → tauri-driver → 平台原生驱动 → WebView
+      </p>
+    </div>
+
+    <p>
+      <strong>WebdriverIO 官方提供 <code>@wdio/tauri-service</code></strong
+      >，自动化了驱动发现、应用启动、跨平台二进制检测：
+    </p>
+    <pre><code># 安装
+npm install --save-dev @wdio/tauri-service
+# 可选：更丰富的 webview 内集成（mock IPC、执行 Tauri 命令）
+npm install --save-dev @wdio/tauri-plugin</code></pre>
+
+    <pre><code>// wdio.conf.ts
+export const config = {
+  services: [["tauri", {
+    app: "src-tauri/target/release/fnix-agent",  // 构建产物
+  }]],
+  capabilities: [{
+    "tauri:options": { application: "src-tauri/target/release/fnix-agent" },
+  }],
+};
+
+// 测试：验证 Tauri 应用窗口标题
+describe("FnixAgent", () => {
+  it("应显示正确标题", async () => {
+    const title = await browser.getTitle();
+    expect(title).toBe("FnixAgent");
+  });
+  it("用户可发送消息并获得回复", async () => {
+    await $(".chat-input").setValue("你好");
+    await $(".send-btn").click();
+    await expect($(".chat-reply")).toBeDisplayed();
+  });
+});</code></pre>
+
+    <p>
+      WebdriverIO for Tauri 的优势：自动配置 WebDriver 层、跨平台、可选
+      <code>@wdio/tauri-plugin</code> 提供更丰富的 in-webview
+      集成（<code>browser.tauri.execute</code>、mock IPC）、deeplink / protocol handler 测试、Rust +
+      前端日志转发到测试报告。
+    </p>
+    <p class="src">
+      来源：Tauri 官方测试文档
+      <a href="https://tauri.app/develop/tests/webdriver/" target="_blank"
+        >tauri.app/develop/tests/webdriver</a
+      >；WebdriverIO Tauri
+      <a href="https://webdriver.io/docs/desktop-testing/tauri" target="_blank"
+        >webdriver.io/docs/desktop-testing/tauri</a
+      >
+    </p>
+
+    <h3>3.2 开发模式 vs 生产模式的测试差异</h3>
+    <p>Tauri 在两种模式下前端加载方式不同，直接影响测试策略：</p>
+
+    <table>
+      <tr>
+        <th></th>
+        <th>开发模式（tauri dev）</th>
+        <th>生产模式（tauri build）</th>
+      </tr>
+      <tr>
+        <td><strong>前端来源</strong></td>
+        <td>Vite Dev Server（localhost:5175 等）</td>
+        <td>打包后的静态文件（frontendDist）</td>
+      </tr>
+      <tr>
+        <td><strong>加载方式</strong></td>
+        <td>Tauri WebView 从 devUrl 加载</td>
+        <td>Tauri WebView 从本地文件系统加载</td>
+      </tr>
+      <tr>
+        <td><strong>Tauri IPC</strong></td>
+        <td>可用（Rust 后端已启动）</td>
+        <td>可用（完整应用）</td>
+      </tr>
+      <tr>
+        <td><strong>热更新</strong></td>
+        <td>有（HMR）</td>
+        <td>无</td>
+      </tr>
+      <tr>
+        <td><strong>适用测试</strong></td>
+        <td>前端组件/集成测试（vitest）</td>
+        <td>完整 E2E（tauri-driver）</td>
+      </tr>
+    </table>
+
+    <h4>开发模式下能否直接用浏览器自动化测？</h4>
+    <div class="callout warn">
+      <p><strong>可以测前端 UI，但有重要限制：</strong></p>
+      <ul>
+        <li>
+          <strong>能测的</strong>：React 组件渲染、CSS 样式、用户交互流——因为前端就是标准 Vite Web
+          应用，Playwright / Cypress 可以直接打开 <code>localhost:5175</code> 操作。
+        </li>
+        <li>
+          <strong>不能测的</strong>：所有 <code>invoke()</code> Tauri Command
+          调用会<strong>失败</strong>——因为普通浏览器没有 Tauri 的 IPC 桥接（<code
+            >window.__TAURI__</code
+          >
+          不存在）。文件对话框、系统通知、全局快捷键等原生能力也无法在普通浏览器中触发。
+        </li>
+      </ul>
+      <p>
+        <strong>结论</strong>：开发模式下用浏览器自动化测前端 UI
+        是可行的（用于样式/交互回归），但<strong>无法覆盖 Tauri 集成边界</strong>。要测完整的"前端调
+        invoke → Rust 处理 → 返回结果"链路，必须用 tauri-driver 驱动真实的 Tauri 应用。
+      </p>
+    </div>
+
+    <h4>推荐的分层策略</h4>
+    <ol>
+      <li>
+        <strong>日常开发</strong>：vitest +
+        jsdom（不开浏览器）覆盖组件逻辑和交互——快、稳、可频繁运行。
+      </li>
+      <li>
+        <strong>视觉回归</strong>：Playwright 打开
+        <code>localhost:5175</code> 截图对比——验证样式不被破坏。
+      </li>
+      <li>
+        <strong>关键路径 E2E</strong>：tauri-driver 驱动生产构建（<code>tauri build</code>
+        产物）——验证 Tauri IPC、原生能力、完整用户流。只在 CI 或发布前运行少量用例。
+      </li>
+    </ol>
+
+    <!-- ============ 4 Agent 测试 ============ -->
+    <h2 id="s4"><span class="num">4</span>AI Agent 应用的专项测试</h2>
+
+    <h3>4.1 Agent 评测 vs 传统软件测试的本质区别</h3>
+    <table>
+      <tr>
+        <th>维度</th>
+        <th>传统软件测试</th>
+        <th>AI Agent 评测</th>
+      </tr>
+      <tr>
+        <td><strong>输出确定性</strong></td>
+        <td>相同输入 → 确定输出（可精确断言）</td>
+        <td>相同输入 → <strong>非确定输出</strong>（LLM 每次可能不同）</td>
+      </tr>
+      <tr>
+        <td><strong>断言方式</strong></td>
+        <td>精确匹配（assert x == 5）</td>
+        <td><strong>模糊匹配 / LLM-as-judge</strong>（语义相似度、维度打分）</td>
+      </tr>
+      <tr>
+        <td><strong>失败模式</strong></td>
+        <td>崩溃、异常、错误值</td>
+        <td>规划出错、工具调用参数错、多轮遗忘、幻觉</td>
+      </tr>
+      <tr>
+        <td><strong>测试对象</strong></td>
+        <td>代码路径 / 函数行为</td>
+        <td><strong>决策轨迹（trajectory）</strong>：一系列推理 + 工具调用 + 状态流转</td>
+      </tr>
+      <tr>
+        <td><strong>可复现性</strong></td>
+        <td>高（确定性）</td>
+        <td>低（需多次运行取统计分布）</td>
+      </tr>
+      <tr>
+        <td><strong>质量标准</strong></td>
+        <td>通过 / 失败（二值）</td>
+        <td><strong>多维度评分</strong>（0-1 连续分数 + 原因解释）</td>
+      </tr>
+    </table>
+
+    <blockquote>
+      <strong
+        >核心区别：传统测试验证"代码是否按预期执行"，Agent 评测验证"AI 是否做出了正确决策"。</strong
+      >前者是确定性逻辑验证，后者是非确定性智能行为评估。这决定了 Agent
+      评测需要全新的指标体系、判分方法和测试基础设施。
+    </blockquote>
+
+    <h3>4.2 为什么 Agent 评测通常通过 API 而不是 UI</h3>
+    <p>所有主流 Agent Benchmark 都通过 <strong>API / CLI 接入</strong>，没有通过 UI 的：</p>
+
+    <table>
+      <tr>
+        <th>Benchmark</th>
+        <th>接入方式</th>
+        <th>判分方式</th>
+        <th>为什么不走 UI</th>
+      </tr>
+      <tr>
+        <td><strong>SWE-bench</strong></td>
+        <td>Agent 通过 API 生成代码 patch</td>
+        <td>运行测试用例，检查 patch 是否通过 CI（<strong>resolve rate</strong>）</td>
+        <td>需要可复现的 Docker 沙箱；只读取 <code>model_patch</code> 字段，不关心 UI 交互</td>
+      </tr>
+      <tr>
+        <td><strong>AgentBench</strong></td>
+        <td>Agent 通过 API 与 8 个环境交互（OS/DB/KG/Web 等）</td>
+        <td>多轮交互后的任务完成率</td>
+        <td>多轮交互需要精确控制；UI 自动化引入非确定性</td>
+      </tr>
+      <tr>
+        <td><strong>DeepEval</strong></td>
+        <td>Pytest 原生，调用 Agent 的 Python API</td>
+        <td>LLM-as-judge + 统计指标，多维度评分</td>
+        <td>需要捕获完整执行 trace；CI/CD 集成；批量运行</td>
+      </tr>
+      <tr>
+        <td><strong>ToolBench</strong></td>
+        <td>Agent 通过 API 调用工具</td>
+        <td>工具选择准确率 + 参数准确率</td>
+        <td>需要精确控制工具调用；结构化输入输出</td>
+      </tr>
+    </table>
+
+    <div class="callout key">
+      <h4>Agent 评测走 API 的四大理由</h4>
+      <ol>
+        <li>
+          <strong>可复现性</strong>：Agent 输出本身已非确定，UI
+          自动化（渲染时序、动画、异步加载）会叠加更多非确定性，使结果无法复现。API
+          调用是同步的、结构化的、可精确控制的。
+        </li>
+        <li>
+          <strong>可自动判分</strong>：Benchmark 需要自动判断"任务是否完成"——SWE-bench
+          跑测试用例、AgentBench 检查环境最终状态、DeepEval 用 LLM-as-judge
+          评分。这些都依赖结构化输出，UI 只能给截图让人看。
+        </li>
+        <li>
+          <strong>批量与效率</strong>：Agent 评测通常需要跑数百个测试用例、每个多次运行取分布。API
+          调用比 UI 操作快 10-100 倍，且可并行。
+        </li>
+        <li>
+          <strong>Trace 捕获</strong>：Agent
+          评测需要分析<strong>完整决策轨迹</strong>（每一步的推理、工具调用、参数）。API
+          层可以精确捕获每个中间状态；UI 层只能看到最终渲染结果，丢失了轨迹信息。
+        </li>
+      </ol>
+    </div>
+    <p class="src">
+      来源：SWE-bench (<a href="https://github.com/SWE-agent/SWE-bench" target="_blank"
+        >github.com/SWE-agent</a
+      >, NeurIPS 2024)；AgentBench (<a href="https://github.com/THUDM/AgentBench" target="_blank"
+        >github.com/THUDM/AgentBench</a
+      >, ICLR 2024)；DeepEval (<a href="https://github.com/confident-ai/deepeval" target="_blank"
+        >github.com/confident-ai/deepeval</a
+      >)
+    </p>
+
+    <h3>4.3 LLM 应用的评测维度</h3>
+    <p>
+      DeepEval 提供了业界最完整的 Agent
+      评测指标体系，分为<strong>轨迹级（Trajectory）</strong>和<strong>组件级（Component）</strong>两类：
+    </p>
+
+    <table>
+      <tr>
+        <th>类别</th>
+        <th>指标</th>
+        <th>评估什么</th>
+        <th>是否需要 Trace</th>
+      </tr>
+      <tr>
+        <td rowspan="4"><strong>轨迹级</strong></td>
+        <td>Task Completion（任务完成度）</td>
+        <td>Agent 是否成功完成了用户的目标</td>
+        <td>是</td>
+      </tr>
+      <tr>
+        <td>Step Efficiency（步骤效率）</td>
+        <td>是否有多余 / 冗余步骤</td>
+        <td>是</td>
+      </tr>
+      <tr>
+        <td>Plan Adherence（规划遵循度）</td>
+        <td>是否按照生成的计划执行</td>
+        <td>是</td>
+      </tr>
+      <tr>
+        <td>Plan Quality（规划质量）</td>
+        <td>生成的计划是否逻辑完整、高效</td>
+        <td>是</td>
+      </tr>
+      <tr>
+        <td rowspan="4"><strong>组件级</strong></td>
+        <td>Tool Correctness（工具正确性）</td>
+        <td>是否选对了工具</td>
+        <td>否（单步）</td>
+      </tr>
+      <tr>
+        <td>Argument Correctness（参数正确性）</td>
+        <td>工具调用参数是否正确</td>
+        <td>否</td>
+      </tr>
+      <tr>
+        <td>Tool Use（工具使用质量）</td>
+        <td>工具使用的综合质量</td>
+        <td>否</td>
+      </tr>
+      <tr>
+        <td>Goal Accuracy（目标达成精度）</td>
+        <td>多大程度达成了预期目标</td>
+        <td>否</td>
+      </tr>
+    </table>
+
+    <div class="diagram">
+      <svg width="560" height="200" viewBox="0 0 560 200">
+        <!-- Agent trajectory -->
+        <text x="280" y="20" text-anchor="middle" fill="#bc8cff" font-size="13" font-weight="700">
+          Agent 执行轨迹（Trajectory）
+        </text>
+        <!-- steps -->
+        <rect
+          x="20"
+          y="40"
+          width="100"
+          height="55"
+          rx="8"
+          fill="#58a6ff"
+          opacity="0.2"
+          stroke="#58a6ff"
+        />
+        <text x="70" y="62" text-anchor="middle" fill="#58a6ff" font-size="10" font-weight="600">
+          Step 1
+        </text>
+        <text x="70" y="78" text-anchor="middle" fill="#9aa7b4" font-size="9">规划</text>
+        <line x1="120" y1="67" x2="145" y2="67" stroke="#9aa7b4" marker-end="url(#a2)" />
+        <rect
+          x="150"
+          y="40"
+          width="100"
+          height="55"
+          rx="8"
+          fill="#3fb950"
+          opacity="0.2"
+          stroke="#3fb950"
+        />
+        <text x="200" y="62" text-anchor="middle" fill="#3fb950" font-size="10" font-weight="600">
+          Step 2
+        </text>
+        <text x="200" y="78" text-anchor="middle" fill="#9aa7b4" font-size="9">工具调用</text>
+        <line x1="250" y1="67" x2="275" y2="67" stroke="#9aa7b4" marker-end="url(#a2)" />
+        <rect
+          x="280"
+          y="40"
+          width="100"
+          height="55"
+          rx="8"
+          fill="#d29922"
+          opacity="0.2"
+          stroke="#d29922"
+        />
+        <text x="330" y="62" text-anchor="middle" fill="#d29922" font-size="10" font-weight="600">
+          Step 3
+        </text>
+        <text x="330" y="78" text-anchor="middle" fill="#9aa7b4" font-size="9">观察/回退</text>
+        <line x1="380" y1="67" x2="405" y2="67" stroke="#9aa7b4" marker-end="url(#a2)" />
+        <rect
+          x="410"
+          y="40"
+          width="100"
+          height="55"
+          rx="8"
+          fill="#f85149"
+          opacity="0.2"
+          stroke="#f85149"
+        />
+        <text x="460" y="62" text-anchor="middle" fill="#f85149" font-size="10" font-weight="600">
+          Step N
+        </text>
+        <text x="460" y="78" text-anchor="middle" fill="#9aa7b4" font-size="9">最终回答</text>
+        <!-- eval brackets -->
+        <rect
+          x="15"
+          y="110"
+          width="500"
+          height="30"
+          rx="6"
+          fill="none"
+          stroke="#bc8cff"
+          stroke-dasharray="6 3"
+        />
+        <text x="265" y="130" text-anchor="middle" fill="#bc8cff" font-size="11" font-weight="600">
+          轨迹级指标：Task Completion · Step Efficiency · Plan Adherence · Plan Quality
+        </text>
+        <rect
+          x="150"
+          y="150"
+          width="230"
+          height="30"
+          rx="6"
+          fill="none"
+          stroke="#39d0d8"
+          stroke-dasharray="6 3"
+        />
+        <text x="265" y="170" text-anchor="middle" fill="#39d0d8" font-size="11" font-weight="600">
+          组件级指标：Tool Correctness · Argument Correctness
+        </text>
+        <defs>
+          <marker id="a2" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+            <path d="M0,0 L8,4 L0,8 Z" fill="#9aa7b4" />
+          </marker>
+        </defs>
+      </svg>
+      <p style="color: var(--text-dim); font-size: 0.85rem; margin-top: 8px">
+        图 4：Agent 评测维度 — 轨迹级评估整体决策链，组件级评估单步工具调用
+      </p>
+    </div>
+
+    <p>
+      Thoughtworks Technology Radar（2026 年 4 月）已将 DeepEval 列为
+      <strong>Trial（试验采用）</strong>级别，确认其在 RAG、Agentic
+      workflow、多轮对话评测方面的成熟度，并特别提到它支持<strong>与 MCP 服务器的交互评测</strong>。
+    </p>
+    <p class="src">
+      来源：DeepEval 指标文档
+      <a href="https://deepeval.com/docs/metrics-introduction" target="_blank"
+        >deepeval.com/docs/metrics-introduction</a
+      >；Thoughtworks Technology Radar
+      <a href="https://www.thoughtworks.com/radar/languages-and-frameworks/deepeval" target="_blank"
+        >thoughtworks.com/radar · DeepEval</a
+      >
+    </p>
+
+    <h3>4.4 Agent 评测的 5 类典型问题</h3>
+    <p>结合 FnixAgent 已有的 ProblemDetector 经验和业界共识，Agent 评测需重点检测以下 5 类问题：</p>
+
+    <table>
+      <tr>
+        <th>#</th>
+        <th>问题类型</th>
+        <th>表现</th>
+        <th>对应评测指标</th>
+        <th>检测方法</th>
+      </tr>
+      <tr>
+        <td>1</td>
+        <td><strong>规划出错</strong></td>
+        <td>Agent 制定的计划逻辑错误、遗漏关键步骤、步骤顺序混乱</td>
+        <td>Plan Quality / Plan Adherence</td>
+        <td>对比预期计划模板；LLM-as-judge 评估计划合理性</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td><strong>工具调用参数错</strong></td>
+        <td>选对了工具但参数格式错、值错、必填参数缺失</td>
+        <td>Tool Correctness / Argument Correctness</td>
+        <td>Schema 校验；对比 expected args；执行后结果校验</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td><strong>忘记回退</strong></td>
+        <td>工具调用失败后不重试 / 不换策略，直接放弃或继续错误路径</td>
+        <td>Step Efficiency / Task Completion</td>
+        <td>检测失败后是否有回退/重试 trace；分析轨迹中断点</td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td><strong>多轮中断</strong></td>
+        <td>长对话中丢失上下文、忘记前置约束、重复已完成步骤</td>
+        <td>Goal Accuracy / Plan Adherence</td>
+        <td>多轮测试用例；状态一致性检查；上下文保留检测</td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td><strong>MCP 调用失败</strong></td>
+        <td>MCP 协议握手失败、工具发现出错、序列化/反序列化错误</td>
+        <td>Tool Use / Task Completion</td>
+        <td>MCP 服务器 mock；协议层单元测试；端到端 trace 检查</td>
+      </tr>
+    </table>
+
+    <div class="callout warn">
+      <h4>FnixAgent 已有的基础</h4>
+      <p>
+        根据项目记忆，FnixAgent 已构建自研 Agent 评测工具（<code>tests/agent_eval/</code>），含
+        <strong>TraceCollector + ProblemDetector + EvalRunner + ReportGenerator</strong> 四模块，22
+        项测试用例覆盖 8 类场景，通过率 86.4%。这与 DeepEval 的指标体系高度对应——建议后续可直接对接
+        DeepEval 的 <code>TaskCompletenessMetric</code>、<code>ToolCorrectnessMetric</code>
+        等标准化指标，补充 LLM-as-judge 能力，减少自维护判分逻辑的负担。
+      </p>
+    </div>
+
+    <!-- ============ 5 FnixAgent 策略 ============ -->
+    <h2 id="s5"><span class="num">5</span>结论：FnixAgent 应该怎么分层测试</h2>
+
+    <h3>5.1 推荐的四层测试架构</h3>
+    <p>
+      综合 Testing Trophy（集成为主）+ 蜂巢模型（接口边界为主）+ Agent 评测（API 接入）+ Tauri
+      特殊性（tauri-driver），FnixAgent 应采用以下四层架构：
+    </p>
+
+    <div class="diagram">
+      <svg width="520" height="320" viewBox="0 0 520 320">
+        <!-- Layer 4: E2E (top, thin) -->
+        <rect x="170" y="15" width="180" height="45" rx="8" fill="#f85149" opacity="0.85" />
+        <text x="260" y="35" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">
+          第四层 · E2E 冒烟
+        </text>
+        <text x="260" y="50" text-anchor="middle" fill="#fff" font-size="9">
+          tauri-driver · 少量关键路径 · ~5%
+        </text>
+        <!-- Layer 3: Agent Eval -->
+        <rect x="120" y="75" width="280" height="55" rx="8" fill="#bc8cff" opacity="0.85" />
+        <text x="260" y="98" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">
+          第三层 · Agent 评测（独立线）
+        </text>
+        <text x="260" y="115" text-anchor="middle" fill="#fff" font-size="9">
+          DeepEval + 自建 EvalRunner · API 接入 · ~25%
+        </text>
+        <!-- Layer 2: Integration (thick) -->
+        <rect x="50" y="145" width="420" height="70" rx="8" fill="#58a6ff" opacity="0.9" />
+        <text x="260" y="172" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">
+          第二层 · 集成测试（主力层）
+        </text>
+        <text x="260" y="190" text-anchor="middle" fill="#fff" font-size="9">
+          vitest+Testing Library（前端↔API mock） · pytest+httpx（API 端点↔LangGraph）
+        </text>
+        <text x="260" y="205" text-anchor="middle" fill="#fff" font-size="9">
+          ~30% · 在 API 边界汇合三条线
+        </text>
+        <!-- Layer 1: Unit (base) -->
+        <rect x="20" y="230" width="480" height="60" rx="8" fill="#3fb950" opacity="0.85" />
+        <text x="260" y="255" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">
+          第一层 · 单元测试 + 静态检查
+        </text>
+        <text x="260" y="272" text-anchor="middle" fill="#fff" font-size="9">
+          vitest（React 逻辑） · pytest（Python 纯函数） · cargo test（Rust Command）
+        </text>
+        <text x="260" y="284" text-anchor="middle" fill="#fff" font-size="9">
+          + TypeScript / Clippy / Ruff 静态检查 · ~40%
+        </text>
+      </svg>
+      <p style="color: var(--text-dim); font-size: 0.85rem; margin-top: 8px">
+        图 5：FnixAgent 四层测试架构 — 集成层最厚，Agent 评测独立成线，E2E 最薄
+      </p>
+    </div>
+
+    <h3>5.2 各层工具与内容明细</h3>
+
+    <table>
+      <tr>
+        <th>层</th>
+        <th>技术栈</th>
+        <th>工具</th>
+        <th>测什么</th>
+        <th>运行频率</th>
+      </tr>
+      <tr>
+        <td rowspan="3">
+          <strong>第一层<br />单元 + 静态</strong>
+        </td>
+        <td>React</td>
+        <td>vitest + TypeScript</td>
+        <td>hooks、纯函数、简单组件</td>
+        <td>每次提交</td>
+      </tr>
+      <tr>
+        <td>Python</td>
+        <td>pytest + Ruff</td>
+        <td>纯函数、Pydantic 模型、解析逻辑、LangGraph 节点纯逻辑</td>
+        <td>每次提交</td>
+      </tr>
+      <tr>
+        <td>Rust</td>
+        <td>cargo test + Clippy</td>
+        <td>Tauri Command 纯逻辑、路径处理、状态管理、序列化</td>
+        <td>每次提交</td>
+      </tr>
+      <tr>
+        <td rowspan="2">
+          <strong>第二层<br />集成（主力）</strong>
+        </td>
+        <td>前端↔API</td>
+        <td>vitest + Testing Library + MSW</td>
+        <td>组件 + mock API 的用户流、状态流转、错误处理</td>
+        <td>每次提交</td>
+      </tr>
+      <tr>
+        <td>API↔Agent</td>
+        <td>pytest + httpx / TestClient</td>
+        <td>FastAPI 端点契约、中间件链、LangGraph 编排（mock LLM）</td>
+        <td>每次提交</td>
+      </tr>
+      <tr>
+        <td>
+          <strong>第三层<br />Agent 评测</strong>
+        </td>
+        <td>AI Agent</td>
+        <td>DeepEval + 自建 EvalRunner</td>
+        <td>任务完成度、工具调用正确性、规划质量、5 类典型问题</td>
+        <td>每日 / 每次模型变更</td>
+      </tr>
+      <tr>
+        <td>
+          <strong>第四层<br />E2E 冒烟</strong>
+        </td>
+        <td>全栈</td>
+        <td>tauri-driver + WebdriverIO</td>
+        <td>关键用户流、Tauri IPC 边界、原生能力</td>
+        <td>发布前 / 每日 nightly</td>
+      </tr>
+    </table>
+
+    <h3>5.3 Agent 评测应该通过 API 还是 UI</h3>
+    <div class="callout key">
+      <h4>明确结论：通过 API（FastAPI 端点）</h4>
+      <p>
+        FnixAgent 的 Agent 评测应直接调用 FastAPI 的 <code>/api/chat</code>、<code
+          >/api/tools/call</code
+        >
+        等端点，<strong>不通过 UI</strong>。理由：
+      </p>
+      <ol>
+        <li>
+          <strong>可复现</strong>：API 调用是同步、结构化的，可精确控制输入和捕获完整
+          trace（TraceCollector 已在 API 层工作）。
+        </li>
+        <li>
+          <strong>可自动判分</strong>：DeepEval 的
+          <code>TaskCompletenessMetric</code> 等指标需要结构化的 <code>LLMTestCase</code>（input /
+          actual_output / expected_output / trace），API 层天然提供这些数据。
+        </li>
+        <li>
+          <strong>批量效率</strong>：22 项测试用例（已有）+ 未来扩展，API 并行运行远快于 UI
+          串行操作。
+        </li>
+        <li>
+          <strong>与业界对齐</strong>：SWE-bench / AgentBench / DeepEval 全部 API
+          接入，生态和最佳实践成熟。
+        </li>
+      </ol>
+      <p>
+        <strong>UI 层只需验证</strong>：Agent
+        返回的消息能否正确渲染到聊天面板——这属于前端集成测试范畴（vitest + Testing Library），不属于
+        Agent 评测。
+      </p>
+    </div>
+
+    <h3>5.4 前端 UI 测试的必要性和范围</h3>
+    <div class="callout">
+      <h4>前端 UI 测试分层建议</h4>
+      <table>
+        <tr>
+          <th>测试类型</th>
+          <th>必要性</th>
+          <th>工具</th>
+          <th>范围</th>
+        </tr>
+        <tr>
+          <td>组件逻辑测试</td>
+          <td><strong style="color: var(--green)">必须</strong></td>
+          <td>vitest + Testing Library</td>
+          <td>所有组件（jsdom，不开浏览器）</td>
+        </tr>
+        <tr>
+          <td>组件交互流测试</td>
+          <td><strong style="color: var(--green)">必须</strong></td>
+          <td>vitest + Testing Library + MSW</td>
+          <td>关键用户流（发送消息、工具调用展示、错误提示）</td>
+        </tr>
+        <tr>
+          <td>视觉回归测试</td>
+          <td>建议</td>
+          <td>Playwright 截图对比</td>
+          <td>核心页面布局（dev 模式 localhost）</td>
+        </tr>
+        <tr>
+          <td>Tauri IPC E2E</td>
+          <td><strong style="color: var(--yellow)">少量必须</strong></td>
+          <td>tauri-driver</td>
+          <td>仅关键路径冒烟（3-5 个用例）</td>
+        </tr>
+        <tr>
+          <td>全量 UI E2E</td>
+          <td><strong style="color: var(--red)">不必要</strong></td>
+          <td>—</td>
+          <td>成本高、收益低，用集成测试替代</td>
+        </tr>
+      </table>
+      <p>
+        <strong>核心原则</strong>：用 vitest + Testing Library 覆盖 90%
+        的前端测试需求（不开浏览器）；只在"必须验证 Tauri 原生集成"时才用 tauri-driver 做
+        E2E，且保持在 3-5 个关键路径冒烟用例。
+      </p>
+    </div>
+
+    <h3>5.5 三条测试线的关系</h3>
+
+    <div class="diagram">
+      <svg width="600" height="240" viewBox="0 0 600 240">
+        <!-- Frontend line -->
+        <rect
+          x="10"
+          y="20"
+          width="170"
+          height="200"
+          rx="10"
+          fill="#58a6ff"
+          opacity="0.1"
+          stroke="#58a6ff"
+        />
+        <text x="95" y="45" text-anchor="middle" fill="#58a6ff" font-size="13" font-weight="700">
+          前端测试线
+        </text>
+        <text x="95" y="70" text-anchor="middle" fill="#9aa7b4" font-size="10">
+          vitest + Testing Library
+        </text>
+        <text x="95" y="95" text-anchor="middle" fill="#9aa7b4" font-size="10">
+          测：渲染 · 交互 · 状态
+        </text>
+        <text x="95" y="130" text-anchor="middle" fill="#58a6ff" font-size="9">mock API 边界</text>
+        <text x="95" y="170" text-anchor="middle" fill="#9aa7b4" font-size="9">
+          ↓ 少量 tauri-driver E2E
+        </text>
+        <text x="95" y="190" text-anchor="middle" fill="#9aa7b4" font-size="9">验证 IPC 渲染</text>
+        <!-- Backend line -->
+        <rect
+          x="215"
+          y="20"
+          width="170"
+          height="200"
+          rx="10"
+          fill="#3fb950"
+          opacity="0.1"
+          stroke="#3fb950"
+        />
+        <text x="300" y="45" text-anchor="middle" fill="#3fb950" font-size="13" font-weight="700">
+          后端测试线
+        </text>
+        <text x="300" y="70" text-anchor="middle" fill="#9aa7b4" font-size="10">
+          pytest + httpx
+        </text>
+        <text x="300" y="95" text-anchor="middle" fill="#9aa7b4" font-size="10">
+          测：端点 · 逻辑 · 编排
+        </text>
+        <text x="300" y="130" text-anchor="middle" fill="#3fb950" font-size="9">API 契约边界</text>
+        <text x="300" y="170" text-anchor="middle" fill="#9aa7b4" font-size="9">
+          Rust: cargo test
+        </text>
+        <text x="300" y="190" text-anchor="middle" fill="#9aa7b4" font-size="9">
+          测 Tauri Command
+        </text>
+        <!-- Agent line -->
+        <rect
+          x="420"
+          y="20"
+          width="170"
+          height="200"
+          rx="10"
+          fill="#bc8cff"
+          opacity="0.1"
+          stroke="#bc8cff"
+        />
+        <text x="505" y="45" text-anchor="middle" fill="#bc8cff" font-size="13" font-weight="700">
+          Agent 评测线
+        </text>
+        <text x="505" y="70" text-anchor="middle" fill="#9aa7b4" font-size="10">
+          DeepEval + EvalRunner
+        </text>
+        <text x="505" y="95" text-anchor="middle" fill="#9aa7b4" font-size="10">
+          测：决策 · 工具 · 规划
+        </text>
+        <text x="505" y="130" text-anchor="middle" fill="#bc8cff" font-size="9">通过 API 接入</text>
+        <text x="505" y="170" text-anchor="middle" fill="#9aa7b4" font-size="9">不经过 UI</text>
+        <text x="505" y="190" text-anchor="middle" fill="#9aa7b4" font-size="9">独立运行</text>
+        <!-- connection arrows -->
+        <line
+          x1="180"
+          y1="125"
+          x2="215"
+          y2="125"
+          stroke="#d29922"
+          stroke-width="2"
+          stroke-dasharray="4 2"
+          marker-end="url(#a3)"
+        />
+        <line
+          x1="385"
+          y1="125"
+          x2="420"
+          y2="125"
+          stroke="#d29922"
+          stroke-width="2"
+          stroke-dasharray="4 2"
+          marker-end="url(#a3)"
+        />
+        <text x="197" y="118" text-anchor="middle" fill="#d29922" font-size="8">API</text>
+        <text x="402" y="118" text-anchor="middle" fill="#d29922" font-size="8">API</text>
+        <defs>
+          <marker id="a3" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+            <path d="M0,0 L8,4 L0,8 Z" fill="#d29922" />
+          </marker>
+        </defs>
+      </svg>
+      <p style="color: var(--text-dim); font-size: 0.85rem; margin-top: 8px">
+        图 6：三条测试线通过 API 边界松耦合汇合，而非在 UI 层强行打通
+      </p>
+    </div>
+
+    <p><strong>三条线的关系</strong>：</p>
+    <ul>
+      <li>
+        <strong>前端测试线</strong>独立验证 UI 渲染和交互，通过
+        <strong>mock API</strong> 与后端解耦——前端不依赖真实后端即可测试。
+      </li>
+      <li>
+        <strong>后端测试线</strong>独立验证 API 契约和业务逻辑，通过
+        <strong>TestClient</strong> 直接调 FastAPI——不依赖前端。
+      </li>
+      <li>
+        <strong>Agent 评测线</strong>独立验证 AI 决策质量，通过
+        <strong>API 端点</strong>接入——不依赖前端也不依赖完整后端基础设施。
+      </li>
+      <li>
+        三条线在 <strong>API 边界</strong>（FastAPI 端点契约）松耦合汇合：前端 mock
+        这个契约、后端实现这个契约、Agent 评测通过这个契约接入。只要 API
+        契约稳定，三条线可独立演进。
+      </li>
+      <li>
+        <strong>E2E 冒烟</strong>是唯一跨三条线的测试，但只做 3-5
+        个关键路径，验证"三条线组装在一起时关键流程能跑通"。
+      </li>
+    </ul>
+
+    <h3>5.6 ISO 25010 质量模型映射</h3>
+    <p>FnixAgent 的测试策略应对照 ISO/IEC 25010 的 8 个质量特性，确保无遗漏：</p>
+    <table>
+      <tr>
+        <th>ISO 25010 特性</th>
+        <th>定义</th>
+        <th>对应测试层</th>
+      </tr>
+      <tr>
+        <td>功能适宜性 (Functional Suitability)</td>
+        <td>满足功能需求的程度</td>
+        <td>单元 + 集成 + Agent 评测</td>
+      </tr>
+      <tr>
+        <td>性能效率 (Performance Efficiency)</td>
+        <td>资源使用下的性能表现</td>
+        <td>集成（负载测试）+ Agent（响应时延）</td>
+      </tr>
+      <tr>
+        <td>兼容性 (Compatibility)</td>
+        <td>与其他系统交互的能力</td>
+        <td>集成（API 契约）</td>
+      </tr>
+      <tr>
+        <td>易用性 (Usability)</td>
+        <td>用户使用的难易程度</td>
+        <td>前端测试 + E2E 冒烟</td>
+      </tr>
+      <tr>
+        <td>可靠性 (Reliability)</td>
+        <td>在指定条件下维持性能的程度</td>
+        <td>集成（错误处理）+ Agent（回退测试）</td>
+      </tr>
+      <tr>
+        <td>安全性 (Security)</td>
+        <td>防止未授权访问的能力</td>
+        <td>集成（鉴权测试）+ 静态分析</td>
+      </tr>
+      <tr>
+        <td>可维护性 (Maintainability)</td>
+        <td>可被有效修改的程度</td>
+        <td>静态分析 + 单元测试覆盖</td>
+      </tr>
+      <tr>
+        <td>可移植性 (Portability)</td>
+        <td>可被迁移的程度</td>
+        <td>跨平台 E2E（tauri-driver 多平台）</td>
+      </tr>
+    </table>
+    <p class="src">
+      来源：ISO/IEC 25010:2011 软件产品质量模型；综述见
+      <a href="https://www.perforce.com/blog/qac/what-is-iso-25010" target="_blank"
+        >Perforce "What is ISO 25010"</a
+      >
+    </p>
+
+    <h3>5.7 ISTQB 测试层级映射</h3>
+    <p>ISTQB Foundation Level 大纲定义了四个测试层级，FnixAgent 的四层架构与之对应：</p>
+    <table>
+      <tr>
+        <th>ISTQB 层级</th>
+        <th>定义</th>
+        <th>FnixAgent 对应</th>
+      </tr>
+      <tr>
+        <td>组件测试 (Component)</td>
+        <td>单个组件 / 单元的测试</td>
+        <td>第一层：vitest / pytest / cargo test</td>
+      </tr>
+      <tr>
+        <td>集成测试 (Integration)</td>
+        <td>组件间接口的测试</td>
+        <td>第二层：前端↔API mock、API↔LangGraph</td>
+      </tr>
+      <tr>
+        <td>系统测试 (System)</td>
+        <td>整个系统的端到端行为</td>
+        <td>第三层（Agent 系统评测）+ 第四层（E2E 冒烟）</td>
+      </tr>
+      <tr>
+        <td>验收测试 (Acceptance)</td>
+        <td>确认系统满足用户需求</td>
+        <td>Agent 评测的任务完成度 + 用户级 E2E</td>
+      </tr>
+    </table>
+    <p class="src">
+      来源：ISTQB Certified Tester Foundation Level Syllabus (<a
+        href="https://www.istqb.org/"
+        target="_blank"
+        >istqb.org</a
+      >)
+    </p>
+
+    <hr />
+
+    <!-- ============ 6 参考来源 ============ -->
+    <h2 id="s6"><span class="num">6</span>参考来源</h2>
+
+    <div class="ref-list">
+      <ol>
+        <li>
+          <strong>Mike Cohn</strong>, <em>Succeeding with Agile</em>, Addison-Wesley, 2009 —
+          测试金字塔原始提出
+        </li>
+        <li>
+          <strong>Ham Vocke</strong>, "The Practical Test Pyramid",
+          <a href="https://martinfowler.com/articles/practical-test-pyramid.html" target="_blank"
+            >martinfowler.com/articles/practical-test-pyramid.html</a
+          >
+          — 金字塔实践指南
+        </li>
+        <li>
+          <strong>Kent C. Dodds</strong>, "Static vs Unit vs Integration vs E2E Testing for Frontend
+          Apps",
+          <a
+            href="https://kentcdodds.com/blog/static-vs-unit-vs-integration-vs-e2e-tests"
+            target="_blank"
+            >kentcdodds.com/blog/static-vs-unit-vs-integration-vs-e2e-tests</a
+          >
+          — Testing Trophy 模型
+        </li>
+        <li>
+          <strong>Kent C. Dodds</strong>, "The Testing Trophy and Testing Classifications",
+          <a
+            href="https://kentcdodds.com/blog/the-testing-trophy-and-testing-classifications"
+            target="_blank"
+            >kentcdodds.com/blog/the-testing-trophy-and-testing-classifications</a
+          >
+        </li>
+        <li>
+          <strong>Spotify Engineering</strong>, "Testing of Microservices",
+          <a
+            href="https://engineering.atspotify.com/2018/01/testing-of-microservices/"
+            target="_blank"
+            >engineering.atspotify.com</a
+          >
+          — Testing Honeycomb 蜂巢模型
+        </li>
+        <li>
+          <strong>Tauri 官方文档</strong>, "Testing / WebDriver",
+          <a href="https://tauri.app/develop/tests/webdriver/" target="_blank"
+            >tauri.app/develop/tests/webdriver</a
+          >
+          — tauri-driver 官方测试方案
+        </li>
+        <li>
+          <strong>WebdriverIO</strong>, "Desktop Testing - Tauri",
+          <a href="https://webdriver.io/docs/desktop-testing/tauri" target="_blank"
+            >webdriver.io/docs/desktop-testing/tauri</a
+          >
+          — @wdio/tauri-service
+        </li>
+        <li>
+          <strong>ISO/IEC 25010:2011</strong>, Software engineering — Systems and software Quality
+          Requirements and Evaluation (SQuaRE) — System and software quality models — 8 大质量特性
+        </li>
+        <li>
+          <strong>Perforce</strong>, "What is ISO 25010?",
+          <a href="https://www.perforce.com/blog/qac/what-is-iso-25010" target="_blank"
+            >perforce.com/blog/qac/what-is-iso-25010</a
+          >
+        </li>
+        <li>
+          <strong>ISTQB</strong>, Certified Tester Foundation Level Syllabus,
+          <a href="https://www.istqb.org/" target="_blank">istqb.org</a> — 四个测试层级定义
+        </li>
+        <li>
+          <strong>DeepEval</strong>, "Introduction to LLM Evaluation Metrics",
+          <a href="https://deepeval.com/docs/metrics-introduction" target="_blank"
+            >deepeval.com/docs/metrics-introduction</a
+          >
+          — Agent 评测指标体系
+        </li>
+        <li>
+          <strong>Confident AI</strong>, DeepEval GitHub,
+          <a href="https://github.com/confident-ai/deepeval" target="_blank"
+            >github.com/confident-ai/deepeval</a
+          >
+          — LLM 评测框架
+        </li>
+        <li>
+          <strong>Thoughtworks</strong>, Technology Radar — DeepEval (Trial, Apr 2026),
+          <a
+            href="https://www.thoughtworks.com/radar/languages-and-frameworks/deepeval"
+            target="_blank"
+            >thoughtworks.com/radar/languages-and-frameworks/deepeval</a
+          >
+        </li>
+        <li>
+          <strong>AgentBench</strong>, "A Comprehensive Benchmark to Evaluate LLMs as Agents" (ICLR
+          2024),
+          <a href="https://github.com/THUDM/AgentBench" target="_blank"
+            >github.com/THUDM/AgentBench</a
+          >
+          — 8 环境通用 Agent 评测
+        </li>
+        <li>
+          <strong>SWE-bench</strong>, Princeton & Stanford,
+          <a href="https://github.com/SWE-agent/SWE-bench" target="_blank">github.com/SWE-agent</a>
+          — 软件工程 Agent 评测（NeurIPS 2024）
+        </li>
+        <li>
+          <strong>SWE-agent</strong>,
+          <a href="https://github.com/SWE-agent" target="_blank">github.com/SWE-agent</a> — 自动修复
+          GitHub issue 的 Agent 系统
+        </li>
+        <li>
+          <strong>Playwright</strong>, "Fast and reliable end-to-end testing",
+          <a href="https://playwright.dev/" target="_blank">playwright.dev</a> — 浏览器自动化测试
+        </li>
+        <li>
+          <strong>Tauri 官方文档</strong>, "Frontend Configuration",
+          <a href="https://v2.tauri.app/start/frontend/" target="_blank"
+            >v2.tauri.app/start/frontend</a
+          >
+          — 前端集成与开发模式说明
+        </li>
+      </ol>
+    </div>
+
+    <hr />
+    <p style="color: var(--text-mute); font-size: 0.82rem; text-align: center; margin-top: 24px">
+      本报告基于 Tauri 官方文档、ISTQB 大纲、ISO 25010 标准、DeepEval 文档及学术
+      Benchmark（AgentBench/SWE-bench）等权威来源编写。 · FnixAgent 项目内部调研 · 2026-08-21
+    </p>
+  </body>
+</html>

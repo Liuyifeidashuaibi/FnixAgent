@@ -18,6 +18,7 @@ API 路由 - 管理后台接口(Phase 1.8)。
 # This software and its source code are proprietary and confidential.
 # Unauthorized copying, modification, distribution, or use is strictly prohibited.
 
+import logging
 import os
 import secrets
 import string
@@ -29,6 +30,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fnixagent.api.routers.auth import _get_user_or_404, verify_jwt_token
 from fnixagent.api.schemas.models import BaseResponse, MFAEnforcementRequest
 from fnixagent.services.storage import get_user_store
+
+_logger = logging.getLogger(__name__)
+
 
 
 # Phase 2.5: 审计动作常量(延迟导入避免循环依赖)
@@ -109,7 +113,7 @@ def _audit_admin(action: str, admin_payload: dict, detail: dict, http_request: R
             user_agent=ua,
         )
     except Exception:
-        pass
+        _logger.debug('Unhandled exception', exc_info=True)
 
 
 # ===========================================================================

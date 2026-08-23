@@ -1,0 +1,18 @@
+{
+  "dataset": "vibe-code-bench",
+  "task_id": "case_14_units",
+  "prompt": "# Build me a Unit Converter\n\nCreate a unit conversion tool:\n\n**Categories:**\n- Length (km, m, cm, mm, miles, feet, inches)\n- Weight (kg, g, lb, oz)\n- Temperature (C, F, K)\n- Volume (L, mL, gallons, cups)\n- Time (hours, minutes, seconds)\n\n**Features:**\n- Select category, then from/to units\n- Type in one field, other updates instantly\n- Swap button to reverse conversion\n- Show conversion formula used\n- Common conversions as quick buttons\n\nClean, responsive design. Single HTML file.",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[\"\"\"\nFunctional tests for Unit Converter (case_14_units).\n\nTests verify actual be] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787332461.0970817,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\vibe-code-bench__case_14_units__192a20"
+}

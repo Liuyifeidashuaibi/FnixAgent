@@ -35,6 +35,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
 logger = logging.getLogger(__name__)
+_logger = logger
 
 # 尝试导入 sklearn(可选依赖,缺失时降级到统计方法)
 try:
@@ -70,7 +71,7 @@ def _audit_behavior_anomaly(
             },
         )
     except Exception:
-        pass
+        _logger.debug('Unhandled exception', exc_info=True)
 
 
 # ---------------------------------------------------------------------------

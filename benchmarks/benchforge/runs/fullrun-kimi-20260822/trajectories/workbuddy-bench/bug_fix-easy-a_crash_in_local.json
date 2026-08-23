@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "bug_fix-easy-a_crash_in_local",
+  "prompt": "我这里偶发看到 `Local` 对象回收时从 `__del__` 冒异常出来，通常是在退出或清理阶段。这个阶段不应该再把异常打到外面，麻烦把清理过程处理得稳一点。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787334454.4381506,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\workbuddy-bench__bug_fix-easy-a_crash_in_local__70ae2b"
+}

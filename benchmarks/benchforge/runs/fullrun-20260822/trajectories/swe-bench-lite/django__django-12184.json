@@ -1,0 +1,18 @@
+{
+  "dataset": "swe-bench-lite",
+  "task_id": "django__django-12184",
+  "prompt": "Optional URL params crash some view functions.\nDescription\n\t\nMy use case, running fine with Django until 2.2:\nURLConf:\nurlpatterns += [\n\t...\n\tre_path(r'^module/(?P<format>(html|json|xml))?/?$', views.modules, name='modules'),\n]\nView:\ndef modules(request, format='html'):\n\t...\n\treturn render(...)\nWith Django 3.0, this is now producing an error:\nTraceback (most recent call last):\n File \"/l10n/venv/lib/python3.6/site-packages/django/core/handlers/exception.py\", line 34, in inner\n\tresponse = get_response(request)\n File \"/l10n/venv/lib/python3.6/site-packages/django/core/handlers/base.py\", line 115, in _get_response\n\tresponse = self.process_exception_by_middleware(e, request)\n File \"/l10n/venv/lib/python3.6/site-packages/django/core/handlers/base.py\", line 113, in _get_response\n\tresponse = wrapped_callback(request, *callback_args, **callback_kwargs)\nException Type: TypeError at /module/\nException Value: modules() takes from 1 to 2 positional arguments but 3 were given\n",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/django/urls/resolvers.py b/django/urls/resolvers.py\n--- a/django/ur] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 77.99999999997453,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787332463.479067,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\swe-bench-lite__django__django-12184__57b25b"
+}

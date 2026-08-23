@@ -1,1 +1,0 @@
-{"default":{"identifier":"default","description":"Fnix Desktop default capabilities","local":true,"windows":["main"],"permissions":["core:default","dialog:default","opener:default","shell:allow-open"]}}

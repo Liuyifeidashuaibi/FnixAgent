@@ -1,0 +1,18 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "IBM__mcp-context-forge-3265",
+  "prompt": "<!--\r\nFor specialized templates, append to your PR URL:\r\n  ?template=bug_fix.md   - Bug fixes\r\n  ?template=feature.md   - New features\r\n  ?template=docs.md      - Documentation\r\n  ?template=plugin.md    - New plugins\r\n\r\nExample: https://github.com/IBM/mcp-context-forge/compare/main...your-branch?expand=1&template=bug_fix.md\r\n-->\r\n\r\n## 🔗 Related Issue\r\nCloses https://github.com/IBM/mcp-context-forge/issues/3264\r\n\r\n---\r\n\r\n## 📝 Summary\r\n\r\nUpdated Ollama API configuration to use the native Ollama API endpoint `/api/tags` for listing models instead of the OpenAI-compatible endpoint.\r\n\r\nChanges made:\r\n\r\n### mcpgateway/db.py \r\n\r\n- Changed `api_base` from `http://localhost:11434/v1` to `http://localhost:11434`\r\n- Changed `models_endpoint` from /`models` to `/api/tags`\r\n- Updated description from \"Local Ollama server (OpenAI-compatible)\" to \"Local Ollama server\"\r\n\r\n### mcpgateway/llm_provider_configs.py\r\n\r\n- Changed `api_base_default` from `http://localhost:11434/v1` to `http://localhost:11434`\r\n- Updated `api_base_help` from `Ollama server URL (use /v1 suffix for OpenAI compatibility)` to `Ollama server URL (native API)`\r\n- Updated description to `Local Ollama server`\r\n\r\n---\r\n\r\n## 🏷️ Type of Change\r\n- [x] Bug fix\r\n- [ ] Feature / Enhancement\r\n- [ ] Documentation\r\n- [ ] Refactor\r\n- [ ] Chore (deps, CI, tooling)\r\n- [ ] Other (describe below)\r\n\r\n---\r\n\r\n## 🧪 Verification\r\n\r\n| Check                     | Command         | Status |\r\n|---------------------------|-----------------|--------|\r\n| Lint suite                | `make lint`     |   ✅      |\r\n| Unit tests                | `make test`     |    ✅      |\r\n| Coverage ≥ 80%            | `make coverage` |        |\r\n\r\n---\r\n\r\n## ✅ Checklist\r\n- [x] Code formatted (`make black isort pre-commit`)\r\n- [ ] Tests added/updated for changes\r\n- [x] Documentation updated (if applicable)\r\n- [x] No secrets or credentials committed\r\n\r\n---\r\n\r\n## 📓 Notes (optional)\r\n_Screenshots, design decisions, or additional context._",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/mcpgateway/db.py b/mcpgateway/db.py\nindex d6ba838a6..741431fdb 1006] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 77.99999999997453,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787332462.296679,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\prototypebench__IBM__mcp-context-forge-3265__b08730"
+}

@@ -1,0 +1,18 @@
+{
+  "dataset": "swe-bench-lite",
+  "task_id": "django__django-13401",
+  "prompt": "Abstract model field should not be equal across models\nDescription\n\t\nConsider the following models:\nclass A(models.Model):\n\tclass Meta:\n\t\tabstract = True\n\tmyfield = IntegerField()\nclass B(A):\n\tpass\nclass C(A):\n\tpass\nIf I pull the fields of B and C into a shared set, one will be de-duplicated away, because they compare as equal. I found this surprising, though in practice using a list was sufficient for my need. The root of the issue is that they compare equal, as fields only consider self.creation_counter when comparing for equality.\nlen({B._meta.get_field('myfield'), C._meta.get_field('myfield')}) == 1\nB._meta.get_field('myfield') == C._meta.get_field('myfield')\nWe should adjust __eq__ so that if the field.model is different, they will compare unequal. Similarly, it is probably wise to adjust __hash__ and __lt__ to match.\nWhen adjusting __lt__, it may be wise to order first by self.creation_counter so that cases not affected by this equality collision won't be re-ordered. In my experimental branch, there was one test that broke if I ordered them by model first.\nI brought this up on IRC django-dev to check my intuitions, and those conversing with me there seemed to agree that the current behavior is not intuitive.\n",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/django/db/models/fields/__init__.py b/django/db/models/fields/__ini] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 79.00000000017826,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787332463.8327134,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\swe-bench-lite__django__django-13401__d3f679"
+}

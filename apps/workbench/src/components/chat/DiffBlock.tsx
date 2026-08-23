@@ -9,14 +9,14 @@
  * DiffBlock — inline diff summary with per-file/per-hunk Accept/Reject.
  *
  * 调研证据：
- * - 
+ * -
  *   "per-proposal or per-turn Apply/Reject"
  *   "Clear separation between preview/pending and applied to disk"
- * - 
+ * -
  *   "per-hunk accept/discard controls inline"
  *   "A summary bar shows how many hunks are pending review across all modified files"
  * - Cline: "every edit shows up as a diff you can review, modify, or revert"
- * - 
+ * -
  *   "shows a diff, lets you accept/reject per hunk, feels like git add -p"
  *
  * 设计取舍：
@@ -25,8 +25,8 @@
  * - 明确区分 pending（待审查）/ applied（已接受）/ rejected（已拒绝）三状态
  */
 
-import { useState } from "react";
-import { Check, X, FileCode, ChevronRight, ChevronDown, CircleDot, Pin } from "lucide-react";
+import { useState } from 'react';
+import { Check, X, FileCode, ChevronRight, ChevronDown, CircleDot, Pin } from 'lucide-react';
 
 /** 单个文件的 diff 条目 */
 export interface DiffEntry {
@@ -51,7 +51,7 @@ export interface DiffHunk {
 }
 
 /** 文件审查状态 */
-type FileStatus = "pending" | "accepted" | "rejected";
+type FileStatus = 'pending' | 'accepted' | 'rejected';
 
 export interface DiffBlockProps {
   /** 单文件或多文件 diff 条目 */
@@ -72,21 +72,29 @@ export interface DiffBlockProps {
   readOnly?: boolean;
 }
 
-export default function DiffBlock({ entries, onAccept, onReject, onAcceptAll, onPin, readOnly = false }: DiffBlockProps) {
+export default function DiffBlock({
+  entries,
+  onAccept,
+  onReject,
+  onAcceptAll,
+  onPin,
+  readOnly = false,
+}: DiffBlockProps) {
   const [expanded, setExpanded] = useState(false);
   const [fileStatuses, setFileStatuses] = useState<Record<string, FileStatus>>({});
 
   const totalAdded = entries.reduce((s, e) => s + e.added, 0);
   const totalRemoved = entries.reduce((s, e) => s + e.removed, 0);
-  const pendingCount = entries.filter(e => fileStatuses[e.path] !== "accepted" && fileStatuses[e.path] !== "rejected").length;
-  const acceptedCount = entries.filter(e => fileStatuses[e.path] === "accepted").length;
+  const pendingCount = entries.filter(
+    (e) => fileStatuses[e.path] !== 'accepted' && fileStatuses[e.path] !== 'rejected',
+  ).length;
 
   const handleAccept = (path: string) => {
-    setFileStatuses(prev => ({ ...prev, [path]: "accepted" }));
+    setFileStatuses((prev) => ({ ...prev, [path]: 'accepted' }));
     onAccept?.(path);
   };
   const handleReject = (path: string) => {
-    setFileStatuses(prev => ({ ...prev, [path]: "rejected" }));
+    setFileStatuses((prev) => ({ ...prev, [path]: 'rejected' }));
     onReject?.(path);
   };
 
@@ -96,7 +104,7 @@ export default function DiffBlock({ entries, onAccept, onReject, onAcceptAll, on
       <div
         className="cl-diff-summary"
         onClick={() => entries.length > 1 && setExpanded(!expanded)}
-        role={entries.length > 1 ? "button" : undefined}
+        role={entries.length > 1 ? 'button' : undefined}
       >
         <FileCode size={12} className="cl-diff-icon" />
         <span className="cl-diff-count">
@@ -126,8 +134,8 @@ export default function DiffBlock({ entries, onAccept, onReject, onAcceptAll, on
       {/* 多文件展开列表 */}
       {expanded && entries.length > 1 && (
         <div className="cl-diff-files">
-          {entries.map(entry => {
-            const status = fileStatuses[entry.path] || "pending";
+          {entries.map((entry) => {
+            const status = fileStatuses[entry.path] || 'pending';
             return (
               <div key={entry.path} className={`cl-diff-file-row cl-diff-file-row--${status}`}>
                 <span className="cl-diff-file-name">{entry.path}</span>
@@ -135,23 +143,42 @@ export default function DiffBlock({ entries, onAccept, onReject, onAcceptAll, on
                   <span className="cl-diff-added">+{entry.added}</span>
                   <span className="cl-diff-removed">-{entry.removed}</span>
                 </span>
-                {!readOnly && status === "pending" && (
+                {!readOnly && status === 'pending' && (
                   <div className="cl-diff-file-actions">
                     {onPin && (
-                      <button className="cl-diff-btn cl-diff-btn--pin" onClick={() => onPin(entry.path)} type="button" title="钉选到画布">
+                      <button
+                        className="cl-diff-btn cl-diff-btn--pin"
+                        onClick={() => onPin(entry.path)}
+                        type="button"
+                        title="钉选到画布"
+                      >
                         <Pin size={12} />
                       </button>
                     )}
-                    <button className="cl-diff-btn cl-diff-btn--accept" onClick={() => handleAccept(entry.path)} type="button" title="Accept this file's changes">
+                    <button
+                      className="cl-diff-btn cl-diff-btn--accept"
+                      onClick={() => handleAccept(entry.path)}
+                      type="button"
+                      title="Accept this file's changes"
+                    >
                       <Check size={10} />
                     </button>
-                    <button className="cl-diff-btn cl-diff-btn--reject" onClick={() => handleReject(entry.path)} type="button" title="Reject this file's changes">
+                    <button
+                      className="cl-diff-btn cl-diff-btn--reject"
+                      onClick={() => handleReject(entry.path)}
+                      type="button"
+                      title="Reject this file's changes"
+                    >
                       <X size={10} />
                     </button>
                   </div>
                 )}
-                {status === "accepted" && <span className="cl-diff-badge cl-diff-badge--accept">accepted</span>}
-                {status === "rejected" && <span className="cl-diff-badge cl-diff-badge--reject">rejected</span>}
+                {status === 'accepted' && (
+                  <span className="cl-diff-badge cl-diff-badge--accept">accepted</span>
+                )}
+                {status === 'rejected' && (
+                  <span className="cl-diff-badge cl-diff-badge--reject">rejected</span>
+                )}
               </div>
             );
           })}
@@ -166,29 +193,35 @@ export default function DiffBlock({ entries, onAccept, onReject, onAcceptAll, on
       {/* 单文件：直接显示 Accept/Reject 按钮（readOnly 模式下改为引导） */}
       {!readOnly && entries.length === 1 && fileStatuses[entries[0].path] === undefined && (
         <div className="cl-diff-single-actions">
-          <button className="cl-diff-btn cl-diff-btn--accept" onClick={() => handleAccept(entries[0].path)} type="button">
+          <button
+            className="cl-diff-btn cl-diff-btn--accept"
+            onClick={() => handleAccept(entries[0].path)}
+            type="button"
+          >
             <Check size={11} /> Accept
           </button>
-          <button className="cl-diff-btn cl-diff-btn--reject" onClick={() => handleReject(entries[0].path)} type="button">
+          <button
+            className="cl-diff-btn cl-diff-btn--reject"
+            onClick={() => handleReject(entries[0].path)}
+            type="button"
+          >
             <X size={11} /> Reject
           </button>
         </div>
       )}
       {readOnly && entries.length === 1 && (
-        <div className="cl-diff-readonly-hint">
-          摘要预览 · 在评审面板操作 Accept/Reject
-        </div>
+        <div className="cl-diff-readonly-hint">摘要预览 · 在评审面板操作 Accept/Reject</div>
       )}
 
       {/* 单文件已审查后显示状态 */}
       {!readOnly && entries.length === 1 && fileStatuses[entries[0].path] && (
         <div className="cl-diff-single-status">
-          {fileStatuses[entries[0].path] === "accepted" && (
+          {fileStatuses[entries[0].path] === 'accepted' && (
             <span className="cl-diff-badge cl-diff-badge--accept">
               <Check size={10} /> applied to disk
             </span>
           )}
-          {fileStatuses[entries[0].path] === "rejected" && (
+          {fileStatuses[entries[0].path] === 'rejected' && (
             <span className="cl-diff-badge cl-diff-badge--reject">
               <X size={10} /> discarded
             </span>

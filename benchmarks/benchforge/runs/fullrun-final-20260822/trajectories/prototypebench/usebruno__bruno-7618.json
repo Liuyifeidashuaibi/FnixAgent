@@ -1,0 +1,20 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "usebruno__bruno-7618",
+  "prompt": "### Description\r\n\r\n<!-- Explain here the changes your PR introduces and text to help us understand the context of this change. -->\r\n\r\n#### Contribution Checklist:\r\n\r\n- [ ] **I've used AI significantly to create this pull request**\r\n- [ ] **The pull request only addresses one issue or adds one feature.**\r\n- [ ] **The pull request does not introduce any breaking changes**\r\n- [ ] **I have added screenshots or gifs to help explain the change if applicable.**\r\n- [ ] **I have read the [contribution guidelines](https://github.com/usebruno/bruno/blob/main/contributing.md).**\r\n- [ ] **Create an issue and link to the pull request.**\r\n\r\nNote: Keeping the PR small and focused helps make it easier to review and merge. If you have multiple changes you want to make, please consider submitting them as separate pull requests.\r\n\r\n#### Publishing to New Package Managers\r\n\r\nPlease see [here](../publishing.md) for more information.\r\n\n\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\n## Summary by CodeRabbit\n\n* **Tests**\n  * Updated GraphQL test fixtures, endpoint targets, and test assertions to match new test data and field selections.\n\n* **Chores**\n  * Expanded mock GraphQL schema and adjusted locator/timeout patterns to improve test reliability and maintainability.\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "原始任务是一段 PR 模板文本（含贡献清单和说明），未包含任何明确指令或执行请求；Agent 错误地将其解读为待处理的变更任务，并要求用户澄清‘要实现什么改变’，但任务本身并无待执行的操作需求——它只是提供模板内容，无需修改、生成或响应。Agent 未能识别该输入为静态文档展示而非指令。",
+  "final_response": "It looks like you've pasted a PR template or contribution checklist — but no specific task or change request is stated.\n\nCould you please clarify:\n\n- What change you'd like me to implement? (e.g., \"Add GraphQL schema validation\", \"Fix broken test in `test/graphql.test.js`\", \"Update README with new CLI flag\", etc.)\n- Any files or behaviors that need modification?\n- Is this related to Bruno (the API client), and if so, what version or feature area?\n\nOnce I know the goal, I’ll inspect the relevant files and make the precise change needed.",
+  "steps": [
+    "Step 0 | 思考: It looks like you've pasted a PR template or contribution checklist — but no specific task or change... | 耗时: 3232ms, tokens: 3031"
+  ],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 3031,
+  "duration_ms": 3234.0000000003783,
+  "error": "",
+  "judge_method": "llm",
+  "started_at": 1787388306.3399618,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-final-20260822\\workspaces\\prototypebench__usebruno__bruno-7618__c84568"
+}

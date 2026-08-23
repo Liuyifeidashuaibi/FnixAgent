@@ -1,0 +1,18 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "usebruno__bruno-7971",
+  "prompt": "### Description\r\n\r\nUpgrades the multipart form body UI to support multi-file uploads properly.\r\n\r\n[JIRA](https://usebruno.atlassian.net/browse/BRU-3036)\r\n\r\n#### Contribution Checklist:\r\n\r\n- [x] **I've used AI significantly to create this pull request**\r\n- [x] **The pull request only addresses one issue or adds one feature.**\r\n- [x] **The pull request does not introduce any breaking changes**\r\n- [x] **I have added screenshots or gifs to help explain the change if applicable.**\r\n- [x] **I have read the [contribution guidelines](https://github.com/usebruno/bruno/blob/main/contributing.md).**\r\n- [x] **Create an issue and link to the pull request.**\r\n\r\nNote: Keeping the PR small and focused helps make it easier to review and merge. If you have multiple changes you want to make, please consider submitting them as separate pull requests.\r\n\r\n#### Publishing to New Package Managers\r\n\r\nPlease see [here](../publishing.md) for more information.\r\n\r\nhttps://github.com/user-attachments/assets/61606aa8-30c2-4eed-bbff-6559b50314fc\r\n\r\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\r\n## Summary by CodeRabbit\r\n\r\n* **New Features**\r\n  * Multipart form files now display as editable chips with per-file add/remove, overflow dropdown, and upload button in edit mode.\r\n  * File selection now merges/deduplicates files, normalizes paths relative to collections, and auto-determines multipart content type; removing the last file converts the field back to text.\r\n  * Response examples and request panes updated to use the chip-based file UI; upload controls hidden in read-only mode.\r\n\r\n* **Tests**\r\n  * Added fixtures and end-to-end tests covering multi-file upload, chip rendering, overflow behavior, and per-file removal.\r\n* **Utilities**\r\n  * Added auto content-type detection for multipart file lists.\r\n\r\n[![Review Change Stack](https://storage.googleapis.com/coderabbit_public_assets/review-stack-in-coderabbit-ui.svg)](https://app.coderabbit.ai/change-stack/usebruno/bruno/pull/7971)\r\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 375.0,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336338.572971,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\prototypebench__usebruno__bruno-7971__cbca8b"
+}

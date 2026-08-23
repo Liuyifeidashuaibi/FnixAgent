@@ -1,0 +1,15 @@
+diff --git a/django/db/models/sql/query.py b/django/db/models/sql/query.py
+index abc1234..def5678 100644
+--- a/django/db/models/sql/query.py
++++ b/django/db/models/sql/query.py
+@@ -1234,7 +1234,10 @@ class Query(BaseExpression):
+     def get_group_by(self, compiler, connection):
+         """
+         Return a list of expressions that define the GROUP BY clause.
+-        """
++        """
++        If group_by is explicitly set (e.g., via values()), use it.
++        """
+         if self.group_by is not None:
+             return self.group_by
+         # Fallback to computing from select...

@@ -1,0 +1,6 @@
+{
+  "id": "core",
+  "name": "FnixForge Core Suite",
+  "version": "1.0.0",
+  "description": "Agent 生产级核心能力基准：指令遵循 / 精确编辑 / 代码生成 / 工具使用 / 多步规划 / 上下文 / 输出契约 / 纠错 / 安全 / 中文语义，共 19 题。"
+}

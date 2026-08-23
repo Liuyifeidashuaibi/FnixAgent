@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "particle-boundary-simulation-L3-029",
+  "prompt": "# Web-Bench Task T29\n\nBased on the notes in the attachments, please build an ion-cloud simulator. Particles should stay inside the container, settle to stable speeds after collisions, not jitter in the corners, and there should be a simple observable metric or debug readout so it's easy to confirm particles aren't clipping through walls, blowing up in speed, or getting stuck.\n\n## Repro Scenario Requirements\n\nThe simulator must make the bundled QA scenarios directly selectable in the UI:\n\n- `shipping_default`\n- `wall_stress_capture`\n- `dense_cluster_capture`\n\nUse the seeds, particle counts, damping, wall bounce, and chamber dimensions from `parameter-snapshots.json`. The wall-stress run must visibly address the three boundary cases from `boundary-case-matrix.csv`: `BC-01` right-wall penetration, `BC-02` top-wall speed rebound, and `BC-03` dense upper-right corner sticking.\n\nThe live diagnostics panel should expose enough readings to audit those cases without opening DevTools. Include labels for the scenario id, seed, particle count, breach/penetration count, max penetration, average speed before/after contact, max speed or energy cap, corner stuck/jitter count, and the current frame-state reference (`FS-02`, `FS-03`, or `FS-04`) when a stress scenario is active.\n\n## Output\n\nCreate the required artifact inside `/workspace`. The required output path is:\n\n- `/workspace/www/index.html` (declared as `environment/www/index.html`)\n\nDo not place the final answer only in chat; write the runnable artifact files.\n\n## Runtime and Delivery Constraints\n\n- The deliverable must open directly under a static file server; don't rely on a Node.js backend, npm build steps, external CDNs, or network downloads for dependencies.\n- If you need to split out CSS, JavaScript, or data-processing files, put them inside the inspected directory and reference them from the entry HTML using relative paths.\n\n## Public Assets\n\n- `symptom-report`: `/workspace/public-assets/brief/symptom-report.md` markdown\n- `wall-stress-protocol`: `/workspace/public-assets/repro/wall-stress-protocol.md` markdown\n- `boundary-case-matrix`: `/workspace/public-assets/repro/boundary-case-matrix.csv` csv\n- `parameter-snapshots`: `/workspace/public-assets/data/parameter-snapshots.json` json\n- `observation-log`: `/workspace/public-assets/logs/observation-log.csv` csv\n- `frame-states`: `/workspace/public-assets/repro/frame-states.json` json",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787332457.876589,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\workbuddy-bench__particle-boundary-simulation-L3-029__feaeff"
+}

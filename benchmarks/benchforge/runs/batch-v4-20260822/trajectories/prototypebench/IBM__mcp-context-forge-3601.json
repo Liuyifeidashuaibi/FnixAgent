@@ -1,0 +1,28 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "IBM__mcp-context-forge-3601",
+  "prompt": "## 🔗 Related Issue\r\nCloses #3533\r\n\r\n---\r\n\r\n## 📝 Summary\r\n\r\nFixes order-dependent test failures in `tests/unit/mcpgateway/test_main.py::TestMetricsEndpoints` caused by leaked singleton mocks from tool service tests.\r\n\r\n### Problem\r\n\r\n`test_get_metrics` and `test_get_metrics_returns_service_dicts` fail intermittently when run after certain tool-service tests that replace singleton cache methods with plain `MagicMock` assignments. The failure is order-dependent and manifests as:\r\n\r\n```\r\nTypeError: mcpgateway.schemas.A2AAgentAggregateMetrics() argument after ** must be a mapping, not list\r\n```\r\n\r\n**Root cause:** Four tests directly assign mocks to the global `metrics_cache.metrics_cache` singleton:\r\n```python\r\ncache_module.metrics_cache.get = MagicMock(return_value=cached)\r\n```\r\n\r\nThese mocks persist across test runs. When `/metrics` endpoint includes live A2A metrics, `A2AAgentService.aggregate_metrics()` reads the leaked mock and crashes attempting to unpack a list as `**cached` (requires dict).\r\n\r\n**Offending tests:**\r\n- `tests/unit/mcpgateway/services/test_tool_service.py:243-252`\r\n- `tests/unit/mcpgateway/services/test_tool_service_coverage.py:812-819`\r\n- `tests/unit/mcpgateway/services/test_tool_service_coverage.py:828-837`\r\n- `tests/unit/mcpgateway/services/test_tool_service_coverage.py:1412-1419`\r\n\r\n### Solution\r\n\r\n1. **Test isolation fixes:** Replace direct singleton assignments with `monkeypatch.setattr()` in 4 tests to ensure proper cleanup after each test\r\n2. **Defense-in-depth:** Add `isinstance(cached, dict)` check in `A2AAgentService.aggregate_metrics()` to gracefully handle invalid cache payloads\r\n\r\n---\r\n\r\n## 🏷️ Type of Change\r\n- [x] Bug fix (test isolation / singleton cleanup)\r\n- [ ] Feature / Enhancement\r\n- [ ] Documentation\r\n- [ ] Refactor\r\n- [ ] Chore (deps, CI, tooling)\r\n- [ ] Other (describe below)\r\n\r\n---\r\n\r\n## 🧪 Verification\r\n\r\n| Check                     | Command         | Status |\r\n|---------------------------|-----------------|--------|\r\n| Lint suite                | `make lint`     | ✅ Pass |\r\n| Unit tests                | `make test`     | ✅ Pass |\r\n| Coverage ≥ 80%            | `make coverage` | ✅ Pass |\r\n\r\n\r\n## ✅ Checklist\r\n- [x] Code formatted (`make black isort pre-commit`)\r\n- [x] Tests added/updated for changes\r\n- [x] Documentation updated (if applicable)\r\n- [x] No secrets or credentials committed\r\n\r\n---\r\n\r\n### Acceptance Criteria Met\r\n\r\n- ✅ All tests that patch `mcpgateway.cache.metrics_cache.metrics_cache` use `monkeypatch.setattr()` for proper cleanup\r\n- ✅ Minimal reproducer passes consistently\r\n- ✅ `tests/unit/mcpgateway/test_main.py::TestMetricsEndpoints::*` passes both in isolation and after offending service tests\r\n- ✅ No order-dependent failures remain from leaked `metrics_cache.get` / `metrics_cache.set` mocks\r\n- ✅ Optional hardening: `A2AAgentService.aggregate_metrics()` fails gracefully on invalid cache payloads\r\n\r\n### Environment Info\r\n\r\n- Gateway version: `727d21455`\r\n- Python version: `3.13.7`\r\n- OS/Platform: Linux 6.6.87.2-microsoft-standard-WSL2",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [
+    "Step 0 | 思考: 根据提供的信息，我们的任务是修复单元测试中的一个依赖于执行顺序的问题。具体来说，`tests/unit/mcpgateway/test_main.py::TestMetricsEndpoints` 中... | 工具 ✗ glob({\"pattern\": \"test_tool_service*.py\", \"path\": \"test) | 耗时: 12198ms, tokens: 3815"
+  ],
+  "tool_calls": [
+    {
+      "step": 1,
+      "tool": "glob",
+      "args": {},
+      "success": false,
+      "output_preview": "[失败] 目录不存在: tests/unit/mcpgateway/services"
+    }
+  ],
+  "files_written": [],
+  "total_tokens": 3815,
+  "duration_ms": 13265.999999999964,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen-max): HTTP 400 (<400> InternalError.Algo.InvalidParameter: messages with role \"tool\" must be a response to a preceeding message with \"tool_calls\".)",
+  "judge_method": "heuristic",
+  "started_at": 1787384917.0143573,
+  "workspace": "benchmarks\\benchforge\\runs\\batch-v4-20260822\\workspaces\\prototypebench__IBM__mcp-context-forge-3601__1acebe"
+}

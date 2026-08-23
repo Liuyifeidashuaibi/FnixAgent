@@ -1,0 +1,18 @@
+{
+  "dataset": "swe-bench-lite",
+  "task_id": "astropy__astropy-7746",
+  "prompt": "Issue when passing empty lists/arrays to WCS transformations\nThe following should not fail but instead should return empty lists/arrays:\r\n\r\n```\r\nIn [1]: from astropy.wcs import WCS\r\n\r\nIn [2]: wcs = WCS('2MASS_h.fits')\r\n\r\nIn [3]: wcs.wcs_pix2world([], [], 0)\r\n---------------------------------------------------------------------------\r\nInconsistentAxisTypesError                Traceback (most recent call last)\r\n<ipython-input-3-e2cc0e97941a> in <module>()\r\n----> 1 wcs.wcs_pix2world([], [], 0)\r\n\r\n~/Dropbox/Code/Astropy/astropy/astropy/wcs/wcs.py in wcs_pix2world(self, *args, **kwargs)\r\n   1352         return self._array_converter(\r\n   1353             lambda xy, o: self.wcs.p2s(xy, o)['world'],\r\n-> 1354             'output', *args, **kwargs)\r\n   1355     wcs_pix2world.__doc__ = \"\"\"\r\n   1356         Transforms pixel coordinates to world coordinates by doing\r\n\r\n~/Dropbox/Code/Astropy/astropy/astropy/wcs/wcs.py in _array_converter(self, func, sky, ra_dec_order, *args)\r\n   1267                     \"a 1-D array for each axis, followed by an origin.\")\r\n   1268 \r\n-> 1269             return _return_list_of_arrays(axes, origin)\r\n   1270 \r\n   1271         raise TypeError(\r\n\r\n~/Dropbox/Code/Astropy/astropy/astropy/wcs/wcs.py in _return_list_of_arrays(axes, origin)\r\n   1223             if ra_dec_order and sky == 'input':\r\n   1224                 xy = self._denormalize_sky(xy)\r\n-> 1225             output = func(xy, origin)\r\n   1226             if ra_dec_order and sky == 'output':\r\n   1227                 output = self._normalize_sky(output)\r\n\r\n~/Dropbox/Code/Astropy/astropy/astropy/wcs/wcs.py in <lambda>(xy, o)\r\n   1351             raise ValueError(\"No basic WCS settings were created.\")\r\n   1352         return self._array_converter(\r\n-> 1353             lambda xy, o: self.wcs.p2s(xy, o)['world'],\r\n   1354             'output', *args, **kwargs)\r\n   1355     wcs_pix2world.__doc__ = \"\"\"\r\n\r\nInconsistentAxisTypesError: ERROR 4 in wcsp2s() at line 2646 of file cextern/wcslib/C/wcs.c:\r\nncoord and/or nelem inconsistent with the wcsprm.\r\n```\n",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 375.0,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336340.7023745,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\swe-bench-lite__astropy__astropy-7746__679a02"
+}

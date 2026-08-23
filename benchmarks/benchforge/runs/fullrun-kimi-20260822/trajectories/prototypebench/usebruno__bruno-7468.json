@@ -1,0 +1,18 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "usebruno__bruno-7468",
+  "prompt": "### Description\r\n\r\n[JIRA](https://usebruno.atlassian.net/browse/BRU-2049)\r\n\r\n#### Contribution Checklist:\r\n\r\n- [x] **I've used AI significantly to create this pull request**\r\n- [x] **The pull request only addresses one issue or adds one feature.**\r\n- [x] **The pull request does not introduce any breaking changes**\r\n- [x] **I have added screenshots or gifs to help explain the change if applicable.**\r\n- [x] **I have read the [contribution guidelines](https://github.com/usebruno/bruno/blob/main/contributing.md).**\r\n- [x] **Create an issue and link to the pull request.**\r\n\r\n\r\nhttps://github.com/user-attachments/assets/10e60051-8076-4794-8a07-957b0f121bd4\r\n\r\n\n\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\n## Summary by CodeRabbit\n\n* **New Features**\n  * GraphQL Query Builder: visual, recursive builder that syncs with the editor and variables.\n  * Per-tab Query Builder toggle plus draggable/resizable Query Builder and Variables panes.\n  * Schema loading (introspection or file), Docs/Refresh/Load actions, and updated header actions including Prettify.\n\n* **Bug Fixes / UX**\n  * Improved editor–builder synchronization, drag/resize behavior, and editor cleanup on unmount.\n\n* **Tests**\n  * New unit and end-to-end tests with fixtures for the query builder.\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/packages/bruno-app/src/components/RequestPane/GraphQLRequestPane/St] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 92.9999999998472,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787334462.4936256,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\prototypebench__usebruno__bruno-7468__c96113"
+}

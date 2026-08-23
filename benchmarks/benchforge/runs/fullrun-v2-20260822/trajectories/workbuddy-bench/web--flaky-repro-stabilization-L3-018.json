@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "web--flaky-repro-stabilization-L3-018",
+  "prompt": "# Web-Bench Task T18\n\nPlease get the Snake game feedback — arrow-key mashing, U-turn restrictions, food spawning on the snake's body — to reproduce reliably, and lock it down as regression tests.\n\n## Output\n\nCreate the required artifact inside `/workspace`. The required output path is:\n\n- `/workspace/submission/tests` (declared as `environment/submission/tests/`)\n\nDo not place the final answer only in chat; write the runnable artifact files.\n\n## Public Assets\n\n- `feedback_transcript`: `/workspace/public-assets/feedback/feedback-transcript.md` markdown\n- `replay_cases`: `/workspace/public-assets/replay/replay-cases.json` json\n- `key_event_stream`: `/workspace/public-assets/replay/key-events.jsonl` jsonl\n- `host_constraints`: `/workspace/public-assets/replay/host-constraints.md` markdown\n- `failure_state_log`: `/workspace/public-assets/evidence/failure-state-log.jsonl` jsonl\n- `test_harness_guidance`: `/workspace/public-assets/evidence/test-harness-guidance.yaml` yaml",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 358.99999999946886,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336321.6435778,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\workbuddy-bench__web--flaky-repro-stabilization-L3-018__f33862"
+}

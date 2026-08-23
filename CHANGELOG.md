@@ -16,6 +16,20 @@
 
 ## [Unreleased]
 
+### Added
+
+- **FnixForge — Agent 生产级熔炉**（`core/forge/`）：以第三方 Agent 项目为被测对象（SUT），
+  提供「Benchmark 测评 → 失败聚类诊断 → Git 守卫下自动修复 → 全量回归复测」的闭环；
+  修复引入回归即自动回滚，无净进步亦回滚。含 19 道生产级基准题（`benchmarks/forge/suites/core`，
+  覆盖指令遵循/精确编辑/代码生成/工具使用/多步规划/上下文检索/输出契约/纠错/安全/中文语义）
+  与 3 题冒烟套件；每题独立沙箱执行 + 文件指纹越界检测 + 确定性判定（不引入 LLM 打分）。
+  - CLI: `fnixagent forge suites|probe|test|fix`（`cli/forge_cmd.py`）
+  - API: `GET/POST /api/v1/forge/suites|probe|run`（SSE 事件流）
+  - 被测 Agent 接入: 自动探测 (`forge probe --write`) + `forge.config.json`（CLI/HTTP 双形态）
+  - 报告: JSON + HTML 能力矩阵，含 PRODUCTION READY 判定（默认阈值 90%）
+  - 演示: `benchmarks/forge/sample-agent/` 内置一个故意带 5 类缺陷的半成品 Agent
+  - 文档: `docs/forge.md`；测试: `tests/forge/`（13 例）；19 题 golden run 全部可解
+
 ### Fixed
 
 - **Dashboard datetime 比较 TypeError**：`api/routers/dashboard.py` 中

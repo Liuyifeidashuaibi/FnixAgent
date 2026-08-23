@@ -24,12 +24,16 @@ A2ABus - Agent 间通信 (Agent-to-Agent Communication)
 from __future__ import annotations
 
 import asyncio
+import logging
 import uuid
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
 from fnixagent.core.agent.types import utcnow_iso
+
+_logger = logging.getLogger(__name__)
+
 
 
 @dataclass
@@ -395,6 +399,7 @@ class A2ABus:
                 callback(message)
                 count += 1
             except Exception:
+                _logger.debug('Unhandled exception', exc_info=True)
                 continue
         return count
 

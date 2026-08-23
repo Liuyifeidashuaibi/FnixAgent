@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "office--effective-control-state-L5-036",
+  "prompt": "# Effective control-state reconstruction\n\n请读取当前工作目录下的受控流程文件包，按截至 2026-08-20、适用站点\"华南冷链库\"、适用角色\"夜班QA复核员\"的口径， 重建 PROC-CC-036 的当前有效 control state，并写入 `output/effective_control_state.json`。输入包含基础流程、签署站点附录、 多份监管通知（含追溯生效附件和后续收紧通知）、培训释放矩阵、事件摘要、FAQ、附录表、文档 register、归档旧版和未签署草案。 不能只取最新文件，也不能只做摘要；必须输出可审计的对象图，包括当前有效 controls、inactive/superseded objects、 冲突解决 register、appendix bindings、角色条件性覆盖、追溯生效行动 和 summary。\n\n输出 JSON 顶层必须包含 `metadata`、`control_states`、`inactive_controls`、`conflict_register`、`appendix_bindings`、 `role_specific_overrides`、`retroactive_actions`、`summary`，共 8 个顶层字段。 `metadata` 至少包含 case_id、as_of_date、target_site、target_role、source_root、output_path、authority_order、excluded_statuses、source_docs_used。 `control_states` 中每个 control 必须包含 control_id、title、effective_steps、active_warnings、bound_appendices、inactive_refs、source_doc、authority_level、site_scope、role_scope。 每个 effective step 必须包含 step_id、text、source_doc、authority_level、applies_to、training_gate。 `inactive_controls` 必须保留被取代、归档、FAQ-only、未签署草案、superseded notice 以及训练未完成而对目标角色 pending 的步骤， 并说明 inactive_reason、replaced_by、source_doc、status。 `conflict_register` 必须记录每个冲突对象的 losing_source、winning_source、active_winner、resolution 和是否需要人工备注。 `appendix_bindings` 必须把 APP-A/APP-B/APP-C 绑定到实际使用的 controls 与 required_rows。 `role_specific_overrides` 列出**非目标角色**因为已完成各自培训而进入更严格步骤的覆盖关系，每条记录 role、site、control_id、 base_step_id、overriding_step_id、training_evidence_id、training_release_date、notice_effective_date、effective_for_role_from、reason； 若**目标角色**的对应培训在 as_of_date 之前未完成，目标角色不出现在 role_specific_overrides 中（仍按 base_step_id 执行）。 `retroactive_actions` 列出 issue_date 在 as_of_date 前但 retroactive_effective_date 更早的监管通知所触发的历史记录重分类， 每条记录 action_id、source_doc、issue_date、retroactive_effective_date、as_of_date、affected_record、affected_record_event_date、 original_severity、new_severity、trigger_rule、paired_with、paired_with_event_date、rationale。\n\n判定规则：监管通知 > incident-triggered control > 签署站点附录 > training_gate > 基础 SOP > FAQ。FAQ 只能解释格式或历史示例，不能覆盖硬性阈值； archive、unsigned draft、future training、superseded notice、训练对目标角色 pending 的更严格步骤都不能成为目标角色的 active step， 但必须在 inactive 或 conflict 中保留可追溯信息。请根据 document_register、各文件生效日期/状态、training_release_matrix、incident_digest、 目标站点/角色和 as_of_date 判断哪些通知、培训、事件触发控制当前对目标角色生效，哪些对象已经被替代或尚未生效。\n\n特别口径：\n- 追溯生效（retroactive supersession）：当 issue_date 在 as_of_date 之前、retroactive_effective_date 更早的监管通知文件存在时， 该通知中的步骤自 retroactive_effective_date 起生效，需进入 control_states.effective_steps；同时该通知所覆盖的历史 incident 行 （事件日期落在 retroactive 窗口内）必须按新规则重分类，并在 retroactive_actions 中记录原值/新值/配对依据。\n- 训练-生效错窗（training-effective overlap window）：当一份监管通知已生效但其要求的角色培训 release_date 在 as_of_date 之后， 则该通知步骤对目标角色 pending（status=training_pending_target_role），目标角色仍按上一版本步骤执行； 已完成同一通知对应培训的非目标角色按新通知执行，并在 role_specific_overrides 中列出。\n- 角色条件性再培训触发（role-conditional retraining）：监管通知可对不同角色设置不同的培训前置条件；不同角色的有效步骤可不同， role_specific_overrides 用于声明非目标角色的更严格步骤。\n不要只按文件名或最新日期取用规则。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 375.0,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336328.2103872,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\workbuddy-bench__office--effective-control-state-L5-036__04651f"
+}

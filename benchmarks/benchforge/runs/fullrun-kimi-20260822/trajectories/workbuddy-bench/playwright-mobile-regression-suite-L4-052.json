@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "playwright-mobile-regression-suite-L4-052",
+  "prompt": "# Web-Bench Task T52\n\nThe mobile booking flow is about to be refactored, and the QA team needs\na Playwright regression pack that preserves the behavior described in the\nattached bug ledger, page requirements, and payload requirements.\n\nBuild the suite under `/workspace/submission/tests`. It should be runnable\nPlaywright code, not a prose plan. The tests should target the booking\npage as a browser user would: load the page on a phone-sized viewport,\nchoose the concrete service and slot ids from the attached data, type the\ncustomer details, open the confirmation step, and intercept the booking API\nat the network boundary so the emitted payload can be asserted.\n\nThe pack must cover the release-blocking regressions in the QA ledger:\nblank required fields, sold-out slot selection, invalid appointment dates,\ndouble confirmation of the same slot, editing after the confirmation step,\nand restoring a partially completed booking after the user leaves and\nreturns. These scenarios should share maintainable helper code where it\nmakes the tests clearer, but the helpers still need to be exercised by the\nspecs.\n\nThe QA lead also asked for a compact review traceability artifact next to the specs. It should map each regression back to the source asset, fixture id, route or viewport control, action, assertion target, and any network or clock control used by the test. The artifact can use any maintainable JSON or Markdown shape; it is for review traceability only and does not replace executable tests.\n\nAvoid brittle shortcuts. Do not use live services, real accounts, SMS, or\nexternal internet. Do not satisfy scenarios by comments, helper-only unit\ntests, direct app state mutation, or localStorage seeding that bypasses the\nvisible booking UI. Time-sensitive assertions should be deterministic.\n\n## Output\n\nCreate the required artifact inside `/workspace`:\n\n- `/workspace/submission/tests`\n\nDo not place the final answer only in chat; write the runnable artifact\nfiles.\n\n## Public Assets\n\n- `bug_replay`: `/workspace/public-assets/replay/mobile-booking-bugs.jsonl`\n- `test_requirements`: `/workspace/public-assets/spec/test-requirements.md`\n- `payload_requirements`: `/workspace/public-assets/spec/payload-requirements.json`\n- `page_requirements`: `/workspace/public-assets/spec/page-requirements.json`\n- `product_notes`: `/workspace/public-assets/spec/product-notes.md`",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787334453.6450913,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\workbuddy-bench__playwright-mobile-regression-suite-L4-052__b7d20c"
+}

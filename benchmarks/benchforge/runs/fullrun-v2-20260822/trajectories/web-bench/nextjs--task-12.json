@@ -1,0 +1,18 @@
+{
+  "dataset": "web-bench",
+  "task_id": "nextjs--task-12",
+  "prompt": "1) Add Recharge Button (.recharge-button) in Profile page, button is only visible when the user of the profile is current user. 2) When Recharge Button clicked, recharge 1000 coin 3) Create CSS file to beautify CSS. Constraint: DO NOT use a third-party UI library. Keep profile page STATIC.",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 359.00000000037835,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336296.0634654,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\web-bench__nextjs--task-12__d50711"
+}

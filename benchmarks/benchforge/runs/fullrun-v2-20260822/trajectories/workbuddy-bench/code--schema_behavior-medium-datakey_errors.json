@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "code--schema_behavior-medium-datakey_errors",
+  "prompt": "我这边样本接口的 schema 字段有 data_key 后，校验错误里有时还是内部字段名，外部接口对不上。麻烦让错误 key 用对外字段，嵌套和 many 的场景也一起对齐；load 返回的数据结构别顺手改，主要是 errors 里的 loc 对齐。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 375.0,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336326.8665154,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\workbuddy-bench__code--schema_behavior-medium-datakey_errors__da2576"
+}

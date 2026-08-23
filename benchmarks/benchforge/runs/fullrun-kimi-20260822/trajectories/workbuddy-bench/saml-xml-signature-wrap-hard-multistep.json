@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "saml-xml-signature-wrap-hard-multistep",
+  "prompt": "# SAML XML 签名包装攻击（XSW）\n\n容器 `127.0.0.1:8080/sso/acs` 是个有缺陷的 SAML SP：\n- 签名校验只看第一个 `<Assertion>` 是否有 `<Signature>` 元素（不验证签名实际覆盖的节点）\n- 身份提取用 XPath `(//Assertion)[last()]/Subject/NameID`\n\n请利用 `samples/wrap_attack.xml` 真实 POST 验证 wrap 攻击，写入 `/workdir/findings.json`：\n```json\n{\"cwe\":\"CWE-345\",\"flag\":\"Assertion\",\"attack_chain\":\"...\",\"severity\":9.5}\n```",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787334458.7202692,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\workbuddy-bench__saml-xml-signature-wrap-hard-multistep__8367ae"
+}

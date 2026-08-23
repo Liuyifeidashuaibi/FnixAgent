@@ -28,12 +28,16 @@ Workspace 工具集 — 参考主流 Agent 工具 的 Agent 工具能力
 from __future__ import annotations
 
 import asyncio
+import logging
 import os
 import re
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+
+_logger = logging.getLogger(__name__)
+
 
 # ===== 安全: 防止危险命令（子串匹配；保守拦截） =====
 # P1 加固: 扩展危险模式覆盖 home 目录/用户目录/强制推送/进程杀死等
@@ -168,8 +172,18 @@ def _reject_stub_source(rel_path: str, content: str) -> str | None:
         return None
     text = (content or "").strip()
     codeish = sum(text.count(ch) for ch in "{}[];=<>/\\`'\"()")
-    looks_like_code = any(
-        kw in text for kw in ("def ", "class ", "import ", "function ", "return ")
+    # 词边界匹配，避免 "display titles with class 'list-item'" 误判为代码；
+    # "=>" 作为 TS/JS 箭头函数信号单独保留。关键词集合已扩充常见代码起始
+    # token（print/from/if/for/while/with/assert/async/await/yield/try/else/
+    # elif/raise/pass/break/continue/lambda/del），否则极简合法脚本
+    # (print('hi') / x = 1) 会被误判为"说明文字"而拒绝写入。
+    looks_like_code = (
+        re.search(
+            r"\b(def|class|import|export|function|const|let|return|print|"
+            r"from|if|for|while|with|assert|async|await|yield|try|else|"
+            r"elif|raise|pass|break|continue|lambda|del)\b", text) is not None
+        or "=>" in text
+        or "=" in text
     )
     looks_like_markup = "<" in text and ">" in text
     looks_like_css = "{" in text and "}" in text
@@ -359,11 +373,22 @@ class WorkspaceTools:
         """
         try:
             path = (rel_path or "").strip()
+            mirror_rel: str | None = None
             if craft_artifacts:
-                from fnixagent.harness.paths import coerce_craft_artifact_path
-
-                path = coerce_craft_artifact_path(path)
-
+                norm = path.replace("\\", "/").strip().lstrip("/")
+                already_artifact = (
+                    norm.lower().startswith(".fnix/artifacts/")
+                    or norm.lower().startswith("artifacts/")
+                )
+                if not already_artifact:
+                    if norm:
+                        # 写到 agent 指定的「自然路径」：就地编辑现有文件 / 任务隐含的
+                        # 相对路径（如 src/components/...、index.html），保证评测器与用户
+                        # 能在预期位置找到产物；同时镜像一份到 .fnix/artifacts/ 供预览面板。
+                        mirror_rel = f".fnix/artifacts/{norm}"
+                    else:
+                        path = ".fnix/artifacts/output.txt"
+                        mirror_rel = None
             stub_err = _reject_stub_source(path, content or "")
             if stub_err:
                 return ToolResult(success=False, error=stub_err)
@@ -371,6 +396,14 @@ class WorkspaceTools:
             target = _safe_path(self.workspace_root, path)
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(content, encoding="utf-8")
+
+            if mirror_rel:
+                try:
+                    mtarget = _safe_path(self.workspace_root, mirror_rel)
+                    mtarget.parent.mkdir(parents=True, exist_ok=True)
+                    mtarget.write_text(content, encoding="utf-8")
+                except Exception:
+                    mirror_rel = None  # 镜像失败不影响主写入
 
             self.ctx.recent_edits.append(
                 {
@@ -380,10 +413,14 @@ class WorkspaceTools:
                 }
             )
 
+            msg = f"已写入: {path} ({len(content)} 字符)"
+            if mirror_rel:
+                msg += f"；预览镜像: {mirror_rel}"
             return ToolResult(
                 success=True,
-                content=f"已写入: {path} ({len(content)} 字符)",
-                metadata={"path": str(target), "size": len(content), "rel_path": path},
+                content=msg,
+                metadata={"path": str(target), "size": len(content), "rel_path": path,
+                          "mirror": mirror_rel},
             )
         except ValueError as e:
             return ToolResult(success=False, error=str(e))
@@ -566,6 +603,7 @@ class WorkspaceTools:
                 try:
                     content = file_path.read_text(encoding="utf-8", errors="replace")
                 except Exception:
+                    _logger.debug("Unhandled exception", exc_info=True)
                     continue
 
                 if output_mode == "count":
@@ -699,10 +737,10 @@ class WorkspaceTools:
     # ============================================================
 
     async def web_search(self, query: str, num: int = 5) -> ToolResult:
-        """网络搜索 (使用 DuckDuckGo HTML 解析版, 比 Instant Answer API 结果更丰富)
+        """网络搜索 (使用 DuckDuckGo Lite 解析版)
 
-        P2 修复: 原 DuckDuckGo Instant Answer API 对中文/技术查询几乎无结果,
-        改用 HTML 搜索页 + 正则解析, 覆盖正常搜索结果而非仅"即时答案"。
+        P3 修复: DuckDuckGo HTML 版 (html.duckduckgo.com/html/) 已返回反爬挑战页,
+        改用 Lite 版 (lite.duckduckgo.com/lite/) 结构更简洁且不受反爬影响。
 
         Args:
             query: 搜索查询
@@ -716,63 +754,70 @@ class WorkspaceTools:
 
             async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
                 resp = await client.get(
-                    "https://html.duckduckgo.com/html/",
-                    params={"q": query, "kl": "cn-zh"},
+                    "https://lite.duckduckgo.com/lite/",
+                    params={"q": query, "kl": "us-en"},
                     headers={
                         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
                     },
                 )
                 html = resp.text or ""
 
-                # 解析 HTML 搜索结果 (DuckDuckGo HTML 版结构)
-                # 结果块: <a class="result__a" href="...">标题</a>
-                # 摘要: <a class="result__snippet" ...>摘要文本</a>
+                # 解析 DuckDuckGo Lite 搜索结果
+                # Lite 版结构: <a rel="nofollow" href="//duckduckgo.com/l/?uddg=URL">Title</a>
+                # 摘要在后续 <td> 中
                 results = []
-                # 提取标题+URL
-                title_pattern = re.compile(
-                    r'<a[^>]+class="result__a"[^>]*href="([^"]+)"[^>]*>(.*?)</a>',
-                    re.DOTALL,
-                )
-                # 提取摘要
-                snippet_pattern = re.compile(
-                    r'<a[^>]+class="result__snippet"[^>]*>(.*?)</a>',
-                    re.DOTALL,
-                )
 
-                titles = title_pattern.findall(html)
-                snippets = snippet_pattern.findall(html)
+                # 提取标题+URL (Lite 版用 rel="nofollow" 标记结果链接)
+                link_pattern = re.compile(
+                    r'<a[^>]*rel="nofollow"[^>]*href="([^"]+)"[^>]*>(.*?)</a>',
+                    re.DOTALL,
+                )
 
                 # 去 HTML 标签的辅助函数
                 def _strip_tags(s: str) -> str:
                     return re.sub(r"<[^>]+>", "", s).strip()
 
-                # 合并标题和摘要
-                for i, (url, title) in enumerate(titles[:num]):
+                from urllib.parse import unquote
+
+                links = link_pattern.findall(html)
+                for i, (url, title) in enumerate(links[:num]):
                     title_clean = _strip_tags(title)
-                    snippet_clean = _strip_tags(snippets[i]) if i < len(snippets) else ""
+                    if not title_clean or len(title_clean) < 3:
+                        continue
                     # DuckDuckGo 重定向 URL 解包 (//duckduckgo.com/l/?uddg=实际URL)
                     if "uddg=" in url:
                         m = re.search(r"uddg=([^&]+)", url)
                         if m:
-                            from urllib.parse import unquote
-
                             url = unquote(m.group(1))
-                    results.append(f"[{i + 1}] {title_clean}\n    URL: {url}\n    {snippet_clean}")
+                    elif url.startswith("//"):
+                        url = "https:" + url
+                    results.append(f"[{i + 1}] {title_clean}\n    URL: {url}")
 
-                # 如果 HTML 解析无结果, 回退到 Instant Answer API
+                # 如果 Lite 版无结果, 回退到 HTML 版 (可能在某些网络环境下可用)
                 if not results:
-                    api_resp = await client.get(
-                        "https://api.duckduckgo.com/",
-                        params={"q": query, "format": "json", "no_html": 1, "skip_disambig": 1},
-                        headers={"User-Agent": "FnixAgent/1.0"},
-                    )
-                    data = api_resp.json()
-                    abstract = data.get("AbstractText", "")
-                    if abstract:
-                        results.append(f"[摘要] {abstract}")
-                    for topic in data.get("RelatedTopics", [])[:num]:
-                        if isinstance(topic, dict):
-                            results.append(f"- {_strip_tags(topic.get('Text', ''))}")
+                    try:
+                        resp2 = await client.get(
+                            "https://html.duckduckgo.com/html/",
+                            params={"q": query, "kl": "cn-zh"},
+                            headers={
+                                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+                            },
+                        )
+                        html2 = resp2.text or ""
+                        title_pattern2 = re.compile(
+                            r'<a[^>]+class="result__a"[^>]*href="([^"]+)"[^>]*>(.*?)</a>',
+                            re.DOTALL,
+                        )
+                        titles2 = title_pattern2.findall(html2)
+                        for i, (url, title) in enumerate(titles2[:num]):
+                            title_clean = _strip_tags(title)
+                            if "uddg=" in url:
+                                m = re.search(r"uddg=([^&]+)", url)
+                                if m:
+                                    url = unquote(m.group(1))
+                            results.append(f"[{i + 1}] {title_clean}\n    URL: {url}")
+                    except Exception:
+                        pass  # HTML 版失败时静默降级
 
                 return ToolResult(
                     success=True,
@@ -951,7 +996,7 @@ class WorkspaceTools:
                     dominant = max(colors, key=lambda c: c[0])
                     info["dominant_color_rgb"] = dominant[1]
             except Exception:
-                pass
+                _logger.debug("Unhandled exception", exc_info=True)
 
             parts = [
                 f"图片格式: {info['format']}",

@@ -1,0 +1,120 @@
+/* Drag and Drop Styles */
+
+.dragging {
+  opacity: 0.5;
+  transform: scale(0.95);
+}
+
+.drop-target {
+  background-color: var(--surface-hover);
+  border: 2px dashed var(--brand);
+  border-radius: 4px;
+}
+
+/* Toast Styles */
+#toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 10000;
+  max-width: 350px;
+}
+
+.toast {
+  margin-bottom: 10px;
+  padding: 12px 16px;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  animation: toast-enter 0.3s ease-out;
+  transition: all 0.3s ease;
+}
+
+.toast-exit {
+  animation: toast-exit 0.3s ease-in;
+}
+
+.toast-success {
+  background-color: var(--success-bg);
+  color: var(--success-text);
+}
+
+.toast-error {
+  background-color: var(--error-bg);
+  color: var(--error-text);
+}
+
+.toast-info {
+  background-color: var(--info-bg);
+  color: var(--info-text);
+}
+
+.toast-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.toast-message {
+  margin-right: 12px;
+}
+
+.toast-close {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: inherit;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toast-close:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+}
+
+@keyframes toast-enter {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes toast-exit {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+/* Folder cross-format move blocking */
+.cross-format-blocked {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.cross-format-blocked::before {
+  content: 'Cross-format folder moves are not supported';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 12px;
+  z-index: 10001;
+}

@@ -1,0 +1,51 @@
+{
+  "id": "out-002",
+  "title": "退出码契约",
+  "capability": "output_contract",
+  "difficulty": 3,
+  "tags": [
+    "exit-code"
+  ],
+  "prompt": "当前目录 checker.py 应该校验 input.txt 是否存在：存在则以退出码 0 结束，不存在以退出码 2 结束。现在它对两种情况都退出 0。请修复它（保持脚本名不变），修复后不要删除 input.txt。",
+  "setup": {
+    "files": {
+      "checker.py": "import os, sys\nif os.path.exists('input.txt'):\n    sys.exit(0)\nsys.exit(0)\n",
+      "input.txt": "data"
+    }
+  },
+  "allowed_scope": [
+    "checker.py"
+  ],
+  "protected": [
+    "input.txt"
+  ],
+  "checks": [
+    {
+      "function": "command_succeeds",
+      "args": {
+        "command": "python checker.py"
+      },
+      "desc": "存在时退出码 0"
+    },
+    {
+      "function": "command_succeeds",
+      "args": {
+        "command": "python -c \"import subprocess,os; os.rename('input.txt','input.bak'); r=subprocess.run(['python','checker.py']); os.rename('input.bak','input.txt'); assert r.returncode==2, f'退出码={r.returncode}'; print('absence-case ok')\""
+      },
+      "weight": 2.0,
+      "desc": "input.txt 不存在时必须退出码 2"
+    },
+    {
+      "function": "file_contains",
+      "args": {
+        "path": "checker.py",
+        "pattern": "exit\\(2\\)|sys\\.exit\\(2\\)"
+      },
+      "weight": 1.5
+    },
+    {
+      "function": "protected_untouched",
+      "args": {}
+    }
+  ]
+}

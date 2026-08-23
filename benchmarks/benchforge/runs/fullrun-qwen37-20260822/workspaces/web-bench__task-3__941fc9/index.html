@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dir Entries Panel</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+  .toolbar { margin-bottom: 16px; }
+  #btn-dir {
+    padding: 8px 16px; font-size: 14px; cursor: pointer;
+    background: #4a90d9; color: #fff; border: none; border-radius: 4px;
+  }
+  #btn-dir:hover { background: #357abd; }
+  #entries {
+    max-width: 600px; display: flex; flex-direction: column; gap: 8px;
+  }
+  .entry.dir {
+    background: #fff; border: 1px solid #ddd; border-radius: 6px; overflow: hidden;
+  }
+  .dir-header {
+    padding: 12px 16px; cursor: pointer; user-select: none;
+    display: flex; align-items: center; gap: 8px;
+    background: #fafafa; transition: background 0.15s;
+  }
+  .dir-header:hover { background: #eef2f7; }
+  .dir-header::before {
+    content: '▸'; display: inline-block; transition: transform 0.2s; font-size: 12px;
+  }
+  .entry.dir.open > .dir-header::before { transform: rotate(90deg); }
+  .entry.dir.open > .dir-header { background: #e3edf7; }
+  .dir-content {
+    padding: 0 16px 12px 28px; font-size: 13px; color: #555;
+    display: none;
+  }
+  .entry.dir.open > .dir-content { display: block; }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <button id="btn-dir">Add Dir</button>
+</div>
+<div id="entries"></div>
+
+<script>
+(function () {
+  var entries = document.getElementById('entries');
+  var btnDir = document.getElementById('btn-dir');
+  var counter = 0;
+
+  function randomName() {
+    var dirs = [
+      'documents', 'photos', 'music', 'videos', 'projects',
+      'backup', 'downloads', 'configs', 'logs', 'temp',
+      'archive', 'shared', 'private', 'public', 'scripts'
+    ];
+    return dirs[Math.floor(Math.random() * dirs.length)] + '-' + Math.floor(Math.random() * 9999);
+  }
+
+  btnDir.addEventListener('click', function () {
+    // Create dir element
+    var dir = document.createElement('div');
+    dir.className = 'entry dir';
+    dir.id = 'dir-' + (++counter);
+
+    // Create header for dirname
+    var header = document.createElement('div');
+    header.className = 'dir-header';
+    var textNode = document.createTextNode(randomName());
+    header.appendChild(textNode);
+
+    // Create dir-content child
+    var content = document.createElement('div');
+    content.className = 'dir-content';
+    content.textContent = 'Contents of ' + header.firstChild.nodeValue;
+
+    // Append children
+    dir.appendChild(header);
+    dir.appendChild(content);
+
+    // Toggle open/close on click
+    header.addEventListener('click', function () {
+      if (dir.classList.contains('open')) {
+        dir.classList.remove('open');
+      } else {
+        dir.classList.add('open');
+      }
+    });
+
+    // Append to entries panel
+    entries.appendChild(dir);
+  });
+})();
+</script>
+
+</body>
+</html>

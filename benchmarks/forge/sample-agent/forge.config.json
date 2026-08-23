@@ -1,0 +1,7 @@
+{
+  "type": "cli",
+  "command": "python \"main.py\" \"$FNIX_FORGE_WORKSPACE\"",
+  "cwd": ".",
+  "env": {},
+  "capture_output": true
+}

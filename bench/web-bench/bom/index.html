@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Browser Interface</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="toolbar">
+        <button class="homepage">Homepage</button>
+        <button class="back" disabled>Back</button>
+        <button class="forward" disabled>Forward</button>
+        <button class="refresh">Refresh</button>
+    </div>
+    <div class="browser">
+        <div class="topbar">
+            <select class="address"></select>
+            <div class="setting">
+                <button class="fullscreen">Fullscreen</button>
+                <button class="exit-fullscreen">Exit Fullscreen</button>
+                <div class="reading-time">0.0</div>
+                <select class="theme">
+                    <option value="dark" selected>Dark Theme</option>
+                    <option value="light">Light Theme</option>
+                </select>
+            </div>
+        </div>
+        <iframe class="content" name="content"></iframe>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -4,6 +4,18 @@
 >
 > 本文档交付：① 完整技术架构 · ② 文件夹目录结构 · ③ 数据库表结构 · ④ 底层算法模块 vs 业务功能模块清单。
 
+> **架构状态声明 (v1.0.0 GA, 2026-08)**
+>
+> FnixAgent 当前为 **Local-First Standalone** 桌面应用，基于 Tauri 2 + Python + Rust 三进程架构。
+> 本文档中标注 **[已实现]** 的部分已在代码中落地；标注 **[规划中]** 的部分属于 Cloud/Enterprise
+> 扩展规划，当前代码库中无对应实现。
+>
+> - **已实现**: FastAPI 后端 (Python 3.13) · Tauri 2 桌面壳 · React/TypeScript 前端 ·
+>   Rust (axum) 本地 sidecar · SQLite 存储 · 本地文件系统 · 多 LLM 路由 (GLM/OpenAI/Qwen) ·
+>   Argon2id + AES-256-GCM + 双令牌 JWT 安全链 · 自进化内核 (KTG/STP/MFP)
+> - **规划中 (未实现)**: PostgreSQL · Milvus · Redis · MinIO · Elasticsearch ·
+>   Celery · Docker/K8s · vLLM · Prometheus/Grafana/ELK/Jaeger
+
 ---
 
 ## 一、总体技术架构（分层视图）
@@ -64,14 +76,19 @@
                                    │
 ┌──────────────────────────────────▼──────────────────────────────────────────┐
 │  ⑥ 数据与存储层 Storage                                                      │
-│   PostgreSQL(业务/实体/审计) · Milvus(长期向量) · Redis(短期会话/缓存) ·      │
-│   MinIO(文件/文档对象) · Elasticsearch(全文检索·日志)                         │
+│   [已实现] SQLite(业务/实体/审计) · 本地文件系统(文档/生成产物) ·             │
+│            JSON 持久化(记忆/配置/索引摘要)                                    │
+│   [规划中] PostgreSQL · Milvus(长期向量) · Redis(短期会话/缓存) ·              │
+│            MinIO(文件/文档对象) · Elasticsearch(全文检索·日志)                 │
 └──────────────────────────────────┬──────────────────────────────────────────┘
                                    │
 ┌──────────────────────────────────▼──────────────────────────────────────────┐
 │  ⑦ 基础设施层 Infrastructure                                                  │
-│   Docker · Kubernetes(弹性扩容) · vLLM(GPU 推理) · Prometheus+Grafana(监控)  │
-│   ELK(日志) · Jaeger(链路追踪) · CI/CD(GitHub Actions)                       │
+│   [已实现] Tauri 2 桌面运行时 · GitHub Actions(CI/CD) ·                       │
+│            Rust sidecar(fnix-local, axum HTTP :8710) ·                        │
+│            Python agentd(FastAPI :8000) · Vite Dev Server(:5175)              │
+│   [规划中] Docker · Kubernetes(弹性扩容) · vLLM(GPU 推理) ·                    │
+│            Prometheus+Grafana(监控) · ELK(日志) · Jaeger(链路追踪)             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -97,26 +114,36 @@
 
 ## 二、技术选型一览
 
-| 层级 | 选型 | 说明 |
-|------|------|------|
-| 后端语言/框架 | Python 3.11 + FastAPI | 异步、生态完善、LLM 友好 |
-| LLM | 闭源：GLM/Claude/GPT；开源：Qwen2.5 / Llama3 + **vLLM** | 通过统一网关多模型路由 |
-| Agent 框架 | **自研调度器**(主) + LangGraph(复杂任务流) | 高可控，关键路径自研 |
-| 向量库 | Milvus(生产) / FAISS(轻量) | 长期记忆 + 文档检索 |
-| 业务库 | PostgreSQL 16 | 实体/会话/任务/审计 |
-| 缓存/短期记忆 | Redis 7 | 会话窗口、请求缓存 |
-| 文件存储 | MinIO | 上传/生成文档对象 |
-| 全文检索/日志 | Elasticsearch | 论文检索、日志聚合 |
-| 代码沙箱 | Docker 容器隔离 / gVisor | 安全执行动态代码 |
-| 任务队列 | Celery + Redis/RabbitMQ | 异步长任务(PDF/图表) |
-| 部署 | Docker + Kubernetes | 弹性扩缩容 |
-| 监控 | Prometheus + Grafana + Loki + Jaeger | 指标/日志/链路 |
+| 层级          | 选型                                 | 状态   | 说明                     |
+| ------------- | ------------------------------------ | ------ | ------------------------ |
+| 后端语言/框架 | Python 3.13 + FastAPI 0.141          | 已实现 | 异步、生态完善、LLM 友好 |
+| 桌面运行时    | Tauri 2 + React/TypeScript           | 已实现 | 跨平台桌面壳，Vite 构建  |
+| 本地 sidecar  | Rust + axum 0.8                      | 已实现 | fnix-local HTTP (:8710)  |
+| LLM           | GLM / OpenAI / Qwen / DashScope      | 已实现 | 通过统一网关多模型路由   |
+| Agent 框架    | 自研调度器 (KTG/STP/MFP 自进化内核)  | 已实现 | 高可控，关键路径自研     |
+| 向量库        | FAISS / 内存检索                     | 已实现 | 轻量本地检索             |
+| 业务库        | SQLite (sqlite3)                     | 已实现 | 实体/会话/任务/审计      |
+| 缓存/短期记忆 | 进程内内存                           | 已实现 | 会话窗口、请求缓存       |
+| 文件存储      | 本地文件系统                         | 已实现 | 上传/生成文档对象        |
+| 安全          | Argon2id + AES-256-GCM + 双令牌 JWT  | 已实现 | RSA 密钥交换 + 设备指纹  |
+| 向量库        | Milvus                               | 规划中 | 长期记忆 (Cloud 扩展)    |
+| 业务库        | PostgreSQL 16                        | 规划中 | 实体/会话/任务/审计      |
+| 缓存/短期记忆 | Redis 7                              | 规划中 | 会话窗口、请求缓存       |
+| 文件存储      | MinIO                                | 规划中 | 上传/生成文档对象        |
+| 全文检索/日志 | Elasticsearch                        | 规划中 | 论文检索、日志聚合       |
+| 代码沙箱      | Docker 容器隔离 / gVisor             | 规划中 | 安全执行动态代码         |
+| 任务队列      | Celery + Redis/RabbitMQ              | 规划中 | 异步长任务(PDF/图表)     |
+| 部署          | Docker + Kubernetes                  | 规划中 | 弹性扩缩容               |
+| 监控          | Prometheus + Grafana + Loki + Jaeger | 规划中 | 指标/日志/链路           |
 
 ---
 
 ## 三、文件夹目录结构
 
 采用 **模块化单体（Modular Monolith）**，每个领域一个独立 package，便于未来拆为微服务。底层引擎与业务模块物理隔离。
+
+> **注意**: 以下目录结构为设计蓝图。标注 `[已实现]` 的目录在当前代码库中存在；
+> 标注 `[规划中]` 的属于 Cloud 扩展规划。实际目录结构请参考项目根目录。
 
 ```
 FNIXAGENT/
@@ -266,8 +293,13 @@ FNIXAGENT/
 
 ---
 
-## 四、数据库表结构（PostgreSQL）
+## 四、数据库表结构
 
+> **实际存储**: 当前使用 **SQLite** (通过 Python `sqlite3` 模块)，表结构设计为
+> PostgreSQL 兼容，便于未来迁移到 Cloud 部署。以下 SQL 以 PostgreSQL 语法描述，
+> SQLite 实现中 `BIGSERIAL` 替换为 `INTEGER PRIMARY KEY AUTOINCREMENT`，
+> `JSONB` 替换为 `TEXT` (JSON 序列化)。
+>
 > 命名规范：表名小写蛇形复数；主键统一 `id BIGSERIAL`（或 UUID）；所有表含 `created_at` / `updated_at`；关键表软删除 `deleted_at`。
 
 ### 4.1 账号与租户
@@ -559,56 +591,56 @@ CREATE TABLE feedbacks (
 
 ### 5.1 底层算法模块（Core Engine，`src/fnixagent/core/`）
 
-| 模块 | 职责 | 关键产出 | 复用性 |
-|------|------|----------|--------|
-| **调度中枢 Orchestrator** | 串联全生命周期，总控流程编排 | `scheduler.py` 7 步流水线 | 通用 |
-| **LLM 基础服务** | 多模型路由、负载均衡、限流、Token 计费、请求缓存、异常熔断 | 统一 `LLMClient` 抽象 | 通用 |
-| **三层记忆引擎** | 短期(滑动窗口)/长期(向量)/实体(结构化) 记忆的读写与过期清理 | `MemoryManager` | 通用 |
-| **规划与推理引擎** | ReAct / Plan&Execute / Self-Reflection 三模式按需切换 | `ReasoningEngine` + `selector` | 通用 |
-| **反思纠错引擎** | 结果完整性/逻辑校验，失败自动重规划、补工具 | `Validator` + `Replanner` | 通用 |
-| **工具执行平台** | 工具元数据管理、串/并/分支编排、安全沙箱 | `ToolRegistry` + `Executor` | 通用 |
-| **安全沙箱** | 动态代码隔离执行、高危命令拦截、网络白名单、文件读写限制 | `code_sandbox` | 通用 |
-| **合规与安全引擎** | 敏感词、Prompt 注入防护、输出审核、脱敏 | `SecurityEngine` | 通用 |
-| **Prompt 管理引擎** | 分层模板(角色/约束/工具/记忆/格式)、版本管理 | `PromptManager` | 通用 |
-| **向量检索引擎** | Embedding、相似度检索、向量+关键词混合检索 | `RetrievalEngine` | 通用 |
+| 模块                      | 职责                                                        | 关键产出                       | 复用性 |
+| ------------------------- | ----------------------------------------------------------- | ------------------------------ | ------ |
+| **调度中枢 Orchestrator** | 串联全生命周期，总控流程编排                                | `scheduler.py` 7 步流水线      | 通用   |
+| **LLM 基础服务**          | 多模型路由、负载均衡、限流、Token 计费、请求缓存、异常熔断  | 统一 `LLMClient` 抽象          | 通用   |
+| **三层记忆引擎**          | 短期(滑动窗口)/长期(向量)/实体(结构化) 记忆的读写与过期清理 | `MemoryManager`                | 通用   |
+| **规划与推理引擎**        | ReAct / Plan&Execute / Self-Reflection 三模式按需切换       | `ReasoningEngine` + `selector` | 通用   |
+| **反思纠错引擎**          | 结果完整性/逻辑校验，失败自动重规划、补工具                 | `Validator` + `Replanner`      | 通用   |
+| **工具执行平台**          | 工具元数据管理、串/并/分支编排、安全沙箱                    | `ToolRegistry` + `Executor`    | 通用   |
+| **安全沙箱**              | 动态代码隔离执行、高危命令拦截、网络白名单、文件读写限制    | `code_sandbox`                 | 通用   |
+| **合规与安全引擎**        | 敏感词、Prompt 注入防护、输出审核、脱敏                     | `SecurityEngine`               | 通用   |
+| **Prompt 管理引擎**       | 分层模板(角色/约束/工具/记忆/格式)、版本管理                | `PromptManager`                | 通用   |
+| **向量检索引擎**          | Embedding、相似度检索、向量+关键词混合检索                  | `RetrievalEngine`              | 通用   |
 
 ### 5.2 业务功能模块（Business，`src/fnixagent/business/`）
 
 每个业务模块对外暴露为「标准化工具」，注册进 `ToolRegistry`，由引擎层按需调用。
 
-| 模块 | 业务能力 | 对应工具示例 | 依赖 |
-|------|----------|--------------|------|
-| **论文文献检索 search** | arXiv / Semantic Scholar / 知网万方 检索、去重、聚合 | `search_paper`、`search_by_doi` | ES + 各 API |
-| **文献管理 literature** | 引用格式化(BibTeX/GB-T7714)、文献综述生成、相关性分析 | `format_citation`、`gen_literature_review` | LLM + 结构化 |
-| **Word 编辑 word** | 创建/修改 docx、查找替换、样式/目录/页眉页脚、批注修订 | `create_docx`、`edit_docx`、`apply_style` | python-docx |
-| **格式转换 converter** | docx↔pdf↔md↔html↔txt 双向转换 | `convert_document` | pandoc / libreoffice |
-| **图表生成 chart** | 柱/折线/饼/散点/热力图、数据可视化、Excel 图表 | `generate_chart`、`plot_from_table` | matplotlib/plotly |
-| **PDF 生成 pdf** | 报告/简历/海报/学术论文 PDF（含 LaTeX 路线） | `generate_pdf_report`、`latex_compile` | reportlab/weasyprint |
-| **文档解析 parser** | PDF/Word/图片 表格抽取、OCR、公式识别（多模态） | `extract_tables`、`ocr_image` | unpdf/paddle |
-| **学习辅助 learning** | 论文摘要、问答、笔记生成、抽认卡、概念图 | `summarize`、`qa_doc`、`make_flashcards` | LLM + 记忆 |
-| **Office 任务编排 workflow** | 端到端：搜论文→下载→总结→生成 Word→转 PDF 等组合工作流 | 复合工具 / Plan 模板 | 编排引擎 |
+| 模块                         | 业务能力                                               | 对应工具示例                               | 依赖                 |
+| ---------------------------- | ------------------------------------------------------ | ------------------------------------------ | -------------------- |
+| **论文文献检索 search**      | arXiv / Semantic Scholar / 知网万方 检索、去重、聚合   | `search_paper`、`search_by_doi`            | ES + 各 API          |
+| **文献管理 literature**      | 引用格式化(BibTeX/GB-T7714)、文献综述生成、相关性分析  | `format_citation`、`gen_literature_review` | LLM + 结构化         |
+| **Word 编辑 word**           | 创建/修改 docx、查找替换、样式/目录/页眉页脚、批注修订 | `create_docx`、`edit_docx`、`apply_style`  | python-docx          |
+| **格式转换 converter**       | docx↔pdf↔md↔html↔txt 双向转换                          | `convert_document`                         | pandoc / libreoffice |
+| **图表生成 chart**           | 柱/折线/饼/散点/热力图、数据可视化、Excel 图表         | `generate_chart`、`plot_from_table`        | matplotlib/plotly    |
+| **PDF 生成 pdf**             | 报告/简历/海报/学术论文 PDF（含 LaTeX 路线）           | `generate_pdf_report`、`latex_compile`     | reportlab/weasyprint |
+| **文档解析 parser**          | PDF/Word/图片 表格抽取、OCR、公式识别（多模态）        | `extract_tables`、`ocr_image`              | unpdf/paddle         |
+| **学习辅助 learning**        | 论文摘要、问答、笔记生成、抽认卡、概念图               | `summarize`、`qa_doc`、`make_flashcards`   | LLM + 记忆           |
+| **Office 任务编排 workflow** | 端到端：搜论文→下载→总结→生成 Word→转 PDF 等组合工作流 | 复合工具 / Plan 模板                       | 编排引擎             |
 
 ### 5.3 辅助层
 
-| 层 | 模块 | 说明 |
-|----|------|------|
-| **接口层 api** | HTTP 路由、鉴权、限流、流式 SSE | 对外唯一入口 |
+| 层                  | 模块                                   | 说明             |
+| ------------------- | -------------------------------------- | ---------------- |
+| **接口层 api**      | HTTP 路由、鉴权、限流、流式 SSE        | 对外唯一入口     |
 | **适配层 adapters** | DB/Cache/ObjectStore/ES/Queue 防腐封装 | 隔离基础设施变更 |
-| **异步任务 tasks** | PDF 编译、大图表、批量检索等长任务 | Celery |
-| **模型层 models** | ORM 实体 + 领域对象 | 与业务解耦 |
+| **异步任务 tasks**  | PDF 编译、大图表、批量检索等长任务     | Celery           |
+| **模型层 models**   | ORM 实体 + 领域对象                    | 与业务解耦       |
 
 ---
 
 ## 六、对应开发阶段的落点（阶段1→6 映射）
 
-| 阶段 | 工作内容 | 落在哪些模块 |
-|------|----------|--------------|
-| 1 需求规划 | 能力清单、风险边界、架构文档 | 本文档 + `config/` |
+| 阶段           | 工作内容                     | 落在哪些模块                                                                                  |
+| -------------- | ---------------------------- | --------------------------------------------------------------------------------------------- |
+| 1 需求规划     | 能力清单、风险边界、架构文档 | 本文档 + `config/`                                                                            |
 | 2 核心模块开发 | LLM/记忆/工具/规划/反思/安全 | `core/llm`、`core/memory`、`core/tools`、`core/reasoning`、`core/reflection`、`core/security` |
-| 3 调度整合 | 主调度中枢 + 分层 Prompt | `core/orchestrator`、`core/prompt` |
-| 4 全量测试 | 单元/集成/调参/压测安全 | `tests/*` |
-| 5 线上部署 | HTTP API、多端对接、容器化 | `api/`、`deploy/` |
-| 6 运维迭代 | 监控、案例回流、能力扩展 | 监控配置 + `feedbacks`/`reflection_logs` |
+| 3 调度整合     | 主调度中枢 + 分层 Prompt     | `core/orchestrator`、`core/prompt`                                                            |
+| 4 全量测试     | 单元/集成/调参/压测安全      | `tests/*`                                                                                     |
+| 5 线上部署     | HTTP API、多端对接、容器化   | `api/`、`deploy/`                                                                             |
+| 6 运维迭代     | 监控、案例回流、能力扩展     | 监控配置 + `feedbacks`/`reflection_logs`                                                      |
 
 ---
 

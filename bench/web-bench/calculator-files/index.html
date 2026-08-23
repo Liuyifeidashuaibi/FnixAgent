@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculator</title>
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+    <div class="calculator">
+        <input type="text" id="display" readonly>
+        <div class="buttons">
+            <button class="btn" data-value="7">7</button>
+            <button class="btn" data-value="8">8</button>
+            <button class="btn" data-value="9">9</button>
+            <button class="btn operator" data-value="/">/</button>
+            
+            <button class="btn" data-value="4">4</button>
+            <button class="btn" data-value="5">5</button>
+            <button class="btn" data-value="6">6</button>
+            <button class="btn operator" data-value="*">*</button>
+            
+            <button class="btn" data-value="1">1</button>
+            <button class="btn" data-value="2">2</button>
+            <button class="btn" data-value="3">3</button>
+            <button class="btn operator" data-value="-">-</button>
+            
+            <button class="btn" data-value="0">0</button>
+            <button class="btn" data-value=".">.</button>
+            <button class="btn equals" data-value="=">=</button>
+            <button class="btn operator" data-value="+">+</button>
+        </div>
+        <div class="bottom-buttons">
+            <button class="clear-btn" id="clear">Clear</button>
+            <button class="sqrt-btn" id="sqrt">√</button>
+            <button class="square-btn" id="square">^2</button>
+            <button class="reciprocal-btn" id="reciprocal">1/x</button>
+            <button class="sin-btn" id="sin">sin</button>
+            <button class="pi-btn" id="pi">π</button>
+        </div>
+    </div>
+    <button class="theme-toggle" id="toggle">dark</button>
+    <script src="index.js"></script>
+</body>
+</html>

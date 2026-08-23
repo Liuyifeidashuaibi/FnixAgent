@@ -40,6 +40,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
 logger = logging.getLogger(__name__)
+_logger = logger
 
 # 尝试导入 watchdog(可选依赖,缺失时仅禁用热加载)
 try:
@@ -73,7 +74,7 @@ def _audit_rule_match(rule: SigmaRule, event: dict) -> None:
             },
         )
     except Exception:
-        pass
+        _logger.debug('Unhandled exception', exc_info=True)
 
 
 # ---------------------------------------------------------------------------

@@ -1,0 +1,26 @@
+diff --git a/pylint/config/arguments.py b/pylint/config/arguments.py
+index 1234567..89abcde 100644
+--- a/pylint/config/arguments.py
++++ b/pylint/config/arguments.py
+@@ -120,6 +120,7 @@ def get_files_from_command_line(args, config):
+         if os.path.isdir(path):
+             if config.recursive:
+                 # Walk through the directory recursively
++                ignored_paths = config.ignore_paths if hasattr(config, 'ignore_paths') else []
+                 for root, dirs, files in os.walk(path):
+                     # Filter out ignored directories
+                     dirs[:] = [d for d in dirs if not any(re.match(pattern, os.path.join(root, d)) for pattern in ignored_paths)]
+@@ -128,7 +129,10 @@ def get_files_from_command_line(args, config):
+                         file_path = os.path.join(root, file)
+                         if os.path.isfile(file_path):
+                             # Check if file matches ignore patterns
+-                            if not any(re.match(pattern, file_path) for pattern in config.ignore_paths):
++                            should_ignore = False
++                            for pattern in ignored_paths:
++                                if re.match(pattern, file_path):
++                                    should_ignore = True
++                                    break
++                            if not should_ignore:
+                                 files_list.append(file_path)
+             else:
+                 # Not recursive, just add the directory itself

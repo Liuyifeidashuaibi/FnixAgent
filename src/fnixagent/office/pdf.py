@@ -29,11 +29,15 @@ PDF 创建/合并/拆分/文本抽取/图片抽取/水印/加密/OCR。
 from __future__ import annotations
 
 import contextlib
+import logging
 import os
 import shutil
 from typing import Any
 
 from fnixagent.office.base import BaseExpert, ExpertError, ExpertResult
+
+_logger = logging.getLogger(__name__)
+
 
 # OCR 单页图片大小上限(20 MB),防止 pdf2image 渲染大图 OOM
 _MAX_OCR_IMAGE_SIZE = 20 * 1024 * 1024
@@ -135,6 +139,7 @@ class PDFExpert(BaseExpert):
                         chinese_font_registered = True
                         break
                     except Exception:
+                        _logger.debug('Unhandled exception', exc_info=True)
                         continue
 
             text_pages = pages if pages else ([text] if text else [""])
@@ -446,7 +451,7 @@ class PDFExpert(BaseExpert):
                 try:
                     doc.close()
                 except Exception:
-                    pass
+                    _logger.debug('Unhandled exception', exc_info=True)
 
     # ------------------------------------------------------------------
     # 水印
@@ -535,12 +540,12 @@ class PDFExpert(BaseExpert):
                     try:
                         doc.close()
                     except Exception:
-                        pass
+                        _logger.debug('Unhandled exception', exc_info=True)
                 if wm_doc is not None:
                     try:
                         wm_doc.close()
                     except Exception:
-                        pass
+                        _logger.debug('Unhandled exception', exc_info=True)
 
     @staticmethod
     def _safe_remove(path: str | None) -> None:

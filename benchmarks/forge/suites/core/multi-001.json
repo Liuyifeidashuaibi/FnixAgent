@@ -1,0 +1,44 @@
+{
+  "id": "multi-001",
+  "title": "两步流水线（抽取→聚合）",
+  "capability": "multi_step",
+  "difficulty": 3,
+  "tags": [
+    "pipeline"
+  ],
+  "prompt": "分两步完成：1) 从 notes.md 中抽取所有整数，按从大到小逐行写入 nums.txt；2) 计算这些整数的总和写入 sum.txt（只有一个数字）。",
+  "setup": {
+    "files": {
+      "notes.md": "# 记录\n买了 3 个苹果和 12 个橙子。\n预算 100，已花 45，剩余很多。\n目标是 7 天内完成。\n"
+    }
+  },
+  "allowed_scope": [
+    "nums.txt",
+    "sum.txt"
+  ],
+  "protected": [
+    "notes.md"
+  ],
+  "checks": [
+    {
+      "function": "file_equals",
+      "args": {
+        "path": "nums.txt",
+        "content": "100\n45\n12\n7\n3"
+      },
+      "weight": 2.0
+    },
+    {
+      "function": "file_equals",
+      "args": {
+        "path": "sum.txt",
+        "content": "167"
+      },
+      "weight": 2.0
+    },
+    {
+      "function": "protected_untouched",
+      "args": {}
+    }
+  ]
+}

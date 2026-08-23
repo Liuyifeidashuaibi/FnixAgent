@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import time
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
@@ -38,6 +39,9 @@ from typing import Any
 from urllib.parse import parse_qs
 
 from loguru import logger
+
+_logger = logging.getLogger(__name__)
+
 
 # ---------------------------------------------------------------------------
 # 公共路径(跳过鉴权,但仍计入审计)
@@ -148,7 +152,7 @@ class AuditLogger:
             )
         except Exception:
             # 审计失败不应影响请求处理
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
 
 
 # ---------------------------------------------------------------------------
@@ -412,7 +416,7 @@ class GatewayMiddleware:
             try:
                 await self._quota.release(principal)
             except Exception:
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
             self._audit_log(
                 principal=principal.sub,
                 path=path,

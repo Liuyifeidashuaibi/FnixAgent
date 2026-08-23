@@ -255,21 +255,67 @@ async def local_llm_bootstrap(request: Request):
     if host not in {"127.0.0.1", "::1", "localhost"}:
         raise HTTPException(status_code=403, detail="localhost only")
 
-    api_key = (
-        os.getenv("DASHSCOPE_API_KEY")
-        or os.getenv("OPENAI_API_KEY")
-        or os.getenv("DEEPSEEK_API_KEY")
-        or os.getenv("GLM_API_KEY")
-        or ""
-    ).strip()
     provider = (os.getenv("LLM_PROVIDER") or "qwen").strip()
+    provider_key = provider.lower()
     model = (os.getenv("LLM_MODEL") or "qwen-plus-2025-07-28").strip()
-    base_url = (
-        os.getenv("DASHSCOPE_BASE_URL")
-        or os.getenv("OPENAI_BASE_URL")
-        or "https://dashscope.aliyuncs.com/compatible-mode/v1"
-    ).strip()
-    provider_name = "DashScope (Qwen)" if provider.lower() in {"qwen", "dashscope"} else provider
+
+    # provider → (api_key 候选环境变量, base_url 候选环境变量, 默认 base_url)。
+    # 单次启动必须返回「同一 provider 的同一把 key + 同一端点」：
+    # 前端 boot 会经 PUT /config 把此处返回的 api_key / base_url 写回
+    # ~/.fnix/secrets.json + config.toml，任何跨 provider 混搭都会让后续
+    # 所有请求 401/404 并错误触发 fallback 熔断级联。
+    # 注意顺序敏感：历史事故有二——
+    #  1) glm provider 取到 DASHSCOPE_API_KEY（阿里云 MaaS key 打在智谱端点鉴权失败）；
+    #  2) siliconflow provider 走 else 分支取到 DASHSCOPE_API_KEY + DASHSCOPE_BASE_URL
+    #     （模型名 deepseek-ai/* 打在阿里云 MaaS 端点 404 → 级联熔断到失效）。
+    _key_envs_map = {
+        "glm": ("GLM_API_KEY", "CUSTOM_API_KEY", "DASHSCOPE_API_KEY", "OPENAI_API_KEY", "DEEPSEEK_API_KEY"),
+        "siliconflow": ("SILICONFLOW_API_KEY", "CUSTOM_API_KEY", "OPENAI_API_KEY"),
+        "deepseek": ("DEEPSEEK_API_KEY", "CUSTOM_API_KEY", "OPENAI_API_KEY"),
+        "openai": ("OPENAI_API_KEY", "CUSTOM_API_KEY"),
+        "custom": ("CUSTOM_API_KEY",),
+        "qwen": ("DASHSCOPE_API_KEY", "QWEN_API_KEY", "CUSTOM_API_KEY", "OPENAI_API_KEY"),
+        "dashscope": ("DASHSCOPE_API_KEY", "QWEN_API_KEY", "CUSTOM_API_KEY", "OPENAI_API_KEY"),
+    }
+    _base_envs_map = {
+        "glm": ("GLM_BASE_URL", "CUSTOM_BASE_URL", "OPENAI_BASE_URL"),
+        "siliconflow": ("SILICONFLOW_BASE_URL", "CUSTOM_BASE_URL", "OPENAI_BASE_URL"),
+        "deepseek": ("DEEPSEEK_BASE_URL", "CUSTOM_BASE_URL", "OPENAI_BASE_URL"),
+        "openai": ("OPENAI_BASE_URL", "CUSTOM_BASE_URL"),
+        "custom": ("CUSTOM_BASE_URL",),
+        "qwen": ("DASHSCOPE_BASE_URL", "QWEN_BASE_URL"),
+        "dashscope": ("DASHSCOPE_BASE_URL", "QWEN_BASE_URL"),
+    }
+    _default_base_map = {
+        "glm": "https://open.bigmodel.cn/api/paas/v4",
+        "siliconflow": "https://api.siliconflow.cn/v1",
+        "deepseek": "https://api.deepseek.com/v1",
+        "openai": "https://api.openai.com/v1",
+        "custom": "",
+        "qwen": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+        "dashscope": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    }
+
+    def _first_env(names: tuple[str, ...]) -> str:
+        for n in names:
+            v = (os.getenv(n) or "").strip()
+            if v:
+                return v
+        return ""
+
+    if provider_key in _key_envs_map:
+        key_envs = _key_envs_map[provider_key]
+        base_envs = _base_envs_map[provider_key]
+        default_base = _default_base_map[provider_key]
+    else:
+        # 未知 provider：保守回退 CUSTOM_*（一般即该 provider 的 OpenAI 兼容端点）
+        key_envs = ("CUSTOM_API_KEY", "DASHSCOPE_API_KEY", "OPENAI_API_KEY")
+        base_envs = ("CUSTOM_BASE_URL", "DASHSCOPE_BASE_URL", "OPENAI_BASE_URL")
+        default_base = ""
+
+    api_key = _first_env(key_envs)
+    base_url = _first_env(base_envs) or default_base
+    provider_name = "DashScope (Qwen)" if provider_key in {"qwen", "dashscope"} else provider
 
     return {
         "ok": True,

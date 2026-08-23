@@ -1,0 +1,13 @@
+diff --git a/sphinx/ext/autodoc/__init__.py b/sphinx/ext/autodoc/__init__.py
+index abc1234..def5678 100644
+--- a/sphinx/ext/autodoc/__init__.py
++++ b/sphinx/ext/autodoc/__init__.py
+@@ -1234,7 +1234,7 @@ class ModuleDocumenter(Documenter):
+         # get __all__ from module
+         all = getattr(self.object, '__all__', None)
+         if all is not None:
+-            if all:
++            # Use __all__ if defined, even if empty
+                 # __all__ is defined, so we use it
+                 members = [(name, getattr(self.object, name)) for name in all
+                            if hasattr(self.object, name)]

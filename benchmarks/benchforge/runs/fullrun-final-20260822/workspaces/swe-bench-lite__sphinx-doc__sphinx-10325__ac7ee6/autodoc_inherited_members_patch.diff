@@ -1,0 +1,79 @@
+diff --git a/sphinx/ext/autodoc.py b/sphinx/ext/autodoc.py
+index 1234567..89abcde 100644
+--- a/sphinx/ext/autodoc.py
++++ b/sphinx/ext/autodoc.py
+@@ -123,7 +123,7 @@ class Documenter:
+         # Check if we should include inherited members
+         if self.options.inherited_members:
+             # Get all base classes
+-            bases = self.get_attr(self.object, '__bases__', ())
++            bases = self.get_attr(self.object, '__bases__', ())
+             
+             # Filter out members from excluded base classes
+             if self.options.inherited_members is True:
+@@ -135,12 +135,25 @@ class Documenter:
+                 # Include all inherited members
+                 pass
+             else:
+-                # Exclude members from specific base class
+-                exclude_bases = [self.options.inherited_members]
++                # Handle list of base classes to exclude
++                if isinstance(self.options.inherited_members, str):
++                    # Convert comma-separated string to list
++                    exclude_bases = [x.strip() for x in self.options.inherited_members.split(',')]
++                elif isinstance(self.options.inherited_members, (list, tuple)):
++                    exclude_bases = list(self.options.inherited_members)
++                else:
++                    exclude_bases = [self.options.inherited_members]
++                
++                # Get actual base class objects for comparison
++                base_classes = []
++                for base in bases:
++                    if hasattr(base, '__name__'):
++                        base_classes.append(base.__name__)
++                    else:
++                        base_classes.append(str(base))
++                
+                 # Filter members
+-                for base in bases:
+-                    if hasattr(base, '__name__') and base.__name__ == self.options.inherited_members:
++                for base_name in base_classes:
++                    if base_name in exclude_bases:
+                         # Skip members from this base class
+                         continue
+ 
+@@ -150,7 +163,7 @@ class Documenter:
+         # Process inherited members
+         if self.options.inherited_members:
+             # Get inherited members from base classes
+-            if self.options.inherited_members is True or self.options.inherited_members == self.object.__bases__[0].__name__:
++            if self.options.inherited_members is True or self._should_include_inherited_members():
+                 # Include inherited members
+                 pass
+ 
+@@ -170,6 +183,15 @@ class Documenter:
+         # ... rest of method
+ 
+     def _should_include_inherited_members(self):
++        """Check if inherited members should be included based on inherited-members option"""
++        if self.options.inherited_members is True:
++            return True
++        if not self.options.inherited_members:
++            return False
++        
++        # Get base class names
++        base_names = [base.__name__ for base in self.get_attr(self.object, '__bases__', ()) if hasattr(base, '__name__')]
++        
++        # Check if any base class name matches the excluded list
++        if isinstance(self.options.inherited_members, str):
++            exclude_list = [x.strip() for x in self.options.inherited_members.split(',')]
++        elif isinstance(self.options.inherited_members, (list, tuple)):
++            exclude_list = list(self.options.inherited_members)
++        else:
++            exclude_list = [self.options.inherited_members]
++        
++        return not any(base in exclude_list for base in base_names)
++
+     def get_object_members(self, want_all):
+         """Get members of the object."""
+         # ... existing code

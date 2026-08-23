@@ -1,0 +1,12 @@
+diff --git a/django/db/models/fields/related.py b/django/db/models/fields/related.py
+index 1234567..89abcdef 100644
+--- a/django/db/models/fields/related.py
++++ b/django/db/models/fields/related.py
+@@ -123,6 +123,7 @@ class ForeignKey(RelatedField):
+         if self.limit_choices_to:
+             qs = qs.complex_filter(self.limit_choices_to)
++            # Ensure distinct results to avoid duplicates from JOINs in limit_choices_to
++            qs = qs.distinct()
+         return qs
+ 
+     def formfield(self, **kwargs):

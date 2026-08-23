@@ -68,6 +68,24 @@ class CLICommand:
     handler: Callable[..., Awaitable[int]]  # 返回退出码
 
 
+class _HarnessAdapterBackend:
+    """将 LLMAdapter 包装为 CodingAgent 所需的 LLMBackend 接口。
+
+    与 api.routers.chat_agent._AdapterLLMBackend 同构（core 层不能反向依赖 api 层，
+    故在此独立定义一份最小包装）。
+    """
+
+    def __init__(self, adapter: Any) -> None:
+        self._adapter = adapter
+
+    async def complete(self, payload: Any, **kwargs: Any) -> str:
+        messages = payload.get("messages", []) if isinstance(payload, dict) else payload
+        result = await self._adapter.chat(messages if isinstance(messages, list) else [])
+        choices = result.get("choices") or [{}]
+        message = choices[0].get("message") or {}
+        return str(message.get("content") or "")
+
+
 # ============================================================================
 # IDE 集成服务 (CLI + MCP Server)
 # ============================================================================
@@ -306,16 +324,28 @@ class IDEServer:
             project_root=self._root,
         )
 
-        # 创建 LLM 后端 (延迟导入, 失败时降级为 None)
+        # 创建 LLM 后端：优先用户在设置中配置的 BYOK（~/.fnix/config.toml
+        # + secrets.json），未配置时降级为内存 Mock（仅测试/离线场景可用）。
+        # 修复：此前无条件使用 InMemoryLLMBackend（Mock），导致请求未显式携带
+        # llm 覆盖时 CodingAgent 永远走 Mock，plan 必退化为「手动执行任务」。
         llm_backend: Any = None
         try:
-            from fnixagent.core.agent.backends.in_memory import (
-                InMemoryLLMBackend,
-            )
+            from fnixagent.core.llm.adapter import create_llm_adapter
 
-            llm_backend = InMemoryLLMBackend()
+            adapter = create_llm_adapter()
+            if adapter.is_configured:
+                llm_backend = _HarnessAdapterBackend(adapter)
         except Exception:
             llm_backend = None
+        if llm_backend is None:
+            try:
+                from fnixagent.core.agent.backends.in_memory import (
+                    InMemoryLLMBackend,
+                )
+
+                llm_backend = InMemoryLLMBackend()
+            except Exception:
+                llm_backend = None
 
         # 创建 CodingAgent (编码智能体)
         self._agent = CodingAgent(

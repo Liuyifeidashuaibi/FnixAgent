@@ -1,0 +1,18 @@
+{
+  "dataset": "swe-bench-lite",
+  "task_id": "psf__requests-1963",
+  "prompt": "`Session.resolve_redirects` copies the original request for all subsequent requests, can cause incorrect method selection\nConsider the following redirection chain:\n\n```\nPOST /do_something HTTP/1.1\nHost: server.example.com\n...\n\nHTTP/1.1 303 See Other\nLocation: /new_thing_1513\n\nGET /new_thing_1513\nHost: server.example.com\n...\n\nHTTP/1.1 307 Temporary Redirect\nLocation: //failover.example.com/new_thing_1513\n```\n\nThe intermediate 303 See Other has caused the POST to be converted to\na GET.  The subsequent 307 should preserve the GET.  However, because\n`Session.resolve_redirects` starts each iteration by copying the _original_\nrequest object, Requests will issue a POST!\n\n",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/requests/sessions.py b/requests/sessions.py\n--- a/requests/sessions] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 77.99999999951979,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787334466.296048,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\swe-bench-lite__psf__requests-1963__c548c3"
+}

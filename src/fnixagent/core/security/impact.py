@@ -34,6 +34,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
 logger = logging.getLogger(__name__)
+_logger = logger
 
 # ---------------------------------------------------------------------------
 # 数据结构
@@ -469,4 +470,4 @@ class ImpactTracker:
                 },
             )
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)

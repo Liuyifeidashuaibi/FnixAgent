@@ -26,6 +26,7 @@
 from __future__ import annotations
 
 import contextlib
+import logging
 import os
 import shutil
 import subprocess
@@ -33,6 +34,9 @@ import tempfile
 from typing import Any
 
 from fnixagent.office.base import BaseExpert, ExpertError, ExpertResult
+
+_logger = logging.getLogger(__name__)
+
 
 # 支持的转换对(直接由 Python 库处理)
 _DIRECT_CONVERSIONS: dict[tuple[str, str], str] = {
@@ -245,7 +249,7 @@ class ConverterExpert(BaseExpert):
                 try:
                     wb.close()
                 except Exception:
-                    pass
+                    _logger.debug('Unhandled exception', exc_info=True)
 
     def csv_to_excel(self, src: str, out: str, **opts: Any) -> ExpertResult:
         err = self._validate_path(src, must_exist=True, allowed_exts=("csv",))
@@ -282,7 +286,7 @@ class ConverterExpert(BaseExpert):
                 try:
                     wb.close()
                 except Exception:
-                    pass
+                    _logger.debug('Unhandled exception', exc_info=True)
 
     def csv_to_json(self, src: str, out: str, **opts: Any) -> ExpertResult:
         err = self._validate_path(src, must_exist=True, allowed_exts=("csv",))
@@ -370,7 +374,7 @@ class ConverterExpert(BaseExpert):
                 try:
                     wb.close()
                 except Exception:
-                    pass
+                    _logger.debug('Unhandled exception', exc_info=True)
 
     def html_to_pdf(self, src: str, out: str, **opts: Any) -> ExpertResult:
         err = self._validate_path(src, must_exist=True, allowed_exts=("html", "htm"))
@@ -515,11 +519,11 @@ class ConverterExpert(BaseExpert):
                 try:
                     word_app.Quit()
                 except Exception:
-                    pass
+                    _logger.debug('Unhandled exception', exc_info=True)
             try:
                 pythoncom.CoUninitialize()
             except Exception:
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
 
     # ------------------------------------------------------------------
     # LibreOffice 兜底

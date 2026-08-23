@@ -36,6 +36,7 @@
 from __future__ import annotations
 
 import functools
+import logging
 import os
 import re
 from collections.abc import Callable
@@ -45,6 +46,9 @@ from functools import cached_property
 from typing import Any
 
 from fnixagent.office.base import BaseExpert, ExpertError, ExpertResult
+
+_logger = logging.getLogger(__name__)
+
 
 # ---------------------------------------------------------------------------
 # 统一 Element 模型
@@ -795,7 +799,7 @@ class ParserExpert(BaseExpert):
             # w:drawing 是 drawingML 图片的容器
             has_image = bool(doc.element.body.findall(f".//{qn('w:drawing')}"))
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
         layout_type = "structured" if (doc.tables or has_header) else "plain"
         return self._success(
             {
@@ -847,7 +851,7 @@ class ParserExpert(BaseExpert):
                 try:
                     wb.close()
                 except Exception:
-                    pass
+                    _logger.debug('Unhandled exception', exc_info=True)
 
     def _parse_xlsx_table(self, path: str, sheet_name: str | None) -> ExpertResult:
         try:
@@ -872,7 +876,7 @@ class ParserExpert(BaseExpert):
                 try:
                     wb.close()
                 except Exception:
-                    pass
+                    _logger.debug('Unhandled exception', exc_info=True)
 
     def _detect_xlsx_layout(self, path: str) -> ExpertResult:
         try:
@@ -908,7 +912,7 @@ class ParserExpert(BaseExpert):
                 try:
                     wb.close()
                 except Exception:
-                    pass
+                    _logger.debug('Unhandled exception', exc_info=True)
 
     # ------------------------------------------------------------------
     # 内部解析器:pdf
@@ -1103,7 +1107,7 @@ class ParserExpert(BaseExpert):
                         for row in rows:
                             raw_parts.append("\t".join(row))
                     except Exception:
-                        pass
+                        _logger.debug('Unhandled exception', exc_info=True)
                     continue
                 if shape.has_text_frame:
                     txt = shape.text_frame.text
@@ -1159,7 +1163,7 @@ class ParserExpert(BaseExpert):
                     if (slide.shapes.title.text or "").strip():
                         has_header = True
             except Exception:
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
             for shape in slide.shapes:
                 if getattr(shape, "has_table", False):
                     has_table = True
@@ -1168,7 +1172,7 @@ class ParserExpert(BaseExpert):
                     if shape.shape_type == 13:
                         has_image = True
                 except Exception:
-                    pass
+                    _logger.debug('Unhandled exception', exc_info=True)
                 if shape.has_text_frame:
                     if (shape.text_frame.text or "").strip():
                         paragraph_count += 1
@@ -1411,7 +1415,7 @@ class ParserExpert(BaseExpert):
                 try:
                     wb.close()
                 except Exception:
-                    pass
+                    _logger.debug('Unhandled exception', exc_info=True)
 
     @apply_metadata
     @add_chunking_strategy
@@ -1602,7 +1606,7 @@ class ParserExpert(BaseExpert):
                     "modified": str(cp.modified) if cp.modified else "",
                 }
             except Exception:
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
         for slide_idx, slide in enumerate(prs.slides):
             slide_meta = {"slide_index": slide_idx + 1, "slide_count": total}
             slide_meta.update(file_meta)
@@ -1645,7 +1649,7 @@ class ParserExpert(BaseExpert):
                             )
                         )
                     except Exception:
-                        pass
+                        _logger.debug('Unhandled exception', exc_info=True)
                     continue
                 if shape.has_text_frame:
                     txt = shape.text_frame.text

@@ -1,0 +1,18 @@
+{
+  "dataset": "swe-bench-lite",
+  "task_id": "django__django-11133",
+  "prompt": "HttpResponse doesn't handle memoryview objects\nDescription\n\t\nI am trying to write a BinaryField retrieved from the database into a HttpResponse. When the database is Sqlite this works correctly, but Postgresql returns the contents of the field as a memoryview object and it seems like current Django doesn't like this combination:\nfrom django.http import HttpResponse\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \n# String content\nresponse = HttpResponse(\"My Content\")\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\nresponse.content\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \n# Out: b'My Content'\n# This is correct\n# Bytes content\nresponse = HttpResponse(b\"My Content\")\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \nresponse.content\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \n# Out: b'My Content'\n# This is also correct\n# memoryview content\nresponse = HttpResponse(memoryview(b\"My Content\"))\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \nresponse.content\n# Out: b'<memory at 0x7fcc47ab2648>'\n# This is not correct, I am expecting b'My Content'\n",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/django/http/response.py b/django/http/response.py\n--- a/django/http] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787332463.200123,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\swe-bench-lite__django__django-11133__54ec23"
+}

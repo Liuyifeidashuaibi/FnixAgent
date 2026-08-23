@@ -1,0 +1,28 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "IBM__mcp-context-forge-3685",
+  "prompt": "## Summary\n- `GatewayCreate` extended `BaseModel` directly, missing the `alias_generator=to_camel_case` and `populate_by_name=True` config that `GatewayUpdate` inherits from `BaseModelWithConfigDict`\n- This caused camelCase field names (e.g. `passthroughHeaders`, `authType`, `authToken`) to be silently ignored on `POST /gateways`, while the same fields worked correctly on `PUT /gateways/{id}`\n- Fix: change `GatewayCreate` to extend `BaseModelWithConfigDict`, matching `GatewayUpdate` and `AdminGatewayCreate`\n\nCloses #3577",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [
+    "Step 0 | 思考: 根据问题描述，`GatewayCreate` 类直接继承自 `BaseModel`，而没有使用 `BaseModelWithConfigDict` 中的配置项 `alias_generator=to_... | 工具 ✓ glob({\"pattern\": \"GatewayCreate.*\", \"path\": \".\"}) | 耗时: 6140ms, tokens: 3005"
+  ],
+  "tool_calls": [
+    {
+      "step": 1,
+      "tool": "glob",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'count': 0, 'pattern': 'GatewayCreate.*'})\n(无匹配结果)"
+    }
+  ],
+  "files_written": [],
+  "total_tokens": 3005,
+  "duration_ms": 7218.999999999937,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen-max): HTTP 400 (<400> InternalError.Algo.InvalidParameter: messages with role \"tool\" must be a response to a preceeding message with \"tool_calls\".)",
+  "judge_method": "heuristic",
+  "started_at": 1787384950.6430614,
+  "workspace": "benchmarks\\benchforge\\runs\\batch-v4-20260822\\workspaces\\prototypebench__IBM__mcp-context-forge-3685__a59131"
+}

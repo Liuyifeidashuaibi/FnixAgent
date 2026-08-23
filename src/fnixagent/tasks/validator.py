@@ -31,12 +31,16 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import re
 from collections import Counter
 from dataclasses import dataclass, field
 
 from fnixagent.office.base import BaseExpert, ExpertError
+
+_logger = logging.getLogger(__name__)
+
 
 __all__ = [
     "CheckItem",
@@ -678,7 +682,7 @@ class TaskValidator(BaseExpert):
                                 if ea:
                                     font_name = ea
                     except Exception:
-                        pass
+                        _logger.debug('Unhandled exception', exc_info=True)
                     font_size: float | None = run.font.size.pt if run.font.size else 12.0
                     # bold=None 归一化为 False
                     bold: bool | None = bool(run.font.bold) if run.font.bold is not None else False

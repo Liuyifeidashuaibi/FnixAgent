@@ -1,0 +1,16 @@
+diff --git a/sphinx/builders/html/__init__.py b/sphinx/builders/html/__init__.py
+index abc1234..def5678 100644
+--- a/sphinx/builders/html/__init__.py
++++ b/sphinx/builders/html/__init__.py
+@@ -1268,7 +1268,12 @@ class StandaloneHTMLBuilder(Builder):
+         """
+         Return the text for an index entry.
+         """
+-        if entryname == 'Symbols':
++        # Map all symbol categories to single 'Symbols' group
++        if (entryname == 'Symbols' or
++            (len(entryname) == 1 and
++             unicodedata.category(entryname) in
++                 ('Pc', 'Pd', 'Pe', 'Pf', 'Pi', 'Po', 'Ps', 'Sc', 'Sk', 'Sm', 'So'))):
+             return 'Symbols'
+         return entryname

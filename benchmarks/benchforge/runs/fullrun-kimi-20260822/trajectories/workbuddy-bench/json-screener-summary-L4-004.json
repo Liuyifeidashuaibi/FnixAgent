@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "json-screener-summary-L4-004",
+  "prompt": "你是研究组的离线股票筛选结果整理助手。工作区里已经放好了冻结的筛选请求、分页行情快照、股票基础表、行业/概念映射和评分规则。请不要联网、不要调用实时行情、券商、交易、邮件、IM、外部搜索、外部消息推送或任何外部接口；这次只处理资料包内静态文件，不做股票推荐、买卖建议、涨跌预测、目标价观点或真实投资建议。\n请阅读 `screen_request.json`、`market_snapshot_pages/`、`stock_master.csv`、`sector_taxonomy.json` 和 `scoring_profile.json`，生成一个新的 Excel 工作簿 `output/screener_summary.xlsx`，并同时生成 `output/normalized_candidates.json`。\n输出 workbook 需要包含四个 sheet：`screened_universe`、`factor_detail`、`review_or_excluded`、`selection_summary`。\n`screened_universe` 只包含最终入选候选，列依次为 stock_code、display_name、exchange、leaf_industry、concept_match、score、rank、selected_reasons、source_pages。\n`factor_detail` 需要记录每个已处理股票的关键因子归一化和分项得分，列依次为 stock_code、field_name、raw_value、normalized_value、component_score、source_artifact。\n`review_or_excluded` 需要包含被剔除或待复核的股票，列依次为 stock_code、display_name、status、primary_reason、visible_rule_id、source_artifact。\n`selection_summary` 的列依次为 metric、value、notes，需要能和前三个明细 sheet 互相核对，包括处理行数、入选/复核/剔除数量、忽略页数、各类复核/剔除原因、供应商行业冲突、概念命中入选数量、入选分数合计和第一名代码。\n关键口径以 `screen_request.json` 和 `scoring_profile.json` 为准：只使用 `as_of_trade_date` 一致且页码在 `expected_pages` 内的行情行；股票代码必须保留前导 0；行业和概念标签以 `stock_master.csv` 与 `sector_taxonomy.json` 为准，行情快照中的 `VENDOR_INDUSTRY_NAME` / `VENDOR_CONCEPT_TAGS` 只能作为参考；`stock_master.csv` 的风险警示和市场标记优先于行情快照；非叶子行业、缺失必需指标或行情/主数据市场标记冲突进入待复核；风险警示、过期快照或数值筛选不通过进入剔除；最终入选按 score 降序、CHANGE_RATE 降序、stock_code 字符串升序稳定排序。JSON 输出需要包含和 workbook 一致的候选代码、分数、状态、排名、主要原因和来源文件。\n\n请读取工作区中的输入文件：`input/screen_request.json`、`input/market_snapshot_pages/page_001.json`、`input/market_snapshot_pages/page_002.json`、`input/market_snapshot_pages/page_003_stale.json`、`input/stock_master.csv`、`input/sector_taxonomy.json`、`input/scoring_profile.json`。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787334456.7950196,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\workbuddy-bench__json-screener-summary-L4-004__3625a7"
+}

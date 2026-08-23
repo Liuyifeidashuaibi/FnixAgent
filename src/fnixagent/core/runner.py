@@ -36,6 +36,7 @@
 
 from __future__ import annotations
 
+import logging
 import time
 import uuid
 from collections.abc import AsyncGenerator
@@ -46,6 +47,9 @@ from typing import Any
 from fnixagent.core.orchestrator.state import (
     OrchestratorContext,
 )
+
+_logger = logging.getLogger(__name__)
+
 
 # ---------------------------------------------------------------------------
 # NextStep 联合类型
@@ -364,7 +368,7 @@ class AgentRunner:
                 mode=config.mode,
             )
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
 
         try:
             if trace is not None:
@@ -598,7 +602,7 @@ class AgentRunner:
             provider = get_provider()
             tracer = provider  # provider 提供 start_span / start_trace
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
 
         try:
             output, target_instance = exec_handoff(

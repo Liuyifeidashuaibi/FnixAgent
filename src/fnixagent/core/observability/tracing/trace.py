@@ -29,6 +29,7 @@ Span 树形结构:
 
 from __future__ import annotations
 
+import logging
 import threading
 import time
 from collections.abc import Callable
@@ -41,6 +42,9 @@ from fnixagent.core.observability.tracing.span import (
     SpanImpl,
     SpanStatus,
 )
+
+_logger = logging.getLogger(__name__)
+
 
 
 class TraceImpl:
@@ -120,7 +124,7 @@ class TraceImpl:
                 try:
                     self._on_span_end(snapshot)
                 except Exception:
-                    pass
+                    _logger.debug('Unhandled exception', exc_info=True)
 
         span = SpanImpl(
             name=name,
@@ -171,7 +175,7 @@ class TraceImpl:
             try:
                 self._on_trace_end(self)
             except Exception:
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
         # 内存优化:Trace 完成后释放 Span 引用(exporter 已拿到快照)
         # 注意:仅在 exporter 执行完毕后清理,保证 exporter 能通过 self.spans 访问
         # 这里不立即清空 _spans,因为 export() 和 spans 属性可能在外部被读取;

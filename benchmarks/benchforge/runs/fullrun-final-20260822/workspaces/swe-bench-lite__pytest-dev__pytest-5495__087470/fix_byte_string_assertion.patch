@@ -1,0 +1,15 @@
+diff --git a/src/_pytest/assertion/rewrite.py b/src/_pytest/assertion/rewrite.py
+index abc123..def456 100644
+--- a/src/_pytest/assertion/rewrite.py
++++ b/src/_pytest/assertion/rewrite.py
+@@ -123,7 +123,10 @@ def _format_byte_string_diff(left, right):
+         # Show first extra item in a more readable way
+         if len(right) > len(left):
+             first_extra = right[len(left)]
+-            msg += f"\nE         Right contains more items, first extra item: {first_extra}"
++            # Format byte as readable character if printable, otherwise hex
++            if 32 <= first_extra <= 126:  # Printable ASCII
++                msg += f"\nE         Right contains more items, first extra item: '{chr(first_extra)}'"
++            else:
++                msg += f"\nE         Right contains more items, first extra item: 0x{first_extra:02x}"
+         return msg

@@ -16,7 +16,6 @@ import net from 'node:net';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { tauriCargoEnv } from './fnix-cargo-env.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const isWin = process.platform === 'win32';
@@ -52,7 +51,7 @@ function ensureEnvFile() {
 function spawnProc(label, cmd, args, extraEnv = {}) {
   const child = spawn(cmd, args, {
     cwd: root,
-    env: label === 'desktop-tauri' ? tauriCargoEnv(extraEnv) : { ...process.env, ...extraEnv },
+    env: { ...process.env, ...extraEnv },
     shell: isWin,
     stdio: 'inherit',
   });
@@ -109,16 +108,11 @@ const baseEnv = {
 console.log('[dev:all:tauri] FnixAgent Standalone + Tauri 2 Desktop');
 console.log(`[dev:all:tauri] profile=${profile}  API=${apiBase}  fnix-local=${localBase}`);
 
-const local = spawnProc(
-  'fnix-local',
-  python,
-  ['-m', 'fnixagent.local'],
-  {
-    ...baseEnv,
-    FNIX_LOCAL_HOST: '127.0.0.1',
-    FNIX_LOCAL_PORT: String(localPort),
-  },
-);
+const local = spawnProc('fnix-local', python, ['-m', 'fnixagent.local'], {
+  ...baseEnv,
+  FNIX_LOCAL_HOST: '127.0.0.1',
+  FNIX_LOCAL_PORT: String(localPort),
+});
 
 try {
   const localHealth = await waitForHealth(localBase, 45000);
@@ -130,7 +124,16 @@ try {
 const api = spawnProc(
   'api',
   python,
-  ['-m', 'fnixagent.main', 'serve', '--no-reload', '--host', '127.0.0.1', '--port', String(apiPort)],
+  [
+    '-m',
+    'fnixagent.main',
+    'serve',
+    '--no-reload',
+    '--host',
+    '127.0.0.1',
+    '--port',
+    String(apiPort),
+  ],
   baseEnv,
 );
 

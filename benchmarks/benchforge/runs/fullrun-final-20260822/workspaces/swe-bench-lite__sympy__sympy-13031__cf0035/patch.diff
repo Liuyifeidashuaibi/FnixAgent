@@ -1,0 +1,20 @@
+diff --git a/sympy/matrices/common.py b/sympy/matrices/common.py
+index abc123..def456 100644
+--- a/sympy/matrices/common.py
++++ b/sympy/matrices/common.py
+@@ -123,7 +123,10 @@ class MatrixCommon(object):
+     @classmethod
+     def hstack(cls, *args):
+         from sympy.matrices.dense import MutableDenseMatrix
+-        if not args: return cls.zeros(0, 0)
++        if not args:
++            return cls.zeros(0, 0)
++        matrices = args
++        rows = matrices[0].rows
+         # Validate row consistency only when rows > 0
+         if rows != 0:
+             for i, m in enumerate(matrices):
+@@ -130,7 +133,8 @@ class MatrixCommon(object):
+                     raise ShapeError("Matrices rows don't match")
+         cols = sum(m.cols for m in matrices)
+         return MutableDenseMatrix.zeros(rows, cols)

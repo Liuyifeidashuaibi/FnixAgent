@@ -21,6 +21,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import os
 import time
 import uuid
@@ -30,6 +31,9 @@ from pathlib import Path
 from typing import Any
 
 from fnixagent.core.types import Message, MessageRole, ReasoningMode
+
+_logger = logging.getLogger(__name__)
+
 
 _ARTIFACT_EXTS = {
     ".html",
@@ -423,7 +427,7 @@ class WorkPipeline:
             elif result.sanitized_text:
                 ctx.user_input = result.sanitized_text
         except Exception:
-            pass
+            _logger.debug("Unhandled exception", exc_info=True)
         return ctx
 
     def step2_3_memory_load(self, ctx: WorkPipelineContext) -> WorkPipelineContext:
@@ -471,7 +475,7 @@ class WorkPipeline:
             elif mode == ReasoningMode.REACT:
                 ctx.max_steps = min(ctx.max_steps, 20) if tool_count < 3 else ctx.max_steps
         except Exception:
-            pass
+            _logger.debug("Unhandled exception", exc_info=True)
         return ctx
 
     def step5_ktg_stp_plan(self, ctx: WorkPipelineContext) -> WorkPipelineContext:
@@ -786,14 +790,14 @@ class WorkPipeline:
                 ctx.reasoning_mode,
             )
         except Exception:
-            pass
+            _logger.debug("Unhandled exception", exc_info=True)
 
         try:
             from fnixagent.core.observability.metrics import record_chat_message
 
             record_chat_message(mode="work")
         except Exception:
-            pass
+            _logger.debug("Unhandled exception", exc_info=True)
 
         return result
 
@@ -845,7 +849,7 @@ def create_work_pipeline(app_state: Any = None) -> WorkPipeline:
         try:
             topo_mgr.load_from_store()
         except Exception:
-            pass
+            _logger.debug("Unhandled exception", exc_info=True)
         if app_state is not None:
             app_state.topology_store_mgr = topo_mgr
 
@@ -1017,7 +1021,7 @@ async def run_work_stream(
         try:
             tool_count = len(pipeline.graph.tool_registry._tools)
         except Exception:
-            pass
+            _logger.debug("Unhandled exception", exc_info=True)
     ctx = pipeline.step4_select_reasoning(ctx, tool_count=tool_count)
 
     # Spec 7+ 四维闭环: HERA 提前到 DAAO 之前, 让命中率反馈给 DAAO 路由
@@ -1064,7 +1068,7 @@ async def run_work_stream(
                 },
             }
     except Exception:
-        pass
+        _logger.debug("Unhandled exception", exc_info=True)
 
     # Spec 7+ DAAO: 真路由决策器（替换原 emit-only 空壳）
     #
@@ -1165,7 +1169,7 @@ async def run_work_stream(
                 },
             }
         except Exception:
-            pass
+            _logger.debug("Unhandled exception", exc_info=True)
 
     # Spec 6 Self-Optimizing: few-shot 示例召回（DSPy BootstrapFewShot 风格）
     # 与 HERA SkillLibrary 互补：HERA 提供"做过类似任务"，Self-Optimizing 提供"具体怎么做"
@@ -1200,7 +1204,7 @@ async def run_work_stream(
                 },
             }
     except Exception:
-        pass
+        _logger.debug("Unhandled exception", exc_info=True)
 
     # Intelligence 七层: 执行前 Nudge 注入 (L1 循环工程层 + L5 记忆层)
     # 把记忆召回 + Nudge 推动注入 skills_block, 失败不阻塞主路径
@@ -1358,7 +1362,7 @@ async def run_work_stream(
                     )
         yield {"type": "decision_context", "data": decision_ctx}
     except Exception:
-        pass
+        _logger.debug("Unhandled exception", exc_info=True)
 
     # 6
     start = time.time()
@@ -1459,7 +1463,7 @@ async def run_work_stream(
                     },
                 }
             except Exception:
-                pass
+                _logger.debug("Unhandled exception", exc_info=True)
             yield event
         else:
             yield event
@@ -1665,7 +1669,7 @@ async def run_work_stream(
                     },
                 }
             except Exception:
-                pass  # guardrail 失败不阻断主流程
+                _logger.debug("Unhandled exception", exc_info=True)  # guardrail 失败不阻断主流程
 
     # Spec 5 独立 Critic Agent: craft 模式 + 有产物 → 语义审查
     # 解决 VMAO 盲点: "工具调用成功但产物语义错误" (如生成了错误代码但 write_file 成功)
@@ -1686,6 +1690,9 @@ async def run_work_stream(
             # 心跳保活: critic LLM 审查可能数十秒静默, 每 10s emit 一条
             # heartbeat 事件, 避免 NDJSON 长连接在长静默中被传输层重置
             # (Windows teardown 竞态); 前端与门禁脚本忽略该事件类型。
+            # BUG-024 fix: Critic with 30s timeout — previously could block
+            # for 120s+ (full LLM timeout). Now skips after 30s to avoid
+            # delaying the done event.
             critic_task = asyncio.ensure_future(
                 critic.review(
                     user_input=ctx.user_input,
@@ -1694,42 +1701,56 @@ async def run_work_stream(
                     answer=answer,
                 )
             )
-            while not critic_task.done():
+            critic_deadline = 30.0  # seconds
+            critic_elapsed = 0.0
+            while not critic_task.done() and critic_elapsed < critic_deadline:
                 try:
                     await asyncio.wait_for(asyncio.shield(critic_task), timeout=10.0)
                 except TimeoutError:
-                    yield {"type": "heartbeat", "data": {"phase": "critic"}}
-            verdict = await critic_task
-            if verdict is not None:
-                # Spec 7 fail-soft-with-signal: 检测哨兵值, emit 可观测信号
-                # score==-1.0 表示审查未完成 (LLM 故障/解析失败),
-                # 不阻断主流程但 emit critic_skipped 事件, 避免静默漏检。
-                # MFP 第 3 阶 (元反思) 可消费此信号统计 critic.skip_rate。
-                if verdict.score == -1.0:
-                    ctx.critic_skipped = True  # Spec 7 闭环: 记录到 ctx, step9 写入 TraceRecord
-                    yield {
-                        "type": "critic_skipped",
-                        "data": {
-                            "reason": "review_incomplete",
-                            "issues": verdict.issues[:3],
-                        },
-                    }
-                else:
-                    yield {
-                        "type": "critic_verdict",
-                        "data": {
-                            "passed": verdict.passed,
-                            "score": verdict.score,
-                            "issues": verdict.issues[:5],
-                            "suggestions": verdict.suggestions[:5],
-                        },
-                    }
-                    if not verdict.passed and verdict.suggestions:
-                        # 注入修改建议到 answer, 让用户看到 Critic 的反馈
-                        suggestions_text = "\n".join(f"- {s}" for s in verdict.suggestions[:3])
-                        critic_note = f"\n\n**Critic 审查建议（独立第三方）:**\n{suggestions_text}"
-                        answer = (answer or "") + critic_note
-                        yield {"type": "text", "data": critic_note}
+                    critic_elapsed += 10.0
+                    if critic_elapsed < critic_deadline:
+                        yield {"type": "heartbeat", "data": {"phase": "critic"}}
+            if not critic_task.done():
+                critic_task.cancel()
+                ctx.critic_skipped = True
+                yield {
+                    "type": "critic_skipped",
+                    "data": {"reason": "review_timeout_30s"},
+                }
+            else:
+                verdict = await critic_task
+                if verdict is not None:
+                    # Spec 7 fail-soft-with-signal: 检测哨兵值, emit 可观测信号
+                    # score==-1.0 表示审查未完成 (LLM 故障/解析失败),
+                    # 不阻断主流程但 emit critic_skipped 事件, 避免静默漏检。
+                    # MFP 第 3 阶 (元反思) 可消费此信号统计 critic.skip_rate。
+                    if verdict.score == -1.0:
+                        ctx.critic_skipped = True  # Spec 7 闭环: 记录到 ctx, step9 写入 TraceRecord
+                        yield {
+                            "type": "critic_skipped",
+                            "data": {
+                                "reason": "review_incomplete",
+                                "issues": verdict.issues[:3],
+                            },
+                        }
+                    else:
+                        yield {
+                            "type": "critic_verdict",
+                            "data": {
+                                "passed": verdict.passed,
+                                "score": verdict.score,
+                                "issues": verdict.issues[:5],
+                                "suggestions": verdict.suggestions[:5],
+                            },
+                        }
+                        if not verdict.passed and verdict.suggestions:
+                            # 注入修改建议到 answer, 让用户看到 Critic 的反馈
+                            suggestions_text = "\n".join(f"- {s}" for s in verdict.suggestions[:3])
+                            critic_note = (
+                                f"\n\n**Critic 审查建议（独立第三方）:**\n{suggestions_text}"
+                            )
+                            answer = (answer or "") + critic_note
+                            yield {"type": "text", "data": critic_note}
         except Exception as critic_exc:
             # Spec 7 fail-soft-with-signal: Critic 异常时 emit 信号, 不静默
             # 原设计 except: pass 会吞掉所有异常, 形成静默漏检。
@@ -1837,7 +1858,7 @@ async def run_work_stream(
                 },
             }
     except Exception:
-        pass
+        _logger.debug("Unhandled exception", exc_info=True)
 
     # Spec 6 Self-Optimizing: 离线轨迹沉淀（DSPy BootstrapFewShot 精简版）
     # 把成功轨迹的 (input, output, tool_sequence, score) 沉淀为 few-shot 示例
@@ -1871,7 +1892,7 @@ async def run_work_stream(
                     },
                 }
     except Exception:
-        pass
+        _logger.debug("Unhandled exception", exc_info=True)
 
     # Intelligence 七层: MFP 之后的深度进化 (L3安全 + L7审判 + L2进化 + L6技能 + L5记忆)
     # 协调七层闭环, 失败不阻塞主路径

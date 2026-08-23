@@ -1,0 +1,174 @@
+/* Multipart Form Styles */
+
+.multipart-form {
+  width: 100%;
+}
+
+.multipart-form-header {
+  display: flex;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+
+.multipart-form-label {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-right: 16px;
+}
+
+.multipart-form-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  padding: 8px 0;
+}
+
+.multipart-form-key {
+  flex: 1;
+  min-width: 120px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background-color: var(--surface);
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.multipart-form-value-container {
+  flex: 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.multipart-form-value {
+  flex: 1;
+  min-width: 200px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background-color: var(--surface);
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.multipart-file-display {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background-color: var(--surface);
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.multipart-file-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Move clear file (X) icon to the right side of the file name - FIXED */
+.multipart-clear-button {
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 16px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  padding: 0;
+  margin-left: 4px;
+}
+
+.multipart-clear-button:hover {
+  background-color: var(--brand);
+  color: white;
+}
+
+/* Fix upload button hover color - FIXED */
+.multipart-upload-button {
+  background-color: var(--brand);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.multipart-upload-button:hover {
+  background-color: #0d6efd; /* Bootstrap primary hover color, more distinct than default */
+}
+
+.multipart-remove-button {
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 16px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  padding: 0;
+  margin-left: 8px;
+}
+
+.multipart-remove-button:hover {
+  background-color: #dc3545;
+  color: white;
+}
+
+.multipart-add-button {
+  background: none;
+  border: none;
+  color: var(--brand);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 4px 8px;
+  margin-top: 8px;
+}
+
+.multipart-add-button:hover {
+  text-decoration: underline;
+}
+
+.hidden {
+  display: none;
+}
+
+/* Handle empty row file selection - ensure proper spacing and behavior */
+.multipart-form-row:last-child {
+  margin-bottom: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .multipart-form-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .multipart-form-value-container {
+    width: 100%;
+    margin-top: 4px;
+  }
+  
+  .multipart-form-key {
+    width: 100%;
+  }
+}

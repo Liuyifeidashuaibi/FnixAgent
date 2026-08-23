@@ -42,9 +42,17 @@ export function canUndoReview(g: UndoGuardInput): boolean {
   return canApplyReview(g);
 }
 
-/** Review pane only meaningful in Code product mode. */
+/** Review pane — opened when there are pending changes.
+ *
+ * Originally required `mode === "code"`, but pickChatBackend may route to the
+ * Code pipeline (streamCode) even when the shell mode is "work" (e.g. user
+ * types a repo-code prompt in Work mode). In that case fileChanges populate
+ * but the review panel never opens, so the Accept button never appears and
+ * preview-mode writes never land on disk. Fix: open review whenever there
+ * are pending changes, regardless of shell mode.
+ */
 export function canOpenReview(g: ReviewOpenGuardInput): boolean {
-  return g.mode === "code" && g.hasPending;
+  return g.hasPending;
 }
 
 /** Start a new Work/Code stream. */

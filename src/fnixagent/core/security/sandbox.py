@@ -37,6 +37,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
+_logger = logger
 
 # ---------------------------------------------------------------------------
 # 审计钩子(失败不影响主流程)
@@ -53,7 +54,7 @@ def _audit_sandbox(
 
         AuditLogger().log(action=action, detail=detail or {})
     except Exception:
-        pass
+        _logger.debug('Unhandled exception', exc_info=True)
 
 
 # ---------------------------------------------------------------------------
@@ -519,7 +520,7 @@ class SandboxExecutor:
         try:
             _KERNEL32.AssignProcessToJobObject(job_handle, int(proc._handle))  # type: ignore[arg-type]
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
 
         # 4.5 网络阻断:network_allowed=False 时通过 Firewall API 阻断出站
         fw_rule_name: str | None = None
@@ -530,11 +531,11 @@ class SandboxExecutor:
                 try:
                     proc.kill()
                 except Exception:
-                    pass
+                    _logger.debug('Unhandled exception', exc_info=True)
                 try:
                     _KERNEL32.CloseHandle(job_handle)
                 except Exception:
-                    pass
+                    _logger.debug('Unhandled exception', exc_info=True)
                 _audit_sandbox(
                     "sandbox.network_block_failed",
                     detail={
@@ -572,7 +573,7 @@ class SandboxExecutor:
         try:
             _KERNEL32.CloseHandle(job_handle)
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
 
         stdout = stdout_b.decode("utf-8", errors="replace") if stdout_b else ""
         stderr = stderr_b.decode("utf-8", errors="replace") if stderr_b else ""
@@ -608,7 +609,7 @@ class SandboxExecutor:
                 ole32 = ctypes.WinDLL("ole32")  # type: ignore[attr-defined]
                 ole32.CoInitializeEx(None, 0x2)  # COINIT_APARTMENTTHREADED
             except Exception:
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
 
             # 通过 COM 创建 INetFwPolicy2 实例
             # CLSID_NetFwPolicy2 = {E2B3C97F-6AE1-41AC-817A-F6F92166D7DD}
@@ -715,7 +716,7 @@ class SandboxExecutor:
             rules.Remove(rule_name)
             return
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
         # 降级:netsh 删除
         try:
             subprocess.run(
@@ -732,7 +733,7 @@ class SandboxExecutor:
                 check=False,
             )
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
 
     # -- Linux: bubblewrap -----------------------------------------------
 

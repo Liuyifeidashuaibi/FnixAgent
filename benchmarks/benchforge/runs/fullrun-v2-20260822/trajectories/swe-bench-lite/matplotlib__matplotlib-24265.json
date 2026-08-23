@@ -1,0 +1,18 @@
+{
+  "dataset": "swe-bench-lite",
+  "task_id": "matplotlib__matplotlib-24265",
+  "prompt": "[Bug]: Setting matplotlib.pyplot.style.library['seaborn-colorblind'] result in key error on matplotlib v3.6.1\n### Bug summary\n\nI have code that executes:\r\n```\r\nimport matplotlib.pyplot as plt\r\nthe_rc = plt.style.library[\"seaborn-colorblind\"]\r\n```\r\n\r\nUsing version 3.4.3 of matplotlib, this works fine. I recently installed my code on a machine with matplotlib version 3.6.1 and upon importing my code, this generated a key error for line `the_rc = plt.style.library[\"seaborn-colorblind\"]` saying \"seaborn-colorblind\" was a bad key.\n\n### Code for reproduction\n\n```python\nimport matplotlib.pyplot as plt\r\nthe_rc = plt.style.library[\"seaborn-colorblind\"]\n```\n\n\n### Actual outcome\n\nTraceback (most recent call last):\r\nKeyError: 'seaborn-colorblind'\n\n### Expected outcome\n\nseaborn-colorblind should be set as the matplotlib library style and I should be able to continue plotting with that style.\n\n### Additional information\n\n- Bug occurs with matplotlib version 3.6.1\r\n- Bug does not occur with matplotlib version 3.4.3\r\n- Tested on MacOSX and Ubuntu (same behavior on both)\n\n### Operating system\n\nOS/X\n\n### Matplotlib Version\n\n3.6.1\n\n### Matplotlib Backend\n\nMacOSX\n\n### Python version\n\n3.9.7\n\n### Jupyter version\n\n_No response_\n\n### Installation\n\npip\n",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 375.0,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336347.0728304,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\swe-bench-lite__matplotlib__matplotlib-24265__2b2d26"
+}

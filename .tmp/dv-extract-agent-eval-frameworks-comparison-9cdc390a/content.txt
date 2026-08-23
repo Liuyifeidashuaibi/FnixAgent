@@ -1,0 +1,655 @@
+[html:l6] Agent 评测框架深度对比报告
+[html:l11] Agent 评测框架深度对比报告
+[html:l12] 调研时间：2026-08-21 ｜ 调研对象：DeepEval / AgentBench / EvalScope / LangSmith / Agent-Eval-Harness ｜ 目标项目：FnixAgent (Tauri 2 + React 19 + Python/FastAPI + LangGraph, API: 百炼 kimi-k2.5)
+[html:l15] 目录
+[html:l17] 执行摘要
+[html:l18] DeepEval 深度分析
+[html:l19] AgentBench 深度分析
+[html:l20] EvalScope 深度分析
+[html:l21] LangSmith 深度分析
+[html:l22] Agent-Eval-Harness 分析
+[html:l23] 多维度对比表
+[html:l24] 关键问题解答
+[html:l25] 源码与文档链接汇总
+[html:l30] 执行摘要
+[html:l33] 核心结论
+[html:l34] DeepEval 是最适合 FnixAgent 接入的框架。
+[html:l36] 支持 pytest 原生集成，可直接嵌入现有 CI/CD 流程
+[html:l37] 内置 8 个 Agent 专用指标（TaskCompletion、ToolCorrectness、StepEfficiency、PlanQuality 等），精确覆盖 5 类问题检测
+[html:l38] LLM-as-judge 可通过 DeepEvalBaseLLM 自定义类接入百炼 kimi-k2.5
+[html:l39] 通过 @observe() 装饰器和 trace() 上下文管理器捕获 Agent 执行轨迹，无需 LangChain 依赖
+[html:l40] 16.7k GitHub Stars，社区活跃，250+ 贡献者，持续维护
+[html:l42] EvalScope 作为补充方案，其 Arena 模式和 SWE-bench/GAIA 基准测试能力可用于横向对比验证。
+[html:l46] 1. DeepEval 深度分析
+[html:l48] 基本信息
+[html:l50] 项目 详情
+[html:l51] GitHub confident-ai/deepeval
+[html:l52] Stars 16,742 (截至 2026-07)
+[html:l53] 最新版本 持续更新（2026-07-09 最新提交），版本 3.x 系列
+[html:l54] 维护团队 Confident AI（商业公司支持，非纯社区项目）
+[html:l55] 开源协议 Apache-2.0
+[html:l56] 语言 Python (>=3.9)
+[html:l57] 贡献者 250+
+[html:l58] 文档 deepeval.com ｜ 指标文档
+[html:l61] 安装与依赖
+[html:l62] pip install -U deepeval
+[html:l64] # 验证安装
+[html:l65] deepeval --version
+[html:l67] # 可选：登录 Confident AI 云平台（免费）
+[html:l68] deepeval login
+[html:l69] 核心依赖： pytest 、 openai （用于 LLM-as-judge）、 requests 。Python 3.9+ 即可运行，无强制 LangChain 依赖。
+[html:l71] 核心能力：如何检测 Agent 每一步问题
+[html:l72] DeepEval 通过 轨迹评估（Trajectory Evaluation） 机制检测 Agent 执行过程中的每一步。核心思路是：用 @observe() 装饰器或 trace() 上下文管理器自动捕获 Agent 的完整执行轨迹，包括每一步的输入、输出、工具调用、参数等，然后将轨迹传给 Agentic Metrics 进行评分。
+[html:l74] from deepeval.tracing import observe, update_current_span
+[html:l75] from deepeval.test_case import LLMTestCase
+[html:l76] from deepeval.metrics import TaskCompletionMetric
+[html:l78] @observe()
+[html:l79] def inner_component(input: str):
+[html:l80] output = "result"
+[html:l81] update_current_span(test_case=LLMTestCase(input=input, actual_output=output))
+[html:l82] return output
+[html:l84] @observe()
+[html:l85] def app(input: str):
+[html:l86] return inner_component(input)
+[html:l88] # 自动捕获轨迹并评估
+[html:l89] for golden in dataset.evals_iterator(metrics=[TaskCompletionMetric()]):
+[html:l90] app(golden.input)
+[html:l92] 内置 Agentic 指标详解
+[html:l93] DeepEval 提供 8 个 Agent 专用指标，分两个层次运行： 端到端层 （看最终结果）和 轨迹层 （看执行过程）。
+[html:l96] 指标 检测什么 计算方式 层次
+[html:l98] TaskCompletionMetric
+[html:l99] Agent 是否达成了用户目标
+[html:l100] LLM-as-judge：将 Agent 最终输出与预期目标对比，判断任务是否完成。输出 0-1 分数 + 评分理由
+[html:l101] 端到端
+[html:l104] ToolCorrectnessMetric
+[html:l105] 是否调用了正确的工具、参数是否正确
+[html:l106] 确定性规则优先 ：先按工具名匹配，再比较参数。支持 strict / unordered / subset 等匹配模式。不确定部分才用 LLM judge
+[html:l107] 轨迹
+[html:l110] GoalAccuracyMetric
+[html:l111] Agent 达成目标的精确程度
+[html:l112] LLM-as-judge：评估最终输出与理想答案的语义相似度和准确性
+[html:l113] 端到端
+[html:l116] StepEfficiencyMetric
+[html:l117] Agent 是否走了不必要的弯路
+[html:l118] 比较实际步数与最优步数。如 3 步能完成的任务用了 9 步（含重试），效率分 = 最优步数/实际步数
+[html:l119] 轨迹
+[html:l122] PlanAdherenceMetric
+[html:l123] Agent 是否遵循了预期计划
+[html:l124] 将实际执行轨迹与预期计划对比，检测是否中途跑偏。支持无显式计划的场景
+[html:l125] 轨迹
+[html:l128] PlanQualityMetric
+[html:l129] Agent 的规划质量
+[html:l130] LLM-as-judge：评估 Agent 制定的计划是否合理、是否覆盖了所有必要步骤、顺序是否正确
+[html:l131] 轨迹
+[html:l134] ToolUseMetric
+[html:l135] 工具使用的整体质量
+[html:l136] 综合评估工具选择是否恰当、调用时机是否合理、结果处理是否正确
+[html:l137] 轨迹
+[html:l140] ArgumentCorrectnessMetric
+[html:l141] 工具调用参数的合法性
+[html:l142] 确定性校验：参数类型、必填项、值域是否符合 Schema 定义。可结合 Schema 验证
+[html:l143] 轨迹
+[html:l148] 指标计算原理 ：所有指标输出 0.0 ~ 1.0 的分数及 score_reason （评分理由）。默认阈值 threshold=0.5 ，低于阈值则测试失败。轨迹层指标需要提供 tools_called 和 expected_tools 信息；端到端指标只需 actual_output 和 expected_output 。
+[html:l151] LLM-as-judge 机制与配置
+[html:l152] DeepEval 的 LLM-as-judge 支持三种评估技术：
+[html:l154] G-Eval ：基于思维链（CoT）的评分，用自然语言描述评分标准，LLM 逐步推理后给出分数。适合主观维度
+[html:l155] DAG（Directed Acyclic Graph） ：决策图评分，定义多步条件判断流程。适合客观、多步骤的评分
+[html:l156] QAG（Question-Answer Generation） ：生成封闭式问题并用参考答案验证。适合有明确答案的场景
+[html:l159] 如何接入百炼 kimi-k2.5 作为 Judge 模型
+[html:l160] 百炼平台提供 OpenAI 兼容端点，DeepEval 通过继承 DeepEvalBaseLLM 即可接入：
+[html:l161] import os
+[html:l162] from deepeval.models import DeepEvalBaseLLM
+[html:l163] from openai import OpenAI
+[html:l165] class KimiK25Model(DeepEvalBaseLLM):
+[html:l166] """百炼 kimi-k2.5 自定义 Judge 模型"""
+[html:l168] def __init__(self):
+[html:l169] self.api_key = os.getenv("DASHSCOPE_API_KEY")
+[html:l170] self.model_name = "kimi-k2.5" # 百炼平台上的模型 ID
+[html:l171] self.client = OpenAI(
+[html:l172] api_key=self.api_key,
+[html:l173] base_url="https://dashscope.aliyuncs.com/compatible-mode/v1"
+[html:l174] )
+[html:l175] super().__init__(model_name=self.model_name)
+[html:l177] def load_model(self):
+[html:l178] return self.client
+[html:l180] def generate(self, prompt: str, **kwargs) -> str:
+[html:l181] response = self.client.chat.completions.create(
+[html:l182] model=self.model_name,
+[html:l183] messages=[{"role": "user", "content": prompt}]
+[html:l184] )
+[html:l185] return response.choices[0].message.content
+[html:l187] async def a_generate(self, prompt: str, **kwargs) -> str:
+[html:l188] return self.generate(prompt, **kwargs)
+[html:l190] def get_model_name(self) -> str:
+[html:l191] return self.model_name
+[html:l193] # 可选：支持结构化输出
+[html:l194] def generate_raw(self, prompt: str, **kwargs):
+[html:l195] response = self.client.chat.completions.create(
+[html:l196] model=self.model_name,
+[html:l197] messages=[{"role": "user", "content": prompt}],
+[html:l198] response_format={"type": "json_object"}
+[html:l199] )
+[html:l200] return response
+[html:l202] # 使用自定义 Judge
+[html:l203] from deepeval.metrics import TaskCompletionMetric
+[html:l205] metric = TaskCompletionMetric(
+[html:l206] model=KimiK25Model(), # 传入百炼 kimi-k2.5
+[html:l207] threshold=0.7
+[html:l208] )
+[html:l211] 百炼端点说明 ：百炼平台 OpenAI 兼容端点为 https://dashscope.aliyuncs.com/compatible-mode/v1 ，API Key 通过环境变量 DASHSCOPE_API_KEY 设置。如果使用 Moonshot 直连，则端点为 https://api.moonshot.cn/v1 。
+[html:l214] 接入自定义 Agent（非 LangChain 体系）
+[html:l215] DeepEval 通过两种方式接入非 LangChain Agent：
+[html:l217] 方式一：手动构造 TestCase + assert_test
+[html:l218] import pytest
+[html:l219] from deepeval import assert_test
+[html:l220] from deepeval.metrics import TaskCompletionMetric, ToolCorrectnessMetric
+[html:l221] from deepeval.test_case import LLMTestCase, ToolActualCall
+[html:l223] def call_fnix_agent(user_input: str):
+[html:l224] """通过 HTTP API 调用 FnixAgent"""
+[html:l225] import requests
+[html:l226] resp = requests.post("http://localhost:8000/api/agent/run", json={
+[html:l227] "message": user_input
+[html:l228] })
+[html:l229] return resp.json()
+[html:l231] @pytest.mark.parametrize("test_case", test_cases)
+[html:l232] def test_fnix_agent(test_case):
+[html:l233] result = call_fnix_agent(test_case.input)
+[html:l235] # 构造测试用例
+[html:l236] case = LLMTestCase(
+[html:l237] input=test_case.input,
+[html:l238] actual_output=result["answer"],
+[html:l239] expected_output=test_case.expected_output,
+[html:l240] tools_called=[
+[html:l241] ToolActualCall(name=t["name"], arguments=t["args"])
+[html:l242] for t in result.get("tool_calls", [])
+[html:l243] ],
+[html:l244] expected_tools=[
+[html:l245] ToolActualCall(name=t["name"], arguments=t["args"])
+[html:l246] for t in test_case.expected_tools
+[html:l247] ]
+[html:l248] )
+[html:l249] assert_test(case, [
+[html:l250] TaskCompletionMetric(threshold=0.7),
+[html:l251] ToolCorrectnessMetric(threshold=0.8),
+[html:l252] ])
+[html:l254] 方式二：使用 @observe() 自动捕获轨迹
+[html:l255] from deepeval.tracing import observe, trace
+[html:l256] from deepeval.metrics import TaskCompletionMetric
+[html:l258] @observe()
+[html:l259] def run_fnix_agent(user_input: str):
+[html:l260] # FnixAgent 调用会被自动追踪
+[html:l261] result = call_fnix_agent_api(user_input)
+[html:l262] return result
+[html:l264] # 或用 trace 上下文管理器
+[html:l265] for golden in dataset.evals_iterator(metrics=[TaskCompletionMetric()]):
+[html:l266] with trace(metrics=[TaskCompletionMetric()]):
+[html:l267] run_fnix_agent(golden.input)
+[html:l269] pytest 集成方式
+[html:l270] # CLI 运行（支持并行）
+[html:l271] deepeval test run tests/test_agent.py -n 4
+[html:l273] # 或直接用 pytest
+[html:l274] pytest tests/test_agent.py -v
+[html:l276] # 或用 evaluate() 函数（不依赖 pytest）
+[html:l277] from deepeval import evaluate
+[html:l278] evaluate(test_cases=dataset, metrics=[TaskCompletionMetric()])
+[html:l279] DeepEval 的 pytest 集成是 原生级别 的：测试用例写法和标准 pytest 完全一致，只需用 assert_test() 替代 assert 。可直接在 GitHub Actions / GitLab CI 中运行。
+[html:l281] Confident AI 云平台联动
+[html:l283] 免费注册，无需额外代码设置， deepeval login 后自动上报
+[html:l284] 功能：测试结果可视化、数据集管理、Trace 查看、超参数对比、生产环境监控
+[html:l285] 支持通过 MCP Server 在 Claude Code / Cursor 中直接拉取数据集和检查 Trace
+[html:l286] 可作为数据持久层：运行 evals → 拉取数据集 → 检查 traces，全程 API 驱动
+[html:l290] 2. AgentBench 深度分析
+[html:l292] 基本信息
+[html:l294] 项目 详情
+[html:l295] GitHub THUDM/AgentBench
+[html:l296] Stars 约 2,000+ （学术项目，Star 数低于工业框架）
+[html:l297] 维护状态 活跃。2026-02 添加 lite preset；2025-10 发布 AgentBench FC 版本
+[html:l298] 开发团队 清华大学 KEG 实验室 + 数据挖掘团队（THUDM）
+[html:l299] 开源协议 Apache-2.0
+[html:l300] 论文 ICLR 2024: AgentBench: Evaluating LLMs as Agents
+[html:l301] 排行榜 llmbench.ai/agent
+[html:l304] 覆盖维度
+[html:l305] AgentBench 在 8 个不同环境 中评估 LLM 作为 Agent 的能力，覆盖工具调用、长链路多轮任务、系统操作和对话质量：
+[html:l307] 环境 考察能力 说明
+[html:l308] OS（操作系统） 系统操作能力 在 Linux 环境中执行 bash 命令完成任务
+[html:l309] DB（数据库） 数据库操作能力 通过 SQL 查询 MySQL 数据库
+[html:l310] KG（知识图谱） 知识获取与推理 在知识图谱上进行多跳推理
+[html:l311] DCG（卡牌对战） 策略决策能力 多轮博弈中的策略选择
+[html:l312] LTP（情景猜谜） 逻辑推理 通过提问推理谜底
+[html:l313] Alfworld（家居） 指令执行 在虚拟家居环境中执行日常任务
+[html:l314] WebShop（网购） 网页交互 在电商网站完成购物流程
+[html:l315] Mind2Web（网页浏览） 网页操作 真实网页上的复杂任务执行
+[html:l318] 新版 AgentBench FC（Function Calling）
+[html:l319] 2025 年 10 月发布，基于 AgentRL 框架重建，核心变化：
+[html:l321] 使用 Function Calling 风格的提示，更贴近真实 Agent 的工具调用方式
+[html:l322] 支持 Docker Compose 一键部署所有任务环境
+[html:l323] 任务环境：alfworld (AF)、dbbench (DB)、knowledgegraph (KG)、os_interaction (OS)、webshop (WS)
+[html:l324] Lite preset 配置：最小化任务集合，便于快速启动和评测
+[html:l327] 适配器模式：如何接入自己的 Agent
+[html:l328] AgentBench 通过 YAML 配置文件 定义 Agent 适配器：
+[html:l329] # configs/agents/my_agent.yaml
+[html:l330] agent_name: "fnix_agent"
+[html:l331] type: "custom" # 自定义类型
+[html:l332] api_base: "http://localhost:8000/api" # FnixAgent API 地址
+[html:l333] model_name: "kimi-k2.5"
+[html:l334] api_key: "your-key"
+[html:l336] # 自定义 Agent 需要继承 AgentBase 并实现：
+[html:l337] # - inference(prompt) -> str 接收提示，返回模型输出
+[html:l338] # - 对话历史管理
+[html:l340] # Python 端实现适配器
+[html:l341] # src/agents/custom_agent.py
+[html:l342] class CustomAgent(AgentBase):
+[html:l343] def __init__(self, config):
+[html:l344] super().__init__(config)
+[html:l345] self.api_base = config["api_base"]
+[html:l347] def inference(self, prompt):
+[html:l348] # 调用你的 Agent API
+[html:l349] import requests
+[html:l350] resp = requests.post(f"{self.api_base}/agent/run",
+[html:l351] json={"message": prompt})
+[html:l352] return resp.json()["response"]
+[html:l353] 然后在配置中引用该适配器，启动任务服务器即可在 8 个环境中评测你的 Agent。
+[html:l355] Docker 环境要求
+[html:l356] # 必需的 Docker 镜像
+[html:l357] docker pull mysql:8 # dbbench
+[html:l358] docker build -t local-os/default ... # os_interaction
+[html:l359] docker build -t local-os/packages ...
+[html:l360] docker build -t local-os/ubuntu ...
+[html:l362] # 一键启动所有任务
+[html:l363] docker compose up -d
+[html:l365] # Python 3.9 推荐（依赖兼容性最好）
+[html:l366] conda create -n agent-bench python=3.9
+[html:l367] pip install -r requirements.txt
+[html:l369] 内置测试集规模
+[html:l370] AgentBench 原版包含 25 个不同语言模型 的评测数据，覆盖 8 个环境共计数百个任务实例。Lite preset 提供最小化子集便于快速验证。FC 版本的测试集基于 AgentRL 框架重新构建，支持多任务多轮评测。
+[html:l373] 适用性评估 ：AgentBench 是学术基准测试，主要评测 LLM 本身的 Agent 能力，不是为"评测你自己的 Agent 应用"设计的。接入自定义 Agent 需要实现适配器接口并配置 Docker 环境，接入成本中等偏高。更适合做模型选型阶段的横向对比，而非 CI/CD 中的回归测试。
+[html:l377] 3. EvalScope 深度分析
+[html:l379] 基本信息
+[html:l381] 项目 详情
+[html:l382] GitHub modelscope/evalscope （原 modelscope/llmuses）
+[html:l383] Stars 约 3,000+
+[html:l384] 维护状态 非常活跃 几乎每周更新，2026 年功能密度极高
+[html:l385] 开发团队 魔搭社区（ModelScope / 阿里达摩院）
+[html:l386] 文档 快速上手 ｜ SWE-bench 指南
+[html:l389] 核心能力：一站式评测 + WebUI 可视化
+[html:l390] EvalScope 是魔搭社区的官方评测框架，覆盖大模型评测全链路：
+[html:l392] 多后端集成 ：Native 后端（自研）+ OpenCompass 后端 + VLMEvalKit 后端 + RAGEval 后端
+[html:l393] 多模型类型 ：LLM、VLM（视觉语言模型）、Embedding、Reranker、AIGC
+[html:l394] 内置基准 ：MMLU、CMMLU、C-Eval、GSM8K、ARC、HellaSwag、HumanEval、MATH 等数十个
+[html:l395] 推理性能压测 ：TTFT、TPOT、吞吐量等指标
+[html:l396] WebUI ：2026-05 已从 Gradio 升级为 React + Vite 前端，支持多维对比、报告概览、预测详情
+[html:l399] Agent 模式支持
+[html:l400] 2026 年 5 月引入 Agent Evaluation Mode ，是 EvalScope 最重大的 Agent 能力更新：
+[html:l402] 将基于 DefaultDataAdapter 的基准（GSM8K、AIME、IFEval 等）通过多轮 AgentLoop 驱动
+[html:l403] 支持可插拔策略：function_calling / react / swe_bench_*
+[html:l404] 支持工具：bash / python_exec / submit
+[html:l405] 支持 local / docker 执行环境
+[html:l406] 每个样本记录完整的 agent_trace ，在 Dashboard 的 Predictions 页签中逐步可视化
+[html:l409] SWE-bench / GAIA / MCP 相关基准支持
+[html:l411] 基准 支持状态 说明
+[html:l412] SWE-bench Verified 支持 2025-11 添加，支持 Docker 镜像构建和远程拉取
+[html:l413] SWE-bench Lite 支持 轻量版本
+[html:l414] SWE-bench Pro 支持 2026-05 添加，Scale AI 出品的多语言长链路基准
+[html:l415] GAIA 支持 2026-05 添加，多轮 ReAct + bash in Docker sandbox，官方规则评分器
+[html:l416] Terminal-Bench 2.0 支持 2025-12 添加，89 个真实多步骤终端任务
+[html:l417] τ-bench / τ²-bench / τ³-bench 支持 工具-Agent-用户交互基准，覆盖零售/航空/电信/银行领域
+[html:l418] MCP Server 支持 支持 2026-05 添加，任何 NativeAgentConfig 驱动的基准可插入 stdio/HTTP/SSE MCP 服务器
+[html:l419] BFCL-v4 支持 Agent 能力评测（网页搜索、长期记忆）
+[html:l422] 竞技场模式：两两对比
+[html:l423] EvalScope 支持 Arena Mode（Pairwise Battle） ，用于多模型两两对比：
+[html:l425] 将两个模型对同一输入的回答进行配对比较
+[html:l426] LLM-as-judge 评判哪个回答更好
+[html:l427] 自动计算 Elo 评分排名
+[html:l428] 结果在 WebUI 中可视化对比
+[html:l431] External Agent Bridge 模式
+[html:l432] 2026-05 引入的 External Agent Bridge 是接入自定义 Agent 的关键能力：
+[html:l434] 直接评测现成 Agent CLI（如 Claude Code、Codex）
+[html:l435] 透明转发 LLM 流量（Anthropic Messages / OpenAI Chat / OpenAI Responses，含 SSE 流式）
+[html:l436] 记录完整轨迹为 agent_trace
+[html:l437] 通过 @register_runner 自定义 runner 接入任意 Agent
+[html:l441] FnixAgent 接入思路 ：FnixAgent 基于 Python/FastAPI，可通过 External Agent Bridge 的 register_runner 机制接入。将 FnixAgent 的 HTTP API 调用包装为 runner，EvalScope 负责驱动基准测试并收集 agent_trace。
+[html:l444] 安装与快速使用
+[html:l445] # 安装（含 WebUI 和性能测试模块）
+[html:l446] pip install 'evalscope[app,perf]' -U
+[html:l448] # 启动可视化服务
+[html:l449] evalscope app
+[html:l451] # 命令行评测
+[html:l452] evalscope eval \
+[html:l453] --model Qwen/Qwen2.5-0.5B-Instruct \
+[html:l454] --datasets gsm8k arc \
+[html:l455] --limit 5
+[html:l458] 4. LangSmith 深度分析
+[html:l460] 基本信息
+[html:l462] 项目 详情
+[html:l463] GitHub langchain-ai/langsmith-sdk （SDK 开源，平台闭源）
+[html:l464] SDK Stars 约 2,945 commits ，活跃开发
+[html:l465] 开发团队 LangChain 公司
+[html:l466] 文档 docs.smith.langchain.com
+[html:l467] SDK 语言 Python + JavaScript/TypeScript
+[html:l468] 平台性质 SaaS（云端服务），非自部署（Enterprise 版支持自部署）
+[html:l471] Trace 链路追踪能力
+[html:l472] LangSmith 的核心价值在于 全链路 Trace 可视化 ，能自动捕获：
+[html:l474] 每一步 LLM 调用的输入/输出/耗时/Token 用量/成本
+[html:l475] 工具调用的参数/返回值/执行耗时
+[html:l476] Agent 决策链路（supervisor → sub-agent → tool → result 循环）
+[html:l477] 嵌套 Span 层级关系（父-子调用树）
+[html:l478] 多轮会话关联（通过 session_id）
+[html:l480] 对于 LangChain/LangGraph 项目，只需设置环境变量即可自动追踪：
+[html:l481] export LANGSMITH_TRACING=true
+[html:l482] export LANGSMITH_API_KEY=ls_...
+[html:l483] # 之后任何 LangChain 调用都会自动上报
+[html:l485] 如何接入非 LangChain 的 Agent
+[html:l486] LangSmith 提供 @traceable 装饰器和 wrap_openai() 包装器，支持任意 Python 应用：
+[html:l487] import openai
+[html:l488] from langsmith import traceable
+[html:l489] from langsmith.wrappers import wrap_openai
+[html:l491] # 包装 OpenAI 客户端（自动追踪所有调用）
+[html:l492] client = wrap_openai(openai.Client(
+[html:l493] api_key="your-key",
+[html:l494] base_url="https://dashscope.aliyuncs.com/compatible-mode/v1"
+[html:l495] ))
+[html:l497] # 用 @traceable 标记自定义函数
+[html:l498] @traceable(name="fnix_agent_pipeline")
+[html:l499] def run_agent(user_input: str):
+[html:l500] # 内部所有 client.chat.completions.create 调用
+[html:l501] # 都会作为子 Span 自动记录
+[html:l502] response = client.chat.completions.create(
+[html:l503] model="kimi-k2.5",
+[html:l504] messages=[{"role": "user", "content": user_input}]
+[html:l505] )
+[html:l506] return response.choices[0].message.content
+[html:l508] # 或手动管理 Span
+[html:l509] @traceable(run_type="tool", name="tool_call")
+[html:l510] def execute_tool(tool_name, args):
+[html:l511] # 工具执行逻辑
+[html:l512] return tool_result
+[html:l514] 测试数据集和自动化评估
+[html:l516] Dataset ：从高频问题、历史 Bad Case、核心业务场景中沉淀测试集
+[html:l517] Evaluator ：支持精确匹配、LLM 辅助评估、自定义评估器
+[html:l518] Experiment ：每次改动在 Dataset 上运行评测，保留每条样本输出和 Trace
+[html:l519] AgentEvals （ 独立仓库 ）：提供轨迹匹配评估器，支持 strict/unordered/subset/superset 模式比较工具调用序列
+[html:l522] 免费额度和限制
+[html:l524] 维度 Developer（免费） Plus（$39/月） Enterprise
+[html:l525] 基础 Trace 额度 5,000 条/月 10,000 条/月 自定义
+[html:l526] 评估任务次数 100 次/月 更高 自定义
+[html:l527] 数据保留期 7 天 更长 自定义
+[html:l528] 项目数量 5 个 无限 无限
+[html:l529] 席位 1 个免费 无限（付费） 无限
+[html:l530] 部署方式 云端（LangChain 托管） 云端 Cloud/Hybrid/Self-Hosted
+[html:l531] SSO/安全 ✗ ✗ ✓
+[html:l535] 注意 ：免费版数据保留仅 7 天，评估次数每月仅 100 次，对持续 CI/CD 评测可能不够用。Plus 版 $39/月可解锁 10k Trace。数据存储在 LangChain 云端，有数据出境合规问题。
+[html:l539] 5. Agent-Eval-Harness 分析
+[html:l542] 重要说明 ：经过多轮搜索（GitHub、技术博客、学术数据库），未找到一个名为 "Agent-Eval-Harness" 的独立开源项目。该名称可能指的是一类"语言无关的评测 harness"设计范式，而非特定项目。以下分析基于该范式最接近的实际实现： hal-harness （Princeton PLI）和 Harbor （Terminal-Bench 环境），它们体现了用户描述的核心特征。
+[html:l545] 最接近的实际项目
+[html:l547] 1. hal-harness（Princeton PLI）
+[html:l549] 项目 详情
+[html:l550] GitHub princeton-pli/hal-harness
+[html:l551] 内置基准 GAIA、Terminal-Bench、SWE-bench Verified、CORE-bench、tau-bench、SciCode、AssistantBench、Cybench 等
+[html:l552] Agent 接入 支持 Inspect Solver agents（ @solver 装饰器）和 自定义外部 Agent
+[html:l553] 执行环境 本地或 Azure VM（ --vm 标志），支持完全并行化评测
+[html:l555] hal-harness 的核心设计是：将 Agent 视为外部进程，通过 CLI 接口驱动。自定义 Agent 只需实现约定的输入/输出协议即可接入，理论上语言无关。
+[html:l557] 2. Harbor（Terminal-Bench 环境）
+[html:l559] 项目 详情
+[html:l560] GitHub ucsb-mlsec/terminal-bench-env
+[html:l561] 安装 pip install harbor
+[html:l562] 支持的基准 Terminal-Bench 2.0、SWE-bench Verified
+[html:l563] Agent 接入 --agent-import-path bash_agent_harbor:BashAgent ，通过 Python import path 指定
+[html:l565] # 在 Terminal-Bench 2.0 上运行自定义 Agent
+[html:l566] harbor run -d terminal-bench@2.0 \
+[html:l567] --agent-import-path my_agent:MyAgent \
+[html:l568] --n-concurrent 4 --n-attempts 5 -e e2b
+[html:l570] # 在 SWE-bench Verified 上运行
+[html:l571] harbor run -d swebench-verified \
+[html:l572] --agent-import-path my_agent:MyAgent \
+[html:l573] --n-concurrent 4 -e e2b
+[html:l575] 语言无关接入方式的实现思路
+[html:l576] "语言无关"的核心思路是：Agent 和 Harness 之间通过 标准化的 JSON 协议 （stdin/stdout）通信，而非直接调用 Python API：
+[html:l577] # Harness 发送任务（JSON via stdin）
+[html:l578] {
+[html:l579] "task_id": "gaia_001",
+[html:l580] "instruction": "Find the population of Tokyo in 2024",
+[html:l581] "tools": ["web_search", "bash"],
+[html:l582] "max_steps": 20
+[html:l583] }
+[html:l585] # Agent 返回结果（JSON via stdout）
+[html:l586] {
+[html:l587] "answer": "Tokyo's population in 2024 is approximately 14 million",
+[html:l588] "steps": [...],
+[html:l589] "tool_calls": [...]
+[html:l590] }
+[html:l591] 这种设计的优势是：Agent 可以用任何语言实现（Rust、Node.js、Go），只要遵循 JSON 协议即可被 Harness 驱动。
+[html:l593] 适合 Rust/Node Agent 的原因
+[html:l595] 进程隔离 ：Agent 作为独立进程运行，Harness 不关心 Agent 的实现语言
+[html:l596] 无 Python 依赖 ：不需要在 Agent 进程中安装 Python 库
+[html:l597] Docker 沙箱 ：每个任务在独立 Docker 容器中执行，环境隔离
+[html:l598] 并行执行 ： --n-concurrent 控制并行度，适合大规模评测
+[html:l602] 对 FnixAgent 的适用性 ：FnixAgent 后端是 Python/FastAPI，直接用 Python SDK 类框架（DeepEval/EvalScope）更自然。语言无关的 harness 方案更适合 Rust/Node/Go 实现的 Agent，对 FnixAgent 来说接入成本偏高。
+[html:l606] 6. 多维度对比表
+[html:l610] 维度
+[html:l611] DeepEval
+[html:l612] AgentBench
+[html:l613] EvalScope
+[html:l614] LangSmith
+[html:l615] Agent-Eval-Harness*
+[html:l618] 接入难度
+[html:l619] 简单 pip install + assert_test
+[html:l620] 中等 需实现适配器 + Docker
+[html:l621] 中等 需配置 AgentLoop/runner
+[html:l622] 简单 @traceable 装饰器
+[html:l623] 复杂 需实现 JSON 协议
+[html:l626] 支持非 Python Agent
+[html:l627] ✗ 仅 Python
+[html:l628] △ 需 API 封装
+[html:l629] ✓ External Agent Bridge
+[html:l630] ✓ Python + JS SDK
+[html:l631] ✓ 语言无关（stdin/stdout）
+[html:l634] 内置指标丰富度
+[html:l635] 高 50+ 指标，8 个 Agent 专用
+[html:l636] 中 任务成功率 + 辅助指标
+[html:l637] 高 工具调用 F1 + Schema 通过率 + 基准分数
+[html:l638] 中 需自定义评估器
+[html:l639] 中 依赖基准内置评分
+[html:l642] LLM-as-judge
+[html:l643] ✓ G-Eval/DAG/QAG，任意 LLM
+[html:l644] ✗ 无内置
+[html:l645] ✓ Arena 模式内置
+[html:l646] ✓ 支持自定义评估器
+[html:l647] ✗ 无内置
+[html:l650] 可视化报告
+[html:l651] ✓ Confident AI 云平台
+[html:l652] ✗ 仅命令行输出
+[html:l653] ✓ React WebUI（强）
+[html:l654] ✓ LangSmith UI（强）
+[html:l655] ✗ 依赖外部工具
+[html:l658] CI 集成
+[html:l659] ✓ pytest 原生，最佳
+[html:l660] ✗ 学术评测，不适合 CI
+[html:l661] △ CLI 可集成，但偏重批量
+[html:l662] △ 需 API 调用，有配额限制
+[html:l663] △ CLI 可集成
+[html:l666] 社区活跃度
+[html:l667] 高 16.7k Stars，250+ 贡献者
+[html:l668] 中 学术项目，更新较慢
+[html:l669] 高 魔搭社区，每周更新
+[html:l670] 高 LangChain 生态
+[html:l671] 低 分散项目，无统一社区
+[html:l674] 适合 FnixAgent
+[html:l675] ★★★★★ 最佳选择
+[html:l676] ★★☆☆☆ 学术性质，成本高
+[html:l677] ★★★★☆ 补充方案
+[html:l678] ★★★☆☆ Trace 好，评测受限
+[html:l679] ★☆☆☆☆ 过度设计
+[html:l682] GitHub Stars
+[html:l683] 16,742
+[html:l684] ~2,000+
+[html:l685] ~3,000+
+[html:l686] SDK: 活跃
+[html:l687] N/A（分散项目）
+[html:l690] 开源协议
+[html:l691] Apache-2.0
+[html:l692] Apache-2.0
+[html:l693] Apache-2.0
+[html:l694] MIT (SDK)
+[html:l695] 各项目不同
+[html:l698] 数据存储
+[html:l699] 本地 + Confident AI 云端
+[html:l700] 本地
+[html:l701] 本地
+[html:l702] LangChain 云端
+[html:l703] 本地
+[html:l706] SWE-bench/GAIA
+[html:l707] ✗ 不内置
+[html:l708] ✗ 不内置
+[html:l709] ✓ 全面支持
+[html:l710] ✗ 不内置
+[html:l711] ✓ 核心基准
+[html:l714] * Agent-Eval-Harness 为范式描述，基于 hal-harness 和 Harbor 等实际项目分析
+[html:l717] 7. 关键问题解答
+[html:l719] 问题 1：哪个框架最适合接入 FnixAgent？
+[html:l722] 推荐：DeepEval（首选）+ EvalScope（补充）
+[html:l725] FnixAgent 的技术栈是 Python/FastAPI 后端 + HTTP API 调用 + 百炼 kimi-k2.5，已有的自研评测工具（TraceCollector + ProblemDetector + EvalRunner）覆盖 22 个测试用例、8 类场景。基于这些条件分析：
+[html:l728] 考量因素 DeepEval 为什么不选其他
+[html:l730] Python 原生
+[html:l731] FnixAgent 后端是 Python，直接 import 使用，零适配成本
+[html:l732] Agent-Eval-Harness 需实现 JSON 协议层，过度设计
+[html:l735] HTTP API 接入
+[html:l736] 用 requests.post() 调用 FnixAgent API，构造 LLMTestCase 即可
+[html:l737] AgentBench 需实现适配器接口 + 配置 Docker 环境
+[html:l740] 问题检测覆盖
+[html:l741] 8 个 Agentic 指标精确映射 5 类问题（见下方对比）
+[html:l742] LangSmith 无内置 Agentic 指标，需自定义评估器
+[html:l745] CI/CD 集成
+[html:l746] pytest 原生， deepeval test run 直接嵌入 GitHub Actions
+[html:l747] EvalScope 偏批量评测，CI 集成需额外封装
+[html:l750] 与现有工具互补
+[html:l751] FnixAgent 已有 ProblemDetector，DeepEval 可作为补充验证层
+[html:l752] LangSmith 是 Trace 平台，与 ProblemDetector 功能重叠
+[html:l755] 成本
+[html:l756] 开源免费，Confident AI 云平台也免费
+[html:l757] LangSmith 免费版仅 5k Trace/月、100 次评估/月
+[html:l761] 补充方案：EvalScope 。当需要进行模型选型横向对比（如 kimi-k2.5 vs Qwen vs DeepSeek）或跑 SWE-bench/GAIA 基准时，EvalScope 的 Arena 模式和内置基准是最佳补充。两者可并行使用：DeepEval 做 CI/CD 回归测试，EvalScope 做阶段性基准评测。
+[html:l763] 问题 2：DeepEval 的 LLM-as-judge 怎么配置才能用百炼 kimi-k2.5？
+[html:l765] 有两种方式接入百炼 kimi-k2.5 作为 DeepEval 的 Judge 模型：
+[html:l767] 方式 A：继承 DeepEvalBaseLLM（推荐，完全控制）
+[html:l768] import os
+[html:l769] from deepeval.models import DeepEvalBaseLLM
+[html:l770] from openai import OpenAI
+[html:l772] class BailianKimiJudge(DeepEvalBaseLLM):
+[html:l773] """百炼平台 kimi-k2.5 Judge 模型"""
+[html:l775] def __init__(self):
+[html:l776] self.client = OpenAI(
+[html:l777] api_key=os.getenv("DASHSCOPE_API_KEY"),
+[html:l778] base_url="https://dashscope.aliyuncs.com/compatible-mode/v1"
+[html:l779] )
+[html:l780] self._model_name = "kimi-k2.5"
+[html:l781] super().__init__(model_name=self._model_name)
+[html:l783] def load_model(self):
+[html:l784] return self.client
+[html:l786] def generate(self, prompt: str, **kwargs) -> str:
+[html:l787] response = self.client.chat.completions.create(
+[html:l788] model=self._model_name,
+[html:l789] messages=[{"role": "user", "content": prompt}],
+[html:l790] temperature=0.0 # Judge 用确定性输出
+[html:l791] )
+[html:l792] return response.choices[0].message.content
+[html:l794] async def a_generate(self, prompt: str, **kwargs) -> str:
+[html:l795] return self.generate(prompt, **kwargs)
+[html:l797] def get_model_name(self) -> str:
+[html:l798] return "bailian-kimi-k2.5"
+[html:l800] # 在所有指标中使用
+[html:l801] from deepeval.metrics import TaskCompletionMetric, ToolCorrectnessMetric
+[html:l803] judge = BailianKimiJudge()
+[html:l804] metrics = [
+[html:l805] TaskCompletionMetric(model=judge, threshold=0.7),
+[html:l806] ToolCorrectnessMetric(model=judge, threshold=0.8),
+[html:l807] ]
+[html:l809] 方式 B：设置环境变量（更简单，但灵活性低）
+[html:l810] # 设置 OpenAI 兼容端点指向百炼
+[html:l811] export OPENAI_API_KEY="your-dashscope-api-key"
+[html:l812] export OPENAI_API_BASE="https://dashscope.aliyuncs.com/compatible-mode/v1"
+[html:l813] export OPENAI_MODEL_NAME="kimi-k2.5"
+[html:l815] # DeepEval 默认使用 OpenAI 模型，
+[html:l816] # 设置 base_url 后会自动指向百炼
+[html:l819] 注意事项 ：
+[html:l821] 百炼端点 https://dashscope.aliyuncs.com/compatible-mode/v1 完全兼容 OpenAI API 格式，无需额外适配
+[html:l822] 如果使用 Moonshot 直连（非百炼），端点改为 https://api.moonshot.cn/v1 ，模型名用 kimi-latest
+[html:l823] Judge 模型建议 temperature=0.0 ，保证评分一致性
+[html:l824] kimi-k2.5 的上下文窗口足够处理 Agent 轨迹评估（轨迹可能较长）
+[html:l825] 方式 A 更推荐：可以精确控制模型参数，且不污染全局环境变量
+[html:l829] 问题 3：5 类问题检测能力对比
+[html:l831] 针对 FnixAgent 关注的 5 类问题（规划出错、工具参数错、忘记回退、多轮中断、MCP 失败），各框架的检测能力对比：
+[html:l835] 问题类型
+[html:l836] DeepEval
+[html:l837] AgentBench
+[html:l838] EvalScope
+[html:l839] LangSmith
+[html:l840] Agent-Eval-Harness
+[html:l843] 规划出错 Agent 第一步计划就错
+[html:l844] ✓ 强 PlanQualityMetric LLM judge 评估计划合理性
+[html:l845] △ 间接 通过任务成功率反映
+[html:l846] △ 间接 agent_trace 可人工检查
+[html:l847] △ 需自定义 Trace 可视化但无自动检测
+[html:l848] ✗ 仅看最终结果
+[html:l851] 工具参数错 调用正确工具但参数不对
+[html:l852] ✓ 强 ToolCorrectnessMetric + ArgumentCorrectnessMetric 确定性 Schema 校验
+[html:l853] △ 间接 任务失败但无参数级诊断
+[html:l854] ✓ 中 FunctionCall 评测流 F1 Score + Schema 通过率
+[html:l855] △ 需自定义 AgentEvals 轨迹匹配可检测
+[html:l856] ✗ 仅看任务结果
+[html:l859] 忘记回退 工具失败后不重试/回退
+[html:l860] ✓ 中 StepEfficiencyMetric 检测冗余/重复步骤 PlanAdherenceMetric 检测跑偏
+[html:l861] ✗ 无轨迹级分析
+[html:l862] △ 间接 agent_trace 含重试记录
+[html:l863] ✓ 中 Trace 可视化重试链路 需人工查看
+[html:l864] ✗ 无轨迹分析
+[html:l867] 多轮中断 长链路任务中途崩溃
+[html:l868] ✓ 中 TaskCompletionMetric 检测未完成 + 轨迹分析
+[html:l869] ✓ 强 8 环境多轮评测 长链路任务设计
+[html:l870] ✓ 中 多轮 AgentLoop τ-bench 多轮交互
+[html:l871] ✓ 强 全链路 Trace 可定位崩溃点
+[html:l872] ✓ 中 GAIA 多步任务
+[html:l875] MCP 失败 MCP 工具调用异常
+[html:l876] △ 间接 ToolCorrectnessMetric 检测工具调用异常 但无 MCP 专用指标
+[html:l877] ✗ 不支持 MCP
+[html:l878] ✓ 强 原生 MCP Server 支持 stdio/HTTP/SSE MCP 可插拔
+[html:l879] △ 需自定义 Trace 可记录 MCP 调用 但无自动检测
+[html:l880] ✗ 不支持 MCP
+[html:l884] 5 类问题检测能力总评
+[html:l886] 框架 规划出错 工具参数错 忘记回退 多轮中断 MCP 失败 总分
+[html:l887] DeepEval ✓ 强 ✓ 强 ✓ 中 ✓ 中 △ 间接 4/5
+[html:l888] AgentBench △ △ ✗ ✓ 强 ✗ 1.5/5
+[html:l889] EvalScope △ ✓ 中 △ ✓ 中 ✓ 强 3/5
+[html:l890] LangSmith △ △ ✓ 中 ✓ 强 △ 2.5/5
+[html:l891] Agent-Eval-Harness ✗ ✗ ✗ ✓ 中 ✗ 1/5
+[html:l895] 关键发现 ：DeepEval 在前 4 类问题上检测能力最强（4/5），唯一短板是 MCP 失败检测。EvalScope 的 MCP 原生支持弥补了这一缺口。建议： DeepEval 做 CI/CD 回归 + EvalScope 做 MCP 专项验证 ，组合覆盖 5/5。
+[html:l899] 8. 源码与文档链接汇总
+[html:l901] DeepEval
+[html:l903] GitHub: https://github.com/confident-ai/deepeval
+[html:l904] 官方文档: https://deepeval.com/
+[html:l905] 指标文档: https://deepeval.com/docs/metrics-introduction
+[html:l906] Confident AI: https://www.confident-ai.com/
+[html:l907] 安装: pip install -U deepeval
+[html:l910] AgentBench
+[html:l912] GitHub: https://github.com/THUDM/AgentBench
+[html:l913] 论文: arXiv:2308.03688 (ICLR 2024)
+[html:l914] 排行榜: https://llmbench.ai/agent
+[html:l915] VisualAgentBench: https://github.com/THUDM/VisualAgentBench
+[html:l918] EvalScope
+[html:l920] GitHub: https://github.com/modelscope/evalscope
+[html:l921] 快速上手: 快速上手文档
+[html:l922] SWE-bench 指南: SWE-bench 文档
+[html:l923] Agent 工具调用评测: Agent 工具调用评测指南
+[html:l924] 安装: pip install 'evalscope[app,perf]' -U
+[html:l927] LangSmith
+[html:l929] SDK GitHub: https://github.com/langchain-ai/langsmith-sdk
+[html:l930] AgentEvals: https://github.com/langchain-ai/agentevals
+[html:l931] 文档: docs.smith.langchain.com
+[html:l932] Cookbook: langsmith-cookbook
+[html:l933] 定价: https://www.langchain.com/pricing
+[html:l934] 安装: pip install -U langsmith
+[html:l937] Agent-Eval-Harness（相关项目）
+[html:l939] hal-harness: https://github.com/princeton-pli/hal-harness
+[html:l940] Terminal-Bench/Harbor: https://github.com/ucsb-mlsec/terminal-bench-env
+[html:l941] HarnessEval: https://github.com/mirros-lab/harnesseval-w
+[html:l942] Claw-SWE-Bench: https://github.com/opensquilla/claw-swe-bench
+[html:l946] 报告生成时间：2026-08-21 ｜ 数据来源：GitHub、官方文档、技术博客、论文 ｜ 目标项目：FnixAgent (Python/FastAPI + 百炼 kimi-k2.5)

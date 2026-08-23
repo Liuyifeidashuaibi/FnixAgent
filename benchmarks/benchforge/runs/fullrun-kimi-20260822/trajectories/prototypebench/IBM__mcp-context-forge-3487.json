@@ -1,0 +1,18 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "IBM__mcp-context-forge-3487",
+  "prompt": "# 🐛 Bug-fix PR\r\n\r\n## 📌 Summary\r\nThe `max_members` limit set on a team via the admin UI was silently ignored, members could be added beyond the declared cap. This fixes #3459 by wiring the `max_members` form field through both the create and update team admin handlers.\r\n\r\n## 🔗  Related Issue\r\nCloses #3459.\r\n\r\n## 🔁 Reproduction Steps\r\n1. Start the gateway (`make dev`).\r\n2. Navigate to **Admin UI → Teams**.\r\n3. Create a team with **Max Members = 2**.\r\n4. Add three members via **Manage Members** - all three succeed; the limit is never enforced.\r\n\r\n## 🐞 Root Cause\r\n`admin_create_team` and `admin_update_team` in `mcpgateway/admin.py` read `name`, `description`, `visibility`, etc. from the HTML form but **never read `max_members`**. Consequently `max_members` is stored as `NULL` in the database. The guard in `team_management_service.add_member_to_team()`:\r\n\r\n```python\r\nif team.max_members:   # NULL is falsy → guard never runs\r\n    if current_member_count >= team.max_members:\r\n        raise TeamMemberLimitExceededError(...)\r\n```\r\n\r\nevaluates to `False` for `NULL`, so the limit check is permanently bypassed for teams created or updated through the admin UI. The REST API path (`POST /teams/`, `PATCH /teams/{id}`) was unaffected - it correctly forwards `max_members`.\r\n\r\n## 💡 Fix Description\r\nIn both `admin_create_team` and `admin_update_team`:\r\n\r\n1. Read `max_members` from the multipart form (`form.get(\"max_members\")`), coercing to `Optional[int]` (empty/non-numeric → `None`).\r\n2. Pass the value to `TeamCreateRequest` / `update_team()` so it propagates to the database.\r\n\r\nNo schema, service, or migration changes are required - the field already exists in `TeamCreateRequest`, the column already exists in the DB, and the service-layer guard is already correct.\r\n\r\n## 🧪 Verification\r\n\r\n| Check | Command | Status |\r\n|---|---|---|\r\n| Lint suite | `make lint` | Pass |\r\n| Unit tests | `make test` | Pass |\r\n| Coverage ≥ 90 % | `make coverage` | Pass |\r\n| Manual regression no longer fails | Create team (max=2) via UI → add 3rd member → expect 400/error toast | Pass |\r\n\r\n## 📐 MCP Compliance (if relevant)\r\n- [x] Matches current MCP spec\r\n- [x] No breaking change to MCP clients\r\n\r\n## ✅ Checklist\r\n- [x] Code formatted (`make black isort pre-commit`)\r\n- [x] No secrets/credentials committed",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/mcpgateway/admin.py b/mcpgateway/admin.py\nindex 73fc30e0f..db875821] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787334460.8378227,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\prototypebench__IBM__mcp-context-forge-3487__2303c6"
+}

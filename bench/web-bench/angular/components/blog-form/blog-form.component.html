@@ -1,0 +1,25 @@
+<div *ngIf="isVisible" class="modal-overlay" (click)="closeModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="visible-count">{{ visibleCount }}</div>
+    <div class="modal-header">
+      <h2>Create Blog</h2>
+      <button class="close-btn" (click)="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <form>
+        <div class="form-group">
+          <label for="blogTitle">Title</label>
+          <input type="text" id="blogTitle" placeholder="Enter blog title">
+        </div>
+        <div class="form-group">
+          <label for="blogContent">Content</label>
+          <textarea id="blogContent" placeholder="Enter blog content" rows="6"></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn-cancel" (click)="closeModal()">Cancel</button>
+          <button type="submit" class="btn-submit">Create</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

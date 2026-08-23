@@ -43,6 +43,7 @@ OS 概念映射:
 from __future__ import annotations
 
 import asyncio
+import logging
 import time
 from collections.abc import Awaitable, Callable
 from typing import Any
@@ -85,6 +86,9 @@ from fnixagent.core.agent.types import (
     utcnow_iso,
 )
 from fnixagent.core.agent.vfs import ContextFS
+
+_logger = logging.getLogger(__name__)
+
 
 # Syscall 处理器签名
 SyscallHandler = Callable[[SyscallRequest], Awaitable[SyscallResponse]]
@@ -743,7 +747,7 @@ class AgentKernel:
             try:
                 tokens_used = await self._llm_backend.count_tokens(messages)
             except Exception:
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
         return SyscallResponse.ok(result, tokens_used=tokens_used)
 
     async def _handle_llm_stream(self, req: SyscallRequest) -> SyscallResponse:
@@ -760,7 +764,7 @@ class AgentKernel:
             try:
                 tokens_used = await self._llm_backend.count_tokens(messages)
             except Exception:
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
         return SyscallResponse.ok(result, tokens_used=tokens_used)
 
     async def _handle_embed(self, req: SyscallRequest) -> SyscallResponse:
@@ -845,7 +849,7 @@ class AgentKernel:
                     detail=detail or {},
                 )
             except Exception:
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
 
     def get_audit_log(self, limit: int = 100, action: str | None = None) -> list[dict[str, Any]]:
         """查询审计日志。"""

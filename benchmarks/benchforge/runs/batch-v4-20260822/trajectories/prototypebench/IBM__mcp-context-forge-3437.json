@@ -1,0 +1,28 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "IBM__mcp-context-forge-3437",
+  "prompt": "## Summary\n\n- Fixes CSRF origin validation failure behind layered reverse proxies where `X-Forwarded-Proto` / `X-Forwarded-Host` headers reflect internal hops rather than the external scheme/host\n- Extends `_request_origin_matches()` to fall back to `settings.allowed_origins` when the forwarded-header same-origin comparison fails\n- Excludes wildcard entries (`*`, `null`, `\"\"`) from the fallback to preserve fail-closed behavior\n\nCloses #3431",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [
+    "Step 0 | 思考: 根据提供的摘要，我们需要对代码进行如下修改：\n\n1. 扩展 `_request_origin_matches()` 函数，使其在基于 `X-Forwarded-Proto` 和 `X-Forwarde... | 工具 ✓ glob({\"pattern\": \"**/security.py\"}) | 耗时: 9292ms, tokens: 3035"
+  ],
+  "tool_calls": [
+    {
+      "step": 1,
+      "tool": "glob",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'count': 0, 'pattern': '**/security.py'})\n(无匹配结果)"
+    }
+  ],
+  "files_written": [],
+  "total_tokens": 3035,
+  "duration_ms": 10015.999999999964,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen-max): HTTP 400 (<400> InternalError.Algo.InvalidParameter: messages with role \"tool\" must be a response to a preceeding message with \"tool_calls\".)",
+  "judge_method": "heuristic",
+  "started_at": 1787384866.8850346,
+  "workspace": "benchmarks\\benchforge\\runs\\batch-v4-20260822\\workspaces\\prototypebench__IBM__mcp-context-forge-3437__9bce4e"
+}

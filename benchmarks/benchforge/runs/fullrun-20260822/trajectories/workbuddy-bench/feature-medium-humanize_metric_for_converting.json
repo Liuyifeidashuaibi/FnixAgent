@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "feature-medium-humanize_metric_for_converting",
+  "prompt": "产品展示里想要一个更顺手的 `humanize.metric()`，把数字按 SI 前缀缩放后再带单位展示。太大或太小的值可以回到科学计数法，单位空格和特殊符号也别显示得别扭。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787332458.6805606,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\workbuddy-bench__feature-medium-humanize_metric_for_converting__1f531c"
+}

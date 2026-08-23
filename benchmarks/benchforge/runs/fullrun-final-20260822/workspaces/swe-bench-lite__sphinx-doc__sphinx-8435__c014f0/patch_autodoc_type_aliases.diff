@@ -1,0 +1,40 @@
+diff --git a/sphinx/ext/autodoc/__init__.py b/sphinx/ext/autodoc/__init__.py
+index abc1234..def5678 100644
+--- a/sphinx/ext/autodoc/__init__.py
++++ b/sphinx/ext/autodoc/__init__.py
+@@ -123,6 +123,15 @@ class Documenter:
+         # ... existing code ...
+         return sig
+ 
++    def _resolve_type_alias(self, type_name):
++        """Resolve type aliases using autodoc_type_aliases configuration."""
++        if (hasattr(self.env.config, 'autodoc_type_aliases') and
++            isinstance(type_name, str) and
++            type_name in self.env.config.autodoc_type_aliases):
++            return self.env.config.autodoc_type_aliases[type_name]
++        return type_name
++
+     def add_content(self, more_content):
+         """Add content to the generated documentation."""
+         # ... existing code ...
+@@ -456,7 +465,10 @@ class AttributeDocumenter(Documenter):
+         # ... existing code ...
+         if annotation is not None:
+             # Format the annotation
+-            annotation_str = self.format_annotation(annotation)
++            annotation_str = self.format_annotation(annotation)
++            # Apply type aliases to attribute annotations
++            if isinstance(annotation, str):
++                annotation_str = self._resolve_type_alias(annotation_str)
+         # ... rest of existing code ...
+ 
+@@ -789,7 +801,10 @@ class ModuleDocumenter(Documenter):
+         # ... existing code ...
+         if annotation is not None:
+             # Format the annotation
+-            annotation_str = self.format_annotation(annotation)
++            annotation_str = self.format_annotation(annotation)
++            # Apply type aliases to module variable annotations
++            if isinstance(annotation, str):
++                annotation_str = self._resolve_type_alias(annotation_str)
+         # ... rest of existing code ...

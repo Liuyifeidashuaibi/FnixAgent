@@ -23,6 +23,7 @@ import logging
 import threading
 
 logger = logging.getLogger(__name__)
+_logger = logger
 
 _cleanup_thread: threading.Thread | None = None
 _cleanup_stop_event = threading.Event()
@@ -70,7 +71,7 @@ def _run_cleanup() -> None:
                         },
                     )
                 except Exception:
-                    pass
+                    _logger.debug('Unhandled exception', exc_info=True)
         except Exception as e:
             logger.error("硬删除用户 %d 失败: %s", user.id, e)
 

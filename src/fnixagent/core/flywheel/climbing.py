@@ -26,6 +26,7 @@
 
 from __future__ import annotations
 
+import logging
 import time
 from collections import Counter
 from typing import Any
@@ -41,6 +42,9 @@ from fnixagent.core.types import (
     TopologyLayer,
     TraceRecord,
 )
+
+_logger = logging.getLogger(__name__)
+
 
 # 默认触发间隔(对话数)
 DEFAULT_EVOLUTION_INTERVAL: int = 100
@@ -165,7 +169,7 @@ class HillClimbingFlywheel:
                     )
                     result["snapshot_created"] = True
                 except Exception:
-                    pass
+                    _logger.debug('Unhandled exception', exc_info=True)
 
             # Step 5: 评估进化效果
             post_stats = self._compute_evolution_metrics(traces)
@@ -264,6 +268,7 @@ class HillClimbingFlywheel:
                         }
                     )
                 except Exception:
+                    _logger.debug('Unhandled exception', exc_info=True)
                     continue
         return top_paths
 

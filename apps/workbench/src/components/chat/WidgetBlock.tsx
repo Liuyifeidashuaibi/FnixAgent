@@ -32,9 +32,9 @@
  * - ArtifactCanvas = 磁盘产物（文件，可编辑可持久化，AI patch 增量编辑）
  */
 
-import { memo, useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, ChevronDown, ChevronRight, Maximize2 } from "lucide-react";
-import type { WidgetBlock as WidgetBlockData } from "../../utils/structuredBlocks";
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { AlertTriangle, ChevronDown, ChevronRight, Maximize2 } from 'lucide-react';
+import type { WidgetBlock as WidgetBlockData } from '../../utils/structuredBlocks';
 
 interface Props {
   block: WidgetBlockData;
@@ -57,13 +57,15 @@ interface Props {
  * - CSP connect-src 'none' 已阻止数据外传
  */
 function sanitizeWidgetCode(code: string): string {
-  return code
-    // 移除 on* 内联事件处理器（onerror / onload / onclick / onmouseover 等）
-    .replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "")
-    // 移除 javascript: 协议
-    .replace(/(href|src)\s*=\s*["']javascript:[^"']*["']/gi, '$1="#"')
-    // 移除 data: 协议中的 script（data:text/html）
-    .replace(/(href|src)\s*=\s*["']data:text\/html[^"']*["']/gi, '$1="#"');
+  return (
+    code
+      // 移除 on* 内联事件处理器（onerror / onload / onclick / onmouseover 等）
+      .replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+      // 移除 javascript: 协议
+      .replace(/(href|src)\s*=\s*["']javascript:[^"']*["']/gi, '$1="#"')
+      // 移除 data: 协议中的 script（data:text/html）
+      .replace(/(href|src)\s*=\s*["']data:text\/html[^"']*["']/gi, '$1="#"')
+  );
 }
 
 /**
@@ -147,7 +149,7 @@ function buildSrcDoc(code: string, widgetId: string): string {
   return `<!DOCTYPE html><html><head>${csp}${theme}${bridge}</head><body>${code}</body></html>`;
 }
 
-function WidgetBlockImpl({ block, live, onPin, onSendPrompt }: Props) {
+function WidgetBlockImpl({ block, onPin, onSendPrompt }: Props) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [expanded, setExpanded] = useState(true);
   const [iframeHeight, setIframeHeight] = useState<number>(240);
@@ -177,15 +179,15 @@ function WidgetBlockImpl({ block, live, onPin, onSendPrompt }: Props) {
       if (!iframe || e.source !== iframe.contentWindow) return;
       const d = e.data as { type?: string; widgetId?: string; height?: number; text?: string };
       if (!d || d.widgetId !== block.widgetId) return;
-      if (d.type === "fnix-widget-height" && typeof d.height === "number" && d.height > 0) {
+      if (d.type === 'fnix-widget-height' && typeof d.height === 'number' && d.height > 0) {
         // 限制在 80-720px 之间，避免过长撑爆对话流
         setIframeHeight(Math.min(720, Math.max(80, d.height + 24)));
-      } else if (d.type === "fnix-widget-prompt" && typeof d.text === "string") {
+      } else if (d.type === 'fnix-widget-prompt' && typeof d.text === 'string') {
         onSendPromptRef.current?.(d.text);
       }
     };
-    window.addEventListener("message", onMessage);
-    return () => window.removeEventListener("message", onMessage);
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
   }, [block.widgetId]);
 
   // iframe 加载失败监听
@@ -193,12 +195,12 @@ function WidgetBlockImpl({ block, live, onPin, onSendPrompt }: Props) {
     const iframe = iframeRef.current;
     if (!iframe) return;
     const onLoad = () => setLoadError(null);
-    const onError = () => setLoadError("iframe 加载失败");
-    iframe.addEventListener("load", onLoad);
-    iframe.addEventListener("error", onError);
+    const onError = () => setLoadError('iframe 加载失败');
+    iframe.addEventListener('load', onLoad);
+    iframe.addEventListener('error', onError);
     return () => {
-      iframe.removeEventListener("load", onLoad);
-      iframe.removeEventListener("error", onError);
+      iframe.removeEventListener('load', onLoad);
+      iframe.removeEventListener('error', onError);
     };
   }, [srcDoc]);
 
@@ -222,7 +224,7 @@ function WidgetBlockImpl({ block, live, onPin, onSendPrompt }: Props) {
           type="button"
           className="cl-widget-toggle"
           onClick={() => setExpanded((v) => !v)}
-          aria-label={expanded ? "折叠" : "展开"}
+          aria-label={expanded ? '折叠' : '展开'}
         >
           {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
         </button>

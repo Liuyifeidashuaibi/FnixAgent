@@ -1,0 +1,2 @@
+[FORMAT]
+function-rgx=[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaffa-z_][\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaffa-z0-9_]{2,30}$

@@ -1,0 +1,18 @@
+{
+  "dataset": "vibe-code-bench",
+  "task_id": "case_15_markdown",
+  "prompt": "# Build me a Markdown Editor\n\nCreate a split-pane markdown editor:\n\n- Left side: text input for markdown\n- Right side: live preview of rendered HTML\n- Support for:\n  - Headers (# ## ###)\n  - Bold (**text**) and italic (*text*)\n  - Lists (- and 1. 2. 3.)\n  - Links [text](url)\n  - Code blocks ```code```\n  - Blockquotes (>)\n- Save/load from localStorage\n- Dark mode toggle\n- Export as HTML button\n\nSingle HTML file.",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[\"\"\"\nFunctional tests for Markdown Editor (case_15_markdown).\n\nTests verify actua] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 78.99999999972351,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787334459.324998,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\vibe-code-bench__case_15_markdown__a3e4a1"
+}

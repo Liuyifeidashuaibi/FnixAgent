@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "web--text-spec-dashboard-implementation-L3-001",
+  "prompt": "# Web-Bench Task T01\n\nI'd like to build a data analytics page. The attachments include the content, data, responsive constraints, and layout notes. Please turn them into a usable HTML/CSS/JS page that reads well on mobile too. Stick to the content and numbers in the attachments — no placeholder values. It would be nice to have a simple data switcher or filter so people can look at different time ranges or metrics.\n\n\n## Interaction and Data Expectations\n\nTreat the CSV-backed chart, KPI cards, supporting table/detail rows, and filter controls as one dashboard state. When a range or metric changes, the visible KPI summaries, chart geometry/labels, active control state, and table/detail evidence should update together from the same source rows. If a selected state has no matching rows, show a clear empty state and then recover cleanly when the user returns to a valid range without leaving stale metrics on screen.\n\nMake at least one filter or search path capable of reaching a no-match state, and make the selected range or metric survive a reload or reopen through a URL parameter/hash, localStorage/sessionStorage, or an equivalent explicit state snapshot. The goal is that a reviewer can reproduce the current dashboard state without guessing what was clicked before.\n\nOn mobile, keep the same data story in a sensible reading order: header, KPI cards, chart, controls, then supporting evidence. The mobile version should not replace the chart or details with unrelated summary copy.\n\n\n## Output\n\nCreate the required artifact inside `/workspace`. The required output path is:\n\n- `/workspace/www/index.html` (declared as `environment/www/index.html`)\n\nDo not place the final answer only in chat; write the runnable artifact files.\n\n## Public Assets\n\n- `dashboard_text_source`: `/workspace/public-assets/source/dashboard-content-transcript.md` text/markdown\n- `dashboard_dom_outline`: `/workspace/public-assets/source/dashboard-dom-outline.json` application/json\n- `layout_wireframe`: `/workspace/public-assets/source/layout-wireframe.md` text/markdown\n- `dashboard_series`: `/workspace/public-assets/data/dashboard-series.csv` text/csv\n- `responsive_constraints`: `/workspace/public-assets/spec/responsive-constraints.md` text/markdown\n- `layout_requirements`: `/workspace/public-assets/spec/layout-requirements.md` text/markdown",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 421.9999999995707,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336323.4840899,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\workbuddy-bench__web--text-spec-dashboard-implementation-L3-001__c16798"
+}

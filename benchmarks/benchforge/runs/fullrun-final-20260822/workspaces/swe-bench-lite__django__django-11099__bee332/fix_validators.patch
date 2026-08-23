@@ -1,0 +1,22 @@
+diff --git a/django/contrib/auth/validators.py b/django/contrib/auth/validators.py
+index 0000000..1111111 100644
+--- a/django/contrib/auth/validators.py
++++ b/django/contrib/auth/validators.py
+@@ -45,7 +45,7 @@ class ASCIIUsernameValidator(UnicodeUsernameValidator):
+     """
+     # ASCII usernames can contain ASCII letters, digits, and the following chars.
+     # This regex is intentionally similar to the Unicode version below.
+-    regex = r'^[\w.@+-]+$'
++    regex = r'\A[\w.@+-]+\Z'
+     message = _(
+         'Enter a valid username. This value may contain only English letters, '
+         'numbers, and @/./+/-/_ characters.'
+@@ -65,7 +65,7 @@ class UnicodeUsernameValidator(BaseValidator):
+     """
+     # Unicode usernames can contain alphanumeric characters, and the following
+     # chars.
+-    regex = r'^[\w.@+-]+$'
++    regex = r'\A[\w.@+-]+\Z'
+     message = _(
+         'Enter a valid username. This value may contain only letters, '
+         'numbers, and @/./+/-/_ characters.'

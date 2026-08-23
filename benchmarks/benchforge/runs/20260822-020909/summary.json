@@ -1,0 +1,27 @@
+{
+  "run_id": "20260822-020909",
+  "model": "configured-model",
+  "started_at": 1787332149.7268448,
+  "finished_at": 1787332239.2830272,
+  "totals": {
+    "total": 2,
+    "success": 2,
+    "failure": 0,
+    "fetch_error": 0,
+    "success_rate": 1.0,
+    "failure_type_counts": {}
+  },
+  "total_tokens": 53206,
+  "note": "",
+  "datasets": {
+    "web-bench": {
+      "dataset": "web-bench",
+      "total": 2,
+      "success": 2,
+      "failure": 0,
+      "fetch_error": 0,
+      "success_rate": 1.0,
+      "failure_type_counts": {}
+    }
+  }
+}

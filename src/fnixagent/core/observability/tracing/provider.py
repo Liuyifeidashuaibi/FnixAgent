@@ -25,6 +25,7 @@ Exporter 协议:
 from __future__ import annotations
 
 import contextvars
+import logging
 import threading
 import uuid
 from collections.abc import Callable
@@ -32,6 +33,9 @@ from typing import Any
 
 from fnixagent.core.observability.tracing.span import Span
 from fnixagent.core.observability.tracing.trace import TraceImpl
+
+_logger = logging.getLogger(__name__)
+
 
 # ---------------------------------------------------------------------------
 # Exporter 类型
@@ -142,20 +146,20 @@ class TracingProvider:
                 try:
                     exporter(snapshot)
                 except Exception:
-                    pass
+                    _logger.debug('Unhandled exception', exc_info=True)
 
         def _on_trace_end(trace: TraceImpl) -> None:
             for exporter in trace_exporters_snapshot:
                 try:
                     exporter(trace)
                 except Exception:
-                    pass
+                    _logger.debug('Unhandled exception', exc_info=True)
             # 恢复外层 Trace(contextvars 的 set 在当前上下文生效)
             try:
                 self._current_trace.set(previous)
             except Exception:
                 # contextvars 异常通常不可恢复,忽略避免影响主流程
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
 
         trace = TraceImpl(
             trace_id=tid,

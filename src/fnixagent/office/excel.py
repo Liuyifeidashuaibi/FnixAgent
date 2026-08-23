@@ -24,9 +24,13 @@ Excel 工作簿创建/读取/公式/数据透视/图表/合并/条件格式/CSV 
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from fnixagent.office.base import BaseExpert, ExpertError, ExpertResult
+
+_logger = logging.getLogger(__name__)
+
 
 
 class ExcelExpert(BaseExpert):
@@ -112,7 +116,7 @@ class ExcelExpert(BaseExpert):
                 try:
                     wb.close()
                 except Exception:
-                    pass
+                    _logger.debug('Unhandled exception', exc_info=True)
 
     def read(
         self,
@@ -173,7 +177,7 @@ class ExcelExpert(BaseExpert):
                 try:
                     wb.close()
                 except Exception:
-                    pass
+                    _logger.debug('Unhandled exception', exc_info=True)
 
     # ------------------------------------------------------------------
     # 公式与计算
@@ -231,7 +235,7 @@ class ExcelExpert(BaseExpert):
                 try:
                     wb.close()
                 except Exception:
-                    pass
+                    _logger.debug('Unhandled exception', exc_info=True)
 
     # ------------------------------------------------------------------
     # 数据透视
@@ -376,7 +380,7 @@ class ExcelExpert(BaseExpert):
                 try:
                     wb.close()
                 except Exception:
-                    pass
+                    _logger.debug('Unhandled exception', exc_info=True)
 
     # ------------------------------------------------------------------
     # 合并
@@ -447,12 +451,12 @@ class ExcelExpert(BaseExpert):
                 try:
                     src_wb.close()
                 except Exception:
-                    pass
+                    _logger.debug('Unhandled exception', exc_info=True)
             if merged is not None:
                 try:
                     merged.close()
                 except Exception:
-                    pass
+                    _logger.debug('Unhandled exception', exc_info=True)
 
     # ------------------------------------------------------------------
     # 条件格式
@@ -558,7 +562,7 @@ class ExcelExpert(BaseExpert):
                 try:
                     wb.close()
                 except Exception:
-                    pass
+                    _logger.debug('Unhandled exception', exc_info=True)
 
     # ------------------------------------------------------------------
     # CSV 转换
@@ -620,4 +624,4 @@ class ExcelExpert(BaseExpert):
                 try:
                     wb.close()
                 except Exception:
-                    pass
+                    _logger.debug('Unhandled exception', exc_info=True)

@@ -1,0 +1,18 @@
+{
+  "dataset": "swe-bench-lite",
+  "task_id": "django__django-15819",
+  "prompt": "inspectdb should generate related_name on same relation links.\nDescription\n\t\nHi!\nAfter models generation with inspectdb command we have issue with relations to same enities\nmodule.Model.field1: (fields.E304) Reverse accessor for 'module.Model.field1' clashes with reverse accessor for 'module.Model.field2'.\nHINT: Add or change a related_name argument to the definition for 'module.Model.field1' or 'module.Model.field2'.\n*\nMaybe we can autogenerate\nrelated_name='attribute_name'\nto all fields in model if related Model was used for this table\n",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 375.0,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336345.5556717,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\swe-bench-lite__django__django-15819__c60ca0"
+}

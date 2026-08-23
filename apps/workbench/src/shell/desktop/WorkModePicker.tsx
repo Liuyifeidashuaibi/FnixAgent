@@ -10,18 +10,18 @@
  * compact：下拉 pill；segment：三小钮（少用）。
  */
 
-import { useEffect, useRef, useState } from "react";
-import { ChevronDown } from "lucide-react";
-import type { WorkExecMode } from "./fnixRuntime";
+import { useEffect, useRef, useState } from 'react';
+import { ChevronDown } from 'lucide-react';
+import type { WorkExecMode } from './fnixRuntime';
 
 const MODES: {
   id: WorkExecMode;
   label: string;
   desc: string;
 }[] = [
-  { id: "ask", label: "Ask", desc: "解释与建议，不写盘" },
-  { id: "plan", label: "Plan", desc: "先出可执行计划" },
-  { id: "craft", label: "Craft", desc: "执行并落盘交付" },
+  { id: 'ask', label: 'Ask', desc: '解释与建议，不写盘' },
+  { id: 'plan', label: 'Plan', desc: '先出可执行计划' },
+  { id: 'craft', label: 'Craft', desc: '执行并落盘交付' },
 ];
 
 interface Props {
@@ -29,15 +29,10 @@ interface Props {
   onChange: (mode: WorkExecMode) => void;
   disabled?: boolean;
   /** dropdown = Composer pill（默认）；segment = 三钮一行 */
-  variant?: "dropdown" | "segment";
+  variant?: 'dropdown' | 'segment';
 }
 
-export function WorkModePicker({
-  value,
-  onChange,
-  disabled,
-  variant = "dropdown",
-}: Props) {
+export function WorkModePicker({ value, onChange, disabled, variant = 'dropdown' }: Props) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const current = MODES.find((m) => m.id === value) || MODES[2]!;
@@ -47,11 +42,11 @@ export function WorkModePicker({
     const close = (e: MouseEvent) => {
       if (!ref.current?.contains(e.target as Node)) setOpen(false);
     };
-    window.addEventListener("mousedown", close);
-    return () => window.removeEventListener("mousedown", close);
+    window.addEventListener('mousedown', close);
+    return () => window.removeEventListener('mousedown', close);
   }, [open]);
 
-  if (variant === "segment") {
+  if (variant === 'segment') {
     return (
       <div className="wb-mode-seg" role="radiogroup" aria-label="Execution mode">
         {MODES.map((m) => (
@@ -60,7 +55,7 @@ export function WorkModePicker({
             type="button"
             role="radio"
             aria-checked={value === m.id}
-            className={`wb-mode-seg-btn${value === m.id ? " on" : ""}`}
+            className={`wb-mode-seg-btn${value === m.id ? ' on' : ''}`}
             disabled={disabled}
             title={m.desc}
             onClick={() => onChange(m.id)}
@@ -88,14 +83,19 @@ export function WorkModePicker({
         <ChevronDown size={12} />
       </button>
       {open ? (
-        <div className="wb-mode-menu" role="listbox" aria-label="Ask Plan Craft">
+        <div
+          className="wb-mode-menu"
+          role="listbox"
+          aria-label="Ask Plan Craft"
+          onMouseDown={(e) => e.stopPropagation()}
+        >
           {MODES.map((m) => (
             <button
               key={m.id}
               type="button"
               role="option"
               aria-selected={value === m.id}
-              className={value === m.id ? "on" : undefined}
+              className={value === m.id ? 'on' : undefined}
               onClick={() => {
                 onChange(m.id);
                 setOpen(false);
@@ -115,13 +115,13 @@ export function WorkModePicker({
 }
 
 export function workModePlaceholder(mode: WorkExecMode): string {
-  if (mode === "ask") return "输入你的问题…";
-  if (mode === "plan") return "描述目标 — 我先出一版计划…";
-  return "描述要构建或交付的内容…";
+  if (mode === 'ask') return '输入你的问题…';
+  if (mode === 'plan') return '描述目标 — 我先出一版计划…';
+  return '描述要构建或交付的内容…';
 }
 
 export function workModeHint(mode: WorkExecMode): string {
-  if (mode === "ask") return "Ask · 只回答，不创建改文件";
-  if (mode === "plan") return "Plan · 输出步骤，确认后切 Craft";
-  return "Craft · 执行并落盘交付";
+  if (mode === 'ask') return 'Ask · 只回答，不创建改文件';
+  if (mode === 'plan') return 'Plan · 输出步骤，确认后切 Craft';
+  return 'Craft · 执行并落盘交付';
 }

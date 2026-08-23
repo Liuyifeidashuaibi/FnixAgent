@@ -1,7 +1,7 @@
 """
 飞轮 ④ 爬坡进化环单元测试。
 
-测试模块: fnixagent.core.flywheel.stage4_climbing
+测试模块: fnixagent.core.flywheel.climbing
 覆盖:
     - should_trigger(): 进化间隔判断
     - 范式检测: 高频任务范式
@@ -25,7 +25,7 @@ import time
 
 import pytest
 
-from fnixagent.core.flywheel.stage4_climbing import (
+from fnixagent.core.flywheel.climbing import (
     DEFAULT_EVOLUTION_INTERVAL,
     HillClimbingFlywheel,
 )

@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "kline-signal-segments-L4-012",
+  "prompt": "你是策略复盘助理。工作区里已经放好了冻结的 A 股日线数据、信号参数表、区间规则说明和交易日历。请不要联网，不要调用行情、券商、交易、邮件、IM、外部消息推送或任何外部接口；本任务只做离线固定规则复盘，不做真实市场操作、预测或投资建议。\n请先阅读 `segment_rules.md`，再结合 `kline_ohlcv.csv`、`signal_params.xlsx` 和 `trading_calendar.csv`，计算每个证券/交易日需要的 MA、MA 趋势、突破比例、量比、信号日判断和异常标记，然后按规则切分连续信号段并计算区间收益、最大回撤和分证券汇总。\n最后生成 `output/kline_signal_segments.xlsx`。输出 workbook 必须包含四个 sheet：`indicator_values`、`signal_segments`、`segment_summary`、`exceptions`。\n`indicator_values` 的列为 security_code、security_name、trade_date、close、ma_window、ma_value、prev_ma_value、ma_trend、breakout_ratio、volume_ratio、signal_day、exception_flag。`signal_segments` 的列为 security_code、security_name、segment_no、start_date、end_date、duration_trading_days、signal_day_count、gap_trading_days_max、segment_return、max_drawdown、trigger_rules。`segment_summary` 的列为 security_code、security_name、segment_count、longest_duration、average_segment_return、deepest_drawdown_segment、deepest_max_drawdown。`exceptions` 的列为 security_code、security_name、trade_date、exception_type、detail。\n所有计算只使用输入文件中的静态数据。不要在输入文件里寻找现成的 signal_day、segment_id 或 expected answer；移动均线窗口、趋势、缺口容忍、收益和回撤口径都以 `segment_rules.md` 为准。\n\n请读取工作区中的输入文件：`input/kline_ohlcv.csv`、`input/signal_params.xlsx`、`input/segment_rules.md`、`input/trading_calendar.csv`。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 108.9999999999236,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787332459.71962,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\workbuddy-bench__kline-signal-segments-L4-012__18be29"
+}

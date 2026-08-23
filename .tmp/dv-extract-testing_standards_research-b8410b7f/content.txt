@@ -1,0 +1,626 @@
+[html:l6] 软件测试国际标准与行业规范调研报告
+[html:l13] 软件测试国际标准与行业规范调研报告
+[html:l15] 📅 2026-08-21
+[html:l16] 📂 FnixAgent 项目
+[html:l17] 🔬 覆盖 ISO/IEC 25010 · ISTQB · 测试金字塔 · Tauri · AI Agent 评测
+[html:l23] 📋 目录
+[html:l25] ISO/IEC 25010 软件质量模型
+[html:l27] 8 个质量特性详解 · 子特性 · 测试要点 · 用例设计方法
+[html:l30] ISTQB 测试体系
+[html:l32] 测试级别 · 测试类型 · 测试设计技术（4 大黑盒 + 白盒 + 经验）
+[html:l35] 测试金字塔与测试策略
+[html:l37] 比例分配 · 自动化策略 · Testing Trophy · 反模式
+[html:l40] 专业测试团队工作流程
+[html:l42] 测试计划 → 设计 → 执行 → 缺陷管理 → 回归测试
+[html:l45] 桌面应用 vs Web 应用测试差异
+[html:l47] 架构差异对比 · Tauri 混合架构分层测试策略
+[html:l50] Agent/AI 应用专项测试
+[html:l52] LLM 评测 vs Agent 评测 · 主流框架 · 评测工具链 · FnixAgent 实践建议
+[html:l60] 1 ISO/IEC 25010 软件质量模型
+[html:l62] ISO/IEC 25010 是 SQuaRE（Systems and software Quality Requirements and Evaluation）系列标准的核心部分，定义了软件产品质量的标准化框架。2011 版定义了 8 个质量特性 和 31 个子特性；2023 版（ISO/IEC 25010:2023）进行了重要修订，新增了 Safety（安全性） 作为独立特性，并以 Interaction Capability（交互能力） 取代了原 Usability（易用性），子特性总数扩展至 31 个。中国国家标准 GB/T 25000.10 等同采用该标准。
+[html:l65] ⚠️ 版本说明
+[html:l66] 目前业界广泛使用的是 2011 版的 8 特性模型 。2023 版虽然已发布，但大多数测试工具和教材仍基于 2011 版。本报告以 2011 版 8 特性为主线，并在相关位置标注 2023 版变化。
+[html:l69] 1.1 八大质量特性总览
+[html:l73] ⚙️
+[html:l74] 功能适合性 Functional Suitability
+[html:l75] 功能是否满足需求
+[html:l78] ⚡
+[html:l79] 性能效率 Performance Efficiency
+[html:l80] 响应时间与资源利用
+[html:l83] 🔌
+[html:l84] 兼容性 Compatibility
+[html:l85] 与其他系统共存交互
+[html:l88] 👥
+[html:l89] 易用性 Usability
+[html:l90] 用户使用的难易程度
+[html:l93] 🛡️
+[html:l94] 可靠性 Reliability
+[html:l95] 维持性能水平的能力
+[html:l98] 🔒
+[html:l99] 安全性 Security
+[html:l100] 信息保护与授权控制
+[html:l103] 🔧
+[html:l104] 可维护性 Maintainability
+[html:l105] 修改与维护的难易
+[html:l108] 📦
+[html:l109] 可移植性 Portability
+[html:l110] 迁移到新环境的能力
+[html:l114] 1.2 各特性详解与测试要点
+[html:l116] ① 功能适合性 Functional Suitability
+[html:l118] 子特性 定义 测试要点
+[html:l119] 功能完整性 Completeness 覆盖所有指定任务和用户目标 需求覆盖度追踪矩阵；验证所有需求项均有对应测试
+[html:l120] 功能正确性 Correctness 提供准确结果的能力 正常/异常/边界条件下的输出验证；等价类与边界值分析
+[html:l121] 功能适当性 Appropriateness 功能是否适合完成任务 用户场景验证；UX 评审；"做正确的事"而非仅"正确地做事"
+[html:l124] ② 性能效率 Performance Efficiency
+[html:l126] 子特性 定义 测试要点
+[html:l127] 时间特性 Time Behavior 响应时间、处理速度、吞吐量 负载测试、压力测试、并发测试；P99 延迟监控
+[html:l128] 资源利用性 Resource Utilization CPU、内存、网络、磁盘 I/O 资源监控工具（如 perfmon、htop）；内存泄漏检测
+[html:l129] 容量 Capacity 可处理的数据/用户/事务上限 容量规划测试；渐进加压至系统瓶颈
+[html:l132] ③ 兼容性 Compatibility
+[html:l134] 子特性 定义 测试要点
+[html:l135] 共存性 Co-existence 与其他系统共享环境时的表现 多应用并行运行测试；资源竞争场景
+[html:l136] 互操作性 Interoperability 与指定系统交换数据的能力 API 兼容性测试；数据格式验证；协议合规性
+[html:l139] ④ 易用性 Usability 2023 版更名为 Interaction Capability
+[html:l141] 子特性 定义 测试要点
+[html:l142] 可辨识性 Recognizability 用户能否识别系统是否满足需求 UI 清晰度；首次使用引导测试
+[html:l143] 可学习性 Learnability 学习使用的难易程度 新用户可用性测试；任务完成时间测量
+[html:l144] 可操作性 Operability 操作是否方便 操作步骤数统计；错误恢复便利性
+[html:l145] 用户错误防护 User Error Protection 防止用户输入错误 输入验证；确认对话框；撤销功能
+[html:l146] 用户界面美观性 UI Aesthetics UI 设计的视觉吸引力 设计评审；A/B 测试
+[html:l147] 可访问性 Accessibility 残障人士使用的程度 WCAG 合规检查；屏幕阅读器测试
+[html:l150] ⑤ 可靠性 Reliability
+[html:l152] 子特性 定义 测试要点
+[html:l153] 成熟性 Maturity 降低内部错误引发失效的频率 长时间稳定性测试（soak test）；故障率统计
+[html:l154] 可用性 Availability 系统可操作和可访问的程度 MTBF / MTTR 计算；99.9% 等可用性 SLA 验证
+[html:l155] 容错性 Fault Tolerance 面对硬件/软件故障仍能运行 故障注入测试（Chaos Engineering）；断网/断电恢复
+[html:l156] 可恢复性 Recoverability 恢复受损数据和建立期望状态 灾难恢复测试；数据一致性校验
+[html:l159] ⑥ 安全性 Security 2023 版拆分为 Security + Safety
+[html:l161] 子特性 定义 测试要点
+[html:l162] 保密性 Confidentiality 数据仅被授权者访问 渗透测试；SQL 注入/XSS/CSRF 检测；数据加密验证
+[html:l163] 完整性 Integrity 防止未授权修改 数据篡改检测；权限边界测试；审计日志
+[html:l164] 不可否认性 Non-repudiation 行为可被证明 数字签名验证；操作日志追溯
+[html:l165] 可核查性 Accountability 行为可被唯一追踪到实体 用户行为审计；访问控制列表验证
+[html:l166] 真实性 Authenticity 身份验证的能力 认证机制测试；多因素验证；会话管理
+[html:l169] ⑦ 可维护性 Maintainability
+[html:l171] 子特性 定义 测试要点
+[html:l172] 模块化 Modularity 组件可独立修改 架构评审；耦合度分析；模块覆盖率
+[html:l173] 可复用性 Reusability 资产可被复用 代码重复度检测；公共库设计评审
+[html:l174] 可分析性 Analysability 诊断缺陷和影响的能力 日志完整性；监控告警；可调试性评估
+[html:l175] 可修改性 Modifiability 可被修改而不引入缺陷 回归测试通过率；变更影响分析
+[html:l176] 可测试性 Testability 可被有效测试 测试覆盖率；测试自动化程度；依赖注入
+[html:l179] ⑧ 可移植性 Portability
+[html:l181] 子特性 定义 测试要点
+[html:l182] 适应性 Adaptability 适应不同环境 跨平台测试（Windows/macOS/Linux）；分辨率适配
+[html:l183] 可安装性 Installability 指定环境中安装的难易 安装/卸载测试；升级测试；权限要求验证
+[html:l184] 可替换性 Replaceability 替代另一指定软件的能力 版本兼容性；数据迁移测试
+[html:l187] 1.3 基于 ISO 25010 设计测试用例的方法
+[html:l190] 📐 质量驱动的测试设计框架
+[html:l191] ISO 25010 的核心价值在于提供了一套 结构化的质量需求分解方法 ，将"软件质量"这个模糊概念拆解为可测试的具体维度。
+[html:l194] 设计步骤：
+[html:l196] 需求映射 ：将产品需求逐一映射到 8 个质量特性，标注每个需求涉及哪些子特性
+[html:l197] 优先级排序 ：根据业务风险对质量特性排序（如金融系统：安全性 > 可靠性 > 性能；游戏：性能 > 易用性）
+[html:l198] 指标量化 ：为每个子特性定义可测量的验收标准（如"P99 响应时间
+[html:l199] 技术选择 ：根据质量特性选择对应的测试技术（功能→黑盒技术；性能→负载测试；安全→渗透测试）
+[html:l200] 用例编写 ：以"质量特性 + 子特性 + 场景 + 预期结果"格式编写测试用例
+[html:l203] 以"用户登录功能"为例的 8 特性覆盖：
+[html:l205] 质量特性 测试用例示例
+[html:l206] 功能适合性 正确账号密码可登录；错误密码提示报错；验证码功能正常
+[html:l207] 性能效率 登录响应 < 1s；1000 并发登录无超时
+[html:l208] 兼容性 Chrome/Safari/Firefox 均可登录；不同操作系统下正常
+[html:l209] 易用性 新用户 30s 内完成首次登录；密码错误有明确提示
+[html:l210] 可靠性 连续 72h 运行无故障；断网后重连可恢复登录状态
+[html:l211] 安全性 密码加密存储；无 SQL 注入；会话超时自动登出
+[html:l212] 可维护性 登录模块修改后回归测试通过率 100%
+[html:l213] 可移植性 从 Windows 迁移到 macOS 后登录功能正常
+[html:l220] 2 ISTQB 测试体系
+[html:l222] ISTQB （International Software Testing Qualifications Board）是全球最大的软件测试认证体系，已在 130+ 个国家发放超过 110 万张证书。其基础级大纲 CTFL v4.0 （2023 年 4 月发布，2024 年 11 月全面替代 v3.1）是软件测试领域的通用知识体系，被业界视为测试术语和方法的"事实标准"。
+[html:l225] 📖 ISTQB 七大测试原则
+[html:l226] ① 测试显示缺陷存在，而非缺席 — 测试能发现缺陷，但不能证明没有缺陷
+[html:l227] ② 穷尽测试不可能 — 除简单情况外无法测试所有组合，应基于风险和优先级
+[html:l228] ③ 尽早测试 — 越早发现缺陷修复成本越低（Shift-Left）
+[html:l229] ④ 缺陷集群效应 — 少数模块通常包含大部分缺陷（二八定律）
+[html:l230] ⑤ 农药悖论 — 重复执行相同测试不再发现新缺陷，需定期更新测试用例
+[html:l231] ⑥ 测试活动依赖于测试上下文 — 不同场景需要不同测试方法
+[html:l232] ⑦ "无缺陷"谬误 — 没有发现缺陷 ≠ 系统满足用户需求
+[html:l235] 2.1 测试级别 Test Levels
+[html:l237] ISTQB 定义了 4 个测试级别，从微观到宏观逐层递进：
+[html:l240] 测试级别 测试对象 目标 典型工具 执行者
+[html:l242] 组件测试 Component Testing (单元测试)
+[html:l243] 单个模块/函数/类
+[html:l244] 验证组件内部逻辑正确性；尽早发现编码缺陷
+[html:l245] pytest, JUnit, Jest, cargo test
+[html:l246] 开发人员
+[html:l249] 组件集成测试 Component Integration
+[html:l250] 组件间接口与交互
+[html:l251] 验证组件组装后的接口调用、数据流、控制流正确性
+[html:l252] pytest, Postman, Supertest
+[html:l253] 开发人员 / 测试人员
+[html:l256] 系统测试 System Testing
+[html:l257] 整个系统
+[html:l258] 验证系统端到端功能和非功能特性是否满足需求规格
+[html:l259] Selenium, Playwright, JMeter
+[html:l260] 独立测试团队
+[html:l263] 验收测试 Acceptance Testing
+[html:l264] 系统在真实环境中
+[html:l265] 确认系统满足用户需求；决定是否接受系统
+[html:l266] 手动验收, UAT 工具
+[html:l267] 用户 / 客户 / 产品
+[html:l272] 📋 验收测试的四种形式
+[html:l273] 用户验收测试 (UAT) ：最终用户在真实环境中验证系统是否满足业务需求
+[html:l274] 运行验收测试 (OAT) ：验证系统在生产环境中的可运维性（部署、监控、备份恢复）
+[html:l275] 合同验收测试 ：依据合同条款验证是否满足验收标准
+[html:l276] Alpha/Beta 测试 ：Alpha 在开发方环境由内部用户测试；Beta 在客户环境由真实用户测试
+[html:l279] 2.2 测试类型 Test Types
+[html:l282] 测试类型 关注点 对应 ISO 25010 特性 示例
+[html:l284] 功能测试
+[html:l285] 系统"做什么" — 功能完整性、正确性、适当性
+[html:l286] 功能适合性
+[html:l287] 验证登录功能、文件上传、API 响应
+[html:l290] 非功能测试
+[html:l291] 系统"做得好不好" — 性能、安全、易用性等
+[html:l292] 其余 7 个特性
+[html:l293] 负载测试、渗透测试、兼容性测试
+[html:l296] 白盒测试
+[html:l297] 基于内部结构 — 代码、控制流、数据流
+[html:l298] —
+[html:l299] 语句覆盖、分支覆盖、路径覆盖
+[html:l302] 黑盒测试
+[html:l303] 基于规格说明 — 不关心内部实现
+[html:l304] —
+[html:l305] 等价类划分、边界值分析
+[html:l309] ISTQB 强调： 四种测试类型可应用于所有测试级别 。例如，单元测试也可以做性能测试（如函数执行时间），系统测试也可以做白盒测试（如代码覆盖率分析）。
+[html:l311] 此外，ISTQB 还定义了两类特殊测试：
+[html:l313] 确认测试 (Confirmation Testing) ：缺陷修复后，重新执行原来失败的测试以验证修复有效
+[html:l314] 回归测试 (Regression Testing) ：修改后重新执行未变更部分的测试，确保未引入新缺陷
+[html:l317] 2.3 测试设计技术 Test Design Techniques
+[html:l319] ISTQB 将测试设计技术分为三大类： 黑盒 、 白盒 和 基于经验 。
+[html:l321] 黑盒测试技术
+[html:l324] 技术 核心思想 适用场景 示例
+[html:l326] 等价类划分 Equivalence Partitioning
+[html:l327] 将输入域划分为等价类，每类取一个代表值
+[html:l328] 输入范围明确的场景
+[html:l329] 密码长度 8-32：取 7(无效)、8(有效)、32(有效)、33(无效)
+[html:l332] 边界值分析 Boundary Value Analysis
+[html:l333] 缺陷往往出现在边界，重点测试边界值及其邻域
+[html:l334] 数值范围、数组边界
+[html:l335] 范围 [0, 100]：测试 -1, 0, 1, 99, 100, 101
+[html:l338] 决策表测试 Decision Table Testing
+[html:l339] 列出所有条件组合及其对应动作
+[html:l340] 多条件组合的复杂业务逻辑
+[html:l341] 登录逻辑：账号正确×密码正确×验证码正确 → 8 种组合
+[html:l344] 状态迁移测试 State Transition Testing
+[html:l345] 识别系统状态和触发迁移的事件，测试所有迁移路径
+[html:l346] 有状态的系统（订单、审批流）
+[html:l347] 订单：待支付→已支付→已发货→已完成 / 已取消
+[html:l350] 用例测试 Use Case Testing
+[html:l351] 基于用户场景设计端到端测试
+[html:l352] 系统级验收测试
+[html:l353] 用户从浏览商品到完成下单的完整流程
+[html:l357] 白盒测试技术
+[html:l360] 技术 覆盖标准 说明
+[html:l361] 语句覆盖 Statement Coverage 每条语句至少执行一次 最弱的覆盖标准，不保证分支正确
+[html:l362] 分支/判定覆盖 Branch Coverage 每个分支的真/假路径至少执行一次 比语句覆盖更强，业界常用最低标准
+[html:l363] 分支/条件覆盖 Branch/Condition 每个条件的真/假均至少执行一次 处理复合条件 (a && b) 的子条件
+[html:l364] 路径覆盖 Path Coverage 所有独立执行路径至少执行一次 最强但成本最高，循环场景下路径数爆炸
+[html:l365] MC/DC 修正条件/判定覆盖 每个条件独立影响判定结果 航空安全软件 (DO-178C) 强制要求
+[html:l368] 基于经验的测试技术
+[html:l371] 技术 说明 适用场景
+[html:l372] 错误猜测 Error Guessing 基于经验预判可能出错的点 有经验的测试人员补充测试用例
+[html:l373] 探索式测试 Exploratory Testing 边设计边执行，强调学习和适应 敏捷开发中快速发现未知缺陷
+[html:l374] 检查表测试 Checklist-based 基于经验积累的检查清单逐项验证 回归测试、安全检查
+[html:l378] ✅ ISTQB CTFL v4.0 新增内容亮点
+[html:l379] • 新增 DevOps 和 CI/CD 中的测试 章节
+[html:l380] • 引入 测试金字塔 和 测试象限 (Testing Quadrants) 概念
+[html:l381] • 强调 协作测试方法 ：ATDD（验收测试驱动开发）、BDD
+[html:l382] • 新增 AI 测试相关内容（ISTQB 已推出 "Certified Tester AI Testing" 认证）
+[html:l389] 3 测试金字塔与测试策略
+[html:l391] 3.1 测试金字塔模型
+[html:l393] 测试金字塔 (Test Automation Pyramid) 由 Mike Cohn 在 2009 年《Succeeding with Agile》中提出，是指导自动化测试分层策略的经典模型。核心思想： 大量快速的底层测试 + 少量慢速的顶层测试 。
+[html:l397] E2E 测试 ~5-10%
+[html:l400] 集成测试 ~15-20%
+[html:l403] 单元测试 ~70-80%
+[html:l408] 层级 占比 特点 执行速度 维护成本 信心
+[html:l409] 单元测试 70-80% 验证单个函数/模块逻辑；隔离外部依赖 毫秒级 低 中
+[html:l410] 集成测试 15-20% 验证模块间接口和数据流；mock 外部服务 秒级 中 高
+[html:l411] E2E 测试 5-10% 模拟真实用户操作完整流程 分钟级 高 最高
+[html:l414] 3.2 哪些层该自动化
+[html:l418] ✅ 必须自动化
+[html:l420] 单元测试 ：100% 自动化，每次提交都跑
+[html:l421] 集成测试 ：API 契约、数据流验证自动执行
+[html:l422] 回归测试 ：核心路径的回归用例库
+[html:l423] 构建/部署流水线 ：CI/CD 中的自动化质量门禁
+[html:l427] ⚠️ 谨慎自动化
+[html:l429] E2E 测试 ：仅覆盖 3-5 条核心用户路径，避免维护噩梦
+[html:l430] 视觉/UI 测试 ：使用视觉回归工具而非逐像素比较
+[html:l431] 探索式测试 ：本质上需要人类智慧，自动化仅作辅助
+[html:l436] 3.3 替代与补充模型
+[html:l438] Testing Trophy（Kent C. Dodds, 2019）
+[html:l439] 前端测试专家 Kent C. Dodds 提出 测试奖杯 模型，认为 集成测试的投入产出比最高 ，应占据最大比例。核心理念： "Write tests. Not too many. Mostly integration."
+[html:l441] 底层：静态分析（TypeScript/ESLint）— 成本极低
+[html:l442] 中层： 集成测试（占大头） — 最高 ROI
+[html:l443] 顶层：少量 E2E + 单元测试
+[html:l446] 常见反模式
+[html:l449] 🚫 反模式：冰淇淋蛋筒 (Ice Cream Cone)
+[html:l450] 顶层 E2E 最多，底层单元最少 。导致：测试套件运行极慢、任何 UI 变动都引发大量失败、维护成本远超收益。这是最常见的测试反模式。
+[html:l454] 🚫 反模式：纸杯蛋糕 (Cupcake)
+[html:l455] 手工测试占比过大 ，自动化测试不足。每个版本都需要大量手工回归，无法支持持续交付。
+[html:l458] 3.4 FnixAgent 项目测试金字塔现状分析
+[html:l461] ✅ 项目已有良好实践
+[html:l462] FnixAgent 已建立分层测试结构：
+[html:l466] 目录 对应层级 已有测试文件数 说明
+[html:l467] tests/unit/ 单元测试 ~30 个 覆盖 harness、memory、config、tool_policy 等核心模块
+[html:l468] tests/integration/ 集成测试 ~10 个 覆盖 scheduler、productivity_tools、code_loop 等集成场景
+[html:l469] tests/e2e/ 端到端测试 ~2 个 用户流程端到端验证
+[html:l470] tests/contract/ 契约测试 ~1 个 OpenAPI 契约验证
+[html:l471] tests/agent_eval/ Agent 评测 4 个模块 TraceCollector + ProblemDetector + EvalRunner + ReportGenerator
+[html:l475] 💡 优化建议
+[html:l476] 1. 前端测试缺失 ：项目使用 React 19，但未见前端测试目录。建议新增 src/__tests__/ 或 frontend-tests/ ，使用 Vitest + Testing Library 覆盖组件逻辑。
+[html:l477] 2. Rust 后端测试缺失 ：Tauri 的 Rust 层（ src-tauri/ ）应有 cargo test 覆盖，特别是 IPC 命令逻辑。
+[html:l478] 3. 契约测试可扩展 ：当前仅 1 个 OpenAPI 契约测试，建议扩展到所有 API 端点的 schema 验证。
+[html:l479] 4. E2E 可引入 Playwright ：Tauri 2 支持 WebDriver 协议，可用 Playwright 做 Tauri 应用的 E2E 测试。
+[html:l486] 4 专业测试团队工作流程
+[html:l488] 标准测试流程遵循 ISTQB 测试过程模型 ，包含 5 个核心阶段，形成闭环迭代：
+[html:l490] 4.1 测试计划 Test Planning
+[html:l493] 活动 内容 产出物
+[html:l494] 确定范围 明确测试对象、不测对象、测试边界 测试范围矩阵
+[html:l495] 风险分析 识别项目风险和产品风险，按可能性和影响排序 风险登记册
+[html:l496] 定义策略 选择测试级别、类型、技术；确定自动化范围 测试策略文档
+[html:l497] 资源分配 人员、环境、工具、时间安排 资源计划
+[html:l498] 定义准则 入口准则（何时开始测试）、出口准则（何时结束测试） 准入/准出标准
+[html:l499] 工作量估算 基于历史数据或专家判断估算测试工作量 估算表
+[html:l503] 📌 出口准则 (Exit Criteria) 示例
+[html:l504] • 代码覆盖率 ≥ 80%（单元测试）
+[html:l505] • P0/P1 缺陷修复率 = 100%
+[html:l506] • 核心路径自动化测试通过率 ≥ 95%
+[html:l507] • 性能指标满足 SLA（P99
+[html:l508] • 安全扫描无高危漏洞
+[html:l511] 4.2 测试设计 Test Design
+[html:l514] 活动 标准做法 产出物
+[html:l515] 测试条件识别 从需求中提取可测试的条目（功能点、质量属性） 测试条件清单
+[html:l516] 测试用例设计 使用黑盒/白盒/经验技术编写用例；包含前置条件、步骤、预期结果 测试用例集
+[html:l517] 测试数据准备 准备正常/异常/边界数据；考虑数据隐私（脱敏/合成数据） 测试数据集
+[html:l518] 测试环境搭建 配置与生产环境一致的测试环境 环境配置文档
+[html:l519] 用例评审 由开发、产品、测试三方评审用例覆盖度和正确性 评审记录
+[html:l522] 测试用例标准模板：
+[html:l523] | 字段 | 说明 |
+[html:l524] |-------------|-----------------------------------------|
+[html:l525] | 用例 ID | TC-模块-序号 (如 TC-LOGIN-001) |
+[html:l526] | 用例标题 | 简明描述测试目的 |
+[html:l527] | 优先级 | P0(阻断) / P1(严重) / P2(一般) / P3(轻微) |
+[html:l528] | 前置条件 | 执行前需要满足的条件 |
+[html:l529] | 测试步骤 | 编号的操作步骤 |
+[html:l530] | 预期结果 | 每步对应的期望输出 |
+[html:l531] | 测试数据 | 输入数据及来源 |
+[html:l532] | 关联需求 | 对应的需求 ID |
+[html:l533] | 自动化状态 | 手工 / 已自动化 / 待自动化 |
+[html:l535] 4.3 测试执行 Test Execution
+[html:l538] 活动 标准做法
+[html:l539] 用例执行 按优先级执行；先冒烟测试确认基本可用，再全面执行
+[html:l540] 结果记录 记录 Pass / Fail / Blocked / N/A；截图或录屏作为证据
+[html:l541] 缺陷报告 发现缺陷立即记录并提交；包含复现步骤、环境、截图
+[html:l542] 进度跟踪 每日更新测试进度：已执行 / 总数 / 通过率 / 缺陷趋势
+[html:l543] 用例维护 执行中发现用例不完善时及时更新
+[html:l546] 4.4 缺陷管理 Defect Management
+[html:l548] 缺陷生命周期遵循标准状态流转：
+[html:l550] 新建 (New)
+[html:l551] ↓ → 确认 (Confirmed) → 已分配 (Assigned) → 修复中 (In Progress)
+[html:l552] ↓ ↓
+[html:l553] 拒绝 (Rejected) 已修复 (Resolved)
+[html:l554] ↓ ↓
+[html:l555] 关闭 (Closed) ← 验证通过 (Verified) ← 重新测试 (Retest)
+[html:l556] ↓
+[html:l557] 验证失败 (Reopened) → 回到 "已分配"
+[html:l560] 缺陷报告必填字段 说明
+[html:l561] 缺陷 ID 唯一标识
+[html:l562] 标题 一句话概括问题
+[html:l563] 严重程度 Blocker / Critical / Major / Minor / Trivial
+[html:l564] 优先级 P0 / P1 / P2 / P3
+[html:l565] 复现步骤 编号步骤，可独立复现
+[html:l566] 预期 vs 实际 预期结果与实际结果对比
+[html:l567] 环境信息 OS 版本、浏览器版本、应用版本、设备型号
+[html:l568] 附件 截图、录屏、日志文件
+[html:l569] 指派人 负责修复的开发人员
+[html:l572] 4.5 回归测试 Regression Testing
+[html:l575] 策略 说明 适用场景
+[html:l576] 全量回归 执行所有已有测试用例 大版本发布前
+[html:l577] 选择性回归 基于变更影响分析，仅执行受影响模块的测试 日常迭代
+[html:l578] 基于风险的回归 优先执行高风险模块和核心路径的测试 紧急修复发布
+[html:l579] 自动化回归 CI/CD 流水线中每次提交自动执行回归集 持续集成场景
+[html:l583] 🔄 敏捷环境下的测试流程适配
+[html:l584] 在敏捷/DevOps 中，测试不再是独立阶段，而是融入每个 Sprint：
+[html:l585] • Backlog 阶段 ：测试人员参与需求评审，编写验收标准（AC）
+[html:l586] • 开发阶段 ：TDD/BDD，测试人员与开发协作编写自动化测试
+[html:l587] • Sprint 内 ：持续测试，每日回归核心路径
+[html:l588] • 发布前 ：探索式测试 + 全量回归
+[html:l589] • 发布后 ：生产监控 + A/B 测试 + 用户反馈收集
+[html:l596] 5 桌面应用 vs Web 应用测试差异
+[html:l598] 5.1 架构与测试差异全景对比
+[html:l601] 维度 桌面应用 Web 应用
+[html:l602] 运行环境 直接运行在 OS 上，调用原生 API 运行在浏览器沙箱中，受浏览器安全策略限制
+[html:l603] 兼容性测试 跨 OS (Win/macOS/Linux) + OS 版本 + 架构 (x64/ARM) 跨浏览器 (Chrome/Firefox/Safari/Edge) + 浏览器版本 + 分辨率
+[html:l604] 安装/更新 需安装包；更新需用户手动下载或自动更新机制 无需安装；服务器端即时更新，用户无感
+[html:l605] 离线能力 天然支持离线；需测试离线/在线切换 多数需要网络；PWA 可有限离线
+[html:l606] 文件系统 直接读写本地文件；需测试权限、路径、并发访问 受限（仅 File API / 拖拽上传）；测试上传/下载
+[html:l607] 性能关注点 客户端资源占用（CPU/内存/磁盘）；启动速度 首屏加载时间；网络请求优化；DOM 渲染性能
+[html:l608] 安全关注点 本地数据加密；代码混淆/反逆向；进程间通信安全 XSS/CSRF/SQL 注入；CORS；HTTPS；CSP
+[html:l609] UI 自动化 UI Automation / Accessibility API / WinAppDriver Selenium / Playwright / Cypress
+[html:l610] 用户交互 键鼠 + 系统快捷键 + 托盘 + 多窗口 键鼠 + 触摸 + 响应式布局
+[html:l611] 中断测试 系统休眠/唤醒；USB 拔插；低电量 网络中断/切换；标签页切换；浏览器崩溃
+[html:l614] 5.2 Tauri 混合架构的分层测试策略
+[html:l616] Tauri 2 采用 Rust 后端 + Web 前端 的混合架构，测试需要针对每一层独立设计，同时覆盖层间通信。
+[html:l618] 架构分层与测试对应
+[html:l620] ┌─────────────────────────────────────────────────┐
+[html:l621] │ Web 前端 (React 19) │ ← 前端单元测试 + 组件测试
+[html:l622] │ TypeScript / Vite / CSS │
+[html:l623] ├─────────────────────────────────────────────────┤
+[html:l624] │ IPC 通信层 (Tauri Commands) │ ← 契约测试 + IPC 集成测试
+[html:l625] │ invoke() ↔ #[tauri::command] │
+[html:l626] ├─────────────────────────────────────────────────┤
+[html:l627] │ Rust 后端 (Tauri Core) │ ← Rust 单元测试 + 集成测试
+[html:l628] │ File I/O · OS API · Plugin System │
+[html:l629] ├─────────────────────────────────────────────────┤
+[html:l630] │ Python/FastAPI 后端 (Sidecar) │ ← Python 单元测试 + API 集成测试
+[html:l631] │ LangGraph · Agent · Tools │
+[html:l632] ├─────────────────────────────────────────────────┤
+[html:l633] │ OS 层 (Windows/macOS/Linux) │ ← 跨平台兼容性测试
+[html:l634] └─────────────────────────────────────────────────┘
+[html:l636] 第一层：Web 前端测试
+[html:l639] 测试类型 工具 测试内容
+[html:l640] 单元测试 Vitest / Jest 纯函数、hooks、状态管理逻辑
+[html:l641] 组件测试 Testing Library + Vitest 组件渲染、交互、props 传递
+[html:l642] 视觉回归 Storybook + Chromatic UI 组件视觉一致性
+[html:l643] E2E (前端) Playwright 完整用户交互流程
+[html:l646] // 前端单元测试示例 (Vitest)
+[html:l647] import { describe, it, expect } from 'vitest'
+[html:l648] import { render, screen } from '@testing-library/react'
+[html:l649] import { LoginPage } from './LoginPage'
+[html:l651] describe('LoginPage', () => {
+[html:l652] it('should show error on invalid password', async () => {
+[html:l653] render(<LoginPage />)
+[html:l654] // 测试逻辑...
+[html:l655] })
+[html:l656] })
+[html:l658] 第二层：Rust 后端测试
+[html:l661] 测试类型 工具 测试内容
+[html:l662] 单元测试 cargo test + #[test] Tauri Command 逻辑、数据处理、错误处理
+[html:l663] 异步测试 tokio::test 异步 Tauri Command（文件 I/O、网络请求）
+[html:l664] 集成测试 tauri::test 模拟前端调用 IPC 命令的完整调用链
+[html:l665] 基准测试 criterion 性能关键路径的基准
+[html:l668] // Rust 单元测试示例
+[html:l669] #[cfg(test)]
+[html:l670] mod tests {
+[html:l671] use super::*;
+[html:l673] #[tokio::test]
+[html:l674] async fn test_read_file_content() {
+[html:l675] let result = read_file_content("test_data/sample.txt").await;
+[html:l676] assert!(result.is_ok());
+[html:l677] assert_eq!(result.unwrap(), "expected content");
+[html:l678] }
+[html:l680] #[test]
+[html:l681] fn test_validate_input_empty() {
+[html:l682] assert!(validate_user_input("").is_err());
+[html:l683] }
+[html:l685] #[test]
+[html:l686] fn test_validate_input_too_long() {
+[html:l687] let long_input = "a".repeat(101);
+[html:l688] assert!(validate_user_input(&long_input).is_err());
+[html:l689] }
+[html:l690] }
+[html:l692] 第三层：IPC 通信层测试（Tauri 特有）
+[html:l694] Tauri 的 IPC 是前后端的桥梁，是 最容易出现集成缺陷的层 。测试要点：
+[html:l696] 命令签名一致性 ：前端 invoke() 参数类型与 Rust #[tauri::command] 签名一致
+[html:l697] 序列化/反序列化 ：复杂数据结构（嵌套对象、枚举、Option）在 JSON 序列化后正确传递
+[html:l698] 错误传递 ：Rust 的 Result<T, E> 错误在前端正确捕获
+[html:l699] 事件系统 ：Rust emit() 的事件在前端 listen() 正确接收
+[html:l700] 权限验证 ：Tauri 2 的 Capability 系统是否正确限制 IPC 访问
+[html:l703] // IPC 契约测试示例 (TypeScript)
+[html:l704] import { invoke } from '@tauri-apps/api/core'
+[html:l705] import { describe, it, expect } from 'vitest'
+[html:l707] describe('IPC Commands', () => {
+[html:l708] it('should return file content via read_file command', async () => {
+[html:l709] const result = await invoke<string>('read_file', {
+[html:l710] path: 'test.txt'
+[html:l711] })
+[html:l712] expect(typeof result).toBe('string')
+[html:l713] })
+[html:l715] it('should handle command errors', async () => {
+[html:l716] await expect(invoke('read_file', { path: '' }))
+[html:l717] .rejects.toThrow()
+[html:l718] })
+[html:l719] })
+[html:l721] 第四层：Python/FastAPI 后端测试
+[html:l723] FnixAgent 的 Python 后端是 Agent 核心逻辑所在，测试策略：
+[html:l725] 单元测试 ： pytest 覆盖 LangGraph 节点逻辑、工具实现、数据模型
+[html:l726] API 契约测试 ：FastAPI 端点的请求/响应 schema 验证
+[html:l727] 集成测试 ：Agent 完整执行链（输入→规划→工具调用→输出）
+[html:l728] Agent 评测 ：已有 tests/agent_eval/ 模块（详见第 6 节）
+[html:l731] 第五层：跨平台与打包测试
+[html:l734] 测试项 说明
+[html:l735] 跨平台编译 CI 中在 Windows/macOS/Linux 三平台构建
+[html:l736] 安装包测试 MSI/NSIS (Win)、DMG (macOS)、AppImage (Linux) 安装/卸载
+[html:l737] 自动更新 Tauri Updater 的版本检查、下载、签名验证
+[html:l738] 权限测试 文件系统权限、系统通知权限、剪贴板权限
+[html:l739] 启动性能 冷启动时间、热启动时间（目标 < 2s）
+[html:l740] 安全审计 cargo audit 检查 Rust 依赖漏洞； npm audit 检查前端依赖
+[html:l744] 🔧 FnixAgent 特有的测试关注点
+[html:l745] 作为 Tauri 2 + React 19 + Python/FastAPI + LangGraph 的 AI 工作台，FnixAgent 还需关注：
+[html:l746] • Sidecar 进程管理 ：Python 后端作为 Tauri Sidecar 运行，需测试进程启动/停止/崩溃恢复
+[html:l747] • WebSocket 通信 ：前端与 Python 后端的实时通信稳定性
+[html:l748] • 长任务处理 ：Agent 执行长任务时的 UI 响应性、进度反馈、中断/恢复
+[html:l749] • 资源隔离 ：Rust 进程和 Python 进程的资源占用不互相干扰
+[html:l756] 6 Agent/AI 应用专项测试
+[html:l758] AI Agent 类应用（如 FnixAgent）的测试是软件测试领域的前沿课题。传统软件测试的"输入→输出"确定性验证范式在 AI 系统中面临根本性挑战： 相同输入可能产生不同输出，输出正确性难以精确定义 。
+[html:l760] 6.1 LLM 评测 vs Agent 评测：本质差异
+[html:l763] 维度 传统 LLM 评测 Agent 评测
+[html:l764] 交互模式 单步问答（1 次输入 → 1 次输出） 多步序列决策（5-50 步长链任务）
+[html:l765] 环境交互 封闭式，无外部环境 开放式，与浏览器/终端/API/文件系统交互
+[html:l766] 评估对象 最终答案质量 过程轨迹 + 最终结果 + 中间行为合规性
+[html:l767] 正确性标准 答案匹配（Exact Match / BLEU / ROUGE） 任务是否完成（成功率）+ 过程质量
+[html:l768] 成本考量 忽略 核心指标（Token 消耗、API 调用次数、执行时间）
+[html:l769] 工具调用 不支持 核心能力（选对工具 + 参数正确 + 时机合适）
+[html:l770] 错误恢复 不适用 关键指标（检测错误 → 修正 → 继续执行）
+[html:l771] 可靠性要求 单次准确率 端到端成功率（多步中任一步出错则失败）
+[html:l775] ⚠️ 关键洞察
+[html:l776] 一个在 HumanEval（代码生成基准）上 95 分的模型，放到 SWE-bench（真实仓库修 Bug）上可能只有 30% 的通过率。原因： Agent 的端到端成功率是各步成功率的乘积 ，10 步任务中每步 90% 成功率，整体成功率仅 35%。
+[html:l779] 6.2 2026 年主流 Agent 评估框架
+[html:l781] 学术基准
+[html:l784] 框架 来源 评测对象 核心方法 2026 最新表现
+[html:l786] SWE-bench
+[html:l787] 普林斯顿大学
+[html:l788] 代码 Agent
+[html:l789] 从 GitHub 采集真实 issue+PR，Agent 修 Bug 并通过项目测试
+[html:l790] Top: Devin 54.6% / Claude Code 51.2%
+[html:l793] WebArena
+[html:l794] CMU + 上交
+[html:l795] Web Agent
+[html:l796] 仿真电商/论坛/CMS/GitLab 环境，Agent 通过浏览器完成任务
+[html:l797] 人类 78.2% / AI Agent 42.6%
+[html:l800] GAIA
+[html:l801] Google DeepMind / Meta
+[html:l802] 通用 Agent
+[html:l803] 466 个通识任务：推理 + 多模态 + 工具调用；"对人类简单对 AI 难"
+[html:l804] 人类 92% / GPT-5 ~63%
+[html:l807] AgentBench
+[html:l808] 清华大学
+[html:l809] 通用 Agent
+[html:l810] 覆盖 8 个环境：Shell、Web、DB、代码、游戏等
+[html:l811] —
+[html:l814] OSWorld
+[html:l815] 认知与交互
+[html:l816] Computer Use
+[html:l817] 在真实 OS VM 中评测 Agent 操作计算机的能力
+[html:l818] —
+[html:l821] τ-bench
+[html:l822] UC Berkeley
+[html:l823] 长时间任务
+[html:l824] 专门评测 Agent 长任务的可靠性和状态管理
+[html:l825] —
+[html:l829] 开源评测工具
+[html:l832] 工具 语言 核心能力 适用场景
+[html:l834] DeepEval
+[html:l835] Python
+[html:l836] 50+ 研究级评测指标；LLM-as-Judge；pytest 原生集成；CI/CD 支持
+[html:l837] LLM 应用单元测试 + Agent 行为评测
+[html:l840] Promptfoo
+[html:l841] TypeScript
+[html:l842] Prompt/Agent/RAG 对比测试；红队渗透；声明式配置；CI/CD 集成
+[html:l843] Prompt 对比 + 安全测试 + 回归评测
+[html:l846] lm-eval-harness
+[html:l847] Python
+[html:l848] 200+ 学术基准测试；模型能力横向对比
+[html:l849] 基础模型能力评估
+[html:l852] AgentProbe
+[html:l853] —
+[html:l854] YAML 配置驱动的 Agent 行为测试；工具选择、故障处理、决策路径验证
+[html:l855] Agent 行为的 TDD（测试驱动开发）
+[html:l859] 6.3 DeepEval 评测指标体系（FnixAgent 可直接复用）
+[html:l861] DeepEval 提供了专门针对 Agent 的评测指标，与 FnixAgent 现有的 tests/agent_eval/ 模块理念高度一致：
+[html:l864] 指标类别 具体指标 评测内容
+[html:l865] Agentic Metrics Task Completion Agent 是否完成了既定目标
+[html:l866] Tool Correctness 是否调用了正确的工具，参数是否正确
+[html:l867] Goal Accuracy Agent 达成预期目标的准确程度
+[html:l868] Step Efficiency 是否执行了不必要的步骤
+[html:l869] Plan Adherence 是否遵循了预期的执行计划
+[html:l870] Plan Quality Agent 生成的计划质量评估
+[html:l871] RAG Metrics Faithfulness 回答是否基于检索到的上下文事实
+[html:l872] Answer Relevancy 回答与问题的相关程度
+[html:l873] Contextual Precision 检索到的上下文的精确度
+[html:l874] Contextual Recall 检索到的上下文的召回率
+[html:l875] Safety Metrics Hallucination 是否生成了编造的内容
+[html:l876] Toxicity 是否包含有害/不当内容
+[html:l877] Bias 是否存在偏见
+[html:l880] 6.4 企业级 Agent 评估的 5 个核心维度
+[html:l883] 维度 关键指标 典型目标值
+[html:l885] ① 任务成功率
+[html:l886] 严格成功率 / 宽松成功率 / 子任务完成率
+[html:l887] 金融场景 ≥ 95%；通用场景 ≥ 85%
+[html:l890] ② 执行效率
+[html:l891] 平均完成时间 / Token 消耗 / API 调用次数 / 工具调用次数
+[html:l892] < 3min / < 50K tokens / < 15 次 API / < 25 次工具
+[html:l895] ③ 鲁棒性与错误恢复
+[html:l896] 随机干扰下成功率衰减 / 错误传播率 / 自我纠错成功率
+[html:l897] 20% 干扰下成功率衰减 < 30%
+[html:l900] ④ 安全与合规
+[html:l901] 越狱抵抗 / 数据泄露 / 权限越界 / 审计完整性
+[html:l902] 零数据泄露；100% 操作可追溯
+[html:l905] ⑤ 成本效益
+[html:l906] 单任务成本 / 月度总成本 / ROI 比值
+[html:l907] Agent 成本 < 人工成本的 30%
+[html:l911] 6.5 分层阶梯式评测方法（Google/DeepMind 实践）
+[html:l913] Google DeepMind 团队采用按难度分层的评测策略，评测成本与风险匹配：
+[html:l916] 层级 评测对象 评测方法 自动化程度
+[html:l917] Level 1 基础能力（单轮问答、翻译、摘要） 自动化指标（Exact Match / BLEU） 全自动化
+[html:l918] Level 2 推理能力（多步推理、代码生成） LLM-as-Judge + 部分自动化 半自动化
+[html:l919] Level 3 Agent 能力（工具使用、规划、自主执行） 端到端任务 + Trace 分析 半自动化
+[html:l920] Level 4 安全与对齐（红队测试、偏见检测） 专项评测 + 人工审核 低自动化
+[html:l923] 6.6 LLM-as-a-Judge 范式
+[html:l925] 对于没有唯一正确答案的 Agent 任务（如"帮我规划一个项目方案"），传统精确匹配失效。 LLM-as-a-Judge 使用一个更强的模型作为裁判，根据评分规则（Rubric）对 Agent 的执行轨迹和输出进行评分：
+[html:l928] 评分维度 ：工具使用合理性、计划可行性、回答完整性、安全性
+[html:l929] 评分方式 ：Chain-of-Thought 推理 → 结构化评分（1-5 分）+ 评分理由
+[html:l930] 注意事项 ：Judge 模型应强于被测模型；需校准 Judge 的一致性；多 Judge 投票可提升可靠性
+[html:l933] 6.7 Agent 评测的 CI/CD 集成
+[html:l936] 🔄 评测驱动开发 (Eval-Driven Development)
+[html:l937] 先写评测用例，再调整 Agent，调完立刻跑评测，绿灯上线。
+[html:l941] 触发时机 评测范围 耗时
+[html:l942] Prompt 微调 核心场景子集（10-20 个 case） ~5 分钟
+[html:l943] 工具变更 受影响工具相关用例 ~10 分钟
+[html:l944] 模型版本升级 全量评测集（200+ case） ~30-60 分钟
+[html:l945] 每周回归 全量评测集 + 新 case ~1 小时
+[html:l946] 发布前 全量 + 对抗式评测 + 人工抽检 ~半天
+[html:l949] 6.8 FnixAgent Agent 评测体系现状与建议
+[html:l952] ✅ 已有基础
+[html:l953] FnixAgent 已自研 Agent 评测工具（ tests/agent_eval/ ），包含 4 个模块：
+[html:l955] TraceCollector ：采集 Agent 执行轨迹（思考链、工具调用、中间状态）
+[html:l956] ProblemDetector ：基于轨迹检测问题模式（重复调用、死循环、工具错误等）
+[html:l957] EvalRunner ：批量执行评测用例，收集结果
+[html:l958] ReportGenerator ：生成可视化评测报告
+[html:l960] 已有 22 项测试用例覆盖 8 类场景，通过率 86.4%。
+[html:l964] 💡 进阶建议
+[html:l965] 1. 引入 DeepEval 补充自动化指标 ：将 DeepEval 的 Task Completion、Tool Correctness 等指标集成到现有 EvalRunner 中，获得更结构化的评分。
+[html:l966] 2. 建立 LLM-as-Judge 评分层 ：对于开放性任务（如代码生成质量、方案合理性），使用更强的模型（如 Claude Opus）作为 Judge，按 Rubric 评分。
+[html:l967] 3. 扩展评测集 ：从 22 个 case 扩展到 200+，覆盖正常流程 60% + 边缘 case 20% + 异常场景 20%。
+[html:l968] 4. 添加鲁棒性测试 ：注入随机干扰（工具超时、API 异常、网络中断），测试 Agent 的错误恢复能力。
+[html:l969] 5. 建立成本追踪 ：在 TraceCollector 中记录每任务的 Token 消耗和 API 调用次数，纳入评测报告。
+[html:l970] 6. 参照 GAIA 构建内部基准 ：从真实用户使用场景中提取任务，构建 FnixAgent 专属的"GAIA 基准"。
+[html:l973] 6.9 2026 年 Agent 评测趋势
+[html:l976] 趋势 说明
+[html:l977] ROI 导向评测 从"能不能完成任务"转向"完成任务是否划算"（AgentCostBench: Value Score = 成功率 × 业务价值 / 总成本）
+[html:l978] 多模态评测 VisualWebArena / OmniBench 评测 Agent 融合视觉、音频、文本的综合交互能力
+[html:l979] 对抗式评测 DynaBench 动态生成任务变体，防止 Agent 过拟合静态评测集
+[html:l980] 人类评估回归 AI + 人类混合评估：AI 负责大规模初筛，人类专家对边界 case 做精细判断
+[html:l981] 持续回归监控 从上线前验收转向生产环境持续评测；模型漂移检测；效果退化预警
+[html:l988] 📌 总结：FnixAgent 测试体系全景图
+[html:l991] 维度 标准/框架 FnixAgent 适用要点
+[html:l993] 质量模型
+[html:l994] ISO/IEC 25010
+[html:l995] 8 特性全覆盖；重点关注功能适合性、可靠性、安全性（AI Agent 特有）、可维护性
+[html:l998] 测试方法论
+[html:l999] ISTQB CTFL v4.0
+[html:l1000] 4 级测试 + 4 类测试类型 + 黑盒/白盒/经验技术；7 大原则指导测试策略
+[html:l1003] 测试策略
+[html:l1004] 测试金字塔
+[html:l1005] 70/20/10 比例；补齐前端测试和 Rust 测试缺失层
+[html:l1008] 测试流程
+[html:l1009] ISTQB 测试过程
+[html:l1010] 计划→设计→执行→缺陷→回归；敏捷适配为持续测试
+[html:l1013] 架构适配
+[html:l1014] Tauri 分层测试
+[html:l1015] 前端(Vitest) + Rust(cargo test) + IPC(契约测试) + Python(pytest) + 跨平台(CI)
+[html:l1018] AI 专项
+[html:l1019] Agent 评测框架
+[html:l1020] 已有自研 agent_eval；建议集成 DeepEval + LLM-as-Judge + 鲁棒性测试 + 成本追踪
+[html:l1025] 🎯 核心行动项优先级
+[html:l1026] P0（立即） ：补齐 Rust 层单元测试（ cargo test ）；前端组件测试（Vitest + Testing Library）
+[html:l1027] P1（近期） ：扩展 agent_eval 评测集至 100+ case；集成 DeepEval 自动化指标
+[html:l1028] P2（中期） ：建立 LLM-as-Judge 评分层；引入 Tauri E2E 测试（Playwright + WebDriver）
+[html:l1029] P3（长期） ：构建 FnixAgent 内部 GAIA 基准；建立持续评测 CI/CD 流水线；对抗式评测
+[html:l1035] 参考来源：
+[html:l1036] • ISO/IEC 25010:2011 / 25010:2023 — Systems and software Quality Requirements and Evaluation (SQuaRE)
+[html:l1037] • ISTQB Certified Tester Foundation Level Syllabus v4.0 (2023) — International Software Testing Qualifications Board
+[html:l1038] • Mike Cohn, "Succeeding with Agile" (2009) — 测试金字塔原始概念
+[html:l1039] • Kent C. Dodds, "The Testing Trophy" (2019) — 测试奖杯模型
+[html:l1040] • SWE-bench (Princeton NLP) / WebArena (CMU+SJTU) / GAIA (Google DeepMind) — Agent 评测基准
+[html:l1041] • DeepEval (confident-ai) / Promptfoo — 开源 LLM/Agent 评测工具
+[html:l1042] • Tauri 2.0 官方文档 — tauri.app
+[html:l1043] • GB/T 25000.10 — 中国国家标准，等同采用 ISO/IEC 25010
+[html:l1044] 本报告由 DuMate 于 2026-08-21 基于公开权威来源调研整理，供 FnixAgent 项目内部参考。

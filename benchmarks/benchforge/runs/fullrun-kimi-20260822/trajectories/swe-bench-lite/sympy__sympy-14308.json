@@ -1,0 +1,18 @@
+{
+  "dataset": "swe-bench-lite",
+  "task_id": "sympy__sympy-14308",
+  "prompt": "vectors break pretty printing\n```py\r\nIn [1]: from sympy.vector import *\r\n\r\nIn [2]: e = CoordSysCartesian('e')\r\n\r\nIn [3]: (x/y)**t*e.j\r\nOut[3]:\r\n⎛   t⎞ e_j\r\n⎜⎛x⎞ e_j ⎟\r\n⎜⎜─⎟ ⎟\r\n⎝⎝y⎠ ⎠\r\n```\r\n\r\nAlso, when it does print correctly, the baseline is wrong (it should be centered). \n",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/sympy/printing/pretty/pretty.py b/sympy/printing/pretty/pretty.py\n-] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787334468.590124,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\swe-bench-lite__sympy__sympy-14308__dc1b50"
+}

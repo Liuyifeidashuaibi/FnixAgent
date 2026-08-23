@@ -1,0 +1,18 @@
+{
+  "dataset": "swe-bench-lite",
+  "task_id": "django__django-10924",
+  "prompt": "Allow FilePathField path to accept a callable.\nDescription\n\t\nI have a special case where I want to create a model containing the path to some local files on the server/dev machine. Seeing as the place where these files are stored is different on different machines I have the following:\nimport os\nfrom django.conf import settings\nfrom django.db import models\nclass LocalFiles(models.Model):\n\tname = models.CharField(max_length=255)\n\tfile = models.FilePathField(path=os.path.join(settings.LOCAL_FILE_DIR, 'example_dir'))\nNow when running manage.py makemigrations it will resolve the path based on the machine it is being run on. Eg: /home/<username>/server_files/example_dir\nI had to manually change the migration to include the os.path.join() part to not break this when running the migration on production/other machine.\n",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/django/db/models/fields/__init__.py b/django/db/models/fields/__ini] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 92.9999999998472,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787332463.1181834,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\swe-bench-lite__django__django-10924__7d2296"
+}

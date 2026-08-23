@@ -32,12 +32,16 @@ Word 文档创建/编辑/样式/目录/合并/比较/脱敏/表格/批注/报告
 from __future__ import annotations
 
 import contextlib
+import logging
 import os
 import re
 import tempfile
 from typing import Any
 
 from fnixagent.office.base import BaseExpert, ExpertError, ExpertResult
+
+_logger = logging.getLogger(__name__)
+
 
 # 中文字号 → 磅值映射
 FONT_SIZE_CN: dict[str, float] = {
@@ -1409,7 +1413,7 @@ class WordExpert(BaseExpert):
                                 int(tc[4:6], 16),
                             )
                         except Exception:
-                            pass
+                            _logger.debug('Unhandled exception', exc_info=True)
             return True
         except Exception:
             return False

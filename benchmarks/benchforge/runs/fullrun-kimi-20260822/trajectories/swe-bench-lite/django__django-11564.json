@@ -1,0 +1,18 @@
+{
+  "dataset": "swe-bench-lite",
+  "task_id": "django__django-11564",
+  "prompt": "Add support for SCRIPT_NAME in STATIC_URL and MEDIA_URL\nDescription\n\t \n\t\t(last modified by Rostyslav Bryzgunov)\n\t \nBy default, {% static '...' %} tag just appends STATIC_URL in the path. When running on sub-path, using SCRIPT_NAME WSGI param, it results in incorrect static URL - it doesn't prepend SCRIPT_NAME prefix.\nThis problem can be solved with prepending SCRIPT_NAME to STATIC_URL in settings.py but that doesn't work when SCRIPT_NAME is a dynamic value.\nThis can be easily added into default Django static tag and django.contrib.staticfiles tag as following:\ndef render(self, context):\n\turl = self.url(context)\n\t# Updating url here with request.META['SCRIPT_NAME'] \n\tif self.varname is None:\n\t\treturn url\n\tcontext[self.varname] = url\n\t\treturn ''\nOn more research I found that FileSystemStorage and StaticFilesStorage ignores SCRIPT_NAME as well. \nWe might have to do a lot of changes but I think it's worth the efforts.\n",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/django/conf/__init__.py b/django/conf/__init__.py\n--- a/django/conf] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787334463.1347926,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\swe-bench-lite__django__django-11564__e3207a"
+}

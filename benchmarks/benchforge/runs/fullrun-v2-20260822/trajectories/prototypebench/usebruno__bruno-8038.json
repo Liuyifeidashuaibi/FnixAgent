@@ -1,0 +1,18 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "usebruno__bruno-8038",
+  "prompt": "[JIRA](https://usebruno.atlassian.net/browse/BRU-3447)\r\n## Summary\r\n\r\nNewer Postman exports (e.g. from the Postman API) wrap collections in a `{ \"collection\": { ... } }` envelope. This caused imports to fail because both the detection logic and the converter expected `info` at the top level.\r\n\r\n- **`isPostmanCollection`** (bruno-app): Now checks `data.collection.info` as a fallback when `data.info` is absent\r\n- **`parsePostmanCollection`** (bruno-converters): Unwraps the envelope into a local `parsedCollection` variable before passing it downstream\r\n- Added unit test for wrapped format in `postman-to-bruno.spec.js`\r\n- Added E2E test + fixture for wrapped v2.1 import\r\n\r\n#### Contribution Checklist:\r\n\r\n- [ ] **I've used AI significantly to create this pull request**\r\n- [x] **The pull request only addresses one issue or adds one feature.**\r\n- [x] **The pull request does not introduce any breaking changes**\r\n- [ ] **I have added screenshots or gifs to help explain the change if applicable.**\r\n- [x] **I have read the [contribution guidelines](https://github.com/usebruno/bruno/blob/main/contributing.md).**\r\n- [ ] **Create an issue and link to the pull request.**\r\n\r\nNote: Keeping the PR small and focused helps make it easier to review and merge. If you have multiple changes you want to make, please consider submitting them as separate pull requests.\r\n\r\n#### Publishing to New Package Managers\r\n\r\nPlease see [here](../publishing.md) for more information.\n\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\n\n## Summary by CodeRabbit\n\n## Release Notes\n\n* **Bug Fixes**\n  * Fixed Postman collection import to support wrapped collection format, enabling imports of newer Postman collection exports.\n\n* **Tests**\n  * Added test coverage for importing wrapped Postman v2.1 collections.\n\n<!-- review_stack_entry_start -->\n\n[![Review Change Stack](https://storage.googleapis.com/coderabbit_public_assets/review-stack-in-coderabbit-ui.svg)](https://app.coderabbit.ai/change-stack/usebruno/bruno/pull/8038?utm_source=github_walkthrough&utm_medium=github&utm_campaign=change_stack)\n\n<!-- review_stack_entry_end -->\n\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 6186.999999999898,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336338.1565878,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\prototypebench__usebruno__bruno-8038__0275e0"
+}

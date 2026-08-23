@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "indicator-window-rules-L4-005",
+  "prompt": "现在要做一份离线技术指标窗口复盘。工作区里已经放好了冻结的策略复核行情导出、交易日历、市场状态记录、指标口径说明和复盘口径备忘录。请不要联网，也不要调用行情、券商、交易、邮件、IM、外部消息推送或任何外部接口；这次只做离线标签复核，不做真实市场操作或真实决策。\n请先阅读 `indicator_methodology.md` 和 `review_policy_memo.md`，再结合 `strategy_review_bars.csv`、`trading_calendar.csv` 和 `market_status.xlsx` 计算复盘窗口内每个证券/交易日/复核时点的 MA20、上一交易日 MA20、MA20 斜率、TR、ATR14、基础标签和市场状态覆盖后的最终标签。窗口和上一交易日口径以交易日历为准，MA20 和 ATR14 都包含当前复核快照；上一交易日必须使用 `trading_calendar.csv` 的 `pretrade_date`，不能按自然日直接回退。\n最后生成 `output/indicator_window_rules.xlsx`。输出 workbook 需要包含四个 sheet：`indicator_by_date`、`signals`、`risk_overrides`、`summary`。\n`indicator_by_date` 的列为 ts_code、trade_date、review_time、close、ma20、prev_trade_date、prev_ma20、ma20_slope、tr、atr14、close_vs_ma、history_status、session_label、base_signal。`signals` 的列为 ts_code、trade_date、review_time、base_signal、signal_reason、threshold_case。`risk_overrides` 的列为 ts_code、trade_date、review_time、pre_override_signal、halt_status、risk_status、final_label、override_reason。`summary` 的列为 summary_key、summary_value、note。\n所有规则、边界比较和覆盖优先级以工作区内两份口径文档为准；不要把备注字段当作最终标签，也不要在输入文件里寻找现成答案。\n\n请读取工作区中的输入文件：`input/strategy_review_bars.csv`、`input/trading_calendar.csv`、`input/market_status.xlsx`、`input/indicator_methodology.md`、`input/review_policy_memo.md`。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 77.99999999997453,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787332459.6526532,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\workbuddy-bench__indicator-window-rules-L4-005__ed16f6"
+}

@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "code--security_hardening-hard-proxy_auth_header_leak",
+  "prompt": "我在接代理和重定向这块时发现 header 处理不够稳，Authorization/Cookie 这类东西可能被带到不该去的地方。麻烦把 proxy header、普通请求 header、跨站 redirect 的边界收紧。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 360.0000000005821,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336327.1232057,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\workbuddy-bench__code--security_hardening-hard-proxy_auth_header_leak__cb6bb3"
+}

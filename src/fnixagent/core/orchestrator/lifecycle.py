@@ -19,6 +19,7 @@ Agent 生命周期编排 (Lifecycle)。
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from typing import Any
 
@@ -34,6 +35,9 @@ from fnixagent.core.types import (
     MessageRole,
     ReasoningMode,
 )
+
+_logger = logging.getLogger(__name__)
+
 
 
 @dataclass
@@ -82,7 +86,7 @@ class Lifecycle:
 
             trace = get_provider().get_current_trace()
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
 
         if trace is not None:
             with trace.start_span(

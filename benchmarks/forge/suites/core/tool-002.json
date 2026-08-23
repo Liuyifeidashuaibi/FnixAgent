@@ -1,0 +1,35 @@
+{
+  "id": "tool-002",
+  "title": "数据统计任务",
+  "capability": "tool_use",
+  "difficulty": 2,
+  "tags": [
+    "compute"
+  ],
+  "prompt": "当前目录 data.csv 有若干行数据。统计它的行数（不含表头），把数字写入 count.txt，文件里只有这个数字。",
+  "setup": {
+    "files": {
+      "data.csv": "id,name\n1,alpha\n2,beta\n3,gamma\n4,delta\n"
+    }
+  },
+  "allowed_scope": [
+    "count.txt"
+  ],
+  "protected": [
+    "data.csv"
+  ],
+  "checks": [
+    {
+      "function": "file_equals",
+      "args": {
+        "path": "count.txt",
+        "content": "4"
+      },
+      "weight": 2.0
+    },
+    {
+      "function": "protected_untouched",
+      "args": {}
+    }
+  ]
+}

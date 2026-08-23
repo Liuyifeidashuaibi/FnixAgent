@@ -1,0 +1,18 @@
+{
+  "dataset": "web-bench",
+  "task_id": "survey--init",
+  "prompt": "Generate 2 pages with HTML/CSS/JS (ES module) files. 'design.js' and 'design.css' are used by 'design.html' containing an empty form. 'preview.js' and 'preview.css' are used by 'preview.html' containing a form (action 'submit') with a submit button. Do not add more elements to the forms.",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 342.9999999998472,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336309.6529567,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\web-bench__survey--init__8cabd7"
+}

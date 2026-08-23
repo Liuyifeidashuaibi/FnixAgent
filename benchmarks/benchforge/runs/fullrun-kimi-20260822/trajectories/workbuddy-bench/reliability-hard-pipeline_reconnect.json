@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "reliability-hard-pipeline_reconnect",
+  "prompt": "redis pipeline 遇到连接断开后状态有点乱，有时 watch 还残留，有时命令被重复执行。麻烦把 reconnect 后可安全重放和不能重放的情况分清楚，执行完也要清理 pipeline 状态。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 92.9999999998472,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787334455.7439296,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\workbuddy-bench__reliability-hard-pipeline_reconnect__75838b"
+}

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page 1</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; padding: 30px; background: #f5f5f5; }
+        h1 { margin-bottom: 20px; color: #333; }
+        p { margin-bottom: 15px; line-height: 1.6; color: #555; }
+        .nav { margin-top: 30px; }
+        .nav a {
+            display: inline-block;
+            margin-right: 15px;
+            padding: 10px 20px;
+            background: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .nav a:hover { background: #45a049; }
+    </style>
+</head>
+<body>
+    <h1>Page 1 - Home</h1>
+    <p>Welcome to Page 1. This is the default content loaded in the iframe.</p>
+    <p>Navigate to other pages to see the address bar update in the parent window.</p>
+    <div class="nav">
+        <a href="page1.html">Page 1</a>
+        <a href="page2.html">Page 2</a>
+        <a href="page3.html">Page 3</a>
+    </div>
+
+    <script>
+        // Notify parent of current page on load
+        function notifyParent() {
+            const currentUrl = window.location.href;
+            window.parent.postMessage({
+                type: 'iframe-navigation',
+                url: currentUrl
+            }, '*');
+        }
+
+        // Send notification on page load
+        notifyParent();
+
+        // Intercept link clicks to notify parent before navigation
+        document.addEventListener('click', function(e) {
+            const link = e.target.closest('a');
+            if (link && link.href) {
+                // Notify parent of the destination URL
+                window.parent.postMessage({
+                    type: 'iframe-navigation',
+                    url: link.href
+                }, '*');
+            }
+        });
+
+        // Also notify on hash changes
+        window.addEventListener('hashchange', notifyParent);
+    </script>
+</body>
+</html>

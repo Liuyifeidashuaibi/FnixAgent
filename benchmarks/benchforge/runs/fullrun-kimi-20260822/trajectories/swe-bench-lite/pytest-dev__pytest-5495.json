@@ -1,0 +1,18 @@
+{
+  "dataset": "swe-bench-lite",
+  "task_id": "pytest-dev__pytest-5495",
+  "prompt": "Confusing assertion rewriting message with byte strings\nThe comparison with assertion rewriting for byte strings is confusing: \r\n```\r\n    def test_b():\r\n>       assert b\"\" == b\"42\"\r\nE       AssertionError: assert b'' == b'42'\r\nE         Right contains more items, first extra item: 52\r\nE         Full diff:\r\nE         - b''\r\nE         + b'42'\r\nE         ?   ++\r\n```\r\n\r\n52 is the ASCII ordinal of \"4\" here.\r\n\r\nIt became clear to me when using another example:\r\n\r\n```\r\n    def test_b():\r\n>       assert b\"\" == b\"1\"\r\nE       AssertionError: assert b'' == b'1'\r\nE         Right contains more items, first extra item: 49\r\nE         Full diff:\r\nE         - b''\r\nE         + b'1'\r\nE         ?   +\r\n```\r\n\r\nNot sure what should/could be done here.\n",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/src/_pytest/assertion/util.py b/src/_pytest/assertion/util.py\n--- a] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787334466.836131,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\swe-bench-lite__pytest-dev__pytest-5495__091583"
+}

@@ -1,7 +1,7 @@
 """
 飞轮 ② 知识固化环单元测试。
 
-测试模块: fnixagent.core.flywheel.stage2_knowledge
+测试模块: fnixagent.core.flywheel.knowledge
 覆盖:
     - 垃圾过滤(临时话术/执行失败/无实质推理)
     - 知识萃取(规则式: 概念/事实/因果关系)
@@ -15,7 +15,7 @@
 # This software and its source code are proprietary and confidential.
 # Unauthorized copying, modification, distribution, or use is strictly prohibited.
 
-from fnixagent.core.flywheel.stage2_knowledge import (
+from fnixagent.core.flywheel.knowledge import (
     JUNK_KEYWORDS,
     MIN_TOOL_CALLS_FOR_SOLIDIFICATION,
     KnowledgeSolidificationFlywheel,

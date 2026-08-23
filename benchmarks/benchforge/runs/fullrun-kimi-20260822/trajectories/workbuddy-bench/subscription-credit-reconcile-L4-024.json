@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "subscription-credit-reconcile-L4-024",
+  "prompt": "请读取 `input/subscription_credit_source.xlsx`，对 2026-04 的订阅服务 incident credit 进行对账，输出 `output/subscription_credit_reconciliation.xlsx`。\n\n来源 workbook 是中英混杂的 billing、ops、contract 和 finance 导出。请自行识别每个来源 sheet 的实际数据区域、表头、说明行和字段含义，忽略标题、说明、空白或非客户生产结算证据的数据。\n\n请依据 workbook 中的 invoice line、account alias、contract terms、incident status、incident event、credit memo 和 source-environment 信息，判断每条候选 invoice line 的补偿状态、需人工复核的冲突、可计入 incident、已入账补偿和应排除证据。\n\n每个 invoice line 必须且只能进入一个分类 sheet：`credit_due`、`already_credited`、`not_eligible`、`manual_review`。\n\n分类 sheet 需要包含以下列：\n\n- invoice_line_id\n- canonical_account_id\n- service_month\n- classification_reason_code\n- eligible_incident_ids\n- existing_credit_memo_ids\n- recommended_credit_amount\n- evidence_note\n\n`summary` sheet 需要包含以下列：\n\n- classification\n- line_count\n- total_recommended_credit\n\n请保留足够的 evidence_note 说明关键合同、事件、贷项或复核依据，避免把 draft/voided/duplicate/monitoring/sandbox/near-match account 等非结算证据算入 eligible_incident_ids。\n\n结果保存为 `output/subscription_credit_reconciliation.xlsx`。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787334457.2246273,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\workbuddy-bench__subscription-credit-reconcile-L4-024__1ea0fd"
+}

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; line-height: 1.6; color: #333; }
+        h1 { color: #f7df1e; background: #323330; padding: 15px; border-radius: 8px; }
+        h2 { color: #555; border-bottom: 2px solid #f7df1e; padding-bottom: 5px; }
+        code { background: #f4f4f4; padding: 2px 6px; border-radius: 4px; font-family: monospace; }
+        pre { background: #2d2d2d; color: #f8f8f2; padding: 15px; border-radius: 8px; overflow-x: auto; }
+        .tip { background: #fff3cd; padding: 12px; border-left: 4px solid #f7df1e; margin: 15px 0; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>JavaScript Programming Language</h1>
+    <p>JavaScript is a lightweight, interpreted programming language that enables interactive web pages. It is an essential part of web applications.</p>
+
+    <h2>Variables and Data Types</h2>
+    <p>JavaScript supports several data types: numbers, strings, booleans, objects, and more.</p>
+    <pre><code>let name = "JavaScript";
+const year = 1995;
+var isDynamic = true;</code></pre>
+
+    <h2>Functions</h2>
+    <p>Functions are reusable blocks of code that perform a specific task.</p>
+    <pre><code>function greet(user) {
+    return `Hello, ${user}!`;
+}
+const add = (a, b) => a + b;</code></pre>
+
+    <h2>DOM Manipulation</h2>
+    <p>The Document Object Model (DOM) allows JavaScript to access and modify HTML elements dynamically.</p>
+    <pre><code>document.getElementById("demo").innerHTML = "Hello World!";
+document.querySelector(".btn").addEventListener("click", handleClick);</code></pre>
+
+    <div class="tip">
+        <strong>Tip:</strong> JavaScript was created by Brendan Eich in just 10 days in May 1995 while he was working at Netscape.
+    </div>
+
+    <h2>Asynchronous Programming</h2>
+    <p>JavaScript handles async operations using callbacks, promises, and async/await syntax.</p>
+    <pre><code>async function fetchData(url) {
+    const response = await fetch(url);
+    const data = await response.json();
+    return data;
+}</code></pre>
+</body>
+</html>

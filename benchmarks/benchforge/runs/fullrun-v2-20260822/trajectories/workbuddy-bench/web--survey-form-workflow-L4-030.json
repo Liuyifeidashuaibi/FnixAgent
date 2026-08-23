@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "web--survey-form-workflow-L4-030",
+  "prompt": "# Web-Bench Task T30\n\nPlease build a multi-step customer intake questionnaire workflow in static HTML/CSS/JavaScript. Draft saving, branching jumps, validation, the review page, and the final submission content all need to match the user's choices.\n\nThe review step should be operational, not just a summary. A reviewer should be able to jump back from review to an earlier visible step, change a controlling answer, return to review, and see the step list, pruned fields, autosave state, and final payload update from the latest choices. After final submit, the success receipt should represent an immutable submitted record unless the user explicitly starts a new draft.\n\n\n## Workflow Reliability Expectations\n\nTreat the branching matrix as a set of real customer paths, not as static documentation. A reviewer should be able to exercise the baseline solo-virtual path, the highest-complexity group/in-person current-customer path, and at least one branch-change cleanup path. Visible steps, validation, autosave status, review summaries, pruned fields, and submitted payloads should all come from the same current branch state.\n\nExpose enough runtime evidence in the page, review screen, receipt, or payload preview for a reviewer to understand what was saved or submitted. Do not require a special debug file, but do not hide the submitted record behind a transient toast either.\n\n## Output\n\nCreate the required artifact inside `/workspace`. The required output path is:\n\n- `/workspace/www/index.html` (declared as `environment/www/index.html`)\n\nDo not place the final answer only in chat; write the runnable artifact files.\n\n## Runtime and Delivery Constraints\n\n- The deliverable must open directly under a static file server; don't rely on a Node.js backend, npm build steps, external CDNs, or network downloads for dependencies.\n- If you need to split out CSS, JavaScript, or data-processing files, put them inside the inspected directory and reference them from the entry HTML using relative paths.\n\n## Public Assets\n\n- `program-brief`: `/workspace/public-assets/brief/program-brief.md` markdown\n- `workflow-prd`: `/workspace/public-assets/spec/customer-intake-workflow-prd.md` markdown\n- `field-catalog`: `/workspace/public-assets/spec/field-catalog.yaml` yaml\n- `branching-matrix`: `/workspace/public-assets/spec/branching-matrix.csv` csv\n- `validation-and-autosave`: `/workspace/public-assets/spec/validation-and-autosave-requirements.md` markdown\n- `draft-session-example`: `/workspace/public-assets/fixtures/draft-session-example.json` json\n- `final-submission-example`: `/workspace/public-assets/fixtures/final-submission-example.json` json\n- `information-architecture`: `/workspace/public-assets/spec/information-architecture.yaml` yaml",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 421.9999999995707,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336323.388166,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\workbuddy-bench__web--survey-form-workflow-L4-030__7e160c"
+}

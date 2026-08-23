@@ -27,6 +27,7 @@ from fnixagent.core.tools.workspace import register_workspace_tools
 from fnixagent.core.types import ToolPermission
 
 logger = logging.getLogger(__name__)
+_logger = logger
 
 
 WORK_SYSTEM_PROMPT = """你是 FnixAgent 办公工作台助手（对齐行业最佳实践 + Work 内的 Code 能力）。
@@ -39,15 +40,16 @@ WORK_SYSTEM_PROMPT = """你是 FnixAgent 办公工作台助手（对齐行业最
 
 规则:
 1. 先理解任务目标与验收标准，再调用工具执行
-2. **写盘契约**：所有 Craft 交付文件必须写到 `.fnix/artifacts/<task_or_project>/` 下，禁止散落到工作区根目录
+2. **写盘契约**：交付文件写到工作区的「自然路径」——若任务指向仓库中已存在的文件(或要求修改现有代码)，直接在原路径编辑；新建文件时用任务隐含的相对路径(相对工作区根，如 `index.html`、`src/components/header/header.component.ts`)。如需在产物预览面板展示，可把同一文件再写入 `.fnix/artifacts/<项目名>/<相对路径>` 作为镜像(二者至少其一，且不要只写 .fnix 而遗漏原路径)。
 3. 写代码文件时，`content` 必须是完整可运行源码，禁止只写「创建xxx文件」这类说明文字
-4. 用户要求创建网站 / HTML / CSS / JS / 编码任务时，**必须**通过 tools API 调用 `write_file`（参数 file_path + content）写入完整源码到 `.fnix/artifacts/<项目名>/`；写完后列出路径
+4. 用户要求创建网站 / HTML / CSS / JS / 编码任务时，**必须**通过 tools API 调用 `write_file`（file_path + content）写入完整源码到任务要求的自然相对路径；写完后列出真实路径
 5. **严禁**用 `<write_file>` / `<path>` / `<content>` XML 假装调用工具（不会落盘）
 6. 纯前端/静态站不要跑 pytest；没有测试用例时不要强行 test
 7. 需要信息时先读文件 / 检索，再生成
 8. 若系统提示中给出「KTG 推理路径」，优先沿该路径选择对应技能
 9. 若加载了「项目技能」，优先匹配技能描述
 10. 回复简洁，说明产物路径与下一步可验收点
+11. **对齐现有项目结构**：写盘前先 `ls` / `glob` 工作区，了解既有目录约定。若任务描述的相对路径（如 `components/...`、`src/...`、`app/...`）与脚手架已有目录不一致，优先把文件放到「约定目录」下（例如源码都在 `src/` 下就写到 `src/components/...`），不要凭空在工作区根新建同名目录；若任务指向的「组件/模块」在脚手架中已存在，直接编辑原文件而非新建同名文件。
 
 你当前的工作目录是: {workspace_root}
 """
@@ -60,15 +62,15 @@ def format_code_task_prompt() -> str:
 ## 编码/应用生成任务（Work 内可做，对齐工程实践 Work App generation + Craft 模式）
 你现在处于 **Work 模式的 Craft 执行态**：必须动手写文件，不能只聊天。
 1. 立刻用 **tools API** 调用 `write_file`（每个文件一次），参数名是 `file_path` 与 `content`
-2. 静态网站最少三个文件：
-   - `.fnix/artifacts/<项目名>/index.html`
-   - `.fnix/artifacts/<项目名>/style.css`
-   - `.fnix/artifacts/<项目名>/script.js`
+2. 静态网站最少三个文件（写到工作区自然路径，不要只塞进 .fnix/artifacts）：
+   - `index.html` (或任务要求的文件名)
+   - `style.css`
+   - `script.js`
 3. HTML 必须引用 style.css / script.js；JS 含真实交互逻辑
 4. **禁止**只输出「创建项目基础结构」「接下来我会…」而不调用工具
 5. **禁止**输出 `<write_file>...</write_file>` XML；必须走 function calling
 6. 写完后列出产物路径与打开方式（如双击 index.html）
-7. 与 Code 同属 Chat 交付：小项目写 `.fnix/artifacts/`；已 Open project 时也可直接改仓库文件（preview → Accept）
+7. 与 Code 同属 Chat 交付：小项目写到工作区根或任务要求的相对路径；如需预览可镜像到 `.fnix/artifacts/<项目名>/`；已 Open project 时直接改仓库文件（preview → Accept）
 """
 
 
@@ -80,7 +82,8 @@ def wrap_code_user_input(user_input: str) -> str:
         "【强制执行 · Work Craft】这是可交付编码/建站任务。"
         "请立即用 tools API 调用 write_file（file_path + content）写入完整源码；"
         "禁止输出 <write_file> XML；不要只回复计划或说明文字。"
-        "静态站写入 `.fnix/artifacts/<项目名>/` 下的 index.html、style.css、script.js。"
+        "写到任务要求的相对路径(如 index.html、src/components/...)，必要时可镜像到 "
+        "`.fnix/artifacts/<项目名>/` 供预览，但不要只写 .fnix 而遗漏原路径。"
     )
 
 
@@ -187,7 +190,7 @@ def strip_mutating_tools(registry: ToolRegistry) -> None:
         try:
             registry.unregister(name)
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
 
 
 class _StpAwareRegistry:
@@ -226,7 +229,7 @@ class _StpAwareRegistry:
                 try:
                     self._feedback.on_skill_failure(tool_name, path=self._path)
                 except Exception:
-                    pass
+                    _logger.debug('Unhandled exception', exc_info=True)
             raise
 
     def get_tool_definitions(self) -> list[dict]:
@@ -239,7 +242,7 @@ class _StpAwareRegistry:
                 rest = [d for d in all_defs if d.get("function", {}).get("name") not in names]
                 return prioritized + rest
             except Exception:
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
         return self._registry.get_tool_definitions()
 
     def get_tools_description(self) -> str:
@@ -250,7 +253,7 @@ class _StpAwareRegistry:
                     lines = [f"- {t.name}: {t.description}" for t in selected]
                     return "\n".join(lines)
             except Exception:
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
         return self._registry.get_tools_description()
 
 
@@ -310,7 +313,7 @@ def run_mfp_after_task(
     try:
         components.trace_store.append(trace)
     except Exception:
-        pass
+        _logger.debug('Unhandled exception', exc_info=True)
     try:
         out["solidified"] = components.flywheel_solidification.process(trace)
     except Exception as e:
@@ -325,7 +328,7 @@ def run_mfp_after_task(
             components.flywheel_climbing.run()
             out["climbed"] = True
     except Exception:
-        pass
+        _logger.debug('Unhandled exception', exc_info=True)
 
     # 注: Intelligence 七层闭环由上层 work_pipeline.py 主路径统一触发,
     # 避免双重调用导致 L5 记忆重复写入 / L7 重复审判 / L6 重复技能创建。
@@ -365,6 +368,15 @@ def adapter_from_llm_override(llm: dict | None = None) -> LLMAdapter:
     model = normalize_llm_model((llm.get("model") or "").strip(), provider)
     base_url = (llm.get("base_url") or llm.get("baseUrl") or "").strip()
 
+    # 请求级 LLM 请求超时（秒）；仅在合法正值时透传，否则由适配器决定默认值
+    req_timeout = llm.get("timeout")
+    try:
+        req_timeout = float(req_timeout) if req_timeout else None
+        if req_timeout is not None and req_timeout <= 0:
+            req_timeout = None
+    except (TypeError, ValueError):
+        req_timeout = None
+
     if api_key:
         if not base_url and provider in _PROVIDER_BASE_URLS:
             base_url = _PROVIDER_BASE_URLS[provider]
@@ -375,6 +387,7 @@ def adapter_from_llm_override(llm: dict | None = None) -> LLMAdapter:
             base_url=base_url,
             model_name=model,
             provider_name=provider or "custom",
+            timeout=req_timeout,
         )
 
     # 无客户端 Key：回退服务端环境（含 DASHSCOPE_API_KEY）
@@ -383,7 +396,7 @@ def adapter_from_llm_override(llm: dict | None = None) -> LLMAdapter:
         provider or os.getenv("LLM_PROVIDER") or "",
     )
     env_provider = provider or os.getenv("LLM_PROVIDER") or ""
-    return LLMAdapter(model_name=env_model, provider_name=env_provider)
+    return LLMAdapter(model_name=env_model, provider_name=env_provider, timeout=req_timeout)
 
 
 def register_office_work_tools(
@@ -409,7 +422,7 @@ def register_office_work_tools(
                     except ValueError:
                         raw = abs_candidate.name
             except Exception:
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
             raw = coerce_craft_artifact_path(raw or "output.bin")
         p = Path(raw)
         if not p.is_absolute():
@@ -455,7 +468,7 @@ def register_office_work_tools(
         registry.register(WORD_META["edit_docx"], _edit_docx)
         registry.register(WORD_META["format_docx"], _format_docx)
     except Exception:
-        pass
+        _logger.debug('Unhandled exception', exc_info=True)
 
     try:
         # P0 修复: 删除 stub format_converter, 改用真实 ConverterExpert
@@ -644,7 +657,7 @@ def register_office_work_tools(
 
         register_search_tools(registry)
     except Exception:
-        pass
+        _logger.debug('Unhandled exception', exc_info=True)
 
     try:
         from fnixagent.office.excel import ExcelExpert
@@ -692,7 +705,7 @@ def register_office_work_tools(
             create_xlsx,
         )
     except Exception:
-        pass
+        _logger.debug('Unhandled exception', exc_info=True)
 
     try:
         from fnixagent.office.powerpoint import PPTExpert
@@ -740,7 +753,7 @@ def register_office_work_tools(
             create_pptx,
         )
     except Exception:
-        pass
+        _logger.debug('Unhandled exception', exc_info=True)
 
     try:
         from fnixagent.office.pdf import PDFExpert
@@ -790,7 +803,7 @@ def register_office_work_tools(
             create_pdf,
         )
     except Exception:
-        pass
+        _logger.debug('Unhandled exception', exc_info=True)
 
     # 图表生成（README 业务能力）
     try:
@@ -1030,7 +1043,7 @@ def build_work_agent_loop(
                     try:
                         registry.unregister(name)
                     except Exception:
-                        pass
+                        _logger.debug('Unhandled exception', exc_info=True)
 
         if prompt_extra:
             system_prompt = system_prompt + prompt_extra

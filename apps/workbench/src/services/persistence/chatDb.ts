@@ -96,6 +96,17 @@ export async function loadChatSessions(projectPath: string, limit = 50): Promise
   }
 }
 
+export async function loadAllChatSessions(limit = 200): Promise<ChatSessionRecord[]> {
+  await initChatDb();
+  if (browserMode) return [];
+  try {
+    return await invoke("db_load_all_chat_sessions", { limit });
+  } catch (err) {
+    console.warn("Failed to load all chat sessions:", err);
+    return [];
+  }
+}
+
 export async function loadChatSession(id: string, projectPath: string): Promise<ChatSessionRecord | null> {
   await initChatDb();
   if (browserMode) return null;

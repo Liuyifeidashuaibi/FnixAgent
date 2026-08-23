@@ -1,0 +1,69 @@
+{
+  "run_id": "smoke1",
+  "generated_at": "2026-08-21T23:30:07",
+  "total": 3,
+  "pass": 1,
+  "fail": 2,
+  "success_rate": 0.3333,
+  "per_dataset": {
+    "web-bench": {
+      "total": 1,
+      "pass": 1,
+      "fail": 0,
+      "failure_types": {
+        "planning": 0,
+        "mcp_error": 0,
+        "incomplete_output": 0,
+        "wrong_path": 0,
+        "context_loss": 0,
+        "requirement_mismatch": 0,
+        "crash": 0,
+        "timeout": 0,
+        "other": 0
+      }
+    },
+    "vibe-code-bench": {
+      "total": 1,
+      "pass": 0,
+      "fail": 1,
+      "failure_types": {
+        "planning": 0,
+        "mcp_error": 0,
+        "incomplete_output": 1,
+        "wrong_path": 0,
+        "context_loss": 0,
+        "requirement_mismatch": 0,
+        "crash": 0,
+        "timeout": 0,
+        "other": 0
+      }
+    },
+    "workbuddy-bench": {
+      "total": 1,
+      "pass": 0,
+      "fail": 1,
+      "failure_types": {
+        "planning": 0,
+        "mcp_error": 0,
+        "incomplete_output": 1,
+        "wrong_path": 0,
+        "context_loss": 0,
+        "requirement_mismatch": 0,
+        "crash": 0,
+        "timeout": 0,
+        "other": 0
+      }
+    }
+  },
+  "failure_overview": {
+    "planning": 0,
+    "mcp_error": 0,
+    "incomplete_output": 2,
+    "wrong_path": 0,
+    "context_loss": 0,
+    "requirement_mismatch": 0,
+    "crash": 0,
+    "timeout": 0,
+    "other": 0
+  }
+}

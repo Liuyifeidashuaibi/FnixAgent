@@ -25,9 +25,13 @@ PowerPoint 演示文稿创建/slide/主题/图片/图表/导出图片。
 
 from __future__ import annotations
 
+import logging
 import os
 
 from fnixagent.office.base import BaseExpert, ExpertError, ExpertResult
+
+_logger = logging.getLogger(__name__)
+
 
 
 class PPTExpert(BaseExpert):
@@ -515,7 +519,7 @@ class PPTExpert(BaseExpert):
                         try:
                             doc.close()
                         except Exception:
-                            pass
+                            _logger.debug('Unhandled exception', exc_info=True)
 
             return self._failure(
                 "export_images requires either PowerPoint (Windows COM) or LibreOffice. "
@@ -616,7 +620,7 @@ class PPTExpert(BaseExpert):
                             rows = [[cell.text for cell in row.cells] for row in tbl.rows]
                             tables.append(rows)
                         except Exception:
-                            pass
+                            _logger.debug('Unhandled exception', exc_info=True)
                         continue
                     # 图片(shape_type == 13 = PICTURE)
                     try:
@@ -624,7 +628,7 @@ class PPTExpert(BaseExpert):
                             has_image = True
                             continue
                     except Exception:
-                        pass
+                        _logger.debug('Unhandled exception', exc_info=True)
                     # 文本框
                     if shape.has_text_frame:
                         txt = shape.text_frame.text
@@ -751,13 +755,13 @@ class PPTExpert(BaseExpert):
                 try:
                     pres.Close()
                 except Exception:
-                    pass
+                    _logger.debug('Unhandled exception', exc_info=True)
             if ppt_app is not None:
                 try:
                     ppt_app.Quit()
                 except Exception:
-                    pass
+                    _logger.debug('Unhandled exception', exc_info=True)
             try:
                 pythoncom.CoUninitialize()
             except Exception:
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)

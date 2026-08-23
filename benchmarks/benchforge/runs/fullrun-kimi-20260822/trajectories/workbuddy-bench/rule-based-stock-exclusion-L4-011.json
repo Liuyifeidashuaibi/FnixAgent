@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "rule-based-stock-exclusion-L4-011",
+  "prompt": "现在要做一份离线条件选股规则筛选结果归档。工作区里已经放好了冻结的候选股票池、行情快照、因子快照 workbook、题材代码表、市场参数说明和筛选规则卡。请不要联网，也不要调用实时行情、券商、交易、邮件、IM、外部消息推送、搜索或任何外部接口；这次只处理资料包内的静态文件，不做真实市场操作、股票推荐、买卖建议、涨停预测、次日操作建议或投资建议。\n请先阅读 `selection_rules.md` 和 `market_regime.md`，再结合 `candidate_universe.csv`、`market_snapshot.csv`、`indicator_snapshot.xlsx` 和 `theme_codebook.csv`，生成一个新的 Excel 工作簿 `output/rule_based_stock_screen.xlsx`。\n输出 workbook 需要包含四个 sheet：`selected_symbols`、`excluded_symbols`、`reason_summary`、`rule_audit`。\n`selected_symbols` 的列依次为 symbol、name、board、theme_code、theme_name、selection_score、valuation_score、liquidity_score、momentum_score、theme_weight、turnover_rate_pct、sort_rank、source_trace。\n`excluded_symbols` 的列依次为 symbol、name、board、primary_exclusion_reason、triggered_rule_codes、priority_rank、source_trace。若一个候选标的触发多个剔除条件，只能按规则卡优先级选择一个 primary_exclusion_reason，但 triggered_rule_codes 需要保留所有触发过的规则代码。\n`reason_summary` 的列依次为 summary_group、reason_or_theme_bucket、count、affected_boards、note。至少输出 primary_exclusion_reason、selected_theme_group、scoped_regime_affected 三类汇总。\n`rule_audit` 的列依次为 rule_code、rule_description、evaluated_count、triggered_count、examples_symbol_list、note。审计行要覆盖规则卡中的剔除规则、selection_score 公式和 selected_symbols 排序规则。\n关键口径以 `selection_rules.md` 和 `market_regime.md` 为准：只评估 candidate_universe.csv 中的候选标的；market_snapshot.csv 中的扩展行情行不进入输出明细；源系统活跃分不参与 selection_score；必需因子 valuation、liquidity、momentum 都要有非空分数且 as_of_date 不早于 2026-06-14；北交所和 watch_only 题材按本轮分组准入参数进入观察池，不进入 selected_symbols；selected_symbols 按 selection_score 降序、换手率降序、symbol 升序排序。\n\n请读取工作区中的输入文件：`input/candidate_universe.csv`、`input/market_snapshot.csv`、`input/indicator_snapshot.xlsx`、`input/theme_codebook.csv`、`input/market_regime.md`、`input/selection_rules.md`。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 78.00000000042928,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787334457.1207757,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\workbuddy-bench__rule-based-stock-exclusion-L4-011__7c8f46"
+}

@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "framework-migration-preserve-behavior-L4-023",
+  "prompt": "# Web-Bench Task T23\n\nConvert the structured professional document into a real Word document. The analysts need an editable `.docx` that keeps the source outline, tables, equations, footnotes, table of contents, and house styles intact enough for downstream editing and review. The output should open cleanly in Word/LibreOffice and remain inspectable as normal OOXML.\n\n\n## DOCX Fidelity Companion Notes\n\nInclude a reviewable companion note as `/workspace/submission/companion-format-ledger.json` alongside `output.docx`. It should help reviewers trace the important conversion decisions for heading styles, table topology, footnotes, equations, ToC order, custom styles, and style-mapping choices back to the bundled source document and style notes. Use concrete source element labels, target DOCX parts or sections, expected and observed format facts, and decision notes rather than generic claims.\n\nThis companion note is not a substitute for the real Word document or `word-structure.json`; it is the audit trail that makes the conversion reviewable without manually unpacking every OOXML part.\n\n## Output\n\nCreate the required artifacts inside `/workspace`:\n\n- `/workspace/submission/output.docx` (declared as `environment/submission/output.docx`)\n- `/workspace/submission/word-structure.json` (declared as `environment/submission/word-structure.json`)\n- `/workspace/submission/companion-format-ledger.json` (declared as `environment/submission/companion-format-ledger.json`)\n\nDo not place the final answer only in chat; write the runnable artifact files.\n\n## Format requirements\n\n1. Equations should be editable Word equation objects, not just plain text that looks like a formula.\n2. Include a Word Table of Contents whose visible entries follow the source heading order.\n3. Preserve source footnotes as Word-native footnotes with the same visible numbering.\n4. Use the `T23-Migration` style family from the style-mapping notes for title, heading, body, caption, and equation treatments.\n5. Preserve table structure and any merged-cell topology from the source document.\n6. Companion `word-structure.json` should summarize, at minimum:\n   - `equations`: list of `{index, omml_present: true, source_id}`\n   - `footnotes`: list of `{label, word_footnote_id}`\n   - `merged_cells`: `{gridSpan_count, vMerge_count}`\n   - `toc`: ordered list of heading titles mirroring the ToC field\n   - `custom_style_set`: `\"T23-Migration\"`\n\n## Public Assets\n\n- `source-document-html`: `/workspace/public-assets/source_docs/source.html` html\n- `document-structure`: `/workspace/public-assets/source_docs/document-structure.json` json\n- `style-mapping-notes`: `/workspace/public-assets/instructions/style-mapping.md` markdown",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787334453.3405287,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\workbuddy-bench__framework-migration-preserve-behavior-L4-023__7083d8"
+}

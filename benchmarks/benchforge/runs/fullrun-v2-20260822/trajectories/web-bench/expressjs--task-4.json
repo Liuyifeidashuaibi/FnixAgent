@@ -1,0 +1,18 @@
+{
+  "dataset": "web-bench",
+  "task_id": "expressjs--task-4",
+  "prompt": "1) Create libs/db.js to export a new sqlite3.Database(process.env.DB_HOST) by node-sqlite3. 2) add libs/setup.sql to create tables for products (id, name, price, image, description, quantity). 3) POST /api/products to insert product data (Request Body follow {'name': 'SKU', 'price': 1234, image: 'xxx', description: 'xxx', quantity: 100}). Return { success: true, data: {'id': 'xxxx' } } when inserted successfully 4) GET /api/products to fetch all products. Return { success: true, products: [{'id':'xxx', 'name': 'SKU', 'price': 1234, image: 'xxx', description: 'xxx', quantity: 100}] } when fetched successfully. 5) all apis generated in this tasks should be placed in routes/products/api.js and used by app entry(index.js) as Express Router",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 359.9999999996726,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336281.548113,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\web-bench__expressjs--task-4__50a666"
+}

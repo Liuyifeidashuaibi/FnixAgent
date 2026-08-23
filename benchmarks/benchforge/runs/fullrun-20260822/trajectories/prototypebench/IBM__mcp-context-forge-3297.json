@@ -1,0 +1,18 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "IBM__mcp-context-forge-3297",
+  "prompt": "# 🐛 Bug-fix PR\r\n\r\nCloses #3296\r\n\r\n---\r\n\r\n## Summary\r\nFixes broken admin redirects, template URLs, and UI cookie paths in proxy/embedded deployments where `request.scope[\"root_path\"]` is empty but `settings.app_root_path` is configured. Follow-up to #3290 which only fixed the CSRF cookie path.\r\n\r\n## Reproduction Steps\r\n1. Set `APP_ROOT_PATH=/api/proxy/mcp` and deploy behind a proxy that does not populate ASGI `scope[\"root_path\"]`.\r\n2. Open Admin UI and perform any POST action (create gateway, delete tool, toggle state).\r\n3. Observe redirect lands on `/admin#...` instead of `/api/proxy/mcp/admin#...`.\r\n\r\n## Root Cause\r\nThe fix in #3290 introduced a fallback from `scope[\"root_path\"]` to `settings.app_root_path` only in `_admin_cookie_path`. However, ~100 other call sites in `mcpgateway/admin.py` still read `request.scope.get(\"root_path\", \"\")` directly:\r\n- All `_build_admin_redirect()` callers (redirect URLs after POST actions)\r\n- All template context dictionaries (rendered navigation, pagination, asset links)\r\n- UI visibility cookie path construction\r\n- `_request` variant handlers\r\n\r\nThese all produce incorrect paths in the same proxy deployment scenario.\r\n\r\n## Fix Description\r\n- **Extracted `_resolve_root_path(request)`**: A new helper that encapsulates the resolution logic — checks `scope[\"root_path\"]` first, falls back to `settings.app_root_path`, normalizes (leading `/`, no trailing `/`).\r\n- **Refactored `_admin_cookie_path`**: Now delegates to `_resolve_root_path` instead of inlining the logic.\r\n- **Updated all call sites**: Replaced all `request.scope.get(\"root_path\", \"\")` occurrences with `_resolve_root_path(request)` (or `_resolve_root_path(_request) if _request else \"\"` for nullable request variants).\r\n\r\n## Verification\r\n\r\n| Check                                 | Command              | Status |\r\n|---------------------------------------|----------------------|--------|\r\n| Targeted tests (10)                   | `uv run pytest -k \"resolve_root_path or admin_cookie_path\"` | 10 passed |\r\n| Full admin test suite                 | `uv run pytest tests/unit/mcpgateway/test_admin.py` | 901 passed |\r\n\r\n## Files Changed\r\n\r\n| File | Changes |\r\n|------|---------|\r\n| `mcpgateway/admin.py` | Added `_resolve_root_path()` helper; replaced ~100 direct `scope[\"root_path\"]` reads |\r\n| `tests/unit/mcpgateway/test_admin.py` | Added 5 unit tests for `_resolve_root_path` |\r\n\r\n## Checklist\r\n- [x] Code formatted (`make black isort pre-commit`)\r\n- [x] No secrets/credentials committed\r\n- [x] Existing tests pass (901/901)\r\n- [x] New tests cover helper behavior (5 tests)",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/mcpgateway/admin.py b/mcpgateway/admin.py\nindex 7d1209e3b..1ebae7ed] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787332462.218113,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\prototypebench__IBM__mcp-context-forge-3297__575081"
+}

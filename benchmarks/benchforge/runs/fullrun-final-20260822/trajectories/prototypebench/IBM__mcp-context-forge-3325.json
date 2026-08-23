@@ -1,0 +1,61 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "IBM__mcp-context-forge-3325",
+  "prompt": "# 🐛 Bug-fix PR\n\n## 📌 Summary\nFixes intermittent `RuntimeError: Stream consumed` when admin form submissions are processed with detailed request logging enabled.\n\n## 🔁 Reproduction Steps\nIssue: #3313\n\n1. Enable detailed request logging (`LOG_LEVEL=INFO` or lower).\n2. Submit server form data from Admin UI (`/admin/servers`), especially with select-all style payloads.\n3. Endpoint may fail while parsing `await request.form()` due to consumed request stream.\n\n## 🐞 Root Cause\n`RequestLoggingMiddleware` read `await request.body()` and then created a synthetic `Request` object (`new_request`) before calling `call_next`. Under `BaseHTTPMiddleware`, downstream processing uses the original ASGI receive channel, so reconstructing `Request` this way can leave downstream form parsing on a consumed stream.\n\n## 💡 Fix Description\n- Removed synthetic `Request` reconstruction in `request_logging_middleware`.\n- Cached the body on the original request (`request._body = body`).\n- Called `call_next(request)` with the original request object.\n- Added regression coverage:\n  - middleware pipeline/form parsing regression test\n  - deterministic guard asserting the original request object is passed to `call_next`\n  - admin-path form regression test under logging-enabled middleware\n\nCloses #3313\n\n## 🧪 Verification\n\n| Check                                 | Command              | Status |\n|---------------------------------------|----------------------|--------|\n| Lint suite                            | `make lint`          | Not run in this cycle |\n| Unit tests                            | `uv run --no-sync pytest tests/unit/mcpgateway/middleware/test_request_logging_middleware.py -v` | Pass (66 passed) |\n| Coverage ≥ 80 %                       | `make coverage`      | Not run in this cycle |\n| Manual regression no longer fails     | `uv run --no-sync pytest tests/unit/mcpgateway/test_admin.py -k \"stream_consume or logging_enabled\" -v` | Pass (1 selected) |\n\n## 📐 MCP Compliance (if relevant)\n- [x] Matches current MCP spec\n- [x] No breaking change to MCP clients\n\n## ✅ Checklist\n- [ ] Code formatted (`make black isort pre-commit`)\n- [x] No secrets/credentials committed",
+  "status": "failure",
+  "failure_type": "path_error",
+  "failure_evidence": "Agent 未能找到指定的文件路径，导致无法执行进一步的任务验证。",
+  "final_response": "The `mcpgateway` directory does not exist in the current workspace. This suggests that the files and changes might be located in a different directory or that the changes have not been committed to this workspace.\n\nTo proceed, I need more information about the location of the files. Could you please provide the following details:\n1. The directory where the `request_logging_middleware` is located.\n2. The directory where the test files (`test_request_logging_middleware.py` and `test_admin.py`) are located.\n\nIf you can provide these details, I will be able to verify the changes and the new tests.",
+  "steps": [
+    "Step 0 | 思考: The provided summary indicates that a bug fix has been implemented to address an intermittent `Runti... | 工具 ✓ grep({\"pattern\": \"request\\\\._body = body\", \"path\": \".\"}) | 耗时: 8501ms, tokens: 3487",
+    "Step 0 | 思考: The provided summary indicates that a bug fix has been implemented to address an intermittent `Runti... | 工具 ✓ grep({\"pattern\": \"call_next\\\\(request\\\\)\", \"path\": \".\"}) | 耗时: 8502ms, tokens: 3487",
+    "Step 0 | 思考: The provided summary indicates that a bug fix has been implemented to address an intermittent `Runti... | 工具 ✓ glob({\"pattern\": \"tests/unit/mcpgateway/**/test_request) | 耗时: 8503ms, tokens: 3487",
+    "Step 0 | 思考: The provided summary indicates that a bug fix has been implemented to address an intermittent `Runti... | 工具 ✓ glob({\"pattern\": \"tests/unit/mcpgateway/test_admin.py\",) | 耗时: 8503ms, tokens: 3487",
+    "Step 1 | 思考: It appears that the expected changes and test files are not present in the current workspace. This c... | 工具 ✗ ls({\"path\": \"mcpgateway\"}) | 耗时: 6121ms, tokens: 3750",
+    "Step 2 | 思考: The `mcpgateway` directory does not exist in the current workspace. This suggests that the files and... | 耗时: 5300ms, tokens: 3893"
+  ],
+  "tool_calls": [
+    {
+      "step": 1,
+      "tool": "grep",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'count': 0, 'pattern': 'request\\\\._body = body'})\n(无匹配)"
+    },
+    {
+      "step": 2,
+      "tool": "grep",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'count': 0, 'pattern': 'call_next\\\\(request\\\\)'})\n(无匹配)"
+    },
+    {
+      "step": 3,
+      "tool": "glob",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'count': 0, 'pattern': 'tests/unit/mcpgateway/**/test_request_logging_middleware.py'})\n(无匹配结果)"
+    },
+    {
+      "step": 4,
+      "tool": "glob",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'count': 0, 'pattern': 'tests/unit/mcpgateway/test_admin.py'})\n(无匹配结果)"
+    },
+    {
+      "step": 5,
+      "tool": "ls",
+      "args": {},
+      "success": false,
+      "output_preview": "[失败] 目录不存在: mcpgateway"
+    }
+  ],
+  "files_written": [],
+  "total_tokens": 11130,
+  "duration_ms": 19920.99999999982,
+  "error": "",
+  "judge_method": "llm",
+  "started_at": 1787386517.773564,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-final-20260822\\workspaces\\prototypebench__IBM__mcp-context-forge-3325__75318f"
+}

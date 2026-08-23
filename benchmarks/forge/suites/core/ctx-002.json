@@ -1,0 +1,52 @@
+{
+  "id": "ctx-002",
+  "title": "多源交叉读取",
+  "capability": "context_retrieval",
+  "difficulty": 3,
+  "tags": [
+    "cross-reference"
+  ],
+  "prompt": "当前目录有 en.md 和 zh.md，各自定义了一组配置项。找出在**两个文件中都存在**的配置项名，逐行写入 common.txt（顺序不限，只写项名）。",
+  "setup": {
+    "files": {
+      "en.md": "- timeout: 30\n- retries: 3\n- region: us-east\n",
+      "zh.md": "- timeout: 30\n- cache: on\n- retries: 3\n"
+    }
+  },
+  "allowed_scope": [
+    "common.txt"
+  ],
+  "protected": [
+    "en.md",
+    "zh.md"
+  ],
+  "checks": [
+    {
+      "function": "file_contains",
+      "args": {
+        "path": "common.txt",
+        "pattern": "timeout"
+      }
+    },
+    {
+      "function": "file_contains",
+      "args": {
+        "path": "common.txt",
+        "pattern": "retries"
+      }
+    },
+    {
+      "function": "file_not_contains",
+      "args": {
+        "path": "common.txt",
+        "pattern": "(region|cache)"
+      },
+      "weight": 1.5,
+      "desc": "排除单方独有的项"
+    },
+    {
+      "function": "protected_untouched",
+      "args": {}
+    }
+  ]
+}

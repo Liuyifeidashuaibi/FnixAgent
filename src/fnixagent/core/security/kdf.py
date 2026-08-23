@@ -31,6 +31,7 @@ from datetime import UTC, datetime
 from functools import lru_cache
 
 logger = logging.getLogger(__name__)
+_logger = logger
 
 
 # ---------------------------------------------------------------------------
@@ -45,7 +46,7 @@ def _audit_kdf(action: str, detail: dict | None = None) -> None:
 
         AuditLogger().log(action=action, detail=detail or {})
     except Exception:
-        pass
+        _logger.debug('Unhandled exception', exc_info=True)
 
 
 # ---------------------------------------------------------------------------
@@ -78,7 +79,7 @@ class DerivedKey:
                 ctypes.memset(buf, 0, len(self.key))
                 # bytes 是不可变对象,无法原地修改,只能确保临时副本被清零
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
 
 
 # ---------------------------------------------------------------------------

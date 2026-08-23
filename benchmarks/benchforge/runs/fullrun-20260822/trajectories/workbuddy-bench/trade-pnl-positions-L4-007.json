@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "trade-pnl-positions-L4-007",
+  "prompt": "现在要做一份固定资料包内的多日盘后交易、权益分派、资金股份对账复核。工作区里已经放好了冻结导出的期初持仓、委托历史、成交回报、交割确认、股份余额变动、资金流水、权益分派通知、收盘价快照、账户别名表和核算规则说明。请不要联网，也不要查询实时行情、券商、交易、邮件、IM、搜索、外部消息推送或任何外部接口；这次只处理资料包内的静态文件，不做真实市场操作、股票推荐、买入卖出建议、持有建议、加仓减仓建议、具体价格预期、次日操作建议或投资建议。\n请先阅读 `accounting_rules.md`，再结合 `initial_positions.xlsx`、`order_history.csv`、`trade_fills.xlsx`、`broker_statement.xlsx`、`security_balance_changes.xlsx`、`cash_ledger.csv`、`corporate_actions.xlsx`、`closing_prices.csv` 和 `account_aliases.csv`，生成一个新的 Excel 工作簿 `output/trade_pnl_review.xlsx`。\n输出 workbook 需要包含六个 sheet：`position_reconciliation`、`realized_pnl`、`unrealized_pnl`、`cash_reconciliation`、`account_summary`、`exceptions`。\n`position_reconciliation` 的列依次为 as_of_date、internal_unit、account_short_code、broker_fund_account、shareholder_account、market、symbol、name、opening_qty、record_date_qty、trade_buy_qty、trade_sell_qty、bonus_share_qty、transfer_in_qty、transfer_out_qty、pending_settlement_qty、settled_ending_qty、reportable_qty、opening_cost_amount、trade_buy_cost_amount、trade_sell_cost_amount、corporate_action_cost_adjustment、ending_cost_amount、adjusted_avg_cost_price、balance_source_ids、source_trace。\n`realized_pnl` 的列依次为 trade_date、settlement_date、internal_unit、market、symbol、name、side、executed_qty、gross_amount、cost_basis、commission、stamp_tax、transfer_fee、realized_pnl、settlement_amount、cash_status、fill_ids、statement_contract_id、source_trace。\n`unrealized_pnl` 的列依次为 valuation_date、internal_unit、market、symbol、name、reportable_qty、adjusted_avg_cost_price、cost_amount、closing_price、price_status、market_value、unrealized_pnl、valuation_status、source_trace。\n`cash_reconciliation` 的列依次为 as_of_date、internal_unit、account_short_code、broker_fund_account、amount_type、market、symbol、gross_cash_amount、fee_amount、tax_amount、net_cash_amount、settlement_status、related_ids、source_trace。\n`account_summary` 的列依次为 as_of_date、internal_unit、account_short_code、broker_fund_account、beginning_cost_amount、trade_buy_cost_amount、trade_sell_cost_amount、corporate_action_qty_delta、dividend_cash、withholding_tax、net_trade_cash、pending_cash_amount、ending_cost_amount、market_value、unrealized_pnl、realized_pnl、exception_count、source_trace。\n`exceptions` 的列依次为 as_of_date、internal_unit、account_short_code、market、symbol、name、review_type、review_detail、severity、related_ids、source_trace。\n关键口径以 `accounting_rules.md` 为准：权益归属按股权登记日持仓判断；除权日之后买入不享有已生成批次的送股和现金红利；送股增加数量但不增加成本金额；现金红利和红利税进入资金对账而不是已实现交易盈亏；trade date 与 settlement date 需要分开；证券余额以股份余额变动和日终余额为高优先级来源，估值数量按日终余额加待交收数量；broker statement 对可匹配成交的成交金额、清算金额和费用更权威；trade fills 是实际成交数量和时间来源；order history 只用于订单生命周期和未成交原因，不能用委托数量替代成交数量；有效成交要处理冲正 / 更正关系；成本法使用移动加权平均；买入费用计入持仓成本，卖出佣金、印花税和过户费扣减已实现盈亏；收盘价缺失时市值和未实现盈亏留空，不能按 0 估值；source_trace 必须覆盖参与判断的输入来源线索；所有输出按规则卡指定排序稳定输出。\n\n请读取工作区中的输入文件：`input/accounting_rules.md`、`input/account_aliases.csv`、`input/initial_positions.xlsx`、`input/order_history.csv`、`input/trade_fills.xlsx`、`input/broker_statement.xlsx`、`input/security_balance_changes.xlsx`、`input/cash_ledger.csv`、`input/corporate_actions.xlsx`、`input/closing_prices.csv`。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787332459.949426,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\workbuddy-bench__trade-pnl-positions-L4-007__ffc601"
+}

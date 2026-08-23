@@ -31,6 +31,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
 logger = logging.getLogger(__name__)
+_logger = logger
 
 
 # ---------------------------------------------------------------------------
@@ -48,7 +49,7 @@ def _audit_tool_call(
 
         AuditLogger().log(action=action, detail=detail or {})
     except Exception:
-        pass
+        _logger.debug('Unhandled exception', exc_info=True)
 
 
 # ---------------------------------------------------------------------------

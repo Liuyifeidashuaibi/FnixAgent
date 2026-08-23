@@ -45,6 +45,7 @@ from fnixagent.core.security.crypto_provider import (
 )
 
 logger = logging.getLogger(__name__)
+_logger = logger
 
 # ---------------------------------------------------------------------------
 # 审计钩子
@@ -58,7 +59,7 @@ def _audit_a2a(action: str, detail: dict | None = None) -> None:
 
         AuditLogger().log(action=action, detail=detail or {})
     except Exception:
-        pass
+        _logger.debug('Unhandled exception', exc_info=True)
 
 
 # ---------------------------------------------------------------------------

@@ -9,7 +9,7 @@
  * Minimal Desktop-look Settings — local BYOK + model name (no model catalog).
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from 'react';
 import {
   ArrowLeft,
   Eye,
@@ -28,10 +28,10 @@ import {
   Sparkles,
   Zap,
   type LucideIcon,
-} from "lucide-react";
-import type { AppConfig } from "../../utils/tauri";
-import { saveAIProviders, saveConfigToStore } from "../../utils/tauri";
-import { testConnection, type AIProviderConfig } from "../../utils/providers";
+} from 'lucide-react';
+import type { AppConfig } from '../../utils/tauri';
+import { saveAIProviders, saveConfigToStore } from '../../utils/tauri';
+import { testConnection, type AIProviderConfig } from '../../utils/providers';
 import {
   approveMcpTrust,
   denyMcpTrust,
@@ -41,7 +41,6 @@ import {
   fetchMemorySearch,
   fetchMemoryStats,
   fetchSkillsList,
-  fetchSkillDrafts,
   createSkillDraft,
   submitSkillForReview,
   approveSkill,
@@ -53,7 +52,6 @@ import {
   testHarnessLlm,
   updateMcpConfig,
   cleanupMemory,
-  type FnixHarnessConfig,
   type FnixRuntimeDoctorReport,
   type FnixMemoryStats,
   type FnixMemoryItem,
@@ -61,8 +59,8 @@ import {
   type FnixSkillStatus,
   type McpServerConfig,
   type McpTrustServerRow,
-} from "../../lib/fnixBridge";
-import { LOCAL_LLM, localProviderConfig } from "./localLlm";
+} from '../../lib/fnixBridge';
+import { LOCAL_LLM, localProviderConfig, updateLocalLlm } from './localLlm';
 import {
   FNIX_VERSION,
   FNIX_BUILD_NUMBER,
@@ -70,27 +68,47 @@ import {
   FNIX_RELEASE_CHANNEL,
   FNIX_LICENSE,
   FNIX_CHANGELOG,
-} from "../../config/alpha";
-import "./DesktopSettings.css";
+} from '../../config/alpha';
+import './DesktopSettings.css';
 
-type Section = "general" | "models" | "about" | "diagnostics" | "mcp" | "memory" | "skills";
+type Section = 'general' | 'models' | 'about' | 'diagnostics' | 'mcp' | 'memory' | 'skills';
 
 const NAV_GROUPS: { label: string; items: [Section, string][] }[] = [
-  { label: "偏好", items: [["general", "General"]] },
-  { label: "模型", items: [["models", "Models"]] },
-  { label: "连接", items: [["mcp", "MCP"], ["skills", "Skills"]] },
-  { label: "数据", items: [["memory", "Memory"]] },
-  { label: "系统", items: [["diagnostics", "Diagnostics"], ["about", "About"]] },
+  { label: '偏好', items: [['general', 'General']] },
+  { label: '模型', items: [['models', 'Models']] },
+  {
+    label: '连接',
+    items: [
+      ['mcp', 'MCP'],
+      ['skills', 'Skills'],
+    ],
+  },
+  { label: '数据', items: [['memory', 'Memory']] },
+  {
+    label: '系统',
+    items: [
+      ['diagnostics', 'Diagnostics'],
+      ['about', 'About'],
+    ],
+  },
 ];
 
 const SECTION_META: Record<Section, { title: string; desc: string; icon: LucideIcon }> = {
-  general: { title: "偏好", desc: "外观与基础设置。", icon: SlidersHorizontal },
-  models: { title: "模型", desc: "配置本地 LLM 与 API Key（仅存本机）。", icon: Cpu },
-  mcp: { title: "MCP 服务器", desc: "管理模型上下文协议连接（fail-closed 本地授权）。", icon: Boxes },
-  skills: { title: "技能", desc: "技能市场生命周期：草稿 → 审核 → 发布。", icon: Wrench },
-  memory: { title: "记忆", desc: "三层本地记忆：短期 / 长期 / 实体。", icon: Brain },
-  diagnostics: { title: "诊断", desc: "查看 Fnix 当前能否正常工作；如有问题会直接给出处理建议。", icon: Activity },
-  about: { title: "关于", desc: "产品能力、版本与许可证。", icon: Info },
+  general: { title: '偏好', desc: '外观与基础设置。', icon: SlidersHorizontal },
+  models: { title: '模型', desc: '配置本地 LLM 与 API Key（仅存本机）。', icon: Cpu },
+  mcp: {
+    title: 'MCP 服务器',
+    desc: '管理模型上下文协议连接（fail-closed 本地授权）。',
+    icon: Boxes,
+  },
+  skills: { title: '技能', desc: '技能市场生命周期：草稿 → 审核 → 发布。', icon: Wrench },
+  memory: { title: '记忆', desc: '三层本地记忆：短期 / 长期 / 实体。', icon: Brain },
+  diagnostics: {
+    title: '诊断',
+    desc: '查看 Fnix 当前能否正常工作；如有问题会直接给出处理建议。',
+    icon: Activity,
+  },
+  about: { title: '关于', desc: '产品能力、版本与许可证。', icon: Info },
 };
 
 /** 统一区块标题：品牌图标块 + 标题 + 描述（SECTION_META 驱动，确保 7 个区块视觉一致）。 */
@@ -99,7 +117,9 @@ function SectionHeader({ section }: { section: Section }) {
   const Icon = meta.icon;
   return (
     <div className="fnix-set-title-head">
-      <span className="fnix-set-title-ico"><Icon size={18} /></span>
+      <span className="fnix-set-title-ico">
+        <Icon size={18} />
+      </span>
       <div>
         <h2>{meta.title}</h2>
         <p>{meta.desc}</p>
@@ -121,63 +141,99 @@ interface Props {
 
 /** Provider presets — selecting one fills sensible base_url / model defaults. */
 const MODEL_PRESETS: { id: string; name: string; baseUrl: string; model: string }[] = [
-  { id: "glm", name: "GLM（智谱）", baseUrl: "https://open.bigmodel.cn/api/paas/v4", model: "glm-4.5-flash" },
-  { id: "qwen", name: "DashScope（通义千问）", baseUrl: "https://dashscope.aliyuncs.com/compatible-mode/v1", model: "qwen-plus-2025-07-28" },
-  { id: "deepseek", name: "DeepSeek", baseUrl: "https://api.deepseek.com/v1", model: "deepseek-chat" },
-  { id: "openai", name: "OpenAI", baseUrl: "https://api.openai.com/v1", model: "gpt-4o-mini" },
-  { id: "custom", name: "自定义 / 其他", baseUrl: "", model: "" },
+  {
+    id: 'glm',
+    name: 'GLM（智谱）',
+    baseUrl: 'https://open.bigmodel.cn/api/paas/v4',
+    model: 'glm-4.5-flash',
+  },
+  {
+    id: 'qwen',
+    name: 'DashScope（通义千问）',
+    baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    model: 'qwen-plus-2025-07-28',
+  },
+  {
+    id: 'deepseek',
+    name: 'DeepSeek',
+    baseUrl: 'https://api.deepseek.com/v1',
+    model: 'deepseek-chat',
+  },
+  { id: 'openai', name: 'OpenAI', baseUrl: 'https://api.openai.com/v1', model: 'gpt-4o-mini' },
+  { id: 'custom', name: '自定义 / 其他', baseUrl: '', model: '' },
 ];
 
 /** MCP 样例模板 — 一键导入常见社区 MCP 服务器（导入后需「授权」方可连接，fail-closed）。
  *  FnixAgent 不内置任何 MCP 服务器；这些仅作为可导入的起点样例。*/
-const MCP_TEMPLATES: { name: string; desc: string; command: string; args: string[]; url?: string }[] = [
-  { name: "filesystem", desc: "读写本地文件系统（建议指定目录）", command: "npx", args: ["-y", "@modelcontextprotocol/server-filesystem", "."] },
-  { name: "fetch", desc: "网页抓取与正文提取", command: "uvx", args: ["mcp-server-fetch"] },
-  { name: "github", desc: "GitHub 仓库 / Issue / PR（需 Token）", command: "npx", args: ["-y", "@modelcontextprotocol/server-github"] },
-  { name: "git", desc: "本地 Git 仓库读写", command: "uvx", args: ["mcp-server-git"] },
-  { name: "sqlite", desc: "本地 SQLite 数据库查询", command: "uvx", args: ["mcp-server-sqlite", "--db-path", "./data.db"] },
-  { name: "time", desc: "时区与时间转换", command: "uvx", args: ["mcp-server-time"] },
+const MCP_TEMPLATES: {
+  name: string;
+  desc: string;
+  command: string;
+  args: string[];
+  url?: string;
+}[] = [
+  {
+    name: 'filesystem',
+    desc: '读写本地文件系统（建议指定目录）',
+    command: 'npx',
+    args: ['-y', '@modelcontextprotocol/server-filesystem', '.'],
+  },
+  { name: 'fetch', desc: '网页抓取与正文提取', command: 'uvx', args: ['mcp-server-fetch'] },
+  {
+    name: 'github',
+    desc: 'GitHub 仓库 / Issue / PR（需 Token）',
+    command: 'npx',
+    args: ['-y', '@modelcontextprotocol/server-github'],
+  },
+  { name: 'git', desc: '本地 Git 仓库读写', command: 'uvx', args: ['mcp-server-git'] },
+  {
+    name: 'sqlite',
+    desc: '本地 SQLite 数据库查询',
+    command: 'uvx',
+    args: ['mcp-server-sqlite', '--db-path', './data.db'],
+  },
+  { name: 'time', desc: '时区与时间转换', command: 'uvx', args: ['mcp-server-time'] },
 ];
 
 /** 提供商头像字（中文优先，便于一眼识别）。 */
 const PROVIDER_GLYPH: Record<string, string> = {
-  glm: "智",
-  qwen: "通",
-  deepseek: "深",
-  openai: "AI",
-  custom: "自",
+  glm: '智',
+  qwen: '通',
+  deepseek: '深',
+  openai: 'AI',
+  custom: '自',
 };
 
 /** 状态 → 中文标签（对标 Trae / WorkBuddy 的本地化状态呈现）。 */
 const SKILL_STATUS_LABEL: Record<string, string> = {
-  draft: "草稿",
-  pending_review: "审核中",
-  published: "已发布",
-  rejected: "已拒绝",
-  deprecated: "已弃用",
+  draft: '草稿',
+  pending_review: '审核中',
+  published: '已发布',
+  rejected: '已拒绝',
+  deprecated: '已弃用',
 };
-const SKILL_FILTERS: { value: FnixSkillStatus | "all"; label: string }[] = [
-  { value: "all", label: "全部" },
-  { value: "draft", label: "草稿" },
-  { value: "pending_review", label: "审核中" },
-  { value: "published", label: "已发布" },
-  { value: "rejected", label: "已拒绝" },
-  { value: "deprecated", label: "已弃用" },
+const SKILL_FILTERS: { value: FnixSkillStatus | 'all'; label: string }[] = [
+  { value: 'all', label: '全部' },
+  { value: 'draft', label: '草稿' },
+  { value: 'pending_review', label: '审核中' },
+  { value: 'published', label: '已发布' },
+  { value: 'rejected', label: '已拒绝' },
+  { value: 'deprecated', label: '已弃用' },
 ];
 const MCP_STATUS_LABEL: Record<string, string> = {
-  approved: "已授权",
-  denied: "已拒绝",
-  pending: "待授权",
+  approved: '已授权',
+  denied: '已拒绝',
+  pending: '待授权',
 };
 const MCP_DOT: Record<string, string> = {
-  approved: "green",
-  denied: "red",
-  pending: "yellow",
+  approved: 'green',
+  denied: 'red',
+  pending: 'yellow',
 };
 
 function ensureLocalProvider(providers: AIProviderConfig[]): AIProviderConfig {
   const existing =
-    providers.find((p) => p.id === "local-dashscope") ||
+    providers.find((p) => p.id === 'local-dashscope') ||
     providers.find((p) => p.apiKey?.trim()) ||
     providers[0];
   if (existing) return existing;
@@ -190,7 +246,7 @@ export function DesktopSettings({
   onConfigChange,
   onProvidersChange,
   onClose,
-  initialSection = "models",
+  initialSection = 'models',
   onOpenBenchmark,
 }: Props) {
   const [section, setSection] = useState<Section>(initialSection);
@@ -216,14 +272,14 @@ export function DesktopSettings({
   const [mcpLoaded, setMcpLoaded] = useState(false);
   const [mcpAdding, setMcpAdding] = useState(false);
   const [mcpAddOpen, setMcpAddOpen] = useState(false);
-  const [mcpAddName, setMcpAddName] = useState("");
-  const [mcpAddCmd, setMcpAddCmd] = useState("");
-  const [mcpAddUrl, setMcpAddUrl] = useState("");
+  const [mcpAddName, setMcpAddName] = useState('');
+  const [mcpAddCmd, setMcpAddCmd] = useState('');
+  const [mcpAddUrl, setMcpAddUrl] = useState('');
 
   // Memory (S1.2.4)
   const [memStats, setMemStats] = useState<FnixMemoryStats | null>(null);
-  const [memQuery, setMemQuery] = useState("");
-  const [memUserId, setMemUserId] = useState("desktop");
+  const [memQuery, setMemQuery] = useState('');
+  const [memUserId, setMemUserId] = useState('desktop');
   const [memItems, setMemItems] = useState<FnixMemoryItem[]>([]);
   const [memBusy, setMemBusy] = useState(false);
   const [memError, setMemError] = useState<string | null>(null);
@@ -231,15 +287,15 @@ export function DesktopSettings({
 
   // Skills (S1.2.3)
   const [skillEntries, setSkillEntries] = useState<FnixSkillEntry[]>([]);
-  const [skillFilter, setSkillFilter] = useState<FnixSkillStatus | "all">("all");
+  const [skillFilter, setSkillFilter] = useState<FnixSkillStatus | 'all'>('all');
   const [skillBusy, setSkillBusy] = useState(false);
   const [skillError, setSkillError] = useState<string | null>(null);
-  const [skillNewName, setSkillNewName] = useState("");
-  const [skillNewDesc, setSkillNewDesc] = useState("");
+  const [skillNewName, setSkillNewName] = useState('');
+  const [skillNewDesc, setSkillNewDesc] = useState('');
   const [skillLoaded, setSkillLoaded] = useState(false);
 
   // 运行状态（agent 运行环境检查）— 打开 Diagnostics 时按需检测一次，不常驻轮询
-  type DocColor = "green" | "yellow" | "red";
+  type DocColor = 'green' | 'yellow' | 'red';
   interface DocCard {
     key: string;
     label: string;
@@ -259,21 +315,23 @@ export function DesktopSettings({
     try {
       const alive = await pingAgentd({ timeoutMs: 4000 });
       cards.push({
-        key: "agentd",
-        label: "后台引擎",
-        desc: "Fnix 的本地后台服务，负责执行命令、读写文件与调用模型。它必须在线，否则所有 agent 功能都无法使用。",
-        color: alive ? "green" : "red",
-        title: alive ? "已就绪" : "离线",
-        detail: alive ? undefined : "需要启动后端服务：python -m uvicorn fnixagent.main:app --port 8003",
+        key: 'agentd',
+        label: '后台引擎',
+        desc: 'Fnix 的本地后台服务，负责执行命令、读写文件与调用模型。它必须在线，否则所有 agent 功能都无法使用。',
+        color: alive ? 'green' : 'red',
+        title: alive ? '已就绪' : '离线',
+        detail: alive
+          ? undefined
+          : '需要启动后端服务：python -m uvicorn fnixagent.main:app --port 8003',
       });
     } catch {
       cards.push({
-        key: "agentd",
-        label: "后台引擎",
-        desc: "Fnix 的本地后台服务，负责执行命令、读写文件与调用模型。它必须在线，否则所有 agent 功能都无法使用。",
-        color: "red",
-        title: "离线",
-        detail: "无法连接 agentd",
+        key: 'agentd',
+        label: '后台引擎',
+        desc: 'Fnix 的本地后台服务，负责执行命令、读写文件与调用模型。它必须在线，否则所有 agent 功能都无法使用。',
+        color: 'red',
+        title: '离线',
+        detail: '无法连接 agentd',
       });
     }
 
@@ -286,44 +344,42 @@ export function DesktopSettings({
     }
     const homeExists = st?.home_dir?.exists;
     cards.push({
-      key: "~/.fnix",
-      label: "配置目录",
-      desc: "Fnix 存放设置、记忆与技能的本地文件夹（位于你的用户目录下）。首次运行会自动创建。",
-      color: typeof homeExists === "boolean" ? (homeExists ? "green" : "red") : "red",
-      title:
-        typeof homeExists === "boolean" ? (homeExists ? "已创建" : "尚未创建") : "无法检测",
+      key: '~/.fnix',
+      label: '配置目录',
+      desc: 'Fnix 存放设置、记忆与技能的本地文件夹（位于你的用户目录下）。首次运行会自动创建。',
+      color: typeof homeExists === 'boolean' ? (homeExists ? 'green' : 'red') : 'red',
+      title: typeof homeExists === 'boolean' ? (homeExists ? '已创建' : '尚未创建') : '无法检测',
       detail:
-        typeof homeExists === "boolean"
+        typeof homeExists === 'boolean'
           ? homeExists
             ? st?.home_dir?.path
-            : "运行一次后端服务即可自动生成"
-          : "后端未响应，请先确认后台引擎在线",
+            : '运行一次后端服务即可自动生成'
+          : '后端未响应，请先确认后台引擎在线',
     });
     const sidecarAvail = st?.sidecar?.available;
     cards.push({
-      key: "sidecar",
-      label: "增强组件",
-      desc: "可选的本地辅助进程，提供更快的文件检索与预览等能力。缺失时核心功能仍可用，仅部分体验会降级。",
-      color: typeof sidecarAvail === "boolean" ? (sidecarAvail ? "green" : "yellow") : "yellow",
-      title:
-        typeof sidecarAvail === "boolean" ? (sidecarAvail ? "已连接" : "未启用") : "无法检测",
+      key: 'sidecar',
+      label: '增强组件',
+      desc: '可选的本地辅助进程，提供更快的文件检索与预览等能力。缺失时核心功能仍可用，仅部分体验会降级。',
+      color: typeof sidecarAvail === 'boolean' ? (sidecarAvail ? 'green' : 'yellow') : 'yellow',
+      title: typeof sidecarAvail === 'boolean' ? (sidecarAvail ? '已连接' : '未启用') : '无法检测',
       detail:
-        typeof sidecarAvail === "boolean"
+        typeof sidecarAvail === 'boolean'
           ? sidecarAvail
             ? st?.sidecar?.url
-            : "本地未运行增强组件，能力受限"
-          : "后端未响应，请先确认后台引擎在线",
+            : '本地未运行增强组件，能力受限'
+          : '后端未响应，请先确认后台引擎在线',
     });
 
     // LLM Key
     const hasKey = providers.some((p) => Boolean(p.apiKey?.trim()));
     cards.push({
-      key: "LLM Key",
-      label: "模型密钥",
-      desc: "用于调用大语言模型的 API 密钥，仅保存在你本机。没有它就无法生成任何回答。",
-      color: hasKey ? "green" : "yellow",
-      title: hasKey ? "已配置" : "未配置",
-      detail: hasKey ? undefined : "请在「模型」中填写 API Key",
+      key: 'LLM Key',
+      label: '模型密钥',
+      desc: '用于调用大语言模型的 API 密钥，仅保存在你本机。没有它就无法生成任何回答。',
+      color: hasKey ? 'green' : 'yellow',
+      title: hasKey ? '已配置' : '未配置',
+      detail: hasKey ? undefined : '请在「模型」中填写 API Key',
     });
 
     setDocCards(cards);
@@ -331,13 +387,15 @@ export function DesktopSettings({
   }, [providers]);
 
   useEffect(() => {
-    if (section === "diagnostics") void refreshDoc();
+    if (section === 'diagnostics') void refreshDoc();
   }, [section, refreshDoc]);
 
   useEffect(() => {
     const p = ensureLocalProvider(providers);
     setApiKey(p.apiKey || config.api_key || LOCAL_LLM.apiKey);
-    setModel(p.models.find((m) => m.enabled)?.id || p.models[0]?.id || config.model || LOCAL_LLM.model);
+    setModel(
+      p.models.find((m) => m.enabled)?.id || p.models[0]?.id || config.model || LOCAL_LLM.model,
+    );
     setBaseUrl(p.baseUrl || LOCAL_LLM.baseUrl);
   }, [providers, config.api_key, config.model]);
 
@@ -347,7 +405,7 @@ export function DesktopSettings({
     try {
       const res = await listMcpTrust();
       if (!res.ok) {
-        setMcpError(res.error || "加载 MCP 授权列表失败");
+        setMcpError(res.error || '加载 MCP 授权列表失败');
         setMcpServers([]);
         return;
       }
@@ -359,7 +417,7 @@ export function DesktopSettings({
   }, []);
 
   useEffect(() => {
-    if (section === "mcp") void refreshMcp();
+    if (section === 'mcp') void refreshMcp();
   }, [section, refreshMcp]);
 
   // ---- Memory ----
@@ -376,7 +434,7 @@ export function DesktopSettings({
   }, []);
 
   useEffect(() => {
-    if (section === "memory") void refreshMemory();
+    if (section === 'memory') void refreshMemory();
   }, [section, refreshMemory]);
 
   const handleMemSearch = async () => {
@@ -384,9 +442,13 @@ export function DesktopSettings({
     setMemBusy(true);
     setMemError(null);
     try {
-      const res = await fetchMemorySearch({ user_id: memUserId.trim(), query: memQuery.trim(), top_k: 10 });
+      const res = await fetchMemorySearch({
+        user_id: memUserId.trim(),
+        query: memQuery.trim(),
+        top_k: 10,
+      });
       if (!res.ok) {
-        setMemError(res.error || "搜索失败");
+        setMemError(res.error || '搜索失败');
         setMemItems([]);
       } else {
         setMemItems(res.items);
@@ -402,7 +464,7 @@ export function DesktopSettings({
     try {
       const res = await cleanupMemory();
       if (!res.ok) {
-        setMemError(res.error || "清理失败");
+        setMemError(res.error || '清理失败');
       } else {
         setToast(`清理 ${res.removed ?? 0} 条`);
         await refreshMemory();
@@ -418,7 +480,7 @@ export function DesktopSettings({
     setSkillError(null);
     try {
       const list = await fetchSkillsList(
-        skillFilter === "all" ? undefined : { status: skillFilter },
+        skillFilter === 'all' ? undefined : { status: skillFilter },
       );
       setSkillEntries(list?.entries ?? []);
     } catch (e) {
@@ -450,7 +512,7 @@ export function DesktopSettings({
   const addMcpServer = async (name: string, command: string, url: string) => {
     const n = name.trim();
     if (!n) {
-      setMcpError("服务器名称不能为空");
+      setMcpError('服务器名称不能为空');
       return;
     }
     setMcpAdding(true);
@@ -458,7 +520,7 @@ export function DesktopSettings({
     try {
       const cur = await fetchMcpConfig();
       if (!cur.ok) {
-        setMcpError(cur.error || "读取 MCP 配置失败");
+        setMcpError(cur.error || '读取 MCP 配置失败');
         return;
       }
       const servers = (cur.servers || []).filter((s) => s.name !== n);
@@ -473,12 +535,12 @@ export function DesktopSettings({
       servers.push(next);
       const res = await updateMcpConfig({ version: cur.version ?? 1, servers });
       if (!res.ok) {
-        setMcpError(res.error || "写入 MCP 配置失败");
+        setMcpError(res.error || '写入 MCP 配置失败');
         return;
       }
-      setMcpAddName("");
-      setMcpAddCmd("");
-      setMcpAddUrl("");
+      setMcpAddName('');
+      setMcpAddCmd('');
+      setMcpAddUrl('');
       setMcpAddOpen(false);
       setToast(`已添加 ${n}（待授权）`);
       await refreshMcp();
@@ -490,22 +552,26 @@ export function DesktopSettings({
   const handleAddMcp = () => void addMcpServer(mcpAddName, mcpAddCmd, mcpAddUrl);
 
   /** 从样例模板一键导入（命令拼回字符串，复用 addMcpServer 的写入 + 信任刷新）。*/
-  const handleImportTemplate = (tpl: typeof MCP_TEMPLATES[number]) => {
-    void addMcpServer(tpl.name, tpl.url ? "" : `${tpl.command} ${tpl.args.join(" ")}`, tpl.url ?? "");
+  const handleImportTemplate = (tpl: (typeof MCP_TEMPLATES)[number]) => {
+    void addMcpServer(
+      tpl.name,
+      tpl.url ? '' : `${tpl.command} ${tpl.args.join(' ')}`,
+      tpl.url ?? '',
+    );
   };
 
   useEffect(() => {
-    if (section === "models") void refreshModels();
+    if (section === 'models') void refreshModels();
   }, [section, refreshModels]);
 
   useEffect(() => {
-    if (section === "skills") void refreshSkills();
+    if (section === 'skills') void refreshSkills();
   }, [section, refreshSkills]);
 
   const handleCreateDraft = async () => {
     const name = skillNewName.trim();
     if (!name) {
-      setSkillError("技能名不能为空");
+      setSkillError('技能名不能为空');
       return;
     }
     setSkillBusy(true);
@@ -515,14 +581,14 @@ export function DesktopSettings({
         name,
         display_name: name,
         description: skillNewDesc.trim(),
-        owner_id: "desktop",
-        initial_version: "1.0.0",
+        owner_id: 'desktop',
+        initial_version: '1.0.0',
       });
       if (!res.ok || !res.entry) {
-        setSkillError(res.error || "创建失败");
+        setSkillError(res.error || '创建失败');
       } else {
-        setSkillNewName("");
-        setSkillNewDesc("");
+        setSkillNewName('');
+        setSkillNewDesc('');
         setToast(`草稿已创建: ${res.entry.name}`);
         await refreshSkills();
       }
@@ -531,13 +597,16 @@ export function DesktopSettings({
     }
   };
 
-  const handleSkillAction = async (entry: FnixSkillEntry, action: "submit" | "approve" | "deprecate") => {
+  const handleSkillAction = async (
+    entry: FnixSkillEntry,
+    action: 'submit' | 'approve' | 'deprecate',
+  ) => {
     setSkillBusy(true);
     setSkillError(null);
     try {
       let res: { ok: boolean; error?: string };
-      if (action === "submit") res = await submitSkillForReview(entry.id);
-      else if (action === "approve") res = await approveSkill(entry.id);
+      if (action === 'submit') res = await submitSkillForReview(entry.id);
+      else if (action === 'approve') res = await approveSkill(entry.id);
       else res = await deprecateSkill(entry.id);
       if (!res.ok) {
         setSkillError(res.error || `${action} failed`);
@@ -551,12 +620,14 @@ export function DesktopSettings({
   };
 
   const buildProvider = (): AIProviderConfig => ({
-    id: seed.id || "local-dashscope",
-    type: "openai-compatible",
+    id: seed.id || 'local-dashscope',
+    type: 'openai-compatible',
     name: MODEL_PRESETS.find((p) => p.id === provider)?.name || provider,
     apiKey: apiKey.trim(),
     baseUrl: baseUrl.trim() || LOCAL_LLM.baseUrl,
-    models: [{ id: model.trim() || LOCAL_LLM.model, name: model.trim() || LOCAL_LLM.model, enabled: true }],
+    models: [
+      { id: model.trim() || LOCAL_LLM.model, name: model.trim() || LOCAL_LLM.model, enabled: true },
+    ],
   });
 
   const handleSave = async () => {
@@ -581,7 +652,16 @@ export function DesktopSettings({
         base_url: prov.baseUrl,
         api_key: prov.apiKey,
       });
-      setToast("Saved");
+      // BUG-022 fix: sync LOCAL_LLM module-level variable so all consumers
+      // (modelLabel fallback, OnboardingWizard, Settings re-open) see the new model.
+      updateLocalLlm({
+        apiKey: prov.apiKey,
+        model: nextConfig.model,
+        baseUrl: prov.baseUrl,
+        provider: provider,
+        providerName: MODEL_PRESETS.find((p) => p.id === provider)?.name || provider,
+      });
+      setToast('Saved');
     } catch (e) {
       setToast(String(e));
     } finally {
@@ -603,13 +683,13 @@ export function DesktopSettings({
       });
       if (harness.ok) {
         setTestOk(true);
-        setToast("连接成功");
+        setToast('连接成功');
         return;
       }
       // Fallback: direct provider call (may hit CORS in browser)
       const res = await testConnection(prov, modelId);
       setTestOk(res.success);
-      setToast(res.success ? "连接成功" : res.error || harness.error || "连接失败");
+      setToast(res.success ? '连接成功' : res.error || harness.error || '连接失败');
     } catch (e) {
       setTestOk(false);
       setToast(String(e));
@@ -626,11 +706,11 @@ export function DesktopSettings({
       command: row.command || undefined,
       args: row.args?.length ? row.args : undefined,
       remote_url: row.url || undefined,
-      notes: "从设置中批准",
+      notes: '从设置中批准',
     });
     setMcpBusy(false);
     if (!res.ok) {
-      setToast(res.error || "批准失败");
+      setToast(res.error || '批准失败');
       setTestOk(false);
       return;
     }
@@ -644,11 +724,11 @@ export function DesktopSettings({
     setToast(null);
     const res = await denyMcpTrust({
       server_id: row.name,
-      notes: "从设置中拒绝",
+      notes: '从设置中拒绝',
     });
     setMcpBusy(false);
     if (!res.ok) {
-      setToast(res.error || "拒绝失败");
+      setToast(res.error || '拒绝失败');
       setTestOk(false);
       return;
     }
@@ -658,7 +738,7 @@ export function DesktopSettings({
   };
 
   return (
-    <div className="fnix-set-root" role="dialog" aria-label="Settings">
+    <div className="fnix-set-root" role="region" aria-label="Settings">
       <header className="fnix-set-head">
         <div className="fnix-set-head-l">
           <button type="button" className="fnix-set-back" onClick={onClose} aria-label="返回">
@@ -670,8 +750,15 @@ export function DesktopSettings({
           </div>
         </div>
         <div className="fnix-set-head-r">
-          {toast && <span className={`fnix-set-toast${testOk === false ? " bad" : ""}`}>{toast}</span>}
-          <button type="button" className="fnix-set-save primary" disabled={saving} onClick={() => void handleSave()}>
+          {toast && (
+            <span className={`fnix-set-toast${testOk === false ? ' bad' : ''}`}>{toast}</span>
+          )}
+          <button
+            type="button"
+            className="fnix-set-save primary"
+            disabled={saving}
+            onClick={() => void handleSave()}
+          >
             {saving ? <Loader2 size={14} className="spin" /> : null}
             Save
           </button>
@@ -690,7 +777,7 @@ export function DesktopSettings({
                   <button
                     key={id}
                     type="button"
-                    className={`fnix-set-nav-item${section === id ? " on" : ""}`}
+                    className={`fnix-set-nav-item${section === id ? ' on' : ''}`}
                     onClick={() => setSection(id)}
                   >
                     <Icon size={16} />
@@ -703,26 +790,35 @@ export function DesktopSettings({
         </nav>
 
         <main className="fnix-set-main">
-          {section === "models" && (
+          {section === 'models' && (
             <>
               <div className="fnix-set-title">
                 <SectionHeader section="models" />
-                {!modelsLoaded ? <p className="fnix-field-hint">正在从后端读取当前模型配置…</p> : null}
+                {!modelsLoaded ? (
+                  <p className="fnix-field-hint">正在从后端读取当前模型配置…</p>
+                ) : null}
               </div>
 
               <div className="fnix-prov-detail">
                 <div className="fnix-prov-head">
                   <span className="fnix-prov-avatar" aria-hidden>
-                    {PROVIDER_GLYPH[provider] ?? (MODEL_PRESETS.find((p) => p.id === provider)?.name || provider).slice(0, 1).toUpperCase()}
+                    {PROVIDER_GLYPH[provider] ??
+                      (MODEL_PRESETS.find((p) => p.id === provider)?.name || provider)
+                        .slice(0, 1)
+                        .toUpperCase()}
                   </span>
                   <div className="fnix-prov-id">
                     <b>{MODEL_PRESETS.find((p) => p.id === provider)?.name || provider}</b>
                     <span>本地 LLM 提供商 · 密钥仅存本机</span>
                   </div>
                   {testOk === true ? (
-                    <span className="fnix-conn-status ok"><CheckCircle2 size={13} /> 已连接</span>
+                    <span className="fnix-conn-status ok">
+                      <CheckCircle2 size={13} /> 已连接
+                    </span>
                   ) : testOk === false ? (
-                    <span className="fnix-conn-status err"><XCircle size={13} /> 连接失败</span>
+                    <span className="fnix-conn-status err">
+                      <XCircle size={13} /> 连接失败
+                    </span>
                   ) : null}
                 </div>
                 <div className="fnix-field">
@@ -741,7 +837,9 @@ export function DesktopSettings({
                     className="fnix-select"
                   >
                     {MODEL_PRESETS.map((p) => (
-                      <option key={p.id} value={p.id}>{p.name}</option>
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
                     ))}
                   </select>
                   {keyHint ? (
@@ -758,12 +856,16 @@ export function DesktopSettings({
                       <KeyRound size={15} />
                     </span>
                     <input
-                      type={showKey ? "text" : "password"}
+                      type={showKey ? 'text' : 'password'}
                       value={apiKey}
                       placeholder="sk-…"
                       onChange={(e) => setApiKey(e.target.value)}
                     />
-                    <button type="button" className="fnix-ibtn sm" onClick={() => setShowKey((v) => !v)}>
+                    <button
+                      type="button"
+                      className="fnix-ibtn sm"
+                      onClick={() => setShowKey((v) => !v)}
+                    >
                       {showKey ? <EyeOff size={15} /> : <Eye size={15} />}
                     </button>
                   </div>
@@ -813,7 +915,7 @@ export function DesktopSettings({
             </>
           )}
 
-          {section === "mcp" && (
+          {section === 'mcp' && (
             <div className="fnix-set-title">
               <SectionHeader section="mcp" />
               <div className="fnix-set-actions" style={{ marginTop: 12 }}>
@@ -823,7 +925,7 @@ export function DesktopSettings({
                   disabled={mcpBusy}
                   onClick={() => setMcpAddOpen((v) => !v)}
                 >
-                  {mcpAddOpen ? "收起" : "+ 添加服务器"}
+                  {mcpAddOpen ? '收起' : '+ 添加服务器'}
                 </button>
                 <button
                   type="button"
@@ -896,24 +998,27 @@ export function DesktopSettings({
               ) : mcpServers.length === 0 ? (
                 <div className="fnix-empty-card">
                   <b>还没有任何 MCP 服务器</b>
-                  <span>点击上方「+ 添加服务器」登记一个本地 / 远程 MCP 服务，批准后即可连接。</span>
+                  <span>
+                    点击上方「+ 添加服务器」登记一个本地 / 远程 MCP 服务，批准后即可连接。
+                  </span>
                 </div>
               ) : (
                 <div style={{ marginTop: 8 }}>
                   {mcpServers.map((row) => (
                     <div key={row.name} className="fnix-mcp-row">
-                      <span className={`fnix-mcp-dot ${MCP_DOT[row.trust_status] ?? "yellow"}`} aria-hidden />
+                      <span
+                        className={`fnix-mcp-dot ${MCP_DOT[row.trust_status] ?? 'yellow'}`}
+                        aria-hidden
+                      />
                       <div className="fnix-mcp-meta">
                         <div className="fnix-mcp-head">
                           <b>{row.name}</b>
-                          <span className="fnix-transport">
-                            {row.command ? "stdio" : "http"}
-                          </span>
+                          <span className="fnix-transport">{row.command ? 'stdio' : 'http'}</span>
                         </div>
                         <span>
                           {row.command
-                            ? [row.command, ...(row.args || [])].join(" ")
-                            : row.url || "—"}
+                            ? [row.command, ...(row.args || [])].join(' ')
+                            : row.url || '—'}
                         </span>
                         <span className={`fnix-mcp-badge ${row.trust_status}`}>
                           {MCP_STATUS_LABEL[row.trust_status] ?? row.trust_status}
@@ -923,7 +1028,7 @@ export function DesktopSettings({
                         <button
                           type="button"
                           className="fnix-set-save"
-                          disabled={mcpBusy || row.trust_status === "approved"}
+                          disabled={mcpBusy || row.trust_status === 'approved'}
                           onClick={() => void handleApproveMcp(row)}
                         >
                           授权
@@ -931,7 +1036,7 @@ export function DesktopSettings({
                         <button
                           type="button"
                           className="fnix-set-save ghost"
-                          disabled={mcpBusy || row.trust_status === "denied"}
+                          disabled={mcpBusy || row.trust_status === 'denied'}
                           onClick={() => void handleDenyMcp(row)}
                         >
                           拒绝
@@ -945,7 +1050,9 @@ export function DesktopSettings({
               <div className="fnix-mcp-samples">
                 <div className="fnix-mcp-samples-head">
                   <b>样例模板</b>
-                  <span>一键导入常见 MCP 服务器；导入后需点击「授权」方可连接（fail-closed 本地授权）。</span>
+                  <span>
+                    一键导入常见 MCP 服务器；导入后需点击「授权」方可连接（fail-closed 本地授权）。
+                  </span>
                 </div>
                 <div className="fnix-mcp-samples-grid">
                   {MCP_TEMPLATES.map((tpl) => {
@@ -954,17 +1061,19 @@ export function DesktopSettings({
                       <div key={tpl.name} className="fnix-mcp-sample-card">
                         <div className="fnix-mcp-sample-top">
                           <b>{tpl.name}</b>
-                          <span className="fnix-transport">{tpl.url ? "http" : "stdio"}</span>
+                          <span className="fnix-transport">{tpl.url ? 'http' : 'stdio'}</span>
                         </div>
                         <p className="fnix-mcp-sample-desc">{tpl.desc}</p>
-                        <code className="fnix-mcp-sample-cmd">{tpl.url || [tpl.command, ...tpl.args].join(" ")}</code>
+                        <code className="fnix-mcp-sample-cmd">
+                          {tpl.url || [tpl.command, ...tpl.args].join(' ')}
+                        </code>
                         <button
                           type="button"
                           className="fnix-set-save"
                           disabled={mcpBusy || imported}
                           onClick={() => handleImportTemplate(tpl)}
                         >
-                          {imported ? "已导入" : "导入"}
+                          {imported ? '已导入' : '导入'}
                         </button>
                       </div>
                     );
@@ -974,37 +1083,57 @@ export function DesktopSettings({
             </div>
           )}
 
-          {section === "memory" && (
+          {section === 'memory' && (
             <div className="fnix-set-title">
               <SectionHeader section="memory" />
               {!memLoaded ? <div className="fnix-loading-row">正在加载记忆统计…</div> : null}
               <div className="fnix-mem-grid">
                 <div className="fnix-mem-layer">
                   <div className="fnix-mem-layer-top">
-                    <span className="fnix-mem-ico"><Zap size={15} /></span>
+                    <span className="fnix-mem-ico">
+                      <Zap size={15} />
+                    </span>
                     <b>短期记忆</b>
                   </div>
-                  <div className="fnix-mem-layer-val">{memStats?.short_term_count ?? "—"}<i>条</i></div>
-                  <div className="fnix-mem-layer-sub">{memStats?.short_term_tokens ?? 0} tokens · 会话内上下文</div>
+                  <div className="fnix-mem-layer-val">
+                    {memStats?.short_term_count ?? '—'}
+                    <i>条</i>
+                  </div>
+                  <div className="fnix-mem-layer-sub">
+                    {memStats?.short_term_tokens ?? 0} tokens · 会话内上下文
+                  </div>
                 </div>
                 <div className="fnix-mem-layer">
                   <div className="fnix-mem-layer-top">
-                    <span className="fnix-mem-ico"><Brain size={15} /></span>
+                    <span className="fnix-mem-ico">
+                      <Brain size={15} />
+                    </span>
                     <b>长期记忆</b>
                   </div>
-                  <div className="fnix-mem-layer-val">{memStats?.long_term_count ?? "—"}<i>条</i></div>
+                  <div className="fnix-mem-layer-val">
+                    {memStats?.long_term_count ?? '—'}
+                    <i>条</i>
+                  </div>
                   <div className="fnix-mem-layer-sub">语义检索可用 · 跨会话保留</div>
                 </div>
                 <div className="fnix-mem-layer">
                   <div className="fnix-mem-layer-top">
-                    <span className="fnix-mem-ico"><Boxes size={15} /></span>
+                    <span className="fnix-mem-ico">
+                      <Boxes size={15} />
+                    </span>
                     <b>实体记忆</b>
                   </div>
-                  <div className="fnix-mem-layer-val">{memStats?.entity_count ?? "—"}<i>个</i></div>
+                  <div className="fnix-mem-layer-val">
+                    {memStats?.entity_count ?? '—'}
+                    <i>个</i>
+                  </div>
                   <div className="fnix-mem-layer-sub">
                     {memStats?.entity_types && Object.keys(memStats.entity_types).length > 0
-                      ? "类型: " + Object.entries(memStats.entity_types).map(([k, v]) => `${k}=${v}`).join(" · ")
-                      : "暂无已识别实体"}
+                      ? '类型: ' +
+                        Object.entries(memStats.entity_types)
+                          .map(([k, v]) => `${k}=${v}`)
+                          .join(' · ')
+                      : '暂无已识别实体'}
                   </div>
                 </div>
               </div>
@@ -1022,7 +1151,9 @@ export function DesktopSettings({
                     value={memQuery}
                     placeholder="检索查询…"
                     onChange={(e) => setMemQuery(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === "Enter") void handleMemSearch(); }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') void handleMemSearch();
+                    }}
                   />
                   <button
                     type="button"
@@ -1042,8 +1173,10 @@ export function DesktopSettings({
                   {memItems.map((it, i) => (
                     <div key={it.id || i} className="fnix-mcp-row">
                       <div className="fnix-mcp-meta">
-                        <b>{(it.content || "").slice(0, 80)}</b>
-                        <span>score: {(it.score ?? 0).toFixed(3)} · {it.created_at || ""}</span>
+                        <b>{(it.content || '').slice(0, 80)}</b>
+                        <span>
+                          score: {(it.score ?? 0).toFixed(3)} · {it.created_at || ''}
+                        </span>
                       </div>
                     </div>
                   ))}
@@ -1072,17 +1205,18 @@ export function DesktopSettings({
             </div>
           )}
 
-          {section === "skills" && (
+          {section === 'skills' && (
             <div className="fnix-set-title">
               <SectionHeader section="skills" />
               {(() => {
-                const builtinCount = skillEntries.filter((e) => e.owner_id === "builtin").length;
+                const builtinCount = skillEntries.filter((e) => e.owner_id === 'builtin').length;
                 return (
                   <>
                     <div className="fnix-skill-sample">
                       <Sparkles size={15} />
                       <span>
-                        已内置 <b>{builtinCount}</b> 个开箱即用技能样板。点击「创建草稿」自定义，或导入你自己的技能（SKILL.md）。
+                        已内置 <b>{builtinCount}</b>{' '}
+                        个开箱即用技能样板。点击「创建草稿」自定义，或导入你自己的技能（SKILL.md）。
                       </span>
                     </div>
 
@@ -1113,12 +1247,12 @@ export function DesktopSettings({
 
                     <div className="fnix-field" style={{ marginTop: 12 }}>
                       <label>状态过滤</label>
-                      <div className="fnix-seg" style={{ maxWidth: "100%", overflowX: "auto" }}>
+                      <div className="fnix-seg" style={{ maxWidth: '100%', overflowX: 'auto' }}>
                         {SKILL_FILTERS.map((f) => (
                           <button
                             key={f.value}
                             type="button"
-                            className={`fnix-seg-item ${skillFilter === f.value ? "on" : ""}`}
+                            className={`fnix-seg-item ${skillFilter === f.value ? 'on' : ''}`}
                             onClick={() => setSkillFilter(f.value)}
                           >
                             {f.label}
@@ -1140,7 +1274,9 @@ export function DesktopSettings({
                       ) : (
                         <div className="fnix-empty-card">
                           <b>还没有技能</b>
-                          <span>在上方填写名称创建第一个草稿，进入 DRAFT → 审核 → 发布 的生命周期。</span>
+                          <span>
+                            在上方填写名称创建第一个草稿，进入 DRAFT → 审核 → 发布 的生命周期。
+                          </span>
                         </div>
                       )
                     ) : (
@@ -1148,19 +1284,23 @@ export function DesktopSettings({
                         {skillEntries.map((entry) => (
                           <div
                             key={entry.id}
-                            className={`fnix-skill-card${entry.owner_id === "builtin" ? " is-sample" : ""}`}
+                            className={`fnix-skill-card${entry.owner_id === 'builtin' ? ' is-sample' : ''}`}
                           >
                             <div className="fnix-skill-card-head">
-                              <span className="fnix-skill-ico"><Boxes size={16} /></span>
+                              <span className="fnix-skill-ico">
+                                <Boxes size={16} />
+                              </span>
                               <div className="fnix-skill-titles">
                                 <div className="fnix-skill-name-row">
                                   <b>{entry.display_name || entry.name}</b>
-                                  <span className="fnix-skill-ver">v{entry.latest_version || "—"}</span>
+                                  <span className="fnix-skill-ver">
+                                    v{entry.latest_version || '—'}
+                                  </span>
                                 </div>
                                 <span className="fnix-skill-id">{entry.name}</span>
                               </div>
                               <div className="fnix-skill-badges">
-                                {entry.owner_id === "builtin" ? (
+                                {entry.owner_id === 'builtin' ? (
                                   <span className="fnix-skill-builtin">内置样板</span>
                                 ) : null}
                                 <span className={`fnix-mcp-badge ${entry.status}`}>
@@ -1168,44 +1308,48 @@ export function DesktopSettings({
                                 </span>
                               </div>
                             </div>
-                            {entry.description ? <p className="fnix-skill-desc">{entry.description}</p> : null}
+                            {entry.description ? (
+                              <p className="fnix-skill-desc">{entry.description}</p>
+                            ) : null}
                             <div className="fnix-skill-meta">
-                              <span className="fnix-chip">{entry.category || "通用"}</span>
+                              <span className="fnix-chip">{entry.category || '通用'}</span>
                               {entry.tags?.length ? (
                                 <div className="fnix-skill-tags">
                                   {entry.tags.slice(0, 4).map((t) => (
-                                    <span className="fnix-skill-tag" key={t}>#{t}</span>
+                                    <span className="fnix-skill-tag" key={t}>
+                                      #{t}
+                                    </span>
                                   ))}
                                 </div>
                               ) : null}
                             </div>
                             <div className="fnix-skill-actions">
-                              {entry.status === "draft" ? (
+                              {entry.status === 'draft' ? (
                                 <button
                                   type="button"
                                   className="fnix-set-save"
                                   disabled={skillBusy}
-                                  onClick={() => void handleSkillAction(entry, "submit")}
+                                  onClick={() => void handleSkillAction(entry, 'submit')}
                                 >
                                   提交
                                 </button>
                               ) : null}
-                              {entry.status === "pending_review" ? (
+                              {entry.status === 'pending_review' ? (
                                 <button
                                   type="button"
                                   className="fnix-set-save"
                                   disabled={skillBusy}
-                                  onClick={() => void handleSkillAction(entry, "approve")}
+                                  onClick={() => void handleSkillAction(entry, 'approve')}
                                 >
                                   通过
                                 </button>
                               ) : null}
-                              {entry.status === "published" ? (
+                              {entry.status === 'published' ? (
                                 <button
                                   type="button"
                                   className="fnix-set-save ghost"
                                   disabled={skillBusy}
-                                  onClick={() => void handleSkillAction(entry, "deprecate")}
+                                  onClick={() => void handleSkillAction(entry, 'deprecate')}
                                 >
                                   弃用
                                 </button>
@@ -1233,49 +1377,49 @@ export function DesktopSettings({
             </div>
           )}
 
-          {section === "diagnostics" && (
+          {section === 'diagnostics' && (
             <div className="fnix-set-title">
               <SectionHeader section="diagnostics" />
               {(() => {
-                const hasRed = docCards.some((c) => c.color === "red");
-                const hasYellow = docCards.some((c) => c.color === "yellow");
-                const overall: "ok" | "limited" | "down" = hasRed
-                  ? "down"
+                const hasRed = docCards.some((c) => c.color === 'red');
+                const hasYellow = docCards.some((c) => c.color === 'yellow');
+                const overall: 'ok' | 'limited' | 'down' = hasRed
+                  ? 'down'
                   : hasYellow
-                    ? "limited"
-                    : "ok";
+                    ? 'limited'
+                    : 'ok';
                 const detecting = docCards.length === 0;
                 const headline = detecting
-                  ? "正在检测 Fnix 运行状态…"
-                  : overall === "ok"
-                    ? "一切正常，可以开始使用"
-                    : overall === "limited"
-                      ? "可以正常使用，部分增强功能暂不可用"
-                      : "暂时无法使用，请按下方提示检查";
-                const agentdDown = docCards.find((c) => c.key === "agentd")?.color === "red";
+                  ? '正在检测 Fnix 运行状态…'
+                  : overall === 'ok'
+                    ? '一切正常，可以开始使用'
+                    : overall === 'limited'
+                      ? '可以正常使用，部分增强功能暂不可用'
+                      : '暂时无法使用，请按下方提示检查';
+                const agentdDown = docCards.find((c) => c.key === 'agentd')?.color === 'red';
                 const FRIENDLY: Record<string, string> = {
-                  "agentd": "服务未运行，请重启 Fnix 客户端后重试。",
-                  "~/.fnix": "配置目录缺失，重启客户端即可自动生成。",
-                  "sidecar": "部分增强功能（更快的文件检索与预览）暂不可用，核心功能不受影响。",
-                  "LLM Key": "尚未配置模型密钥：前往「模型」填写 API Key 后即可正常对话。",
+                  agentd: '服务未运行，请重启 Fnix 客户端后重试。',
+                  '~/.fnix': '配置目录缺失，重启客户端即可自动生成。',
+                  sidecar: '部分增强功能（更快的文件检索与预览）暂不可用，核心功能不受影响。',
+                  'LLM Key': '尚未配置模型密钥：前往「模型」填写 API Key 后即可正常对话。',
                 };
                 const actionable: string[] = docCards
-                  .filter((c) => c.color !== "green")
-                  .filter((c) => !(agentdDown && (c.key === "~/.fnix" || c.key === "sidecar")))
+                  .filter((c) => c.color !== 'green')
+                  .filter((c) => !(agentdDown && (c.key === '~/.fnix' || c.key === 'sidecar')))
                   .map((c) => FRIENDLY[c.key])
-                  .filter((m): m is string => typeof m === "string");
+                  .filter((m): m is string => typeof m === 'string');
                 return (
                   <div className="fnix-diag">
                     <div className="fnix-diag-summary">
                       <span
                         className={`fnix-diag-dot ${
                           docCards.length === 0
-                            ? "idle"
-                            : overall === "ok"
-                              ? "green"
-                              : overall === "limited"
-                                ? "yellow"
-                                : "red"
+                            ? 'idle'
+                            : overall === 'ok'
+                              ? 'green'
+                              : overall === 'limited'
+                                ? 'yellow'
+                                : 'red'
                         }`}
                       />
                       <span className="fnix-diag-summary-text">{headline}</span>
@@ -1285,7 +1429,7 @@ export function DesktopSettings({
                         disabled={docBusy}
                         onClick={() => void refreshDoc()}
                       >
-                        {docBusy ? "检测中…" : "重新检测"}
+                        {docBusy ? '检测中…' : '重新检测'}
                       </button>
                     </div>
 
@@ -1298,7 +1442,11 @@ export function DesktopSettings({
                     )}
 
                     <div className="fnix-set-actions" style={{ marginTop: 4 }}>
-                      <button type="button" className="fnix-set-save" onClick={() => onOpenBenchmark?.()}>
+                      <button
+                        type="button"
+                        className="fnix-set-save"
+                        onClick={() => onOpenBenchmark?.()}
+                      >
                         打开全链路测试面板
                       </button>
                     </div>
@@ -1330,22 +1478,20 @@ export function DesktopSettings({
                               .finally(() => setDoctorBusy(false));
                           }}
                         >
-                          {doctorBusy ? "检查中…" : "运行运行时诊断"}
+                          {doctorBusy ? '检查中…' : '运行运行时诊断'}
                         </button>
                       </div>
                       {doctor && (
                         <div className="fnix-info-card" style={{ marginTop: 12 }}>
-                          <b>{doctor.ok ? "运行时正常" : "运行时需要检查"}</b>
+                          <b>{doctor.ok ? '运行时正常' : '运行时需要检查'}</b>
                           <span>
-                            API {doctor.apiBase || "—"} · sidecar {doctor.sidecarUrl || "—"}
+                            API {doctor.apiBase || '—'} · sidecar {doctor.sidecarUrl || '—'}
                           </span>
                           <span>
-                            agentd binary {doctor.agentdBinary ? "yes" : "no"} · Keychain{" "}
-                            {doctor.keychainOk ? "ok" : "unavailable"} · {doctor.os}/{doctor.arch}
+                            agentd binary {doctor.agentdBinary ? 'yes' : 'no'} · Keychain{' '}
+                            {doctor.keychainOk ? 'ok' : 'unavailable'} · {doctor.os}/{doctor.arch}
                           </span>
-                          {doctor.notes?.length ? (
-                            <span>{doctor.notes.join(" · ")}</span>
-                          ) : null}
+                          {doctor.notes?.length ? <span>{doctor.notes.join(' · ')}</span> : null}
                         </div>
                       )}
                     </details>
@@ -1355,7 +1501,7 @@ export function DesktopSettings({
             </div>
           )}
 
-          {section === "general" && (
+          {section === 'general' && (
             <div className="fnix-set-title">
               <SectionHeader section="general" />
 
@@ -1363,7 +1509,10 @@ export function DesktopSettings({
                 <div className="fnix-set-card-head">
                   <div>
                     <b>外观</b>
-                    <span>界面外观（浅色 / 深色）跟随系统设置；高对比度与减弱动效自动适配系统无障碍偏好。</span>
+                    <span>
+                      界面外观（浅色 /
+                      深色）跟随系统设置；高对比度与减弱动效自动适配系统无障碍偏好。
+                    </span>
                   </div>
                 </div>
               </div>
@@ -1386,7 +1535,7 @@ export function DesktopSettings({
             </div>
           )}
 
-          {section === "about" && (
+          {section === 'about' && (
             <div className="fnix-set-title">
               <SectionHeader section="about" />
 
@@ -1394,17 +1543,29 @@ export function DesktopSettings({
                 <b className="fnix-changelog-title">产品能力</b>
                 <p>Fnix 是一个本地优先的编码智能体工作台，开箱即用：</p>
                 <ul>
-                  <li><b>对话与执行</b>：直接提问、写代码、跑命令，结果落盘到你的工作区。</li>
-                  <li><b>本地记忆</b>：短期对话窗口 + 长期向量记忆 + 实体画像，数据存本机。</li>
-                  <li><b>技能与连接</b>：Skills 生命周期管理，MCP 服务器本地授权（fail-closed）。</li>
+                  <li>
+                    <b>对话与执行</b>：直接提问、写代码、跑命令，结果落盘到你的工作区。
+                  </li>
+                  <li>
+                    <b>本地记忆</b>：短期对话窗口 + 长期向量记忆 + 实体画像，数据存本机。
+                  </li>
+                  <li>
+                    <b>技能与连接</b>：Skills 生命周期管理，MCP 服务器本地授权（fail-closed）。
+                  </li>
                 </ul>
                 <details className="fnix-evo-note">
                   <summary>进化内核（KTG / STP / MFP）是什么？</summary>
                   <p>Fnix 在每轮回答时运行一个自进化内核，为主对话提供参考上下文：</p>
                   <ul>
-                    <li><b>KTG</b>（知识路径）：从知识图谱检索到的相关推理路径数量。</li>
-                    <li><b>STP</b>（概念识别）：本轮任务识别并采用的核心概念。</li>
-                    <li><b>MFP</b>（历史经验）：实际参考的短期与长期记忆条数。</li>
+                    <li>
+                      <b>KTG</b>（知识路径）：从知识图谱检索到的相关推理路径数量。
+                    </li>
+                    <li>
+                      <b>STP</b>（概念识别）：本轮任务识别并采用的核心概念。
+                    </li>
+                    <li>
+                      <b>MFP</b>（历史经验）：实际参考的短期与长期记忆条数。
+                    </li>
                   </ul>
                   <p className="fnix-evo-hint">
                     这些信息原先显示在对话底部，为保持界面简洁已统一收纳在「关于」中。实时数值会在会话进行中由运行时生成。
@@ -1418,16 +1579,22 @@ export function DesktopSettings({
                 </div>
                 <div className="fnix-about-meta">
                   <b>FnixAgent Workbench</b>
-                  <span>v{FNIX_VERSION} · {FNIX_BUILD_NUMBER}</span>
+                  <span>
+                    v{FNIX_VERSION} · {FNIX_BUILD_NUMBER}
+                  </span>
                 </div>
-                <span className={`fnix-rel-badge${FNIX_RELEASE_CHANNEL === "internal" ? " internal" : ""}`}>
-                  {FNIX_RELEASE_CHANNEL === "internal" ? "内部测试" : FNIX_RELEASE_CHANNEL}
+                <span
+                  className={`fnix-rel-badge${FNIX_RELEASE_CHANNEL === 'internal' ? ' internal' : ''}`}
+                >
+                  {FNIX_RELEASE_CHANNEL === 'internal' ? '内部测试' : FNIX_RELEASE_CHANNEL}
                 </span>
               </div>
 
               <div className="fnix-info-card">
                 <b>发布渠道</b>
-                <span>当前为 internal（内部测试）构建，尚未发布公开 Release。功能仍在本地验证中。</span>
+                <span>
+                  当前为 internal（内部测试）构建，尚未发布公开 Release。功能仍在本地验证中。
+                </span>
               </div>
 
               <div className="fnix-rel-card">
@@ -1436,13 +1603,14 @@ export function DesktopSettings({
                   <span>{FNIX_RELEASE_DATE} 构建 · 暂未发布</span>
                 </div>
                 <p className="fnix-rel-note">
-                  正式版将通过发布渠道提供直接下载。当前内部测试版本暂未打包 Release，请先用本地构建验证，暂不接入外部发布。
+                  正式版将通过发布渠道提供直接下载。当前内部测试版本暂未打包
+                  Release，请先用本地构建验证，暂不接入外部发布。
                 </p>
                 <div className="fnix-set-actions">
                   <button
                     type="button"
                     className="fnix-set-save ghost"
-                    onClick={() => setToast("当前为内部测试版本，暂未发布 Release")}
+                    onClick={() => setToast('当前为内部测试版本，暂未发布 Release')}
                   >
                     检查更新
                   </button>
@@ -1451,7 +1619,9 @@ export function DesktopSettings({
 
               <div className="fnix-info-card">
                 <b>本地模型</b>
-                <span>{LOCAL_LLM.providerName} · {model || LOCAL_LLM.model}</span>
+                <span>
+                  {LOCAL_LLM.providerName} · {model || LOCAL_LLM.model}
+                </span>
               </div>
 
               <div className="fnix-changelog">

@@ -15,6 +15,17 @@ from fnixagent.services import llm_policy
 
 def test_api_only_requires_user_key(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("FNIX_API_ONLY", "1")
+    # 清除所有服务端 Key 环境变量，确保 server_llm_configured() 返回 False
+    # （B3 管理员优先逻辑会在 server_llm_configured=True 时跳过 api_only 检查）
+    for k in (
+        "DASHSCOPE_API_KEY",
+        "QWEN_API_KEY",
+        "OPENAI_API_KEY",
+        "GLM_API_KEY",
+        "DEEPSEEK_API_KEY",
+        "CUSTOM_API_KEY",
+    ):
+        monkeypatch.delenv(k, raising=False)
     llm, err = llm_policy.resolve_llm_for_request({}, is_admin=True)
     assert llm is None
     assert err and "API Key" in err

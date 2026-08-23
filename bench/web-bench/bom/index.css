@@ -1,0 +1,48 @@
+/* Styles for the browser interface */
+.topbar {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    background-color: #f0f0f0;
+    border-bottom: 1px solid #ccc;
+}
+
+.toolbar {
+    display: flex;
+    gap: 10px;
+}
+
+.toolbar button {
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+.address {
+    margin-left: auto;
+    padding: 5px;
+    font-size: 14px;
+}
+
+.setting {
+    margin-left: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.reading-time {
+    font-weight: bold;
+    color: #333;
+}
+
+.content {
+    flex: 1;
+    width: 100%;
+    height: calc(100vh - 80px);
+    border: none;
+}
+
+.fullscreen, .exit-fullscreen {
+    padding: 5px 10px;
+    cursor: pointer;
+}

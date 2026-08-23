@@ -41,6 +41,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
 logger = logging.getLogger(__name__)
+_logger = logger
 
 # ---------------------------------------------------------------------------
 # 审计动作常量
@@ -352,7 +353,7 @@ class AuditLogger:
 
                 record_audit_log(action)
             except Exception:
-                pass  # 指标记录失败不影响审计
+                _logger.debug('Unhandled exception', exc_info=True)  # 指标记录失败不影响审计
             return entry
         except Exception as e:
             # 审计日志失败不应影响主流程

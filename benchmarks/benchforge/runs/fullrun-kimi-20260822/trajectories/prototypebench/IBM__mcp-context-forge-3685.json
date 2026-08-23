@@ -1,0 +1,18 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "IBM__mcp-context-forge-3685",
+  "prompt": "## Summary\n- `GatewayCreate` extended `BaseModel` directly, missing the `alias_generator=to_camel_case` and `populate_by_name=True` config that `GatewayUpdate` inherits from `BaseModelWithConfigDict`\n- This caused camelCase field names (e.g. `passthroughHeaders`, `authType`, `authToken`) to be silently ignored on `POST /gateways`, while the same fields worked correctly on `PUT /gateways/{id}`\n- Fix: change `GatewayCreate` to extend `BaseModelWithConfigDict`, matching `GatewayUpdate` and `AdminGatewayCreate`\n\nCloses #3577",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/mcpgateway/schemas.py b/mcpgateway/schemas.py\nindex cca5611c1..9461] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787334460.3841286,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\prototypebench__IBM__mcp-context-forge-3685__aa4ba2"
+}

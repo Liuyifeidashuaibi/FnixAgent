@@ -1,0 +1,31 @@
+{
+  "run_id": "20260822-023959",
+  "model": "kimi-k2.6",
+  "started_at": 1787333999.200599,
+  "finished_at": 1787334134.1857946,
+  "totals": {
+    "total": 6,
+    "success": 4,
+    "failure": 2,
+    "fetch_error": 0,
+    "success_rate": 0.6667,
+    "failure_type_counts": {
+      "incomplete_output": 2
+    }
+  },
+  "total_tokens": 237996,
+  "note": "",
+  "datasets": {
+    "web-bench": {
+      "dataset": "web-bench",
+      "total": 6,
+      "success": 4,
+      "failure": 2,
+      "fetch_error": 0,
+      "success_rate": 0.6667,
+      "failure_type_counts": {
+        "incomplete_output": 2
+      }
+    }
+  }
+}

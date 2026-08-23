@@ -1,0 +1,18 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "usebruno__bruno-7895",
+  "prompt": "### Description\r\n\r\n[Jira](https://usebruno.atlassian.net/browse/BRU-3260)\r\n\r\nFixes #7858\r\n\r\nReplace ad-hoc `path.relative()` and `startsWith`-based containment in file picker flows with centralized utilities that handle cross-platform paths.                                                                \r\n                                                                                                                                            \r\n   - Add `getRelativePathWithinBasePath` with `path.relative`-based containment                                                             \r\n     guard and optional posixify support                                                                                                  \r\n   - FilePickerEditor / MultipartFormParams / ResponseExampleMultipartFormParams                                                            \r\n     → `getRelativePathWithinBasePath` (backwards-compat default) replacing                                                                 \r\n     fragile `startsWith` containment (false-positives on sibling dirs,                                                                     \r\n     case-sensitive on Windows)                                                                                                             \r\n   - Mixed-separator containment tests + e2e test for multipart file persistence \r\n\r\n#### Contribution Checklist:\r\n\r\n- [ ] **I've used AI significantly to create this pull request**\r\n- [x] **The pull request only addresses one issue or adds one feature.**\r\n- [x] **The pull request does not introduce any breaking changes**\r\n- [x] **I have added screenshots or gifs to help explain the change if applicable.**\r\n- [x] **I have read the [contribution guidelines](https://github.com/usebruno/bruno/blob/main/contributing.md).**\r\n- [x] **Create an issue and link to the pull request.**\r\n\r\n\r\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\r\n## Summary by CodeRabbit\r\n\r\n* **Refactor**\r\n  * Introduced a shared helper to derive stored/display file paths; collection settings, file picker, auth private-key selection, multipart form UI, and response preview now use it for consistent in-collection path handling.\r\n\r\n* **Tests**\r\n  * Added unit tests (including Windows cases) for the new helper, an end-to-end test verifying multipart file path persistence across restarts, and test helpers to mock file selection and manage multipart entries.\r\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/packages/bruno-app/src/components/FilePickerEditor/index.js b/packa] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 77.99999999951979,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787334461.5429165,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\prototypebench__usebruno__bruno-7895__f6c5cb"
+}

@@ -1,0 +1,57 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "IBM__mcp-context-forge-3610",
+  "prompt": "## 🔗 Related Issue                                                                                                                             Closes #3085\r\n  Supersedes #3209                                                                                                                              \r\n                                                                                                                                                \r\n  ---\r\n\r\n  ## 📝 Summary\r\n  The Manage Members modal loaded all non-members eagerly via infinite scroll, which crashed browsers at 20K+ users due to DOM accumulation.\r\n                                                                                                                                                  **Changes:**\r\n  - Non-members section no longer loads on modal open — users must search by name/email first; results are capped at 50                         \r\n  - Current members section gains its own search bar with server-side filtering via a new `search` parameter on `get_team_members()`            \r\n  - Replaced monolithic `serverSideUserSearch` with two focused server-side search functions (`serverSideMemberSearch`,                         \r\n  `serverSideNonMemberSearch`)                                                                                                                    - Selection state is preserved across searches with a 2-char minimum enforced                                                                 \r\n                                                                                                                                                  \r\n                                                                                                                                                \r\n  ## 🏷️ Type of Change                                    \r\n  - [x] Bug fix\r\n  - [ ] Feature / Enhancement\r\n  - [ ] Documentation\r\n  - [ ] Refactor\r\n  - [ ] Chore (deps, CI, tooling)\r\n  - [ ] Other (describe below)\r\n                                                                                                                                               \r\n                                                                                                                                                \r\n  ## 🧪 Verification\r\n\r\n  | Check                     | Command         | Status |\r\n  |---------------------------|-----------------|--------|\r\n  | Lint suite                | `make lint`     | ✅     |\r\n  | Unit tests                | `make test`     | ✅     |                                                                                        | Coverage ≥ 80%            | `make coverage` | ✅     |\r\n                                                                                                                                                \r\n  ---\r\n\r\n  ## ✅ Checklist\r\n  - [x] Code formatted (`make black isort pre-commit`)\r\n  - [x] Tests added/updated for changes                                                                                                           - [ ] Documentation updated (if applicable)\r\n  - [x] No secrets or credentials committed                                                                                                     \r\n  \r\n  ---\r\n\r\n  ## 📓 Notes (optional)\r\n  Re-opened from #3209 (which was itself re-created from #3103) since the branch lived on the upstream repo and I couldn't push conflict\r\n  resolution directly. Code and changes are identical — only the merge conflicts with upstream main have been resolved.                            \r\n  **Files changed (4):**                                                                                                                          - `mcpgateway/admin.py` — Split unified search into two per-section inputs; non-members container no longer auto-loads\r\n  - `mcpgateway/services/team_management_service.py` — Added `search` param + `_escape_like()` to `get_team_members()`                          \r\n  - `mcpgateway/static/admin.js` — Replaced `serverSideUserSearch` with `serverSideMemberSearch` and `serverSideNonMemberSearch`                \r\n  - `tests/unit/mcpgateway/test_admin.py` — Updated 13 tests for new search param, added `test_admin_team_non_members_partial_html_empty_search`",
+  "status": "failure",
+  "failure_type": "mcp_call_error",
+  "failure_evidence": "LLM调用失败，存在HTTP 400错误，提示messages with role 'tool'必须是对带有'tool_calls'的先前消息的响应。",
+  "final_response": "",
+  "steps": [
+    "Step 0 | 思考: Based on the provided summary, it seems that the changes are focused on improving the performance an... | 工具 ✓ write_file({\"file_path\": \"mcpgateway/admin.py\", \"content\": \"f) | 耗时: 29578ms, tokens: 4406",
+    "Step 0 | 思考: Based on the provided summary, it seems that the changes are focused on improving the performance an... | 工具 ✓ write_file({\"file_path\": \"mcpgateway/services/team_management) | 耗时: 29580ms, tokens: 4406",
+    "Step 0 | 思考: Based on the provided summary, it seems that the changes are focused on improving the performance an... | 工具 ✓ write_file({\"file_path\": \"mcpgateway/static/admin.js\", \"conte) | 耗时: 29583ms, tokens: 4406",
+    "Step 0 | 思考: Based on the provided summary, it seems that the changes are focused on improving the performance an... | 工具 ✓ write_file({\"file_path\": \"tests/unit/mcpgateway/test_admin.py) | 耗时: 29585ms, tokens: 4406"
+  ],
+  "tool_calls": [
+    {
+      "step": 1,
+      "tool": "write_file",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\batch-v4-20260822\\\\workspaces\\\\prototypebench__IBM__mcp-context-forge-3610__2f8ca9\\\\mcpgateway\\\\admin.py', 'size': 617, 'rel_path': 'mcpgateway/admin.py', 'mirror': None})\n已写入: mcpgateway/admin.py (617 字符)"
+    },
+    {
+      "step": 2,
+      "tool": "write_file",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\batch-v4-20260822\\\\workspaces\\\\prototypebench__IBM__mcp-context-forge-3610__2f8ca9\\\\mcpgateway\\\\services\\\\team_management_service.py', 'size': 454, 'rel_path': 'mcpgateway/services/team_management_service.py', 'mirror': None})\n已写入: mcpgateway/services/team_management_service.py (454 字符)"
+    },
+    {
+      "step": 3,
+      "tool": "write_file",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\batch-v4-20260822\\\\workspaces\\\\prototypebench__IBM__mcp-context-forge-3610__2f8ca9\\\\mcpgateway\\\\static\\\\admin.js', 'size': 411, 'rel_path': 'mcpgateway/static/admin.js', 'mirror': None})\n已写入: mcpgateway/static/admin.js (411 字符)"
+    },
+    {
+      "step": 4,
+      "tool": "write_file",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\batch-v4-20260822\\\\workspaces\\\\prototypebench__IBM__mcp-context-forge-3610__2f8ca9\\\\tests\\\\unit\\\\mcpgateway\\\\test_admin.py', 'size': 1385, 'rel_path': 'tests/unit/mcpgateway/test_admin.py', 'mirror': None})\n已写入: tests/unit/mcpgateway/test_admin.py (1385 字符)"
+    }
+  ],
+  "files_written": [
+    "mcpgateway\\admin.py",
+    "mcpgateway\\services\\team_management_service.py",
+    "mcpgateway\\static\\admin.js",
+    "tests\\unit\\mcpgateway\\test_admin.py"
+  ],
+  "total_tokens": 4406,
+  "duration_ms": 30406.999999999927,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen-max): HTTP 400 (<400> InternalError.Algo.InvalidParameter: messages with role \"tool\" must be a response to a preceeding message with \"tool_calls\".)",
+  "judge_method": "llm",
+  "started_at": 1787384917.0785134,
+  "workspace": "benchmarks\\benchforge\\runs\\batch-v4-20260822\\workspaces\\prototypebench__IBM__mcp-context-forge-3610__2f8ca9"
+}

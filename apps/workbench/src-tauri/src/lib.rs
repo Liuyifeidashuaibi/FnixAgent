@@ -2299,6 +2299,36 @@ fn db_delete_chat_session(id: String, project_path: String) -> Result<(), String
     Ok(())
 }
 
+#[tauri::command]
+fn db_load_all_chat_sessions(limit: usize) -> Result<Vec<ChatSessionRow>, String> {
+    let conn = get_connection()?;
+    let mut stmt = conn.prepare(
+        "SELECT id, project_path, title, provider, model, messages, token_count, cost, created_at, updated_at
+         FROM chat_sessions ORDER BY updated_at DESC LIMIT ?1"
+    ).map_err(|e| format!("DB query error: {}", e))?;
+
+    let rows = stmt.query_map(rusqlite::params![limit as i64], |row| {
+        Ok(ChatSessionRow {
+            id: row.get(0)?,
+            project_path: row.get(1)?,
+            title: row.get(2)?,
+            provider: row.get(3)?,
+            model: row.get(4)?,
+            messages: row.get(5)?,
+            token_count: row.get(6)?,
+            cost: row.get(7)?,
+            created_at: row.get(8)?,
+            updated_at: row.get(9)?,
+        })
+    }).map_err(|e| format!("DB query error: {}", e))?;
+
+    let mut sessions = Vec::new();
+    for row in rows {
+        sessions.push(row.map_err(|e| format!("DB row error: {}", e))?);
+    }
+    Ok(sessions)
+}
+
 // --- App Entry ---
 
 // --- PTY Terminal (Interactive Shell) ---
@@ -2641,6 +2671,7 @@ pub fn run() {
             db_save_chat_session,
             db_load_chat_sessions,
             db_load_chat_session,
+            db_load_all_chat_sessions,
             db_delete_chat_session,
             // DAP commands
             dap_manager::dap_start,

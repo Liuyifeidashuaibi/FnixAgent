@@ -26,11 +26,15 @@ Span 树形结构说明:
 
 from __future__ import annotations
 
+import logging
 import re
 import time
 import uuid
 from dataclasses import dataclass, field
 from typing import Any
+
+_logger = logging.getLogger(__name__)
+
 
 # ---------------------------------------------------------------------------
 # 敏感信息脱敏
@@ -445,7 +449,7 @@ class SpanImpl:
             try:
                 self._on_end(snapshot)
             except Exception:
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
         return snapshot
 
     def export(self) -> Span:

@@ -1,0 +1,33 @@
+{
+  "id": "code-002",
+  "title": "修复并验证既有算法",
+  "capability": "code_gen",
+  "difficulty": 3,
+  "tags": [
+    "bug-fix",
+    "verify"
+  ],
+  "prompt": "当前目录 sorter.py 实现了 quicksort，但有边界 bug：输入含重复元素时会死循环或漏元素。请修复它，并保证 quicksort([]) 返回 []。",
+  "setup": {
+    "files": {
+      "sorter.py": "def quicksort(arr):\n    if len(arr) <= 1:\n        return arr\n    pivot = arr[0]\n    less = [x for x in arr if x < pivot]\n    more = [x for x in arr if x >= pivot]\n    return quicksort(less) + quicksort(more)\n"
+    }
+  },
+  "allowed_scope": [
+    "sorter.py"
+  ],
+  "checks": [
+    {
+      "function": "command_succeeds",
+      "args": {
+        "command": "python -c \"from sorter import quicksort; assert quicksort([])==[]; assert quicksort([3,1,2,2,1])==[1,1,2,2,3]; assert quicksort([5,5,5])==[5,5,5]\"",
+        "timeout_s": 30
+      },
+      "weight": 2.0
+    },
+    {
+      "function": "scope_respected",
+      "args": {}
+    }
+  ]
+}

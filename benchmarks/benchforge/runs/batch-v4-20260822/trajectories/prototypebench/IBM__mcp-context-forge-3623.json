@@ -1,0 +1,28 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "IBM__mcp-context-forge-3623",
+  "prompt": "# 🐛 Bug-fix PR\r\n\r\n## 📌 Summary\r\n- Add max teams validation in create_join_request() before DB operation\r\n- Return 400 Bad Request (not 500) for validation errors in API endpoints\r\n- Handle ValueError exceptions in request_to_join_team() and approve_join_request()\r\n- Improve admin UI error handling with inline HTML error display\r\n- Disable join button when allow_team_join_requests feature flag is false\r\n- Add toast notification for network errors in requestToJoinTeamSafe()\r\n- Ensure proper HTTP status codes for all validation failures\r\n\r\nChanges:\r\n- mcpgateway/services/team_management_service.py: Add max teams check\r\n- mcpgateway/routers/teams.py: Add ValueError handling for 400 responses\r\n- mcpgateway/admin.py: Add feature flag checks and error handling\r\n- mcpgateway/templates/admin.html: Improve JS error handling\r\n\r\nFixes #3513\r\n\r\n## 🔁 Reproduction Steps\r\nSee #3513 \r\n\r\n## 🐞 Root Cause\r\nUser team validation was not being handled properly on the backed, and the `allow_team_join_requests` was not handled on the UI.\r\n\r\n## 💡 Fix Description\r\nAdded the proper HTTP responses for the cases above and disabled the UI button when `allow_team_join_requests` is set to false.\r\n\r\n## 🧪 Verification\r\n\r\n| Check                                 | Command              | Status |\r\n|---------------------------------------|----------------------|--------|\r\n| Lint suite                            | `make lint`          |    ✅    |\r\n| Unit tests                            | `make test`          |    ✅    |\r\n| Coverage ≥ 80 %                       | `make coverage`      |    ✅    |\r\n| Manual regression no longer fails     | steps / screenshots  |    ✅    |\r\n\r\n\r\n## ✅ Checklist\r\n- [X] Code formatted (`make black isort pre-commit`)\r\n- [X] No secrets/credentials committed",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [
+    "Step 0 | 思考: 了解了，您希望我基于上述描述进行一系列的代码更改和验证。首先，我会根据您的要求制定一个计划：\n\n1. 在 `mcpgateway/services/team_management_service.py... | 工具 ✗ read_file({\"file_path\": \"mcpgateway/services/team_management) | 耗时: 8147ms, tokens: 3321"
+  ],
+  "tool_calls": [
+    {
+      "step": 1,
+      "tool": "read_file",
+      "args": {},
+      "success": false,
+      "output_preview": "[失败] 文件不存在: mcpgateway/services/team_management_service.py"
+    }
+  ],
+  "files_written": [],
+  "total_tokens": 3321,
+  "duration_ms": 8875.0,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen-max): HTTP 400 (<400> InternalError.Algo.InvalidParameter: messages with role \"tool\" must be a response to a preceeding message with \"tool_calls\".)",
+  "judge_method": "heuristic",
+  "started_at": 1787384924.7636092,
+  "workspace": "benchmarks\\benchforge\\runs\\batch-v4-20260822\\workspaces\\prototypebench__IBM__mcp-context-forge-3623__d3b020"
+}

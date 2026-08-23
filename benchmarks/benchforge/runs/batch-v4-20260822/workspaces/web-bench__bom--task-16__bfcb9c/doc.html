@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Documentation</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #1a1a2e;
+      --card-bg: #f0f0f5;
+      --accent: #4361ee;
+      --border: #d1d1e0;
+      --shadow: rgba(0, 0, 0, 0.08);
+      --code-bg: #e8e8f0;
+    }
+
+    [data-theme="dark"] {
+      --bg: #1a1a2e;
+      --text: #e0e0f0;
+      --card-bg: #16213e;
+      --accent: #4cc9f0;
+      --border: #2a2a4a;
+      --shadow: rgba(0, 0, 0, 0.3);
+      --code-bg: #0f3460;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      transition: background 0.3s, color 0.3s;
+      padding: 2rem;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid var(--border);
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      color: var(--accent);
+    }
+
+    .theme-badge {
+      font-size: 0.8rem;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      background: var(--accent);
+      color: #fff;
+      transition: background 0.3s;
+    }
+
+    .content {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 2px 8px var(--shadow);
+      transition: background 0.3s, border-color 0.3s;
+    }
+
+    .content h2 {
+      margin-bottom: 1rem;
+      font-size: 1.3rem;
+    }
+
+    .content p {
+      line-height: 1.7;
+      margin-bottom: 1rem;
+      opacity: 0.85;
+    }
+
+    .content code {
+      background: var(--code-bg);
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.9em;
+      transition: background 0.3s;
+    }
+
+    .content pre {
+      background: var(--code-bg);
+      padding: 1rem;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 1rem 0;
+      transition: background 0.3s;
+    }
+
+    .content pre code {
+      background: none;
+      padding: 0;
+    }
+
+    .notice {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      border-left: 4px solid var(--accent);
+      background: var(--code-bg);
+      border-radius: 0 8px 8px 0;
+      font-size: 0.9rem;
+      transition: background 0.3s, border-color 0.3s;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1 id="pageTitle">Documentation</h1>
+    <span class="theme-badge" id="themeBadge">☀️ Light</span>
+  </header>
+
+  <div class="content" id="docContent">
+    <!-- Content will be populated based on URL params -->
+  </div>
+
+  <script>
+    (function () {
+      const html = document.documentElement;
+      const pageTitle = document.getElementById('pageTitle');
+      const themeBadge = document.getElementById('themeBadge');
+      const docContent = document.getElementById('docContent');
+
+      // --- Populate content from URL params ---
+      const params = new URLSearchParams(window.location.search);
+      const title = params.get('title') || 'Documentation';
+      const section = params.get('section') || 'default';
+
+      document.title = title;
+      pageTitle.textContent = title;
+
+      const sections = {
+        setup: `
+          <h2>Setup &amp; Installation</h2>
+          <p>Follow these steps to get started with the project:</p>
+          <pre><code>npm install my-project
+cd my-project
+npm start</code></pre>
+          <p>After running the above commands, the development server will start at <code>http://localhost:3000</code>.</p>
+          <p>Make sure you have <code>Node.js &gt;= 18</code> installed on your system before proceeding.</p>
+          <div class="notice">💡 Tip: Use <code>nvm</code> to manage multiple Node.js versions easily.</div>
+        `,
+        api: `
+          <h2>API Reference</h2>
+          <p>The API provides the following core methods:</p>
+          <pre><code>init(config)     → Initialize the application
+render(data)     → Render content to the DOM
+destroy()        → Clean up resources</code></pre>
+          <p>Each method returns a <code>Promise</code> that resolves when the operation completes.</p>
+          <p>Configuration options are passed as an object to the <code>init()</code> method. See the examples below for common patterns.</p>
+          <div class="notice">⚠️ Always call <code>destroy()</code> before unmounting to prevent memory leaks.</div>
+        `,
+        advanced: `
+          <h2>Advanced Guide</h2>
+          <p>This section covers advanced customization and optimization techniques.</p>
+          <pre><code>import { createPlugin } from 'my-project';
+
+const myPlugin = createPlugin({
+  name: 'custom-plugin',
+  hooks: {
+    beforeRender: (ctx) => { /* ... */ },
+    afterRender:  (ctx) => { /* ... */ },
+  }
+});</code></pre>
+          <p>Plugins allow you to extend functionality without modifying the core codebase. They follow a hook-based lifecycle model.</p>
+          <div class="notice">🔧 Advanced: You can chain multiple plugins using the <code>compose()</code> utility.</div>
+        `,
+        default: `
+          <h2>Welcome</h2>
+          <p>This is a documentation page. Use the navigation on the main page to open specific sections.</p>
+          <div class="notice">ℹ️ This window will automatically sync its theme with the main page.</div>
+        `
+      };
+
+      docContent.innerHTML = sections[section] || sections['default'];
+
+      // --- Theme sync via postMessage ---
+      function applyTheme(theme) {
+        html.setAttribute('data-theme', theme);
+        themeBadge.textContent = theme === 'dark' ? '🌙 Dark' : '☀️ Light';
+      }
+
+      window.addEventListener('message', function (event) {
+        if (event.data && event.data.type === 'theme-change') {
+          applyTheme(event.data.theme);
+        }
+      });
+
+      // Notify the opener that this window is ready to receive theme messages
+      if (window.opener) {
+        window.opener.postMessage({ type: 'doc-ready' }, '*');
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+{
+  "id": "lang-002",
+  "title": "中文数据的确定性处理",
+  "capability": "language",
+  "difficulty": 3,
+  "tags": [
+    "zh",
+    "sort"
+  ],
+  "prompt": "names.txt 里每行一个中文名字，有重复。请去重后按 Unicode 码点升序排列，写入 sorted.txt，一行一个，不留空行。",
+  "setup": {
+    "files": {
+      "names.txt": "张伟\n李娜\n王芳\n张伟\n刘洋\n李娜\n陈杰\n"
+    }
+  },
+  "allowed_scope": [
+    "sorted.txt"
+  ],
+  "protected": [
+    "names.txt"
+  ],
+  "checks": [
+    {
+      "function": "file_equals",
+      "args": {
+        "path": "sorted.txt",
+        "content": "刘洋\n张伟\n李娜\n王芳\n陈杰"
+      },
+      "weight": 2.0
+    },
+    {
+      "function": "protected_untouched",
+      "args": {}
+    }
+  ]
+}

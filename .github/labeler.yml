@@ -6,7 +6,6 @@ workbench:
   - changed-files:
       - any-glob-to-any-file:
           - 'apps/workbench/**'
-          - 'apps/desktop-tauri/**'
 agentd:
   - changed-files:
       - any-glob-to-any-file:

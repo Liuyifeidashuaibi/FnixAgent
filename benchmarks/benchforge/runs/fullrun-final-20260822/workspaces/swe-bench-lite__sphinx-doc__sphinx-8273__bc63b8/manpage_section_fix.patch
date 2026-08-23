@@ -1,0 +1,38 @@
+diff --git a/sphinx/builders/manpage.py b/sphinx/builders/manpage.py
+index abc123..def456 100644
+--- a/sphinx/builders/manpage.py
++++ b/sphinx/builders/manpage.py
+@@ -123,7 +123,15 @@ class ManualPageBuilder(Builder):
+         # get path to manpage
+         if self.config.man_pages:
+             for entry in self.config.man_pages:
+-                outfilename = path.join(self.outdir, entry[0] + '.' + entry[3])
++                # Extract section number from entry[3] (section) and create section subdirectory
++                section = str(entry[3])
++                # Ensure section is numeric and create proper section directory
++                if section.isdigit():
++                    section_dir = path.join(self.outdir, 'man' + section)
++                    ensuredir(section_dir)
++                    outfilename = path.join(section_dir, entry[0] + '.' + entry[3])
++                else:
++                    outfilename = path.join(self.outdir, entry[0] + '.' + entry[3])
+                 self.info('writing %s...' % outfilename)
+                 f = open(outfilename, 'w', encoding='utf-8')
+                 try:
+@@ -150,7 +158,15 @@ class ManualPageBuilder(Builder):
+         # get path to manpage
+         if self.config.man_pages:
+             for entry in self.config.man_pages:
+-                outfilename = path.join(self.outdir, entry[0] + '.' + entry[3])
++                # Extract section number from entry[3] (section) and create section subdirectory
++                section = str(entry[3])
++                # Ensure section is numeric and create proper section directory
++                if section.isdigit():
++                    section_dir = path.join(self.outdir, 'man' + section)
++                    ensuredir(section_dir)
++                    outfilename = path.join(section_dir, entry[0] + '.' + entry[3])
++                else:
++                    outfilename = path.join(self.outdir, entry[0] + '.' + entry[3])
+                 self.info('writing %s...' % outfilename)
+                 f = open(outfilename, 'w', encoding='utf-8')
+                 try:

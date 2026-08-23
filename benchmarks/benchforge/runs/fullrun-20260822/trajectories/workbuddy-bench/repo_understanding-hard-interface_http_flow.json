@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "repo_understanding-hard-interface_http_flow",
+  "prompt": "我这里要接一个 Feign 相关的改动，但现在还没把它从 Java 接口方法一路变成 HTTP 请求、再把响应解回返回值的链路看明白。\n\n请你不要改业务代码，只在仓库根目录生成 `analysis.json`，格式保持稳定：\n\n```json\n{\n  \"summary\": \"不超过 200 字\",\n  \"facts\": [\n    {\n      \"id\": \"short-name\",\n      \"claim\": \"关键事实\",\n      \"details\": \"可选说明\",\n      \"evidence\": [{\"path\": \"core/src/main/java/feign/Feign.java\", \"line\": 217}]\n    }\n  ],\n  \"request_flow\": [\"...\"],\n  \"extension_points\": [\"...\"]\n}\n```\n\n重点帮我说清楚：`Feign.builder().target(...)` 最后怎么创建代理；接口注解怎么被解析成方法元数据和请求模板；代理方法调用怎么分派到 handler；参数怎么填进 `RequestTemplate` 并叠加目标 URL；请求拦截器、编码器、HTTP Client、响应解码、错误解码和重试分别在链路的哪个位置。每个关键事实都要给真实 `path` 和 `line` 证据。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 77.99999999997453,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787332459.1367054,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\workbuddy-bench__repo_understanding-hard-interface_http_flow__1ba77e"
+}

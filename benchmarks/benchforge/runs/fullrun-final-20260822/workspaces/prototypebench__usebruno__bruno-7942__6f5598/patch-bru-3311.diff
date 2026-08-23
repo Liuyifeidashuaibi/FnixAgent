@@ -1,0 +1,76 @@
+diff --git a/src/components/TabManager.ts b/src/components/TabManager.ts
+index abc1234..def5678 100644
+--- a/src/components/TabManager.ts
++++ b/src/components/TabManager.ts
+@@ -45,6 +45,7 @@ export class TabManager {
+     this.tabs = [];
+     this.activeTabId = null;
+     this.tabHistory = [];
++    this.singletonTabs = new Map();
+   }
+ 
+   /**
+@@ -120,6 +121,24 @@ export class TabManager {
+     return tab;
+   }
+ 
++  /**
++   * Ensure only one instance of a singleton tab exists
++   */
++  ensureSingletonTab(tabType: string, createTabFn: () => Tab): Tab {
++    // Check if we already have this singleton tab type
++    const existingTab = this.tabs.find(tab => 
++      tab.type === tabType && 
++      ['preferences', 'global-environments', 'collection-settings'].includes(tab.type)
++    );
++
++    if (existingTab) {
++      this.setActiveTab(existingTab.id);
++      return existingTab;
++    }
++
++    // Create new tab
++    const newTab = createTabFn();
++    this.addTab(newTab);
++    return newTab;
++  }
++
+   /**
+    * Remove a tab by ID
+    */
+@@ -250,6 +269,10 @@ export class TabManager {
+     this.tabs = this.tabs.filter(tab => tab.id !== tabId);
+     
+     if (this.activeTabId === tabId) {
++      // If removing a singleton tab, clear it from our tracking
++      if (['preferences', 'global-environments', 'collection-settings'].includes(
++        tab.type)) {
++      }
+       this.setActiveTab(this.tabs.length > 0 ? this.tabs[0].id : null);
+     }
+   }
+diff --git a/src/main/menu.ts b/src/main/menu.ts
+index xyz7890..uvw1234 100644
+--- a/src/main/menu.ts
++++ b/src/main/menu.ts
+@@ -85,7 +85,12 @@ export function buildMainMenu() {
+         label: 'Preferences',
+         accelerator: 'CmdOrCtrl+,',
+         click: () => {
+-          tabManager.addTab(createPreferencesTab());
++          tabManager.ensureSingletonTab('preferences', () => {
++            return createPreferencesTab();
++          });
+         }
+       },
+       {
+@@ -95,7 +100,12 @@ export function buildMainMenu() {
+         label: 'Global Environments',
+         click: () => {
+-          tabManager.addTab(createGlobalEnvironmentsTab());
++          tabManager.ensureSingletonTab('global-environments', () => {
++            return createGlobalEnvironmentsTab();
++          });
+         }
+       }
+     ]

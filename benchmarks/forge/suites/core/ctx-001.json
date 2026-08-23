@@ -1,0 +1,35 @@
+{
+  "id": "ctx-001",
+  "title": "定位隐藏信息",
+  "capability": "context_retrieval",
+  "difficulty": 2,
+  "tags": [
+    "retrieval"
+  ],
+  "prompt": "docs/spec.md 的某个段落里定义了一个部署令牌（格式为 大写单词-数字）。找到它，并只把该令牌写入当前目录的 token.txt。",
+  "setup": {
+    "files": {
+      "docs/spec.md": "# 部署说明\n\n## 环境\n生产环境使用 docker compose。\n\n## 凭据\n数据库密码另行下发。\n回滚令牌为 ORANGE-47，仅在紧急回滚时使用。\n\n## 监控\nPrometheus 端口 9090。\n"
+    }
+  },
+  "allowed_scope": [
+    "token.txt"
+  ],
+  "protected": [
+    "docs/*"
+  ],
+  "checks": [
+    {
+      "function": "file_equals",
+      "args": {
+        "path": "token.txt",
+        "content": "ORANGE-47"
+      },
+      "weight": 2.0
+    },
+    {
+      "function": "protected_untouched",
+      "args": {}
+    }
+  ]
+}

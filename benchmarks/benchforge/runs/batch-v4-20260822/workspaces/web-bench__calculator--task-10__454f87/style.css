@@ -1,0 +1,195 @@
+/* Theme Variables */
+:root[data-theme="dark"] {
+    --bg-primary: #1a1a2e;
+    --bg-secondary: #16213e;
+    --bg-calculator: #0f3460;
+    --bg-display: #1a1a2e;
+    --bg-btn-number: #16213e;
+    --bg-btn-function: #533483;
+    --bg-btn-operator: #e94560;
+    --bg-btn-equals: #0f3460;
+    --bg-btn-hover: rgba(255, 255, 255, 0.1);
+    --text-primary: #ffffff;
+    --text-secondary: #a0a0b0;
+    --text-btn-number: #ffffff;
+    --text-btn-function: #ffffff;
+    --text-btn-operator: #ffffff;
+    --text-btn-equals: #ffffff;
+    --shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    --btn-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    --border-color: rgba(255, 255, 255, 0.05);
+}
+
+:root[data-theme="light"] {
+    --bg-primary: #f0f0f5;
+    --bg-secondary: #e0e0ea;
+    --bg-calculator: #ffffff;
+    --bg-display: #f5f5fa;
+    --bg-btn-number: #e8e8f0;
+    --bg-btn-function: #c8c8d8;
+    --bg-btn-operator: #4a6cf7;
+    --bg-btn-equals: #2d4ad1;
+    --bg-btn-hover: rgba(0, 0, 0, 0.05);
+    --text-primary: #1a1a2e;
+    --text-secondary: #6b6b80;
+    --text-btn-number: #1a1a2e;
+    --text-btn-function: #1a1a2e;
+    --text-btn-operator: #ffffff;
+    --text-btn-equals: #ffffff;
+    --shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+    --btn-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    --border-color: rgba(0, 0, 0, 0.08);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg-primary);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s ease;
+}
+
+.calculator-container {
+    position: relative;
+}
+
+.theme-toggle {
+    position: absolute;
+    top: -50px;
+    right: 0;
+}
+
+#theme-toggle-btn {
+    background: var(--bg-btn-function);
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: transform 0.3s ease, background-color 0.3s ease;
+}
+
+#theme-toggle-btn:hover {
+    transform: scale(1.1);
+}
+
+.calculator {
+    background: var(--bg-calculator);
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: var(--shadow);
+    width: 340px;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.display {
+    background: var(--bg-display);
+    border-radius: 14px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    text-align: right;
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    border: 1px solid var(--border-color);
+    transition: background-color 0.3s ease;
+}
+
+.previous-operand {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    min-height: 1.4em;
+    word-break: break-all;
+    transition: color 0.3s ease;
+}
+
+.current-operand {
+    color: var(--text-primary);
+    font-size: 2.5rem;
+    font-weight: 600;
+    word-break: break-all;
+    line-height: 1.2;
+    transition: color 0.3s ease;
+}
+
+.buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+}
+
+.btn {
+    border: none;
+    border-radius: 14px;
+    padding: 18px;
+    font-size: 1.25rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-shadow: var(--btn-shadow);
+    user-select: none;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.1);
+}
+
+.btn:active {
+    transform: translateY(0);
+    filter: brightness(0.95);
+}
+
+.btn-number {
+    background: var(--bg-btn-number);
+    color: var(--text-btn-number);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.btn-function {
+    background: var(--bg-btn-function);
+    color: var(--text-btn-function);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.btn-operator {
+    background: var(--bg-btn-operator);
+    color: var(--text-btn-operator);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.btn-equals {
+    background: var(--bg-btn-equals);
+    color: var(--text-btn-equals);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.btn-zero {
+    grid-column: span 2;
+}
+
+@media (max-width: 400px) {
+    .calculator {
+        width: 300px;
+        padding: 16px;
+    }
+
+    .btn {
+        padding: 14px;
+        font-size: 1.1rem;
+    }
+
+    .current-operand {
+        font-size: 2rem;
+    }
+}

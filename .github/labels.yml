@@ -2,196 +2,192 @@
 # 同步运行: .github/workflows/labels.yml (自动应用到 repo)
 # 手动同步: 使用 `gh label sync -f .github/labels.yml` 或 actions/labeler
 
-- name: "bug"
-  color: "d73a4a"
+- name: 'bug'
+  color: 'd73a4a'
   description: "Something isn't working — a confirmed defect."
 
-- name: "feature"
-  color: "a2eeef"
-  description: "New user-facing feature."
+- name: 'feature'
+  color: 'a2eeef'
+  description: 'New user-facing feature.'
 
-- name: "enhancement"
-  color: "84b6eb"
-  description: "Improvement to an existing feature."
+- name: 'enhancement'
+  color: '84b6eb'
+  description: 'Improvement to an existing feature.'
 
-- name: "documentation"
-  color: "0075ca"
-  description: "Improvements or additions to documentation."
+- name: 'documentation'
+  color: '0075ca'
+  description: 'Improvements or additions to documentation.'
 
-- name: "duplicate"
-  color: "cfd3d7"
-  description: "This issue or pull request already exists."
+- name: 'duplicate'
+  color: 'cfd3d7'
+  description: 'This issue or pull request already exists.'
 
-- name: "good first issue"
-  color: "7057ff"
-  description: "Good for newcomers — small, well-scoped, friendly."
+- name: 'good first issue'
+  color: '7057ff'
+  description: 'Good for newcomers — small, well-scoped, friendly.'
 
-- name: "help wanted"
-  color: "008672"
-  description: "Maintainers would love help on this."
+- name: 'help wanted'
+  color: '008672'
+  description: 'Maintainers would love help on this.'
 
-- name: "invalid"
-  color: "e4e669"
+- name: 'invalid'
+  color: 'e4e669'
   description: "This doesn't seem right — closing."
 
-- name: "question"
-  color: "d876e3"
-  description: "Further information is requested — may move to Discussions."
+- name: 'question'
+  color: 'd876e3'
+  description: 'Further information is requested — may move to Discussions.'
 
-- name: "wontfix"
-  color: "ffffff"
-  description: "This will not be worked on."
+- name: 'wontfix'
+  color: 'ffffff'
+  description: 'This will not be worked on.'
 
-- name: "rfc"
-  color: "fbca04"
-  description: "Request for Comments — large design proposal."
+- name: 'rfc'
+  color: 'fbca04'
+  description: 'Request for Comments — large design proposal.'
 
-- name: "discussion"
-  color: "c5def5"
-  description: "Belongs in Discussions, not Issues."
+- name: 'discussion'
+  color: 'c5def5'
+  description: 'Belongs in Discussions, not Issues.'
 
 # --- 类型 ---
-- name: "breaking"
-  color: "b60205"
-  description: "💥 Breaking change — affects public API or behavior."
+- name: 'breaking'
+  color: 'b60205'
+  description: '💥 Breaking change — affects public API or behavior.'
 
-- name: "security"
-  color: "ee0701"
-  description: "Security issue or fix. See SECURITY.md."
+- name: 'security'
+  color: 'ee0701'
+  description: 'Security issue or fix. See SECURITY.md.'
 
-- name: "performance"
-  color: "f4db52"
-  description: "Performance improvement or regression."
+- name: 'performance'
+  color: 'f4db52'
+  description: 'Performance improvement or regression.'
 
-- name: "refactor"
-  color: "fbca04"
-  description: "Code change that neither fixes a bug nor adds a feature."
+- name: 'refactor'
+  color: 'fbca04'
+  description: 'Code change that neither fixes a bug nor adds a feature.'
 
-- name: "test"
-  color: "bfd4f2"
-  description: "Adding or correcting tests."
+- name: 'test'
+  color: 'bfd4f2'
+  description: 'Adding or correcting tests.'
 
-- name: "ci"
-  color: "0e8a16"
-  description: "CI / CD / tooling change."
+- name: 'ci'
+  color: '0e8a16'
+  description: 'CI / CD / tooling change.'
 
-- name: "dependencies"
-  color: "0366d6"
-  description: "Dependency bump (Dependabot, manual)."
+- name: 'dependencies'
+  color: '0366d6'
+  description: 'Dependency bump (Dependabot, manual).'
 
-- name: "build"
-  color: "5319e7"
-  description: "Build system, packaging, or installer change."
+- name: 'build'
+  color: '5319e7'
+  description: 'Build system, packaging, or installer change.'
 
-- name: "chore"
-  color: "fef2c0"
-  description: "Tooling, maintenance, non-user-facing change."
+- name: 'chore'
+  color: 'fef2c0'
+  description: 'Tooling, maintenance, non-user-facing change.'
 
 # --- 区域 (subsystem) ---
-- name: "area/workbench"
-  color: "1d76db"
-  description: "apps/workbench (Tauri UI)"
+- name: 'area/workbench'
+  color: '1d76db'
+  description: 'apps/workbench (Tauri UI)'
 
-- name: "area/desktop-tauri"
-  color: "1d76db"
-  description: "apps/desktop-tauri (legacy shell)"
+- name: 'area/agentd'
+  color: '1d76db'
+  description: 'src/fnixagent (Python agentd)'
 
-- name: "area/agentd"
-  color: "1d76db"
-  description: "src/fnixagent (Python agentd)"
+- name: 'area/fnix-local'
+  color: '1d76db'
+  description: 'apps/fnix-local (sidecar)'
 
-- name: "area/fnix-local"
-  color: "1d76db"
-  description: "apps/fnix-local (sidecar)"
+- name: 'area/mcp'
+  color: '1d76db'
+  description: 'MCP server / registry'
 
-- name: "area/mcp"
-  color: "1d76db"
-  description: "MCP server / registry"
+- name: 'area/security'
+  color: 'b60205'
+  description: 'Security subsystem'
 
-- name: "area/security"
-  color: "b60205"
-  description: "Security subsystem"
+- name: 'area/docs'
+  color: '0075ca'
+  description: 'Documentation site'
 
-- name: "area/docs"
-  color: "0075ca"
-  description: "Documentation site"
+- name: 'area/deploy'
+  color: '5319e7'
+  description: 'Deployment, Docker, CI/CD'
 
-- name: "area/deploy"
-  color: "5319e7"
-  description: "Deployment, Docker, CI/CD"
-
-- name: "area/schemas"
-  color: "fbca04"
-  description: "OpenAPI / protocol contracts"
+- name: 'area/schemas'
+  color: 'fbca04'
+  description: 'OpenAPI / protocol contracts'
 
 # --- 优先级 ---
-- name: "priority/critical"
-  color: "b60205"
-  description: "🔴 Drop everything — production is on fire."
+- name: 'priority/critical'
+  color: 'b60205'
+  description: '🔴 Drop everything — production is on fire.'
 
-- name: "priority/high"
-  color: "d93f0b"
-  description: "🟠 Next-up — should land in the current release."
+- name: 'priority/high'
+  color: 'd93f0b'
+  description: '🟠 Next-up — should land in the current release.'
 
-- name: "priority/medium"
-  color: "fbca04"
-  description: "🟡 Important but not blocking."
+- name: 'priority/medium'
+  color: 'fbca04'
+  description: '🟡 Important but not blocking.'
 
-- name: "priority/low"
-  color: "0e8a16"
-  description: "🟢 Nice to have — pick up when convenient."
+- name: 'priority/low'
+  color: '0e8a16'
+  description: '🟢 Nice to have — pick up when convenient.'
 
 # --- 状态 ---
-- name: "blocked"
-  color: "b60205"
-  description: "Cannot make progress — needs external input."
+- name: 'blocked'
+  color: 'b60205'
+  description: 'Cannot make progress — needs external input.'
 
-- name: "in-progress"
-  color: "0e8a16"
-  description: "Someone is actively working on this."
+- name: 'in-progress'
+  color: '0e8a16'
+  description: 'Someone is actively working on this.'
 
-- name: "needs-design"
-  color: "fbca04"
-  description: "Needs design discussion before implementation."
+- name: 'needs-design'
+  color: 'fbca04'
+  description: 'Needs design discussion before implementation.'
 
-- name: "needs-info"
-  color: "d876e3"
-  description: "Waiting on the reporter for more information."
+- name: 'needs-info'
+  color: 'd876e3'
+  description: 'Waiting on the reporter for more information.'
 
-- name: "needs-rebase"
-  color: "f4db52"
-  description: "PR needs to be rebased onto the latest main."
+- name: 'needs-rebase'
+  color: 'f4db52'
+  description: 'PR needs to be rebased onto the latest main.'
 
-- name: "needs-tests"
-  color: "bfd4f2"
-  description: "Implementation is in but tests are missing."
+- name: 'needs-tests'
+  color: 'bfd4f2'
+  description: 'Implementation is in but tests are missing.'
 
-- name: "do-not-merge"
-  color: "b60205"
-  description: "WIP / experiment — do not merge."
+- name: 'do-not-merge'
+  color: 'b60205'
+  description: 'WIP / experiment — do not merge.'
 
-- name: "work-in-progress"
-  color: "fef2c0"
-  description: "WIP — author is still iterating."
+- name: 'work-in-progress'
+  color: 'fef2c0'
+  description: 'WIP — author is still iterating.'
 
 # --- Stale ---
-- name: "stale"
-  color: "cfd3d7"
+- name: 'stale'
+  color: 'cfd3d7'
   description: "Marked stale by the stale bot. Will be closed if there's no activity."
 
-- name: "closed-by-stale"
-  color: "cfd3d7"
-  description: "Closed automatically because there was no activity."
+- name: 'closed-by-stale'
+  color: 'cfd3d7'
+  description: 'Closed automatically because there was no activity.'
 
 # --- Skip / Meta ---
-- name: "skip-changelog"
-  color: "ffffff"
-  description: "PR should not appear in the release notes."
+- name: 'skip-changelog'
+  color: 'ffffff'
+  description: 'PR should not appear in the release notes.'
 
-- name: "meta"
-  color: "7057ff"
-  description: "Discussion about the project itself (governance, process)."
+- name: 'meta'
+  color: '7057ff'
+  description: 'Discussion about the project itself (governance, process).'
 
-- name: "pinned"
-  color: "ededed"
-  description: "Pinned — protected from the stale bot."
+- name: 'pinned'
+  color: 'ededed'
+  description: 'Pinned — protected from the stale bot.'

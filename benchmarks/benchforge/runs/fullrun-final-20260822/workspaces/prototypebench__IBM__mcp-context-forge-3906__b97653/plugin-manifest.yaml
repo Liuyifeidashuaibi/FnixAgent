@@ -1,0 +1,95 @@
+name: encoded_exfil_detection
+version: "0.2.0"
+description: "Detects suspicious encoded payloads (base64, base64url, hex, percent-encoding, hex escapes) in prompt arguments, tool outputs, and resource content"
+author: "IBM"
+license: "Apache-2.0"
+
+hooks:
+  - name: prompt_pre_fetch
+    description: "Hook for prompt pre-fetch"
+    input_type: "PromptPrehookPayload"
+    output_type: "PluginResult | PluginViolation"
+  - name: tool_post_invoke
+    description: "Hook for tool post-invoke"
+    input_type: "ToolPostInvokeResult"
+    output_type: "PluginResult | PluginViolation"
+  - name: resource_post_fetch
+    description: "Hook for resource post-fetch"
+    input_type: "ResourcePostFetchResult"
+    output_type: "PluginResult | PluginViolation"
+
+config_schema:
+  type: "object"
+  properties:
+    min_suspicion_score:
+      type: "integer"
+      default: 3
+      description: "Minimum suspicion score to flag as finding"
+    min_encoded_length:
+      type: "integer"
+      default: 24
+      description: "Minimum length of encoded candidate to consider"
+    min_entropy:
+      type: "number"
+      default: 3.3
+      description: "Minimum Shannon entropy for high entropy check"
+    printable_ratio_threshold:
+      type: "number"
+      default: 0.7
+      description: "Minimum ratio of printable ASCII characters"
+    allowlist_patterns:
+      type: "array"
+      items:
+        type: "string"
+      default: []
+      description: "Regex patterns to allowlist (skip detection)"
+    per_encoding_score:
+      type: "object"
+      default: {}
+      description: "Per-encoding suspicion thresholds"
+    extra_sensitive_keywords:
+      type: "array"
+      items:
+        type: "string"
+      default: []
+      description: "Additional sensitive keywords to detect"
+    extra_egress_hints:
+      type: "array"
+      items:
+        type: "string"
+      default: []
+      description: "Additional egress hints to detect"
+    max_decode_depth:
+      type: "integer"
+      default: 2
+      description: "Maximum depth for nested encoding detection"
+    parse_json_strings:
+      type: "boolean"
+      default: true
+      description: "Whether to parse JSON within strings"
+    max_recursion_depth:
+      type: "integer"
+      default: 32
+      description: "Maximum recursion depth for container scanning"
+    log_detections:
+      type: "boolean"
+      default: true
+      description: "Whether to log detections"
+    block_on_detection:
+      type: "boolean"
+      default: true
+      description: "Whether to block on detection"
+    redact_enabled:
+      type: "boolean"
+      default: false
+      description: "Whether to redact detected content"
+    min_findings_to_block:
+      type: "integer"
+      default: 1
+      description: "Minimum number of findings to trigger blocking"
+
+# Required dependencies
+requires:
+  - mcp>=0.1.0
+  - pydantic>=2.0.0
+  - typing-extensions>=4.0.0

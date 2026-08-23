@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "api_contract-hard-token_errors",
+  "prompt": "对外 token 校验这块调用方现在只能靠猜异常原因，过期、坏签名、格式不对这些表现不够稳定。帮我按 tokens.py 里 ERROR_REASONS 和异常类旁边写的公开字段约定，把错误类型和能拿到的信息固定下来，正常签发和校验不要受影响。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 79.00000000017826,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787332458.3304088,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\workbuddy-bench__api_contract-hard-token_errors__ce97f1"
+}

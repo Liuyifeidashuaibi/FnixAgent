@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "code--model_evaluation-hard-multiclass_report",
+  "prompt": "多分类评估脚本现在只看 overall accuracy，我排 badcase 时不够用。麻烦补一份更完整的 report：从每行 scores 里取 top1，算每个 label 的 precision/recall/f1/support，再给 macro、weighted 和 accuracy；同分的时候按 labels.json 里的顺序选，未知真实标签不要把脚本跑挂。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 344.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336325.3746033,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\workbuddy-bench__code--model_evaluation-hard-multiclass_report__7f81be"
+}

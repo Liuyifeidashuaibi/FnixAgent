@@ -1,0 +1,18 @@
+{
+  "dataset": "swe-bench-lite",
+  "task_id": "sphinx-doc__sphinx-7686",
+  "prompt": "autosummary: The members variable for module template contains imported members\n**Describe the bug**\r\nautosummary: The members variable for module template contains imported members even if autosummary_imported_members is False.\r\n\r\n**To Reproduce**\r\n\r\n```\r\n# _templates/autosummary/module.rst\r\n{{ fullname | escape | underline }}\r\n\r\n.. automodule:: {{ fullname }}\r\n\r\n   .. autosummary::\r\n   {% for item in members %}\r\n      {{ item }}\r\n   {%- endfor %}\r\n\r\n```\r\n```\r\n# example.py\r\nimport os\r\n```\r\n```\r\n# index.rst\r\n.. autosummary::\r\n   :toctree: generated\r\n\r\n   example\r\n```\r\n```\r\n# conf.py\r\nautosummary_generate = True\r\nautosummary_imported_members = False\r\n```\r\n\r\nAs a result, I got following output:\r\n```\r\n# generated/example.rst\r\nexample\r\n=======\r\n\r\n.. automodule:: example\r\n\r\n   .. autosummary::\r\n\r\n      __builtins__\r\n      __cached__\r\n      __doc__\r\n      __file__\r\n      __loader__\r\n      __name__\r\n      __package__\r\n      __spec__\r\n      os\r\n```\r\n\r\n**Expected behavior**\r\nThe template variable `members` should not contain imported members when `autosummary_imported_members` is False.\r\n\r\n**Your project**\r\nNo\r\n\r\n**Screenshots**\r\nNo\r\n\r\n**Environment info**\r\n- OS: Mac\r\n- Python version: 3.8.2\r\n- Sphinx version: 3.1.0dev\r\n- Sphinx extensions:  sphinx.ext.autosummary\r\n- Extra tools: No\r\n\r\n**Additional context**\r\nNo\r\n\n",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/sphinx/ext/autosummary/generate.py b/sphinx/ext/autosummary/generat] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 92.9999999998472,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=glm-5.2): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787332466.283374,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-20260822\\workspaces\\swe-bench-lite__sphinx-doc__sphinx-7686__3b70b5"
+}

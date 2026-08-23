@@ -10,9 +10,9 @@
  * Order: agentd env → public/local-llm.bootstrap.json → VITE_FNIX_*.
  */
 
-import type { AIProviderConfig } from "../../utils/providers";
-import type { AppConfig } from "../../utils/tauri";
-import { loadLocalLlmBootstrap } from "../../lib/fnixBridge";
+import type { AIProviderConfig } from '../../utils/providers';
+import type { AppConfig } from '../../utils/tauri';
+import { loadLocalLlmBootstrap } from '../../lib/fnixBridge';
 
 const env = (import.meta as ImportMeta & { env?: Record<string, string> }).env || {};
 
@@ -25,13 +25,11 @@ export type LocalLlm = {
 };
 
 export let LOCAL_LLM: LocalLlm = {
-  apiKey: (env.VITE_FNIX_API_KEY || "").trim(),
-  model: (env.VITE_FNIX_MODEL || "qwen-plus-2025-07-28").trim(),
-  baseUrl: (
-    env.VITE_FNIX_BASE_URL || "https://dashscope.aliyuncs.com/compatible-mode/v1"
-  ).trim(),
-  provider: (env.VITE_FNIX_PROVIDER || "qwen").trim(),
-  providerName: (env.VITE_FNIX_PROVIDER_NAME || "DashScope (Qwen)").trim(),
+  apiKey: (env.VITE_FNIX_API_KEY || '').trim(),
+  model: (env.VITE_FNIX_MODEL || 'qwen-plus-2025-07-28').trim(),
+  baseUrl: (env.VITE_FNIX_BASE_URL || 'https://dashscope.aliyuncs.com/compatible-mode/v1').trim(),
+  provider: (env.VITE_FNIX_PROVIDER || 'qwen').trim(),
+  providerName: (env.VITE_FNIX_PROVIDER_NAME || 'DashScope (Qwen)').trim(),
 };
 
 function applyBoot(boot: {
@@ -44,7 +42,7 @@ function applyBoot(boot: {
   provider_name?: string;
   providerName?: string;
 }) {
-  const key = (boot.api_key || boot.apiKey || "").trim();
+  const key = (boot.api_key || boot.apiKey || '').trim();
   if (!key) return false;
   LOCAL_LLM = {
     apiKey: key,
@@ -63,7 +61,7 @@ export function hasLocalLlmBootstrap(): boolean {
 async function loadPublicBootstrap(): Promise<boolean> {
   try {
     const res = await fetch(`/local-llm.bootstrap.json?t=${Date.now()}`, {
-      cache: "no-store",
+      cache: 'no-store',
       signal: AbortSignal.timeout(2000),
     });
     if (!res.ok) return false;
@@ -83,8 +81,8 @@ export async function refreshLocalLlmFromAgentd(): Promise<boolean> {
 
 export function localProviderConfig(): AIProviderConfig {
   return {
-    id: "local-dashscope",
-    type: "openai-compatible",
+    id: 'local-dashscope',
+    type: 'openai-compatible',
     name: LOCAL_LLM.providerName,
     apiKey: LOCAL_LLM.apiKey,
     baseUrl: LOCAL_LLM.baseUrl,
@@ -98,5 +96,23 @@ export function localAppConfig(base: AppConfig): AppConfig {
     provider: LOCAL_LLM.provider,
     api_key: LOCAL_LLM.apiKey,
     model: LOCAL_LLM.model,
+  };
+}
+
+/**
+ * BUG-022 fix: Update LOCAL_LLM in-place after settings save.
+ * Previously, saving a new model in DesktopSettings only updated React state
+ * (config, providers) and the backend via syncHarnessConfig, but LOCAL_LLM
+ * remained stale. Any code reading LOCAL_LLM (OnboardingWizard, Settings
+ * panel re-open, modelLabel fallback) would show the old model name until
+ * a full page reload triggered refreshLocalLlmFromAgentd().
+ */
+export function updateLocalLlm(patch: Partial<LocalLlm>): void {
+  LOCAL_LLM = {
+    apiKey: patch.apiKey ?? LOCAL_LLM.apiKey,
+    model: patch.model ?? LOCAL_LLM.model,
+    baseUrl: patch.baseUrl ?? LOCAL_LLM.baseUrl,
+    provider: patch.provider ?? LOCAL_LLM.provider,
+    providerName: patch.providerName ?? LOCAL_LLM.providerName,
   };
 }

@@ -1,0 +1,69 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "IBM__mcp-context-forge-3476",
+  "prompt": "# 🐛 Bug-fix PR\n\n---\n\n## 📌 Summary\nWhen a gateway's visibility is updated (e.g. `public` → `team`), the change was not propagated to its linked tools, prompts, and resources if the upstream MCP server was unreachable. This caused a visibility mismatch where the gateway would be `team`-scoped while its tools/prompts/resources remained `public`.\n\nCloses #3475\n\n## 🔁 Reproduction Steps\n1. Register a gateway with `visibility: \"public\"`\n2. Take the upstream MCP server offline\n3. Update the gateway via `PUT /gateways/{id}` with `visibility: \"team\"`\n4. Observe: gateway is `team` but linked tools/prompts/resources are still `public`\n\n## 🐞 Root Cause\nIn `gateway_service.py:update_gateway`, visibility propagation to linked items happened inside a `try` block gated on `_initialize_gateway` succeeding (network call). If the upstream was unreachable, the exception was caught and propagation was skipped entirely. Also contained a duplicate visibility assignment.\n\n## 💡 Fix Description\n- Moved visibility propagation to run immediately after the gateway's own visibility is set, before the `_initialize_gateway` try block\n- Iterates over `gateway.tools`, `gateway.resources`, and `gateway.prompts` (already eager-loaded) and sets their visibility directly\n- Removed the duplicate `gateway.visibility` assignment\n\n## 🧪 Verification\n\n| Check                                 | Command              | Status |\n|---------------------------------------|----------------------|--------|\n| Lint suite                            | `make lint`          | ✅     |\n| Unit tests                            | `make test`          | ✅     |\n| New regression test                   | `pytest ...test_update_gateway_visibility_propagates_when_init_fails` | ✅ |\n\n## ✅ Checklist\n- [x] Code formatted (`make black isort pre-commit`)\n- [x] No secrets/credentials committed\n- [x] TDD: test written first, verified failing, then fix applied",
+  "status": "failure",
+  "failure_type": "path_error",
+  "failure_evidence": "Agent未能找到`gateway_service.py`文件的具体位置，导致无法执行必要的代码修改。",
+  "final_response": "The `gateway_service.py` file is still not found, even after searching in potential subdirectories. This suggests that the file might be in a different location or the project structure may differ from what I expected.\n\n### Step 6: Request Clarification\n\nTo proceed, I need to clarify the exact location of the `gateway_service.py` file. Could you please provide the correct path to the `gateway_service.py` file within the project? Once I have the correct path, I can read the file and make the necessary changes.",
+  "steps": [
+    "Step 0 | 思考: To address the issue described, we need to make sure that the visibility of a gateway is correctly p... | 工具 ✓ glob({\"pattern\": \"gateway_service.py\"}) | 耗时: 5703ms, tokens: 3279",
+    "Step 0 | 思考: To address the issue described, we need to make sure that the visibility of a gateway is correctly p... | 工具 ✗ read_file({\"file_path\": \"gateway_service.py\"}) | 耗时: 5704ms, tokens: 3279",
+    "Step 1 | 思考: It appears that the `gateway_service.py` file is not present in the current working directory. Given... | 工具 ✓ ls({\"path\": \".\"}) | 耗时: 3946ms, tokens: 3434",
+    "Step 2 | 思考: The current directory appears to be empty, which suggests that the `gateway_service.py` file is not ... | 工具 ✓ glob({\"pattern\": \"**/gateway_service.py\", \"path\": \".\"}) | 耗时: 3730ms, tokens: 3617",
+    "Step 3 | 思考: It seems that the `gateway_service.py` file is not present in any of the subdirectories either. This... | 工具 ✗ ls({\"path\": \"..\"}) | 耗时: 4648ms, tokens: 3764",
+    "Step 4 | 思考: It looks like I cannot navigate to the parent directory due to security restrictions. Given this, I ... | 工具 ✓ glob({\"pattern\": \"*/gateway_service.py\", \"path\": \".\"}) | 耗时: 4216ms, tokens: 3938",
+    "Step 5 | 思考: The `gateway_service.py` file is still not found, even after searching in potential subdirectories. ... | 耗时: 3854ms, tokens: 4074"
+  ],
+  "tool_calls": [
+    {
+      "step": 1,
+      "tool": "glob",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'count': 0, 'pattern': 'gateway_service.py'})\n(无匹配结果)"
+    },
+    {
+      "step": 2,
+      "tool": "read_file",
+      "args": {},
+      "success": false,
+      "output_preview": "[失败] 文件不存在: gateway_service.py"
+    },
+    {
+      "step": 3,
+      "tool": "ls",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'count': 0, 'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\fullrun-final-20260822\\\\workspaces\\\\prototypebench__IBM__mcp-context-forge-3476__d47cae'})\n(空目录)"
+    },
+    {
+      "step": 4,
+      "tool": "glob",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'count': 0, 'pattern': '**/gateway_service.py'})\n(无匹配结果)"
+    },
+    {
+      "step": 5,
+      "tool": "ls",
+      "args": {},
+      "success": false,
+      "output_preview": "[失败] 路径遍历攻击: .."
+    },
+    {
+      "step": 6,
+      "tool": "glob",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'count': 0, 'pattern': '*/gateway_service.py'})\n(无匹配结果)"
+    }
+  ],
+  "files_written": [],
+  "total_tokens": 22106,
+  "duration_ms": 26110.000000000127,
+  "error": "",
+  "judge_method": "llm",
+  "started_at": 1787386650.5471654,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-final-20260822\\workspaces\\prototypebench__IBM__mcp-context-forge-3476__d47cae"
+}

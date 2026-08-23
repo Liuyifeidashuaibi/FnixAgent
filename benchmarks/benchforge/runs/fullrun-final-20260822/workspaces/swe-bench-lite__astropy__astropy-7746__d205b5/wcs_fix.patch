@@ -1,0 +1,20 @@
+diff --git a/astropy/wcs/wcs.py b/astropy/wcs/wcs.py
+index abc1234..def5678 100644
+--- a/astropy/wcs/wcs.py
++++ b/astropy/wcs/wcs.py
+@@ -1260,6 +1260,12 @@ class WCS(object):
+             # Check that we have the right number of axes
+             if len(axes) != self.naxis:
+                 raise ValueError(
+-                    "Number of input arrays ({0}) does not match "
++                    "Number of input arrays ({0}) does not match "
+                     "number of WCS axes ({1}).".format(len(axes), self.naxis))
+ 
++            # Handle empty input arrays
++            if len(axes) > 0 and all(len(axis) == 0 for axis in axes):
++                # Return empty arrays for each output dimension
++                return [np.array([]) for _ in range(self.naxis)]
++
+             # Validate axes
+             for i, axis in enumerate(axes):
+                 if not hasattr(axis, '__len__'):

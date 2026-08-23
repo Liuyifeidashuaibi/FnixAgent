@@ -28,12 +28,16 @@ Phase 2.11 验收:违规输入 100ms 内拦截,违规输出不展示,审计可�
 
 from __future__ import annotations
 
+import logging
 import re
 import time
 from dataclasses import dataclass, field
 
 from fnixagent.core.security.desensitize import Desensitizer
 from fnixagent.core.security.sensitive import SensitiveDetector
+
+_logger = logging.getLogger(__name__)
+
 
 # ---------------------------------------------------------------------------
 # 审核类别常量
@@ -164,7 +168,7 @@ def _audit_moderation(
             ip_address=ip_address,
         )
     except Exception:
-        pass
+        _logger.debug('Unhandled exception', exc_info=True)
 
 
 # ---------------------------------------------------------------------------

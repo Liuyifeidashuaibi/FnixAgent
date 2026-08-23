@@ -1,0 +1,28 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "usebruno__bruno-7883",
+  "prompt": "### Description\r\n\r\n[Jira](https://usebruno.atlassian.net/browse/BRU-2465)\r\n\r\nWhat this does:\r\n- Validate whitespace-only collection/workspace name input\r\n- Fix stale formik values, by updating logic of onChange\r\n\r\nAfter:\r\n\r\nCreate collection modal:\r\n\r\nhttps://github.com/user-attachments/assets/b962d31d-e038-4dec-97fd-801446545d5b\r\n\r\nCreate workspace modal:\r\n\r\nhttps://github.com/user-attachments/assets/e80ebe03-6c48-4229-a67b-083e90b07299\r\n\r\n\r\nBefore:\r\n\r\nCreate collection modal:\r\n\r\nhttps://github.com/user-attachments/assets/a23d5edc-4081-4daa-ab23-45ff2b779711\r\n\r\n\r\nCreate workspace modal:\r\n\r\nhttps://github.com/user-attachments/assets/be166b7b-ff5e-4a63-a950-2c6cf04acbda\r\n\r\n\r\n\r\n#### Contribution Checklist:\r\n\r\n- [ ] **I've used AI significantly to create this pull request**\r\n- [x] **The pull request only addresses one issue or adds one feature.**\r\n- [x] **The pull request does not introduce any breaking changes**\r\n- [x] **I have added screenshots or gifs to help explain the change if applicable.**\r\n- [x] **I have read the [contribution guidelines](https://github.com/usebruno/bruno/blob/main/contributing.md).**\r\n- [x] **Create an issue and link to the pull request.**",
+  "status": "infra_skip",
+  "failure_type": "",
+  "failure_evidence": "基础设施错误(LLM 配额/鉴权)，待配额恢复后重跑: LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-2026-05-20): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"us",
+  "final_response": "",
+  "steps": [
+    "Step 0 | 思考: Let me understand the PR: it needs to validate whitespace-only collection/workspace name input and f... | 工具 ✓ grep({\"pattern\": \"CreateCollection|create-collection|Cr) | 耗时: 2006ms, tokens: 3137"
+  ],
+  "tool_calls": [
+    {
+      "step": 1,
+      "tool": "grep",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'count': 0, 'pattern': 'CreateCollection|create-collection|CreateWorkspace|create-workspace'})\n(无匹配)"
+    }
+  ],
+  "files_written": [],
+  "total_tokens": 3137,
+  "duration_ms": 2044.0056000006734,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-2026-05-20): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787382548.4428673,
+  "workspace": "benchmarks\\benchforge\\runs\\batch-v4-20260822\\workspaces\\prototypebench__usebruno__bruno-7883__64e47f"
+}

@@ -1,0 +1,28 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "usebruno__bruno-7537",
+  "prompt": "- Updated the error formatter to utilize in-memory script content for error context, improving accuracy when users have unsaved changes.\r\n- Introduced a new utility function, `getSourceContextFromContent`, to extract context lines from in-memory scripts.\r\n- Enhanced tests to verify that draft script errors display the correct code context, ensuring users see the most relevant information during debugging.\r\n- Added new Playwright tests to validate error handling in draft states across pre-request, post-response, and test scripts.\r\n\r\n### Description\r\n\r\n<!-- Explain here the changes your PR introduces and text to help us understand the context of this change. -->\r\n\r\n#### Contribution Checklist:\r\n\r\n- [ ] **I've used AI significantly to create this pull request**\r\n- [ ] **The pull request only addresses one issue or adds one feature.**\r\n- [ ] **The pull request does not introduce any breaking changes**\r\n- [ ] **I have added screenshots or gifs to help explain the change if applicable.**\r\n- [ ] **I have read the [contribution guidelines](https://github.com/usebruno/bruno/blob/main/contributing.md).**\r\n- [ ] **Create an issue and link to the pull request.**\r\n\r\nNote: Keeping the PR small and focused helps make it easier to review and merge. If you have multiple changes you want to make, please consider submitting them as separate pull requests.\r\n\r\n#### Publishing to New Package Managers\r\n\r\nPlease see [here](../publishing.md) for more information.\r\n\n\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\n## Summary by CodeRabbit\n\n* **Bug Fixes**\n  * Error views now prefer unsaved (draft) script content when available, yielding correct error lines, context, and preserving stack-trace locations for draft-only code.\n  * Improved context extraction for in-memory script content so error cards show the draft script lines.\n\n* **Tests**\n  * Added end-to-end tests validating draft script error UI for pre-request, post-response, and tests.\n  * Expanded unit/integration tests for in-memory vs on-disk context and stack-trace handling; added fixtures.\n\n* **Chores**\n  * UI now shows a draft indicator on modified request tabs.\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->",
+  "status": "infra_skip",
+  "failure_type": "",
+  "failure_evidence": "基础设施错误(LLM 配额/鉴权)，待配额恢复后重跑: LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-2026-05-20): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"us",
+  "final_response": "",
+  "steps": [
+    "Step 0 | 思考: I need to understand the current state of the workspace and what changes are needed based on the PR ... | 工具 ✓ ls({\"path\": \".\"}) | 耗时: 1364ms, tokens: 3196"
+  ],
+  "tool_calls": [
+    {
+      "step": 1,
+      "tool": "ls",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'count': 0, 'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\batch-v4-20260822\\\\workspaces\\\\prototypebench__usebruno__bruno-7537__cd980a'})\n(空目录)"
+    }
+  ],
+  "files_written": [],
+  "total_tokens": 3196,
+  "duration_ms": 1401.5676000053645,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-2026-05-20): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787382524.893168,
+  "workspace": "benchmarks\\benchforge\\runs\\batch-v4-20260822\\workspaces\\prototypebench__usebruno__bruno-7537__cd980a"
+}

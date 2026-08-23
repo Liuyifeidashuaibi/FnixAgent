@@ -32,6 +32,7 @@
 from __future__ import annotations
 
 import html as html_lib
+import logging
 import os
 import re
 import time
@@ -39,6 +40,9 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from fnixagent.office.base import BaseExpert, ExpertError, ExpertResult
+
+_logger = logging.getLogger(__name__)
+
 
 # ---------------------------------------------------------------------------
 # 模板元数据
@@ -321,7 +325,7 @@ class TemplateManager(BaseExpert):
                     try:
                         wb.close()
                     except Exception:
-                        pass
+                        _logger.debug('Unhandled exception', exc_info=True)
         elif ext == "pptx":
             try:
                 from pptx import Presentation
@@ -510,7 +514,7 @@ class TemplateManager(BaseExpert):
                 try:
                     wb.close()
                 except Exception:
-                    pass
+                    _logger.debug('Unhandled exception', exc_info=True)
 
     def _apply_pptx(self, src: str, out: str, values: dict[str, Any]) -> ExpertResult:
         try:

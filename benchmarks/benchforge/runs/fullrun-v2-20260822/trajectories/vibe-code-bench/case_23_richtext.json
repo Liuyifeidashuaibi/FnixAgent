@@ -1,0 +1,18 @@
+{
+  "dataset": "vibe-code-bench",
+  "task_id": "case_23_richtext",
+  "prompt": "# Build me a Rich Text Editor\n\nI want a WYSIWYG rich text editor in a single HTML file. Think simple Google Docs or Medium editor.\n\n## Core Features\n\n1. **Editable content area** - Large text editing area\n2. **Formatting toolbar** with buttons for:\n   - **Bold** (Ctrl+B)\n   - **Italic** (Ctrl+I)\n   - **Underline** (Ctrl+U)\n   - **Strikethrough**\n   - **Headings** (H1, H2, H3)\n   - **Lists** (bullet and numbered)\n   - **Links** (add/edit hyperlinks)\n   - **Text alignment** (left, center, right, justify)\n\n3. **Undo/Redo** - Ctrl+Z and Ctrl+Y should work\n4. **Character/word count** - Show at bottom\n\n## Advanced Features (bonus)\n\n- **Text color** picker\n- **Highlight/background color**\n- **Font size** selector\n- **Block quotes**\n- **Code blocks** (monospace)\n- **Insert horizontal rule**\n\n## UI Requirements\n\n- **Toolbar** at top with formatting buttons (icons preferred)\n- **Content area** below, like a document page\n- **Clean, minimal design** - focus on content\n- Buttons should show active state when format is applied\n\n## Behavior\n\n- Formatting applies to selected text\n- If no selection, toggle format for next typed text\n- Keyboard shortcuts should work\n- Content should persist in localStorage (optional)\n\n## Technical\n\n- Use `contenteditable` or build from scratch\n- Vanilla JavaScript, no libraries\n- Single HTML file with embedded CSS/JS\n- Use `document.execCommand` or Selection API\n\nMake it look like a professional document editor - white page, subtle shadows.",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 375.0,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336334.1169648,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\vibe-code-bench__case_23_richtext__7ca4cd"
+}

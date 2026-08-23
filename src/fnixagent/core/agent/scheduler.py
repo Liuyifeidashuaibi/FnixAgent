@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import time
 from typing import Any
 
@@ -38,6 +39,9 @@ from fnixagent.core.agent.types import (
     AgentState,
     StorageBackend,
 )
+
+_logger = logging.getLogger(__name__)
+
 
 
 class AgentScheduler:
@@ -128,6 +132,7 @@ class AgentScheduler:
                 break
             except Exception:
                 # 避免循环因异常退出
+                _logger.debug('Unhandled exception', exc_info=True)
                 continue
 
     async def _resource_monitor_loop(self) -> None:
@@ -157,6 +162,7 @@ class AgentScheduler:
             except asyncio.CancelledError:
                 break
             except Exception:
+                _logger.debug('Unhandled exception', exc_info=True)
                 continue
 
     # --- 进程管理 ---

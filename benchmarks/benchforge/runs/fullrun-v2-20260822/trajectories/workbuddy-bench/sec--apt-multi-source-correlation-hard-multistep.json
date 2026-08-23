@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "sec--apt-multi-source-correlation-hard-multistep",
+  "prompt": "# APT Multi-Source Correlation (5源 → 4阶段)\n\n你是企业 SOC 分析师。SIEM 在凌晨告警一组关联事件，跨多个数据源出现可疑活动。请基于 `/workdir/logs/` 下的真实日志样本完成 APT 攻击链关联分析。\n\n## 数据源\n\n`/workdir/logs/` 下提供 5 个真实日志源：\n1. `01-mail-gateway.log` - postfix + amavisd 邮件网关日志\n2. `02-sysmon-windows.xml` - Windows Sysmon 进程/网络事件\n3. `03-windows-security-audit.log` - 域控 + 文件服务器 Windows Security Auditing 事件\n4. `04-aws-cloudtrail.jsonl` - AWS CloudTrail JSON Lines\n5. `05-firewall-traffic.log` - 防火墙流量+告警日志\n\n## 任务\n\n通过分析以上 5 源日志，识别这次 APT 攻击的：\n- **IoC 列表**（恶意域名、IP、用户、文件、AWS key 等）\n- **MITRE ATT&CK TTP 技术编号**\n- **攻击链描述**（识别 → 关联 → 归因 → 影响）\n- **整体严重等级**（CVSS 0.0-10.0）\n\n## 提交格式\n\n把分析结论写入 `/workdir/findings.json`，schema 如下：\n\n```json\n{\n  \"ioc\": [\"...\"],\n  \"ttp\": [\"T1566\", \"T1059\", \"...\"],\n  \"attack_chain\": \"完整描述：从初始访问到目的实现 4 阶段的逻辑链\",\n  \"severity\": 9.5\n}\n```\n\n## 提示\n\n- 攻击预计跨越邮件钓鱼、终端执行、域控横向、IAM 滥用、S3 外发 5 个阶段\n- 严重等级综合考虑：数据泄露规模（>=GB级敏感数据）、提权深度（krbtgt/Admin）、影响面（生产业务）\n\n## 工具\n\n容器内已预装：`ripgrep`、`jq`、`xmlstarlet`、`grep`、`python3` 及 `python-dateutil` 库。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 359.00000000037835,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336329.8434088,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\workbuddy-bench__sec--apt-multi-source-correlation-hard-multistep__a1fa6c"
+}

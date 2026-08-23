@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geolocation Monitor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .settings-panel {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 24px;
+        }
+
+        .geolocation {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background-color: #e74c3c;
+            margin: 0 auto 30px;
+            transition: all 0.5s ease;
+            box-shadow: 0 8px 20px rgba(231, 76, 60, 0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 40px;
+        }
+
+        .geolocation.reached {
+            background-color: #27ae60;
+            box-shadow: 0 8px 20px rgba(39, 174, 96, 0.4);
+            transform: scale(1.1);
+        }
+
+        .info {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .info p {
+            margin: 5px 0;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="settings-panel">
+        <h1>📍 Geolocation Monitor</h1>
+        <div class="geolocation">📍</div>
+        <div class="info">
+            <p><strong>Target Location:</strong></p>
+            <p>Latitude: 30°</p>
+            <p>Longitude: 120°</p>
+        </div>
+        <div class="status" id="status">Monitoring location...</div>
+    </div>
+
+    <script>
+        const TARGET_LATITUDE = 30;
+        const TARGET_LONGITUDE = 120;
+        const TOLERANCE = 0.01; // 约 1km 精度
+
+        let watchId = null;
+
+        function checkLocation(position) {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+            
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = `Current: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+
+            // 检查是否到达目标位置
+            const latDiff = Math.abs(latitude - TARGET_LATITUDE);
+            const lonDiff = Math.abs(longitude - TARGET_LONGITUDE);
+
+            if (latDiff <= TOLERANCE && lonDiff <= TOLERANCE) {
+                // 到达目标，添加 reached 类
+                const geoElement = document.querySelector('.geolocation');
+                geoElement.classList.add('reached');
+                geoElement.textContent = '✓';
+                
+                statusEl.textContent = '✓ Target reached! Monitoring stopped.';
+                statusEl.style.color = '#27ae60';
+                statusEl.style.fontWeight = 'bold';
+
+                // 清除地理位置监控
+                if (watchId !== null) {
+                    navigator.geolocation.clearWatch(watchId);
+                    watchId = null;
+                }
+            }
+        }
+
+        function handleError(error) {
+            const statusEl = document.getElementById('status');
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    statusEl.textContent = '⚠ Location permission denied';
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    statusEl.textContent = '⚠ Location unavailable';
+                    break;
+                case error.TIMEOUT:
+                    statusEl.textContent = '⚠ Location request timeout';
+                    break;
+                default:
+                    statusEl.textContent = '⚠ Unknown error occurred';
+                    break;
+            }
+            statusEl.style.color = '#e74c3c';
+        }
+
+        // 开始监控地理位置
+        if ('geolocation' in navigator) {
+            watchId = navigator.geolocation.watchPosition(
+                checkLocation,
+                handleError,
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                }
+            );
+        } else {
+            document.getElementById('status').textContent = '⚠ Geolocation not supported';
+        }
+    </script>
+</body>
+</html>

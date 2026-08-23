@@ -1,0 +1,35 @@
+{
+  "id": "inst-001",
+  "title": "精确格式指令遵循",
+  "capability": "instruction_following",
+  "difficulty": 1,
+  "tags": [
+    "format"
+  ],
+  "prompt": "在当前目录创建 notes.txt，内容恰好为 3 行，每行均以 \"- \" 开头，不要输出其他任何内容到该文件。",
+  "allowed_scope": [
+    "notes.txt"
+  ],
+  "checks": [
+    {
+      "function": "file_exists",
+      "args": {
+        "path": "notes.txt"
+      },
+      "desc": "创建文件"
+    },
+    {
+      "function": "file_contains",
+      "args": {
+        "path": "notes.txt",
+        "pattern": "^(- .+\n?){3}$"
+      },
+      "desc": "恰好 3 行且均以 '- ' 开头"
+    },
+    {
+      "function": "scope_respected",
+      "args": {},
+      "desc": "不得创建其他文件"
+    }
+  ]
+}

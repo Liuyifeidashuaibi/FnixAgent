@@ -40,6 +40,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 
 logger = logging.getLogger(__name__)
+_logger = logger
 
 # ---------------------------------------------------------------------------
 # 数据结构
@@ -132,7 +133,7 @@ class AuditChain:
             os.makedirs(self._chain_dir, exist_ok=True)
             os.makedirs(self._snapshots_dir, exist_ok=True)
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
         # 内存索引:当前最大 entry_id(避免每次都全量扫描)
         self._last_entry_id = self._count_entries() - 1
         self._last_hash = self._compute_last_hash()
@@ -308,9 +309,10 @@ class AuditChain:
                         )
                     )
                 except Exception:
+                    _logger.debug('Unhandled exception', exc_info=True)
                     continue
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
         return snapshots
 
     # -- 内部:哈希计算 ---------------------------------------------------
@@ -431,6 +433,7 @@ class AuditChain:
                             )
                         )
                     except Exception:
+                        _logger.debug('Unhandled exception', exc_info=True)
                         continue
         except Exception as exc:
             logger.warning("[audit_chain] 读取链失败: %s", exc)
@@ -477,7 +480,7 @@ class AuditChain:
                     stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH,
                 )
         except Exception:
-            pass  # WORM 保护失败不阻塞主流程
+            _logger.debug('Unhandled exception', exc_info=True)  # WORM 保护失败不阻塞主流程
 
     def _unset_worm_protection(self) -> None:
         """临时解除 WORM 只读保护(追加写入前调用)。"""
@@ -498,4 +501,4 @@ class AuditChain:
                     stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH,
                 )
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)

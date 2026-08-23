@@ -1,0 +1,28 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "IBM__mcp-context-forge-3574",
+  "prompt": "# 🐛 Bug-fix PR\r\n\r\nCloses #3530\r\n\r\n## 📌 Summary\r\nFixed a bug where the `AUTO_REFRESH_SERVERS=true` configuration overrides the granular visibility settings of individual tools, resources, and prompts. Previously, during a server auto-refresh, any explicitly configured \"Private\" or \"Team\" items would automatically be changed to match the parent Gateway's visibility (e.g., \"Public\"). This fix ensures that background sync operations preserve existing visibility configurations while still allowing manual UI/API updates to propagate visibility changes correctly.\r\n\r\n## 🔁 Reproduction Steps\r\n1. Create and configure an MCP Gateway with \"Public\" visibility.\r\n2. Allow the Gateway to perform its initial sync so that its tools default to \"Public\".\r\n3. Manually update one of the synced tools to have \"Private\" visibility.\r\n4. Trigger a background auto-refresh for the Gateway (e.g., via `AUTO_REFRESH_SERVERS=true` or a health check).\r\n5. **Observed Bug:** The tool's visibility is changed back to \"Public\".\r\n6. **Expected Behavior:** The tool remains \"Private\".\r\n\r\n## 🐞 Root Cause\r\nThe `_update_or_create_tools`, `_update_or_create_resources`, and `_update_or_create_prompts` helper methods in `mcpgateway/services/gateway_service.py` contained logic that unconditionally applied `existing_item.visibility = gateway.visibility` during the synchronization process. The methods did not differentiate between an automatic background refresh and a manual update triggered by a user.\r\n\r\n## 💡 Fix Description\r\nThe `_update_or_create_tools`, `_update_or_create_resources`, and `_update_or_create_prompts` helper methods in `mcpgateway/services/gateway_service.py` contained logic that unconditionally applied `existing_item.visibility = gateway.visibility` during the synchronization process. The methods did not differentiate between an automatic background refresh and a manual update triggered by a user.\r\n## 💡 Fix Description\r\nUpdated the synchronization logic across tools, resources, and prompts to conditionally evaluate visibility changes based on the operation's context. \r\n- Introduced a `should_update_visibility = created_via == \"update\"` condition.\r\n- The item's `visibility` attribute is now explicitly excluded from the `fields_to_update` conditions and field assignment blocks unless the sync is triggered by a manual update (`\"update\"`). \r\n- Added comprehensive unit tests `test_update_visibility_logic` and updated removal scenarios) in `test_gateway_service_extended.py` to assert that visibility correctly inherits during manual updates but is preserved during `auto_refresh`, `health_check`, and `rediscovery` contexts.\r\n\r\n## 🧪 Verification\r\n\r\n| Check                                 | Command              | Status |\r\n|---------------------------------------|----------------------|--------|\r\n| Lint suite                            | `make lint`          |   ✅     |\r\n| Unit tests                            | `make test`          |     ✅   |\r\n| Coverage ≥ 80 %                       | `make coverage`      |    ✅    |\r\n| Manual regression no longer fails     | steps / screenshots  |    ✅    |\r\n\r\n## 📐 MCP Compliance (if relevant)\r\n- [x] Matches current MCP spec\r\n- [x] No breaking change to MCP clients\r\n\r\n## ✅ Checklist\r\n- [x] Code formatted (`make black isort pre-commit`)\r\n- [x] No secrets/credentials committed",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [
+    "Step 0 | 思考: 了解了，您希望修复一个与 MCP Gateway 自动刷新服务器时覆盖工具、资源和提示的细粒度可见性设置有关的 bug。根据您的描述，我已经明确了需要修改 `mcpgateway/services/g... | 工具 ✗ read_file({\"file_path\": \"mcpgateway/services/gateway_service) | 耗时: 7909ms, tokens: 3589"
+  ],
+  "tool_calls": [
+    {
+      "step": 1,
+      "tool": "read_file",
+      "args": {},
+      "success": false,
+      "output_preview": "[失败] 文件不存在: mcpgateway/services/gateway_service.py"
+    }
+  ],
+  "files_written": [],
+  "total_tokens": 3589,
+  "duration_ms": 8812.999999999989,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen-max): HTTP 400 (<400> InternalError.Algo.InvalidParameter: messages with role \"tool\" must be a response to a preceeding message with \"tool_calls\".)",
+  "judge_method": "heuristic",
+  "started_at": 1787384908.2505279,
+  "workspace": "benchmarks\\benchforge\\runs\\batch-v4-20260822\\workspaces\\prototypebench__IBM__mcp-context-forge-3574__729019"
+}

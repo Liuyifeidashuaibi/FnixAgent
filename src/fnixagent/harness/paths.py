@@ -53,6 +53,21 @@ def mcp_path() -> Path:
     return fnix_home() / "mcp.json"
 
 
+def default_workspace() -> Path:
+    """服务端默认工作区（未显式指定时）。
+
+    解析顺序：FNIXAGENT_WORKSPACE 环境变量 > ~/.fnix/workspaces/default。
+    绝不回落到进程 cwd —— 那通常是应用安装目录，会把用户产物写进
+    安装目录/源码仓库（D1 缺陷修复）。
+    """
+    raw = os.getenv("FNIXAGENT_WORKSPACE", "").strip()
+    if raw:
+        return Path(raw).expanduser().resolve()
+    ws = fnix_home() / "workspaces" / "default"
+    ws.mkdir(parents=True, exist_ok=True)
+    return ws
+
+
 def project_fnix_dir(workspace: str | os.PathLike[str]) -> Path:
     return Path(workspace).expanduser().resolve() / ".fnix"
 

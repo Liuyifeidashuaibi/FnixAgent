@@ -1,0 +1,37 @@
+{
+  "dataset": "prototypebench",
+  "task_id": "usebruno__bruno-7813",
+  "prompt": "### Description\r\n\r\n[BRU-3157](https://usebruno.atlassian.net/browse/BRU-3157)\r\n\r\nAfter:\r\n\r\n\r\nhttps://github.com/user-attachments/assets/f25cad27-0b80-4ef5-922d-3ed56c1b8d28\r\n\r\nBefore:\r\n\r\nhttps://github.com/user-attachments/assets/1a95539b-19c7-461f-ac3c-ad838e8ee6b6\r\n\r\nCreate a new component for selection list, use it for imports from collections. Used in git import, bulk import paths.\r\n\r\nWill be used in github import later.\r\n\r\n#### Contribution Checklist:\r\n\r\n- [ ] **I've used AI significantly to create this pull request**\r\n- [x] **The pull request only addresses one issue or adds one feature.**\r\n- [x] **The pull request does not introduce any breaking changes**\r\n- [x] **I have added screenshots or gifs to help explain the change if applicable.**\r\n- [x] **I have read the [contribution guidelines](https://github.com/usebruno/bruno/blob/main/contributing.md).**\r\n- [ ] **Create an issue and link to the pull request.**\r\n\r\n\r\n\r\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\r\n## Summary by CodeRabbit\r\n\r\n* **New Features**\r\n  * Reusable selectable list with \"Select All\", per-item checkboxes, empty-state messaging, and configurable visible rows/spacing.\r\n\r\n* **Style**\r\n  * Visual and layout styling for the selection toolbar, scrollable list viewport, items, and empty state.\r\n\r\n* **Refactor**\r\n  * Replaced inline selection UIs with the new reusable component across sidebars.\r\n\r\n* **Tests**\r\n  * End-to-end tests verifying selection list viewport visibility and scrolling behavior in bulk import.\r\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->",
+  "status": "failure",
+  "failure_type": "mcp_call_error",
+  "failure_evidence": "工具失败率50%",
+  "final_response": "Let me check if there's a git repo or any setup needed.",
+  "steps": [
+    "Step 0 | 思考: I'll start by understanding the codebase structure and the PR description. The task is to create a r... | 工具 ✓ ls({\"path\": \".\"}) | 耗时: 1667ms, tokens: 3165",
+    "Step 1 | 思考: The workspace is empty. I need to clone the Bruno repository first to work with the codebase.\n\n... | 工具 ✗ run_command({\"command\": \"git clone https://github.com/usebruno) | 耗时: 1411ms, tokens: 3310",
+    "Step 2 | 思考: Let me check if there's a git repo or any setup needed.... | 耗时: 1081ms, tokens: 3297"
+  ],
+  "tool_calls": [
+    {
+      "step": 1,
+      "tool": "ls",
+      "args": {},
+      "success": true,
+      "output_preview": "[成功] ({'count': 0, 'path': 'E:\\\\FNIX\\\\FnixAgent\\\\benchmarks\\\\benchforge\\\\runs\\\\batch-v4-20260822\\\\workspaces\\\\prototypebench__usebruno__bruno-7813__802d77'})\n(空目录)"
+    },
+    {
+      "step": 2,
+      "tool": "run_command",
+      "args": {},
+      "success": false,
+      "output_preview": "[失败] 工具执行异常: coroutine is being awaited already"
+    }
+  ],
+  "files_written": [],
+  "total_tokens": 9772,
+  "duration_ms": 4164.286299994274,
+  "error": "",
+  "judge_method": "heuristic",
+  "started_at": 1787382542.402077,
+  "workspace": "benchmarks\\benchforge\\runs\\batch-v4-20260822\\workspaces\\prototypebench__usebruno__bruno-7813__802d77"
+}

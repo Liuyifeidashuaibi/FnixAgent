@@ -1,0 +1,34 @@
+{# Fixed: Removed dead '!= 'N/A'' guard; 'None' check is sufficient #}
+{# Fixed: Added '×1000' conversion for avgResponseTime (seconds → ms) #}
+{# Fixed: Replaced 'item.get('successRate', 0) or 0' with proper None-aware check #}
+{# Fixed: Removed dead '!= 'Never'' guard #}
+{# Fixed: Replaced verbatim '{{ last_exec }}' with '{{ last_exec[:16] | replace('T', ' ') }}' #}
+
+<!-- Top Performers template -->
+<div class="top-performers">
+  {% for item in top_performers %}
+    <div class="performer-item">
+      <div class="avg-response-time">
+        {% if item.avgResponseTime is not none %}
+          {{ (item.avgResponseTime * 1000) | round(1) }}ms
+        {% else %}
+          N/A
+        {% endif %}
+      </div>
+      <div class="success-rate">
+        {% if item.successRate is not none %}
+          {{ item.successRate | round(1) }}%
+        {% else %}
+          N/A
+        {% endif %}
+      </div>
+      <div class="last-execution">
+        {% if item.lastExecution is not none %}
+          {{ item.lastExecution[:16] | replace('T', ' ') }}
+        {% else %}
+          Never
+        {% endif %}
+      </div>
+    </div>
+  {% endfor %}
+</div>

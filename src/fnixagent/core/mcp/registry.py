@@ -23,6 +23,7 @@
 
 from __future__ import annotations
 
+import logging
 import threading
 from typing import Any
 
@@ -39,6 +40,9 @@ from fnixagent.core.mcp.types import (
 )
 from fnixagent.core.tools.protocol import ToolFunc, ToolMetadata
 from fnixagent.core.types import ToolPermission
+
+_logger = logging.getLogger(__name__)
+
 
 # ---------------------------------------------------------------------------
 # 异常
@@ -174,7 +178,7 @@ class MCPToolRegistry:
             try:
                 client.disconnect_sync()
             except Exception:
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
             # 移除该 server 全部工具
             tools_to_remove = [
                 name for name, sid in self._tool_to_server.items() if sid == server_id
@@ -204,7 +208,7 @@ class MCPToolRegistry:
             try:
                 client.disconnect_sync()
             except Exception:
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
             client.server_info.status = MCPServerStatus.CONNECTING
             client.connect_sync()
             self._refresh_server_tools(server_id)
@@ -438,6 +442,7 @@ class MCPToolRegistry:
                 tool_registry.register(metadata, executor)
                 registered.append(tool.name)
             except Exception:
+                _logger.debug('Unhandled exception', exc_info=True)
                 continue  # 单个工具注册失败不影响其他
         return registered
 

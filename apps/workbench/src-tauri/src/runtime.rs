@@ -109,15 +109,7 @@ fn resolve_paths(app: &AppHandle) -> RuntimePaths {
     }
 
     let root = repo_root();
-    let workbench_resources = root.join("apps/workbench/src-tauri/resources");
-    let legacy_resources = root.join("apps/desktop-tauri/resources");
-    let resources = if workbench_resources.join("fnixagent-py/src").exists()
-        || workbench_resources.join("agentd").exists()
-    {
-        workbench_resources
-    } else {
-        legacy_resources
-    };
+    let resources = root.join("apps/workbench/src-tauri/resources");
     let bundled_python = resources.join("fnixagent-py/src");
     let python_path = if bundled_python.exists() {
         bundled_python

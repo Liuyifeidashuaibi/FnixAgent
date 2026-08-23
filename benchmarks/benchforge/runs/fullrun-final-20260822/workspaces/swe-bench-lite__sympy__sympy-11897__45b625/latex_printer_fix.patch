@@ -1,0 +1,69 @@
+diff --git a/sympy/printing/latex.py b/sympy/printing/latex.py
+--- a/sympy/printing/latex.py
++++ b/sympy/printing/latex.py
+@@ -XXX,XX +XXX,XX @@ class LatexPrinter(Printer):
+     def _print_Pow(self, expr):
+         """
+         Print exponentials.
+         """
+         base = self._print(expr.base)
+         exp = self._print(expr.exp)
+         
+         # Handle exp(-x) -> e^{-x} for consistency with pretty printer
+         if (expr.base.is_Function and expr.base.func == exp and 
+             expr.exp.is_negative and expr.exp.is_Integer and 
+             len(expr.base.args) == 1 and expr.base.args[0].is_Symbol):
+             # exp(-x) case
+             return r"e^{%s}" % self._print(expr.exp * expr.base.args[0])
+         
+         # Handle negative integer exponents for other bases
+         if expr.exp.is_Integer and expr.exp.is_negative:
+             if expr.base.is_Symbol:
+                 return r"%s^{%s}" % (base, exp)
+             else:
+                 return r"\left(%s\right)^{%s}" % (base, exp)
+         
+         # Default handling
+         if expr.base.is_Symbol:
+             return r"%s^{%s}" % (base, exp)
+         else:
+             return r"\left(%s\right)^{%s}" % (base, exp)
+
+@@ -YYY,YY +YYY,YY @@ class LatexPrinter(Printer):
+     def _print_Mul(self, expr):
+         """
+         Print multiplication.
+         """
+         from sympy.core.mul import Mul
+         
+         # Handle division: a/b/c should be \frac{a}{b c} not \frac{a}{b}/c
+         # Look for division patterns
+         args = list(expr.args)
+         
+         # Check for cases like 1/(x+y)/2
+         if len(args) > 1:
+             # Find division terms
+             numer = []
+             denom = []
+             for arg in args:
+                 if arg.is_Pow and arg.exp.is_negative:
+                     # This is a denominator term
+                     base = arg.base
+                     if base.is_Add:
+                         # Keep parentheses for sums in denominator
+                         denom.append(r"\left(%s\right)^{%s}" % (self._print(base), self._print(arg.exp)))
+                     else:
+                         denom.append(r"%s^{%s}" % (self._print(base), self._print(arg.exp)))
+                 else:
+                     numer.append(self._print(arg))
+             
+             if denom:
+                 if len(numer) == 1 and len(denom) == 1:
+                     return r"\frac{%s}{%s}" % (numer[0], denom[0])
+                 elif len(numer) == 1:
+                     # Multiple denominator factors
+                     denom_str = r" \\\\cdot \\ ".join(denom)
+                     return r"\frac{%s}{%s}" % (numer[0], denom_str)
+         
+         # Default multiplication handling
+         return super()._print_Mul(expr)

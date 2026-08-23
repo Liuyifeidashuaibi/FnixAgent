@@ -1,0 +1,17 @@
+# Requirements for MCP Context Forge Chat Service
+
+# Core dependencies
+python>=3.8
+
+# Testing
+pytest>=7.0
+pytest-cov>=4.0
+
+# Code quality
+pylint>=2.15
+black>=23.0
+isort>=5.12
+
+# Optional: for production deployment
+aiohttp>=3.8
+fastapi>=0.104

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Documentation Browser</title>
+  <style>
+    body { margin: 0; font-family: sans-serif; }
+    .toolbar { padding: 10px; background: #f0f0f0; border-bottom: 1px solid #ccc; }
+    .toolbar label { margin-right: 8px; font-weight: bold; }
+    iframe { width: 100%; height: calc(100vh - 50px); border: none; }
+
+    .menu {
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      background: #fff;
+      border: 1px solid #ccc;
+      box-shadow: 2px 2px 6px rgba(0,0,0,0.2);
+      min-width: 200px;
+      padding: 4px 0;
+      border-radius: 4px;
+    }
+    .menu .menu-item {
+      padding: 6px 16px;
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 14px;
+      color: #333;
+    }
+    .menu .menu-item:hover {
+      background: #e8f0fe;
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <label for="address">Address:</label>
+    <select id="address">
+      <option value="docs/intro.html" selected>docs/intro.html</option>
+      <option value="docs/javascript.html">docs/javascript.html</option>
+      <option value="docs/css.html">docs/css.html</option>
+      <option value="docs/html.html">docs/html.html</option>
+      <option value="docs/nodejs.html">docs/nodejs.html</option>
+    </select>
+  </div>
+  <iframe id="content" src="docs/intro.html"></iframe>
+
+  <!-- Back history context menu -->
+  <div class="menu back-menu"></div>
+
+  <script>
+    (function() {
+      var iframe = document.getElementById('content');
+      var select = document.getElementById('address');
+      var backMenu = document.querySelector('.menu.back-menu');
+
+      // History tracking
+      var history = ['docs/intro.html']; // backward history stack
+      var currentIndex = 0; // current position in full history
+
+      // Navigate to a URL (pushes to history)
+      function navigateTo(url) {
+        // Trim forward history when navigating to a new page
+        history = history.slice(0, currentIndex + 1);
+        history.push(url);
+        currentIndex = history.length - 1;
+        iframe.src = url;
+        select.value = url;
+      }
+
+      // Jump to a specific history entry (no push)
+      function jumpTo(index) {
+        currentIndex = index;
+        var url = history[index];
+        iframe.src = url;
+        select.value = url;
+      }
+
+      // Address bar change
+      select.addEventListener('change', function() {
+        navigateTo(this.value);
+      });
+
+      // Right-click to show back menu
+      document.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+
+        // Build backward history list (oldest first, excluding current)
+        backMenu.innerHTML = '';
+
+        var hasItems = false;
+        for (var i = 0; i < currentIndex; i++) {
+          hasItems = true;
+          var item = document.createElement('div');
+          item.className = 'menu-item';
+          item.textContent = history[i];
+          item.setAttribute('data-index', i);
+          backMenu.appendChild(item);
+        }
+
+        if (!hasItems) {
+          backMenu.style.display = 'none';
+          return;
+        }
+
+        // Position menu at cursor
+        backMenu.style.left = e.clientX + 'px';
+        backMenu.style.top = e.clientY + 'px';
+        backMenu.style.display = 'block';
+
+        // Adjust if menu goes off-screen
+        var rect = backMenu.getBoundingClientRect();
+        if (rect.right > window.innerWidth) {
+          backMenu.style.left = (window.innerWidth - rect.width - 4) + 'px';
+        }
+        if (rect.bottom > window.innerHeight) {
+          backMenu.style.top = (window.innerHeight - rect.height - 4) + 'px';
+        }
+      });
+
+      // Click on a menu item to jump
+      backMenu.addEventListener('click', function(e) {
+        var item = e.target.closest('.menu-item');
+        if (!item) return;
+        var index = parseInt(item.getAttribute('data-index'), 10);
+        jumpTo(index);
+        backMenu.style.display = 'none';
+      });
+
+      // Hide menu on click elsewhere
+      document.addEventListener('click', function() {
+        backMenu.style.display = 'none';
+      });
+
+      // Hide menu on scroll
+      window.addEventListener('scroll', function() {
+        backMenu.style.display = 'none';
+      });
+    })();
+  </script>
+</body>
+</html>

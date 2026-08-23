@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "web--help-center-doc-pack-L4-050",
+  "prompt": "# Web-Bench Task T50\n\nThe attachments are help docs and an FAQ table exported from the old CMS. Please reorganize them into a new help-center docs pack — Markdown content, navigation structure, and link list.\n\n\n## Migration Review Evidence\n\nMake the help-center pack reviewable from the submitted files. A writer or support reviewer should be able to trace FAQ merges, glossary replacements, navigation nodes, redirects, conflict choices, orphan-link cleanup, and source-priority decisions back to concrete rows or anchors in the bundled assets. That evidence can live in article notes, manifest fields, the conflict report, a migration notes file, or another clear part of the pack; do not rely on prose-only claims that cannot be followed to a generated destination.\n\n## Output\n\nCreate the required artifact inside `/workspace`. The required output path is:\n\n- `/workspace/submission/help-center` (declared as `environment/submission/help-center/`)\n\nThe help-center pack must include these files at minimum:\n\n- `/workspace/submission/help-center/articles/account-billing.md`\n- `/workspace/submission/help-center/articles/account-security.md`\n- `/workspace/submission/help-center/nav.json`\n- `/workspace/submission/help-center/links.json`\n- `/workspace/submission/help-center/glossary.json`\n- `/workspace/submission/help-center/redirects.json`\n- `/workspace/submission/help-center/conflict-report.json`\n\nDo not collapse everything into one article. Split account/billing content and security/SSO/password content into the two required Markdown articles, then make `nav.json` and `links.json` point to actual files or anchors.\n\nDo not place the final answer only in chat; write the runnable artifact files.\n\n## Public Assets\n\n- `legacy_html`: `/workspace/public-assets/source_docs/legacy-help.html` text/html\n- `faq_csv`: `/workspace/public-assets/source_docs/faq.csv` text/csv\n- `nav_schema`: `/workspace/public-assets/spec/nav-schema.json` application/json\n- `term_map`: `/workspace/public-assets/source_docs/terms.json` application/json\n- `redirects_csv`: `/workspace/public-assets/source_docs/redirects.csv` text/csv\n- `conflict_overrides`: `/workspace/public-assets/source_docs/conflict-overrides.csv` text/csv\n- `support_ticket_samples`: `/workspace/public-assets/source_docs/support-ticket-samples.csv` text/csv\n- `docs_migration_notes`: `/workspace/public-assets/spec/docs-migration-product-notes.md` text/markdown",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 375.0,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336321.8070743,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\workbuddy-bench__web--help-center-doc-pack-L4-050__adf98c"
+}

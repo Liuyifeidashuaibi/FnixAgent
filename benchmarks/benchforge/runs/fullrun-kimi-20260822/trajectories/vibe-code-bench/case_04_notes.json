@@ -1,0 +1,18 @@
+{
+  "dataset": "vibe-code-bench",
+  "task_id": "case_04_notes",
+  "prompt": "# Build me a Note Taking App\n\nCreate a simple notes app as a web page:\n\n- I can create new notes with a title and content\n- Notes are saved to localStorage so they persist\n- I can see all my notes in a list/grid\n- Click a note to view/edit it\n- Delete notes I don't need\n- Search through my notes\n- Maybe some basic formatting (bold, italic)\n\nMake it clean and minimal. Single HTML file.",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[\"\"\"\nFunctional tests for Notes App (case_04_notes).\n\nTests verify actual behavio] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 94.00000000005093,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787334459.0894344,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\vibe-code-bench__case_04_notes__3dd786"
+}

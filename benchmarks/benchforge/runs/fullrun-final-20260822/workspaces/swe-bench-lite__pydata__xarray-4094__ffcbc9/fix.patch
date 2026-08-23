@@ -1,0 +1,22 @@
+diff --git a/xarray/core/dataarray.py b/xarray/core/dataarray.py
+index abc123..def456 100644
+--- a/xarray/core/dataarray.py
++++ b/xarray/core/dataarray.py
+@@ -1234,7 +1234,7 @@ class DataArray(AbstractArray, DatasetView):
+         # Create a dataset for each level of the stacked dimension
+         datasets = []
+         for i, level in enumerate(self.coords[stacked_dim].values):
+-            ds = Dataset({name: self.isel(**{stacked_dim: i})})
++            ds = Dataset({name: self.isel(**{stacked_dim: i})}, coords={stacked_dim: [level]})
+             datasets.append(ds)
+ 
+         # Combine all datasets
+@@ -1242,7 +1242,7 @@ class DataArray(AbstractArray, DatasetView):
+         # Use combine_by_coords to merge datasets
+         try:
+             from .dataset import combine_by_coords
+-            result = combine_by_coords(datasets)
++            result = combine_by_coords(datasets, compat='override')
+         except Exception as e:
+             # Fallback to manual combination if combine_by_coords fails
+             result = datasets[0]

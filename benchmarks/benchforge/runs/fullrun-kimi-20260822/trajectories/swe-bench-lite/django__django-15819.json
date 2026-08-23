@@ -1,0 +1,18 @@
+{
+  "dataset": "swe-bench-lite",
+  "task_id": "django__django-15819",
+  "prompt": "inspectdb should generate related_name on same relation links.\nDescription\n\t\nHi!\nAfter models generation with inspectdb command we have issue with relations to same enities\nmodule.Model.field1: (fields.E304) Reverse accessor for 'module.Model.field1' clashes with reverse accessor for 'module.Model.field2'.\nHINT: Add or change a related_name argument to the definition for 'module.Model.field1' or 'module.Model.field2'.\n*\nMaybe we can autogenerate\nrelated_name='attribute_name'\nto all fields in model if related Model was used for this table\n",
+  "status": "failure",
+  "failure_type": "requirement_misunderstanding",
+  "failure_evidence": "期望[diff --git a/django/core/management/commands/inspectdb.py b/django/core/manageme] 实际[]",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 78.00000000042928,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "golden-match",
+  "started_at": 1787334465.0944955,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\swe-bench-lite__django__django-15819__67fb18"
+}

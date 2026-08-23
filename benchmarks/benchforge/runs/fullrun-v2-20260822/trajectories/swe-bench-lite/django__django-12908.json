@@ -1,0 +1,18 @@
+{
+  "dataset": "swe-bench-lite",
+  "task_id": "django__django-12908",
+  "prompt": "Union queryset should raise on distinct().\nDescription\n\t \n\t\t(last modified by Sielc Technologies)\n\t \nAfter using\n.annotate() on 2 different querysets\nand then .union()\n.distinct() will not affect the queryset\n\tdef setUp(self) -> None:\n\t\tuser = self.get_or_create_admin_user()\n\t\tSample.h.create(user, name=\"Sam1\")\n\t\tSample.h.create(user, name=\"Sam2 acid\")\n\t\tSample.h.create(user, name=\"Sam3\")\n\t\tSample.h.create(user, name=\"Sam4 acid\")\n\t\tSample.h.create(user, name=\"Dub\")\n\t\tSample.h.create(user, name=\"Dub\")\n\t\tSample.h.create(user, name=\"Dub\")\n\t\tself.user = user\n\tdef test_union_annotated_diff_distinct(self):\n\t\tqs = Sample.objects.filter(user=self.user)\n\t\tqs1 = qs.filter(name='Dub').annotate(rank=Value(0, IntegerField()))\n\t\tqs2 = qs.filter(name='Sam1').annotate(rank=Value(1, IntegerField()))\n\t\tqs = qs1.union(qs2)\n\t\tqs = qs.order_by('name').distinct('name') # THIS DISTINCT DOESN'T WORK\n\t\tself.assertEqual(qs.count(), 2)\nexpected to get wrapped union\n\tSELECT DISTINCT ON (siebox_sample.name) * FROM (SELECT ... UNION SELECT ...) AS siebox_sample\n",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 342.9999999998472,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=qwen3.7-max-preview): HTTP 403 (Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.)",
+  "judge_method": "heuristic",
+  "started_at": 1787336342.6544871,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-v2-20260822\\workspaces\\swe-bench-lite__django__django-12908__a46c1f"
+}

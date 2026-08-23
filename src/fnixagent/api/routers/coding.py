@@ -29,6 +29,7 @@ from pydantic import BaseModel, Field
 
 from fnixagent.api.routers.auth import verify_jwt_token
 from fnixagent.core.code.server import IDEServer
+from fnixagent.harness.paths import default_workspace
 
 router = APIRouter(prefix="/coding", tags=["coding"])
 
@@ -48,13 +49,13 @@ def get_server(workspace: str | None = None) -> IDEServer:
     其余调用直接复用单例。
 
     Args:
-        workspace: 工作区路径, 缺省取 os.getcwd()。
+        workspace: 工作区路径, 缺省取默认工作区(~/.fnix/workspaces/default)。
 
     Returns:
         IDEServer 实例。
     """
     global _server, _server_workspace
-    ws = workspace or os.getcwd()
+    ws = workspace or str(default_workspace())
     if _server is None or _server_workspace != ws:
         _server = IDEServer(project_root=ws)
         _server_workspace = ws

@@ -33,6 +33,7 @@ fnixagent 的首个落地场景,集成任务引擎全部模块,端到端处理�
 
 from __future__ import annotations
 
+import logging
 import os
 import re
 import time
@@ -48,6 +49,9 @@ from fnixagent.tasks.dsl import TaskResult
 from fnixagent.tasks.pending_export import PendingExporter
 from fnixagent.tasks.resolver import AnswerResolver, GarbageDetector
 from fnixagent.tasks.validator import TaskValidator
+
+_logger = logging.getLogger(__name__)
+
 
 # ---------------------------------------------------------------------------
 # 数据结构
@@ -259,7 +263,7 @@ class QuestionBankScenario(BaseExpert):
                 self._normalizer.normalize_word(output_path, output_path=output_path)
             except Exception:
                 # 格式统一失败不中断,记录 warning
-                pass
+                _logger.debug('Unhandled exception', exc_info=True)
 
         # 8. 验证
         try:

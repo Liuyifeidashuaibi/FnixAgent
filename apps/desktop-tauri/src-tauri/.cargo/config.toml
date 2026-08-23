@@ -1,5 +1,0 @@
-# Fnix Desktop (Tauri) — Windows MSVC + isolated target-dir (see docs/OPEN_SOURCE_DESIGN.md)
-
-[build]
-target = "x86_64-pc-windows-msvc"
-target-dir = "target"

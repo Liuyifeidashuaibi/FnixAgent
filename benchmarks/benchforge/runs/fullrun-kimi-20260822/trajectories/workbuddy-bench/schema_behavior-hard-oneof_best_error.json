@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "schema_behavior-hard-oneof_best_error",
+  "prompt": "我这边做样本 schema 校验时，oneOf 最后展示的错误太泛，经常不是最接近输入的那条。麻烦主要收一下 best_match 选错误的逻辑，validate 产出的错误结构先别大改；尽量避开泛泛的 oneOf 错误，能看出分支时就报那个分支里真正需要改的数据字段。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 78.00000000042928,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787334455.9017398,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\workbuddy-bench__schema_behavior-hard-oneof_best_error__ebeab2"
+}

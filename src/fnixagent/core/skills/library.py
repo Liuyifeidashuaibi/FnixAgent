@@ -22,12 +22,16 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import re
 import threading
 import time
 from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from pathlib import Path
+
+_logger = logging.getLogger(__name__)
+
 
 
 @dataclass
@@ -195,7 +199,7 @@ class SkillLibrary:
                 encoding="utf-8",
             )
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
 
     def add_new_skill(
         self,
@@ -360,7 +364,7 @@ class SkillLibrary:
                         topo_weight = max(0.0, min(1.0, topo_weight))
                         score *= 0.5 + topo_weight
                     except Exception:
-                        pass  # 拓扑查询失败不影响原召回
+                        _logger.debug('Unhandled exception', exc_info=True)  # 拓扑查询失败不影响原召回
                 scored.append((score, skill))
             scored.sort(key=lambda x: -x[0])
             result = [s for _, s in scored[:top_k]]

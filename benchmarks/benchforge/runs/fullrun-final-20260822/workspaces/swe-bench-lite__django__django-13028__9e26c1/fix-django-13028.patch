@@ -1,0 +1,13 @@
+--- a/django/db/models/sql/query.py
++++ b/django/db/models/sql/query.py
+@@ -1128,7 +1128,10 @@ class Query(BaseExpression):
+     def check_filterable(self, value):
+         # Check that the value is filterable.
+-        if hasattr(value.__class__, 'filterable') and not value.__class__.filterable:
++        filterable = getattr(value.__class__, 'filterable', None)
++        if (filterable is not None and
++            not isinstance(filterable, Field) and
++            not filterable):
+             raise NotSupportedError(
+                 '%s is disallowed in the filter clause.' % value.__class__.__name__
+             )

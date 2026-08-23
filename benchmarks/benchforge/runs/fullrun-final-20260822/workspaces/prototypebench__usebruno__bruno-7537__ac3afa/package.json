@@ -1,0 +1,27 @@
+{
+  "name": "bruno-error-context-enhancement",
+  "version": "1.0.0",
+  "description": "Enhanced error context handling for Bruno with in-memory script support",
+  "main": "src/utils/error-formatter.js",
+  "types": "src/utils/error-formatter.d.ts",
+  "scripts": {
+    "test": "jest",
+    "test:e2e": "npx playwright test tests/e2e/error-handling-draft.test.js",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "build": "tsc"
+  },
+  "keywords": [
+    "bruno",
+    "error-handling",
+    "debugging",
+    "script-context"
+  ],
+  "author": "Bruno Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "jest": "^29.0.0",
+    "eslint": "^8.0.0"
+  },
+  "dependencies": {}
+}

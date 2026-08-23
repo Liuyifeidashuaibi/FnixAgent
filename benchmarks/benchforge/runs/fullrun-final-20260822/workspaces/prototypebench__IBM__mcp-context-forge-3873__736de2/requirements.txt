@@ -1,0 +1,13 @@
+# Requirements for MCP Context Forge REST Tool Enhancements
+
+# Core dependencies
+requests>=2.25.1
+orjson>=3.4.8
+
+# Development/testing dependencies
+pytest>=6.2.4
+pytest-mock>=3.6.1
+unittest>=3.8
+
+# Optional dependencies for advanced features
+jq>=1.0.0  # For actual jq filtering (not implemented in basic version)

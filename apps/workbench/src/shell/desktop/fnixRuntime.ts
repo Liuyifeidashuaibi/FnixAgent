@@ -11,11 +11,11 @@
  * Code → POST /api/v1/chat/agent (NDJSON)
  */
 
-import { authHeaders, getFnixApiBase, syncHarnessConfig } from "../../lib/fnixBridge";
-import type { AIProviderConfig } from "../../utils/providers";
-import type { ChatAttachment } from "../../utils/tauri";
-import { ndjsonEventToBlock, redactSensitiveText, type StructuredBlock } from "../../utils/structuredBlocks";
-import { activityId, type ActivityItem } from "./activityTypes";
+import { authHeaders, getFnixApiBase, syncHarnessConfig } from '../../lib/fnixBridge';
+import type { AIProviderConfig } from '../../utils/providers';
+import type { ChatAttachment } from '../../utils/tauri';
+import { ndjsonEventToBlock, redactSensitiveText } from '../../utils/structuredBlocks';
+import { activityId, type ActivityItem } from './activityTypes';
 
 export type FnixLlm = {
   provider?: string;
@@ -38,7 +38,7 @@ export type CodeFileChange = {
   runId?: string;
 };
 
-export type WorkExecMode = "ask" | "plan" | "craft";
+export type WorkExecMode = 'ask' | 'plan' | 'craft';
 
 export type WorkMission = {
   title?: string;
@@ -90,12 +90,12 @@ type StreamHandlers = {
    * 与 onText/onActivity/onFileChange 并行触发，消费方（useChatFlow）负责合并到消息 blocks 数组。
    * 调研：AG-UI 16 种标准事件类型 + 事件溯源 + 逐块渲染
    */
-  onStructuredBlock?: (block: import("../../utils/structuredBlocks").StructuredBlock) => void;
+  onStructuredBlock?: (block: import('../../utils/structuredBlocks').StructuredBlock) => void;
 };
 
 function emitActivity(
   handlers: StreamHandlers,
-  partial: Omit<ActivityItem, "id" | "startedAt"> & { id?: string; startedAt?: number },
+  partial: Omit<ActivityItem, 'id' | 'startedAt'> & { id?: string; startedAt?: number },
 ) {
   handlers.onActivity?.({
     id: partial.id || activityId(),
@@ -109,66 +109,128 @@ function emitActivity(
  * 基于 AG-UI 协议（16 种标准事件类型）+ 事件溯源。
  * 与 onActivity/onFileChange/onError 并行触发，消费方负责合并到消息 blocks 数组。
  */
-function emitStructuredBlock(
-  handlers: StreamHandlers,
-  obj: Record<string, unknown>,
-): void {
+function emitStructuredBlock(handlers: StreamHandlers, obj: Record<string, unknown>): void {
   if (!handlers.onStructuredBlock) return;
   const block = ndjsonEventToBlock(obj);
   if (block) handlers.onStructuredBlock(block);
 }
 
+/** Generate a human-readable label for a step based on its action and target. */
+function stepLabel(
+  step: { description?: string; name?: string; action?: string; target?: string } | undefined,
+  fallback = '执行操作',
+): string {
+  if (!step) return fallback;
+  const action = String(step.action || '').toLowerCase();
+  const target = String(step.target || '');
+  if (target) {
+    if (action === 'write') return `写入 ${target}`;
+    if (action === 'edit') return `修改 ${target}`;
+    if (action === 'read') return `读取 ${target}`;
+    if (action === 'compile') return `编译检查 ${target}`;
+  }
+  if (action === 'test') return '运行测试';
+  if (action === 'compile') return '编译检查';
+  // For unknown actions, use description but truncate (may contain code)
+  const desc = step.description || '';
+  if (desc.length > 80) return desc.slice(0, 80) + '…';
+  return desc || step.name || fallback;
+}
+
+/** Map step action to ActivityKind. */
+function stepKind(step: { action?: string } | undefined): ActivityItem['kind'] {
+  const action = String(step?.action || '').toLowerCase();
+  if (action === 'read') return 'read';
+  if (action === 'write') return 'write';
+  if (action === 'edit') return 'edit';
+  if (action === 'test') return 'test';
+  if (action === 'compile') return 'run';
+  return 'tool';
+}
+
 function toolArg(args: unknown, keys: string[]): string {
-  if (!args || typeof args !== "object") return "";
+  if (!args || typeof args !== 'object') return '';
   const record = args as Record<string, unknown>;
   for (const key of keys) {
     const value = record[key];
-    if (typeof value === "string" && value.trim()) return value.trim();
+    if (typeof value === 'string' && value.trim()) return value.trim();
   }
-  return "";
+  return '';
 }
 
-function describeToolAction(name: string, args: unknown): Pick<ActivityItem, "kind" | "title" | "path" | "detail"> {
+function describeToolAction(
+  name: string,
+  args: unknown,
+): Pick<ActivityItem, 'kind' | 'title' | 'path' | 'detail'> {
   const normalized = name.toLowerCase();
-  const path = toolArg(args, ["path", "file_path", "file", "target", "source_path"]);
-  const query = toolArg(args, ["query", "pattern", "regex", "search"]);
-  const command = toolArg(args, ["command", "cmd", "script"]);
-  const detail = typeof args === "string"
-    ? redactSensitiveText(args).slice(0, 500)
-    : args && typeof args === "object"
-      ? redactSensitiveText(JSON.stringify(args)).slice(0, 500)
-      : undefined;
+  const path = toolArg(args, ['path', 'file_path', 'file', 'target', 'source_path']);
+  const query = toolArg(args, ['query', 'pattern', 'regex', 'search']);
+  const command = toolArg(args, ['command', 'cmd', 'script']);
+  const detail =
+    typeof args === 'string'
+      ? redactSensitiveText(args).slice(0, 500)
+      : args && typeof args === 'object'
+        ? redactSensitiveText(JSON.stringify(args)).slice(0, 500)
+        : undefined;
 
   if (/grep|search|find/.test(normalized)) {
-    return { kind: "read", title: query ? `搜索 “${query.slice(0, 80)}”` : "搜索项目", path: path || undefined, detail };
+    return {
+      kind: 'read',
+      title: query ? `搜索 “${query.slice(0, 80)}”` : '搜索项目',
+      path: path || undefined,
+      detail,
+    };
   }
   if (/read|open|list/.test(normalized)) {
-    return { kind: "read", title: path ? `读取 ${path}` : "读取项目内容", path: path || undefined, detail };
+    return {
+      kind: 'read',
+      title: path ? `读取 ${path}` : '读取项目内容',
+      path: path || undefined,
+      detail,
+    };
   }
   if (/edit|patch|replace|move|rename|delete/.test(normalized)) {
-    return { kind: "edit", title: path ? `修改 ${path}` : `执行 ${name}`, path: path || undefined, detail };
+    return {
+      kind: 'edit',
+      title: path ? `修改 ${path}` : `执行 ${name}`,
+      path: path || undefined,
+      detail,
+    };
   }
   if (/write|create|save/.test(normalized)) {
-    return { kind: "write", title: path ? `写入 ${path}` : `执行 ${name}`, path: path || undefined, detail };
+    return {
+      kind: 'write',
+      title: path ? `写入 ${path}` : `执行 ${name}`,
+      path: path || undefined,
+      detail,
+    };
   }
   if (/test|check|lint|diagnostic/.test(normalized)) {
-    return { kind: "test", title: command ? `运行 ${command.slice(0, 100)}` : `运行 ${name}`, detail };
+    return {
+      kind: 'test',
+      title: command ? `运行 ${command.slice(0, 100)}` : `运行 ${name}`,
+      detail,
+    };
   }
   if (/shell|terminal|exec|command|run/.test(normalized)) {
-    return { kind: "run", title: command ? `运行 ${command.slice(0, 100)}` : `运行 ${name}`, detail };
+    return {
+      kind: 'run',
+      title: command ? `运行 ${command.slice(0, 100)}` : `运行 ${name}`,
+      detail,
+    };
   }
-  return { kind: "tool", title: `使用 ${name}`, path: path || undefined, detail };
+  return { kind: 'tool', title: `使用 ${name}`, path: path || undefined, detail };
 }
 
 function mapProviderType(p: AIProviderConfig): string {
-  if (p.type === "gemini") return "gemini";
-  if (p.type === "anthropic") return "anthropic";
-  const name = (p.name || "").toLowerCase();
-  if (name.includes("deepseek")) return "deepseek";
-  if (name.includes("qwen") || name.includes("dashscope")) return "qwen";
-  if (name.includes("glm") || name.includes("zhipu") || name.includes("z.ai")) return "glm";
-  if (name.includes("ollama")) return "ollama";
-  return "openai";
+  if (p.type === 'gemini') return 'gemini';
+  if (p.type === 'anthropic') return 'anthropic';
+  const name = (p.name || '').toLowerCase();
+  if (name.includes('deepseek')) return 'deepseek';
+  if (name.includes('qwen') || name.includes('dashscope')) return 'qwen';
+  if (name.includes('glm') || name.includes('zhipu') || name.includes('z.ai')) return 'glm';
+  if (name.includes('ollama')) return 'ollama';
+  return 'openai';
 }
 
 export function pickFnixLlm(
@@ -178,10 +240,11 @@ export function pickFnixLlm(
   fallbackModel: string,
 ): FnixLlm | null {
   const withKey = providers.find(
-    (p) => (p.apiKey && p.apiKey.trim()) || p.name.toLowerCase().includes("ollama"),
+    (p) => (p.apiKey && p.apiKey.trim()) || p.name.toLowerCase().includes('ollama'),
   );
   if (withKey) {
-    const model = withKey.models.find((m) => m.enabled)?.id || withKey.models[0]?.id || fallbackModel;
+    const model =
+      withKey.models.find((m) => m.enabled)?.id || withKey.models[0]?.id || fallbackModel;
     return {
       provider: mapProviderType(withKey),
       model,
@@ -191,8 +254,8 @@ export function pickFnixLlm(
   }
   if (fallbackKey.trim()) {
     return {
-      provider: fallbackProvider || "openai",
-      model: fallbackModel || "gpt-4o",
+      provider: fallbackProvider || 'openai',
+      model: fallbackModel || 'gpt-4o',
       api_key: fallbackKey.trim(),
     };
   }
@@ -219,7 +282,7 @@ async function readNdjsonStream(
 ): Promise<void> {
   if (!res.body) {
     const text = await res.text();
-    for (const line of text.split("\n")) {
+    for (const line of text.split('\n')) {
       const t = line.trim();
       if (!t) continue;
       try {
@@ -235,7 +298,7 @@ async function readNdjsonStream(
 
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
-  let buf = "";
+  let buf = '';
   let stopped = false;
   while (true) {
     if (signal?.aborted) {
@@ -244,13 +307,13 @@ async function readNdjsonStream(
       } catch {
         /* ignore */
       }
-      throw new DOMException("Aborted", "AbortError");
+      throw new DOMException('Aborted', 'AbortError');
     }
     const { done, value } = await reader.read();
     if (done) break;
     buf += decoder.decode(value, { stream: true });
-    const parts = buf.split("\n");
-    buf = parts.pop() || "";
+    const parts = buf.split('\n');
+    buf = parts.pop() || '';
     for (const line of parts) {
       const t = line.trim();
       if (!t) continue;
@@ -291,11 +354,15 @@ async function readNdjsonStream(
  * P0-1: idle timeout 从 60s 提升到 5 分钟 — LLM 非流式调用期间 (复杂推理任务)
  * 可能 90s+ 才有响应, 60s 会误切断。后端 AgenticLoop 已加 15s 心跳, 但双保险
  * 更稳妥。业界主流工具默认也是 5 分钟以上。
+ *
+ * P0-2: 5 分钟 → 10 分钟 — /chat/agent (Code 模式) 已加 15s 心跳保活,
+ * 长 LLM thinking/review 不再被误杀; idle 守卫退化为「死链兜底」, 10 分钟
+ * 是给任何未覆盖心跳的流式路径留出的安全边际。
  */
 function createStreamGuard(
   external: AbortSignal | undefined,
   onTimeout: () => void,
-  idleMs = 300_000,
+  idleMs = 600_000,
 ): { signal: AbortSignal; touch: () => void; dispose: () => void } {
   const ctrl = new AbortController();
   let timer: number | undefined;
@@ -310,14 +377,14 @@ function createStreamGuard(
   const onExt = () => ctrl.abort();
   if (external) {
     if (external.aborted) ctrl.abort();
-    else external.addEventListener("abort", onExt, { once: true });
+    else external.addEventListener('abort', onExt, { once: true });
   }
   return {
     signal: ctrl.signal,
     touch: arm,
     dispose: () => {
       if (timer) window.clearTimeout(timer);
-      if (external) external.removeEventListener("abort", onExt);
+      if (external) external.removeEventListener('abort', onExt);
     },
   };
 }
@@ -341,7 +408,7 @@ export async function streamWork(opts: {
 }): Promise<void> {
   const base = getFnixApiBase();
   const guard = createStreamGuard(opts.signal, () => {
-    opts.handlers.onError?.("连接超时：流式输出超过 5 分钟无数据，请检查 agentd 或后端。");
+    opts.handlers.onError?.('连接超时：流式输出超过 10 分钟无数据，请检查 agentd 或后端。');
   });
   try {
     // Spec 4: 当 _url/_body 提供时（resumeRun），复用本函数的整套 NDJSON 流式分发。
@@ -350,516 +417,554 @@ export async function streamWork(opts: {
       user_input: opts.userInput,
       workspace: opts.workspace || undefined,
       session_id: opts.sessionId || undefined,
-      work_mode: opts.workMode || "craft",
+      work_mode: opts.workMode || 'craft',
       llm: opts.llm,
       attachments: opts.attachments || undefined,
       disabled_skills:
-        opts.disabledSkills && opts.disabledSkills.length > 0
-          ? opts.disabledSkills
-          : undefined,
+        opts.disabledSkills && opts.disabledSkills.length > 0 ? opts.disabledSkills : undefined,
     };
     const res = await fetch(url, {
-      method: "POST",
-      headers: authHeaders({ "Content-Type": "application/json" }),
+      method: 'POST',
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(body),
       signal: guard.signal,
     });
 
     if (!res.ok) {
-      const err = await res.text().catch(() => "");
+      const err = await res.text().catch(() => '');
       throw new Error(err || `Work stream failed (${res.status})`);
     }
 
     let sawDone = false;
     let sawText = false;
     const textChunks: string[] = [];
-    await readNdjsonStream(res, guard.signal, (obj) => {
-      guard.touch();
-      // 结构化 block 流：每个 NDJSON 事件都尝试转为 StructuredBlock 注入消息气泡
-      emitStructuredBlock(opts.handlers, obj);
-      const chunk = String(obj.chunk_type || obj.type || "");
-    const content = obj.content;
-    if (chunk === "error") {
-      opts.handlers.onError?.(typeof content === "string" ? content : JSON.stringify(content));
-      return;
-    }
-    if (chunk === "text" || chunk === "message") {
-      const t = typeof content === "string" ? content : String(content ?? "");
-      if (t) {
-        // 后端偶发重复推送整段正文时去重
-        if (textChunks.length === 1 && t === textChunks[0]) {
+    await readNdjsonStream(
+      res,
+      guard.signal,
+      (obj) => {
+        guard.touch();
+        // 结构化 block 流：每个 NDJSON 事件都尝试转为 StructuredBlock 注入消息气泡
+        emitStructuredBlock(opts.handlers, obj);
+        const chunk = String(obj.chunk_type || obj.type || '');
+        const content = obj.content;
+        if (chunk === 'error') {
+          opts.handlers.onError?.(typeof content === 'string' ? content : JSON.stringify(content));
           return;
         }
-        if (textChunks.some((c) => c.length > 80 && c === t)) {
+        if (chunk === 'text' || chunk === 'message') {
+          const t = typeof content === 'string' ? content : String(content ?? '');
+          if (t) {
+            // 后端偶发重复推送整段正文时去重
+            if (textChunks.length === 1 && t === textChunks[0]) {
+              return;
+            }
+            if (textChunks.some((c) => c.length > 80 && c === t)) {
+              return;
+            }
+            textChunks.push(t);
+            sawText = true;
+            opts.handlers.onText?.(t);
+          }
           return;
         }
-        textChunks.push(t);
-        sawText = true;
-        opts.handlers.onText?.(t);
-      }
-      return;
-    }
-    if (chunk === "mission" && content && typeof content === "object") {
-      const mission = content as WorkMission;
-      opts.handlers.onMission?.(mission);
-      const title = String(mission.title || "任务");
-      const mode = String(mission.work_mode || opts.workMode || "craft");
-      opts.handlers.onStatus?.("正在理解任务");
-      emitActivity(opts.handlers, {
-        kind: "mission",
-        title,
-        meta: mode.toUpperCase(),
-        status: "running",
-      });
-      return;
-    }
-    if (chunk === "pipeline" && content && typeof content === "object") {
-      const info = content as WorkPipelineInfo;
-      // heal_round: { current, max } — 提取并归一化为 number[]
-      const hr = (content as { heal_round?: { current?: unknown; max?: unknown } }).heal_round;
-      if (hr && typeof hr === "object") {
-        const cur = typeof hr.current === "number" ? hr.current : Number(hr.current);
-        const mx = typeof hr.max === "number" ? hr.max : Number(hr.max);
-        info.heal_round =
-          Number.isFinite(cur) && Number.isFinite(mx) ? { current: cur, max: mx } : undefined;
-      } else {
-        info.heal_round = undefined;
-      }
-      opts.handlers.onPipeline?.(info);
-      const reason = String(info.reasoning_mode || "");
-      const step = String(info.step ?? "");
-      opts.handlers.onStatus?.("正在准备下一步操作");
-      emitActivity(opts.handlers, {
-        kind: "plan",
-        title: reason || `Pipeline step ${step || "…"}`,
-        meta: "pipeline",
-        status: "running",
-      });
-      return;
-    }
-    if (chunk === "evolution" && content && typeof content === "object") {
-      const evo = content as EvolutionInfo;
-      opts.handlers.onEvolution?.(evo);
-      const paths = typeof evo.ktg_paths === "number" ? evo.ktg_paths : 0;
-      const mode = String(evo.reasoning_mode || evo.step || "ready");
-      const label = `KTG ${paths} · ${mode}`;
-      emitActivity(opts.handlers, {
-        kind: "think",
-        title: label,
-        meta: "evolution",
-        status: "running",
-      });
-      return;
-    }
-    if (chunk === "thought" || chunk === "thinking") {
-      // Spec 2: 真实 LLM 思考内容（可折叠展示，推理过程展示）
-      const label =
-        typeof content === "string"
-          ? content.slice(0, 120)
-          : chunk;
-      opts.handlers.onStatus?.(label);
-      emitActivity(opts.handlers, {
-        kind: "think",
-        title: label || "Thinking…",
-        status: "running",
-        // 完整思考内容存到 detail，前端可展开
-        detail: typeof content === "string" ? content : undefined,
-      });
-      return;
-    }
-    if (chunk === "action") {
-      // Spec 2: 工具调用前置事件（含 name + args）
-      const name =
-        content && typeof content === "object"
-          ? String((content as { name?: string }).name || "tool")
-          : "tool";
-      const actionContent = content as { args?: unknown; call_id?: unknown; tool_call_id?: unknown; id?: unknown } | null;
-      const args = actionContent?.args;
-      const callId = String(actionContent?.call_id || actionContent?.tool_call_id || actionContent?.id || "");
-      const action = describeToolAction(name, args);
-      opts.handlers.onStatus?.(action.title);
-      emitActivity(opts.handlers, {
-        ...action,
-        ...(callId ? { id: `tool-${callId}` } : {}),
-        meta: name,
-        status: "running",
-      });
-      return;
-    }
-    if (chunk === "observation") {
-      // Spec 2: 工具结果事件（含 success + summary）
-      const obs = content as {
-        success?: boolean;
-        summary?: string;
-        name?: string;
-        duration_ms?: number;
-        call_id?: unknown;
-        tool_call_id?: unknown;
-        id?: unknown;
-      } | null;
-      const ok = obs?.success !== false;
-      const name = obs?.name || "tool";
-      const callId = String(obs?.call_id || obs?.tool_call_id || obs?.id || "");
-      const summary = redactSensitiveText(obs?.summary || "").slice(0, 200);
-      opts.handlers.onStatus?.(ok ? `${name} 已完成` : `${name} 执行失败`);
-      emitActivity(opts.handlers, {
-        ...(callId ? { id: `tool-${callId}` } : {}),
-        kind: ok ? "tool" : "error",
-        title: ok ? `${name} 已完成` : `${name} 执行失败`,
-        meta: name,
-        status: ok ? "done" : "error",
-        detail: summary || undefined,
-        endedAt: Date.now(),
-      });
-      return;
-    }
-    if (chunk === "tool_call") {
-      // 兼容旧 chunk：若无 action 前置，也派生一个 running activity
-      const name =
-        content && typeof content === "object"
-          ? String((content as { name?: string }).name || "tool")
-          : "tool";
-      const toolContent = content as { call_id?: unknown; tool_call_id?: unknown; id?: unknown } | null;
-      const callId = String(toolContent?.call_id || toolContent?.tool_call_id || toolContent?.id || "");
-      const action = describeToolAction(name, undefined);
-      opts.handlers.onStatus?.(action.title);
-      emitActivity(opts.handlers, {
-        ...action,
-        ...(callId ? { id: `tool-${callId}` } : {}),
-        meta: name,
-        status: "running",
-      });
-      return;
-    }
-    if (chunk === "tool_result") {
-      // 兼容旧 chunk：若无 observation，也派生一个 done activity
-      const resultContent = content as { call_id?: unknown; tool_call_id?: unknown; id?: unknown; content?: unknown; summary?: unknown } | null;
-      const rawText = typeof content === "string" ? content : String(resultContent?.summary || resultContent?.content || "");
-      const text = redactSensitiveText(rawText);
-      const callId = String(resultContent?.call_id || resultContent?.tool_call_id || resultContent?.id || "");
-      const ok = !text.startsWith("[失败]");
-      opts.handlers.onStatus?.(ok ? "工具执行完成" : "工具执行失败");
-      emitActivity(opts.handlers, {
-        ...(callId ? { id: `tool-${callId}` } : {}),
-        kind: ok ? "tool" : "error",
-        title: ok ? "工具执行完成" : "工具执行失败",
-        status: ok ? "done" : "error",
-        detail: text.slice(0, 200) || undefined,
-        endedAt: Date.now(),
-      });
-      return;
-    }
-    if (chunk === "artifact" && content && typeof content === "object") {
-      const art = content as { path?: string; name?: string };
-      if (art.path) {
-        opts.handlers.onArtifact?.({ path: art.path, name: art.name });
-        emitActivity(opts.handlers, {
-          kind: "write",
-          title: art.name || "Artifact",
-          path: art.path,
-          status: "done",
-          endedAt: Date.now(),
-        });
-      }
-      return;
-    }
-    if (chunk === "decision_context" && content && typeof content === "object") {
-      // Spec 5: 决策上下文面板 — 嵌入 ProcessTimeline 的 DecisionCard
-      // content 结构：{goal, concepts[], concept_edges[], reasoning_mode, memory_short_count, memory_long_count, risks[]}
-      const ctx = content as {
-        goal?: string;
-        concepts?: { id: string; label: string; layer: string }[];
-        concept_edges?: { from: string; to: string; type: string }[];
-        reasoning_mode?: string;
-        memory_short_count?: number;
-        memory_long_count?: number;
-        risks?: { type: string; between: string[] }[];
-      };
-      const conceptLabels = (ctx.concepts || []).map((c) => c.label).filter(Boolean);
-      const title = conceptLabels.length > 0
-        ? `决策依据 · ${conceptLabels.slice(0, 3).join(" · ")}${conceptLabels.length > 3 ? ` +${conceptLabels.length - 3}` : ""}`
-        : "决策依据";
-      emitActivity(opts.handlers, {
-        kind: "plan",
-        title,
-        status: "done",
-        detail: JSON.stringify(ctx),
-        endedAt: Date.now(),
-      });
-      return;
-    }
-    if (chunk === "route_decision" && content && typeof content === "object") {
-      // Spec 7+ DAAO 真路由: 路由决策可视化 + 四维闭环反馈信号
-      // 显示难度/HERA命中率/最近失败率/置信度, 让用户看到"为什么选这条路径"
-      const rd = content as {
-        route?: string;
-        max_steps?: number;
-        max_reflect_rounds?: number;
-        workspace_kind?: string;
-        work_mode?: string;
-        reason?: string;
-        tool_count?: number;
-        // Spec 7+ 四维闭环新字段
-        difficulty_score?: number;
-        hera_hit_rate?: number;
-        recent_failure_rate?: number;
-        confidence?: number;
-        tool_subset?: string[];
-        fallback?: boolean;
-      };
-      const route = rd.route || "react";
-      const mode = (rd.work_mode || "craft").toUpperCase();
-      const title = `路由决策 · ${mode} · ${route}`;
-      const stepsMeta = `${rd.max_steps || "?"} 步 / ${rd.max_reflect_rounds ?? "?"} 轮反思`;
-      opts.handlers.onStatus?.(`${mode} · ${route} · ${stepsMeta}`);
-      // 把四维信号拼进 meta, 让 GlassProcessList RouteCard 能展示
-      const signals: string[] = [];
-      if (typeof rd.difficulty_score === "number") {
-        signals.push(`难度 ${(rd.difficulty_score * 100).toFixed(0)}%`);
-      }
-      if (typeof rd.hera_hit_rate === "number") {
-        signals.push(`HERA ${(rd.hera_hit_rate * 100).toFixed(0)}%`);
-      }
-      if (typeof rd.recent_failure_rate === "number" && rd.recent_failure_rate > 0) {
-        signals.push(`失败率 ${(rd.recent_failure_rate * 100).toFixed(0)}%`);
-      }
-      const metaStr = signals.length > 0 ? `${stepsMeta} · ${signals.join(" · ")}` : stepsMeta;
-      emitActivity(opts.handlers, {
-        kind: "plan",
-        title,
-        meta: metaStr,
-        status: "done",
-        detail: JSON.stringify(rd),
-        endedAt: Date.now(),
-      });
-      return;
-    }
-    if (chunk === "reflection_to_skill" && content && typeof content === "object") {
-      // Spec 7+ 四维闭环: VMAO 反思已写入 HERA 失败技能库
-      // 让用户看到"反思经验已沉淀, 下次类似任务会召回"
-      const rs = content as {
-        saved?: boolean;
-        round?: number;
-        library_total?: number;
-      };
-      const round = rs.round ?? 0;
-      const total = rs.library_total ?? 0;
-      const title = `四维闭环 · VMAO 反思已入 HERA · 第 ${round} 轮 · 库存 ${total}`;
-      opts.handlers.onStatus?.(title);
-      emitActivity(opts.handlers, {
-        kind: "done",
-        title,
-        meta: "reflection→HERA",
-        status: "done",
-        detail: JSON.stringify(rs),
-        endedAt: Date.now(),
-      });
-      return;
-    }
-    if (chunk === "critic_verdict" && content && typeof content === "object") {
-      // Spec 5 独立 Critic Agent: 任务产物语义审查结论
-      // 让用户看到"独立第三方审查者"对产物的结构化评价
-      const cv = content as {
-        passed?: boolean;
-        score?: number;
-        issues?: string[];
-        suggestions?: string[];
-      };
-      const passed = cv.passed !== false;
-      const score = typeof cv.score === "number" ? cv.score : 0.5;
-      const scorePct = (score * 100).toFixed(0);
-      const issuesCount = (cv.issues || []).length;
-      const title = passed
-        ? `Critic 审查通过 · score ${scorePct}%`
-        : `Critic 审查未通过 · score ${scorePct}% · ${issuesCount} 个问题`;
-      opts.handlers.onStatus?.(title);
-      emitActivity(opts.handlers, {
-        kind: passed ? "done" : "think",
-        title,
-        meta: passed ? "passed" : `issues:${issuesCount}`,
-        status: passed ? "done" : "running",
-        detail: JSON.stringify(cv),
-        endedAt: passed ? Date.now() : undefined,
-      });
-      return;
-    }
-    if (chunk === "guardrail" && content && typeof content === "object") {
-      // 史诗级优化: Artifact Guardrail + Reflexion 修复循环
-      // 让用户看到"产物校验 + 自动修复"的过程, 提升信任度
-      const gr = content as {
-        passed?: boolean;
-        summary?: string;
-        missing?: string[];
-        issues?: string[][];
-        validation_count?: number;
-        repair_attempt?: boolean;
-        artifacts_after?: number;
-      };
-      const passed = gr.passed !== false;
-      const isRepair = gr.repair_attempt === true;
-      const missingCount = (gr.missing || []).length;
-      const issuesCount = (gr.issues || []).reduce((acc, arr) => acc + (arr?.length || 0), 0);
-      const title = isRepair
-        ? (passed
-            ? `Reflexion 修复成功 · ${gr.artifacts_after || 0} 个产物已落盘`
-            : `Reflexion 修复后仍不通过 · ${missingCount} 缺失 / ${issuesCount} 问题`)
-        : (passed
-            ? `Guardrail 通过 · ${gr.validation_count || 0} 个产物合规`
-            : `Guardrail 未通过 · ${missingCount} 缺失 / ${issuesCount} 问题`);
-      opts.handlers.onStatus?.(title);
-      emitActivity(opts.handlers, {
-        kind: isRepair ? "think" : (passed ? "done" : "think"),
-        title,
-        meta: passed ? "passed" : `missing:${missingCount}`,
-        status: passed ? "done" : "running",
-        detail: JSON.stringify(gr),
-        endedAt: passed ? Date.now() : undefined,
-      });
-      return;
-    }
-    if (chunk === "reflection" && content && typeof content === "object") {
-      // Spec 6 VMAO: Reflexion 自反思 — 显示反思内容（借鉴 noahshinn/reflexion）
-      const rf = content as {
-        round?: number;
-        reason?: string;
-        reflection?: string;
-        previous_failures?: { name: string; error: string; step?: number }[];
-      };
-      const round = rf.round || 1;
-      const reason = rf.reason || "工具失败";
-      const reflection = (rf.reflection || "").slice(0, 200);
-      const title = `VMAO 反思 · 第 ${round} 轮 · ${reason}`;
-      opts.handlers.onStatus?.(title);
-      emitActivity(opts.handlers, {
-        kind: "think",
-        title,
-        meta: `R${round}`,
-        status: "running",
-        detail: JSON.stringify(rf),
-      });
-      // 反思完成后立即标记 done
-      emitActivity(opts.handlers, {
-        id: `reflect-done-${round}`,
-        kind: "think",
-        title: `反思完成 · 第 ${round} 轮`,
-        status: "done",
-        detail: reflection,
-        endedAt: Date.now(),
-      });
-      return;
-    }
-    if (chunk === "skill_retrieved" && content && typeof content === "object") {
-      // Spec 6 HERA: 技能库召回 — 显示召回的历史成功技能
-      const sr = content as {
-        skills?: { task_signature: string; solution_summary: string; usage_count: number; workspace_kind: string }[];
-        total_in_library?: number;
-      };
-      const count = (sr.skills || []).length;
-      const total = sr.total_in_library || 0;
-      const title = count > 0
-        ? `HERA 召回 · ${count} 个历史技能 · 库存 ${total}`
-        : `HERA 技能库 · 库存 ${total}`;
-      opts.handlers.onStatus?.(title);
-      emitActivity(opts.handlers, {
-        kind: "plan",
-        title,
-        meta: count > 0 ? `+${count}` : undefined,
-        status: "done",
-        detail: JSON.stringify(sr),
-        endedAt: Date.now(),
-      });
-      return;
-    }
-    if (chunk === "skill_saved" && content && typeof content === "object") {
-      // Spec 6 HERA: 技能已固化 — 任务成功后自动捕获
-      const ss = content as {
-        skill_id?: string;
-        task_signature?: string;
-        saved?: boolean;
-        library_total?: number;
-      };
-      const title = `HERA 固化 · 技能已保存 · 库存 ${ss.library_total || 0}`;
-      opts.handlers.onStatus?.(title);
-      emitActivity(opts.handlers, {
-        kind: "done",
-        title,
-        meta: "skill",
-        status: "done",
-        detail: JSON.stringify(ss),
-        endedAt: Date.now(),
-      });
-      return;
-    }
-    if (chunk === "fewshot_retrieved" && content && typeof content === "object") {
-      // Spec 6 Self-Optimizing: few-shot 示例召回（DSPy BootstrapFewShot 风格）
-      const fr = content as {
-        examples?: { task_signature: string; score: number; usage_count: number; workspace_kind: string; tool_sequence?: string[] }[];
-        total_in_library?: number;
-      };
-      const count = (fr.examples || []).length;
-      const total = fr.total_in_library || 0;
-      const title = count > 0
-        ? `Self-Optimizing 召回 · ${count} 个 few-shot 示例 · 库存 ${total}`
-        : `Self-Optimizing 库 · 库存 ${total}`;
-      opts.handlers.onStatus?.(title);
-      emitActivity(opts.handlers, {
-        kind: "plan",
-        title,
-        meta: count > 0 ? `+${count}` : undefined,
-        status: "done",
-        detail: JSON.stringify(fr),
-        endedAt: Date.now(),
-      });
-      return;
-    }
-    if (chunk === "fewshot_saved" && content && typeof content === "object") {
-      // Spec 6 Self-Optimizing: 离线轨迹沉淀 — 成功轨迹已存为 few-shot 示例
-      const fs = content as {
-        example_id?: string;
-        task_signature?: string;
-        score?: number;
-        saved?: boolean;
-        library_total?: number;
-      };
-      const scoreStr = typeof fs.score === "number" ? ` · score ${fs.score.toFixed(2)}` : "";
-      const title = `Self-Optimizing 沉淀 · 示例已保存${scoreStr} · 库存 ${fs.library_total || 0}`;
-      opts.handlers.onStatus?.(title);
-      emitActivity(opts.handlers, {
-        kind: "done",
-        title,
-        meta: "fewshot",
-        status: "done",
-        detail: JSON.stringify(fs),
-        endedAt: Date.now(),
-      });
-      return;
-    }
-    if (chunk === "done") {
-      sawDone = true;
-      // Only use done.result when no text chunks arrived (avoid duplicating the reply)
-      if (!sawText && content && typeof content === "object") {
-        const result = (content as { result?: unknown }).result;
-        if (typeof result === "string" && result.trim()) {
-          opts.handlers.onText?.(result);
+        if (chunk === 'mission' && content && typeof content === 'object') {
+          const mission = content as WorkMission;
+          opts.handlers.onMission?.(mission);
+          const title = String(mission.title || '任务');
+          const mode = String(mission.work_mode || opts.workMode || 'craft');
+          opts.handlers.onStatus?.('正在理解任务');
+          emitActivity(opts.handlers, {
+            kind: 'mission',
+            title,
+            meta: mode.toUpperCase(),
+            status: 'running',
+          });
+          return;
         }
-        const arts = (content as { artifacts?: unknown }).artifacts;
-        if (Array.isArray(arts)) {
-          for (const a of arts) {
-            if (a && typeof a === "object" && (a as { path?: string }).path) {
-              const art = a as { path: string; name?: string };
-              opts.handlers.onArtifact?.({ path: art.path, name: art.name });
+        if (chunk === 'pipeline' && content && typeof content === 'object') {
+          const info = content as WorkPipelineInfo;
+          // heal_round: { current, max } — 提取并归一化为 number[]
+          const hr = (content as { heal_round?: { current?: unknown; max?: unknown } }).heal_round;
+          if (hr && typeof hr === 'object') {
+            const cur = typeof hr.current === 'number' ? hr.current : Number(hr.current);
+            const mx = typeof hr.max === 'number' ? hr.max : Number(hr.max);
+            info.heal_round =
+              Number.isFinite(cur) && Number.isFinite(mx) ? { current: cur, max: mx } : undefined;
+          } else {
+            info.heal_round = undefined;
+          }
+          opts.handlers.onPipeline?.(info);
+          const reason = String(info.reasoning_mode || '');
+          const step = String(info.step ?? '');
+          opts.handlers.onStatus?.('正在准备下一步操作');
+          emitActivity(opts.handlers, {
+            kind: 'plan',
+            title: reason || `Pipeline step ${step || '…'}`,
+            meta: 'pipeline',
+            status: 'running',
+          });
+          return;
+        }
+        if (chunk === 'evolution' && content && typeof content === 'object') {
+          const evo = content as EvolutionInfo;
+          opts.handlers.onEvolution?.(evo);
+          const paths = typeof evo.ktg_paths === 'number' ? evo.ktg_paths : 0;
+          const mode = String(evo.reasoning_mode || evo.step || 'ready');
+          const label = `KTG ${paths} · ${mode}`;
+          emitActivity(opts.handlers, {
+            kind: 'think',
+            title: label,
+            meta: 'evolution',
+            status: 'running',
+          });
+          return;
+        }
+        if (chunk === 'thought' || chunk === 'thinking') {
+          // Spec 2: 真实 LLM 思考内容（可折叠展示，推理过程展示）
+          const label = typeof content === 'string' ? content.slice(0, 120) : chunk;
+          opts.handlers.onStatus?.(label);
+          emitActivity(opts.handlers, {
+            kind: 'think',
+            title: label || 'Thinking…',
+            status: 'running',
+            // 完整思考内容存到 detail，前端可展开
+            detail: typeof content === 'string' ? content : undefined,
+          });
+          return;
+        }
+        if (chunk === 'action') {
+          // Spec 2: 工具调用前置事件（含 name + args）
+          const name =
+            content && typeof content === 'object'
+              ? String((content as { name?: string }).name || 'tool')
+              : 'tool';
+          const actionContent = content as {
+            args?: unknown;
+            call_id?: unknown;
+            tool_call_id?: unknown;
+            id?: unknown;
+          } | null;
+          const args = actionContent?.args;
+          const callId = String(
+            actionContent?.call_id || actionContent?.tool_call_id || actionContent?.id || '',
+          );
+          const action = describeToolAction(name, args);
+          opts.handlers.onStatus?.(action.title);
+          emitActivity(opts.handlers, {
+            ...action,
+            ...(callId ? { id: `tool-${callId}` } : {}),
+            meta: name,
+            status: 'running',
+          });
+          return;
+        }
+        if (chunk === 'observation') {
+          // Spec 2: 工具结果事件（含 success + summary）
+          const obs = content as {
+            success?: boolean;
+            summary?: string;
+            name?: string;
+            duration_ms?: number;
+            call_id?: unknown;
+            tool_call_id?: unknown;
+            id?: unknown;
+          } | null;
+          const ok = obs?.success !== false;
+          const name = obs?.name || 'tool';
+          const callId = String(obs?.call_id || obs?.tool_call_id || obs?.id || '');
+          const summary = redactSensitiveText(obs?.summary || '').slice(0, 200);
+          opts.handlers.onStatus?.(ok ? `${name} 已完成` : `${name} 执行失败`);
+          emitActivity(opts.handlers, {
+            ...(callId ? { id: `tool-${callId}` } : {}),
+            kind: ok ? 'tool' : 'error',
+            title: ok ? `${name} 已完成` : `${name} 执行失败`,
+            meta: name,
+            status: ok ? 'done' : 'error',
+            detail: summary || undefined,
+            endedAt: Date.now(),
+          });
+          return;
+        }
+        if (chunk === 'tool_call') {
+          // 兼容旧 chunk：若无 action 前置，也派生一个 running activity
+          const name =
+            content && typeof content === 'object'
+              ? String((content as { name?: string }).name || 'tool')
+              : 'tool';
+          const toolContent = content as {
+            call_id?: unknown;
+            tool_call_id?: unknown;
+            id?: unknown;
+          } | null;
+          const callId = String(
+            toolContent?.call_id || toolContent?.tool_call_id || toolContent?.id || '',
+          );
+          const action = describeToolAction(name, undefined);
+          opts.handlers.onStatus?.(action.title);
+          emitActivity(opts.handlers, {
+            ...action,
+            ...(callId ? { id: `tool-${callId}` } : {}),
+            meta: name,
+            status: 'running',
+          });
+          return;
+        }
+        if (chunk === 'tool_result') {
+          // 兼容旧 chunk：若无 observation，也派生一个 done activity
+          const resultContent = content as {
+            call_id?: unknown;
+            tool_call_id?: unknown;
+            id?: unknown;
+            content?: unknown;
+            summary?: unknown;
+          } | null;
+          const rawText =
+            typeof content === 'string'
+              ? content
+              : String(resultContent?.summary || resultContent?.content || '');
+          const text = redactSensitiveText(rawText);
+          const callId = String(
+            resultContent?.call_id || resultContent?.tool_call_id || resultContent?.id || '',
+          );
+          const ok = !text.startsWith('[失败]');
+          opts.handlers.onStatus?.(ok ? '工具执行完成' : '工具执行失败');
+          emitActivity(opts.handlers, {
+            ...(callId ? { id: `tool-${callId}` } : {}),
+            kind: ok ? 'tool' : 'error',
+            title: ok ? '工具执行完成' : '工具执行失败',
+            status: ok ? 'done' : 'error',
+            detail: text.slice(0, 200) || undefined,
+            endedAt: Date.now(),
+          });
+          return;
+        }
+        if (chunk === 'artifact' && content && typeof content === 'object') {
+          const art = content as { path?: string; name?: string };
+          if (art.path) {
+            opts.handlers.onArtifact?.({ path: art.path, name: art.name });
+            emitActivity(opts.handlers, {
+              kind: 'write',
+              title: art.name || 'Artifact',
+              path: art.path,
+              status: 'done',
+              endedAt: Date.now(),
+            });
+          }
+          return;
+        }
+        if (chunk === 'decision_context' && content && typeof content === 'object') {
+          // Spec 5: 决策上下文面板 — 嵌入 ProcessTimeline 的 DecisionCard
+          // content 结构：{goal, concepts[], concept_edges[], reasoning_mode, memory_short_count, memory_long_count, risks[]}
+          const ctx = content as {
+            goal?: string;
+            concepts?: { id: string; label: string; layer: string }[];
+            concept_edges?: { from: string; to: string; type: string }[];
+            reasoning_mode?: string;
+            memory_short_count?: number;
+            memory_long_count?: number;
+            risks?: { type: string; between: string[] }[];
+          };
+          const conceptLabels = (ctx.concepts || []).map((c) => c.label).filter(Boolean);
+          const title =
+            conceptLabels.length > 0
+              ? `决策依据 · ${conceptLabels.slice(0, 3).join(' · ')}${conceptLabels.length > 3 ? ` +${conceptLabels.length - 3}` : ''}`
+              : '决策依据';
+          emitActivity(opts.handlers, {
+            kind: 'plan',
+            title,
+            status: 'done',
+            detail: JSON.stringify(ctx),
+            endedAt: Date.now(),
+          });
+          return;
+        }
+        if (chunk === 'route_decision' && content && typeof content === 'object') {
+          // Spec 7+ DAAO 真路由: 路由决策可视化 + 四维闭环反馈信号
+          // 显示难度/HERA命中率/最近失败率/置信度, 让用户看到"为什么选这条路径"
+          const rd = content as {
+            route?: string;
+            max_steps?: number;
+            max_reflect_rounds?: number;
+            workspace_kind?: string;
+            work_mode?: string;
+            reason?: string;
+            tool_count?: number;
+            // Spec 7+ 四维闭环新字段
+            difficulty_score?: number;
+            hera_hit_rate?: number;
+            recent_failure_rate?: number;
+            confidence?: number;
+            tool_subset?: string[];
+            fallback?: boolean;
+          };
+          const route = rd.route || 'react';
+          const mode = (rd.work_mode || 'craft').toUpperCase();
+          const title = `路由决策 · ${mode} · ${route}`;
+          const stepsMeta = `${rd.max_steps || '?'} 步 / ${rd.max_reflect_rounds ?? '?'} 轮反思`;
+          opts.handlers.onStatus?.(`${mode} · ${route} · ${stepsMeta}`);
+          // 把四维信号拼进 meta, 让 GlassProcessList RouteCard 能展示
+          const signals: string[] = [];
+          if (typeof rd.difficulty_score === 'number') {
+            signals.push(`难度 ${(rd.difficulty_score * 100).toFixed(0)}%`);
+          }
+          if (typeof rd.hera_hit_rate === 'number') {
+            signals.push(`HERA ${(rd.hera_hit_rate * 100).toFixed(0)}%`);
+          }
+          if (typeof rd.recent_failure_rate === 'number' && rd.recent_failure_rate > 0) {
+            signals.push(`失败率 ${(rd.recent_failure_rate * 100).toFixed(0)}%`);
+          }
+          const metaStr = signals.length > 0 ? `${stepsMeta} · ${signals.join(' · ')}` : stepsMeta;
+          emitActivity(opts.handlers, {
+            kind: 'plan',
+            title,
+            meta: metaStr,
+            status: 'done',
+            detail: JSON.stringify(rd),
+            endedAt: Date.now(),
+          });
+          return;
+        }
+        if (chunk === 'reflection_to_skill' && content && typeof content === 'object') {
+          // Spec 7+ 四维闭环: VMAO 反思已写入 HERA 失败技能库
+          // 让用户看到"反思经验已沉淀, 下次类似任务会召回"
+          const rs = content as {
+            saved?: boolean;
+            round?: number;
+            library_total?: number;
+          };
+          const round = rs.round ?? 0;
+          const total = rs.library_total ?? 0;
+          const title = `四维闭环 · VMAO 反思已入 HERA · 第 ${round} 轮 · 库存 ${total}`;
+          opts.handlers.onStatus?.(title);
+          emitActivity(opts.handlers, {
+            kind: 'done',
+            title,
+            meta: 'reflection→HERA',
+            status: 'done',
+            detail: JSON.stringify(rs),
+            endedAt: Date.now(),
+          });
+          return;
+        }
+        if (chunk === 'critic_verdict' && content && typeof content === 'object') {
+          // Spec 5 独立 Critic Agent: 任务产物语义审查结论
+          // 让用户看到"独立第三方审查者"对产物的结构化评价
+          const cv = content as {
+            passed?: boolean;
+            score?: number;
+            issues?: string[];
+            suggestions?: string[];
+          };
+          const passed = cv.passed !== false;
+          const score = typeof cv.score === 'number' ? cv.score : 0.5;
+          const scorePct = (score * 100).toFixed(0);
+          const issuesCount = (cv.issues || []).length;
+          const title = passed
+            ? `Critic 审查通过 · score ${scorePct}%`
+            : `Critic 审查未通过 · score ${scorePct}% · ${issuesCount} 个问题`;
+          opts.handlers.onStatus?.(title);
+          emitActivity(opts.handlers, {
+            kind: passed ? 'done' : 'think',
+            title,
+            meta: passed ? 'passed' : `issues:${issuesCount}`,
+            status: passed ? 'done' : 'running',
+            detail: JSON.stringify(cv),
+            endedAt: passed ? Date.now() : undefined,
+          });
+          return;
+        }
+        if (chunk === 'guardrail' && content && typeof content === 'object') {
+          // 史诗级优化: Artifact Guardrail + Reflexion 修复循环
+          // 让用户看到"产物校验 + 自动修复"的过程, 提升信任度
+          const gr = content as {
+            passed?: boolean;
+            summary?: string;
+            missing?: string[];
+            issues?: string[][];
+            validation_count?: number;
+            repair_attempt?: boolean;
+            artifacts_after?: number;
+          };
+          const passed = gr.passed !== false;
+          const isRepair = gr.repair_attempt === true;
+          const missingCount = (gr.missing || []).length;
+          const issuesCount = (gr.issues || []).reduce((acc, arr) => acc + (arr?.length || 0), 0);
+          const title = isRepair
+            ? passed
+              ? `Reflexion 修复成功 · ${gr.artifacts_after || 0} 个产物已落盘`
+              : `Reflexion 修复后仍不通过 · ${missingCount} 缺失 / ${issuesCount} 问题`
+            : passed
+              ? `Guardrail 通过 · ${gr.validation_count || 0} 个产物合规`
+              : `Guardrail 未通过 · ${missingCount} 缺失 / ${issuesCount} 问题`;
+          opts.handlers.onStatus?.(title);
+          emitActivity(opts.handlers, {
+            kind: isRepair ? 'think' : passed ? 'done' : 'think',
+            title,
+            meta: passed ? 'passed' : `missing:${missingCount}`,
+            status: passed ? 'done' : 'running',
+            detail: JSON.stringify(gr),
+            endedAt: passed ? Date.now() : undefined,
+          });
+          return;
+        }
+        if (chunk === 'reflection' && content && typeof content === 'object') {
+          // Spec 6 VMAO: Reflexion 自反思 — 显示反思内容（借鉴 noahshinn/reflexion）
+          const rf = content as {
+            round?: number;
+            reason?: string;
+            reflection?: string;
+            previous_failures?: { name: string; error: string; step?: number }[];
+          };
+          const round = rf.round || 1;
+          const reason = rf.reason || '工具失败';
+          const reflection = (rf.reflection || '').slice(0, 200);
+          const title = `VMAO 反思 · 第 ${round} 轮 · ${reason}`;
+          opts.handlers.onStatus?.(title);
+          emitActivity(opts.handlers, {
+            kind: 'think',
+            title,
+            meta: `R${round}`,
+            status: 'running',
+            detail: JSON.stringify(rf),
+          });
+          // 反思完成后立即标记 done
+          emitActivity(opts.handlers, {
+            id: `reflect-done-${round}`,
+            kind: 'think',
+            title: `反思完成 · 第 ${round} 轮`,
+            status: 'done',
+            detail: reflection,
+            endedAt: Date.now(),
+          });
+          return;
+        }
+        if (chunk === 'skill_retrieved' && content && typeof content === 'object') {
+          // Spec 6 HERA: 技能库召回 — 显示召回的历史成功技能
+          const sr = content as {
+            skills?: {
+              task_signature: string;
+              solution_summary: string;
+              usage_count: number;
+              workspace_kind: string;
+            }[];
+            total_in_library?: number;
+          };
+          const count = (sr.skills || []).length;
+          const total = sr.total_in_library || 0;
+          const title =
+            count > 0
+              ? `HERA 召回 · ${count} 个历史技能 · 库存 ${total}`
+              : `HERA 技能库 · 库存 ${total}`;
+          opts.handlers.onStatus?.(title);
+          emitActivity(opts.handlers, {
+            kind: 'plan',
+            title,
+            meta: count > 0 ? `+${count}` : undefined,
+            status: 'done',
+            detail: JSON.stringify(sr),
+            endedAt: Date.now(),
+          });
+          return;
+        }
+        if (chunk === 'skill_saved' && content && typeof content === 'object') {
+          // Spec 6 HERA: 技能已固化 — 任务成功后自动捕获
+          const ss = content as {
+            skill_id?: string;
+            task_signature?: string;
+            saved?: boolean;
+            library_total?: number;
+          };
+          const title = `HERA 固化 · 技能已保存 · 库存 ${ss.library_total || 0}`;
+          opts.handlers.onStatus?.(title);
+          emitActivity(opts.handlers, {
+            kind: 'done',
+            title,
+            meta: 'skill',
+            status: 'done',
+            detail: JSON.stringify(ss),
+            endedAt: Date.now(),
+          });
+          return;
+        }
+        if (chunk === 'fewshot_retrieved' && content && typeof content === 'object') {
+          // Spec 6 Self-Optimizing: few-shot 示例召回（DSPy BootstrapFewShot 风格）
+          const fr = content as {
+            examples?: {
+              task_signature: string;
+              score: number;
+              usage_count: number;
+              workspace_kind: string;
+              tool_sequence?: string[];
+            }[];
+            total_in_library?: number;
+          };
+          const count = (fr.examples || []).length;
+          const total = fr.total_in_library || 0;
+          const title =
+            count > 0
+              ? `Self-Optimizing 召回 · ${count} 个 few-shot 示例 · 库存 ${total}`
+              : `Self-Optimizing 库 · 库存 ${total}`;
+          opts.handlers.onStatus?.(title);
+          emitActivity(opts.handlers, {
+            kind: 'plan',
+            title,
+            meta: count > 0 ? `+${count}` : undefined,
+            status: 'done',
+            detail: JSON.stringify(fr),
+            endedAt: Date.now(),
+          });
+          return;
+        }
+        if (chunk === 'fewshot_saved' && content && typeof content === 'object') {
+          // Spec 6 Self-Optimizing: 离线轨迹沉淀 — 成功轨迹已存为 few-shot 示例
+          const fs = content as {
+            example_id?: string;
+            task_signature?: string;
+            score?: number;
+            saved?: boolean;
+            library_total?: number;
+          };
+          const scoreStr = typeof fs.score === 'number' ? ` · score ${fs.score.toFixed(2)}` : '';
+          const title = `Self-Optimizing 沉淀 · 示例已保存${scoreStr} · 库存 ${fs.library_total || 0}`;
+          opts.handlers.onStatus?.(title);
+          emitActivity(opts.handlers, {
+            kind: 'done',
+            title,
+            meta: 'fewshot',
+            status: 'done',
+            detail: JSON.stringify(fs),
+            endedAt: Date.now(),
+          });
+          return;
+        }
+        if (chunk === 'done') {
+          sawDone = true;
+          // Only use done.result when no text chunks arrived (avoid duplicating the reply)
+          if (!sawText && content && typeof content === 'object') {
+            const result = (content as { result?: unknown }).result;
+            if (typeof result === 'string' && result.trim()) {
+              opts.handlers.onText?.(result);
+            }
+            const arts = (content as { artifacts?: unknown }).artifacts;
+            if (Array.isArray(arts)) {
+              for (const a of arts) {
+                if (a && typeof a === 'object' && (a as { path?: string }).path) {
+                  const art = a as { path: string; name?: string };
+                  opts.handlers.onArtifact?.({ path: art.path, name: art.name });
+                }
+              }
             }
           }
+          opts.handlers.onDone?.(content);
         }
-      }
-      opts.handlers.onDone?.(content);
-    }
-  }, (obj) => {
-    // 终止事件后立即停止读取,避免 done 之后的阻塞读在 Windows teardown
-    // 竞态下收到 connection reset(done/error 在服务端均为终止事件)。
-    const t = String(obj.chunk_type || obj.type || "");
-    return t === "done" || t === "error";
-  });
+      },
+      (obj) => {
+        // 终止事件后立即停止读取,避免 done 之后的阻塞读在 Windows teardown
+        // 竞态下收到 connection reset(done/error 在服务端均为终止事件)。
+        const t = String(obj.chunk_type || obj.type || '');
+        return t === 'done' || t === 'error';
+      },
+    );
     if (!sawDone) opts.handlers.onDone?.(null);
   } finally {
     guard.dispose();
@@ -879,12 +984,12 @@ export async function streamCode(opts: {
 }): Promise<void> {
   const base = getFnixApiBase();
   const guard = createStreamGuard(opts.signal, () => {
-    opts.handlers.onError?.("连接超时：流式输出超过 5 分钟无数据，请检查 agentd 或后端。");
+    opts.handlers.onError?.('连接超时：流式输出超过 10 分钟无数据，请检查 agentd 或后端。');
   });
   try {
     const res = await fetch(`${base}/api/v1/chat/agent`, {
-      method: "POST",
-      headers: authHeaders({ "Content-Type": "application/json" }),
+      method: 'POST',
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({
         messages: opts.messages,
         workspace: opts.workspace,
@@ -897,117 +1002,175 @@ export async function streamCode(opts: {
     });
 
     if (!res.ok) {
-      const err = await res.text().catch(() => "");
+      const err = await res.text().catch(() => '');
       throw new Error(err || `Code agent failed (${res.status})`);
     }
 
     let sawDone = false;
-    await readNdjsonStream(res, guard.signal, (obj) => {
-      guard.touch();
-      // 结构化 block 流：每个 NDJSON 事件都尝试转为 StructuredBlock 注入消息气泡
-      emitStructuredBlock(opts.handlers, obj);
-      const t = String(obj.type || "");
-    if (t === "thinking") {
-      const label = String(obj.content || "Thinking…").slice(0, 120);
-      opts.handlers.onStatus?.(label);
-      emitActivity(opts.handlers, {
-        kind: "think",
-        title: label,
-        status: "running",
-      });
-      return;
-    }
-    if (t === "plan") {
-      opts.handlers.onStatus?.("Planning…");
-      emitActivity(opts.handlers, {
-        kind: "plan",
-        title: "Planning…",
-        status: "running",
-      });
-      return;
-    }
-    if (t === "step_start") {
-      const step = obj.step as { id?: unknown; step_id?: unknown; description?: string; name?: string } | undefined;
-      const label = step?.description || step?.name || "执行操作";
-      const stepId = String(step?.id || step?.step_id || obj.step_id || obj.id || "");
-      opts.handlers.onStatus?.(label);
-      emitActivity(opts.handlers, {
-        ...(stepId ? { id: `step-${stepId}` } : {}),
-        kind: "tool",
-        title: label,
-        meta: step?.name,
-        status: "running",
-      });
-      return;
-    }
-    if (t === "step_end") {
-      const step = obj.step as { id?: unknown; step_id?: unknown; description?: string; name?: string } | undefined;
-      const stepId = String(step?.id || step?.step_id || obj.step_id || obj.id || "");
-      const label = step?.description || step?.name || "操作完成";
-      opts.handlers.onStatus?.(label);
-      emitActivity(opts.handlers, {
-        ...(stepId ? { id: `step-${stepId}` } : {}),
-        kind: "tool",
-        title: label,
-        meta: step?.name,
-        status: "done",
-        endedAt: Date.now(),
-      });
-      return;
-    }
-    if (t === "file_change") {
-      const fc: CodeFileChange = {
-        path: String(obj.path || ""),
-        action: obj.action ? String(obj.action) : undefined,
-        diff: obj.diff ? String(obj.diff) : undefined,
-        content: obj.content != null ? String(obj.content) : undefined,
-        old_content: obj.old_content != null ? String(obj.old_content) : undefined,
-        preview: obj.preview !== false,
-      };
-      opts.handlers.onFileChange?.(fc);
-      const path = fc.path || "file";
-      const action = (fc.action || "edit").toLowerCase();
-      const kind =
-        action.includes("read") || action === "read"
-          ? "read"
-          : action.includes("write") || action === "create"
-            ? "write"
-            : "edit";
-      emitActivity(opts.handlers, {
-        kind,
-        title: kind === "read" ? `读取 ${path}` : kind === "write" ? `写入 ${path}` : `修改 ${path}`,
-        path,
-        meta: fc.action,
-        status: "done",
-        detail: fc.diff?.slice(0, 800),
-        endedAt: Date.now(),
-      });
-      // 删除 onText 重复 emit：上方 emitStructuredBlock 已 emit DiffBlock 到 blocks 数组，
-      // MessageBubble 在 blocks 存在时优先渲染 blocks，此 onText 累积的 markdown diff 代码块
-      // 不会被显示，但会污染 assistantMsg.content（blocks 渲染失败回退时用户看到重复 diff）
-      return;
-    }
-    if (t === "message") {
-      const c = String(obj.content || "");
-      if (c) opts.handlers.onText?.(c);
-      return;
-    }
-    if (t === "done") {
-      sawDone = true;
-      if (obj.error) {
-        opts.handlers.onError?.(String(obj.error));
-      }
-      opts.handlers.onDone?.(obj);
-      return;
-    }
-    if (t === "error") {
-      opts.handlers.onError?.(String(obj.content || obj.error || "error"));
-    }
-  }, (obj) => {
-    // 终止事件后立即停止读取(done/error 在服务端均为终止事件)。
-    const tt = String(obj.type || "");
-    return tt === "done" || tt === "error";
-  });
+    await readNdjsonStream(
+      res,
+      guard.signal,
+      (obj) => {
+        guard.touch();
+        // 结构化 block 流：每个 NDJSON 事件都尝试转为 StructuredBlock 注入消息气泡
+        emitStructuredBlock(opts.handlers, obj);
+        const t = String(obj.type || '');
+        if (t === 'status') {
+          const statusVal = String(obj.data || obj.status || '');
+          const isDone = statusVal === 'completed' || statusVal === 'failed';
+          let label = '处理中';
+          let kind: ActivityItem['kind'] = 'think';
+          let actId: string | undefined;
+          if (statusVal === 'planning') { label = '规划中'; kind = 'plan'; actId = 'phase-planning'; }
+          else if (statusVal === 'executing') { label = '执行中'; kind = 'tool'; actId = 'phase-executing'; }
+          else if (statusVal === 'reviewing') { label = '审查中'; kind = 'test'; actId = 'phase-reviewing'; }
+          else if (statusVal === 'completed') { label = '已完成'; kind = 'done'; actId = 'phase-completed'; }
+          else if (statusVal === 'failed') { label = '执行失败'; kind = 'error'; actId = 'phase-failed'; }
+          else if (statusVal.startsWith('healing:')) {
+            const round = statusVal.split(':')[1] || '?';
+            label = `修复中（第${round}轮）`;
+            kind = 'tool';
+            actId = `phase-healing-${round}`;
+          }
+          opts.handlers.onStatus?.(label);
+          emitActivity(opts.handlers, {
+            ...(actId ? { id: actId } : {}),
+            kind,
+            title: label,
+            status: isDone ? 'done' : 'running',
+            ...(isDone ? { endedAt: Date.now() } : {}),
+          });
+          return;
+        }
+        if (t === 'heartbeat') {
+          // Keep-alive signal; guard.touch() already reset idle timer
+          return;
+        }
+        if (t === 'thinking') {
+          const label = String(obj.content || '思考中…').slice(0, 120);
+          opts.handlers.onStatus?.(label);
+          emitActivity(opts.handlers, {
+            kind: 'think',
+            title: label,
+            status: 'running',
+          });
+          return;
+        }
+        if (t === 'plan') {
+          const steps = Array.isArray(obj.steps) ? obj.steps : [];
+          opts.handlers.onStatus?.(`规划完成（${steps.length} 个步骤）`);
+          emitActivity(opts.handlers, {
+            id: 'phase-planning',
+            kind: 'plan',
+            title: `规划完成（${steps.length} 个步骤）`,
+            status: 'done',
+            endedAt: Date.now(),
+          });
+          return;
+        }
+        if (t === 'step_start') {
+          const step = obj.step as
+            { id?: unknown; step_id?: unknown; description?: string; name?: string; action?: string; target?: string } | undefined;
+          const stepId = String(step?.id || step?.step_id || obj.step_id || obj.id || '');
+          const label = stepLabel(step);
+          opts.handlers.onStatus?.(label);
+          emitActivity(opts.handlers, {
+            ...(stepId ? { id: `step-${stepId}` } : {}),
+            kind: stepKind(step),
+            title: label,
+            meta: step?.name,
+            status: 'running',
+          });
+          return;
+        }
+        if (t === 'step_end') {
+          const step = obj.step as
+            { id?: unknown; step_id?: unknown; description?: string; name?: string; action?: string; target?: string } | undefined;
+          const stepId = String(step?.id || step?.step_id || obj.step_id || obj.id || '');
+          const label = stepLabel(step, '操作完成');
+          opts.handlers.onStatus?.(label);
+          emitActivity(opts.handlers, {
+            ...(stepId ? { id: `step-${stepId}` } : {}),
+            kind: stepKind(step),
+            title: label,
+            meta: step?.name,
+            status: 'done',
+            endedAt: Date.now(),
+          });
+          return;
+        }
+        if (t === 'file_change') {
+          const fc: CodeFileChange = {
+            path: String(obj.path || ''),
+            action: obj.action ? String(obj.action) : undefined,
+            diff: obj.diff ? String(obj.diff) : undefined,
+            content: obj.content != null ? String(obj.content) : undefined,
+            old_content: obj.old_content != null ? String(obj.old_content) : undefined,
+            preview: obj.preview !== false,
+          };
+          opts.handlers.onFileChange?.(fc);
+          const path = fc.path || 'file';
+          const action = (fc.action || 'edit').toLowerCase();
+          const kind =
+            action.includes('read') || action === 'read'
+              ? 'read'
+              : action.includes('write') || action === 'create'
+                ? 'write'
+                : 'edit';
+          emitActivity(opts.handlers, {
+            kind,
+            title:
+              kind === 'read' ? `读取 ${path}` : kind === 'write' ? `写入 ${path}` : `修改 ${path}`,
+            path,
+            meta: fc.action,
+            status: 'done',
+            detail: fc.diff?.slice(0, 800),
+            endedAt: Date.now(),
+          });
+          // 删除 onText 重复 emit：上方 emitStructuredBlock 已 emit DiffBlock 到 blocks 数组，
+          // MessageBubble 在 blocks 存在时优先渲染 blocks，此 onText 累积的 markdown diff 代码块
+          // 不会被显示，但会污染 assistantMsg.content（blocks 渲染失败回退时用户看到重复 diff）
+          return;
+        }
+        if (t === 'review') {
+          const passed = obj.passed ?? obj.review_passed;
+          opts.handlers.onStatus?.(passed ? '审查通过' : '审查未通过');
+          emitActivity(opts.handlers, {
+            id: 'phase-reviewing',
+            kind: 'test',
+            title: passed ? '审查通过' : '审查未通过',
+            status: 'done',
+            endedAt: Date.now(),
+          });
+          return;
+        }
+        if (t === 'heal') {
+          // Heal feedback: status event already shows "修复中"
+          return;
+        }
+        if (t === 'message') {
+          const c = String(obj.content || '');
+          if (c) opts.handlers.onText?.(c);
+          return;
+        }
+        if (t === 'done') {
+          sawDone = true;
+          if (obj.error) {
+            opts.handlers.onError?.(String(obj.error));
+          }
+          opts.handlers.onDone?.(obj);
+          return;
+        }
+        if (t === 'error') {
+          opts.handlers.onError?.(String(obj.content || obj.error || 'error'));
+        }
+      },
+      (obj) => {
+        // 终止事件后立即停止读取(done/error 在服务端均为终止事件)。
+        const tt = String(obj.type || '');
+        return tt === 'done' || tt === 'error';
+      },
+    );
     if (!sawDone) opts.handlers.onDone?.(null);
   } finally {
     guard.dispose();
@@ -1026,15 +1189,15 @@ export async function applyCodeChanges(opts: {
   conflict?: boolean;
   failed_file?: string;
 }> {
-  const workspace = (opts.workspace || "").trim();
+  const workspace = (opts.workspace || '').trim();
   if (!workspace) {
-    return { ok: false, applied: 0, error: "需要先打开仓库" };
+    return { ok: false, applied: 0, error: '需要先打开仓库' };
   }
   const payload = opts.changes
     .filter((c) => c.path?.trim())
     .map((c) => ({
       path: c.path,
-      action: (c.action || "modify").toLowerCase(),
+      action: (c.action || 'modify').toLowerCase(),
       content: c.content ?? undefined,
       old_content: c.old_content ?? undefined,
     }));
@@ -1043,12 +1206,12 @@ export async function applyCodeChanges(opts: {
   }
 
   const res = await fetch(`${getFnixApiBase()}/api/v1/chat/agent/apply`, {
-    method: "POST",
-    headers: authHeaders({ "Content-Type": "application/json" }),
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({ workspace, changes: payload }),
   });
   if (!res.ok) {
-    const err = await res.text().catch(() => "");
+    const err = await res.text().catch(() => '');
     return { ok: false, applied: 0, error: err || `Apply failed (${res.status})` };
   }
   const data = (await res.json()) as {
@@ -1062,11 +1225,7 @@ export async function applyCodeChanges(opts: {
   const err = data.error || undefined;
   const conflict =
     Boolean(data.conflict) ||
-    Boolean(
-      err &&
-        (/冲突|并发编辑|内容已变更|conflict/i.test(err) ||
-          /文件已存在/.test(err)),
-    );
+    Boolean(err && (/冲突|并发编辑|内容已变更|conflict/i.test(err) || /文件已存在/.test(err)));
   return {
     ok: Boolean(data.ok),
     applied: data.applied ?? 0,
@@ -1082,20 +1241,20 @@ export async function rollbackCodeChanges(opts: {
   workspace: string;
   changeset_id?: string | null;
 }): Promise<{ ok: boolean; error?: string; changeset_id?: string }> {
-  const workspace = (opts.workspace || "").trim();
+  const workspace = (opts.workspace || '').trim();
   if (!workspace) {
-    return { ok: false, error: "需要先打开仓库" };
+    return { ok: false, error: '需要先打开仓库' };
   }
   const res = await fetch(`${getFnixApiBase()}/api/v1/chat/agent/rollback`, {
-    method: "POST",
-    headers: authHeaders({ "Content-Type": "application/json" }),
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({
       workspace,
       changeset_id: opts.changeset_id || undefined,
     }),
   });
   if (!res.ok) {
-    const err = await res.text().catch(() => "");
+    const err = await res.text().catch(() => '');
     return { ok: false, error: err || `Rollback failed (${res.status})` };
   }
   const data = (await res.json()) as {
@@ -1112,12 +1271,12 @@ export async function rollbackCodeChanges(opts: {
 }
 
 export async function indexHarnessWorkspace(workspace: string): Promise<boolean> {
-  const path = (workspace || "").trim();
+  const path = (workspace || '').trim();
   if (!path) return false;
   try {
     const res = await fetch(`${getFnixApiBase()}/api/v1/harness/index`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ workspace: path }),
       signal: AbortSignal.timeout(60_000),
     });
@@ -1136,7 +1295,7 @@ export async function indexHarnessWorkspace(workspace: string): Promise<boolean>
 type WorkJobStep = {
   key: string;
   label: string;
-  status: "pending" | "running" | "completed" | "failed" | "skipped";
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'skipped';
   ts: string;
 };
 
@@ -1147,7 +1306,7 @@ export type WorkJob = {
   workspace: string;
   title: string;
   description: string;
-  status: "pending" | "running" | "completed" | "failed" | "cancelled";
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
   trace_id: string;
   result: string;
   artifacts: { path: string; name?: string }[];
@@ -1181,16 +1340,16 @@ export type WorkJobEvent = {
 
 type ListJobsOptions = {
   workspace?: string;
-  status?: WorkJob["status"];
+  status?: WorkJob['status'];
   limit?: number;
 };
 
 /** 列出所有 jobs（含排队/运行/完成/失败/取消） */
 export async function listJobs(opts: ListJobsOptions = {}): Promise<WorkJob[]> {
   const params = new URLSearchParams();
-  if (opts.workspace) params.set("workspace", opts.workspace);
-  if (opts.status) params.set("status", opts.status);
-  params.set("limit", String(opts.limit ?? 50));
+  if (opts.workspace) params.set('workspace', opts.workspace);
+  if (opts.status) params.set('status', opts.status);
+  params.set('limit', String(opts.limit ?? 50));
   const url = `${getFnixApiBase()}/api/v1/work/jobs?${params.toString()}`;
   const res = await fetch(url, { headers: authHeaders() });
   if (!res.ok) return [];
@@ -1208,19 +1367,19 @@ export async function enqueueJob(opts: {
   priority?: number;
 }): Promise<{ ok: boolean; session_id?: string; status?: string; error?: string }> {
   const res = await fetch(`${getFnixApiBase()}/api/v1/work/jobs`, {
-    method: "POST",
-    headers: authHeaders({ "Content-Type": "application/json" }),
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({
       user_input: opts.userInput,
       workspace: opts.workspace || undefined,
       session_id: opts.sessionId || undefined,
       llm: opts.llm || undefined,
-      user_id: opts.userId || "desktop",
+      user_id: opts.userId || 'desktop',
       priority: opts.priority ?? 10,
     }),
   });
   if (!res.ok) {
-    const err = await res.text().catch(() => "");
+    const err = await res.text().catch(() => '');
     return { ok: false, error: err || `enqueue failed (${res.status})` };
   }
   return (await res.json()) as { ok: boolean; session_id: string; status: string };
@@ -1232,20 +1391,17 @@ export async function cancelJob(
 ): Promise<{ ok: boolean; status?: string; error?: string }> {
   const res = await fetch(
     `${getFnixApiBase()}/api/v1/work/jobs/${encodeURIComponent(sessionId)}/cancel`,
-    { method: "POST", headers: authHeaders() },
+    { method: 'POST', headers: authHeaders() },
   );
   if (!res.ok) {
-    const err = await res.text().catch(() => "");
+    const err = await res.text().catch(() => '');
     return { ok: false, error: err || `cancel failed (${res.status})` };
   }
   return (await res.json()) as { ok: boolean; status: string };
 }
 
 /** 获取 job 事件尾部（重连用） */
-export async function getJobEvents(
-  sessionId: string,
-  limit = 50,
-): Promise<WorkJobEvent[]> {
+export async function getJobEvents(sessionId: string, limit = 50): Promise<WorkJobEvent[]> {
   const res = await fetch(
     `${getFnixApiBase()}/api/v1/work/jobs/${encodeURIComponent(sessionId)}/events?limit=${limit}`,
     { headers: authHeaders() },
@@ -1272,7 +1428,7 @@ export async function getJobStats(): Promise<WorkJobStats | null> {
 //   GET  /api/v1/work/runs/{run_id}   — 获取 run 详情 + checkpoint state + 最近 events
 //   POST /api/v1/work/resume/{run_id} — 从 checkpoint 恢复，流式返回 NDJSON（同 stream 格式）
 
-export type WorkRunStatus = "running" | "completed" | "failed" | "interrupted";
+export type WorkRunStatus = 'running' | 'completed' | 'failed' | 'interrupted';
 
 export interface WorkRunSummary {
   run_id: string;
@@ -1288,17 +1444,19 @@ export interface WorkRunSummary {
 /**
  * 列出所有 run（含可恢复标志）。用于侧边栏「可恢复任务」section。
  */
-export async function listRuns(opts: {
-  status?: WorkRunStatus;
-  channel?: "work" | "code";
-  limit?: number;
-} = {}): Promise<{ ok: boolean; runs: WorkRunSummary[]; count: number }> {
+export async function listRuns(
+  opts: {
+    status?: WorkRunStatus;
+    channel?: 'work' | 'code';
+    limit?: number;
+  } = {},
+): Promise<{ ok: boolean; runs: WorkRunSummary[]; count: number }> {
   const params = new URLSearchParams();
-  if (opts.status) params.set("status", opts.status);
-  if (opts.channel) params.set("channel", opts.channel);
-  if (opts.limit) params.set("limit", String(opts.limit));
+  if (opts.status) params.set('status', opts.status);
+  if (opts.channel) params.set('channel', opts.channel);
+  if (opts.limit) params.set('limit', String(opts.limit));
   const qs = params.toString();
-  const url = `${getFnixApiBase()}/api/v1/work/runs${qs ? `?${qs}` : ""}`;
+  const url = `${getFnixApiBase()}/api/v1/work/runs${qs ? `?${qs}` : ''}`;
   try {
     const res = await fetch(url, { headers: authHeaders() });
     if (!res.ok) return { ok: false, runs: [], count: 0 };
@@ -1322,7 +1480,7 @@ export async function resumeRun(opts: {
 }): Promise<void> {
   const base = getFnixApiBase();
   return streamWork({
-    userInput: "",
+    userInput: '',
     llm: {},
     handlers: opts.handlers,
     signal: opts.signal,
@@ -1347,19 +1505,19 @@ export async function resumeRun(opts: {
  */
 export async function sendFeedback(opts: {
   userInput: string;
-  feedback: "up" | "down" | "none";
+  feedback: 'up' | 'down' | 'none';
   comment?: string;
   workspace?: string;
 }): Promise<{ ok: boolean; updated: boolean }> {
   const url = `${getFnixApiBase()}/api/v1/work/feedback`;
   try {
     const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...authHeaders() },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({
         feedback: opts.feedback,
         user_input: opts.userInput,
-        comment: opts.comment || "",
+        comment: opts.comment || '',
         workspace: opts.workspace,
       }),
     });

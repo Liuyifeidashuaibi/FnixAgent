@@ -69,7 +69,7 @@ git push -u origin release/1.2.0
 ### 2. Bump the version
 
 - Update `version` in `pyproject.toml`.
-- Update `version` in `apps/workbench/package.json` and `apps/desktop-tauri/package.json`.
+- Update `version` in `apps/workbench/package.json`.
 - Update `version` in `Cargo.toml` (root + any sub-crates).
 - Update the docker tags in `deploy/docker/`.
 - Add a new section at the top of `CHANGELOG.md`:

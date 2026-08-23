@@ -28,8 +28,8 @@ class LLMConfig:
     """LLM 基础服务配置。"""
 
     default_provider: str = "glm"  # 默认走哪个 provider
-    request_timeout: float = 120.0  # 单次请求超时(秒)
-    max_retries: int = 3  # 网络层重试
+    request_timeout: float = 90.0  # 单次请求超时(秒) — BUG-024: 从120s降至90s
+    max_retries: int = 2  # 网络层重试 — BUG-024: 从3次降至2次，减少最坏等待
     retry_backoff: float = 0.8  # 指数退避基数
     cache_enabled: bool = True  # 精确缓存开关
     cache_max_size: int = 2048  # LRU 条目上限

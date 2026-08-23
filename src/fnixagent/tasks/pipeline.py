@@ -35,6 +35,7 @@ fnixagent 任务引擎的批量执行层:支持多文件并行处理、任务模
 
 from __future__ import annotations
 
+import logging
 import os
 import threading
 import time
@@ -46,6 +47,9 @@ from typing import Any
 from fnixagent.office.base import BaseExpert, ExpertResult
 from fnixagent.tasks.dsl import TaskRequest, TaskResult, TaskStep
 from fnixagent.tasks.router import TaskRouter
+
+_logger = logging.getLogger(__name__)
+
 
 __all__ = [
     "BatchConfig",
@@ -261,7 +265,7 @@ class Pipeline(BaseExpert):
                     try:
                         cfg.progress_callback(fp, pct)
                     except Exception:
-                        pass  # 回调异常不外泄
+                        _logger.debug('Unhandled exception', exc_info=True)  # 回调异常不外泄
         finally:
             executor.shutdown(wait=True)
 
@@ -369,7 +373,7 @@ class Pipeline(BaseExpert):
                     try:
                         cfg.progress_callback(fp, pct)
                     except Exception:
-                        pass
+                        _logger.debug('Unhandled exception', exc_info=True)
         finally:
             executor.shutdown(wait=True)
 
@@ -833,4 +837,4 @@ class Pipeline(BaseExpert):
         try:
             self._executor.shutdown(wait=True)
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)

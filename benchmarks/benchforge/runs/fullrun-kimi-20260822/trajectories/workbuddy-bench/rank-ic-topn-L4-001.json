@@ -1,0 +1,18 @@
+{
+  "dataset": "workbuddy-bench",
+  "task_id": "rank-ic-topn-L4-001",
+  "prompt": "现在要做一份离线多因子 Rank IC 与 TopN 复核。工作区里已经放好了冻结的因子暴露、未来收益标签、模型分数快照、股票池约束、因子检验参数和口径说明。请不要联网，不要调用实时行情、券商、交易、邮件、IM、搜索或任何外部接口；这次只处理资料包内的静态文件，不做真实市场操作、股票推荐、买卖建议、目标价、涨停预测、次日操作建议或投资建议。\n请先阅读 `rules.md`，再结合 `analysis_config.json`、`factor_exposure.csv`、`factor_matrix_preview.csv`、`forward_returns.csv`、`model_scores.json` 和 `universe.xlsx`，生成一个新的 Excel 工作簿 `output/rank_ic_topn_report.xlsx`。\n输出 workbook 需要包含四个 sheet：`rank_ic_by_period`、`topn_selection`、`exclusion_reasons`、`summary`。\n`rank_ic_by_period` 的列依次为 period_end、baseline_rank_ic、model_rank_ic、baseline_n、model_n、model_minus_baseline、baseline_positive_flag、model_positive_flag、source_trace。\n`topn_selection` 的列依次为 period_end、selection_rank、symbol、display_name、industry_lvl1、board、model_score、baseline_score、fwd_20_return、liquidity_rank、tie_break_note、source_trace。\n`exclusion_reasons` 的列依次为 period_end、symbol、display_name、exclusion_scope、primary_reason、triggered_rule_codes、score_available、return_available、tradable_flag、suspended_flag、pool_status、source_trace。这个 sheet 只记录不进入 IC 分母或 TopN 候选池的记录，不要求列出所有 eligible 但未入选 TopN 的股票。\n`summary` 的列依次为 summary_group、summary_key、metric_value、count、note。summary 需要覆盖测试期数量、baseline/model 有效 IC 分母合计、Rank IC 均值、样本标准差、ICIR、正 IC 占比、TopN 行数、剔除主原因分布和 exclusion_scope 分布。\n关键口径以 `rules.md`、`analysis_config.json` 和 `universe.xlsx / params_codebook` 为准：只统计测试期，不要输出训练期结果；Rank IC 使用 Spearman rank correlation；ICIR 分母使用测试期 Rank IC 的样本标准差；缺少未来收益、缺少对应 score 或不满足 universe eligible 规则的记录不进入相应 IC 分母；TopN 只从 eligible 且存在 model_score 的股票中选择，按 model_score 降序、liquidity_rank 升序、symbol 升序排序；`pool_status=watch` 只作为数据风险记录，不进入 IC 分母或 TopN 候选。\n\n请读取工作区中的输入文件：`input/analysis_config.json`、`input/factor_exposure.csv`、`input/factor_matrix_preview.csv`、`input/forward_returns.csv`、`input/model_scores.json`、`input/universe.xlsx`、`input/rules.md`。",
+  "status": "failure",
+  "failure_type": "incomplete_output",
+  "failure_evidence": "无最终回复且未产出任何文件",
+  "final_response": "",
+  "steps": [],
+  "tool_calls": [],
+  "files_written": [],
+  "total_tokens": 0,
+  "duration_ms": 78.00000000042928,
+  "error": "LLM 调用失败: [qwen] chat failed: [qwen] request failed (model=kimi-k2.6): HTTP 403",
+  "judge_method": "heuristic",
+  "started_at": 1787334457.032118,
+  "workspace": "benchmarks\\benchforge\\runs\\fullrun-kimi-20260822\\workspaces\\workbuddy-bench__rank-ic-topn-L4-001__037a6e"
+}

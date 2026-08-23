@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSS Documentation</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; line-height: 1.6; color: #333; }
+        h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+        h2 { color: #2980b9; margin-top: 30px; }
+        code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; font-family: monospace; }
+        pre { background: #2d2d2d; color: #f8f8f2; padding: 15px; border-radius: 5px; overflow-x: auto; }
+        .highlight { background: #fff3cd; padding: 10px; border-left: 4px solid #ffc107; margin: 15px 0; }
+    </style>
+</head>
+<body>
+    <h1>CSS (Cascading Style Sheets)</h1>
+    <p>CSS is a stylesheet language used to describe the presentation of a document written in HTML. It controls layout, colors, fonts, spacing, and responsive design.</p>
+
+    <h2>Core Concepts</h2>
+    <div class="highlight">
+        <strong>Selectors:</strong> CSS selectors target HTML elements to apply styles. Common types include element selectors, class selectors (<code>.classname</code>), ID selectors (<code>#idname</code>), and attribute selectors.
+    </div>
+
+    <h2>The Box Model</h2>
+    <p>Every HTML element is a rectangular box consisting of: <code>content</code>, <code>padding</code>, <code>border</code>, and <code>margin</code>. Understanding the box model is essential for layout design.</p>
+
+    <h2>Flexbox Layout</h2>
+    <pre>
+.container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+    </pre>
+
+    <h2>CSS Grid</h2>
+    <pre>
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-gap: 20px;
+}
+    </pre>
+
+    <h2>Responsive Design</h2>
+    <p>Use media queries to adapt layouts for different screen sizes:</p>
+    <pre>
+@media (max-width: 768px) {
+    .container { flex-direction: column; }
+}
+    </pre>
+
+    <h2>Common Properties</h2>
+    <ul>
+        <li><code>display</code> - block, inline, flex, grid, none</li>
+        <li><code>position</code> - static, relative, absolute, fixed, sticky</li>
+        <li><code>transition</code> - smooth animated changes</li>
+        <li><code>transform</code> - rotate, scale, translate, skew</li>
+        <li><code>z-index</code> - stacking order of elements</li>
+    </ul>
+</body>
+</html>

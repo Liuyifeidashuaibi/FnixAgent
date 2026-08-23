@@ -108,7 +108,7 @@ pnpm clean:cache
 ```bash
 pnpm prepare:release
 pnpm build
-# 产物: apps/desktop-tauri/src-tauri/target/release/bundle/
+# 产物: apps/workbench/src-tauri/target/release/bundle/
 ```
 
 推送 tag 触发 CI：见 [`BETA_RELEASE.md`](./BETA_RELEASE.md)

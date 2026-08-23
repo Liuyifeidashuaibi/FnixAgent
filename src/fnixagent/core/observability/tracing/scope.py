@@ -29,8 +29,12 @@ TracingScope 维护当前线程/协程的 Span 栈,支持嵌套 with 语义:
 from __future__ import annotations
 
 import contextvars
+import logging
 
 from fnixagent.core.observability.tracing.span import SpanImpl
+
+_logger = logging.getLogger(__name__)
+
 
 # 全局 contextvar:存储当前协程/线程的 Span 栈(列表)
 # default=None 表示未初始化,避免使用可变默认值(列表共享导致跨上下文污染)
@@ -75,7 +79,7 @@ class TracingScope:
             stack.append(span)
         except Exception:
             # contextvars 栈操作异常(LookupError 等)不应中断业务
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
 
     def pop(self, expected: SpanImpl | None = None) -> SpanImpl | None:
         """弹出栈顶 Span。
@@ -140,7 +144,7 @@ class TracingScope:
         try:
             _current_stack.set([])
         except Exception:
-            pass
+            _logger.debug('Unhandled exception', exc_info=True)
 
 
 # ---------------------------------------------------------------------------

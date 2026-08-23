@@ -1,0 +1,14 @@
+diff --git a/django/http/response.py b/django/http/response.py
+index 1234567..89abcde 100644
+--- a/django/http/response.py
++++ b/django/http/response.py
+@@ -100,6 +100,9 @@ class HttpResponse(HttpResponseBase):
+     @content.setter
+     def content(self, value):
+         # Handle string and bytes content
++        # Handle memoryview objects by converting to bytes
++        if isinstance(value, memoryview):
++            value = bytes(value)
+         if hasattr(value, '__iter__') and not isinstance(value, (bytes, str)):
+             self._container = list(value)
+         else:

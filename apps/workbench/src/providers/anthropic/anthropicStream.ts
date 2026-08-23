@@ -35,10 +35,7 @@
  *   - Partial JSON collected and parsed on block stop
  */
 
-import type {
-  StreamEvent,
-  Usage,
-} from "./anthropicTypes";
+import type { StreamEvent, Usage } from './anthropicTypes';
 
 // ── Stream State ──────────────────────────────────────────────────────────────
 
@@ -60,7 +57,7 @@ export interface StreamAccumulator {
 /** Internal tracking of the current content block being streamed. */
 interface ActiveBlock {
   index: number;
-  type: "text" | "tool_use";
+  type: 'text' | 'tool_use';
   // For tool_use blocks
   toolId?: string;
   toolName?: string;
@@ -94,7 +91,7 @@ export async function executeStream(
   abortSignal?: AbortSignal,
 ): Promise<StreamAccumulator> {
   const accumulator: StreamAccumulator = {
-    text: "",
+    text: '',
     usage: { input_tokens: 0, output_tokens: 0 },
     stopReason: null,
     toolUseBlocks: [],
@@ -106,7 +103,7 @@ export async function executeStream(
 
   try {
     const response = await fetch(url, {
-      method: "POST",
+      method: 'POST',
       headers,
       body,
       signal: abortSignal,
@@ -122,14 +119,14 @@ export async function executeStream(
 
     const reader = response.body?.getReader();
     if (!reader) {
-      const msg = "No response body from Anthropic API";
+      const msg = 'No response body from Anthropic API';
       accumulator.error = msg;
       callbacks.onError(msg);
       return accumulator;
     }
 
     const decoder = new TextDecoder();
-    let buffer = "";
+    let buffer = '';
 
     while (true) {
       if (abortSignal?.aborted) {
@@ -143,29 +140,28 @@ export async function executeStream(
       buffer += decoder.decode(value, { stream: true });
 
       // Parse SSE lines
-      const lines = buffer.split("\n");
-      buffer = lines.pop() || ""; // Keep incomplete line in buffer
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || ''; // Keep incomplete line in buffer
 
-      let eventType = "";
       for (const line of lines) {
         const trimmed = line.trim();
 
-        if (trimmed === "") {
-          // Empty line = end of SSE event (reset event type)
-          eventType = "";
+        if (trimmed === '') {
+          // Empty line = end of SSE event
           continue;
         }
 
-        if (trimmed.startsWith("event: ")) {
-          eventType = trimmed.slice(7);
+        if (trimmed.startsWith('event: ')) {
           continue;
         }
 
-        if (trimmed.startsWith("data: ")) {
+        if (trimmed.startsWith('data: ')) {
           const data = trimmed.slice(6);
           try {
             const event = JSON.parse(data) as StreamEvent;
-            processEvent(event, accumulator, activeBlock, callbacks, (block) => { activeBlock = block; });
+            processEvent(event, accumulator, activeBlock, callbacks, (block) => {
+              activeBlock = block;
+            });
           } catch {
             // Malformed JSON — skip (ping events sometimes don't have data)
           }
@@ -203,7 +199,7 @@ function processEvent(
   setActiveBlock: (block: ActiveBlock | null) => void,
 ): void {
   switch (event.type) {
-    case "message_start": {
+    case 'message_start': {
       // Extract initial usage (input tokens)
       if (event.message?.usage) {
         acc.usage.input_tokens = event.message.usage.input_tokens;
@@ -212,53 +208,53 @@ function processEvent(
       break;
     }
 
-    case "content_block_start": {
+    case 'content_block_start': {
       const block = event.content_block;
-      if (block.type === "text") {
-        setActiveBlock({ index: event.index, type: "text" });
+      if (block.type === 'text') {
+        setActiveBlock({ index: event.index, type: 'text' });
         // Initial text (usually empty string)
         if (block.text) {
           acc.text += block.text;
           callbacks.onToken(block.text);
         }
-      } else if (block.type === "tool_use") {
+      } else if (block.type === 'tool_use') {
         setActiveBlock({
           index: event.index,
-          type: "tool_use",
+          type: 'tool_use',
           toolId: block.id,
           toolName: block.name,
-          partialJson: "",
+          partialJson: '',
         });
       }
       break;
     }
 
-    case "content_block_delta": {
+    case 'content_block_delta': {
       const delta = event.delta;
-      if (delta.type === "text_delta") {
+      if (delta.type === 'text_delta') {
         acc.text += delta.text;
         callbacks.onToken(delta.text);
-      } else if (delta.type === "input_json_delta" && activeBlock?.type === "tool_use") {
+      } else if (delta.type === 'input_json_delta' && activeBlock?.type === 'tool_use') {
         // Accumulate partial JSON for tool use blocks
-        activeBlock.partialJson = (activeBlock.partialJson || "") + delta.partial_json;
+        activeBlock.partialJson = (activeBlock.partialJson || '') + delta.partial_json;
       }
       break;
     }
 
-    case "content_block_stop": {
-      if (activeBlock?.type === "tool_use") {
+    case 'content_block_stop': {
+      if (activeBlock?.type === 'tool_use') {
         // Finalize tool use block — parse accumulated JSON
         acc.toolUseBlocks.push({
-          id: activeBlock.toolId || "",
-          name: activeBlock.toolName || "",
-          inputJson: activeBlock.partialJson || "{}",
+          id: activeBlock.toolId || '',
+          name: activeBlock.toolName || '',
+          inputJson: activeBlock.partialJson || '{}',
         });
       }
       setActiveBlock(null);
       break;
     }
 
-    case "message_delta": {
+    case 'message_delta': {
       acc.stopReason = event.delta.stop_reason;
       if (event.usage) {
         acc.usage.output_tokens = event.usage.output_tokens;
@@ -266,18 +262,18 @@ function processEvent(
       break;
     }
 
-    case "message_stop": {
+    case 'message_stop': {
       acc.completed = true;
       callbacks.onComplete(acc);
       break;
     }
 
-    case "ping": {
+    case 'ping': {
       // Keepalive — ignore
       break;
     }
 
-    case "error": {
+    case 'error': {
       const msg = `Anthropic stream error: ${event.error.type} — ${event.error.message}`;
       acc.error = msg;
       callbacks.onError(msg);
@@ -289,18 +285,21 @@ function processEvent(
 // ── Error Parsing ─────────────────────────────────────────────────────────────
 
 function parseHttpError(status: number, body: string): string {
-  if (status === 401) return "Invalid Anthropic API key. Check your key in Settings.";
-  if (status === 403) return "Anthropic API access denied. Your key may lack permissions for this model.";
-  if (status === 404) return "Model not found. Check the model ID in Settings.";
-  if (status === 429) return "Rate limited by Anthropic. Wait a moment and try again.";
-  if (status === 529) return "Anthropic API is overloaded. Retry in a moment.";
+  if (status === 401) return 'Invalid Anthropic API key. Check your key in Settings.';
+  if (status === 403)
+    return 'Anthropic API access denied. Your key may lack permissions for this model.';
+  if (status === 404) return 'Model not found. Check the model ID in Settings.';
+  if (status === 429) return 'Rate limited by Anthropic. Wait a moment and try again.';
+  if (status === 529) return 'Anthropic API is overloaded. Retry in a moment.';
   if (status >= 500) return `Anthropic server error (${status}). Try again in a few seconds.`;
 
   try {
     const parsed = JSON.parse(body);
     const msg = parsed?.error?.message;
     if (msg) return `Anthropic: ${msg}`;
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 
   return `Anthropic API error (${status}): ${body.slice(0, 200)}`;
 }

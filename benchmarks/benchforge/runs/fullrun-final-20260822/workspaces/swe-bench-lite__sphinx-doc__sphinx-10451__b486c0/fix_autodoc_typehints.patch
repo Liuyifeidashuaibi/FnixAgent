@@ -1,0 +1,19 @@
+diff --git a/sphinx/ext/autodoc/__init__.py b/sphinx/ext/autodoc/__init__.py
+index 1234567..89abcde 100644
+--- a/sphinx/ext/autodoc/__init__.py
++++ b/sphinx/ext/autodoc/__init__.py
+@@ -1234,7 +1234,12 @@ class FunctionDocumenter(DocstringSignatureMixin, Documenter):
+                 # Add type hints to parameter descriptions
+                 for param in sig.parameters.values():
+                     if param.name not in documented_params:
+-                        add_param(param.name, param.annotation)
++                        # Handle *args and **kwargs properly
++                        if param.kind == Parameter.VAR_POSITIONAL:
++                            add_param(f'*{param.name}', param.annotation)
++                        elif param.kind == Parameter.VAR_KEYWORD:
++                            add_param(f'**{param.name}', param.annotation)
++                        else:
++                            add_param(param.name, param.annotation)
+ 
+         # Add return type hint if present
+         if sig.return_annotation is not Parameter.empty and \
