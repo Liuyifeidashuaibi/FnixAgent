@@ -1,0 +1,212 @@
+# 智能信息采集源配置
+# 定义 FnixAgent 自动收集 AI Agent 领域最新情报的源列表
+
+sources:
+  # ============================================================
+  # 1. GitHub 顶级开源项目监控
+  # ============================================================
+  github_repos:
+    - name: Hermes Agent
+      url: https://github.com/NousResearch/hermes-agent
+      category: self_evolving_agent
+      watch: [releases, commits, issues, discussions]
+      priority: critical
+      notes: 50k stars, self-improving agent, 技能自动创建, GEPA遗传优化
+
+    - name: OpenClaw
+      url: https://github.com/openclaw/openclaw
+      category: agent_framework
+      watch: [releases, skills_marketplace]
+      priority: critical
+      notes: 354k stars, self-improving-agent skill, AutoSkill, ClawHub技能市场
+
+    - name: SAGE
+      url: https://github.com/RL-LLM-Agent/SAGE
+      category: self_evolving_agent
+      watch: [releases, papers]
+      priority: high
+      notes: RL-based self-improving agent, skill library, 强化学习自进化
+
+    - name: DeerFlow 2.0
+      url: https://github.com/bytedance/DeerFlow
+      category: agent_framework
+      watch: [releases]
+      priority: high
+      notes: 字节跳动 57k stars, LangGraph 1.0, SuperAgent Harness
+
+    - name: AutoGen
+      url: https://github.com/microsoft/autogen
+      category: multi_agent
+      watch: [releases]
+      priority: high
+      notes: 微软多Agent框架, 42k stars, 对话式编程
+
+    - name: LangGraph
+      url: https://github.com/langchain-ai/langgraph
+      category: agent_framework
+      watch: [releases]
+      priority: high
+      notes: LangChain Agent编排框架, 状态图驱动
+
+    - name: CrewAI
+      url: https://github.com/crewAIInc/crewAI
+      category: multi_agent
+      watch: [releases]
+      priority: medium
+      notes: 角色扮演多Agent协作, 27k stars
+
+    - name: MetaGPT
+      url: https://github.com/geekan/MetaGPT
+      category: multi_agent
+      watch: [releases]
+      priority: medium
+      notes: 软件公司多角色Agent, 50k stars
+
+    - name: Manus Agent
+      url: https://github.com/mannaandpoem/OpenManus
+      category: agent_framework
+      watch: [releases]
+      priority: high
+      notes: 通用Agent, GAIA基准SOTA
+
+    - name: OpenAI Agents SDK
+      url: https://github.com/openai/openai-agents-python
+      category: agent_framework
+      watch: [releases]
+      priority: high
+      notes: OpenAI官方Agent SDK, 多Agent编排
+
+  # ============================================================
+  # 2. 学术论文源 (arXiv)
+  # ============================================================
+  arxiv_categories:
+    - category: cs.AI
+      keywords: [agent, multi-agent, self-improving, self-evolving, autonomous, LLM agent, tool use, reasoning]
+      priority: high
+
+    - category: cs.CL
+      keywords: [agent, instruction following, tool augmented, reasoning, chain-of-thought, prompt engineering]
+      priority: high
+
+    - category: cs.LG
+      keywords: [reinforcement learning agent, self-play, continual learning, meta-learning, RLHF, DPO]
+      priority: medium
+
+    - category: cs.MA
+      keywords: [multi-agent, cooperation, coordination, agent communication, emergent behavior]
+      priority: medium
+
+  # ============================================================
+  # 3. 大厂技术博客
+  # ============================================================
+  tech_blogs:
+    - name: OpenAI Blog
+      url: https://openai.com/blog
+      category: frontier_research
+      priority: critical
+
+    - name: Anthropic Blog
+      url: https://www.anthropic.com/research
+      category: frontier_research
+      priority: critical
+
+    - name: Google DeepMind Blog
+      url: https://deepmind.google/discover/blog/
+      category: frontier_research
+      priority: critical
+
+    - name: Meta AI Blog
+      url: https://ai.meta.com/blog/
+      category: frontier_research
+      priority: high
+
+    - name: LangChain Blog
+      url: https://blog.langchain.dev/
+      category: agent_engineering
+      priority: high
+
+    - name: Nous Research Blog
+      url: https://nousresearch.com/blog/
+      category: self_evolving_agent
+      priority: high
+
+  # ============================================================
+  # 4. 行业动态与社区
+  # ============================================================
+  community:
+    - name: Hacker News (AI Agent threads)
+      url: https://news.ycombinator.com/
+      keywords: [AI agent, LLM, autonomous, self-improving]
+      priority: medium
+
+    - name: Reddit r/LocalLLaMA
+      url: https://www.reddit.com/r/LocalLLaMA/
+      keywords: [agent, self-improving, tool use]
+      priority: medium
+
+    - name: Reddit r/MachineLearning
+      url: https://www.reddit.com/r/MachineLearning/
+      keywords: [agent, reinforcement learning, self-play]
+      priority: medium
+
+  # ============================================================
+  # 5. 协议与标准
+  # ============================================================
+  protocols:
+    - name: Google A2A Protocol
+      url: https://github.com/google/A2A
+      category: agent_protocol
+      priority: high
+      notes: Agent-to-Agent通信协议
+
+    - name: Anthropic MCP
+      url: https://github.com/modelcontextprotocol
+      category: agent_protocol
+      priority: high
+      notes: Model Context Protocol, 工具/资源标准化
+
+  # ============================================================
+  # 6. 学术会议
+  # ============================================================
+  conferences:
+    - name: ICLR 2026
+      url: https://iclr.cc/
+      keywords: [agent, self-improving, meta-learning, reinforcement learning]
+      priority: high
+
+    - name: ICML 2026
+      url: https://icml.cc/
+      keywords: [agent, continual learning, self-play, LLM]
+      priority: high
+
+    - name: NeurIPS 2026
+      url: https://neurips.cc/
+      keywords: [agent, multi-agent, reinforcement learning, LLM agent]
+      priority: high
+
+    - name: ACL 2026
+      url: https://2026.aclweb.org/
+      keywords: [agent, tool use, reasoning, instruction following]
+      priority: medium
+
+# ============================================================
+# 采集策略
+# ============================================================
+collection_strategy:
+  # 高频源 (每天)
+  daily:
+    - github_trending       # GitHub Trending AI Agent repos
+    - arxiv_new_papers      # 当天新增论文
+    - hn_ai_threads         # Hacker News AI相关讨论
+
+  # 中频源 (每周)
+  weekly:
+    - github_repo_releases  # 监控仓库新 Release
+    - tech_blog_posts       # 大厂技术博客
+    - reddit_discussions    # Reddit 社区讨论
+
+  # 低频源 (每月)
+  monthly:
+    - conference_proceedings # 学术会议论文
+    - protocol_updates       # Agent协议更新
+    - landscape_analysis     # 领域全景分析

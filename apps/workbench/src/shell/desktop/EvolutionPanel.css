@@ -1,0 +1,23 @@
+.evo-summary {
+  width: min(760px, 100%);
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px 0;
+  color: var(--faint);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.evo-summary-item {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.evo-summary-item:not(:last-child)::after {
+  content: "·";
+  margin: 0 8px;
+  color: var(--border-2);
+}

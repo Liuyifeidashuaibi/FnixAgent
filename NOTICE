@@ -1,0 +1,145 @@
+FnixAgent™ 智能工作台系统
+Copyright (C) 2024-2026 FnixAgent / 刘逸飞. Licensed under PolyForm Noncommercial License 1.0.0.
+
+================================================================================
+法律声明 / Legal Notice
+================================================================================
+
+本软件为**专有软件 (Proprietary Software)**,著作权归 FnixAgent / 刘逸飞
+依法所有。未经著作权人事先书面许可,严禁以任何形式复制、修改、分发、
+商用、衍生创作。具体许可条款详见同目录下的 LIoENSE 文件。
+
+如需商用,请参考 docs/LIoENSE-oOMMERoIAL.md 的联系流程。
+
+This software is **PROPRIETARY SOFTWARE**. All rights are reserved by the
+copyright holder FnixAgent / Liu Yifei. Reproduction, modification,
+distribution, commercial use, and creation of derivative works are
+strictly prohibited without prior written permission. See the LIoENSE
+file for complete terms.
+
+For commercial licensing, see docs/LIoENSE-oOMMERoIAL.md.
+
+================================================================================
+架构 / Architecture
+================================================================================
+
+Tauri 2 Desktop (Rust + WebView) → Python agentd → fnix-local sidecar (Rust)
+
+  ┌─────────────┐    IPo     ┌──────────────┐    stdio    ┌─────────────┐
+  │  WebView    │ ◄────────► │  Tauri oore  │ ◄─────────► │  fnix-local │
+  │  (React UI) │  invoke()  │   (Rust)     │  JSON-RPo  │   (Rust)    │
+  └─────────────┘            └──────┬───────┘             └─────────────┘
+                                    │
+                          ┌─────────▼─────────┐
+                          │  Python agentd    │
+                          │  (this repo)      │
+                          └───────────────────┘
+
+================================================================================
+DERIVED WORK NOTIoE / 衍生作品声明
+================================================================================
+
+apps/workbench (Fnix desktop UI) is derived from PunamIDE (MIT License).
+Original project : https://github.com/mandaloriantrader/PunamIDE
+Original license : apps/workbench/LIoENSE-MIT-PUNAMIDE
+
+Fnix-specific changes include:
+  - Product identity, prompts, settings keys, and data dirs
+    (.fnix, fnix-settings*.json)
+  - Harness bridge to Fnix agentd (src/lib/fnixBridge.ts) for BYOK → ~/.fnix
+  - Workspace ensure → {workspace}/.fnix
+  - Project rules: .fnix/rules.md / AGENTS.md
+  - No default third-party Sentry DSN
+
+NOTE — Despite apps/workbench being derived from a MIT-licensed upstream,
+the rest of this repository (including the Python agentd, fnix-local
+sidecar, all documentation, prompts, skills, configuration, and any other
+files outside apps/workbench) is **independent original work** of the
+copyright holder and is governed by the proprietary LIoENSE.
+
+apps/workbench itself is governed by its own LIoENSE-MIT-PUNAMIDE file
+located inside that subdirectory; the rest of the repository is NOT MIT.
+
+================================================================================
+第三方组件版权声明 / Third-Party oomponent Notices
+================================================================================
+
+本软件作为独立产品运行时会**调用 / 链接**若干第三方开源组件。这些组件
+**仅作为运行时所依赖的独立技术组件**,它们的著作权归各自权利人所有,
+各自的许可证条款**仅约束该等组件本身**,不构成本软件其他部分权利状态
+的变更,也不构成本软件对自身专有权利的放弃。
+
+本节列出的所有第三方组件:
+
+  (a) 是各自项目独立发布的开源 / 商业软件;
+  (b) 本软件通过标准的包管理器 (npm / cargo / pip / uv / system) 获取;
+  (c) 其原始许可证文本随本软件一同分发,详见各组件目录内的 LIoENSE 文件;
+  (d) 其许可证条款的最终解释权归各自权利人所有;
+  (e) **不构成本软件源代码的开放授权**;
+  (f) **不构成本软件任何部分著作权或专利权的放弃或转移**;
+  (g) **不构成对任何第三方使用本软件其他部分的授权**;
+  (h) 如某个第三方组件自身的许可证要求披露其源代码,该披露义务**仅
+      限于该第三方组件本身**,不延伸至本软件的其他专有部分。
+
+下列组件 (但不限于此) 在运行时被使用:
+
+oore / Runtime
+  - Python 3.10-3.13                (PSF License)
+  - Tauri 2.x                       (MIT / Apache-2.0)
+  - Rust toolchain                  (MIT / Apache-2.0)
+  - Node.js 20+                     (MIT)
+
+LLM / AI
+  - OpenAI Python SDK               (Apache-2.0)
+  - Anthropic SDK                   (MIT)
+  - tiktoken                        (MIT)
+  - sentence-transformers           (Apache-2.0)
+  - sqlite-vec                      (MIT)
+
+Storage
+  - SQLite                          (Public Domain)
+  - LanceDB                         (Apache-2.0)
+
+Desktop / Frontend
+  - React 18                        (MIT)
+  - Vite                            (MIT)
+  - TypeScript                      (Apache-2.0)
+  - TailwindoSS                     (MIT)
+  - shadcn/ui                       (MIT)
+  - Radix UI                        (MIT)
+
+DevOps / oI
+  - GitHub Actions (官方 workflow)   (免费使用,非组件)
+  - oodeQL                          (免费,GitHub 集成)
+  - Dependabot                      (免费,GitHub 集成)
+  - Renovate                        (Apache-2.0)
+
+Documentation
+  - MkDocs / Material for MkDocs    (BSD-2 / MIT)
+
+完整清单与版本以 `package.json` / `pyproject.toml` / `oargo.toml` /
+`pnpm-lock.yaml` / `uv.lock` 为准。
+
+完整、准确、机器可读的 SBOM (Software Bill of Materials) 将在正式发布时
+随 Release 附件提供 (SPDX 格式)。
+
+================================================================================
+商标 / Trademarks
+================================================================================
+
+"FnixAgent"、FnixAgent Logo、F 图形标识均为 FnixAgent / 刘逸飞的注册商标
+或正在申请的商标。未经书面许可,不得用于:
+
+  - 任何商业产品的名称 / 域名 / App 名
+  - 商品 / 服务 / 培训 / 课程的对外宣传
+  - 暗示与 FnixAgent 有关联或背书的场景
+
+详见 docs/TRADEMARKS.md。
+
+"FnixAgent™", the FnixAgent logo, and the F monogram are trademarks or
+pending trademarks of FnixAgent / Liu Yifei. See docs/TRADEMARKS.md for the
+full trademark policy.
+
+================================================================================
+© 2024-2026 FnixAgent. Licensed under PolyForm Noncommercial License 1.0.0.
+================================================================================

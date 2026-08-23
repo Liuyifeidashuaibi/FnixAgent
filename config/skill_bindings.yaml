@@ -1,0 +1,111 @@
+# STP 技能-拓扑突触协议绑定关系(Phase 0.7)
+#
+# 本文件声明 L2 概念节点与工具的初始绑定关系。
+# 运行时由 SkillBindingProtocol 加载,可通过 API 动态修改(写入拓扑图而非本文件)。
+#
+# 字段说明:
+#   concept_id   - 概念节点 ID(对应拓扑图中 L2 CONCEPT 节点的 node_id)
+#   concept_name - 概念名称(供人类阅读)
+#   skill_name   - 工具名称(对应 ToolRegistry 中注册的工具名)
+#   skill_level  - 技能权限级别:basic / reasoning / meta
+#   auto_invoke  - 是否允许自动调用(basic=true, reasoning=需确认, meta=禁用)
+#   hit_coefficient_on_path  - 命中路径时概念权重对技能优先级的贡献系数
+#   hit_coefficient_sibling  - 同层兄弟节点的贡献系数
+#   hit_coefficient_unrelated - 不相关时贡献系数
+
+# ===========================================================================
+# 命中系数(全局常量,与 core/skills/protocol.py 保持一致)
+# ===========================================================================
+hit_coefficients:
+  on_path: 1.0        # 技能对应概念在推理路径上 → 全权重
+  sibling: 0.3        # 仅同层兄弟 → 降权
+  unrelated: 0.0      # 不相关 → 不参与
+
+# ===========================================================================
+# 初始绑定关系(冷启动种子数据)
+# ===========================================================================
+bindings:
+  # ---- 论文检索域 ----
+  - concept_id: "L2:concept_search_paper"
+    concept_name: "论文检索"
+    skill_name: "search_paper"
+    skill_level: "basic"
+    auto_invoke: true
+    description: "arXiv/SemanticScholar 论文检索"
+
+  - concept_id: "L2:concept_search_author"
+    concept_name: "作者检索"
+    skill_name: "search_author"
+    skill_level: "basic"
+    auto_invoke: true
+    description: "作者信息与论文列表检索"
+
+  - concept_id: "L2:concept_search_doi"
+    concept_name: "DOI 检索"
+    skill_name: "search_by_doi"
+    skill_level: "basic"
+    auto_invoke: true
+    description: "通过 DOI 精确定位论文"
+
+  # ---- 文档编辑域 ----
+  - concept_id: "L2:concept_word_edit"
+    concept_name: "Word 编辑"
+    skill_name: "word_edit"
+    skill_level: "reasoning"
+    auto_invoke: false                # 涉及文档修改,需用户确认
+    description: "Word 文档内容编辑(段落/样式/表格)"
+
+  - concept_id: "L2:concept_word_create"
+    concept_name: "Word 创建"
+    skill_name: "word_create"
+    skill_level: "basic"
+    auto_invoke: true
+    description: "从模板或空白创建 Word 文档"
+
+  - concept_id: "L2:concept_word_export"
+    concept_name: "Word 导出"
+    skill_name: "word_export_pdf"
+    skill_level: "basic"
+    auto_invoke: true
+    description: "Word 转 PDF"
+
+  # ---- 格式转换域 ----
+  - concept_id: "L2:concept_format_convert"
+    concept_name: "格式转换"
+    skill_name: "convert_format"
+    skill_level: "basic"
+    auto_invoke: true
+    description: "Markdown/HTML/PDF/Word 互转"
+
+  # ---- 元认知域(meta 级,需授权)----
+  - concept_id: "L2:concept_skill_register"
+    concept_name: "技能注册"
+    skill_name: "register_tool"
+    skill_level: "meta"
+    auto_invoke: false                # meta 级,需管理员授权
+    description: "动态注册新工具到 ToolRegistry"
+
+  - concept_id: "L2:concept_topology_write"
+    concept_name: "拓扑写入"
+    skill_name: "write_topology"
+    skill_level: "meta"
+    auto_invoke: false
+    description: "向 KTG 写入新节点/边(仅飞轮 ②③④ 可调用)"
+
+# ===========================================================================
+# 权限策略(与 core/skills/levels.py 保持一致)
+# ===========================================================================
+permission_policy:
+  BASIC:
+    can_auto_invoke: true
+    needs_confirmation: false
+    can_write_ktg: false
+  REASONING:
+    can_auto_invoke: false
+    needs_confirmation: true         # 弹窗确认
+    can_write_ktg: false
+  META:
+    can_auto_invoke: false
+    needs_confirmation: true
+    can_write_ktg: true              # 仅 meta 级可写 KTG
+    requires_admin_authorization: true

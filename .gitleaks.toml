@@ -1,0 +1,19 @@
+# FnixAgent Gitleaks 配置
+# 自定义密钥泄露检测规则,排除已知误报
+
+title = "FnixAgent Gitleaks Config"
+
+[extend]
+useDefault = true
+
+# 允许列表(已知误报)
+[allowlist]
+  description = "全局允许列表"
+  paths = [
+    '''_references/''',
+    '''\.env\.example''',
+    '''\.env\.prod\.example''',
+    '''pnpm-lock\.yaml''',
+    '''\.secret_meta\.json''',
+    '''\.secrets\.baseline''',
+  ]

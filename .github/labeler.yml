@@ -1,0 +1,64 @@
+# PR Labeler config (v5 format)
+# https://github.com/actions/labeler#configuration
+
+# --- Areas ---
+workbench:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'apps/workbench/**'
+          - 'apps/desktop-tauri/**'
+agentd:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/fnixagent/**'
+          - 'apps/fnix-local/**'
+mcp:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/fnixagent/core/mcp/**'
+          - 'src/fnixagent/mcp_server.py'
+docs:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'docs/**'
+          - '**/*.md'
+          - '!**/CHANGELOG.md'
+          - '!**/node_modules/**'
+ci:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '.github/**'
+deploy:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'deploy/**'
+          - 'docker-compose*.yml'
+          - 'Dockerfile'
+          - '.dockerignore'
+          - '**/Dockerfile'
+security:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/fnixagent/core/security/**'
+          - 'SECURITY.md'
+          - '.gitleaks.toml'
+schemas:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'openapi.json'
+          - 'packages/protocol/**'
+dependencies:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'package.json'
+          - 'pnpm-lock.yaml'
+          - 'requirements.txt'
+          - 'pyproject.toml'
+tests:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/*.test.*'
+          - '**/*.spec.*'
+          - 'tests/**'
+          - 'e2e/**'
+          - '__tests__/**'

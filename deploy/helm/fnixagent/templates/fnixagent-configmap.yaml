@@ -1,0 +1,20 @@
+{{/* fnixagent 配置 ConfigMap(非敏感配置) */}}
+{{- if .Values.fnixagent.configMap.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "fnixagent.fullname" . }}-config
+  labels:
+    {{- include "fnixagent.labels" . | nindent 4 }}
+data:
+  {{- range $key, $value := .Values.env }}
+  {{ $key }}: {{ $value | quote }}
+  {{- end }}
+  {{- /* 数据库 URL 占位符,实际值由 envFrom Secret 注入后拼接 */}}
+  {{- if not .Values.env.DATABASE_URL }}
+  DATABASE_URL_PLACEHOLDER: "true"
+  {{- end }}
+  {{- /* 配置文件内容 */}}
+  settings.yaml: |
+    {{- .Values.fnixagent.configMap.settings | toYaml | nindent 4 }}
+{{- end -}}

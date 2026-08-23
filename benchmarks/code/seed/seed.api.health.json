@@ -1,0 +1,17 @@
+{
+  "id": "seed.api.health",
+  "title": "FastAPI health endpoint",
+  "prompt": "Create app.py with FastAPI app exposing GET /health returning JSON {\"status\":\"ok\"}. Add test_health.py using TestClient.",
+  "capability": ["api", "write"],
+  "difficulty": 3,
+  "language": "python",
+  "tags": ["seed"],
+  "timeout_s": 240,
+  "setup": { "files": {} },
+  "checks": [
+    { "function": "file_exists", "args": { "path": "app.py" } },
+    { "function": "file_contains", "args": { "path": "app.py", "text": "FastAPI" } },
+    { "function": "pytest_passes", "args": { "path": "test_health.py" }, "required": false, "weight": 2 },
+    { "function": "no_stub_content", "args": {} }
+  ]
+}

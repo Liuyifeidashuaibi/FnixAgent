@@ -1,0 +1,67 @@
+# FnixAgent Rules
+# ---------------------------------------------------------------------------
+# 项目级规则文件,用于指导 Agent 的行为和代码风格。
+# 规则类型:
+#   - always:           始终包含在上下文中的规则
+#   - manual:           由特定文件匹配触发的规则
+#   - agent_requestable: Agent 可按需请求的规则
+# ---------------------------------------------------------------------------
+
+## Rules
+
+# ---------------------------------------------------------------------------
+# 始终生效的规则
+# ---------------------------------------------------------------------------
+
+- type: always
+  description: 始终使用 Python 3.11+ 类型提示,导入 from __future__ import annotations
+- type: always
+  description: 所有模块/类/函数的 docstring 使用中文
+- type: always
+  description: 使用 dataclasses 定义数据模型,避免使用普通 dict
+- type: always
+  description: 安全规范: 绝不在代码中硬编码密钥、令牌或密码,使用环境变量或 keystore 管理
+- type: always
+  description: 日志使用标准 logging 模块,禁止使用 print() 输出调试信息
+- type: always
+  description: 遵循项目现有的 ruff 代码风格: 双引号、100 字符行宽、py311 目标版本
+
+# ---------------------------------------------------------------------------
+# 手动触发规则 (按文件匹配)
+# ---------------------------------------------------------------------------
+
+- type: manual
+  description: 使用 pytest 进行测试,测试文件必须以 test_ 开头,放在 tests/ 目录下
+  globs: ["tests/**/*.py", "**/test_*.py"]
+- type: manual
+  description: API 路由使用 FastAPI,遵循 RESTful 设计,异常通过 HTTPException 抛出
+  globs: ["src/fnixagent/api/**/*.py"]
+- type: manual
+  description: 数据库模型使用 SQLAlchemy ORM,迁移文件放在 migrations/ 目录
+  globs: ["src/fnixagent/models/**/*.py", "migrations/**/*.py"]
+- type: manual
+  description: 前端组件使用 React + TypeScript, 样式使用 Tailwind CSS
+  globs: ["apps/**/*.tsx", "apps/**/*.ts", "packages/ui/**/*.tsx"]
+- type: manual
+  description: 配置管理使用 pydantic-settings 或 dataclass, 环境变量前缀为 FNIXAGENT_
+  globs: ["src/fnixagent/core/config*.py", "**/config*.py"]
+- type: manual
+  description: 安全检查: 处理用户输入时必须进行注入防护和敏感信息脱敏
+  globs: ["src/fnixagent/core/security/**/*.py", "src/fnixagent/api/**/*.py"]
+
+# ---------------------------------------------------------------------------
+# Agent 可请求规则
+# ---------------------------------------------------------------------------
+
+- type: agent_requestable
+  description: 项目架构遵循分层设计: api(接口层) → services(业务层) → core(引擎层), 严格遵循依赖方向, 禁止循环引用
+- type: agent_requestable
+  description: 命名规范: 模块使用 snake_case, 类使用 PascalCase, 函数/变量使用 snake_case, 常量使用 UPPER_SNAKE_CASE
+- type: agent_requestable
+  description: 错误处理: 使用项目自定义异常类 (fnixagent.core.exceptions), 避免使用裸 Exception
+- type: agent_requestable
+  description: Git 提交信息遵循 Conventional Commits 规范 (feat/fix/docs/refactor/test/chore)
+- type: agent_requestable
+  description: 性能规范: 避免在循环中进行 I/O 操作, 使用异步 (async/await) 处理网络请求, 大数据量操作使用生成器
+- type: agent_requestable
+  description: 依赖管理: 核心包依赖通过 requirements.txt 管理, 可选依赖在 pyproject.toml 中声明, 新依赖需评估必要性

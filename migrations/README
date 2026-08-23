@@ -1,0 +1,50 @@
+﻿Generic single-database configuration with an async dbapi.
+
+# Phase 0.3 数据库迁移
+
+此目录由 `alembic init migrations` 生成,并针对 FnixAgent 项目定制:
+
+- `env.py`:导入 `fnixagent.models.db.models.Base`,把 ORM 元数据注册给 alembic
+- `script.py.mako`:新迁移文件模板
+- `versions/`:迁移版本文件(每个文件对应一次 schema 变更)
+
+## 常用命令
+
+```bash
+# 应用所有未执行的迁移(创建表/列/索引)
+alembic upgrade head
+
+# 回滚一个版本
+alembic downgrade -1
+
+# 查看当前版本
+alembic current
+
+# 查看历史
+alembic history --verbose
+
+# 自动生成新迁移(检测 ORM 模型变化)
+alembic revision --autogenerate -m "describe change"
+
+# 生成 SQL 脚本(不连 DB,用于审计/CI)
+alembic upgrade head --sql
+```
+
+## 数据库连接
+
+优先级:
+1. 环境变量 `DATABASE_URL`(推荐,docker/k8s 注入)
+2. `alembic.ini` 中的 `sqlalchemy.url`(开发默认值)
+
+示例:
+```bash
+export DATABASE_URL="postgresql+psycopg2://user:pass@host:5432/dbname"
+alembic upgrade head
+```
+
+## 与 ORM 模型的关系
+
+ORM 模型定义在 `src/fnixagent/models/db/models.py`,alembic 通过 `env.py` 中的
+`target_metadata = Base.metadata` 自动检测模型变化。
+
+**不要**手动修改 `versions/` 中已发布的迁移文件(已应用到生产环境的迁移是只读的)。

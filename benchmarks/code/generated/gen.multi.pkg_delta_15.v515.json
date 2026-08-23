@@ -1,0 +1,46 @@
+{
+  "id": "gen.multi.pkg_delta_15.v515",
+  "title": "package pkg_delta_15",
+  "prompt": "Create package `pkg_delta_15` with `__init__.py` exporting `run()` and `pkg_delta_15/core.py` implementing `run()` returning 'pkg_delta_15-ok'.",
+  "capability": [
+    "multi_file",
+    "write"
+  ],
+  "difficulty": 3,
+  "language": "python",
+  "tags": [
+    "generated",
+    "multi_file"
+  ],
+  "timeout_s": 180,
+  "setup": {
+    "files": {
+      "README.md": "# pkg_delta_15\n"
+    }
+  },
+  "checks": [
+    {
+      "function": "file_exists",
+      "args": {
+        "path": "pkg_delta_15/__init__.py"
+      }
+    },
+    {
+      "function": "file_exists",
+      "args": {
+        "path": "pkg_delta_15/core.py"
+      }
+    },
+    {
+      "function": "stdout_equals",
+      "args": {
+        "command": [
+          "python",
+          "-c",
+          "from pkg_delta_15 import run; print(run())"
+        ],
+        "expected": "pkg_delta_15-ok"
+      }
+    }
+  ]
+}

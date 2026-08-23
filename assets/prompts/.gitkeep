@@ -1,0 +1,3 @@
+# Prompts directory
+# 自进化 Agent 提示词模板(可热加载)
+# 当前源码在 src/fnixagent/core/prompt/ 中,后续可外置到此目录

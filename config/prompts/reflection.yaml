@@ -1,0 +1,120 @@
+# 反思校验 Prompt - 结果校验与重规划
+
+name: "reflection"
+version: "1.0.0"
+
+# 反思流程说明
+instruction: |
+  反思引擎用于校验任务执行结果:
+  
+  校验维度:
+  1. Completeness: 结果完整性 - 是否达成用户目标
+  2. Correctness: 结果正确性 - 输出内容是否准确
+  3. Quality: 结果质量 - 格式/规范/可用性
+  4. Safety: 结果安全性 - 是否包含敏感/违规信息
+  
+  校验结果:
+  - PASS: 校验通过,可以返回用户
+  - FAIL: 校验失败,需要重规划或补充工具调用
+  - WARN: 校验通过但存在警告,可附加提示返回
+
+# 校验模板
+validation_template: |
+  任务: {task}
+  执行结果: {result}
+  
+  校验报告:
+  {
+    "completeness": {
+      "passed": true/false,
+      "reason": "完整性分析",
+      "missing_parts": ["缺失部分"]
+    },
+    "correctness": {
+      "passed": true/false,
+      "reason": "正确性分析",
+      "errors": ["错误点"]
+    },
+    "quality": {
+      "passed": true/false,
+      "reason": "质量分析",
+      "issues": ["质量问题"]
+    },
+    "safety": {
+      "passed": true/false,
+      "reason": "安全性分析",
+      "risks": ["风险点"]
+    },
+    "overall": "PASS/FAIL/WARN",
+    "suggestion": "改进建议(FAIL时提供重规划方案)"
+  }
+
+# 校验规则
+validation_rules:
+  completeness:
+    - "检查是否响应了用户的核心需求"
+    - "检查是否遗漏了用户明确要求的输出"
+    - "检查文件类任务是否成功生成文件"
+  
+  correctness:
+    - "检查数据准确性(引用/数据/统计)"
+    - "检查格式正确性(引用格式/文档格式)"
+    - "检查逻辑一致性(前后矛盾)"
+  
+  quality:
+    - "检查输出格式规范(排版/结构)"
+    - "检查可读性(语言流畅/表达清晰)"
+    - "检查专业性(术语准确/引用规范)"
+  
+  safety:
+    - "敏感词检测(政治/色情/暴力)"
+    - "隐私信息检测(个人信息/密码)"
+    - "版权合规检测(未授权全文)"
+
+# 重规划策略
+replanning_strategy: |
+  当校验结果为FAIL时,触发重规划:
+  
+  1. 分析失败原因:
+     - 定位失败的校验维度
+     - 提取具体的失败点
+  
+  2. 生成补充计划:
+     - 针对缺失部分,补充工具调用
+     - 针对错误内容,修正或重新生成
+     - 针对质量问题,增加优化步骤
+  
+  3. 执行补充计划:
+     - 按新的步骤顺序执行
+     - 再次触发校验
+  
+  4. 最大重试次数: 3次
+
+# 示例
+examples:
+  - task: "生成论文摘要Word文档"
+    result:
+      status: "success"
+      file: "summary.docx"
+      content: "论文摘要内容..."
+    
+    validation:
+      completeness:
+        passed: true
+        reason: "成功生成文档并包含摘要内容"
+      
+      correctness:
+        passed: false
+        reason: "引用格式不符合规范"
+        errors: ["引用格式应为GB-T7714,实际使用了APA格式"]
+      
+      quality:
+        passed: true
+        reason: "文档格式规范,内容可读"
+      
+      safety:
+        passed: true
+        reason: "无敏感信息"
+      
+      overall: "FAIL"
+      suggestion: "调用format_citation工具,修正引用格式"

@@ -1,0 +1,394 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 900" font-family="'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif">
+  <defs>
+    <linearGradient id="bgEvo" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f8f9fc"/>
+      <stop offset="100%" stop-color="#f5f3ff"/>
+    </linearGradient>
+    <linearGradient id="ktgGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4f46e5"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+    <linearGradient id="stpGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#db2777"/>
+      <stop offset="100%" stop-color="#ec4899"/>
+    </linearGradient>
+    <linearGradient id="mfpGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#059669"/>
+      <stop offset="100%" stop-color="#10b981"/>
+    </linearGradient>
+    <linearGradient id="l1Col" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#4f46e5"/><stop offset="100%" stop-color="#6366f1"/>
+    </linearGradient>
+    <linearGradient id="l2Col" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#7c3aed"/><stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+    <linearGradient id="l3Col" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#a855f7"/><stop offset="100%" stop-color="#c084fc"/>
+    </linearGradient>
+    <linearGradient id="l4Col" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#d8b4fe"/><stop offset="100%" stop-color="#e9d5ff"/>
+    </linearGradient>
+    <filter id="eShadow" x="-3%" y="-3%" width="106%" height="106%">
+      <feDropShadow dx="0" dy="3" stdDeviation="6" flood-color="#000" flood-opacity="0.1"/>
+    </filter>
+    <filter id="eGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feFlood flood-color="#7c3aed" flood-opacity="0.15"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <marker id="eArr" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 L3,5 Z" fill="#94a3b8"/>
+    </marker>
+    <marker id="eArrPurple" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 L3,5 Z" fill="#7c3aed"/>
+    </marker>
+    <marker id="eArrPink" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 L3,5 Z" fill="#db2777"/>
+    </marker>
+    <marker id="eArrGreen" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 L3,5 Z" fill="#059669"/>
+    </marker>
+  </defs>
+
+  <rect width="1400" height="900" fill="url(#bgEvo)"/>
+
+  <!-- Title -->
+  <text x="700" y="40" text-anchor="middle" font-size="24" font-weight="700" fill="#1e293b" letter-spacing="1">自进化 Agent 内核：KTG × STP × MFP</text>
+  <text x="700" y="62" text-anchor="middle" font-size="12" fill="#64748b">Self-Evolution Core Architecture — Knowledge Topology × Skill-Topology × Meta Flywheel Process</text>
+  <line x1="500" y1="73" x2="900" y2="73" stroke="#e2e8f0" stroke-width="1"/>
+
+  <!-- ============================================================ -->
+  <!-- LEFT: KTG Knowledge Topology Graph -->
+  <!-- ============================================================ -->
+  <g filter="url(#eShadow)">
+    <rect x="40" y="95" width="480" height="440" rx="16" fill="#fff" stroke="#ddd6fe" stroke-width="1.5"/>
+    <rect x="40" y="95" width="480" height="5" rx="2" fill="url(#ktgGrad)"/>
+  </g>
+  <text x="280" y="125" text-anchor="middle" font-size="18" font-weight="700" fill="#4f46e5">KTG 知识拓扑图</text>
+  <text x="280" y="145" text-anchor="middle" font-size="11" fill="#94a3b8">Knowledge Topology Graph — 4层权重路径结构</text>
+
+  <!-- KTG Visualization: tree/hierarchy -->
+  <!-- L1: Goal -->
+  <g filter="url(#eShadow)">
+    <rect x="195" y="170" width="170" height="38" rx="19" fill="url(#l1Col)"/>
+    <text x="280" y="194" text-anchor="middle" font-size="12" font-weight="600" fill="#fff">L1 · 目标层 Goal</text>
+  </g>
+
+  <!-- L1→L2 connectors -->
+  <path d="M240 208 Q200 225 150 245" fill="none" stroke="#a78bfa" stroke-width="1.5"/>
+  <path d="M280 208 Q280 225 280 245" fill="none" stroke="#a78bfa" stroke-width="1.5"/>
+  <path d="M320 208 Q360 225 410 245" fill="none" stroke="#a78bfa" stroke-width="1.5"/>
+
+  <!-- L2: Concepts -->
+  <g filter="url(#eShadow)">
+    <rect x="80" y="245" width="140" height="34" rx="17" fill="url(#l2Col)"/>
+    <text x="150" y="267" text-anchor="middle" font-size="11" font-weight="600" fill="#fff">L2 · 概念 Concept</text>
+  </g>
+  <g filter="url(#eShadow)">
+    <rect x="240" y="245" width="140" height="34" rx="17" fill="url(#l2Col)"/>
+    <text x="310" y="267" text-anchor="middle" font-size="11" font-weight="600" fill="#fff">L2 · 概念 Concept</text>
+  </g>
+  <g filter="url(#eShadow)">
+    <rect x="400" y="245" width="80" height="34" rx="17" fill="url(#l2Col)"/>
+    <text x="440" y="267" text-anchor="middle" font-size="11" font-weight="600" fill="#fff">…</text>
+  </g>
+
+  <!-- L2→L3 connectors -->
+  <path d="M120 279 Q100 300 80 320" fill="none" stroke="#c4b5fd" stroke-width="1"/>
+  <path d="M150 279 Q150 300 150 320" fill="none" stroke="#c4b5fd" stroke-width="1"/>
+  <path d="M180 279 Q200 300 220 320" fill="none" stroke="#c4b5fd" stroke-width="1"/>
+  <path d="M280 279 Q270 300 260 320" fill="none" stroke="#c4b5fd" stroke-width="1"/>
+  <path d="M320 279 Q330 300 340 320" fill="none" stroke="#c4b5fd" stroke-width="1"/>
+  <path d="M360 279 Q390 300 420 320" fill="none" stroke="#c4b5fd" stroke-width="1"/>
+
+  <!-- L3: Rules -->
+  <g filter="url(#eShadow)">
+    <rect x="48" y="320" width="70" height="28" rx="14" fill="url(#l3Col)"/>
+    <text x="83" y="338" text-anchor="middle" font-size="9" font-weight="600" fill="#fff">L3 规则</text>
+  </g>
+  <g filter="url(#eShadow)">
+    <rect x="128" y="320" width="70" height="28" rx="14" fill="url(#l3Col)"/>
+    <text x="163" y="338" text-anchor="middle" font-size="9" font-weight="600" fill="#fff">L3 规则</text>
+  </g>
+  <g filter="url(#eShadow)">
+    <rect x="220" y="320" width="70" height="28" rx="14" fill="url(#l3Col)"/>
+    <text x="255" y="338" text-anchor="middle" font-size="9" font-weight="600" fill="#fff">L3 规则</text>
+  </g>
+  <g filter="url(#eShadow)">
+    <rect x="300" y="320" width="70" height="28" rx="14" fill="url(#l3Col)"/>
+    <text x="335" y="338" text-anchor="middle" font-size="9" font-weight="600" fill="#fff">L3 规则</text>
+  </g>
+  <g filter="url(#eShadow)">
+    <rect x="400" y="320" width="70" height="28" rx="14" fill="url(#l3Col)"/>
+    <text x="435" y="338" text-anchor="middle" font-size="9" font-weight="600" fill="#fff">L3 规则</text>
+  </g>
+
+  <!-- L3→L4 connectors -->
+  <line x1="83" y1="348" x2="83" y2="370" stroke="#ddd6fe" stroke-width="1"/>
+  <line x1="163" y1="348" x2="163" y2="370" stroke="#ddd6fe" stroke-width="1"/>
+  <line x1="255" y1="348" x2="255" y2="370" stroke="#ddd6fe" stroke-width="1"/>
+  <line x1="335" y1="348" x2="335" y2="370" stroke="#ddd6fe" stroke-width="1"/>
+  <line x1="435" y1="348" x2="435" y2="370" stroke="#ddd6fe" stroke-width="1"/>
+
+  <!-- L4: Facts -->
+  <g filter="url(#eShadow)">
+    <rect x="55" y="370" width="56" height="24" rx="12" fill="url(#l4Col)"/>
+    <text x="83" y="386" text-anchor="middle" font-size="8" fill="#6b21a8">L4 事实</text>
+  </g>
+  <g filter="url(#eShadow)">
+    <rect x="135" y="370" width="56" height="24" rx="12" fill="url(#l4Col)"/>
+    <text x="163" y="386" text-anchor="middle" font-size="8" fill="#6b21a8">L4 事实</text>
+  </g>
+  <g filter="url(#eShadow)">
+    <rect x="227" y="370" width="56" height="24" rx="12" fill="url(#l4Col)"/>
+    <text x="255" y="386" text-anchor="middle" font-size="8" fill="#6b21a8">L4 事实</text>
+  </g>
+  <g filter="url(#eShadow)">
+    <rect x="307" y="370" width="56" height="24" rx="12" fill="url(#l4Col)"/>
+    <text x="335" y="386" text-anchor="middle" font-size="8" fill="#6b21a8">L4 事实</text>
+  </g>
+  <g filter="url(#eShadow)">
+    <rect x="407" y="370" width="56" height="24" rx="12" fill="url(#l4Col)"/>
+    <text x="435" y="386" text-anchor="middle" font-size="8" fill="#6b21a8">L4 事实</text>
+  </g>
+
+  <!-- Weight annotations on edges -->
+  <text x="138" y="237" font-size="8" fill="#7c3aed" font-weight="600">w=0.82</text>
+  <text x="268" y="237" font-size="8" fill="#7c3aed" font-weight="600">w=0.95</text>
+  <text x="380" y="237" font-size="8" fill="#7c3aed" font-weight="600">w=0.41</text>
+
+  <!-- KTG Key features -->
+  <line x1="70" y1="415" x2="490" y2="415" stroke="#f3e8ff" stroke-width="1"/>
+  <text x="70" y="440" font-size="11" font-weight="600" fill="#4f46e5">核心特性</text>
+  <circle cx="80" cy="460" r="3" fill="#4f46e5"/>
+  <text x="92" y="464" font-size="10" fill="#475569">权重路径搜索替代向量相似度，避免语义漂移</text>
+  <circle cx="80" cy="480" r="3" fill="#4f46e5"/>
+  <text x="92" y="484" font-size="10" fill="#475569">自适应权重：命中强化 +0.1，30天衰减 ×0.95</text>
+  <circle cx="80" cy="500" r="3" fill="#4f46e5"/>
+  <text x="92" y="504" font-size="10" fill="#475569">规模上限：50,000 节点 · 32 边/节点 · JSON/SQLite 持久化</text>
+
+  <!-- Weight legend -->
+  <g transform="translate(70, 515)">
+    <text x="0" y="0" font-size="10" font-weight="600" fill="#4f46e5">权重颜色</text>
+    <rect x="70" y="-10" width="40" height="6" rx="3" fill="url(#l1Col)"/>
+    <text x="115" y="-4" font-size="8" fill="#94a3b8">高权重 (≥0.8)</text>
+    <rect x="200" y="-10" width="40" height="6" rx="3" fill="url(#l3Col)"/>
+    <text x="245" y="-4" font-size="8" fill="#94a3b8">中权重 (0.3-0.8)</text>
+    <rect x="330" y="-10" width="40" height="6" rx="3" fill="url(#l4Col)"/>
+    <text x="375" y="-4" font-size="8" fill="#94a3b8">低权重 (&lt;0.3)</text>
+  </g>
+
+  <!-- ============================================================ -->
+  <!-- CENTER: STP Skill-Topology Protocol -->
+  <!-- ============================================================ -->
+  <g filter="url(#eGlow)">
+    <rect x="560" y="95" width="280" height="440" rx="16" fill="#fff" stroke="#f9a8d4" stroke-width="2"/>
+    <rect x="560" y="95" width="280" height="5" rx="2" fill="url(#stpGrad)"/>
+  </g>
+  <text x="700" y="125" text-anchor="middle" font-size="18" font-weight="700" fill="#db2777">STP 技能-拓扑突触</text>
+  <text x="700" y="145" text-anchor="middle" font-size="11" fill="#94a3b8">Skill-Topology Protocol · 突触式连接</text>
+
+  <!-- Synapse visualization -->
+  <!-- Concept node (from KTG L2) -->
+  <circle cx="700" cy="200" r="42" fill="#f5f3ff" stroke="#7c3aed" stroke-width="2.5"/>
+  <text x="700" y="196" text-anchor="middle" font-size="11" font-weight="700" fill="#7c3aed">L2 概念</text>
+  <text x="700" y="212" text-anchor="middle" font-size="9" fill="#a78bfa">"论文检索"</text>
+
+  <!-- Synapse connections to skills -->
+  <!-- Connection 1: thick/high weight -->
+  <path d="M670 235 Q620 280 585 310" fill="none" stroke="#db2777" stroke-width="4" stroke-linecap="round"/>
+  <text x="610" y="275" font-size="9" font-weight="700" fill="#db2777">w=0.85</text>
+  <!-- Connection 2: medium weight -->
+  <path d="M700 242 Q700 290 700 320" fill="none" stroke="#ec4899" stroke-width="2.5" stroke-linecap="round"/>
+  <text x="710" y="285" font-size="9" font-weight="600" fill="#ec4899">w=0.62</text>
+  <!-- Connection 3: thin/low weight -->
+  <path d="M730 235 Q780 280 815 310" fill="none" stroke="#f9a8d4" stroke-width="1.5" stroke-linecap="round"/>
+  <text x="785" y="275" font-size="9" fill="#f472b6">w=0.41</text>
+
+  <!-- Synapse knobs (like neuron synapses) -->
+  <circle cx="585" cy="310" r="6" fill="#db2777"/>
+  <circle cx="700" cy="320" r="5" fill="#ec4899"/>
+  <circle cx="815" cy="310" r="4" fill="#f9a8d4"/>
+
+  <!-- Skill nodes -->
+  <g filter="url(#eShadow)">
+    <rect x="515" y="320" width="140" height="36" rx="18" fill="#fdf2f8" stroke="#f472b6" stroke-width="1.5"/>
+    <text x="585" y="343" text-anchor="middle" font-size="11" font-weight="600" fill="#db2777">search_paper</text>
+  </g>
+  <g filter="url(#eShadow)">
+    <rect x="630" y="330" width="140" height="36" rx="18" fill="#fdf2f8" stroke="#f472b6" stroke-width="1.5"/>
+    <text x="700" y="353" text-anchor="middle" font-size="11" font-weight="600" fill="#db2777">search_by_doi</text>
+  </g>
+  <g filter="url(#eShadow)">
+    <rect x="745" y="320" width="140" height="36" rx="18" fill="#fdf2f8" stroke="#f472b6" stroke-width="1.5"/>
+    <text x="815" y="343" text-anchor="middle" font-size="11" font-weight="600" fill="#db2777">format_citation</text>
+  </g>
+
+  <!-- Feedback loop arrow -->
+  <path d="M585 356 Q585 400 640 400 Q700 400 700 242" fill="none" stroke="#ec4899" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#eArrPink)"/>
+  <text x="590" y="395" font-size="9" fill="#ec4899" font-weight="600">反馈: 成功+0.05 / 失败-0.1</text>
+
+  <!-- Permission levels -->
+  <line x1="590" y1="415" x2="810" y2="415" stroke="#fce7f3" stroke-width="1"/>
+  <text x="590" y="440" font-size="11" font-weight="600" fill="#db2777">三级权限体系</text>
+  <rect x="590" y="452" width="80" height="24" rx="12" fill="#dcfce7" stroke="#86efac"/>
+  <text x="630" y="468" text-anchor="middle" font-size="9" font-weight="600" fill="#16a34a">Basic 自动</text>
+  <rect x="680" y="452" width="90" height="24" rx="12" fill="#fef3c7" stroke="#fcd34d"/>
+  <text x="725" y="468" text-anchor="middle" font-size="9" font-weight="600" fill="#d97706">Reasoning 确认</text>
+  <rect x="590" y="484" width="80" height="24" rx="12" fill="#fee2e2" stroke="#fca5a5"/>
+  <text x="630" y="500" text-anchor="middle" font-size="9" font-weight="600" fill="#dc2626">Meta 禁用</text>
+  <text x="690" y="502" font-size="9" fill="#94a3b8">权重→优先级：指数曲线映射</text>
+
+  <!-- ============================================================ -->
+  <!-- RIGHT: MFP Multi-stage Flywheel Process -->
+  <!-- ============================================================ -->
+  <g filter="url(#eShadow)">
+    <rect x="880" y="95" width="480" height="440" rx="16" fill="#fff" stroke="#bbf7d0" stroke-width="1.5"/>
+    <rect x="880" y="95" width="480" height="5" rx="2" fill="url(#mfpGrad)"/>
+  </g>
+  <text x="1120" y="125" text-anchor="middle" font-size="18" font-weight="700" fill="#059669">MFP 四阶进化飞轮</text>
+  <text x="1120" y="145" text-anchor="middle" font-size="11" fill="#94a3b8">Multi-stage Flywheel Process — 闭环自驱动</text>
+
+  <!-- Flywheel cycle -->
+  <!-- Center circle -->
+  <circle cx="1120" cy="280" r="80" fill="#f0fdf4" stroke="#86efac" stroke-width="2" stroke-dasharray="8,4"/>
+  <text x="1120" y="273" text-anchor="middle" font-size="13" font-weight="700" fill="#059669">自进化</text>
+  <text x="1120" y="292" text-anchor="middle" font-size="10" fill="#10b981">无需人工标注</text>
+
+  <!-- Flywheel stage 1 (top) -->
+  <g filter="url(#eShadow)">
+    <circle cx="1120" cy="180" r="42" fill="url(#mfpGrad)"/>
+    <text x="1120" y="176" text-anchor="middle" font-size="10" font-weight="600" fill="#fff">飞轮 ①</text>
+    <text x="1120" y="192" text-anchor="middle" font-size="10" font-weight="600" fill="#fff">感知执行</text>
+  </g>
+
+  <!-- Flywheel stage 2 (right) -->
+  <g filter="url(#eShadow)">
+    <circle cx="1230" cy="280" r="42" fill="url(#mfpGrad)"/>
+    <text x="1230" y="276" text-anchor="middle" font-size="10" font-weight="600" fill="#fff">飞轮 ②</text>
+    <text x="1230" y="292" text-anchor="middle" font-size="10" font-weight="600" fill="#fff">知识固化</text>
+  </g>
+
+  <!-- Flywheel stage 3 (bottom) -->
+  <g filter="url(#eShadow)">
+    <circle cx="1120" cy="380" r="42" fill="url(#mfpGrad)"/>
+    <text x="1120" y="376" text-anchor="middle" font-size="10" font-weight="600" fill="#fff">飞轮 ③</text>
+    <text x="1120" y="392" text-anchor="middle" font-size="10" font-weight="600" fill="#fff">元反思</text>
+  </g>
+
+  <!-- Flywheel stage 4 (left) -->
+  <g filter="url(#eShadow)">
+    <circle cx="1010" cy="280" r="42" fill="url(#mfpGrad)"/>
+    <text x="1010" y="276" text-anchor="middle" font-size="10" font-weight="600" fill="#fff">飞轮 ④</text>
+    <text x="1010" y="292" text-anchor="middle" font-size="10" font-weight="600" fill="#fff">爬山进化</text>
+  </g>
+
+  <!-- Cycle arrows between stages -->
+  <path d="M1120 222 Q1175 222 1195 250" fill="none" stroke="#059669" stroke-width="2.5" marker-end="url(#eArrGreen)"/>
+  <path d="M1195 310 Q1175 340 1140 352" fill="none" stroke="#059669" stroke-width="2.5" marker-end="url(#eArrGreen)"/>
+  <path d="M1100 352 Q1065 340 1050 310" fill="none" stroke="#059669" stroke-width="2.5" marker-end="url(#eArrGreen)"/>
+  <path d="M1050 250 Q1065 222 1120 222" fill="none" stroke="#059669" stroke-width="2.5" marker-end="url(#eArrGreen)"/>
+
+  <!-- Stage descriptions -->
+  <text x="1120" y="130" text-anchor="middle" font-size="9" fill="#10b981">多轮迭代任务执行</text>
+  <text x="1290" y="283" font-size="9" fill="#10b981">案例归并→规则提取</text>
+  <text x="1120" y="438" text-anchor="middle" font-size="9" fill="#10b981">每10任务触发反思</text>
+  <text x="940" y="283" text-anchor="end" font-size="9" fill="#10b981">每50任务策略迭代，回退保护</text>
+
+  <!-- MFP details -->
+  <line x1="910" y1="415" x2="1330" y2="415" stroke="#dcfce7" stroke-width="1"/>
+  <text x="910" y="440" font-size="11" font-weight="600" fill="#059669">进化参数</text>
+  <circle cx="920" cy="458" r="3" fill="#059669"/>
+  <text x="932" y="462" font-size="10" fill="#475569">感知-执行：单任务最大迭代 10 轮</text>
+  <circle cx="920" cy="478" r="3" fill="#059669"/>
+  <text x="932" y="482" font-size="10" fill="#475569">知识固化：相似度≥0.75 归并，单次提取≤5规则</text>
+  <circle cx="920" cy="498" r="3" fill="#059669"/>
+  <text x="932" y="502" font-size="10" fill="#475569">元反思：每10任务触发，评分<0.7→重规划</text>
+  <circle cx="920" cy="518" r="3" fill="#059669"/>
+  <text x="932" y="522" font-size="10" fill="#475569">爬山进化：每50任务评估，回退阈值5%，AES-256快照</text>
+
+  <!-- ============================================================ -->
+  <!-- BOTTOM: Integration Arrows -->
+  <!-- ============================================================ -->
+  <!-- KTG → STP -->
+  <path d="M520 315 Q540 315 555 315" fill="none" stroke="#7c3aed" stroke-width="2.5" marker-end="url(#eArrPurple)"/>
+  <rect x="516" y="290" width="50" height="16" rx="8" fill="#ede9fe"/>
+  <text x="541" y="302" text-anchor="middle" font-size="8" font-weight="600" fill="#7c3aed">概念绑定</text>
+
+  <!-- STP → MFP -->
+  <path d="M840 315 Q860 315 875 315" fill="none" stroke="#db2777" stroke-width="2.5" marker-end="url(#eArrPink)"/>
+  <rect x="838" y="290" width="50" height="16" rx="8" fill="#fce7f3"/>
+  <text x="863" y="302" text-anchor="middle" font-size="8" font-weight="600" fill="#db2777">技能执行</text>
+
+  <!-- MFP → KTG (feedback loop across all) -->
+  <path d="M1120 535 Q1120 580 280 580 Q280 535 280 535" fill="none" stroke="#059669" stroke-width="2" stroke-dasharray="8,4" marker-end="url(#eArrGreen)"/>
+  <rect x="650" y="565" width="200" height="20" rx="10" fill="#f0fdf4" stroke="#86efac" stroke-width="1"/>
+  <text x="750" y="579" text-anchor="middle" font-size="10" font-weight="600" fill="#059669">知识更新 · 权重调整 · 规则提取</text>
+
+  <!-- ============================================================ -->
+  <!-- BOTTOM: Input/Output -->
+  <!-- ============================================================ -->
+  <g transform="translate(40, 620)">
+    <rect x="0" y="0" width="1320" height="240" rx="16" fill="#fff" stroke="#e2e8f0" stroke-width="1.5" filter="url(#eShadow)"/>
+    <rect x="0" y="0" width="1320" height="4" rx="2" fill="url(#ktgGrad)"/>
+
+    <text x="660" y="30" text-anchor="middle" font-size="16" font-weight="700" fill="#1e293b">三核协作 · 一次进化对话的完整闭环</text>
+
+    <!-- Input side -->
+    <g transform="translate(60, 55)">
+      <rect x="0" y="0" width="200" height="50" rx="10" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+      <text x="100" y="20" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">用户请求</text>
+      <text x="100" y="38" text-anchor="middle" font-size="9" fill="#94a3b8">"帮我搜arxiv上最新的LLM Agent论文"</text>
+    </g>
+
+    <path d="M260 80 L320 80" stroke="#94a3b8" stroke-width="2" marker-end="url(#eArr)"/>
+
+    <!-- KTG step -->
+    <g transform="translate(320, 55)">
+      <rect x="0" y="0" width="200" height="50" rx="10" fill="#eef2ff" stroke="#c7d2fe" stroke-width="1"/>
+      <text x="100" y="20" text-anchor="middle" font-size="11" font-weight="600" fill="#4f46e5">KTG 路径激活</text>
+      <text x="100" y="38" text-anchor="middle" font-size="9" fill="#6366f1">L1论文检索 → L2arxiv概念 → L3API规则</text>
+    </g>
+
+    <path d="M520 80 L580 80" stroke="#7c3aed" stroke-width="2" marker-end="url(#eArrPurple)"/>
+
+    <!-- STP step -->
+    <g transform="translate(580, 55)">
+      <rect x="0" y="0" width="200" height="50" rx="10" fill="#fdf2f8" stroke="#f9a8d4" stroke-width="1"/>
+      <text x="100" y="20" text-anchor="middle" font-size="11" font-weight="600" fill="#db2777">STP 技能调度</text>
+      <text x="100" y="38" text-anchor="middle" font-size="9" fill="#ec4899">w=0.85→search_paper 优先激活</text>
+    </g>
+
+    <path d="M780 80 L840 80" stroke="#db2777" stroke-width="2" marker-end="url(#eArrPink)"/>
+
+    <!-- Tool execution -->
+    <g transform="translate(840, 55)">
+      <rect x="0" y="0" width="200" height="50" rx="10" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+      <text x="100" y="20" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">工具执行</text>
+      <text x="100" y="38" text-anchor="middle" font-size="9" fill="#94a3b8">沙箱内调用 arXiv API + 结果解析</text>
+    </g>
+
+    <path d="M1040 80 L1100 80" stroke="#94a3b8" stroke-width="2" marker-end="url(#eArr)"/>
+
+    <!-- Output -->
+    <g transform="translate(1100, 55)">
+      <rect x="0" y="0" width="160" height="50" rx="10" fill="#ecfdf5" stroke="#86efac" stroke-width="1"/>
+      <text x="80" y="20" text-anchor="middle" font-size="11" font-weight="600" fill="#059669">响应返回</text>
+      <text x="80" y="38" text-anchor="middle" font-size="9" fill="#10b981">论文列表 + 摘要 + 引用</text>
+    </g>
+
+    <!-- MFP feedback loop at bottom -->
+    <path d="M1180 105 Q1180 160 660 160 Q140 160 140 105" fill="none" stroke="#059669" stroke-width="2" stroke-dasharray="8,4" marker-end="url(#eArrGreen)"/>
+    <g transform="translate(580, 150)">
+      <rect x="0" y="0" width="200" height="28" rx="14" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5"/>
+      <text x="100" y="18" text-anchor="middle" font-size="10" font-weight="600" fill="#059669">MFP 飞轮：案例归并→权重更新→规则沉淀</text>
+    </g>
+
+    <!-- Key takeaway -->
+    <text x="660" y="215" text-anchor="middle" font-size="12" font-weight="600" fill="#475569">每一次对话都不是孤立的——KTG 积累知识、STP 优化调度、MFP 进化策略，Agent 在使用中持续变强</text>
+  </g>
+
+  <!-- Footer -->
+  <text x="700" y="885" text-anchor="middle" font-size="10" fill="#94a3b8">FnixAgent · Self-Evolution Core: KTG × STP × MFP</text>
+</svg>

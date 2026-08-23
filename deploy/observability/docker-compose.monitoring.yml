@@ -1,0 +1,117 @@
+version: '3.8'
+
+# fnixagent 监控栈 — Phase 2.10
+#
+# 组件:
+#   - Prometheus  指标采集 + 存储
+#   - Alertmanager 告警路由
+#   - Grafana     可视化大盘
+#   - Node Exporter 主机指标
+#   - Postgres Exporter 数据库指标
+#   - Redis Exporter 缓存指标
+#
+# 用法:
+#   docker compose -f deploy/observability/docker-compose.monitoring.yml up -d
+#
+# 端口映射:
+#   Prometheus    http://localhost:9090
+#   Alertmanager  http://localhost:9093
+#   Grafana       http://localhost:3000  (admin/admin)
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: fnixagent-prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./alerts:/etc/prometheus/alerts:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9090:9090"
+    restart: always
+    networks:
+      - fnixagent-net
+
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    container_name: fnixagent-alertmanager
+    volumes:
+      - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+    ports:
+      - "9093:9093"
+    restart: always
+    networks:
+      - fnixagent-net
+
+  grafana:
+    image: grafana/grafana:10.4.0
+    container_name: fnixagent-grafana
+    volumes:
+      - ./dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/fnixagent-overview.json
+    ports:
+      - "3000:3000"
+    restart: always
+    depends_on:
+      - prometheus
+    networks:
+      - fnixagent-net
+
+  node-exporter:
+    image: prom/node-exporter:v1.7.0
+    container_name: fnixagent-node-exporter
+    ports:
+      - "9100:9100"
+    restart: always
+    networks:
+      - fnixagent-net
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.15.0
+    container_name: fnixagent-postgres-exporter
+    environment:
+      DATA_SOURCE_NAME: "postgresql://fnixagent:${POSTGRES_PASSWORD:-changeme}@postgres:5432/fnixagent?sslmode=disable"
+    ports:
+      - "9187:9187"
+    restart: always
+    networks:
+      - fnixagent-net
+
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.59.0
+    container_name: fnixagent-redis-exporter
+    environment:
+      REDIS_ADDR: "redis:6379"
+      REDIS_PASSWORD: "${REDIS_PASSWORD:-}"
+    ports:
+      - "9121:9121"
+    restart: always
+    networks:
+      - fnixagent-net
+
+volumes:
+  prometheus_data:
+  alertmanager_data:
+  grafana_data:
+
+networks:
+  fnixagent-net:
+    external: true
+    name: fnixagent_default

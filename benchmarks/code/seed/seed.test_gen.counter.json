@@ -1,0 +1,20 @@
+{
+  "id": "seed.test_gen.counter",
+  "title": "Add tests for Counter class",
+  "prompt": "counter.py has Counter with increment() and value. Write test_counter.py with pytest covering increment and initial value 0.",
+  "capability": ["test_gen"],
+  "difficulty": 2,
+  "language": "python",
+  "tags": ["seed"],
+  "timeout_s": 120,
+  "setup": {
+    "files": {
+      "counter.py": "class Counter:\n    def __init__(self):\n        self._v = 0\n\n    def increment(self):\n        self._v += 1\n\n    @property\n    def value(self):\n        return self._v\n"
+    }
+  },
+  "checks": [
+    { "function": "file_exists", "args": { "path": "test_counter.py" } },
+    { "function": "pytest_passes", "args": { "path": "test_counter.py" } },
+    { "function": "no_stub_content", "args": {} }
+  ]
+}

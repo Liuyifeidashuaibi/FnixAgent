@@ -1,0 +1,291 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1300 800" font-family="'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif">
+  <defs>
+    <linearGradient id="bgDep" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f8f9fc"/>
+      <stop offset="100%" stop-color="#f1f5f9"/>
+    </linearGradient>
+    <linearGradient id="extGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#64748b"/>
+      <stop offset="100%" stop-color="#94a3b8"/>
+    </linearGradient>
+    <linearGradient id="lbGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#0891b2"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
+    </linearGradient>
+    <linearGradient id="appGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#4f46e5"/>
+      <stop offset="100%" stop-color="#6366f1"/>
+    </linearGradient>
+    <linearGradient id="svcGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+    <linearGradient id="dataGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#d97706"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+    <linearGradient id="monGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#059669"/>
+      <stop offset="100%" stop-color="#10b981"/>
+    </linearGradient>
+    <filter id="dShadow" x="-3%" y="-3%" width="106%" height="106%">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#000" flood-opacity="0.08"/>
+    </filter>
+    <marker id="dArr" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 L3,5 Z" fill="#94a3b8"/>
+    </marker>
+    <marker id="dArrBlue" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 L3,5 Z" fill="#4f46e5"/>
+    </marker>
+    <marker id="dArrCyan" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 L3,5 Z" fill="#0891b2"/>
+    </marker>
+    <marker id="dArrPurple" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 L3,5 Z" fill="#7c3aed"/>
+    </marker>
+    <marker id="dArrOrange" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 L3,5 Z" fill="#d97706"/>
+    </marker>
+  </defs>
+
+  <rect width="1300" height="800" fill="url(#bgDep)"/>
+
+  <!-- Title -->
+  <text x="650" y="38" text-anchor="middle" font-size="22" font-weight="700" fill="#1e293b" letter-spacing="1">生产部署拓扑</text>
+  <text x="650" y="58" text-anchor="middle" font-size="12" fill="#64748b">Production Deployment Topology — Docker Compose / Kubernetes Ready</text>
+  <line x1="520" y1="68" x2="780" y2="68" stroke="#e2e8f0" stroke-width="1"/>
+
+  <!-- ============================================================ -->
+  <!-- Layer labels (left side) -->
+  <!-- ============================================================ -->
+  <text x="20" y="120" font-size="10" font-weight="700" fill="#64748b" transform="rotate(-90,20,120)">外部访问</text>
+  <text x="20" y="230" font-size="10" font-weight="700" fill="#64748b" transform="rotate(-90,20,230)">负载均衡</text>
+  <text x="20" y="380" font-size="10" font-weight="700" fill="#64748b" transform="rotate(-90,20,380)">应用层</text>
+  <text x="20" y="530" font-size="10" font-weight="700" fill="#64748b" transform="rotate(-90,20,530)">数据层</text>
+  <text x="20" y="650" font-size="10" font-weight="700" fill="#64748b" transform="rotate(-90,20,650)">监控层</text>
+
+  <!-- ============================================================ -->
+  <!-- External users -->
+  <!-- ============================================================ -->
+  <g transform="translate(100, 85)">
+    <rect x="0" y="0" width="200" height="50" rx="10" fill="#fff" stroke="#e2e8f0" stroke-width="1.5" filter="url(#dShadow)"/>
+    <text x="100" y="22" text-anchor="middle" font-size="12" font-weight="600" fill="#1e293b">🌐 Web 用户</text>
+    <text x="100" y="38" text-anchor="middle" font-size="9" fill="#94a3b8">React SPA / HTTPS</text>
+  </g>
+  <g transform="translate(340, 85)">
+    <rect x="0" y="0" width="200" height="50" rx="10" fill="#fff" stroke="#e2e8f0" stroke-width="1.5" filter="url(#dShadow)"/>
+    <text x="100" y="22" text-anchor="middle" font-size="12" font-weight="600" fill="#1e293b">🤖 企业微信/钉钉</text>
+    <text x="100" y="38" text-anchor="middle" font-size="9" fill="#94a3b8">Webhook Bot</text>
+  </g>
+  <g transform="translate(580, 85)">
+    <rect x="0" y="0" width="200" height="50" rx="10" fill="#fff" stroke="#e2e8f0" stroke-width="1.5" filter="url(#dShadow)"/>
+    <text x="100" y="22" text-anchor="middle" font-size="12" font-weight="600" fill="#1e293b">🔌 API 集成</text>
+    <text x="100" y="38" text-anchor="middle" font-size="9" fill="#94a3b8">ERP/BI/第三方系统</text>
+  </g>
+  <g transform="translate(820, 85)">
+    <rect x="0" y="0" width="200" height="50" rx="10" fill="#fff" stroke="#e2e8f0" stroke-width="1.5" filter="url(#dShadow)"/>
+    <text x="100" y="22" text-anchor="middle" font-size="12" font-weight="600" fill="#1e293b">💻 CLI / SDK</text>
+    <text x="100" y="38" text-anchor="middle" font-size="9" fill="#94a3b8">开发者工具</text>
+  </g>
+
+  <!-- Arrows down to LB -->
+  <line x1="200" y1="135" x2="400" y2="185" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#dArr)"/>
+  <line x1="440" y1="135" x2="480" y2="185" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#dArr)"/>
+  <line x1="680" y1="135" x2="640" y2="185" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#dArr)"/>
+  <line x1="920" y1="135" x2="800" y2="185" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#dArr)"/>
+
+  <!-- ============================================================ -->
+  <!-- Load Balancer / Nginx -->
+  <!-- ============================================================ -->
+  <g transform="translate(350, 185)" filter="url(#dShadow)">
+    <rect x="0" y="0" width="480" height="55" rx="12" fill="#fff" stroke="#67e8f9" stroke-width="2"/>
+    <rect x="0" y="0" width="480" height="5" rx="2" fill="url(#lbGrad)"/>
+    <text x="240" y="28" text-anchor="middle" font-size="14" font-weight="700" fill="#0891b2">Nginx · 反向代理 / SSL 终止 / 静态资源</text>
+    <text x="240" y="46" text-anchor="middle" font-size="10" fill="#64748b">HTTPS (Let's Encrypt) · WebSocket/SSE · 限流 · 健康检查</text>
+  </g>
+
+  <!-- Arrow down to App -->
+  <line x1="590" y1="240" x2="590" y2="275" stroke="#0891b2" stroke-width="2.5" marker-end="url(#dArrCyan)"/>
+
+  <!-- ============================================================ -->
+  <!-- Application Layer -->
+  <!-- ============================================================ -->
+  <!-- App instances (replicas) -->
+  <g transform="translate(200, 285)" filter="url(#dShadow)">
+    <rect x="0" y="0" width="230" height="140" rx="12" fill="#fff" stroke="#c7d2fe" stroke-width="1.5"/>
+    <rect x="0" y="0" width="230" height="5" rx="2" fill="url(#appGrad)"/>
+    <text x="115" y="28" text-anchor="middle" font-size="13" font-weight="700" fill="#4f46e5">FnixAgent App × N</text>
+    <text x="115" y="44" text-anchor="middle" font-size="9" fill="#94a3b8">FastAPI · Uvicorn · Gunicorn</text>
+    <line x1="15" y1="52" x2="215" y2="52" stroke="#e0e7ff" stroke-width="1"/>
+    <text x="15" y="68" font-size="9" fill="#64748b">• API Router (14 路由模块)</text>
+    <text x="15" y="83" font-size="9" fill="#64748b">• Agent 调度中枢</text>
+    <text x="15" y="98" font-size="9" fill="#64748b">• 8 大核心引擎</text>
+    <text x="15" y="113" font-size="9" fill="#64748b">• 业务工具层</text>
+    <text x="220" y="134" text-anchor="end" font-size="8" fill="#4f46e5">Pod / Container</text>
+  </g>
+
+  <!-- Celery Worker -->
+  <g transform="translate(460, 285)" filter="url(#dShadow)">
+    <rect x="0" y="0" width="180" height="65" rx="12" fill="#fff" stroke="#ddd6fe" stroke-width="1.5"/>
+    <rect x="0" y="0" width="180" height="5" rx="2" fill="url(#svcGrad)"/>
+    <text x="90" y="28" text-anchor="middle" font-size="12" font-weight="700" fill="#7c3aed">Celery Worker</text>
+    <text x="90" y="44" text-anchor="middle" font-size="9" fill="#64748b">异步长任务 · 文档处理</text>
+    <text x="90" y="57" text-anchor="middle" font-size="9" fill="#64748b">文件转换 · 批量任务</text>
+  </g>
+
+  <!-- vLLM / Self-hosted LLM -->
+  <g transform="translate(460, 365)" filter="url(#dShadow)">
+    <rect x="0" y="0" width="180" height="60" rx="12" fill="#fff" stroke="#ddd6fe" stroke-width="1.5"/>
+    <rect x="0" y="0" width="180" height="5" rx="2" fill="url(#svcGrad)"/>
+    <text x="90" y="28" text-anchor="middle" font-size="12" font-weight="700" fill="#7c3aed">vLLM (可选)</text>
+    <text x="90" y="44" text-anchor="middle" font-size="9" fill="#64748b">本地模型推理 · GPU加速</text>
+    <text x="90" y="56" text-anchor="middle" font-size="9" fill="#64748b">Qwen/DeepSeek 自部署</text>
+  </g>
+
+  <!-- External LLM APIs -->
+  <g transform="translate(680, 285)" filter="url(#dShadow)">
+    <rect x="0" y="0" width="200" height="140" rx="12" fill="#fff" stroke="#e2e8f0" stroke-width="1.5"/>
+    <rect x="0" y="0" width="200" height="5" rx="2" fill="url(#extGrad)"/>
+    <text x="100" y="28" text-anchor="middle" font-size="12" font-weight="700" fill="#64748b">☁️ 外部 LLM API</text>
+    <line x1="15" y1="36" x2="185" y2="36" stroke="#e2e8f0" stroke-width="1"/>
+    <rect x="20" y="45" width="75" height="22" rx="6" fill="#f1f5f9" stroke="#cbd5e1"/>
+    <text x="57" y="60" text-anchor="middle" font-size="8" fill="#475569">智谱 GLM</text>
+    <rect x="105" y="45" width="75" height="22" rx="6" fill="#f1f5f9" stroke="#cbd5e1"/>
+    <text x="142" y="60" text-anchor="middle" font-size="8" fill="#475569">OpenAI</text>
+    <rect x="20" y="75" width="75" height="22" rx="6" fill="#f1f5f9" stroke="#cbd5e1"/>
+    <text x="57" y="90" text-anchor="middle" font-size="8" fill="#475569">Qwen</text>
+    <rect x="105" y="75" width="75" height="22" rx="6" fill="#f1f5f9" stroke="#cbd5e1"/>
+    <text x="142" y="90" text-anchor="middle" font-size="8" fill="#475569">DeepSeek</text>
+    <rect x="20" y="105" width="160" height="22" rx="6" fill="#f1f5f9" stroke="#cbd5e1"/>
+    <text x="100" y="120" text-anchor="middle" font-size="8" fill="#475569">负载均衡 · 限流 · 熔断 · 降级</text>
+  </g>
+
+  <!-- Arrows App→LLM -->
+  <path d="M430 320 Q550 320 675 320" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#dArr)"/>
+  <path d="M430 370 Q430 395 455 395" fill="none" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#dArrPurple)"/>
+
+  <!-- Arrows App→Data layer -->
+  <line x1="280" y1="425" x2="280" y2="470" stroke="#d97706" stroke-width="2" marker-end="url(#dArrOrange)"/>
+  <line x1="320" y1="425" x2="400" y2="470" stroke="#d97706" stroke-width="2" marker-end="url(#dArrOrange)"/>
+  <line x1="360" y1="425" x2="520" y2="470" stroke="#d97706" stroke-width="2" marker-end="url(#dArrOrange)"/>
+  <line x1="400" y1="425" x2="680" y2="470" stroke="#d97706" stroke-width="2" marker-end="url(#dArrOrange)"/>
+  <line x1="430" y1="425" x2="870" y2="470" stroke="#d97706" stroke-width="2" marker-end="url(#dArrOrange)"/>
+
+  <!-- ============================================================ -->
+  <!-- Data Layer -->
+  <!-- ============================================================ -->
+  <g transform="translate(100, 480)" filter="url(#dShadow)">
+    <rect x="0" y="0" width="200" height="100" rx="12" fill="#fff" stroke="#fde68a" stroke-width="1.5"/>
+    <rect x="0" y="0" width="200" height="5" rx="2" fill="url(#dataGrad)"/>
+    <text x="100" y="28" text-anchor="middle" font-size="13" font-weight="700" fill="#d97706">PostgreSQL 16</text>
+    <text x="100" y="44" text-anchor="middle" font-size="9" fill="#94a3b8">主数据库</text>
+    <text x="10" y="62" font-size="9" fill="#64748b">• 业务数据 / 实体记忆</text>
+    <text x="10" y="77" font-size="9" fill="#64748b">• 审计日志 / 计费记录</text>
+    <text x="10" y="92" font-size="9" fill="#64748b">• Alembic 迁移管理</text>
+  </g>
+
+  <g transform="translate(320, 480)" filter="url(#dShadow)">
+    <rect x="0" y="0" width="200" height="100" rx="12" fill="#fff" stroke="#fde68a" stroke-width="1.5"/>
+    <rect x="0" y="0" width="200" height="5" rx="2" fill="url(#dataGrad)"/>
+    <text x="100" y="28" text-anchor="middle" font-size="13" font-weight="700" fill="#d97706">Redis 7</text>
+    <text x="100" y="44" text-anchor="middle" font-size="9" fill="#94a3b8">缓存 + 消息队列</text>
+    <text x="10" y="62" font-size="9" fill="#64748b">• 短期记忆 / 会话</text>
+    <text x="10" y="77" font-size="9" fill="#64748b">• LLM 响应缓存</text>
+    <text x="10" y="92" font-size="9" fill="#64748b">• 限流计数器</text>
+  </g>
+
+  <g transform="translate(540, 480)" filter="url(#dShadow)">
+    <rect x="0" y="0" width="200" height="100" rx="12" fill="#fff" stroke="#fde68a" stroke-width="1.5"/>
+    <rect x="0" y="0" width="200" height="5" rx="2" fill="url(#dataGrad)"/>
+    <text x="100" y="28" text-anchor="middle" font-size="13" font-weight="700" fill="#d97706">Milvus 2.3</text>
+    <text x="100" y="44" text-anchor="middle" font-size="9" fill="#94a3b8">向量数据库</text>
+    <text x="10" y="62" font-size="9" fill="#64748b">• 长期记忆向量</text>
+    <text x="10" y="77" font-size="9" fill="#64748b">• Embedding 1024d</text>
+    <text x="10" y="92" font-size="9" fill="#64748b">• HNSW 索引 · Top-K 检索</text>
+  </g>
+
+  <g transform="translate(760, 480)" filter="url(#dShadow)">
+    <rect x="0" y="0" width="200" height="100" rx="12" fill="#fff" stroke="#fde68a" stroke-width="1.5"/>
+    <rect x="0" y="0" width="200" height="5" rx="2" fill="url(#dataGrad)"/>
+    <text x="100" y="28" text-anchor="middle" font-size="13" font-weight="700" fill="#d97706">MinIO</text>
+    <text x="100" y="44" text-anchor="middle" font-size="9" fill="#94a3b8">对象存储</text>
+    <text x="10" y="62" font-size="9" fill="#64748b">• 文件 / 文档存储</text>
+    <text x="10" y="77" font-size="9" fill="#64748b">• Milvus 底层对象</text>
+    <text x="10" y="92" font-size="9" fill="#64748b">• S3 兼容 API</text>
+  </g>
+
+  <g transform="translate(980, 480)" filter="url(#dShadow)">
+    <rect x="0" y="0" width="200" height="100" rx="12" fill="#fff" stroke="#fde68a" stroke-width="1.5"/>
+    <rect x="0" y="0" width="200" height="5" rx="2" fill="url(#dataGrad)"/>
+    <text x="100" y="28" text-anchor="middle" font-size="13" font-weight="700" fill="#d97706">Elasticsearch 8.10</text>
+    <text x="100" y="44" text-anchor="middle" font-size="9" fill="#94a3b8">全文检索 + 日志</text>
+    <text x="10" y="62" font-size="9" fill="#64748b">• 论文/文档全文搜索</text>
+    <text x="10" y="77" font-size="9" fill="#64748b">• 应用日志索引</text>
+    <text x="10" y="92" font-size="9" fill="#64748b">• 审计日志搜索</text>
+  </g>
+
+  <!-- Milvus dependencies -->
+  <g transform="translate(590, 430)">
+    <rect x="0" y="0" width="100" height="22" rx="6" fill="#fef3c7" stroke="#fde68a"/>
+    <text x="50" y="15" text-anchor="middle" font-size="8" fill="#d97706">etcd (元数据)</text>
+  </g>
+  <line x1="640" y1="452" x2="640" y2="475" stroke="#fde68a" stroke-width="1" stroke-dasharray="3,2"/>
+
+  <!-- ============================================================ -->
+  <!-- Monitoring Layer -->
+  <!-- ============================================================ -->
+  <g transform="translate(100, 610)" filter="url(#dShadow)">
+    <rect x="0" y="0" width="200" height="70" rx="12" fill="#fff" stroke="#86efac" stroke-width="1.5"/>
+    <rect x="0" y="0" width="200" height="5" rx="2" fill="url(#monGrad)"/>
+    <text x="100" y="28" text-anchor="middle" font-size="12" font-weight="700" fill="#059669">Prometheus + Grafana</text>
+    <text x="10" y="48" font-size="9" fill="#64748b">• 指标采集 · 告警规则</text>
+    <text x="10" y="62" font-size="9" fill="#64748b">• 可视化仪表盘 · SLO 监控</text>
+  </g>
+
+  <g transform="translate(320, 610)" filter="url(#dShadow)">
+    <rect x="0" y="0" width="200" height="70" rx="12" fill="#fff" stroke="#86efac" stroke-width="1.5"/>
+    <rect x="0" y="0" width="200" height="5" rx="2" fill="url(#monGrad)"/>
+    <text x="100" y="28" text-anchor="middle" font-size="12" font-weight="700" fill="#059669">Loki + ELK</text>
+    <text x="10" y="48" font-size="9" fill="#64748b">• 日志聚合 · 全文检索</text>
+    <text x="10" y="62" font-size="9" fill="#64748b">• 结构化日志 · 错误追踪</text>
+  </g>
+
+  <g transform="translate(540, 610)" filter="url(#dShadow)">
+    <rect x="0" y="0" width="200" height="70" rx="12" fill="#fff" stroke="#86efac" stroke-width="1.5"/>
+    <rect x="0" y="0" width="200" height="5" rx="2" fill="url(#monGrad)"/>
+    <text x="100" y="28" text-anchor="middle" font-size="12" font-weight="700" fill="#059669">Jaeger</text>
+    <text x="10" y="48" font-size="9" fill="#64748b">• 分布式链路追踪</text>
+    <text x="10" y="62" font-size="9" fill="#64748b">• TraceId 全链路回放</text>
+  </g>
+
+  <g transform="translate(760, 610)" filter="url(#dShadow)">
+    <rect x="0" y="0" width="200" height="70" rx="12" fill="#fff" stroke="#86efac" stroke-width="1.5"/>
+    <rect x="0" y="0" width="200" height="5" rx="2" fill="url(#monGrad)"/>
+    <text x="100" y="28" text-anchor="middle" font-size="12" font-weight="700" fill="#059669">CI/CD</text>
+    <text x="10" y="48" font-size="9" fill="#64748b">• GitHub Actions</text>
+    <text x="10" y="62" font-size="9" fill="#64748b">• 安全扫描 · 自动部署</text>
+  </g>
+
+  <!-- Monitoring arrows (pull metrics from app & data) -->
+  <path d="M200 610 Q200 590 315 430" fill="none" stroke="#10b981" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#dArr)"/>
+  <path d="M420 610 Q420 580 420 430" fill="none" stroke="#10b981" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#dArr)"/>
+  <path d="M640 610 Q640 590 640 485" fill="none" stroke="#10b981" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#dArr)"/>
+
+  <!-- Port annotations -->
+  <g transform="translate(100, 700)" opacity="0.7">
+    <text x="0" y="0" font-size="9" fill="#94a3b8" font-weight="600">端口映射</text>
+    <text x="0" y="16" font-size="8" fill="#94a3b8">App: 8000 · Nginx: 80/443 · PostgreSQL: 5432 · Redis: 6379 · Milvus: 19530 · MinIO: 9000/9001 · ES: 9200 · Grafana: 3000 · Jaeger: 16686</text>
+  </g>
+
+  <!-- Deployment modes -->
+  <g transform="translate(980, 610)" filter="url(#dShadow)">
+    <rect x="0" y="0" width="200" height="70" rx="12" fill="#fff" stroke="#fecaca" stroke-width="1.5"/>
+    <rect x="0" y="0" width="200" height="5" rx="2" fill="#ef4444"/>
+    <text x="100" y="28" text-anchor="middle" font-size="12" font-weight="700" fill="#dc2626">部署模式</text>
+    <text x="10" y="48" font-size="9" fill="#64748b">• Dev: docker compose up -d</text>
+    <text x="10" y="62" font-size="9" fill="#64748b">• Prod: K8s + Helm Chart</text>
+  </g>
+
+  <!-- Footer -->
+  <text x="650" y="775" text-anchor="middle" font-size="10" fill="#94a3b8">FnixAgent · Production Deployment Topology</text>
+</svg>

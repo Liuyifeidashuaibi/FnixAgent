@@ -1,0 +1,4 @@
+# Snapshots directory
+# 进化前快照(由 SnapshotManager 写入,供飞轮 ④ 回滚使用)
+# 格式: snap_<timestamp>_<label>.json
+# 清理策略: 保留每日 7 份 + 每周 4 份

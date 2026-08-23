@@ -1,0 +1,29 @@
+{
+  "run_id": "20260822-042331",
+  "model": "qwen3.6-plus-2026-04-02",
+  "started_at": 1787340211.088714,
+  "finished_at": 1787340784.201138,
+  "totals": {
+    "total": 37,
+    "success": 25,
+    "failure": 0,
+    "fetch_error": 0,
+    "infra_skip": 12,
+    "success_rate": 1.0,
+    "failure_type_counts": {}
+  },
+  "total_tokens": 929485,
+  "note": "配额熔断：连续 12 条基础设施错误后提前停止，剩余任务未执行，待模型配额恢复后重跑续上。",
+  "datasets": {
+    "web-bench": {
+      "dataset": "web-bench",
+      "total": 37,
+      "success": 25,
+      "failure": 0,
+      "fetch_error": 0,
+      "infra_skip": 12,
+      "success_rate": 1.0,
+      "failure_type_counts": {}
+    }
+  }
+}

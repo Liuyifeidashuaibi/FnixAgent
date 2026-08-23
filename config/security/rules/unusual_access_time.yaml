@@ -1,0 +1,16 @@
+title: 非工作时段访问
+id: 6g4b3c2d-2345-6789-abcd-ef1234567890
+status: stable
+description: 凌晨 2-5 点的访问行为
+author: fnixagent
+date: 2026-07-07
+level: medium
+detection:
+  selection:
+    detail.hour_of_day|gte: 2
+    detail.hour_of_day|lt: 5
+  condition: selection
+mitre:
+  - T1078
+falsepositives:
+  - 自动化夜间任务

@@ -1,0 +1,117 @@
+# fnixagent 生产环境覆盖配置
+# ============================================================================
+# 用法:
+#   helm install fnixagent deploy/helm/fnixagent \
+#     -f deploy/helm/fnixagent/values.yaml \
+#     -f deploy/helm/fnixagent/values.prod.yaml \
+#     -f my-secrets.yaml  # 包含真实的密码/API Key
+#
+# 关键变更:
+#   1. 副本数 3(高可用最低要求)
+#   2. 资源限制上调
+#   3. Secret.create=false(必须从外部注入,推荐 Sealed Secrets)
+#   4. HPA 最大副本数 20
+#   5. 持久化存储 200Gi
+#   6. 使用真实域名 + Let's Encrypt 证书
+#   7. Pod 反亲和(分散到不同节点)
+# ============================================================================
+
+fnixagent:
+  replicaCount: 3
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+  hpa:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 20
+    targetCPUUtilizationPercentage: 65
+    targetMemoryUtilizationPercentage: 75
+  persistence:
+    size: 200Gi
+    storageClass: "gp3"  # AWS EBS gp3 / 阿里云 ESSD / 自建 local-path
+
+# 生产环境必须使用外部 Secret(Sealed Secrets / External Secrets Operator)
+secret:
+  create: false
+  name: fnixagent-secrets
+
+# 使用云托管数据库(推荐 AWS RDS / 阿里云 RDS / 自建主从)
+externalDatabase:
+  enabled: true
+  host: "prod-pg.fnixagent.internal"  # 替换为真实地址
+  port: 5432
+externalRedis:
+  enabled: true
+  host: "prod-redis.fnixagent.internal"  # 替换为真实地址
+  port: 6379
+
+# Milvus / MinIO / ES 使用云托管或独立 Operator 部署
+milvus:
+  enabled: true
+  host: "prod-milvus.fnixagent.internal"
+minio:
+  enabled: true
+  endpoint: "prod-minio.fnixagent.internal:9000"
+elasticsearch:
+  enabled: true
+  host: "prod-es.fnixagent.internal"
+
+# Ingress 生产配置
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - host: api.fnixagent.com  # 替换为真实域名
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: fnixagent-tls
+      hosts:
+        - api.fnixagent.com
+
+# Pod 反亲和:分散到不同节点,避免单节点故障导致服务不可用
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: fnixagent
+              app.kubernetes.io/instance: "{{ .Release.Name }}"
+          topologyKey: kubernetes.io/hostname
+
+# 节点容忍(部署到专用节点池)
+tolerations:
+  - key: "fnixagent/dedicated"
+    operator: "Equal"
+    value: "true"
+    effect: "NoSchedule"
+
+nodeSelector:
+  fnixagent/dedicated: "true"
+
+# 备份与容灾 — Phase 2.9
+backup:
+  enabled: true
+  schedule: "0 19 * * *"  # UTC 19:00 = 北京 03:00
+  retentionDays: 30  # 生产环境保留 30 天(异地 90 天由对象存储生命周期管理)
+  resources:
+    requests:
+      cpu: 500m
+      memory: 512Mi
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+  storage:
+    size: 500Gi
+    storageClass: "gp3"
+  remote:
+    endpoint: "https://s3.ap-east-1.amazonaws.com"  # 替换为真实异地 endpoint
+    bucket: "fnixagent-backup-prod"

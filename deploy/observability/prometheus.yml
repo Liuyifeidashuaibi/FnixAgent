@@ -1,0 +1,117 @@
+# fnixagent Prometheus 抓取配置 — Phase 2.10
+#
+# 用法:
+#   prometheus --config.file=prometheus.yml
+#
+# 抓取目标:
+#   - fnixagent API(FastAPI /metrics 端点)
+#   - PostgreSQL exporter(可选)
+#   - Redis exporter(可选)
+#   - Milvus metrics(可选)
+#   - Node Exporter(主机指标)
+#   - kube-state-metrics(K8s 集群指标)
+
+global:
+  scrape_interval: 15s      # 默认抓取间隔
+  evaluation_interval: 15s  # 告警规则评估间隔
+  scrape_timeout: 10s       # 单次抓取超时
+
+# 告警规则文件
+rule_files:
+  - "alerts/*.yml"
+
+# Alertmanager 配置
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - "alertmanager:9093"
+
+# 抓取目标
+scrape_configs:
+  # ---------------------------------------------------------------------------
+  # fnixagent API(应用指标)
+  # ---------------------------------------------------------------------------
+  - job_name: "fnixagent"
+    metrics_path: "/metrics"
+    scrape_interval: 10s  # 应用指标更频繁
+    static_configs:
+      - targets: ["fnixagent:8000"]
+        labels:
+          service: "fnixagent"
+          env: "production"
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL Exporter(数据库指标)
+  # ---------------------------------------------------------------------------
+  - job_name: "postgres"
+    static_configs:
+      - targets: ["postgres-exporter:9187"]
+        labels:
+          service: "postgres"
+    # 仅当部署了 postgres-exporter 时抓取
+
+  # ---------------------------------------------------------------------------
+  # Redis Exporter(缓存指标)
+  # ---------------------------------------------------------------------------
+  - job_name: "redis"
+    static_configs:
+      - targets: ["redis-exporter:9121"]
+        labels:
+          service: "redis"
+
+  # ---------------------------------------------------------------------------
+  # Milvus Metrics(向量数据库)
+  # ---------------------------------------------------------------------------
+  - job_name: "milvus"
+    metrics_path: "/metrics"
+    static_configs:
+      - targets: ["milvus:9091"]
+        labels:
+          service: "milvus"
+
+  # ---------------------------------------------------------------------------
+  # Node Exporter(主机指标:CPU/内存/磁盘/网络)
+  # ---------------------------------------------------------------------------
+  - job_name: "node"
+    static_configs:
+      - targets: ["node-exporter:9100"]
+        labels:
+          service: "node"
+
+  # ---------------------------------------------------------------------------
+  # Kubernetes 服务发现(在 K8s 集群中自动发现带 prometheus.io/scrape 注解的 Pod)
+  # ---------------------------------------------------------------------------
+  - job_name: "kubernetes-pods"
+    kubernetes_sd_configs:
+      - role: pod
+    relabel_configs:
+      # 仅抓取带 prometheus.io/scrape: true 注解的 Pod
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+        action: keep
+        regex: true
+      # 使用注解中的 path(默认 /metrics)
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+        action: replace
+        target_label: __metrics_path__
+        regex: (.+)
+      # 使用注解中的 port
+      - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+        action: replace
+        regex: ([^:]+)(?::\d+)?;(\d+)
+        replacement: $1:$2
+        target_label: __address__
+      # 添加 namespace / pod_name 标签
+      - source_labels: [__meta_kubernetes_namespace]
+        target_label: namespace
+      - source_labels: [__meta_kubernetes_pod_name]
+        target_label: pod
+      - source_labels: [__meta_kubernetes_pod_label_app]
+        target_label: app
+
+  # ---------------------------------------------------------------------------
+  # kube-state-metrics(K8s 集群状态指标:Deployment/Pod/Service 数量等)
+  # ---------------------------------------------------------------------------
+  - job_name: "kube-state-metrics"
+    static_configs:
+      - targets: ["kube-state-metrics.kube-system.svc:8080"]

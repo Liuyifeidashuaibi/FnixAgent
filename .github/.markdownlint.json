@@ -1,0 +1,57 @@
+{
+  "default": true,
+  "extends": "github",
+  "globs": [
+    "**/*.md",
+    "**/*.markdown",
+    ".github/**/*.md",
+    "docs/**/*.md"
+  ],
+  "ignore": [
+    "node_modules/**",
+    "dist/**",
+    "build/**",
+    "target/**",
+    "coverage/**",
+    "**/*.min.js",
+    "**/*.lock",
+    "**/package-lock.json",
+    "**/pnpm-lock.yaml",
+    "**/yarn.lock",
+    "**/Cargo.lock",
+    "_references/**",
+    ".fnix/**",
+    "data/**",
+    ".pytest_cache/**",
+    ".ruff_cache/**",
+    "__pycache__/**",
+    "*.svg",
+    "CHANGELOG.md",
+    "软著申请材料/**"
+  ],
+  "config": {
+    "default": true,
+
+    "MD003": { "style": "atx" },
+    "MD004": { "style": "dash" },
+    "MD007": { "indent": 2 },
+    "MD013": { "line_length": 120, "code_blocks": false, "tables": false, "headings": false },
+    "MD024": { "siblings_only": true },
+    "MD025": { "front_matter_title": "" },
+    "MD026": { "punctuation": ".,;:!。，；：！" },
+    "MD029": { "style": "ordered" },
+    "MD033": { "allowed_elements": ["br", "sub", "sup", "kbd", "details", "summary", "a", "img", "picture", "source", "abbr", "span", "div"] },
+    "MD034": false,
+    "MD036": false,
+    "MD041": false,
+    "MD046": { "style": "fenced" },
+
+    "no-hard-tabs": true,
+    "no-inline-html": false,
+    "no-trailing-punctuation": false,
+    "no-trailing-spaces": true,
+    "no-duplicate-heading": true,
+    "first-heading-h1": false,
+    "no-empty-links": true
+  }
+}

@@ -1,0 +1,67 @@
+name: fnix-se-core
+
+on:
+  push:
+    paths:
+      - "fnix-se/**"
+      - ".github/workflows/fnix-se-core.yml"
+  pull_request:
+    paths:
+      - "fnix-se/**"
+      - ".github/workflows/fnix-se-core.yml"
+
+jobs:
+  core-check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: fnix-se
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Core subset check
+        run: |
+          cargo check -p fnix-core -p fnix-storage -p fnix-ast -p fnix-pdg \
+            -p fnix-checkpoint -p fnix-evolution -p fnix-dag -p fnix-llm \
+            -p fnix-agent -p fnix-tools -p fnix-adapt -p fnix-cli -p fnix-server \
+            -p fnix-sandbox -p fnix-neuro-symbolic -p fnix-protocol
+          cargo test -p fnix-neuro-symbolic -p fnix-sandbox -p fnix-protocol --lib --quiet
+      - name: MVP E2E smoke
+        run: |
+          cargo run -q -p fnix-cli -- status
+          cargo run -q -p fnix-cli -- index --path crates/fnix-core --force
+          cargo run -q -p fnix-cli -- run --task "echo e2e via tools" --project .
+          cargo run -q -p fnix-cli -- verify --file crates/fnix-core/src/lib.rs --project crates/fnix-core
+          cargo run -q -p fnix-cli -- pev --task "write:.fnix/run_artifacts/ci_pev.txt:ok" --project .
+          cargo run -q -p fnix-cli -- evolve --task ci-offline --fitness 0.9
+          cargo run -q -p fnix-cli -- git --path .
+          cargo run -q -p fnix-cli -- agent --task "echo e2e" --project .
+          cargo run -q -p fnix-cli -- agent --task "echo txn" --project . --txn
+          OUT=$(cargo run -q -p fnix-cli -- checkpoint demo --task ci 2>&1)
+          ID=$(echo "$OUT" | sed -n 's/.*execution_id: \([0-9a-f-]\{36\}\).*/\1/p' | head -n1)
+          test -n "$ID"
+          cargo run -q -p fnix-cli -- checkpoint resume --execution-id "$ID"
+      - name: MCP stdio smoke
+        run: |
+          MCP_OUT=$(printf '%s\n' \
+            '{"jsonrpc":"2.0","method":"initialize","id":1}' \
+            '{"jsonrpc":"2.0","method":"tools/list","id":2}' \
+            '{"jsonrpc":"2.0","method":"tools/call","id":3,"params":{"name":"echo","arguments":{"message":"ci-mcp"}}}' \
+            | cargo run -q -p fnix-cli -- serve-mcp 2>/dev/null)
+          echo "$MCP_OUT"
+          echo "$MCP_OUT" | grep -q '"protocolVersion"'
+          echo "$MCP_OUT" | grep -q '"name":"echo"'
+          echo "$MCP_OUT" | grep -q 'ci-mcp'
+      - name: LSP stdio smoke
+        run: |
+          cargo run -q -p fnix-cli -- index --path crates/fnix-core --force
+          BODY='{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"processId":null,"rootUri":null,"capabilities":{}}}'
+          LEN=$(printf '%s' "$BODY" | wc -c)
+          LSP_OUT=$(printf 'Content-Length: %s\r\n\r\n%s' "$LEN" "$BODY" \
+            | cargo run -q -p fnix-cli -- serve-lsp --project crates/fnix-core 2>/dev/null)
+          echo "$LSP_OUT"
+          echo "$LSP_OUT" | grep -q '"name":"fnix-lsp"'
+          echo "$LSP_OUT" | grep -q 'completionProvider'
+          echo "$LSP_OUT" | grep -q 'definitionProvider'
+          test -f crates/fnix-core/.fnix/index/pdg_symbols.json
+          grep -q start_line crates/fnix-core/.fnix/index/pdg_symbols.json

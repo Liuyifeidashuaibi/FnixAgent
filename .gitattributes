@@ -1,0 +1,85 @@
+# Git attributes — normalize line endings, control diffs, ship exports.
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Line endings
+#   - source code: LF (Unix)
+#   - Windows-only files: CRLF
+#   - anything not matched: LF (default)
+# ──────────────────────────────────────────────────────────────────────────────
+*                 text=auto eol=lf
+
+# Windows batch / PowerShell
+*.bat             text eol=crlf
+*.cmd             text eol=crlf
+*.ps1             text eol=crlf
+
+# Shell scripts must stay LF even on Windows checkouts
+*.sh              text eol=lf
+*.bash            text eol=lf
+
+# Windows-only source
+*.sln             text eol=crlf
+*.csproj          text eol=crlf
+*.vcxproj         text eol=crlf
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Diff / merge drivers — make noisy files reviewable
+# ──────────────────────────────────────────────────────────────────────────────
+*.svg             diff=svg
+*.png             binary
+*.jpg             binary
+*.jpeg            binary
+*.gif             binary
+*.webp            binary
+*.ico             binary
+*.pdf             binary
+*.zip             binary
+*.gz              binary
+*.tar             binary
+*.7z              binary
+*.woff            binary
+*.woff2           binary
+*.ttf             binary
+*.eot             binary
+
+# Lockfiles are large and noisy — show them as "changed" but don't diff
+package-lock.json -diff
+pnpm-lock.yaml    -diff
+yarn.lock         -diff
+Cargo.lock        -diff
+composer.lock     -diff
+poetry.lock       -diff
+uv.lock           -diff
+
+# Generated files — don't diff by default
+openapi.json      linguist-generated
+CHANGELOG.md      linguist-generated
+
+# Custom: collapse generated OpenAPI diffs
+/api/openapi/*.json  linguist-generated
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Linguist overrides — give credit to the right languages
+# ──────────────────────────────────────────────────────────────────────────────
+*.pymacs          linguist-language=Python
+*.tmSnippet       linguist-language=XML
+
+# Treat workflow files as YAML (they already are, but be explicit)
+.github/workflows/*.yml linguist-language=YAML
+
+# Vendored dependencies — exclude from language stats
+/.fnixrules       linguist-vendored
+/.cluster         linguist-vendored
+/node_modules     linguist-vendored
+/dist             linguist-vendored
+/build            linguist-vendored
+/target           linguist-vendored
+/coverage         linguist-vendored
+/.pytest_cache    linguist-vendored
+/.ruff_cache      linguist-vendored
+/__pycache__      linguist-vendored
+*.pyc             linguist-vendored
+
+# Documentation
+/docs/**          linguist-documentation
+**/*.md           linguist-documentation

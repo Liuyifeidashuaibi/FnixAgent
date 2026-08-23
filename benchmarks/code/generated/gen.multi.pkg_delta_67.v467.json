@@ -1,0 +1,46 @@
+{
+  "id": "gen.multi.pkg_delta_67.v467",
+  "title": "package pkg_delta_67",
+  "prompt": "Create package `pkg_delta_67` with `__init__.py` exporting `run()` and `pkg_delta_67/core.py` implementing `run()` returning 'pkg_delta_67-ok'.",
+  "capability": [
+    "multi_file",
+    "write"
+  ],
+  "difficulty": 3,
+  "language": "python",
+  "tags": [
+    "generated",
+    "multi_file"
+  ],
+  "timeout_s": 180,
+  "setup": {
+    "files": {
+      "README.md": "# pkg_delta_67\n"
+    }
+  },
+  "checks": [
+    {
+      "function": "file_exists",
+      "args": {
+        "path": "pkg_delta_67/__init__.py"
+      }
+    },
+    {
+      "function": "file_exists",
+      "args": {
+        "path": "pkg_delta_67/core.py"
+      }
+    },
+    {
+      "function": "stdout_equals",
+      "args": {
+        "command": [
+          "python",
+          "-c",
+          "from pkg_delta_67 import run; print(run())"
+        ],
+        "expected": "pkg_delta_67-ok"
+      }
+    }
+  ]
+}

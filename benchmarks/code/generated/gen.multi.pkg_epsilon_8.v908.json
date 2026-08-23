@@ -1,0 +1,46 @@
+{
+  "id": "gen.multi.pkg_epsilon_8.v908",
+  "title": "package pkg_epsilon_8",
+  "prompt": "Create package `pkg_epsilon_8` with `__init__.py` exporting `run()` and `pkg_epsilon_8/core.py` implementing `run()` returning 'pkg_epsilon_8-ok'.",
+  "capability": [
+    "multi_file",
+    "write"
+  ],
+  "difficulty": 3,
+  "language": "python",
+  "tags": [
+    "generated",
+    "multi_file"
+  ],
+  "timeout_s": 180,
+  "setup": {
+    "files": {
+      "README.md": "# pkg_epsilon_8\n"
+    }
+  },
+  "checks": [
+    {
+      "function": "file_exists",
+      "args": {
+        "path": "pkg_epsilon_8/__init__.py"
+      }
+    },
+    {
+      "function": "file_exists",
+      "args": {
+        "path": "pkg_epsilon_8/core.py"
+      }
+    },
+    {
+      "function": "stdout_equals",
+      "args": {
+        "command": [
+          "python",
+          "-c",
+          "from pkg_epsilon_8 import run; print(run())"
+        ],
+        "expected": "pkg_epsilon_8-ok"
+      }
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "id": "sales_csv",
+  "prompt": "写一个销售明细 CSV（含表头 date,product,amount 与至少 3 行数据）到 .fnix/artifacts/sales_data/rows.csv，可用 write_file。",
+  "work_mode": "craft",
+  "expect_glob": ".fnix/artifacts/sales_data/**/*.csv",
+  "timeout_s": 120
+}

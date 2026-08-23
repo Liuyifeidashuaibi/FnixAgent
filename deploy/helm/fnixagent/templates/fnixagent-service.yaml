@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "fnixagent.fullname" . }}
+  labels:
+    {{- include "fnixagent.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.fnixagent.service.type }}
+  ports:
+    - port: {{ .Values.fnixagent.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "fnixagent.selectorLabels" . | nindent 4 }}

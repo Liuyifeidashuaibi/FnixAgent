@@ -1,0 +1,173 @@
+# Fnix Desktop Release (Tauri 2)
+
+# 触发: 推送 v* 标签 或 workflow_dispatch
+# 产物: Windows NSIS / macOS DMG / Linux deb+AppImage
+
+name: Release Desktop Client
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '版本号 (如 1.0.0-beta.1，不带 v 前缀)'
+        required: false
+
+permissions:
+  contents: write
+
+env:
+  NODE_VERSION: '20'
+  PNPM_VERSION: '9.15.9'
+  CARGO_TERM_COLOR: always
+
+jobs:
+  release:
+    name: Tauri Build (${{ matrix.platform }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: win
+            target: x86_64-pc-windows-msvc
+            artifact_glob: apps/workbench/src-tauri/target/release/bundle/**/*
+          - os: macos-latest
+            platform: mac
+            target: x86_64-apple-darwin
+            artifact_glob: apps/workbench/src-tauri/target/release/bundle/**/*
+          - os: macos-latest
+            platform: mac-aarch64
+            target: aarch64-apple-darwin
+            artifact_glob: apps/workbench/src-tauri/target/release/bundle/**/*
+          - os: ubuntu-22.04
+            platform: linux
+            target: x86_64-unknown-linux-gnu
+            artifact_glob: apps/workbench/src-tauri/target/release/bundle/**/*
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Enable corepack
+        run: corepack enable
+
+      - name: Setup pnpm
+        run: corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python deps
+        run: |
+          pip install -r requirements.txt
+          pip install -e ".[dev,security]"
+          pip install "pyinstaller>=6.0"
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: apps/workbench/src-tauri
+
+      - name: Install Linux Tauri deps
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate icons
+        run: python scripts/generate-app-icon.py
+
+      - name: Generate Tauri icons
+        working-directory: apps/workbench
+        run: pnpm exec tauri icon app-icon.png
+
+      - name: Bundle self-contained agentd sidecar
+        run: node scripts/build-agentd-sidecar.mjs
+
+      - name: Fetch fnix-local sidecar
+        run: node scripts/fetch-fnix-local.mjs ${{ matrix.platform }}
+        env:
+          FNIX_BUILD_LOCAL: '1'
+
+      - name: Clean-VM sidecar smoke
+        run: node scripts/smoke-clean-vm.mjs
+
+      - name: Verify beta (no API)
+        run: node scripts/verify-beta.mjs
+        env:
+          SKIP_VERIFY_BUNDLE: '1'
+
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Updater 签名密钥(必需): tauri.conf.json 已写入 pubkey,
+          # 私钥通过仓库 Settings → Secrets 注入,缺失则更新包无法验签。
+          # 本机密钥对位于维护者 ~/.fnix/tauri-updater.key(不入库)。
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          # 代码签名 / macOS 公证(可选,配置后自动启用):
+          # APPLE_CERTIFICATE / APPLE_CERTIFICATE_PASSWORD / APPLE_ID /
+          # APPLE_PASSWORD / APPLE_TEAM_ID; Windows Authenticode 待接入。
+        with:
+          projectPath: apps/workbench
+          args: --target ${{ matrix.target }}
+
+      - name: Checksums + SBOM stub
+        run: node scripts/release-checksums.mjs
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: fnix-${{ matrix.platform }}-${{ github.ref_name }}
+          path: |
+            ${{ matrix.artifact_glob }}
+            dist-release/**
+          retention-days: 30
+          if-no-files-found: warn
+
+  github-release:
+    name: Publish GitHub Release
+    needs: release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/**/*
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-rc') || contains(github.ref_name, '-beta') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

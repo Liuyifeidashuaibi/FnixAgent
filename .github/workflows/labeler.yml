@@ -1,0 +1,21 @@
+name: PR Labeler
+
+# Auto-applies labels to PRs based on changed paths.
+# https://github.com/actions/labeler
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/labeler@v5
+        with:
+          configuration-path: .github/labeler.yml
+          fail-on-empty-config: false

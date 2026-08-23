@@ -1,0 +1,129 @@
+# KTG 知识拓扑图 Schema 配置(Phase 0.7)
+#
+# 本文件声明拓扑图的「固化」结构:层级、节点类型、边类型、固定权重。
+# 与代码 core/topology/schema.py 中的常量保持一致,运行时仅读取不修改。
+#
+# 任何修改必须同步更新:
+#   - src/fnixagent/core/topology/schema.py
+#   - src/fnixagent/core/types.py (NodeType / EdgeType / TopologyLayer)
+#   - SELF_EVOLUTION_AGENT_PLAN.md 第二部分
+
+# ===========================================================================
+# 固定四层层级(永久不变,不允许新增层)
+# ===========================================================================
+layers:
+  L1_GOAL:
+    name: "根目标"
+    description: "Agent 全局能力定位"
+    example: "智能办公助手"
+  L2_CONCEPT:
+    name: "概念层"
+    description: "对应大类 Skills"
+    example: "论文检索 / 文档编辑 / 格式转换"
+  L3_RULE:
+    name: "规则层"
+    description: "技能调用前置条件/约束/优先级"
+    example: "检索需先确认领域 / PDF 转换需源文件<50MB"
+  L4_FACT:
+    name: "事实执行层"
+    description: "具体执行案例/最优参数"
+    example: "arXiv 查询 cs.AI 返回 10 篇按相关性排序"
+
+# ===========================================================================
+# 六类固定节点类型(永久不变)
+# ===========================================================================
+node_types:
+  GOAL:
+    layer: L1_GOAL
+    description: "根目标节点"
+    required_fields: [name, description]
+  CONCEPT:
+    layer: L2_CONCEPT
+    description: "概念节点,绑定技能"
+    required_fields: [name, skill_binding, weight]
+  RULE:
+    layer: L3_RULE
+    description: "规则节点"
+    required_fields: [name, precondition, priority]
+  FACT:
+    layer: L4_FACT
+    description: "事实执行节点"
+    required_fields: [name, content, source, confidence]
+  CONSTRAINT:
+    layer: L3_RULE
+    description: "约束节点(规则子类)"
+    required_fields: [name, rule_type, threshold]
+  INFERENCE:
+    layer: L3_RULE
+    description: "推理链路节点"
+    required_fields: [name, from_node, to_node, reasoning]
+
+# ===========================================================================
+# 六类固定因果边关系(永久不变)
+# ===========================================================================
+edge_types:
+  CAUSAL:
+    description: "A 导致 B"
+    direction: "A→B"
+    weight_semantics: "因果强度"
+    weight_type: "variable"        # 可变权重
+  DEPENDS_ON:
+    description: "A 依赖 B"
+    direction: "A→B"
+    weight_semantics: "依赖必要性"
+    weight_type: "variable"
+  DERIVES:
+    description: "A 推导出 B"
+    direction: "A→B"
+    weight_semantics: "推导置信度"
+    weight_type: "variable"
+  CONTAINS:
+    description: "A 包含 B"
+    direction: "A→B"
+    weight_semantics: "包含权重"
+    weight_type: "fixed"
+    fixed_weight: 1.0
+  PRECONDITION:
+    description: "A 是 B 的前置"
+    direction: "A→B"
+    weight_semantics: "前置必要性"
+    weight_type: "variable"
+  MUTEX:
+    description: "A 与 B 互斥"
+    direction: "A↔B"
+    weight_semantics: "互斥强度(降权)"
+    weight_type: "fixed"
+    fixed_weight: -1.0
+
+# ===========================================================================
+# 固定权重参数(运行期不可修改)
+# ===========================================================================
+weights:
+  INITIAL_WEIGHT: 0.5              # 新节点/边初始权重
+  SINGLE_INCREMENT: 0.02           # 单次有效推理路径增量
+  SUCCESS_BONUS: 0.05              # 技能执行成功奖励
+  FAILURE_PENALTY: -0.08           # 失败惩罚
+  DAILY_DECAY: 0.999               # 每日衰减系数
+  DEPRECATE_THRESHOLD: 0.05        # 低于此值标记废弃
+  CONFIDENCE_INIT: 0.3             # 新节点初始置信度
+  MAX_WEIGHT: 1.0                  # 权重上限
+  MIN_WEIGHT: 0.0                  # 权重下限(非负)
+  DEPRECATED_WEIGHT: 0.01          # 废弃后回写的极小权重
+  MUTEX_PENALTY: 0.5               # 路径含 MUTEX 边时的降权系数
+
+# ===========================================================================
+# 路径搜索参数
+# ===========================================================================
+search:
+  default_top_k: 3                 # 默认返回 Top-K 路径
+  default_max_depth: 6             # 路径展开最大深度
+  default_min_weight: 0.05         # 路径权重低于此值剪枝
+  cold_start_threshold: 5          # 概念节点数 < 此值视为冷启动
+
+# ===========================================================================
+# 增量写入规则
+# ===========================================================================
+write_rules:
+  node_insert_only: true           # 永远 INSERT,从不 UPDATE 已有节点内容
+  edge_insert_only: true           # 同源同目标边新增平行边,不覆盖旧边权重
+  deprecated_soft_delete: true     # 废弃采用软删除(deprecated=true),不物理删除

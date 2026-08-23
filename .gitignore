@@ -1,0 +1,157 @@
+# --- Secrets & local env ---
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+credentials.json
+secrets/
+apps/workbench/public/local-llm.bootstrap.json
+apps/workbench/.env.local
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pyright/
+htmlcov/
+.coverage
+.coverage.*
+*.egg-info/
+dist/
+build/
+*.egg
+
+# --- Node / pnpm ---
+node_modules/
+.pnpm-store/
+*.tsbuildinfo
+.turbo/
+
+# --- Rust / Tauri ---
+**/target/
+**/*.rs.bk
+
+# --- Desktop bundles ---
+apps/workbench/src-tauri/resources/fnixagent-py/*
+!apps/workbench/src-tauri/resources/fnixagent-py/README.md
+apps/workbench/src-tauri/resources/fnix-local/*
+!apps/workbench/src-tauri/resources/fnix-local/README.md
+apps/workbench/src-tauri/resources/agentd/*
+!apps/workbench/src-tauri/resources/agentd/README.md
+packaging/.pyinstaller/
+apps/desktop-tauri/resources/fnixagent-py/
+apps/desktop-tauri/resources/fnix-local/
+apps/desktop/dist/
+apps/desktop/out/
+apps/desktop/release/
+
+# --- IDE ---
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json.example
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# --- Logs & runtime data ---
+logs/
+*.log
+data/standalone/*
+!data/standalone/.gitkeep
+data/topology/snapshots/*.json
+!data/topology/snapshots/.gitkeep
+data/traces/
+data/intelligence/
+data/uploads/*
+!data/uploads/.gitkeep
+data/db/
+data/cache/
+.secret_meta.json
+.fnix/
+.workbuddy/
+
+# --- Reference / study clones (local only, never tracked) ---
+_references/
+
+# --- Test / e2e ---
+playwright-report/
+test-results/
+blob-report/
+
+# --- Misc ---
+openapi.json
+app-icon.png
+*.local
+.cache/
+
+# --- Temp / one-shot outputs ---
+_write_test.tmp
+.tmp-agentd.out
+.fullsuite_report.txt
+.fullsuite_summary.txt
+apps/workbench/typecheck-out.txt
+apps/workbench/typecheck-exit.txt
+.fnix-smoke-test/
+.tmp-website-sim/
+.tmp-website-sim2/
+_debug_home/
+_debug_ws/
+debug_craft.py
+
+# --- Runtime cache & clusters ---
+.cluster/
+
+# --- Benchmark seeds (large test data) ---
+benchmarks/code/seed/
+
+# --- Generated HTML docs ---
+docs/*.html
+docs/internal/
+docs/转载用研究资料/
+
+# --- Experimental code ---
+experiments/
+ops-memory-mcp/
+
+# --- One-shot test scripts ---
+test_*.py
+verify_*.py
+test.jsonl
+
+# --- Agent workspace (not part of repo) ---
+.dumate/
+AGENTS.md
+MEMORY.md
+memory-topic/
+.easyclaw/
+
+# Reference/study tooling (local only)
+scripts/clone-references.mjs
+scripts/verify-references.mjs
+scripts/fnix-stack.mjs
+
+# Temporary cleanup scripts (never commit)
+scripts/clean_*.py
+scripts/p1_*.py
+scripts/ai_trace*.py
+
+# Local artifacts / scratch output (not part of repo)
+output.docx
+outputs/
+.uploads/
+up.sql
+down.sql
+pyright*.txt
+unit-result.txt
+unit-final.txt

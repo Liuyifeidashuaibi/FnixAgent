@@ -1,0 +1,62 @@
+============================================================
+  FnixAgent 已部署到 Kubernetes!
+============================================================
+
+Release: {{ .Release.Name }}
+Namespace: {{ .Release.Namespace }}
+Version: {{ .Chart.Version }} / App {{ .Chart.AppVersion }}
+
+1. 等待 Pod 就绪:
+   kubectl --namespace {{ .Release.Namespace }} wait \
+     --for=condition=ready pod -l app.kubernetes.io/instance={{ .Release.Name }} \
+     --timeout=300s
+
+2. 检查服务:
+   kubectl --namespace {{ .Release.Namespace }} get svc {{ include "fnixagent.fullname" . }}
+   kubectl --namespace {{ .Release.Namespace }} get pods -l app.kubernetes.io/instance={{ .Release.Name }}
+
+{{- if .Values.ingress.enabled }}
+
+3. 访问入口(Ingress):
+   {{- range .Values.ingress.hosts }}
+   URL: https://{{ .host }}
+   {{- end }}
+
+   确保 DNS 已解析到 Ingress Controller 的 LoadBalancer IP:
+   kubectl get svc -n ingress-nginx ingress-nginx-controller
+{{- else }}
+
+3. 端口转发访问(临时):
+   kubectl --namespace {{ .Release.Namespace }} port-forward \
+     svc/{{ include "fnixagent.fullname" . }} 8000:{{ .Values.fnixagent.service.port }}
+   然后访问 http://localhost:8000
+{{- end }}
+
+{{- if .Values.secret.create }}
+
+⚠️  警告:Secret 使用了 values.yaml 中的明文默认值(开发环境模式)!
+   生产环境必须:
+   1. 设置 secret.create=false
+   2. 通过 Sealed Secrets / External Secrets Operator 注入
+   3. 或通过 --set secret.values.JWT_SECRET_KEY=xxx 命令行注入
+{{- end }}
+
+4. 查看日志:
+   kubectl --namespace {{ .Release.Namespace }} logs \
+     -l app.kubernetes.io/instance={{ .Release.Name }} --tail=100 -f
+
+5. 运行数据库迁移(首次部署):
+   kubectl --namespace {{ .Release.Namespace }} exec -it \
+     deploy/{{ include "fnixagent.fullname" . }} -- \
+     alembic upgrade head
+
+6. 升级 Chart:
+   helm upgrade {{ .Release.Name }} deploy/helm/fnixagent \
+     -f deploy/helm/fnixagent/values.prod.yaml \
+     -f my-secrets.yaml -n {{ .Release.Namespace }}
+
+7. 卸载:
+   helm uninstall {{ .Release.Name }} -n {{ .Release.Namespace }}
+   注意:PVC 默认不删除,需手动清理:
+   kubectl --namespace {{ .Release.Namespace }} delete pvc \
+     -l app.kubernetes.io/instance={{ .Release.Name }}

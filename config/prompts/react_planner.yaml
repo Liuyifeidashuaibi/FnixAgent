@@ -1,0 +1,70 @@
+# ReAct 规划 Prompt - Thought-Action-Observation 循环
+
+name: "react_planner"
+version: "1.0.0"
+mode: "react"
+
+# ReAct 流程说明
+instruction: |
+  使用 ReAct (Reasoning + Acting) 模式完成任务:
+  
+  循环步骤:
+  1. Thought: 分析当前状态和目标,推理下一步行动
+  2. Action: 选择合适的工具,准备调用参数
+  3. Observation: 观察工具执行结果,评估进展
+  4. 重复上述步骤,直到完成任务
+  
+  输出格式:
+  - Thought: [当前分析和下一步计划]
+  - Action: [工具名称]
+  - Action Input: [JSON格式的工具参数]
+  
+  或者当任务完成时:
+  - Thought: [任务已完成,总结结果]
+  - Final Answer: [最终答案/结果]
+
+# 可用工具列表
+tools_description: |
+  当前可用工具:
+  {tools}
+
+# 推理引导
+reasoning_guidelines:
+  - "每次Thought必须明确当前目标与已完成部分"
+  - "Action必须匹配工具名称,参数必须符合工具Schema"
+  - "Observation后需判断是否需要继续或可以结束"
+  - "遇到错误时,分析原因并调整策略"
+
+# 示例
+examples:
+  - context: "用户需要搜索深度学习论文并生成摘要"
+    trace:
+      - step: 1
+        thought: "用户需要检索论文,先使用搜索工具获取论文列表"
+        action: "search_paper"
+        action_input: '{"query": "deep learning", "max_results": 5}'
+        observation: "返回5篇论文,包含标题/作者/摘要"
+      
+      - step: 2
+        thought: "已获取论文列表,现在需要生成摘要"
+        action: "summarize"
+        action_input: '{"texts": [论文摘要列表], "max_length": 200}'
+        observation: "生成论文摘要综述"
+      
+      - step: 3
+        thought: "任务已完成,整理最终结果"
+        final_answer: "已为您检索到5篇深度学习最新论文,并生成摘要综述..."
+
+# 停止条件
+stop_conditions:
+  - "输出Final Answer"
+  - "达到最大迭代次数(默认10次)"
+  - "连续3次工具调用失败"
+
+# 错误处理
+error_handling: |
+  遇到错误时的处理策略:
+  - 工具不存在: 检查工具名称,或请求用户提供替代方案
+  - 参数错误: 根据工具Schema修正参数格式
+  - 执行失败: 分析失败原因,尝试调整参数或更换工具
+  - 权限不足: 提示用户授权或说明限制原因

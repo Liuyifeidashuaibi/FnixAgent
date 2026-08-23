@@ -1,0 +1,232 @@
+# ====================================================================
+# fnixagent OS 内核服务编排(AgentOS Kernel Services)
+# ====================================================================
+# 用途:将 AgentOS 内核各子系统映射为 Docker 容器,实现完整 Agent OS。
+#
+# 设计理念(2026 AgentOS 前沿共识):
+#   - Agent 是"一等公民",不是工具
+#   - Prompt → Context → Harness Engineering 三阶演进
+#   - ETCLOVG 七层:Execution/Tool/Context/Lifecycle/Observability/Verification/Governance
+#   - 模型能力已够,决定落地的是 Harness 设计质量
+#
+# OS 概念映射:
+#   Kernel       → agent-runner(调度/syscall handler)
+#   Filesystem   → context-fs(Postgres/MinIO 后端)
+#   Memory       → memory-svc(Letta + Milvus + GraphRAG)
+#   IPC Bus      → nats(A2A 通信总线)
+#   Policy       → opa(权限/能力模型)
+#   Scheduler    → restate(Durable Execution 检查点)
+#   Driver       → mcp-registry(工具驱动注册中心)
+#   Observability→ otel-collector + langfuse + phoenix
+#   Sandbox      → gvisor + firecracker(三档隔离)
+#   Shell        → frontend(Electron/Web/Office 插件)
+#
+# 启动方式:
+#   docker compose -f docker-compose.yml \
+#                  -f deploy/docker/docker-compose.gpu.yml \
+#                  -f deploy/docker/docker-compose.future.yml \
+#                  -f deploy/docker/docker-compose.agentos.yml \
+#                  --profile kernel --profile bus --profile policy \
+#                  --profile memory --profile driver --profile sandbox up -d
+# ====================================================================
+
+services:
+  # ==================================================================
+  # IPC 层:NATS(A2A Agent 间通信总线)
+  # ==================================================================
+  # 仓库: https://github.com/nats-io/nats-server
+  # 2026 关键能力:
+  #   - 多 Agent 通信首选(对比 Kafka/RabbitMQ,NATS 延迟最低)
+  #   - 支持 request-reply / pub-sub / queue 三种模式
+  #   - JetStream 持久化(类比 dmesg + msg queue)
+  #   - 原生支持 WebSocket(前端 Agent 通信)
+  # 集成方式:
+  #   core/agentos/kernel.py 的 A2ABus 改用 NATS 后端
+  # ------------------------------------------------------------------
+  nats:
+    image: nats:2.10-alpine
+    container_name: fnixagent-nats
+    profiles: ["bus"]
+    command: >
+      --jetstream
+      --store_dir /data
+      --max_mem_store 1G
+      --max_file_store 10G
+      --http_port 8222
+      --websocket_port 8080
+      --websocket_no_tls
+    volumes:
+      - nats_data:/data
+    ports:
+      - "14222:4222"   # NATS 客户端
+      - "18222:8222"   # 监控 HTTP
+      - "18080:8080"   # WebSocket(前端 Agent)
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8222/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ==================================================================
+  # 治理层:OPA(Open Policy Agent,权限/能力模型)
+  # ==================================================================
+  # 仓库: https://github.com/open-policy-agent/opa
+  # 2026 关键能力:
+  #   - Rego 策略语言定义 Agent 操作边界
+  #   - PolicyEngine.authorize() 调用 OPA 评估
+  #   - 支持非技术合规人员配置
+  #   - 与 AWS Cedar 互补(2026 共识:Agent 必须关进制度笼子)
+  # 集成方式:
+  #   core/agentos/kernel.py 的 PolicyEngine 改用 OPA 后端
+  # ------------------------------------------------------------------
+  opa:
+    image: openpolicyagent/opa:latest
+    container_name: fnixagent-opa
+    profiles: ["policy"]
+    command: >
+      run --server
+      --addr 0.0.0.0:8181
+      --set=services.agentos.url=http://agent-runner:8000
+      --set=bundles.agentos.service=agentos
+      --set=bundles.agentos.resource=bundles/agentos.tar.gz
+    volumes:
+      - ../../config/opa_policies:/policies:ro
+      - opa_data:/data
+    ports:
+      - "18181:8181"
+    restart: unless-stopped
+
+  # ==================================================================
+  # 记忆层:Letta(MemGPT,记忆优先 Agent 运行时)
+  # ==================================================================
+  # 仓库: https://github.com/letta-ai/letta
+  # 2026 关键能力(23K star):
+  #   - 前身 MemGPT,Agent 自管理上下文
+  #   - 四层记忆:感知/工作/情节/语义
+  #   - 长期记忆自动卸载/召回
+  #   - 完整 Agent 运行时(不只是记忆模块)
+  # 集成方式:
+  #   core/agentos/kernel.py 的 MemoryManager 调用 Letta API
+  # ------------------------------------------------------------------
+  letta:
+    image: letta/letta:latest
+    container_name: fnixagent-letta
+    profiles: ["memory"]
+    environment:
+      # Letta 后端(复用 Postgres)
+      LETTA_PG_URI: postgresql://fnixagent:${POSTGRES_PASSWORD:-fnixagent-dev}@postgres:5432/fnixagent_letta
+      # LLM 端点(走 LiteLLM 网关)
+      LETTA_LLM_ENDPOINT: http://litellm:4000
+      LETTA_LLM_MODEL: fnixagent-llm
+      LETTA_EMBEDDING_ENDPOINT: http://litellm:4000
+      LETTA_EMBEDDING_MODEL: fnixagent-embedding
+      # OTel 上报
+      LETTA_OTEL_ENDPOINT: http://otel-collector:4317
+    ports:
+      - "18282:8283"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ==================================================================
+  # 记忆层:cognee(知识图谱,本地化语义记忆)
+  # ==================================================================
+  # 仓库: https://github.com/topoteretes/cognee
+  # 2026 关键能力(19K star):
+  #   - 把文档抽成带类型的知识图谱
+  #   - 完全本地运行(数据主权)
+  #   - 补充 GraphRAG 多跳推理
+  # ------------------------------------------------------------------
+  cognee:
+    image: cognita/cognee:latest
+    container_name: fnixagent-cognee
+    profiles: ["memory"]
+    environment:
+      COGNEE_LLM_ENDPOINT: http://litellm:4000
+      COGNEE_DB: postgresql://fnixagent:${POSTGRES_PASSWORD:-fnixagent-dev}@postgres:5432/fnixagent_cognee
+      COGNEE_VECTOR_DB: milvus
+      COGNEE_MILVUS_URI: http://milvus:19530
+    ports:
+      - "18300:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ==================================================================
+  # 驱动层:MCP Registry(工具驱动注册中心)
+  # ==================================================================
+  # 仓库: https://github.com/modelcontextprotocol/registry
+  # 2026 关键能力:
+  #   - 集中索引所有 MCP server(类比 device driver registry)
+  #   - Agent 启动时发现可用工具
+  #   - 工具版本管理 + 健康检查
+  # 集成方式:
+  #   core/agentos/kernel.py 的 _tool_drivers 从 MCP Registry 加载
+  # ------------------------------------------------------------------
+  mcp-registry:
+    image: mcp/registry:latest
+    container_name: fnixagent-mcp-registry
+    profiles: ["driver"]
+    environment:
+      REGISTRY_DB: postgresql://fnixagent:${POSTGRES_PASSWORD:-fnixagent-dev}@postgres:5432/fnixagent_mcp_registry
+      REGISTRY_PORT: "8000"
+    ports:
+      - "18010:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ==================================================================
+  # 沙箱层:gVisor 运行时(中等隔离)
+  # ==================================================================
+  # 需要:宿主机安装 runsc,并在 /etc/docker/daemon.json 注册
+  # {
+  #   "runtimes": {
+  #     "runsc": { "path": "/usr/bin/runsc" }
+  #   }
+  # }
+  # ------------------------------------------------------------------
+  sandbox-gvisor:
+    image: python:3.11-slim
+    container_name: fnixagent-sandbox-gvisor
+    profiles: ["sandbox"]
+    runtime: runsc
+    environment:
+      SANDBOX_MODE: gvisor
+      SANDBOX_MAX_MEMORY: 2G
+      SANDBOX_MAX_CPU: "4.0"
+      SANDBOX_TIMEOUT: 600
+    volumes:
+      - sandbox_workspace:/workspace
+    command: ["sleep", "infinity"]
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: "4.0"
+
+  # ==================================================================
+  # 沙箱层:Firecracker microVM(最高隔离,需 KVM)
+  # ==================================================================
+  # 通过 firecracker-containerd 集成,此处仅占位
+  # 实际部署:https://github.com/firecracker-microvm/firecracker-containerd
+  # ------------------------------------------------------------------
+
+  # ==================================================================
+  # 经济层:Agent Wallet(Agent 自主经济能力,未来探索)
+  # ==================================================================
+  # 2026 趋势:Agent 作为独立经济主体
+  #   - pinion-os:Agent 自主赚钱/消费
+  #   - AI+Crypto:链上自动化交易
+  # 当前仅占位,未来按需启用
+  # ------------------------------------------------------------------
+
+volumes:
+  nats_data:
+  opa_data:
+  sandbox_workspace:

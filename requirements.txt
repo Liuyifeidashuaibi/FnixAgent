@@ -1,0 +1,91 @@
+# FnixAgent 依赖清单
+# 2026-08 生产化升级: 修复 CVE 风险版本(fastapi<0.109.1 / cryptography 42 /
+# requests<2.32 / httpx<0.28 等),核心框架升至当前稳定线。
+
+# Web框架
+fastapi==0.141.1
+uvicorn[standard]==0.52.3
+pydantic==2.13.4
+pydantic-settings==2.15.0
+starlette>=0.37.0
+
+# MCP（Model Context Protocol，Spec 7）
+mcp[cli]>=1.6.0
+
+# 数据库
+# - SQLAlchemy 为 storage 层依赖（standalone 走内存/JSON，仍需导入）
+# - psycopg2-binary 已移至 requirements-optional.txt（仅 cloud/local-stack 需要）
+sqlalchemy==2.0.52
+alembic==1.19.1
+
+# 缓存
+# - redis 已移至 requirements-optional.txt（standalone 不依赖外部缓存）
+
+# LLM
+# - 本仓库不直接 import openai SDK(LLM 走自研 HTTP 适配层),
+#   此处仅作为 langchain-openai 的传递依赖下限,允许 pip 解析兼容版本
+openai>=1.40.0
+tiktoken==0.14.0
+
+# Agent 编排(LangGraph 生态)
+langgraph>=0.2.0
+langchain-core>=0.3.0
+langchain-openai>=0.3.0
+
+# 文档处理
+python-docx==1.2.0
+reportlab==4.5.1
+pypdf==6.16.1
+
+# 数据可视化
+matplotlib==3.11.1
+plotly==6.9.0
+
+# 搜索引擎
+# - elasticsearch 已移至 requirements-optional.txt（standalone 用内存检索）
+
+# 文件存储
+# - minio 已移至 requirements-optional.txt（standalone 用本地文件系统）
+
+# 向量数据库
+# - pymilvus 已移至 requirements-optional.txt（standalone 用内存向量检索）
+
+# 工具调用
+requests==2.34.2
+
+# 安全(Phase 0.4 已切换为 Argon2id + RSA + AES-256-GCM)
+argon2-cffi==25.1.0
+cryptography==50.0.0
+
+# 监控
+prometheus-client==0.26.0
+
+# 日志(P0-01 ASGI 网关审计使用)
+loguru==0.7.3
+
+# 测试
+pytest==9.1.1
+pytest-cov==7.1.0
+pytest-asyncio==1.4.0
+
+# 配置
+pyyaml==6.0.3
+
+# MFA(多因素认证) — tests/unit/test_mfa 直接依赖, standalone 亦保留
+pyotp==2.10.0
+
+# 智能信息采集
+httpx==0.28.1
+croniter==6.2.4
+
+# 其他
+python-dateutil==2.9.0.post0
+pytz==2026.3.post1
+
+# --------------------------------------------------------------------------
+# 以下企业 / 云集成依赖已移至 requirements-optional.txt，standalone 不安装：
+#   - ldap3            (LDAP/AD 域集成, Phase 2.2)
+#   - python3-saml     (SAML 2.0 SSO, Phase 2.3；Windows 需 libxml2/libxslt)
+#   - pyotp            (MFA TOTP, Phase 2.4；standalone 无账号体系)
+# 启用 cloud / 企业私有部署时执行: pip install -r requirements-optional.txt
+# --------------------------------------------------------------------------

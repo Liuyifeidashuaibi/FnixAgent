@@ -1,0 +1,17 @@
+{
+  "projectName": "fnixagent",
+  "projectOwner": "fnixagent",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "commitConvention": "none",
+  "contributors": [],
+  "contributorsPerLine": 7,
+  "skipCi": true,
+  "contributorTemplate": "<a href=\"<%= contributor.profile %>\"><img src=\"<%= contributor.avatar_url %>\" width=\"<%= width %>px\" height=\"<%= width %>px\" alt=\"<%= contributor.name %>\"/></a>",
+  "wrapperTemplate": "<%= contributors.map(function(block) { return `<table><tr><td colspan=\"<%= block.columns %>\"><%= block.title %></td></tr><tr><%= block.users.map(function(user) { return `<td align=\"center\"><a href=\"${user.profile}\"><img src=\"${user.avatar_url}\" width=\"100px;\" alt=\"${user.name}\"/><br /><sub><b>${user.name}</b></sub></a></td>`; }).join('') %></tr></table>`; }).join('') %>"
+}

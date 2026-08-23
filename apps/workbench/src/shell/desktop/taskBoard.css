@@ -1,0 +1,428 @@
+/* ============================================================
+ * 任务面板（Kanban）— 对标 OpenAI Code task panel / vibe-kanban
+ * 复用项目设计 token（--bg / --accent / --work / --muted …），明暗双主题。
+ * 极简浅色 + 细线条，与现有 TaskCard 视觉一致。
+ * ============================================================ */
+
+/* ── 全屏覆盖层 ── */
+.fnix-task-board-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg, #ffffff);
+  color: var(--text, #111827);
+  animation: fnix-board-in 180ms ease;
+}
+@keyframes fnix-board-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── 顶栏 ── */
+.fnix-board-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border, rgba(0, 0, 0, 0.06));
+  gap: 12px;
+  flex-shrink: 0;
+}
+.fnix-board-top-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.fnix-board-title {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.fnix-board-stats {
+  font-size: 12px;
+  color: var(--muted, #5c6470);
+  font-variant-numeric: tabular-nums;
+}
+.fnix-board-stats b {
+  color: var(--text, #111827);
+  font-weight: 600;
+}
+.fnix-board-top-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.fnix-board-hint {
+  font-size: 11.5px;
+  color: var(--faint, #9ca3af);
+}
+.fnix-board-close {
+  border: 1px solid var(--border-2, rgba(0, 0, 0, 0.1));
+  background: transparent;
+  color: var(--muted, #5c6470);
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+.fnix-board-close:hover {
+  background: var(--bg-soft, #f3f4f6);
+  color: var(--text, #111827);
+}
+
+/* ── 主体（列 + 详情）── */
+.fnix-board-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+.fnix-board-columns {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  gap: 14px;
+  padding: 16px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.fnix-board-columns::-webkit-scrollbar { height: 6px; }
+.fnix-board-columns::-webkit-scrollbar-thumb {
+  background: var(--bg-muted, #e5e7eb);
+  border-radius: 3px;
+}
+
+/* ── 单列 ── */
+.fnix-board-col {
+  display: flex;
+  flex-direction: column;
+  width: 300px;
+  min-width: 260px;
+  background: var(--bg-soft, #f3f4f6);
+  border: 1px solid transparent;
+  border-radius: 12px;
+  min-height: 0;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+.fnix-board-col.drag-over {
+  border-color: var(--accent, #4f46e5);
+  background: color-mix(in srgb, var(--accent, #4f46e5) 8%, var(--bg-soft, #f3f4f6));
+}
+.fnix-board-col-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px 8px;
+}
+.fnix-board-col-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.fnix-board-col-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text, #111827);
+}
+.fnix-board-col-count {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--muted, #5c6470);
+  background: var(--bg, #ffffff);
+  border: 1px solid var(--border, rgba(0, 0, 0, 0.06));
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-variant-numeric: tabular-nums;
+}
+.fnix-board-col-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 4px 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  scrollbar-width: thin;
+}
+.fnix-board-col-body::-webkit-scrollbar { width: 5px; }
+.fnix-board-col-body::-webkit-scrollbar-thumb {
+  background: var(--bg-muted, #e5e7eb);
+  border-radius: 3px;
+}
+.fnix-board-col-empty {
+  font-size: 12px;
+  color: var(--faint, #9ca3af);
+  padding: 14px 6px;
+  text-align: center;
+}
+
+/* ── 队列列内联 composer ── */
+.fnix-board-composer {
+  margin: 2px 10px 8px;
+  background: var(--bg, #ffffff);
+  border: 1px solid var(--border, rgba(0, 0, 0, 0.06));
+  border-radius: 10px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.fnix-board-composer-input {
+  border: none;
+  outline: none;
+  resize: none;
+  background: transparent;
+  color: var(--text, #111827);
+  font-family: var(--font);
+  font-size: 13px;
+  line-height: 1.45;
+  width: 100%;
+}
+.fnix-board-composer-input::placeholder {
+  color: var(--faint, #9ca3af);
+}
+.fnix-board-composer-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+.fnix-board-send {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: none;
+  background: var(--accent, #4f46e5);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: opacity 160ms ease;
+}
+.fnix-board-send:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.fnix-board-send:not(:disabled):hover {
+  opacity: 0.9;
+}
+.fnix-board-composer-err {
+  font-size: 11px;
+  color: #ef4444;
+}
+
+/* ── 卡片包裹（拖拽宿主）── */
+.fnix-board-card-wrap {
+  outline: none;
+  border-radius: 10px;
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+.fnix-board-card-wrap.dragging {
+  opacity: 0.45;
+}
+.fnix-board-card-wrap.selected {
+  box-shadow: 0 0 0 2px var(--accent, #4f46e5);
+  border-radius: 10px;
+}
+
+/* ── 详情右栏 ── */
+.fnix-board-detail {
+  width: 340px;
+  flex-shrink: 0;
+  border-left: 1px solid var(--border, rgba(0, 0, 0, 0.06));
+  padding: 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  scrollbar-width: thin;
+}
+.fnix-board-detail::-webkit-scrollbar { width: 5px; }
+.fnix-board-detail::-webkit-scrollbar-thumb {
+  background: var(--bg-muted, #e5e7eb);
+  border-radius: 3px;
+}
+.fnix-board-detail-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.fnix-board-detail-title {
+  font-size: 14px;
+  font-weight: 600;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fnix-board-detail-x {
+  border: none;
+  background: transparent;
+  color: var(--muted, #5c6470);
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.fnix-board-detail-x:hover {
+  background: var(--bg-soft, #f3f4f6);
+}
+.fnix-board-detail-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.fnix-board-status-pill {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--bg-muted, #e5e7eb);
+  color: var(--muted, #5c6470);
+}
+.fnix-board-status-pill.pending { background: color-mix(in srgb, var(--faint, #9ca3af) 18%, transparent); color: var(--muted, #5c6470); }
+.fnix-board-status-pill.running { background: color-mix(in srgb, var(--accent, #4f46e5) 16%, transparent); color: var(--accent, #4f46e5); }
+.fnix-board-status-pill.completed { background: color-mix(in srgb, var(--work, #10a37f) 16%, transparent); color: var(--work, #10a37f); }
+.fnix-board-status-pill.failed { background: rgba(239, 68, 68, 0.14); color: #ef4444; }
+.fnix-board-status-pill.cancelled { background: var(--bg-soft, #f3f4f6); color: var(--muted, #5c6470); }
+
+.fnix-board-detail-chip {
+  font-size: 11px;
+  color: var(--muted, #5c6470);
+  background: var(--bg-soft, #f3f4f6);
+  border-radius: 6px;
+  padding: 2px 8px;
+}
+.fnix-board-detail-time {
+  font-size: 11px;
+  color: var(--faint, #9ca3af);
+  margin-left: auto;
+}
+.fnix-board-detail-progress {
+  width: 100%;
+  height: 4px;
+  background: var(--bg-muted, #e5e7eb);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.fnix-board-detail-progress-bar {
+  height: 100%;
+  background: var(--accent, #4f46e5);
+  border-radius: 2px;
+  transition: width 220ms ease;
+}
+.fnix-board-detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.fnix-board-detail-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--faint, #9ca3af);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.fnix-board-detail-desc {
+  font-size: 12.5px;
+  color: var(--muted, #5c6470);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.fnix-board-detail-artifacts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.fnix-board-detail-artifact {
+  font-size: 11px;
+  color: var(--muted, #5c6470);
+  background: var(--bg-soft, #f3f4f6);
+  border-radius: 5px;
+  padding: 3px 7px;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fnix-board-detail-events {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 220px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.fnix-board-event {
+  font-size: 11.5px;
+  color: var(--muted, #5c6470);
+  background: var(--bg-soft, #f3f4f6);
+  border-radius: 5px;
+  padding: 4px 8px;
+  font-family: var(--mono);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.fnix-board-event-type {
+  color: var(--code, #7c3aed);
+  font-weight: 600;
+}
+.fnix-board-event-detail {
+  color: var(--text, #1f2329);
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.4;
+  max-height: 96px;
+  overflow-y: auto;
+}
+.fnix-board-detail-error {
+  font-size: 11.5px;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.06);
+  border-radius: 7px;
+  padding: 8px 10px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.fnix-board-detail-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: auto;
+}
+.fnix-board-detail-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid var(--border-2, rgba(0, 0, 0, 0.1));
+  background: transparent;
+  color: var(--text, #111827);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 160ms ease;
+}
+.fnix-board-detail-btn:hover {
+  background: var(--bg-soft, #f3f4f6);
+}
+.fnix-board-detail-btn.danger {
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.25);
+}
+.fnix-board-detail-btn.danger:hover {
+  background: rgba(239, 68, 68, 0.06);
+}

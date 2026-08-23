@@ -1,0 +1,28 @@
+name: Markdown Link Check
+
+# Validates all links in the repository, including the docs site and README.
+# https://github.com/gaurav-nelson/github-action-markdown-link-check
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    - cron: '0 5 * * 0' # Weekly Sunday 05:00 UTC
+
+permissions:
+  contents: read
+
+jobs:
+  markdown-link-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          config-file: .github/markdown-link-check.json
+          use-quiet-mode: yes
+          use-verbose-mode: yes
+          fail_on_error: no

@@ -1,0 +1,18 @@
+{
+  "id": "seed.write.fibonacci",
+  "title": "Implement fibonacci module",
+  "prompt": "Create fib.py with function fib(n) returning the nth Fibonacci number (fib(0)=0, fib(1)=1). Add test_fib.py with pytest.",
+  "capability": ["write", "test_gen"],
+  "difficulty": 2,
+  "language": "python",
+  "tags": ["seed", "smoke"],
+  "timeout_s": 180,
+  "setup": { "files": {} },
+  "checks": [
+    { "function": "file_exists", "args": { "path": "fib.py" } },
+    { "function": "compile_ok", "args": { "path": "fib.py" } },
+    { "function": "pytest_passes", "args": { "path": "test_fib.py" }, "required": false, "weight": 2 },
+    { "function": "file_contains", "args": { "path": "fib.py", "pattern": "def fib" } },
+    { "function": "no_stub_content", "args": {} }
+  ]
+}

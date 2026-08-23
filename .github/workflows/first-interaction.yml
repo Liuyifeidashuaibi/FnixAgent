@@ -1,0 +1,50 @@
+name: First Interaction
+
+# Greets new contributors and labels their first PR / issue.
+# 微软 / 谷歌 / python/cpython 等顶级项目的标配.
+
+on:
+  issues:
+    types: [opened]
+  pull_request_target:
+    types: [opened]
+  discussions:
+    types: [created]
+
+permissions:
+  issues: write
+  pull-requests: write
+  discussions: write
+
+jobs:
+  greeting:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Greet first-time contributor
+        uses: actions/first-interaction@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          issue-message: |
+            👋 Thanks for opening your first issue!
+
+            A maintainer will take a look. To help us help you faster:
+            - Make sure you're on the [latest release](https://github.com/Liuyifeidashuaibi/FnixAgent/releases)
+            - Run `fnixagent doctor` and include the output
+            - Read [CONTRIBUTING.md](CONTRIBUTING.md) and [SUPPORT.md](.github/SUPPORT.md)
+
+            Welcome to the community! 🎉
+          pr-message: |
+            👋 Thanks for your first pull request!
+
+            A maintainer will review it shortly. While you wait, please:
+            1. Read [CONTRIBUTING.md](CONTRIBUTING.md) and [CODE_STYLE.md](docs/CODE_STYLE.md)
+            2. Make sure CI is green (lint, typecheck, tests)
+            3. Update [CHANGELOG.md](CHANGELOG.md) under `[Unreleased]`
+            4. Rebase onto the latest `main`
+
+            Thanks for contributing! 🎉
+          discussion-message: |
+            👋 Welcome to the FnixAgent community!
+
+            Please review our [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) and
+            [SUPPORT.md](.github/SUPPORT.md) to find the right channel for your question.

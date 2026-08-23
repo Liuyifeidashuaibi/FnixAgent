@@ -1,0 +1,249 @@
+# fnixagent Helm Chart 默认配置
+# ============================================================================
+# 此文件为开发环境默认值。生产环境请使用 values.prod.yaml 覆盖:
+#   helm install fnixagent deploy/helm/fnixagent \
+#     -f deploy/helm/fnixagent/values.prod.yaml \
+#     -f my-secrets.yaml
+# ============================================================================
+
+# 全局
+nameOverride: ""
+fullnameOverride: ""
+
+# fnixagent API 服务
+fnixagent:
+  image:
+    repository: ghcr.io/Liuyifeidashuaibi/FnixAgent
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+
+  # 副本数(HPA 启用后此项作为下限)
+  replicaCount: 2
+
+  # 资源限制
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+
+  # Service
+  service:
+    type: ClusterIP
+    port: 8000
+    targetPort: 8000
+
+  # 健康检查
+  probe:
+    liveness:
+      enabled: true
+      path: /health
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+    readiness:
+      enabled: true
+      path: /health
+      initialDelaySeconds: 10
+      periodSeconds: 5
+      timeoutSeconds: 3
+      failureThreshold: 3
+
+  # Horizontal Pod Autoscaler
+  hpa:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+  # 持久化(uploads/logs/assets)
+  persistence:
+    enabled: true
+    storageClass: ""
+    accessMode: ReadWriteMany
+    size: 50Gi
+    mounts:
+      - name: uploads
+        mountPath: /app/data/uploads
+        subPath: uploads
+      - name: assets
+        mountPath: /app/assets
+        subPath: assets
+      - name: logs
+        mountPath: /app/logs
+        subPath: logs
+
+  # 配置文件(从 config/ 目录加载)
+  configMap:
+    enabled: true
+    # 配置内容会从 config/ 目录读取并注入为 ConfigMap
+    # 详见 templates/fnixagent-configmap.yaml
+    settings:
+      fnixagent:
+        mode: evolve
+        log_level: INFO
+
+# 环境变量(非敏感)
+env:
+  FNIXAGENT_MODE: evolve
+  SERVICE_ENV: production
+  # 数据库连接(指向集群内 postgres 或外部 DATABASE_URL)
+  DATABASE_URL: ""  # 留空则由 postgres 子 Chart 自动注入
+  REDIS_HOST: ""
+  REDIS_PORT: "6379"
+  MILVUS_HOST: ""
+  MILVUS_PORT: "19530"
+  MINIO_ENDPOINT: ""
+  ES_HOST: ""
+  ES_PORT: "9200"
+
+# 敏感信息(从 Secret 注入)
+# 生产环境推荐使用 Sealed Secrets 或 External Secrets Operator
+# 详见 templates/fnixagent-secret.yaml
+secret:
+  # 设置为 true 时使用下方明文值创建 Secret(仅开发环境!)
+  # 生产环境必须设为 false,通过 --set 或外部 Secret 注入
+  create: true
+  name: fnixagent-secrets
+  values:
+    POSTGRES_PASSWORD: "changeme"
+    REDIS_PASSWORD: "changeme"
+    MINIO_ACCESS_KEY: "changeme"
+    MINIO_SECRET_KEY: "changeme"
+    ES_PASSWORD: "changeme"
+    JWT_SECRET_KEY: "changeme-to-strong-random-key"
+    GLM_API_KEY: ""
+    OPENAI_API_KEY: ""
+    DEEPSEEK_API_KEY: ""
+    QWEN_API_KEY: ""
+
+# Ingress
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: fnixagent.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: fnixagent-tls
+      hosts:
+        - fnixagent.local
+
+# PostgreSQL 子 Chart(默认禁用,使用外部数据库时设为 false)
+postgres:
+  enabled: false
+  auth:
+    postgresPassword: ""  # 从外部 Secret 注入
+    database: fnixagent
+  primary:
+    persistence:
+      size: 20Gi
+
+# Redis 子 Chart(默认禁用,使用外部 Redis 时设为 false)
+redis:
+  enabled: false
+  auth:
+    password: ""  # 从外部 Secret 注入
+  master:
+    persistence:
+      size: 8Gi
+
+# 外部依赖(云托管数据库)
+externalDatabase:
+  enabled: true
+  host: ""
+  port: 5432
+  database: fnixagent
+  user: fnixagent
+  passwordKey: POSTGRES_PASSWORD  # Secret 中的 key
+
+externalRedis:
+  enabled: true
+  host: ""
+  port: 6379
+  passwordKey: REDIS_PASSWORD  # Secret 中的 key
+
+# Milvus(向量数据库,通常使用 Milvus Operator 部署)
+milvus:
+  enabled: false
+  host: ""
+  port: 19530
+
+# MinIO(对象存储,可使用云厂商 S3/OSS 替代)
+minio:
+  enabled: false
+  endpoint: ""
+  accessKeyKey: MINIO_ACCESS_KEY
+  secretKeyKey: MINIO_SECRET_KEY
+
+# Elasticsearch(可使用云托管 ES 替代)
+elasticsearch:
+  enabled: false
+  host: ""
+  port: 9200
+  passwordKey: ES_PASSWORD
+
+# Pod 调度
+nodeSelector: {}
+affinity: {}
+tolerations: []
+
+# Image Pull Secrets(私有镜像仓库)
+imagePullSecrets: []
+
+# Service Account
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+# Pod Security Context
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+
+# Container Security Context
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false  # fnixagent 需写 logs/uploads
+  capabilities:
+    drop:
+      - ALL
+
+# 备份与容灾 — Phase 2.9
+# 启用后会创建 CronJob + PVC + ConfigMap(包含 backup.sh / restore.sh)
+backup:
+  enabled: false  # 开发环境默认禁用,生产环境必须启用
+  # Cron 表达式(UTC 时间) - 默认每天 19:00 UTC = 北京 03:00
+  schedule: "0 19 * * *"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  retentionDays: 7
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+  storage:
+    size: 100Gi
+    storageClass: ""  # 留空使用默认 StorageClass
+  # 异地对象存储(留空则跳过异地同步)
+  remote:
+    endpoint: ""  # 如 https://s3.ap-east-1.amazonaws.com
+    bucket: "fnixagent-backup"

@@ -1,0 +1,41 @@
+{
+  "id": "gen.cli.greet.zeta.v709",
+  "title": "greet zeta",
+  "prompt": "Create `main.py` CLI: `python main.py zeta` prints `Hello, zeta!`",
+  "capability": [
+    "write",
+    "cli"
+  ],
+  "difficulty": 1,
+  "language": "python",
+  "tags": [
+    "generated",
+    "cli",
+    "full"
+  ],
+  "timeout_s": 120,
+  "setup": {
+    "files": {
+      "main.py": "pass\n"
+    }
+  },
+  "checks": [
+    {
+      "function": "stdout_equals",
+      "args": {
+        "command": [
+          "python",
+          "main.py",
+          "zeta"
+        ],
+        "expected": "Hello, zeta!"
+      }
+    },
+    {
+      "function": "no_stub_content",
+      "args": {
+        "path": "main.py"
+      }
+    }
+  ]
+}

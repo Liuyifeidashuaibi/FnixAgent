@@ -1,0 +1,5 @@
+# 可选：Windows 本地 release 打包时使用 MSVC（需 rustup target add x86_64-pc-windows-msvc）
+# 开发默认使用系统 rustup 默认 target（GNU 亦可 cargo check）
+#
+# [build]
+# target = "x86_64-pc-windows-msvc"

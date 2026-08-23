@@ -1,0 +1,246 @@
+# FnixAgent 项目元数据(Python Project Metadata, PEP 621)
+# 构建后端:hatchling;依赖清单仍由 requirements.txt 维护(单一来源)
+# Dockerfile 中 COPY pyproject.toml requirements.txt ./ 同时复制两份
+
+[build-system]
+requires = ["hatchling", "hatch-requirements-txt"]
+build-backend = "hatchling.build"
+
+[project]
+name = "fnixagent"
+version = "1.0.0"
+description = "Fnix Harness — local-first AI workspace (Work + Code), BYOK, Tauri Desktop + Python agentd"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Proprietary" }
+authors = [
+    { name = "FnixAgent" },
+]
+keywords = ["agent", "llm", "langgraph", "self-evolution", "ktg", "office"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: Other/Proprietary License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+]
+
+# 动态依赖:从 requirements.txt 读取,避免重复维护
+dynamic = ["dependencies"]
+
+[project.optional-dependencies]
+dev = [
+    "ruff",
+    "pyright",
+    "pytest",
+    "pytest-cov",
+    "pytest-asyncio",
+]
+security = [
+    "argon2-cffi>=23.1",          # Argon2id 密码哈希(Phase 0.4)
+    "cryptography>=42.0",          # RSA-2048 密码传输加密 + AES-256-GCM 资产加密
+]
+# 云端文档智能(Azure Document Intelligence)
+cloud = [
+    "azure-ai-documentintelligence>=1.0.0",
+]
+# OCR 本地识别(PaddleOCR)
+ocr = [
+    "paddleocr>=2.7.0",
+]
+# 聚合全部可选依赖
+all = [
+    "fnixagent[security,cloud,ocr]",
+]
+
+[project.urls]
+Homepage = "https://github.com/Liuyifeidashuaibi/FnixAgent"
+Documentation = "https://github.com/Liuyifeidashuaibi/FnixAgent/blob/main/DEVELOPMENT.md"
+Issues = "https://github.com/Liuyifeidashuaibi/FnixAgent/issues"
+
+[project.scripts]
+fnixagent = "fnixagent.main:main"
+fnixagent-mcp = "fnixagent.core.mcp.server:main"
+fnix-mcp = "fnixagent.mcp_server:main"
+
+# 插件入口点:第三方 DocumentConverter 实现通过此入口点注册
+[project.entry-points."fnixagent.converters"]
+# 空占位 — 插件将通过此入口点注册 DocumentConverter 实现
+
+# ---------------------------------------------------------------------------
+# hatchling 构建配置
+# ---------------------------------------------------------------------------
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/fnixagent"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "src/fnixagent",
+    "requirements.txt",
+    "README.md",
+    "LICENSE",
+]
+
+# 从 requirements.txt 动态读取依赖(通过 hatch-requirements-txt 插件)
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.metadata.hooks.requirements_txt]
+requirements-file = "requirements.txt"
+
+# ---------------------------------------------------------------------------
+# 工具链配置:ruff(检查 + 格式化)
+# ---------------------------------------------------------------------------
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+extend-exclude = [
+    "_references",
+    "build",
+    "dist",
+    ".venv",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "B", "C4", "SIM", "UP", "S", "RUF"]
+# 全局忽略: 这些规则在本项目(中文代码库 + 服务端 + 非加密哈希)产生大量误报
+ignore = [
+    "E501",   # 行长由 format 统一管理
+    "RUF001", # 中文字符串中的全角标点误报
+    "RUF002", # 中文文档字符串中的全角标点误报
+    "RUF003", # 中文注释中的全角标点误报
+    "RUF012", # mutable-class-default (dataclass/Pydantic 常态)
+    "RUF022", # __all__ 排序 (非功能性)
+    "S104",   # 服务端绑定 0.0.0.0 是预期行为
+    "S311",   # random 用于非加密场景(任务 ID/采样)
+    "S324",   # hashlib.md5/sha1 用于非加密哈希(task_hash/缓存键)
+    "S314",   # xml.etree 用于受信源(arXiv 解析)
+    "S310",   # url-open 用于受信 API
+    "B008",   # FastAPI Depends/Query 默认参数是框架惯例
+    "B904",   # raise-without-from (保留原始 traceback 不总是必要)
+    "B905",   # zip strict 在 3.11 之前不支持,部分场景无需
+    "SIM117", # 嵌套 with 可读性优先
+    "SIM102", # collapsible-if 可读性优先
+    "UP042",  # str-enum 迁移破坏性大,暂不强制
+    "N806",   # 函数内常量命名(如 HTTP/JSON 等缩写)
+    "N818",   # 异常名后缀 (本项目已有命名规范)
+    "S110",   # try-except-pass (best-effort 清理是常态)
+    "S112",   # try-except-continue (循环容错是常态)
+    "SIM105", # contextlib.suppress 可读性争议
+    "SIM108", # 三元表达式可读性争议
+    "SIM103", # needless-bool 重构收益低
+    "SIM110", # reimplemented-builtin 重构收益低
+    "SIM112", # 环境变量大小写 (Windows 不敏感)
+    "SIM118", # in-dict-keys 风格选择
+    "SIM109", # compare-with-tuple 风格选择
+    "RUF005", # collection-literal-concatenation 风格选择
+    "RUF013", # implicit-optional (Pydantic 场景常见)
+    "E402",   # module-import-not-at-top (sys.path 调整后导入是合理的)
+    "E741",   # 单字母变量名 (l/I/O 在数学/循环上下文合理)
+    "B007",   # unused-loop-control-variable (解构场景常见)
+    "B019",   # cached-instance-method (lru_cache on method)
+    "B024",   # abstract-base-class-without-abstract-method (基类设计)
+    "B023",   # function-uses-loop-variable (闭包场景合理)
+    "N801",   # invalid-class-name (已有命名规范)
+    "C416",   # unnecessary-comprehension 风格选择
+    "S105",   # hardcoded-password-string (默认空串/占位符误报)
+    "S106",   # hardcoded-password-func-arg (默认空串误报)
+    "S108",   # hardcoded-temp-file (/tmp 路径在沙箱场景合理)
+    "S603",   # subprocess (已在 per-file-ignores 处理)
+    "S607",   # start-process-with-partial-path (已在上文处理)
+    "S101",   # assert (src 中作为防御性契约检查,非测试专用)
+    "F403",   # undefined-local-with-import-star (__init__.py 重导出是合理的)
+    "RUF059", # unused-unpacked-variable (解构场景常见)
+    "RUF034", # useless-if-else (None 判断场景)
+    "RUF046", # unnecessary-cast-to-int
+    "S102",   # exec-builtin (沙箱/插件场景)
+    "SIM113", # enumerate-for-loop 风格选择
+    "SIM115", # open-file-with-context-handler 风格选择
+    "UP007",  # non-pep604-annotation-union (from __future__ annotations 已处理)
+    "UP028",  # yield-in-for-loop 风格选择
+    "UP036",  # outdated-version-block
+    "C401",   # unnecessary-generator-set 风格选择
+    "RUF100", # unused-noqa (与 try/except ImportError 中的 noqa 冲突,暂禁用)
+]
+
+[tool.ruff.lint.per-file-ignores]
+# 测试中允许使用 assert 与部分可疑调用
+"tests/*" = ["S101", "S110", "S112", "S105", "S106", "S107", "S108", "S306", "F841", "B017", "RUF015"]
+"_references/*" = ["ALL"]
+# API 路由层: FastAPI 默认参数 + 异常透传
+"src/fnixagent/api/**" = ["B008"]
+# 安全模块自身使用 hashlib/subprocess 是核心功能
+"src/fnixagent/core/security/**" = ["S324", "S603", "S607"]
+# MCP server 使用 subprocess 是核心功能
+"src/fnixagent/core/mcp/**" = ["S603", "S607"]
+# 业务工具使用网络请求是核心功能
+"src/fnixagent/business/**" = ["S310", "S314"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+# ---------------------------------------------------------------------------
+# 工具链配置:pyright(类型检查,strict 模式)
+# ---------------------------------------------------------------------------
+
+[tool.pyright]
+# 类型检查基线收敛策略:
+# - strict 为长期目标(存量 ~12k 错误,不现实一步到位)
+# - 当前以 basic 为生产门槛(捕获缺失导入/参数错误等真实缺陷)
+# - 依赖桩缺失噪音降级为 warning,不阻塞 CI;存量 error 按基线逐模块清零
+typeCheckingMode = "basic"
+reportMissingImports = "warning"
+reportMissingTypeStubs = false
+pythonVersion = "3.11"
+include = ["src/fnixagent"]
+exclude = [
+    "_references",
+    "tests",
+    "build",
+    "dist",
+    "**/__pycache__",
+]
+
+# ---------------------------------------------------------------------------
+# 工具链配置:pytest
+# ---------------------------------------------------------------------------
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q --strict-markers"
+testpaths = ["tests"]
+pythonpath = ["src"]
+asyncio_mode = "auto"
+markers = [
+    "slow: 标记慢测试(可加 --deselect 跳过)",
+    "integration: 集成测试",
+    "unit: 单元测试",
+]
+
+# ---------------------------------------------------------------------------
+# 工具链配置:coverage
+# ---------------------------------------------------------------------------
+
+[tool.coverage.run]
+source = ["src/fnixagent"]
+omit = [
+    "*/tests/*",
+    "*/__pycache__/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]

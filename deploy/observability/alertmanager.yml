@@ -1,0 +1,108 @@
+# fnixagent Alertmanager 配置 — Phase 2.10
+#
+# 告警路由规则:
+#   - critical → 立即发送(邮件 + 钉钉/企业微信 + 电话)
+#   - warning  → 5 分钟内聚合发送(邮件 + 钉钉/企业微信)
+#   - info     → 每日汇总发送(仅邮件)
+#
+# 告警抑制规则:
+#   - critical 触发时抑制同服务的 warning
+#   - 节点宕机时抑制该节点上的所有 Pod 告警
+
+global:
+  resolve_timeout: 5m
+  smtp_smarthost: "smtp.fnixagent.com:587"
+  smtp_from: "alerts@fnixagent.com"
+  smtp_auth_username: "alerts@fnixagent.com"
+  smtp_auth_password: "CHANGE_ME"
+  smtp_require_tls: true
+
+# 告警模板
+templates:
+  - "/etc/alertmanager/templates/*.tmpl"
+
+# 告警路由
+route:
+  group_by: ["alertname", "service", "env"]
+  group_wait: 10s        # 首次告警等待时间(聚合)
+  group_interval: 30s    # 同组告警发送间隔
+  repeat_interval: 4h    # 重复告警间隔
+  receiver: "default"
+
+  routes:
+    # critical 级别:立即发送
+    - match:
+        severity: "critical"
+      receiver: "critical"
+      group_wait: 0s
+      repeat_interval: 1h
+
+    # warning 级别:5 分钟聚合
+    - match:
+        severity: "warning"
+      receiver: "warning"
+      group_wait: 5m
+      repeat_interval: 4h
+
+    # info 级别:每日汇总
+    - match:
+        severity: "info"
+      receiver: "info"
+      group_wait: 30m
+      repeat_interval: 24h
+
+# 告警抑制
+inhibit_rules:
+  # critical 抑制同服务 warning
+  - source_match:
+      severity: "critical"
+    target_match:
+      severity: "warning"
+    equal: ["service", "env"]
+
+  # 节点宕机抑制 Pod 告警
+  - source_match:
+      alertname: "NodeDown"
+      severity: "critical"
+    target_match_re:
+      alertname: "Pod.*"
+    equal: ["node"]
+
+# 接收器
+receivers:
+  - name: "default"
+    email_configs:
+      - to: "oncall@fnixagent.com"
+        send_resolved: true
+
+  - name: "critical"
+    email_configs:
+      - to: "oncall@fnixagent.com"
+        send_resolved: true
+        headers:
+          Subject: '[CRITICAL] {{ .GroupLabels.alertname }} - {{ .CommonLabels.service }}'
+    # 钉钉 / 企业微信 webhook(需配置外部 webhook)
+    webhook_configs:
+      - url: "http://dingtalk-webhook:8060/dingtalk/fnixagent/send"
+        send_resolved: true
+    # 电话告警(集成 PagerDuty / Opsgenie)
+    # pagerduty_configs:
+    #   - routing_key: "CHANGE_ME"
+    #     description: '{{ .CommonLabels.alertname }}: {{ .CommonAnnotations.summary }}'
+
+  - name: "warning"
+    email_configs:
+      - to: "oncall@fnixagent.com"
+        send_resolved: true
+        headers:
+          Subject: '[WARNING] {{ .GroupLabels.alertname }} - {{ .CommonLabels.service }}'
+    webhook_configs:
+      - url: "http://dingtalk-webhook:8060/dingtalk/fnixagent/send"
+        send_resolved: true
+
+  - name: "info"
+    email_configs:
+      - to: "oncall@fnixagent.com"
+        send_resolved: false
+        headers:
+          Subject: '[INFO] Daily alert summary'

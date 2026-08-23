@@ -1,0 +1,4 @@
+# Traces directory
+# MFP 飞轮 ① 产出的执行轨迹(由 TraceStore 写入)
+# 格式: traces_<date>.jsonl (按天轮转)
+# 保留: 90 天(见 config/flywheel_rules.yaml)

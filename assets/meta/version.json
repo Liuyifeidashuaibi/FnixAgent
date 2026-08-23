@@ -1,0 +1,25 @@
+{
+  "version": "1.0.0",
+  "created_at": "2026-07-04T00:00:00Z",
+  "schema_version": "ktg_v1",
+  "description": "fnixagent 自进化资产包元数据",
+  "directories": {
+    "topology": "KTG 拓扑图快照",
+    "skills": "STP 技能注册表",
+    "flywheel": "MFP 进化历史",
+    "traces": "执行轨迹",
+    "snapshots": "进化前快照(回滚用)",
+    "prompts": "提示词模板"
+  },
+  "encryption": {
+    "enabled": true,
+    "algorithm": "AES-256-GCM",
+    "key_derivation": "PBKDF2-HMAC-SHA256",
+    "iterations": 100000,
+    "key_length": 32
+  },
+  "compatibility": {
+    "min_agent_version": "1.0.0",
+    "schema_compatibility": ["ktg_v1"]
+  }
+}

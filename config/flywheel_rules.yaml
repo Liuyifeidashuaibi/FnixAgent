@@ -1,0 +1,137 @@
+# MFP 四阶进化飞轮规则配置(Phase 0.7)
+#
+# 本文件声明四个飞轮的触发条件、执行频率、回滚策略。
+# 与代码 core/flywheel/*.py 中的常量保持一致。
+
+# ===========================================================================
+# 飞轮 ① 感知-执行(实时)
+# ===========================================================================
+stage1_perception:
+  trigger: "every_dialog"            # 每次用户对话触发
+  real_time: true
+  timeout_ms: 30000                  # LangGraph 执行超时
+  max_iterations: 5                  # 反思循环最大次数
+  reasoning_mode: "react"            # 默认推理模式:react / plan_execute / self_reflect
+  checkpoint_enabled: true           # 启用 LangGraph MemorySaver 检查点
+  checkpoint_resume_on_error: true   # 出错后可从检查点恢复
+
+# ===========================================================================
+# 飞轮 ② 知识固化(实时,对话后触发)
+# ===========================================================================
+stage2_knowledge:
+  trigger: "post_dialog"             # 每次对话后触发
+  real_time: true
+  filter_junk: true                  # 过滤临时话术(你好/谢谢/再见)
+  junk_keywords:                     # 垃圾轨迹过滤关键词
+    - "你好"
+    - "hello"
+    - "hi"
+    - "谢谢"
+    - "thanks"
+    - "再见"
+    - "bye"
+  filter_no_tool_calls: true         # 过滤无工具调用的轨迹
+  filter_failed_execution: true      # 过滤执行失败的轨迹
+  extraction_mode: "llm_first"       # llm_first / rule_based_only / hybrid
+  llm_fallback_to_rule: true         # LLM 提取失败时回退到规则提取
+  write_strategy: "insert_only"      # 增量写入,不覆盖
+  reinforce_existing_nodes: true     # 命中已有节点时强化权重
+  reinforce_existing_edges: true     # 命中已有边时强化权重
+
+# ===========================================================================
+# 飞轮 ③ 元反思(准实时,每 N 次对话触发)
+# ===========================================================================
+stage3_reflection:
+  trigger: "every_n_dialogs"
+  trigger_interval: 10               # 每 10 次对话触发一次
+  real_time: false                   # 后台异步
+  lookback_window: 50                # 评估最近 50 条轨迹
+  min_traces_for_reflection: 5       # 轨迹数不足时不触发
+
+  # 评估指标
+  metrics:
+    path_quality:
+      enabled: true
+      threshold: 0.7                 # 路径质量阈值,低于此值调整权重
+    skill_accuracy:
+      enabled: true
+      threshold: 0.8                 # 技能成功率阈值
+    knowledge_completeness:
+      enabled: true
+      min_node_count: 10             # 节点数低于此值视为知识不完整
+
+  # 权重调整策略
+  weight_adjustment:
+    success_bonus: 0.03              # 成功路径节点权重增量
+    failure_penalty: -0.05           # 失败路径节点权重减量
+    deprecate_threshold: 0.05        # 低于此值标记废弃
+
+  # 知识缺口填补
+  fill_knowledge_gaps:
+    enabled: true
+    add_goal_node_for_failures: true # 失败任务自动加 L1 GOAL 节点
+    goal_node_confidence: 0.2        # 新增 GOAL 节点初始置信度(低)
+
+# ===========================================================================
+# 飞轮 ④ 爬坡进化(后台异步,每 N 次对话触发)
+# ===========================================================================
+stage4_climbing:
+  trigger: "every_n_dialogs"
+  evolution_interval: 50             # 每 50 次对话触发一次
+  real_time: false                   # 后台异步
+  lookback_window: 100               # 评估最近 100 条轨迹
+
+  # 模式检测
+  pattern_detection:
+    enabled: true
+    min_occurrences: 3               # 模式最小出现次数
+    goal_prefix_length: 20           # goal 字段前缀长度(用于分组)
+
+  # 技能组合检测
+  skill_combo_detection:
+    enabled: true
+    min_co_occurrences: 3            # 技能组合最小共现次数
+
+  # 弱链修复
+  fix_weak_links:
+    enabled: true
+    low_weight_threshold: 0.2        # 低权重阈值
+    high_usage_threshold: 5          # 高使用次数阈值
+    boost_increment: 0.05            # 弱链修复增量
+
+  # 技能优先级调整
+  skill_priority_adjustment:
+    enabled: true
+    high_success_threshold: 0.8      # 成功率高于此值时提升概念权重
+    boost_increment: 0.04
+
+  # 模式固化(高频+高成功率 → L3 RULE 节点)
+  solidify_patterns:
+    enabled: true
+    min_frequency: 3                 # 最小出现次数
+    min_success_rate: 0.5            # 最小成功率
+    rule_node_confidence: 0.6        # 新增 RULE 节点初始置信度
+
+  # 全局衰减
+  global_decay:
+    enabled: true
+    daily_decay_factor: 0.999        # 每日衰减系数
+    stale_threshold_days: 30         # 30 天未用标记为 stale
+    stale_freshness: 0.1             # stale 后的 freshness 值
+
+  # 安全保障
+  safety:
+    snapshot_before_evolution: true  # 进化前必须创建快照
+    rollback_on_failure: true        # 进化失败自动回滚
+    rollback_threshold_ratio: 0.9    # 进化后成功率 < 进化前 90% 时回滚
+    max_rollback_attempts: 3         # 最大回滚尝试次数
+
+# ===========================================================================
+# 轨迹存储
+# ===========================================================================
+trace_store:
+  backend: "jsonl"                   # jsonl / postgres / elasticsearch
+  base_dir: "data/traces"            # JSONL 文件存储目录
+  max_file_size_mb: 100              # 单文件最大大小,超过则轮转
+  retention_days: 90                 # 轨迹保留天数
+  compress_after_days: 7             # 7 天后压缩归档

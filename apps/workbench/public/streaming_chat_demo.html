@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FNIX 流式对话过程可视化 — 演示</title>
+<style>
+:root {
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif;
+  --font-mono: "SF Mono", Menlo, Consolas, monospace;
+  --surface: #ffffff;
+  --surface-muted: #f6f7f9;
+  --border: #e4e7eb;
+  --text-primary: #1a202c;
+  --text-secondary: #4a5568;
+  --text-muted: #8b95a3;
+  --brand: #6b46c1;
+  --brand-soft: #f3eefa;
+  --accent: #2b6cb0;
+  --accent-soft: #e6f0fa;
+  --success: #2f855a;
+  --success-soft: #e6f6ec;
+  --warning: #c05621;
+  --warning-soft: #fef3e8;
+  --danger: #c53030;
+  --danger-soft: #fce8e8;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font-sans);
+  background: #1a1d24;
+  display: flex;
+  justify-content: center;
+  padding: 40px 20px;
+  min-height: 100vh;
+}
+.container {
+  width: 100%;
+  max-width: 680px;
+  background: var(--surface);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.header {
+  background: linear-gradient(135deg, var(--brand), #9f7aea);
+  color: #fff;
+  padding: 20px 24px;
+}
+.header h1 { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+.header p { font-size: 12px; opacity: 0.85; }
+.chat-area {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+.msg-user {
+  align-self: flex-end;
+  background: var(--brand);
+  color: #fff;
+  padding: 10px 14px;
+  border-radius: 12px 12px 4px 12px;
+  max-width: 80%;
+  font-size: 13px;
+}
+.msg-assistant {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+}
+/* Progress Strip */
+.progress-strip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  border-radius: 6px;
+  border-left: 2px solid var(--accent);
+  margin-bottom: 4px;
+}
+.spinner {
+  display: inline-block;
+  width: 11px; height: 11px;
+  border: 1.5px solid var(--accent);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.progress-step { font-weight: 600; color: var(--accent); }
+.progress-sep { color: var(--text-muted); }
+
+/* Thinking Block */
+.thinking-block {
+  border: 1px solid color-mix(in srgb, var(--brand) 25%, transparent);
+  border-radius: 6px;
+  background: var(--brand-soft);
+  padding: 8px 12px;
+  font-size: 12px;
+}
+.thinking-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--brand);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.thinking-body { color: var(--text-secondary); line-height: 1.5; font-size: 11px; }
+
+/* Tool Call */
+.tool-call {
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+  border-radius: 6px;
+  background: var(--accent-soft);
+  padding: 8px 12px;
+  font-size: 12px;
+}
+.tool-call-header {
+  display: flex; align-items: center; gap: 6px;
+}
+.tool-icon { font-size: 13px; }
+.tool-label { color: var(--text-secondary); font-weight: 500; font-size: 12px; }
+.tool-target { color: var(--text-muted); font-size: 11px; font-family: var(--font-mono); flex: 1; }
+.tool-status { font-size: 11px; }
+.tool-status.done { color: var(--success); }
+.tool-status.running { color: var(--accent); }
+.tool-check { color: var(--success); }
+
+/* Tool Result (智能折叠 — head-and-tail) */
+.tool-result {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-muted);
+  overflow: hidden;
+}
+.tool-result-header {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 10px;
+  font-size: 11px;
+  border-bottom: 1px solid var(--border);
+}
+.tool-result-label { color: var(--text-secondary); font-weight: 500; }
+.tool-result-toggle {
+  margin-left: auto;
+  font-size: 10px;
+  background: none; border: 1px solid var(--border);
+  padding: 2px 6px; border-radius: 4px; cursor: pointer;
+  color: var(--text-secondary);
+}
+.tool-result-body {
+  padding: 6px 10px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-secondary);
+  max-height: 120px;
+  overflow-y: auto;
+  white-space: pre;
+}
+.tool-result-ellipsis {
+  text-align: center;
+  font-size: 10px;
+  color: var(--text-muted);
+  padding: 4px 0;
+  border-top: 1px dashed var(--border);
+  border-bottom: 1px dashed var(--border);
+  background: color-mix(in srgb, var(--text-muted) 4%, transparent);
+  letter-spacing: 0.3px;
+}
+.tool-result-more {
+  text-align: center;
+  font-size: 10px;
+  color: var(--text-muted);
+  padding: 3px 0;
+  border-top: 1px solid var(--border);
+}
+
+/* Diff Block */
+.diff-block {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  margin: 2px 0;
+  background: var(--surface);
+}
+.diff-summary {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 10px;
+  font-size: 11px;
+  cursor: pointer;
+  background: var(--surface-muted);
+}
+.diff-icon { color: var(--text-muted); }
+.diff-count { color: var(--text-primary); font-weight: 500; flex: 1; font-family: var(--font-mono); font-size: 11px; }
+.diff-stats { display: flex; gap: 6px; font-family: var(--font-mono); font-size: 10px; }
+.diff-added { color: var(--success); font-weight: 600; }
+.diff-removed { color: var(--danger); font-weight: 600; }
+.diff-files {
+  border-top: 1px solid var(--border);
+  max-height: 160px;
+  overflow-y: auto;
+}
+.diff-file-row {
+  display: flex; align-items: center; gap: 6px;
+  padding: 4px 10px;
+  font-size: 11px;
+  border-bottom: 1px solid var(--border);
+}
+.diff-file-row:last-child { border-bottom: none; }
+.diff-file-name {
+  flex: 1; font-family: var(--font-mono); font-size: 10px;
+  color: var(--text-secondary);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.diff-file-stats { display: flex; gap: 4px; font-size: 10px; font-family: var(--font-mono); }
+.diff-btns { display: flex; gap: 2px; }
+.diff-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 3px 8px; font-size: 10px; font-weight: 500;
+  border-radius: 4px; border: 1px solid transparent; cursor: pointer;
+}
+.diff-btn.accept { background: var(--success); color: #fff; }
+.diff-btn.reject { background: transparent; color: var(--danger); border-color: color-mix(in srgb, var(--danger) 40%, transparent); }
+.diff-single-actions {
+  display: flex; gap: 4px; padding: 5px 10px;
+  border-top: 1px solid var(--border);
+}
+/* 三态状态指示器 — pending/done + 单文件 applied/discarded */
+.diff-status {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 10px; font-weight: 600;
+  padding: 1px 6px; border-radius: 8px; white-space: nowrap;
+}
+.diff-status--pending {
+  color: #c05621;
+  background: color-mix(in srgb, #c05621 12%, transparent);
+}
+.diff-status--done {
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 12%, transparent);
+}
+.diff-file-row--accepted { opacity: 0.55; background: color-mix(in srgb, var(--success) 4%, transparent); }
+.diff-file-row--rejected { opacity: 0.4; text-decoration: line-through; background: color-mix(in srgb, var(--danger) 3%, transparent); }
+.diff-single-status {
+  display: flex; align-items: center; gap: 4px;
+  padding: 5px 10px; border-top: 1px solid var(--border);
+}
+.diff-badge {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 9px; font-weight: 600;
+  padding: 1px 5px; border-radius: 8px;
+}
+.diff-badge--accept { color: var(--success); background: color-mix(in srgb, var(--success) 15%, transparent); }
+.diff-badge--reject { color: var(--danger); background: color-mix(in srgb, var(--danger) 15%, transparent); }
+.diff-accept-all {
+  display: block; width: 100%; padding: 4px;
+  font-size: 10px; font-weight: 500; background: none;
+  border: none; border-top: 1px solid var(--border);
+  color: var(--accent); cursor: pointer;
+}
+
+/* Error Block — 严重级别 + Problem/Cause/Solution 三元素 */
+.error-block {
+  border: 1px solid color-mix(in srgb, var(--danger) 40%, transparent);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--danger) 8%, transparent);
+  overflow: hidden;
+  margin: 2px 0;
+}
+.error-block--persistent {
+  border-color: color-mix(in srgb, #c05621 40%, transparent);
+  background: color-mix(in srgb, #c05621 8%, transparent);
+}
+.error-block--fatal {
+  border-color: color-mix(in srgb, var(--danger) 60%, transparent);
+  border-width: 2px;
+}
+.error-header {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 10px;
+  font-size: 11px;
+}
+.error-icon { color: var(--danger); flex-shrink: 0; }
+.error-title { color: var(--text-primary); font-weight: 500; overflow: hidden; text-overflow: ellipsis; }
+.error-tool {
+  font-size: 10px; color: var(--text-muted);
+  background: var(--surface-muted);
+  padding: 1px 6px; border-radius: 8px; white-space: nowrap;
+}
+.error-retries-exhausted {
+  font-size: 9px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.3px;
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
+  padding: 1px 6px; border-radius: 8px; white-space: nowrap;
+}
+.error-toggle {
+  margin-left: auto; background: none; border: none;
+  cursor: pointer; color: var(--text-muted);
+  padding: 2px; display: flex; align-items: center;
+}
+.error-detail {
+  padding: 0 10px 6px 24px;
+  font-size: 10px; color: var(--text-secondary);
+}
+.error-detail pre {
+  background: var(--surface-muted);
+  border-radius: 4px; padding: 6px 8px; margin: 0;
+  overflow-x: auto; font-family: var(--font-mono);
+}
+.error-detail-label {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 9px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.3px;
+  color: var(--text-muted); margin-bottom: 4px;
+}
+.error-suggestion {
+  margin-top: 6px; padding: 6px 8px;
+  font-size: 10px; color: var(--text-secondary);
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+  border-left: 2px solid var(--accent);
+  border-radius: 0 4px 4px 0; line-height: 1.45;
+}
+.error-suggestion strong { color: var(--accent); font-weight: 600; }
+.error-actions {
+  display: flex; gap: 4px;
+  padding: 4px 10px 6px;
+}
+.error-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 8px; font-size: 10px; font-weight: 500;
+  border-radius: 4px; border: 1px solid transparent; cursor: pointer;
+}
+.error-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.error-btn.retry { background: var(--danger); color: #fff; }
+.error-btn.skip { background: transparent; color: var(--text-secondary); border-color: var(--border); }
+.error-btn.takeover { background: transparent; color: var(--accent); border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
+
+/* Response */
+.response {
+  padding: 8px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+.response code {
+  background: var(--surface-muted);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+.cursor {
+  display: inline-block;
+  width: 2px; height: 12px;
+  background: var(--brand);
+  animation: blink 1s steps(2) infinite;
+  vertical-align: text-bottom;
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+/* Tabs */
+.tabs {
+  display: flex; gap: 4px;
+  padding: 12px 24px 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.tab {
+  padding: 8px 14px;
+  font-size: 12px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  border-bottom: 2px solid transparent;
+  font-weight: 500;
+}
+.tab.active { color: var(--brand); border-bottom-color: var(--brand); }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+.section-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 16px 0 6px;
+  padding-left: 2px;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>FNIX 流式对话过程可视化</h1>
+    <p>head-and-tail 折叠 · 三态 DiffBlock · 严重级别 ErrorBlock · ARIA 进度条 — 对话内流动式过程展示</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="flow">完整流程</button>
+    <button class="tab" data-tab="collapse">智能折叠</button>
+    <button class="tab" data-tab="diff">DiffBlock</button>
+    <button class="tab" data-tab="error">ErrorBlock</button>
+    <button class="tab" data-tab="progress">进度状态条</button>
+  </div>
+
+  <div class="chat-area">
+
+    <!-- Tab 1: 完整流程 -->
+    <div class="tab-panel active" data-panel="flow">
+      <div class="msg-user">帮我重构 utils.ts 里的 parseDate 函数，并修复 bug</div>
+
+      <div class="msg-assistant">
+        <div class="progress-strip">
+          <span class="spinner"></span>
+          <span class="progress-step">Step 1/4</span>
+          <span class="progress-sep">·</span>
+          <span>读取并分析当前实现</span>
+        </div>
+
+        <div class="thinking-block">
+          <div class="thinking-label">
+            <span class="spinner"></span> Thinking
+          </div>
+          <div class="thinking-body">用户要重构 parseDate。我需要先读取 utils.ts 看当前实现，分析问题，再提出改进方案。</div>
+        </div>
+
+        <div class="tool-call">
+          <div class="tool-call-header">
+            <span class="tool-icon">📖</span>
+            <span class="tool-label">Reading file</span>
+            <span class="tool-target">src/utils.ts</span>
+            <span class="tool-status done"><span class="tool-check">✓</span></span>
+          </div>
+        </div>
+
+        <div class="tool-result">
+          <div class="tool-result-header">
+            <span class="tool-result-label">Result · 142 lines · 4.2KB</span>
+            <button class="tool-result-toggle" onclick="this.closest('.tool-result').querySelector('.tool-result-body').style.maxHeight='none';this.closest('.tool-result').querySelector('.tool-result-ellipsis').style.display='none';this.style.display='none';">Show all</button>
+          </div>
+          <div class="tool-result-body">
+export function parseDate(input: string): Date | null {
+  // TODO: 不支持 ISO 8601 和时区
+  const parts = input.split("-");
+  if (parts.length !== 3) return null;
+  const [year, month, day] = parts.map(Number);</div>
+          <div class="tool-result-ellipsis">… 135 lines hidden …</div>
+          <div class="tool-result-body" style="border-top:none;padding-top:0;">
+  return new Date(year, month - 1, day);
+}</div>
+          <div class="tool-result-more">135 lines hidden (3.8KB total) · click Show all to expand</div>
+        </div>
+
+        <div class="progress-strip">
+          <span class="spinner"></span>
+          <span class="progress-step">Step 2/4</span>
+          <span class="progress-sep">·</span>
+          <span>重构 parseDate 并修复时区 bug</span>
+        </div>
+
+        <div class="tool-call">
+          <div class="tool-call-header">
+            <span class="tool-icon">✏️</span>
+            <span class="tool-label">Writing file</span>
+            <span class="tool-target">src/utils.ts</span>
+            <span class="tool-status done"><span class="tool-check">✓</span></span>
+          </div>
+        </div>
+
+        <div class="diff-block">
+          <div class="diff-summary" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display==='block'?'none':'block';">
+            <span class="diff-icon">📄</span>
+            <span class="diff-count">src/utils.ts</span>
+            <span class="diff-stats">
+              <span class="diff-added">+18</span>
+              <span class="diff-removed">-7</span>
+            </span>
+            <span class="diff-status diff-status--pending">● 1 pending</span>
+          </div>
+          <div class="diff-single-actions">
+            <button class="diff-btn accept">✓ Accept</button>
+            <button class="diff-btn reject">✗ Reject</button>
+          </div>
+        </div>
+
+        <div class="response">
+          我已重构 <code>parseDate</code>。改进了 3 点：① 支持 ISO 8601 格式 ② 增加时区处理 ③ 改进错误处理<span class="cursor"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 2: 智能折叠 (head-and-tail) -->
+    <div class="tab-panel" data-panel="collapse">
+      <div class="section-label">大文件结果 — head-and-tail 预览（5 头 + 3 尾）</div>
+      <div class="tool-result">
+        <div class="tool-result-header">
+          <span class="tool-result-label">Result · 847 lines · 24.6KB</span>
+          <button class="tool-result-toggle">Show all</button>
+        </div>
+        <div class="tool-result-body">import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ChevronDown, ChevronRight } from 'lucide-react';
+import type { ChatMessage, StreamBlock } from '../types';
+import { ThinkingBlock, ToolCallCard, ToolResultCard } from './blocks';</div>
+        <div class="tool-result-ellipsis">… 839 lines hidden …</div>
+        <div class="tool-result-body" style="border-top:none;padding-top:0;">
+  const containerRef = useRef&lt;HTMLDivElement&gt;(null);
+  return &lt;MessageList messages={messages} /&gt;;
+}</div>
+        <div class="tool-result-more">839 lines hidden (23.8KB total) · click Show all to expand</div>
+      </div>
+
+      <div class="section-label">head-and-tail 保留结尾上下文（return 语句可见）</div>
+      <div class="tool-result">
+        <div class="tool-result-header">
+          <span class="tool-result-label">Result · 68 lines · 2.1KB</span>
+          <button class="tool-result-toggle">Show all</button>
+        </div>
+        <div class="tool-result-body">export async function fetchUser(id: string): Promise&lt;User&gt; {
+  const cache = getCache(id);
+  if (cache) return cache;
+  const res = await fetch(`/api/users/${id}`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);</div>
+        <div class="tool-result-ellipsis">… 60 lines hidden …</div>
+        <div class="tool-result-body" style="border-top:none;padding-top:0;">
+  const data = await res.json();
+  setCache(id, data);
+  return data;
+}</div>
+        <div class="tool-result-more">60 lines hidden (1.7KB total) · click Show all to expand</div>
+      </div>
+
+      <div class="section-label">小结果（不折叠）</div>
+      <div class="tool-result">
+        <div class="tool-result-header">
+          <span class="tool-result-label">Result</span>
+        </div>
+        <div class="tool-result-body" style="max-height:none;">
+File written successfully: src/utils.ts (142 bytes)</div>
+      </div>
+    </div>
+
+    <!-- Tab 3: DiffBlock (三态: pending/accepted/rejected) -->
+    <div class="tab-panel" data-panel="diff">
+      <div class="section-label">单文件 — pending（待审查）</div>
+      <div class="diff-block">
+        <div class="diff-summary">
+          <span class="diff-icon">📄</span>
+          <span class="diff-count">src/utils.ts</span>
+          <span class="diff-stats">
+            <span class="diff-added">+18</span>
+            <span class="diff-removed">-7</span>
+          </span>
+          <span class="diff-status diff-status--pending">● 1 pending</span>
+        </div>
+        <div class="diff-single-actions">
+          <button class="diff-btn accept">✓ Accept</button>
+          <button class="diff-btn reject">✗ Reject</button>
+        </div>
+      </div>
+
+      <div class="section-label">单文件 — accepted（已写入磁盘）</div>
+      <div class="diff-block">
+        <div class="diff-summary">
+          <span class="diff-icon">📄</span>
+          <span class="diff-count">src/utils.ts</span>
+          <span class="diff-stats">
+            <span class="diff-added">+18</span>
+            <span class="diff-removed">-7</span>
+          </span>
+          <span class="diff-status diff-status--done">✓ reviewed</span>
+        </div>
+        <div class="diff-single-status">
+          <span class="diff-badge diff-badge--accept">✓ applied to disk</span>
+        </div>
+      </div>
+
+      <div class="section-label">单文件 — rejected（已丢弃）</div>
+      <div class="diff-block">
+        <div class="diff-summary">
+          <span class="diff-icon">📄</span>
+          <span class="diff-count">src/utils.ts</span>
+          <span class="diff-stats">
+            <span class="diff-added">+18</span>
+            <span class="diff-removed">-7</span>
+          </span>
+          <span class="diff-status diff-status--done">✓ reviewed</span>
+        </div>
+        <div class="diff-single-status">
+          <span class="diff-badge diff-badge--reject">✗ discarded</span>
+        </div>
+      </div>
+
+      <div class="section-label">多文件 diff — 混合状态（点击展开）</div>
+      <div class="diff-block">
+        <div class="diff-summary" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display==='block'?'none':'block';">
+          <span class="diff-icon">📄</span>
+          <span class="diff-count">4 files changed</span>
+          <span class="diff-stats">
+            <span class="diff-added">+52</span>
+            <span class="diff-removed">-18</span>
+          </span>
+          <span class="diff-status diff-status--pending">● 2 pending</span>
+        </div>
+        <div class="diff-files" style="display:none;">
+          <div class="diff-file-row diff-file-row--accepted">
+            <span class="diff-file-name">src/utils.ts</span>
+            <span class="diff-file-stats"><span class="diff-added">+18</span><span class="diff-removed">-7</span></span>
+            <span class="diff-badge diff-badge--accept">✓ accepted</span>
+          </div>
+          <div class="diff-file-row diff-file-row--rejected">
+            <span class="diff-file-name">src/components/DatePicker.tsx</span>
+            <span class="diff-file-stats"><span class="diff-added">+12</span><span class="diff-removed">-3</span></span>
+            <span class="diff-badge diff-badge--reject">✗ rejected</span>
+          </div>
+          <div class="diff-file-row">
+            <span class="diff-file-name">src/hooks/useDate.ts</span>
+            <span class="diff-file-stats"><span class="diff-added">+15</span><span class="diff-removed">-5</span></span>
+            <div class="diff-btns">
+              <button class="diff-btn accept">✓</button>
+              <button class="diff-btn reject">✗</button>
+            </div>
+          </div>
+          <div class="diff-file-row">
+            <span class="diff-file-name">tests/utils.test.ts</span>
+            <span class="diff-file-stats"><span class="diff-added">+7</span><span class="diff-removed">-3</span></span>
+            <div class="diff-btns">
+              <button class="diff-btn accept">✓</button>
+              <button class="diff-btn reject">✗</button>
+            </div>
+          </div>
+          <button class="diff-accept-all">Accept all remaining (2)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 4: ErrorBlock (严重级别 + Problem/Cause/Solution) -->
+    <div class="tab-panel" data-panel="error">
+      <div class="section-label">transient（瞬时错误）— 仅显示 Retry + Skip</div>
+      <div class="error-block">
+        <div class="error-header">
+          <span class="error-icon">⚠</span>
+          <span class="error-title">文件不存在</span>
+          <span class="error-tool">read_file</span>
+        </div>
+        <div class="error-actions">
+          <button class="error-btn retry">↻ Retry</button>
+          <button class="error-btn skip">⏭ Skip</button>
+        </div>
+      </div>
+
+      <div class="section-label">transient — 带重试计数（2/3）</div>
+      <div class="error-block">
+        <div class="error-header">
+          <span class="error-icon">⚠</span>
+          <span class="error-title">网络请求超时</span>
+          <span class="error-tool">fetch</span>
+        </div>
+        <div class="error-actions">
+          <button class="error-btn retry">↻ Retry (2/3)</button>
+          <button class="error-btn skip">⏭ Skip</button>
+        </div>
+      </div>
+
+      <div class="section-label">transient — 重试耗尽（显示 Skip + Take over）</div>
+      <div class="error-block">
+        <div class="error-header">
+          <span class="error-icon">⚠</span>
+          <span class="error-title">网络请求超时</span>
+          <span class="error-tool">fetch</span>
+          <span class="error-retries-exhausted">retries exhausted</span>
+        </div>
+        <div class="error-actions">
+          <button class="error-btn skip">⏭ Skip</button>
+          <button class="error-btn takeover">👤 Take over</button>
+        </div>
+      </div>
+
+      <div class="section-label">persistent（持续错误）— 显示 Skip + Take over（不显示 Retry）</div>
+      <div class="error-block error-block--persistent">
+        <div class="error-header">
+          <span class="error-icon">⚠</span>
+          <span class="error-title">端口 3000 已被占用</span>
+          <span class="error-tool">run_command</span>
+          <button class="error-toggle" onclick="this.closest('.error-block').querySelector('.error-detail').style.display=this.closest('.error-block').querySelector('.error-detail').style.display==='block'?'none':'block';">▾</button>
+        </div>
+        <div class="error-detail" style="display:none;">
+          <div class="error-detail-label">ⓘ Diagnostics</div>
+          <pre>Error: listen EADDRINUSE: address already in use 0.0.0.0:3000</pre>
+          <div class="error-suggestion">
+            <strong>Suggestion:</strong> 使用端口 3001 或终止占用 3000 的进程（lsof -i :3000）
+          </div>
+        </div>
+        <div class="error-actions">
+          <button class="error-btn skip">⏭ Skip</button>
+          <button class="error-btn takeover">👤 Take over</button>
+        </div>
+      </div>
+
+      <div class="section-label">fatal（致命错误）— 仅显示 Take over</div>
+      <div class="error-block error-block--fatal">
+        <div class="error-header">
+          <span class="error-icon">⚠</span>
+          <span class="error-title">API Key 无效 — 无法继续执行</span>
+          <span class="error-tool">llm_chat</span>
+          <button class="error-toggle" onclick="this.closest('.error-block').querySelector('.error-detail').style.display=this.closest('.error-block').querySelector('.error-detail').style.display==='block'?'none':'block';">▾</button>
+        </div>
+        <div class="error-detail" style="display:none;">
+          <div class="error-detail-label">ⓘ Diagnostics</div>
+          <pre>401 Unauthorized: Invalid API Key
+GLM_API_KEY environment variable may be expired or revoked.</pre>
+          <div class="error-suggestion">
+            <strong>Suggestion:</strong> 检查 .env 文件中的 GLM_API_KEY 是否有效，或切换到 OPENAI_API_KEY
+          </div>
+        </div>
+        <div class="error-actions">
+          <button class="error-btn takeover">👤 Take over</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 5: 进度状态条 (ARIA + indeterminate/determinate) -->
+    <div class="tab-panel" data-panel="progress">
+      <div class="section-label">determinate 模式 — Step N/M（已知总步骤数）</div>
+      <div class="progress-strip" role="status" aria-live="polite" aria-label="当前进度: Step 3 of 7">
+        <span class="spinner"></span>
+        <span class="progress-step">Step 3/7</span>
+        <span class="progress-sep">·</span>
+        <span>正在重构 parseDate 函数</span>
+      </div>
+
+      <div class="section-label">indeterminate 模式 — Step N（总步骤数未知，避免失真）</div>
+      <div class="progress-strip" role="status" aria-live="polite" aria-label="当前进度: Step 5">
+        <span class="spinner"></span>
+        <span class="progress-step">Step 5</span>
+        <span class="progress-sep">·</span>
+        <span>搜索相关引用...</span>
+      </div>
+
+      <div class="section-label">已完成（✓ + 降低不透明度）</div>
+      <div class="progress-strip" role="status" aria-live="polite" style="opacity:0.6;border-left-color:var(--success);">
+        <span style="color:var(--success);">✓</span>
+        <span class="progress-step" style="color:var(--success);">Step 4/4</span>
+        <span class="progress-sep">·</span>
+        <span>全部完成</span>
+      </div>
+
+      <div class="section-label">多步骤流水线（craft 模式 9 步）</div>
+      <div class="progress-strip" role="status" aria-live="polite" aria-label="当前进度: Step 6 of 9">
+        <span class="spinner"></span>
+        <span class="progress-step">Step 6/9</span>
+        <span class="progress-sep">·</span>
+        <span>Critic 代理审查产物中...</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    const target = tab.dataset.tab;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.querySelector(`.tab-panel[data-panel="${target}"]`).classList.add('active');
+  });
+});
+</script>
+
+</body>
+</html>

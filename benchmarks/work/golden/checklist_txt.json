@@ -1,0 +1,7 @@
+{
+  "id": "checklist_txt",
+  "prompt": "写一份上线检查清单纯文本（至少 5 行，以 [ ] 开头）到 .fnix/artifacts/release_checklist/check.txt",
+  "work_mode": "craft",
+  "expect_glob": ".fnix/artifacts/release_checklist/**/*.txt",
+  "timeout_s": 120
+}

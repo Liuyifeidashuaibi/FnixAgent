@@ -1,0 +1,22 @@
+{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "charliermarsh.ruff",
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "ms-playwright.playwright",
+    "tamasfe.even-better-toml",
+    "redhat.vscode-yaml",
+    "DavidAnson.vscode-markdownlint",
+    "bradlc.vscode-tailwindcss",
+    "rust-lang.rust-analyzer",
+    "tauri-apps.tauri-vscode",
+    "ms-vscode.powershell",
+    "foxundermoon.shell-format"
+  ],
+  "unwantedRecommendations": [
+    "HookyQR.beautify",
+    "standard-things"  // example
+  ]
+}

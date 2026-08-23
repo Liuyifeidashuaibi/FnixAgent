@@ -1,0 +1,221 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 520" font-family="'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif">
+  <defs>
+    <linearGradient id="bgFlow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f8f9fc"/>
+      <stop offset="100%" stop-color="#eef1f7"/>
+    </linearGradient>
+    <linearGradient id="gateGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#0891b2"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
+    </linearGradient>
+    <linearGradient id="coreGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#3b82f6"/>
+    </linearGradient>
+    <linearGradient id="evolveGrad2" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+    <linearGradient id="outGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#059669"/>
+      <stop offset="100%" stop-color="#10b981"/>
+    </linearGradient>
+    <linearGradient id="loopGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#ec4899"/>
+    </linearGradient>
+    <filter id="fShadow" x="-2%" y="-5%" width="104%" height="110%">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#000" flood-opacity="0.08"/>
+    </filter>
+    <filter id="fGlow" x="-10%" y="-20%" width="120%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feFlood flood-color="#7c3aed" flood-opacity="0.12"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <marker id="arr" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 L3,5 Z" fill="#94a3b8"/>
+    </marker>
+    <marker id="arrPurple" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 L3,5 Z" fill="#7c3aed"/>
+    </marker>
+    <marker id="arrRed" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#ef4444"/>
+    </marker>
+  </defs>
+
+  <rect width="1400" height="520" fill="url(#bgFlow)"/>
+
+  <!-- Title -->
+  <text x="700" y="38" text-anchor="middle" font-size="22" font-weight="700" fill="#1e293b" letter-spacing="1">请求生命周期 · 9 步处理流水线</text>
+  <text x="700" y="60" text-anchor="middle" font-size="12" fill="#64748b">Request Lifecycle Pipeline — From User Input to Response</text>
+  <line x1="560" y1="70" x2="840" y2="70" stroke="#e2e8f0" stroke-width="1"/>
+
+  <!-- Row 1: Top flow -->
+  <!-- Step 1: User Input -->
+  <g filter="url(#fShadow)">
+    <rect x="20" y="100" width="120" height="60" rx="12" fill="#fff" stroke="#e0e7ff" stroke-width="1.5"/>
+    <circle cx="45" cy="130" r="16" fill="#eef2ff"/>
+    <text x="45" y="136" text-anchor="middle" font-size="16">👤</text>
+    <text x="80" y="125" font-size="11" font-weight="600" fill="#1e293b">用户输入</text>
+    <text x="80" y="142" font-size="9" fill="#94a3b8">Web / API / Bot</text>
+  </g>
+  <line x1="140" y1="130" x2="165" y2="130" stroke="#94a3b8" stroke-width="2" marker-end="url(#arr)"/>
+
+  <!-- Step 2: Gateway -->
+  <g filter="url(#fShadow)">
+    <rect x="170" y="100" width="140" height="60" rx="12" fill="#fff" stroke="#a5f3fc" stroke-width="1.5"/>
+    <rect x="170" y="100" width="4" height="60" rx="2" fill="url(#gateGrad)"/>
+    <text x="184" y="125" font-size="11" font-weight="700" fill="#0891b2">① 网关层</text>
+    <text x="184" y="140" font-size="9" fill="#64748b">鉴权 · 限流</text>
+    <text x="184" y="152" font-size="9" fill="#64748b">生成 TraceId</text>
+  </g>
+  <line x1="310" y1="130" x2="335" y2="130" stroke="#94a3b8" stroke-width="2" marker-end="url(#arr)"/>
+
+  <!-- Step 3: Security Check -->
+  <g filter="url(#fShadow)">
+    <rect x="340" y="100" width="130" height="60" rx="12" fill="#fff" stroke="#fecaca" stroke-width="1.5"/>
+    <circle cx="365" cy="130" r="14" fill="#fef2f2"/>
+    <text x="365" y="136" text-anchor="middle" font-size="14">🛡</text>
+    <text x="390" y="122" font-size="11" font-weight="700" fill="#dc2626">② 安全校验</text>
+    <text x="390" y="137" font-size="9" fill="#64748b">敏感词/注入检测</text>
+    <text x="390" y="150" font-size="9" fill="#ef4444">失败→拦截返回</text>
+  </g>
+  <!-- Red failure path -->
+  <line x1="405" y1="100" x2="405" y2="78" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrRed)"/>
+  <text x="420" y="75" font-size="9" fill="#ef4444">拦截</text>
+  <line x1="470" y1="130" x2="495" y2="130" stroke="#94a3b8" stroke-width="2" marker-end="url(#arr)"/>
+
+  <!-- Step 4: Memory Load -->
+  <g filter="url(#fShadow)">
+    <rect x="500" y="100" width="140" height="60" rx="12" fill="#fff" stroke="#bfdbfe" stroke-width="1.5"/>
+    <circle cx="525" cy="130" r="14" fill="#eff6ff"/>
+    <text x="525" y="136" text-anchor="middle" font-size="14">🧠</text>
+    <text x="550" y="120" font-size="11" font-weight="700" fill="#2563eb">③ 记忆加载</text>
+    <text x="550" y="134" font-size="9" fill="#64748b">短期窗口 + 长期向量</text>
+    <text x="550" y="147" font-size="9" fill="#64748b">+ 实体记忆</text>
+  </g>
+  <line x1="640" y1="130" x2="665" y2="130" stroke="#94a3b8" stroke-width="2" marker-end="url(#arr)"/>
+
+  <!-- Step 5: Intent + Planning -->
+  <g filter="url(#fShadow)">
+    <rect x="670" y="100" width="140" height="60" rx="12" fill="#fff" stroke="#ddd6fe" stroke-width="1.5"/>
+    <circle cx="695" cy="130" r="14" fill="#f5f3ff"/>
+    <text x="695" y="136" text-anchor="middle" font-size="14">🎯</text>
+    <text x="720" y="120" font-size="11" font-weight="700" fill="#7c3aed">④ 意图+规划</text>
+    <text x="720" y="134" font-size="9" fill="#64748b">意图识别</text>
+    <text x="720" y="147" font-size="9" fill="#64748b">生成子任务计划</text>
+  </g>
+  <line x1="810" y1="130" x2="835" y2="130" stroke="#94a3b8" stroke-width="2" marker-end="url(#arr)"/>
+
+  <!-- Loop box (Reasoning → Tool → Observe) -->
+  <g filter="url(#fGlow)">
+    <rect x="840" y="85" width="220" height="90" rx="14" fill="#faf5ff" stroke="#c4b5fd" stroke-width="2" stroke-dasharray="6,3"/>
+    <text x="950" y="108" text-anchor="middle" font-size="12" font-weight="700" fill="#7c3aed">⑤ 推理循环（ReAct/PlanExec）</text>
+    <rect x="855" y="118" width="60" height="32" rx="8" fill="#7c3aed"/>
+    <text x="885" y="139" text-anchor="middle" font-size="10" font-weight="600" fill="#fff">推理</text>
+    <text x="920" y="137" text-anchor="middle" font-size="14" fill="#7c3aed">→</text>
+    <rect x="930" y="118" width="60" height="32" rx="8" fill="#ec4899"/>
+    <text x="960" y="139" text-anchor="middle" font-size="10" font-weight="600" fill="#fff">工具</text>
+    <text x="995" y="137" text-anchor="middle" font-size="14" fill="#7c3aed">→</text>
+    <rect x="1005" y="118" width="45" height="32" rx="8" fill="#f59e0b"/>
+    <text x="1027" y="139" text-anchor="middle" font-size="10" font-weight="600" fill="#fff">观察</text>
+    <!-- Loop back arrow -->
+    <path d="M1027 150 Q1027 165 885 165 Q845 165 885 155" fill="none" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#arrPurple)"/>
+    <text x="950" y="173" text-anchor="middle" font-size="8" fill="#7c3aed">循环（≤10轮）</text>
+  </g>
+
+  <!-- Arrow down from loop -->
+  <line x1="950" y1="175" x2="950" y2="200" stroke="#94a3b8" stroke-width="2" marker-end="url(#arr)"/>
+
+  <!-- Row 2: Post-loop steps -->
+  <!-- Step 6: Reflection -->
+  <g filter="url(#fShadow)">
+    <rect x="840" y="208" width="220" height="60" rx="12" fill="#fff" stroke="#ddd6fe" stroke-width="1.5"/>
+    <circle cx="865" cy="238" r="14" fill="#f5f3ff"/>
+    <text x="865" y="244" text-anchor="middle" font-size="14">🔍</text>
+    <text x="890" y="227" font-size="11" font-weight="700" fill="#7c3aed">⑥ 反思校验</text>
+    <text x="890" y="242" font-size="9" fill="#64748b">完整性/合理性校验</text>
+    <text x="890" y="255" font-size="9" fill="#ef4444">不通过→重规划(≤2次)</text>
+  </g>
+  <!-- Replanning arrow back up -->
+  <path d="M840 238 Q820 238 820 175 Q820 130 835 130" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrRed)"/>
+  <text x="808" y="200" font-size="8" fill="#ef4444" transform="rotate(-90,808,200)">重规划</text>
+
+  <!-- Arrow right -->
+  <line x1="1060" y1="238" x2="1085" y2="238" stroke="#94a3b8" stroke-width="2" marker-end="url(#arr)"/>
+
+  <!-- Step 7: Output Audit -->
+  <g filter="url(#fShadow)">
+    <rect x="1090" y="208" width="140" height="60" rx="12" fill="#fff" stroke="#bbf7d0" stroke-width="1.5"/>
+    <circle cx="1115" cy="238" r="14" fill="#ecfdf5"/>
+    <text x="1115" y="244" text-anchor="middle" font-size="14">✅</text>
+    <text x="1140" y="227" font-size="11" font-weight="700" fill="#059669">⑦ 输出审核</text>
+    <text x="1140" y="242" font-size="9" fill="#64748b">脱敏/合规检查</text>
+    <text x="1140" y="255" font-size="9" fill="#64748b">内容审核</text>
+  </g>
+
+  <!-- Arrow left-down for output -->
+  <line x1="1090" y1="268" x2="1090" y2="298" stroke="#94a3b8" stroke-width="2"/>
+  <line x1="1090" y1="298" x2="670" y2="298" stroke="#94a3b8" stroke-width="2"/>
+  <line x1="670" y1="298" x2="670" y2="330" stroke="#94a3b8" stroke-width="2" marker-end="url(#arr)"/>
+
+  <!-- Step 8: Generate Response -->
+  <g filter="url(#fShadow)">
+    <rect x="550" y="338" width="240" height="60" rx="12" fill="#fff" stroke="#bbf7d0" stroke-width="1.5"/>
+    <rect x="550" y="338" width="4" height="60" rx="2" fill="url(#outGrad)"/>
+    <text x="564" y="363" font-size="11" font-weight="700" fill="#059669">⑧ 生成回复</text>
+    <text x="564" y="378" font-size="9" fill="#64748b">流式 SSE 输出 → 用户</text>
+    <text x="564" y="391" font-size="9" fill="#64748b">同步/流式双模式</text>
+  </g>
+  <!-- Response arrow up to user -->
+  <path d="M550 368 Q450 368 450 130 Q450 130 145 130" fill="none" stroke="#10b981" stroke-width="2" stroke-dasharray="6,3" marker-end="url(#arr)"/>
+  <text x="300" y="355" text-anchor="middle" font-size="9" fill="#10b981">响应返回（流式）</text>
+
+  <!-- Arrow down for persistence -->
+  <line x1="670" y1="398" x2="670" y2="425" stroke="#94a3b8" stroke-width="2" marker-end="url(#arr)"/>
+
+  <!-- Step 9: Persist -->
+  <g filter="url(#fShadow)">
+    <rect x="500" y="433" width="340" height="60" rx="12" fill="#fff" stroke="#fde68a" stroke-width="1.5"/>
+    <rect x="500" y="433" width="4" height="60" rx="2" fill="#f59e0b"/>
+    <text x="514" y="458" font-size="11" font-weight="700" fill="#d97706">⑨ 全量落库</text>
+    <text x="514" y="473" font-size="9" fill="#64748b">短期记忆更新 + 实体更新 + 文件→MinIO + 消息/工具/审计→PG</text>
+    <text x="514" y="485" font-size="9" fill="#64748b">TraceId 串联所有记录，支持完整回放</text>
+  </g>
+
+  <!-- Storage indicators -->
+  <g opacity="0.7">
+    <rect x="155" y="433" width="80" height="26" rx="6" fill="#fffbeb" stroke="#fde68a"/>
+    <text x="195" y="450" text-anchor="middle" font-size="9" font-weight="600" fill="#d97706">PostgreSQL</text>
+    <rect x="245" y="433" width="80" height="26" rx="6" fill="#fffbeb" stroke="#fde68a"/>
+    <text x="285" y="450" text-anchor="middle" font-size="9" font-weight="600" fill="#d97706">Redis</text>
+    <rect x="335" y="433" width="80" height="26" rx="6" fill="#fffbeb" stroke="#fde68a"/>
+    <text x="375" y="450" text-anchor="middle" font-size="9" font-weight="600" fill="#d97706">Milvus</text>
+    <rect x="855" y="433" width="80" height="26" rx="6" fill="#fffbeb" stroke="#fde68a"/>
+    <text x="895" y="450" text-anchor="middle" font-size="9" font-weight="600" fill="#d97706">MinIO</text>
+    <rect x="945" y="433" width="80" height="26" rx="6" fill="#fffbeb" stroke="#fde68a"/>
+    <text x="985" y="450" text-anchor="middle" font-size="9" font-weight="600" fill="#d97706">ES</text>
+    <line x1="235" y1="463" x2="500" y2="470" stroke="#fde68a" stroke-width="1" stroke-dasharray="3,2"/>
+    <line x1="325" y1="463" x2="500" y2="475" stroke="#fde68a" stroke-width="1" stroke-dasharray="3,2"/>
+    <line x1="415" y1="463" x2="500" y2="480" stroke="#fde68a" stroke-width="1" stroke-dasharray="3,2"/>
+    <line x1="855" y1="463" x2="840" y2="470" stroke="#fde68a" stroke-width="1" stroke-dasharray="3,2"/>
+    <line x1="945" y1="463" x2="840" y2="475" stroke="#fde68a" stroke-width="1" stroke-dasharray="3,2"/>
+  </g>
+
+  <!-- Legend -->
+  <g transform="translate(20, 210)">
+    <text x="0" y="0" font-size="10" font-weight="700" fill="#64748b">图例</text>
+    <line x1="0" y1="12" x2="30" y2="12" stroke="#94a3b8" stroke-width="2" marker-end="url(#arr)"/>
+    <text x="35" y="16" font-size="9" fill="#64748b">正常流</text>
+    <line x1="80" y1="12" x2="110" y2="12" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrRed)"/>
+    <text x="115" y="16" font-size="9" fill="#64748b">失败/回退</text>
+    <line x1="180" y1="12" x2="210" y2="12" stroke="#10b981" stroke-width="2" stroke-dasharray="6,3" marker-end="url(#arr)"/>
+    <text x="215" y="16" font-size="9" fill="#64748b">响应</text>
+    <rect x="260" y="2" width="30" height="16" rx="4" fill="#faf5ff" stroke="#c4b5fd" stroke-width="1.5" stroke-dasharray="4,2"/>
+    <text x="297" y="14" font-size="9" fill="#64748b">循环体</text>
+  </g>
+
+  <!-- Footer -->
+  <text x="700" y="510" text-anchor="middle" font-size="10" fill="#94a3b8">FnixAgent · Request Lifecycle Pipeline</text>
+</svg>

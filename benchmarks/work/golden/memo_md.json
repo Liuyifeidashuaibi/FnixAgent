@@ -1,0 +1,7 @@
+{
+  "id": "memo_md",
+  "prompt": "写一份简短会议纪要 Markdown，保存到 .fnix/artifacts/meeting_memo/notes.md，含议题与待办。",
+  "work_mode": "craft",
+  "expect_glob": ".fnix/artifacts/meeting_memo/**/*.md",
+  "timeout_s": 120
+}

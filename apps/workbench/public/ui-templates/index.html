@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fnix UI Templates — Fnix Desktop 2026-07 IA</title>
+  <style>
+    :root {
+      --bg: #f3f3f3;
+      --card: #fff;
+      --text: #0d0d0d;
+      --muted: #676767;
+      --border: rgba(0,0,0,.08);
+      --font: ui-sans-serif, -apple-system, system-ui, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      padding: 32px 28px 64px;
+    }
+    h1 { font-size: 22px; letter-spacing: -0.03em; margin: 0 0 8px; }
+    .lead { color: var(--muted); font-size: 14px; margin: 0 0 28px; max-width: 800px; line-height: 1.55; }
+    .grid { display: grid; gap: 28px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 2px 12px rgba(0,0,0,.04);
+    }
+    .card h2 {
+      margin: 0;
+      padding: 16px 18px;
+      font-size: 15px;
+      border-bottom: 1px solid var(--border);
+    }
+    .card img { display: block; width: 100%; height: auto; }
+    .card p {
+      margin: 0;
+      padding: 14px 18px 18px;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+    code { font-size: 12px; background: #f0f0f0; padding: 1px 6px; border-radius: 4px; }
+    ul { margin: 8px 0 0; padding-left: 18px; }
+    .ia {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 16px 0 28px;
+      max-width: 800px;
+    }
+    .ia div {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 13px;
+    }
+    .ia b { display: block; margin-bottom: 4px; color: var(--text); }
+  </style>
+</head>
+<body>
+  <h1>ChatGPT / Codex Desktop · IA 核对（~7.19）</h1>
+  <p class="lead">
+    侧栏 IA：顶栏左右 <b>Work | Code</b>；主按钮 <b>New work</b>；
+    <b>Repositories</b>（文件夹图标+名）；其下 <b>Works / Chats</b> 会话列表。
+    无 Search、无产品下拉、无右上角多余按钮。Composer 内 Ask/Plan/Craft。
+    Glass <a href="/?glass=1"><code>/?glass=1</code></a>。
+  </p>
+  <div class="ia">
+    <div><b>1 · 产品</b>Work | Code 分段</div>
+    <div><b>2 · Repos</b>文件夹列表</div>
+    <div><b>3 · 会话</b>Works / Chats</div>
+  </div>
+  <div class="grid">
+    <article class="card">
+      <h2>0 · 三层 IA（去重）</h2>
+      <img src="./ia-layers.png" alt="Product vs surface vs exec mode" />
+      <p>
+        禁止把「Fnix / Code」与「Chat / Work」做成两套同级大开关。
+        产品菜单只有两项；Chat|Work 只在 Fnix 下出现。
+      </p>
+    </article>
+    <article class="card">
+      <h2>1 · Home：模式进 Composer</h2>
+      <img src="./ia-home-composer-modes.png" alt="Home with composer mode pill" />
+      <p>
+        主区只有品牌 + 标题 + Composer。Ask/Plan/Craft = 底栏 pill（对标 Cursor Agent / Plan）。
+        <ul>
+          <li>勿在中央放三张 Ask/Plan/Craft 大卡</li>
+          <li>Chat 面：无执行 pill，固定 Ask</li>
+          <li>Work 面：显示 Craft ▾</li>
+        </ul>
+      </p>
+    </article>
+    <article class="card">
+      <h2>2 · Work Home（旧参考）</h2>
+      <img src="./work-home.png" alt="Work home template" />
+      <p>侧栏 + 居中标题 + 底部 Composer；执行模式以后者模板为准。</p>
+    </article>
+    <article class="card">
+      <h2>3 · Codex Review</h2>
+      <img src="./codex-review.png" alt="Codex review template" />
+      <p>产品 = Fnix Code；无 Chat|Work；胶囊 + Review Accept/Reject；Local|Worktree|Cloud。</p>
+    </article>
+    <article class="card">
+      <h2>4 · Goal progress / Activity</h2>
+      <img src="./process-goal-row.png" alt="Goal progress row" />
+      <img src="./process-timeline.png" alt="Process timeline" style="border-top:1px solid var(--border)" />
+      <p>Composer 上方 Goal row；消息区 Activity 时间线。</p>
+    </article>
+  </div>
+</body>
+</html>

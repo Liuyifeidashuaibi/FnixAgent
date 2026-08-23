@@ -1,0 +1,41 @@
+{
+  "id": "gen.cli.greet.alpha.v208",
+  "title": "greet alpha",
+  "prompt": "Fix `main.py` so running `python main.py alpha` prints exactly `Hello, alpha!`",
+  "capability": [
+    "bugfix",
+    "cli"
+  ],
+  "difficulty": 2,
+  "language": "python",
+  "tags": [
+    "generated",
+    "cli",
+    "full"
+  ],
+  "timeout_s": 120,
+  "setup": {
+    "files": {
+      "main.py": "def main():\n    print(\"hello\")\n\nif __name__ == \"__main__\":\n    main()\n"
+    }
+  },
+  "checks": [
+    {
+      "function": "stdout_equals",
+      "args": {
+        "command": [
+          "python",
+          "main.py",
+          "alpha"
+        ],
+        "expected": "Hello, alpha!"
+      }
+    },
+    {
+      "function": "no_stub_content",
+      "args": {
+        "path": "main.py"
+      }
+    }
+  ]
+}

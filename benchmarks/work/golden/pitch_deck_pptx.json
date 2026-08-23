@@ -1,0 +1,7 @@
+{
+  "id": "pitch_deck_pptx",
+  "prompt": "用 create_pptx 做一份 3 页产品介绍 PPT：封面、痛点、方案。保存到 .fnix/artifacts/pitch_deck/product.pptx",
+  "work_mode": "craft",
+  "expect_glob": ".fnix/artifacts/pitch_deck/**/*.pptx",
+  "timeout_s": 180
+}

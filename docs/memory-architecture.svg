@@ -1,0 +1,254 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 750" font-family="'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif">
+  <defs>
+    <linearGradient id="bgMem" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f8f9fc"/>
+      <stop offset="100%" stop-color="#f0f9ff"/>
+    </linearGradient>
+    <linearGradient id="stmGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#2563eb"/>
+    </linearGradient>
+    <linearGradient id="ltmGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#06b6d4"/>
+      <stop offset="100%" stop-color="#0891b2"/>
+    </linearGradient>
+    <linearGradient id="emGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+    <linearGradient id="mgrGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#334155"/>
+    </linearGradient>
+    <filter id="memShadow" x="-3%" y="-3%" width="106%" height="106%">
+      <feDropShadow dx="0" dy="3" stdDeviation="6" flood-color="#000" flood-opacity="0.08"/>
+    </filter>
+    <filter id="memGlow" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feFlood flood-color="#3b82f6" flood-opacity="0.1"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <marker id="mArr" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 L3,5 Z" fill="#94a3b8"/>
+    </marker>
+    <marker id="mArrBlue" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 L3,5 Z" fill="#3b82f6"/>
+    </marker>
+    <marker id="mArrCyan" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 L3,5 Z" fill="#06b6d4"/>
+    </marker>
+    <marker id="mArrPurple" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 L3,5 Z" fill="#7c3aed"/>
+    </marker>
+  </defs>
+
+  <rect width="1100" height="750" fill="url(#bgMem)"/>
+
+  <!-- Title -->
+  <text x="550" y="40" text-anchor="middle" font-size="24" font-weight="700" fill="#1e293b" letter-spacing="1">三层记忆引擎架构</text>
+  <text x="550" y="62" text-anchor="middle" font-size="12" fill="#64748b">Three-Tier Memory Engine — Short-Term · Long-Term · Entity</text>
+  <line x1="430" y1="73" x2="670" y2="73" stroke="#e2e8f0" stroke-width="1"/>
+
+  <!-- ============================================================ -->
+  <!-- MemoryManager (center orchestrator) -->
+  <!-- ============================================================ -->
+  <g filter="url(#memGlow)">
+    <rect x="400" y="300" width="300" height="100" rx="16" fill="#fff" stroke="#1e293b" stroke-width="2"/>
+    <rect x="400" y="300" width="300" height="6" rx="3" fill="url(#mgrGrad)"/>
+  </g>
+  <text x="550" y="335" text-anchor="middle" font-size="18" font-weight="700" fill="#1e293b">MemoryManager</text>
+  <text x="550" y="355" text-anchor="middle" font-size="11" fill="#64748b">统一记忆调度 · 生命周期管理 · Prompt 组装</text>
+  <text x="550" y="375" text-anchor="middle" font-size="10" fill="#94a3b8">TTL 过期清理 · 自动摘要压缩 · 记忆融合注入</text>
+
+  <!-- ============================================================ -->
+  <!-- Short-Term Memory (top) -->
+  <!-- ============================================================ -->
+  <g filter="url(#memShadow)">
+    <rect x="340" y="100" width="420" height="170" rx="16" fill="#fff" stroke="#93c5fd" stroke-width="1.5"/>
+    <rect x="340" y="100" width="420" height="6" rx="3" fill="url(#stmGrad)"/>
+  </g>
+  <text x="370" y="130" font-size="16" font-weight="700" fill="#2563eb">🧠 短期记忆 (Short-Term)</text>
+  <text x="370" y="150" font-size="10" fill="#64748b">滑动窗口 · 当前会话上下文</text>
+
+  <!-- Window visual -->
+  <g transform="translate(370, 165)">
+    <rect x="0" y="0" width="360" height="40" rx="8" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1"/>
+    <!-- Message bubbles -->
+    <rect x="10" y="6" width="80" height="28" rx="6" fill="#dbeafe"/>
+    <text x="50" y="24" text-anchor="middle" font-size="8" fill="#1d4ed8">User: 你好</text>
+    <rect x="100" y="6" width="120" height="28" rx="6" fill="#3b82f6"/>
+    <text x="160" y="24" text-anchor="middle" font-size="8" fill="#fff">Agent: 您好！请问...</text>
+    <rect x="230" y="6" width="120" height="28" rx="6" fill="#dbeafe"/>
+    <text x="290" y="24" text-anchor="middle" font-size="8" fill="#1d4ed8">User: 帮我搜论文</text>
+    <!-- Window indicator -->
+    <rect x="0" y="0" width="4" height="40" rx="2" fill="#3b82f6"/>
+  </g>
+
+  <!-- STM params -->
+  <text x="370" y="225" font-size="10" fill="#475569">
+    <tspan x="370" dy="0">• 容量: 滑动窗口 6000 tokens / 20 条消息</tspan>
+    <tspan x="370" dy="16">• 存储: Redis 7 · 会话级 TTL (30min 空闲过期)</tspan>
+    <tspan x="370" dy="16">• 策略: 超容自动摘要压缩 (LLM summarize)</tspan>
+  </text>
+
+  <!-- Arrow: STM → Manager -->
+  <path d="M550 270 L550 295" fill="none" stroke="#3b82f6" stroke-width="2.5" marker-end="url(#mArrBlue)"/>
+  <text x="560" y="287" font-size="9" fill="#3b82f6">读取/写入</text>
+
+  <!-- ============================================================ -->
+  <!-- Long-Term Memory (left) -->
+  <!-- ============================================================ -->
+  <g filter="url(#memShadow)">
+    <rect x="30" y="300" width="330" height="200" rx="16" fill="#fff" stroke="#67e8f9" stroke-width="1.5"/>
+    <rect x="30" y="300" width="330" height="6" rx="3" fill="url(#ltmGrad)"/>
+  </g>
+  <text x="55" y="330" font-size="16" font-weight="700" fill="#0891b2">💾 长期记忆 (Long-Term)</text>
+  <text x="55" y="350" font-size="10" fill="#64748b">向量检索 · 跨会话知识持久化</text>
+
+  <!-- Vector space visual -->
+  <g transform="translate(55, 365)">
+    <rect x="0" y="0" width="280" height="50" rx="8" fill="#ecfeff" stroke="#a5f3fc" stroke-width="1"/>
+    <!-- Vector points -->
+    <circle cx="30" cy="25" r="8" fill="#06b6d4" opacity="0.8"/>
+    <circle cx="70" cy="15" r="6" fill="#0891b2" opacity="0.6"/>
+    <circle cx="100" cy="30" r="10" fill="#06b6d4" opacity="0.9"/>
+    <circle cx="140" cy="20" r="5" fill="#67e8f9" opacity="0.7"/>
+    <circle cx="180" cy="35" r="7" fill="#0891b2" opacity="0.6"/>
+    <circle cx="220" cy="18" r="9" fill="#06b6d4" opacity="0.8"/>
+    <circle cx="255" cy="28" r="6" fill="#67e8f9" opacity="0.7"/>
+    <!-- Query point (highlighted) -->
+    <circle cx="100" cy="30" r="14" fill="none" stroke="#0891b2" stroke-width="2" stroke-dasharray="3,2"/>
+    <text x="140" y="0" font-size="8" fill="#0891b2">Top-K=5 召回</text>
+    <!-- Similarity lines -->
+    <line x1="100" y1="30" x2="30" y2="25" stroke="#06b6d4" stroke-width="0.5" stroke-dasharray="2,2" opacity="0.5"/>
+    <line x1="100" y1="30" x2="70" y2="15" stroke="#06b6d4" stroke-width="0.5" stroke-dasharray="2,2" opacity="0.5"/>
+    <line x1="100" y1="30" x2="140" y2="20" stroke="#06b6d4" stroke-width="0.5" stroke-dasharray="2,2" opacity="0.5"/>
+    <line x1="100" y1="30" x2="180" y2="35" stroke="#06b6d4" stroke-width="0.5" stroke-dasharray="2,2" opacity="0.5"/>
+    <line x1="100" y1="30" x2="220" y2="18" stroke="#06b6d4" stroke-width="0.5" stroke-dasharray="2,2" opacity="0.5"/>
+  </g>
+
+  <!-- LTM params -->
+  <text x="55" y="435" font-size="10" fill="#475569">
+    <tspan x="55" dy="0">• 检索: Embedding 向量 (1024维) + BM25 关键词混合 (7:3)</tspan>
+    <tspan x="55" dy="16">• Top-K: 5 条相关记忆注入 Prompt</tspan>
+    <tspan x="55" dy="16">• 存储: Milvus 向量数据库 · JSON/对象双格式</tspan>
+    <tspan x="55" dy="16">• 触发: 每轮对话自动语义检索</tspan>
+  </text>
+
+  <!-- Arrow: LTM → Manager -->
+  <path d="M360 370 L395 350" fill="none" stroke="#06b6d4" stroke-width="2.5" marker-end="url(#mArrCyan)"/>
+  <text x="365" y="348" font-size="9" fill="#06b6d4">语义检索</text>
+  <!-- Arrow: Manager → LTM (write) -->
+  <path d="M395 390 L360 410" fill="none" stroke="#06b6d4" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#mArrCyan)"/>
+  <text x="362" y="418" font-size="8" fill="#06b6d4">写入/更新</text>
+
+  <!-- ============================================================ -->
+  <!-- Entity Memory (right) -->
+  <!-- ============================================================ -->
+  <g filter="url(#memShadow)">
+    <rect x="740" y="300" width="330" height="200" rx="16" fill="#fff" stroke="#c4b5fd" stroke-width="1.5"/>
+    <rect x="740" y="300" width="330" height="6" rx="3" fill="url(#emGrad)"/>
+  </g>
+  <text x="765" y="330" font-size="16" font-weight="700" fill="#7c3aed">📋 实体记忆 (Entity)</text>
+  <text x="765" y="350" font-size="10" fill="#64748b">结构化存储 · 业务事实持久化</text>
+
+  <!-- Entity table visual -->
+  <g transform="translate(765, 365)">
+    <rect x="0" y="0" width="280" height="50" rx="8" fill="#f5f3ff" stroke="#ddd6fe" stroke-width="1"/>
+    <!-- Table header -->
+    <rect x="0" y="0" width="280" height="16" rx="8" fill="#ede9fe"/>
+    <text x="10" y="12" font-size="8" font-weight="600" fill="#6d28d9">实体类型</text>
+    <text x="100" y="12" font-size="8" font-weight="600" fill="#6d28d9">属性</text>
+    <text x="200" y="12" font-size="8" font-weight="600" fill="#6d28d9">值</text>
+    <!-- Table rows -->
+    <line x1="0" y1="16" x2="280" y2="16" stroke="#ddd6fe" stroke-width="0.5"/>
+    <text x="10" y="28" font-size="7" fill="#6d28d9">User</text>
+    <text x="100" y="28" font-size="7" fill="#64748b">研究方向</text>
+    <text x="200" y="28" font-size="7" fill="#64748b">LLM Agent</text>
+    <text x="10" y="40" font-size="7" fill="#6d28d9">Paper</text>
+    <text x="100" y="40" font-size="7" fill="#64748b">当前主题</text>
+    <text x="200" y="40" font-size="7" fill="#64748b">Self-Evolution</text>
+  </g>
+
+  <!-- EM params -->
+  <text x="765" y="435" font-size="10" fill="#475569">
+    <tspan x="765" dy="0">• 类型: 用户画像 / 论文 / 项目 / 任务上下文</tspan>
+    <tspan x="765" dy="16">• 容量: 1000 实体/用户 · 结构化字段</tspan>
+    <tspan x="765" dy="16">• 存储: PostgreSQL 16 · JSONB 字段</tspan>
+    <tspan x="765" dy="16">• 触发: 对话中显式提取实体信息时更新</tspan>
+  </text>
+
+  <!-- Arrow: EM → Manager -->
+  <path d="M740 370 L705 350" fill="none" stroke="#7c3aed" stroke-width="2.5" marker-end="url(#mArrPurple)"/>
+  <text x="710" y="348" font-size="9" fill="#7c3aed">实体读取</text>
+  <!-- Arrow: Manager → EM (write) -->
+  <path d="M705 390 L740 410" fill="none" stroke="#7c3aed" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#mArrPurple)"/>
+  <text x="710" y="418" font-size="8" fill="#7c3aed">实体提取/更新</text>
+
+  <!-- ============================================================ -->
+  <!-- Memory injection flow (down to Prompt) -->
+  <!-- ============================================================ -->
+  <path d="M550 400 L550 450" fill="none" stroke="#1e293b" stroke-width="2.5" marker-end="url(#mArr)"/>
+  <text x="560" y="432" font-size="9" fill="#1e293b" font-weight="600">统一组装注入</text>
+
+  <g filter="url(#memShadow)">
+    <rect x="320" y="460" width="460" height="130" rx="14" fill="#fff" stroke="#e2e8f0" stroke-width="1.5"/>
+    <rect x="320" y="460" width="460" height="4" rx="2" fill="#1e293b"/>
+  </g>
+  <text x="550" y="488" text-anchor="middle" font-size="14" font-weight="700" fill="#1e293b">Prompt 组装器</text>
+
+  <!-- Assembled prompt preview -->
+  <g transform="translate(345, 500)">
+    <rect x="0" y="0" width="410" height="78" rx="8" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+    <rect x="0" y="0" width="4" height="78" rx="2" fill="#3b82f6"/>
+    <text x="14" y="16" font-size="8" font-weight="600" fill="#3b82f6">[System] 你是FnixAgent，研究助手...</text>
+    <rect x="0" y="0" width="4" height="78" rx="2" fill="#3b82f6"/>
+    <rect x="10" y="22" width="4" height="14" rx="2" fill="#06b6d4"/>
+    <text x="20" y="33" font-size="8" fill="#0891b2">[长期记忆] 你之前研究过Self-Evolution Agent... (Top-K=5 召回)</text>
+    <rect x="10" y="38" width="4" height="14" rx="2" fill="#7c3aed"/>
+    <text x="20" y="49" font-size="8" fill="#7c3aed">[实体记忆] 用户研究方向: LLM Agent; 当前主题: ...</text>
+    <rect x="10" y="54" width="4" height="20" rx="2" fill="#2563eb"/>
+    <text x="20" y="65" font-size="8" fill="#2563eb">[短期记忆] User: 你好 → Agent: 您好... → User: 帮我搜论文</text>
+  </g>
+
+  <!-- ============================================================ -->
+  <!-- BOTTOM: Storage backends -->
+  <!-- ============================================================ -->
+  <g transform="translate(30, 620)">
+    <text x="0" y="0" font-size="12" font-weight="700" fill="#1e293b">存储后端</text>
+    <g transform="translate(0, 10)" filter="url(#memShadow)">
+      <rect x="0" y="0" width="200" height="50" rx="10" fill="#fff" stroke="#bfdbfe" stroke-width="1.5"/>
+      <circle cx="25" cy="25" r="14" fill="#3b82f6"/>
+      <text x="25" y="30" text-anchor="middle" font-size="10" fill="#fff" font-weight="700">R</text>
+      <text x="48" y="22" font-size="11" font-weight="600" fill="#2563eb">Redis 7</text>
+      <text x="48" y="38" font-size="9" fill="#64748b">短期会话 · 滑动窗口缓存</text>
+      <text x="190" y="46" text-anchor="end" font-size="8" fill="#3b82f6">TTL 30min</text>
+    </g>
+    <g transform="translate(220, 10)" filter="url(#memShadow)">
+      <rect x="0" y="0" width="200" height="50" rx="10" fill="#fff" stroke="#a5f3fc" stroke-width="1.5"/>
+      <circle cx="25" cy="25" r="14" fill="#06b6d4"/>
+      <text x="25" y="30" text-anchor="middle" font-size="10" fill="#fff" font-weight="700">M</text>
+      <text x="48" y="22" font-size="11" font-weight="600" fill="#0891b2">Milvus</text>
+      <text x="48" y="38" font-size="9" fill="#64748b">长期向量 · Embedding 1024d</text>
+      <text x="190" y="46" text-anchor="end" font-size="8" fill="#06b6d4">HNSW索引</text>
+    </g>
+    <g transform="translate(440, 10)" filter="url(#memShadow)">
+      <rect x="0" y="0" width="200" height="50" rx="10" fill="#fff" stroke="#ddd6fe" stroke-width="1.5"/>
+      <circle cx="25" cy="25" r="14" fill="#7c3aed"/>
+      <text x="25" y="30" text-anchor="middle" font-size="10" fill="#fff" font-weight="700">P</text>
+      <text x="48" y="22" font-size="11" font-weight="600" fill="#7c3aed">PostgreSQL 16</text>
+      <text x="48" y="38" font-size="9" fill="#64748b">实体记忆 · JSONB 结构化</text>
+      <text x="190" y="46" text-anchor="end" font-size="8" fill="#7c3aed">持久化</text>
+    </g>
+    <!-- Memory lifecycle note -->
+    <g transform="translate(660, 10)">
+      <rect x="0" y="0" width="400" height="50" rx="10" fill="#fffbeb" stroke="#fde68a" stroke-width="1.5"/>
+      <text x="14" y="22" font-size="10" font-weight="600" fill="#d97706">记忆生命周期</text>
+      <text x="14" y="38" font-size="9" fill="#92400e">创建 → 读取(TTL检查) → 写入/更新 → 过期清理 → 超容压缩 → 长期沉淀</text>
+    </g>
+  </g>
+
+  <!-- Footer -->
+  <text x="550" y="735" text-anchor="middle" font-size="10" fill="#94a3b8">FnixAgent · Three-Tier Memory Engine Architecture</text>
+</svg>

@@ -1,0 +1,36 @@
+name: 数据删除事件响应
+id: 7h5c4d3e-3456-789a-bcde-f23456789012
+trigger: rule.match.high
+enabled: true
+description: 响应批量数据删除/数据库删除事件
+steps:
+  - name: 立即隔离
+    actions:
+      - name: isolate_agent
+        params:
+          reason: "疑似数据删除行为"
+        timeout: 30
+    require_approval: false
+  - name: 撤销凭证
+    actions:
+      - name: revoke_token
+        params:
+          scope: "all"
+        timeout: 30
+    require_approval: false
+  - name: 通知管理员
+    actions:
+      - name: notify_admin
+        params:
+          severity: high
+          message: "检测到批量数据删除,已隔离 Agent 并撤销凭证"
+        timeout: 10
+    require_approval: false
+  - name: 回滚操作
+    actions:
+      - name: rollback_operation
+        params:
+          lookup_recent: true
+        timeout: 300
+    require_approval: true
+    approval_timeout: 3600
