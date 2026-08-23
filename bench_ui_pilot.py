@@ -31,9 +31,11 @@ WS_ROOT = Path.home() / ".fnix" / "workspaces" / "bench" / "ui-pilot"
 
 # 固定小题目集（多样框架 + 关键回归）
 SELECT = [
-    ("web-bench", "angular--task-1"),          # BUG-4 回归：多文件组件 + heal
-    ("vibe-code-bench", "case_01_pomodoro"),   # 全应用从零搭建（HTML/CSS/JS）
-    ("workbuddy-bench", "web--animated-explainer-L3-028"),  # 动画网页（L4 难度）
+    ("vibe-code-bench", "case_02_quiz"),        # 答题测试应用（新题）
+    ("vibe-code-bench", "case_03_calculator"),  # 计算器（新题）
+    ("vibe-code-bench", "case_04_notes"),       # 笔记应用（新题）
+    ("vibe-code-bench", "case_06_kanban"),      # 看板（拖拽+localStorage，新题）
+    ("web-bench", "angular--task-1"),           # 回归：多文件组件 + heal
 ]
 
 

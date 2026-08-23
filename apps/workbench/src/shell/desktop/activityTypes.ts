@@ -87,6 +87,33 @@ export function upsertActivity(prev: ActivityItem[], next: ActivityItem): Activi
       return copy;
     }
   }
+  // Fallback: observation 事件（kind=tool, status=done）无 meta 或 meta='tool' 时，
+  // 说明 obs.name 为空回退为 'tool'，尝试合并到最后一个 running 的工具活动，
+  // 避免产生重复的"tool 已完成"条目。
+  if (
+    next.status !== "running" &&
+    next.kind === "tool" &&
+    (!next.meta || next.meta === "tool")
+  ) {
+    const i = prev.findLastIndex(
+      (item) =>
+        item.status === "running" &&
+        ["read", "edit", "write", "tool", "run", "test"].includes(item.kind),
+    );
+    if (i >= 0) {
+      const copy = [...prev];
+      copy[i] = {
+        ...copy[i]!,
+        ...next,
+        id: copy[i]!.id,
+        kind: copy[i]!.kind,
+        title: copy[i]!.title,
+        startedAt: copy[i]!.startedAt,
+        path: next.path || copy[i]!.path,
+      };
+      return copy;
+    }
+  }
   return [...prev, next].slice(-40);
 }
 

@@ -195,7 +195,14 @@ export function ResultsView({
         <FolderOpen size={15} />
         <span>结果</span>
         <em>{artifacts.length}</em>
-        {coverage != null ? <em className="cov">{coverage}%</em> : null}
+        {coverage != null ? (
+          <em
+            className="cov"
+            title={`交付覆盖率：已产出产物匹配预期交付物的比例（${coverage}%）`}
+          >
+            {coverage}%
+          </em>
+        ) : null}
         <span className="fnx-results-bar-spacer" />
         {artifacts.length > 0 ? (
           <button

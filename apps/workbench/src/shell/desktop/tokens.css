@@ -6724,6 +6724,9 @@ button.fnix-agent-process-hidden {
 }
 .fnix-canvas-pane.preview {
   background: var(--bg-soft, #fff);
+  /* 给 iframe 预览内容留出内边距，避免边缘内容被裁切 */
+  padding: 12px;
+  box-sizing: border-box;
 }
 .fnix-canvas-pane.source {
   border-left: 1px solid var(--canvas-border);
@@ -6745,6 +6748,8 @@ button.fnix-agent-process-hidden {
   height: 100%;
   border: none;
   background: var(--bg-soft, #fff);
+  border-radius: 6px;
+  box-sizing: border-box;
 }
 
 /* SVG */

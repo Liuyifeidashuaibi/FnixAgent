@@ -578,7 +578,8 @@ export async function streamWork(opts: {
             ...(callId ? { id: `tool-${callId}` } : {}),
             kind: ok ? 'tool' : 'error',
             title: ok ? `${name} 已完成` : `${name} 执行失败`,
-            meta: name,
+            // 当 name 回退为 'tool' 时不设 meta，让 upsertActivity fallback 合并
+            ...(name !== 'tool' ? { meta: name } : {}),
             status: ok ? 'done' : 'error',
             detail: summary || undefined,
             endedAt: Date.now(),

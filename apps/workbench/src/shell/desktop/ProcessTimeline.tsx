@@ -53,6 +53,9 @@ function isUsefulActivity(item: ActivityItem): boolean {
   if (item.meta === 'evolution' || item.meta === 'pipeline' || item.meta === 'reflection→HERA')
     return false;
   if (item.title.startsWith('KTG ') || item.title.startsWith('Pipeline step')) return false;
+  // 过滤无信息量的 "tool 已完成" 条目：这些是 observation 事件 obs.name 为空时的回退标题，
+  // 对应的工具活动已通过 action 事件展示（如"使用 ls"、"写入 index.html"等）。
+  if (item.title === 'tool 已完成' && !item.path) return false;
   return true;
 }
 
@@ -155,7 +158,10 @@ export function ProcessTimeline({ items, streaming = false, onStop, onOpenDiff, 
   ).length;
   const cancelled = visibleItems.some((item) => item.status === 'cancelled');
   const latest = visibleItems[visibleItems.length - 1];
-  const summary = running?.title || latest?.title || '执行过程';
+  const state = running ? 'running' : errors ? 'error' : cancelled ? 'cancelled' : 'done';
+  // 标题逻辑：运行中显示当前活动，完成/出错显示整体状态而非最后活动名
+  // （最后活动名往往是「Self-Optimizing 沉淀」等内部步骤，对用户无意义）
+  const summary = running?.title || (state === 'done' ? '执行完成' : state === 'error' ? '执行遇到问题' : state === 'cancelled' ? '已停止' : latest?.title || '执行过程');
   const fileCount = new Set(visibleItems.map((item) => item.path).filter(Boolean)).size;
   const commandCount = visibleItems.filter(
     (item) => item.kind === 'run' || item.kind === 'test',
@@ -165,7 +171,6 @@ export function ProcessTimeline({ items, streaming = false, onStop, onOpenDiff, 
   const end = Math.max(...visibleItems.map((item) => item.endedAt || item.startedAt));
   const rows = showAll ? filteredItems : filteredItems.slice(-24);
   const hiddenRows = filteredItems.length - rows.length;
-  const state = running ? 'running' : errors ? 'error' : cancelled ? 'cancelled' : 'done';
   const doneCount = visibleItems.filter(
     (item) => item.status === 'done' || item.status === 'error' || item.status === 'cancelled',
   ).length;
