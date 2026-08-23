@@ -7,7 +7,7 @@
 
 /** Agent 执行控制台：真实动作、证据和控制，不展示原始 chain-of-thought。 */
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   BrainCircuit,
   Check,
@@ -109,6 +109,7 @@ export function ProcessTimeline({ items, streaming = false, onStop, onOpenDiff, 
   const [filter, setFilter] = useState<Filter>('all');
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [showAll, setShowAll] = useState(false);
+  const [atBottom, setAtBottom] = useState(true);
   const bodyRef = useRef<HTMLDivElement>(null);
   const visibleItems = useMemo(() => items.filter(isUsefulActivity), [items]);
   const filteredItems = useMemo(
@@ -120,20 +121,31 @@ export function ProcessTimeline({ items, streaming = false, onStop, onOpenDiff, 
   // Duration display is now handled by <LiveDuration> child components with
   // their own isolated timers.
 
-  // 平滑自动滚动：不仅在新行追加时滚动，最后一行内容增长（think 证据流入）时也跟随，
-  // 避免流式期间视口「卡住不动、突然跳变」。rAF 合帧，scrollTo smooth 避免瞬移。
+  // 智能粘底滚动：用户上滚查看历史时不强制拉回底部（参考 Cline/OpenHands）。
+  // 仅在 atBottom 时自动跟随，避免用户阅读历史时被流式追加打断。
   const lastItem = visibleItems[visibleItems.length - 1];
   const lastSig = lastItem
     ? `${lastItem.status}:${(lastItem.detail ?? '').length}:${lastItem.endedAt ?? 0}`
     : '';
+  const handleScroll = useCallback(() => {
+    if (!bodyRef.current) return;
+    const el = bodyRef.current;
+    const distance = el.scrollHeight - el.scrollTop - el.clientHeight;
+    setAtBottom(distance < 40);
+  }, []);
+  const scrollToBottom = useCallback(() => {
+    if (!bodyRef.current) return;
+    bodyRef.current.scrollTo({ top: bodyRef.current.scrollHeight, behavior: 'smooth' });
+    setAtBottom(true);
+  }, []);
   useEffect(() => {
-    if (!streaming || !open || !bodyRef.current) return;
+    if (!streaming || !open || !bodyRef.current || !atBottom) return;
     const el = bodyRef.current;
     const raf = window.requestAnimationFrame(() => {
       el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
     });
     return () => window.cancelAnimationFrame(raf);
-  }, [items.length, lastSig, open, streaming]);
+  }, [items.length, lastSig, open, streaming, atBottom]);
 
   if (visibleItems.length === 0) return null;
 
@@ -154,6 +166,9 @@ export function ProcessTimeline({ items, streaming = false, onStop, onOpenDiff, 
   const rows = showAll ? filteredItems : filteredItems.slice(-24);
   const hiddenRows = filteredItems.length - rows.length;
   const state = running ? 'running' : errors ? 'error' : cancelled ? 'cancelled' : 'done';
+  const doneCount = visibleItems.filter(
+    (item) => item.status === 'done' || item.status === 'error' || item.status === 'cancelled',
+  ).length;
 
   return (
     <section
@@ -188,7 +203,7 @@ export function ProcessTimeline({ items, streaming = false, onStop, onOpenDiff, 
                 streaming={streaming}
               />
               {' · '}
-              {visibleItems.length} 项操作
+              {doneCount}/{visibleItems.length} 项完成
               {fileCount ? ` · ${fileCount} 个文件` : ''}
             </span>
           </span>
@@ -237,6 +252,7 @@ export function ProcessTimeline({ items, streaming = false, onStop, onOpenDiff, 
             ref={bodyRef}
             role="log"
             aria-live="polite"
+            onScroll={handleScroll}
           >
             {hiddenRows > 0 ? (
               <button
@@ -251,7 +267,7 @@ export function ProcessTimeline({ items, streaming = false, onStop, onOpenDiff, 
             {rows.length > 0 ? (
               rows.map((item) => {
                 const hasDetail = Boolean(item.detail?.trim());
-                const isOpen = Boolean(expanded[item.id]);
+                const isOpen = hasDetail && (expanded[item.id] !== undefined ? expanded[item.id] : item.status === 'running');
                 const canOpenDiff = Boolean(
                   item.path && onOpenDiff && (item.kind === 'edit' || item.kind === 'write'),
                 );
@@ -323,6 +339,16 @@ export function ProcessTimeline({ items, streaming = false, onStop, onOpenDiff, 
             ) : (
               <div className="fnix-agent-process-empty">此筛选下暂无记录</div>
             )}
+            {streaming && !atBottom ? (
+              <button
+                type="button"
+                className="fnix-agent-process-back-latest"
+                onClick={scrollToBottom}
+                title="回到最新"
+              >
+                回到最新
+              </button>
+            ) : null}
           </div>
         </>
       ) : null}

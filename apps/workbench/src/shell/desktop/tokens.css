@@ -6371,6 +6371,63 @@ button.fnix-agent-process-hidden {
   }
 }
 
+/* ── 过程可视化 P1 优化（参考 Cline/OpenHands/Trae，不改结构/配色） ── */
+/* 事件图标/状态颜色平滑过渡：running→done 不再瞬变 */
+.fnix-agent-event-icon,
+.fnix-agent-event-status,
+.fnix-agent-event-title {
+  transition:
+    color 0.3s ease,
+    border-color 0.3s ease,
+    background 0.3s ease;
+}
+/* "回到最新"浮动按钮：用户上滚时浮现，点击回到底部 */
+.fnix-agent-process-back-latest {
+  position: sticky;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border: 1px solid color-mix(in srgb, var(--work) 30%, var(--border));
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--work) 8%, var(--bg-soft, #fff));
+  color: var(--work);
+  font: inherit;
+  font-size: 10.5px;
+  font-weight: 540;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  z-index: 2;
+  animation: fnixBackLatestIn 0.2s ease both;
+}
+.fnix-agent-process-back-latest:hover {
+  background: color-mix(in srgb, var(--work) 14%, var(--bg-soft, #fff));
+  border-color: color-mix(in srgb, var(--work) 44%, var(--border));
+}
+@keyframes fnixBackLatestIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+/* 完成态事件淡化：聚焦当前活动，已完成的旧操作视觉后退（Trae SOLO 进度链视觉聚焦） */
+.fnix-agent-process-body:not(:hover) .fnix-agent-event.done:not(.kind-error) .fnix-agent-event-title {
+  opacity: 0.78;
+}
+.fnix-agent-process-body:hover .fnix-agent-event.done:not(.kind-error) .fnix-agent-event-title {
+  opacity: 1;
+}
+.fnix-agent-event.done:not(.kind-error) .fnix-agent-event-title {
+  transition: opacity 0.25s ease;
+}
+
 /* ── 并行任务抽屉 ── */
 .fnix-jobs-drawer {
   position: fixed;
