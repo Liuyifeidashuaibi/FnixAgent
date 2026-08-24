@@ -167,8 +167,8 @@ export function MessageList({
         <div className="fnix-jump-latest">
           <button
             type="button"
-            className="fnix-jump-btn"
-            title="回到最新"
+            className={`fnix-jump-btn${newCount > 0 ? " has-new" : ""}`}
+            title={newCount > 0 ? `${newCount} 条新消息` : "回到最新"}
             aria-label="回到最新"
             onClick={jumpToLatest}
           >

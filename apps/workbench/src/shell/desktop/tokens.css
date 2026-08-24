@@ -2925,6 +2925,7 @@ body,
   letter-spacing: -0.01em;
 }
 .fnix-feed {
+  position: relative;
   flex: 1;
   min-height: 0;
   overflow: auto;
@@ -2940,43 +2941,47 @@ body,
   gap: 22px;
   padding-bottom: 12px;
 }
-/* "Jump to latest" pill — shown only when the user scrolled up (see MessageList.tsx) */
+/* ── "回到最新" 浮动按钮 v2.3.1 — 仅在用户向上滚动时出现 (see MessageList.tsx) ── */
 .fnix-jump-latest {
-  position: sticky;
-  bottom: 24px;
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 6px;
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+  z-index: 50;
   pointer-events: none;
-  z-index: 10;
+  animation: fnix-jump-in 0.22s var(--ease-soft);
 }
 .fnix-jump-btn {
   pointer-events: auto;
   appearance: none;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-2);
   background: var(--bg);
-  color: var(--text);
+  color: var(--muted);
   border-radius: 50%;
   width: 40px;
   height: 40px;
   display: grid;
   place-items: center;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10), 0 1px 3px rgba(0, 0, 0, 0.04);
   cursor: pointer;
   position: relative;
-  animation: fnix-jump-in 0.2s var(--ease-soft);
   transition:
     background 0.15s var(--ease-soft),
     box-shadow 0.15s var(--ease-soft),
+    color 0.15s var(--ease-soft),
     transform 0.15s var(--ease-spring);
 }
 .fnix-jump-btn:hover {
   background: var(--bg-soft);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.16);
-  transform: scale(1.05);
+  color: var(--text);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.14), 0 2px 6px rgba(0, 0, 0, 0.06);
+  transform: scale(1.06);
 }
 .fnix-jump-btn:active {
   transform: scale(0.92);
+}
+/* 有新消息时按钮脉冲提示 */
+.fnix-jump-btn.has-new {
+  animation: fnix-jump-pulse 1.8s ease-in-out infinite;
 }
 .fnix-jump-badge {
   position: absolute;
@@ -2992,6 +2997,7 @@ body,
   text-align: center;
   color: #fff;
   background: #e5484d;
+  border: 2px solid var(--bg);
   box-shadow: 0 1px 4px rgba(229, 72, 77, 0.4);
 }
 @keyframes fnix-jump-in {
@@ -3003,6 +3009,31 @@ body,
     opacity: 1;
     transform: translateY(0) scale(1);
   }
+}
+@keyframes fnix-jump-pulse {
+  0%, 100% {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10), 0 1px 3px rgba(0, 0, 0, 0.04),
+                0 0 0 0 rgba(229, 72, 77, 0);
+  }
+  50% {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10), 0 1px 3px rgba(0, 0, 0, 0.04),
+                0 0 0 8px rgba(229, 72, 77, 0);
+  }
+}
+/* ── Dark theme ── */
+.fnix-root.theme-dark .fnix-jump-btn {
+  background: var(--bg-soft);
+  color: var(--muted);
+  border-color: var(--border-2);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+.fnix-root.theme-dark .fnix-jump-btn:hover {
+  background: var(--bg-muted);
+  color: var(--text);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+.fnix-root.theme-dark .fnix-jump-badge {
+  border-color: var(--bg-soft);
 }
 .fnix-turn {
   width: 100%;
@@ -8620,13 +8651,7 @@ button.fnix-agent-process-hidden {
 .fnix-asst-mark {
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
 }
-/* fnix-jump-btn 样式已在前面定义，此处保留精修阴影过渡 */
-.fnix-jump-btn {
-  transition:
-    background var(--dur-1) var(--ease-soft),
-    box-shadow var(--dur-1) var(--ease-soft),
-    transform var(--dur-1) var(--ease-soft);
-}
+/* fnix-jump-btn 样式已在 v2.3.1 区块统一定义（含 dark theme + 脉冲动画），此处不再重复 */
 
 /* 代码块质感 */
 .fnix-code {
