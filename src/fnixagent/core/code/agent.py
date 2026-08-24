@@ -332,6 +332,10 @@ class CodingAgent:
         if status == TaskStatus.COMPLETED:
             await self._run_critic_review(task, result)
 
+        # 用 LLM 流式生成自然语言完成摘要，逐 chunk 发送 message 事件
+        # 让聊天区看到文字逐字流式输出（像 Cursor/Codex 那样）
+        await self._stream_completion_summary(task, result)
+
         await self._emit(CodingAgentEvent(type="done", result=result))
 
         return result
@@ -429,6 +433,10 @@ class CodingAgent:
                     status=status.value,
                 )
             )
+
+            # 用 LLM 流式生成自然语言完成摘要，逐 chunk 发送 message 事件
+            await self._stream_completion_summary(task, result)
+
             await self._emit(CodingAgentEvent(type="done", result=result))
             # 发送结束标记
             await queue.put(None)
@@ -468,7 +476,7 @@ class CodingAgent:
         todos_block = todo_store.format_for_prompt() if todo_store else ""
 
         await self._emit(CodingAgentEvent(type="status", status="planning"))
-        await self._emit(CodingAgentEvent(type="thinking", content="正在分析任务需求，制定执行计划..."))
+        # 初始 thinking 标签由 _plan → _call_llm_streaming 发送，不再重复
         plan = await self._plan(task, todos_block=todos_block)
         plan = self._augment_plan_with_required_files(task, plan)
         # 把 plan steps 同步到 TodoStore (load-bearing state)
@@ -490,13 +498,18 @@ class CodingAgent:
             )
         )
 
+        # 发送分阶段 message 事件：规划完成，让聊天区实时显示进度
+        plan_summary = self._build_plan_message(plan)
+        if plan_summary:
+            await self._emit(CodingAgentEvent(type="message", content=plan_summary))
+
         await self._emit(CodingAgentEvent(type="status", status="executing"))
         changeset_id = await self._execute(task, plan)
         if todo_store:
             self._update_todos_after_execute(todo_store, plan)
 
         await self._emit(CodingAgentEvent(type="status", status="reviewing"))
-        await self._emit(CodingAgentEvent(type="thinking", content="正在审查代码变更和测试结果..."))
+        # 审查 thinking 标签由 _review → _call_llm_streaming 发送，不再重复
         review_passed, review_notes = await self._review(task, plan)
         if todo_store:
             self._update_todos_after_review(todo_store, review_passed, review_notes)
@@ -508,6 +521,11 @@ class CodingAgent:
                 review_notes=review_notes,
             )
         )
+
+        # 发送分阶段 message 事件：审查结果（加 \n\n 段落分隔）
+        review_msg = self._build_review_message(review_passed, review_notes)
+        if review_msg:
+            await self._emit(CodingAgentEvent(type="message", content="\n\n" + review_msg))
 
         heal_round = 0
         max_heal = _heal_rounds()
@@ -527,7 +545,7 @@ class CodingAgent:
                 )
             )
             # heal 时注入最新 todos_block (含历次失败原因, 避免 _plan_heal 失忆)
-            await self._emit(CodingAgentEvent(type="thinking", content=f"正在根据审查反馈制定修复计划（第{heal_round}轮）..."))
+            # heal thinking 标签由 _plan_heal → _call_llm_streaming 发送，不再重复
             heal_plan = await self._plan_heal(task, review_notes, todos_block=todos_block)
             if not heal_plan:
                 # 最后一轮：用脚手架补齐缺失交付（smoke/可靠性）
@@ -651,7 +669,10 @@ class CodingAgent:
                 "role": "system",
                 "content": f"当前文件状态（请基于此修复，不要重写已有内容）：\n{file_context}",
             })
-        response = await self._call_llm(messages)
+        response = await self._call_llm_streaming(
+            messages,
+            thinking_label="正在根据审查反馈制定修复计划",
+        )
         steps = self._parse_plan(response)
         # 过滤掉无意义的 fallback「手动执行」若 LLM 空响应
         if len(steps) == 1 and steps[0].action in ("", "manual"):
@@ -719,8 +740,11 @@ class CodingAgent:
             }
         )
 
-        # LLM 推理并解析
-        response = await self._call_llm(messages)
+        # LLM 推理并解析 — 规划阶段使用真正流式调用，逐 chunk 发送 thinking 事件
+        response = await self._call_llm_streaming(
+            messages,
+            thinking_label="正在分析任务需求，制定执行计划",
+        )
         return self._parse_plan(response)
 
     # ========================================================================
@@ -824,14 +848,23 @@ class CodingAgent:
                             action = getattr(ch.change_type, "value", None) or str(
                                 ch.change_type or "modify"
                             )
+                            file_path = ch.path or step.target
                             await self._emit(
                                 CodingAgentEvent(
                                     type="file_change",
-                                    file_path=ch.path or step.target,
+                                    file_path=file_path,
                                     file_action=str(action).lower(),
                                     diff=ch.to_diff() or cs.to_diff(),
                                     content=ch.new_content,
                                     old_content=ch.old_content,
+                                )
+                            )
+                            # 发送分阶段 message 事件：文件变更（加 \n\n 段落分隔）
+                            action_label = "创建" if str(action).lower() == "create" else "修改"
+                            await self._emit(
+                                CodingAgentEvent(
+                                    type="message",
+                                    content=f"\n\n正在{action_label} `{file_path}`…",
                                 )
                             )
         finally:
@@ -1882,7 +1915,10 @@ class CodingAgent:
                 ),
             },
         ]
-        response = await self._call_llm(messages)
+        response = await self._call_llm_streaming(
+            messages,
+            thinking_label="正在审查代码变更和测试结果",
+        )
         return self._parse_review(response)
 
     def _collect_diff(self, task_id: str) -> str:
@@ -1987,6 +2023,103 @@ class CodingAgent:
         except Exception as exc:
             # 保留失败信号：空字符串会触发审查失败，而不是默认通过
             self._last_llm_error = f"{type(exc).__name__}: {exc}"
+            return ""
+
+    async def _call_llm_with_progress(
+        self,
+        messages: list[dict[str, str]],
+        *,
+        progress_msgs: list[str] | None = None,
+        interval: int = 8,
+    ) -> str:
+        """调用 LLM 并在等待期间定期发送 thinking 事件。
+
+        解决规划/审查阶段 LLM 阻塞期间前端无任何可见进度的问题：
+        每 interval 秒发送一条 progress_msgs 中的 thinking 事件，
+        让用户知道系统正在工作而非卡死。
+
+        Args:
+            messages: LLM 消息列表。
+            progress_msgs: 进度提示文本列表（轮换发送）。
+            interval: 发送间隔秒数。
+
+        Returns:
+            LLM 响应文本。
+        """
+        if not progress_msgs:
+            return await self._call_llm(messages)
+
+        progress_task: asyncio.Task[None] | None = None
+
+        async def _emit_progress() -> None:
+            idx = 0
+            while True:
+                await asyncio.sleep(interval)
+                idx = min(idx + 1, len(progress_msgs) - 1)
+                await self._emit(CodingAgentEvent(type="thinking", content=progress_msgs[idx]))
+
+        progress_task = asyncio.create_task(_emit_progress())
+        try:
+            return await self._call_llm(messages)
+        finally:
+            progress_task.cancel()
+            try:
+                await progress_task
+            except asyncio.CancelledError:
+                pass
+
+    async def _call_llm_streaming(
+        self,
+        messages: list[dict[str, str]],
+        *,
+        thinking_label: str = "正在思考",
+    ) -> str:
+        """流式调用 LLM，逐 chunk 发送 thinking 事件，最后返回完整响应。
+
+        真正的流式输出：LLM 思考过程的每个 token chunk 通过 thinking 事件
+        实时推送到前端，像聊天一样逐字显示，而非预定义文字轮换。
+
+        若 LLM backend 不支持 stream_complete，自动降级到 _call_llm_with_progress。
+
+        Args:
+            messages: LLM 消息列表。
+            thinking_label: 思考阶段标签（用于第一个 thinking 事件）。
+
+        Returns:
+            LLM 完整响应文本。
+        """
+        # 先发送一个标签事件，让前端知道开始思考
+        # 只发送 label，不发送 LLM 的 JSON chunk — 结构化结果通过 plan/review 等事件展示
+        await self._emit(
+            CodingAgentEvent(type="thinking", content=thinking_label)
+        )
+
+        # 检查 backend 是否支持流式
+        if not hasattr(self._llm, "stream_complete"):
+            # 降级到进度轮换方案
+            return await self._call_llm_with_progress(
+                messages,
+                progress_msgs=[
+                    f"{thinking_label}...",
+                    "正在生成执行计划，请稍候...",
+                    "正在分析任务细节，确定文件结构...",
+                ],
+            )
+
+        # 上下文压缩
+        messages = await self._compact_if_needed(messages)
+
+        try:
+            full_text = ""
+            async for chunk in self._llm.stream_complete({"messages": messages}):
+                full_text += chunk
+                # 不发送 LLM chunk 到前端 thinking 事件
+                # LLM 输出的是结构化 JSON（规划步骤/审查结论），不是用户可读的思考过程
+                # 结构化结果通过 plan/review/step_start 等事件正确展示给用户
+            return full_text
+        except Exception as exc:
+            self._last_llm_error = f"{type(exc).__name__}: {exc}"
+            # 如果已经有部分文本，返回它；否则返回空
             return ""
 
     async def _compact_if_needed(self, messages: list[dict[str, str]]) -> list[dict[str, str]]:
@@ -2193,6 +2326,140 @@ class CodingAgent:
                     status=f"critic_skipped: {type(critic_exc).__name__}: {critic_exc}",
                 )
             )
+
+    def _build_plan_message(self, plan: list[TaskStep]) -> str:
+        """生成规划阶段的聊天消息，让用户看到 Agent 正在做什么。"""
+        write_steps = [s for s in plan if s.action in ("write", "edit") and s.target]
+        if not write_steps:
+            return f"我分析了你的需求，计划执行 {len(plan)} 个操作。"
+        files = []
+        for s in write_steps:
+            if s.target not in files:
+                files.append(s.target)
+        if len(files) == 1:
+            return f"我计划修改文件 `{files[0]}`。"
+        file_list = "\n".join(f"- `{f}`" for f in files)
+        return f"我计划修改以下 {len(files)} 个文件：\n{file_list}"
+
+    def _build_review_message(self, review_passed: bool, review_notes: str) -> str:
+        """生成审查阶段的聊天消息。简洁状态，不重复 review_notes 全文。"""
+        if review_passed:
+            return "✅ 代码审查通过。"
+        else:
+            return "⚠️ 审查发现问题，正在尝试修复…"
+
+    async def _stream_completion_summary(
+        self, task: CodingTask, result: TaskResult
+    ) -> None:
+        """用 LLM 流式生成自然语言完成摘要，逐 chunk 发送 message 事件。
+
+        让聊天区看到文字逐字流式输出（像 Cursor/Codex 那样），
+        而不是一次性弹出整段文本。
+
+        若 LLM 不支持流式或调用失败，降级到 _build_completion_message 一次性发送。
+        """
+        # 收集变更文件列表
+        changed_files: list[str] = []
+        for step in (result.plan or []):
+            if step.action in ("write", "edit") and step.target:
+                if step.target not in changed_files:
+                    changed_files.append(step.target)
+
+        # 构建给 LLM 的 prompt
+        if result.status == TaskStatus.COMPLETED:
+            user_prompt = (
+                f"任务：{task.description[:500]}\n\n"
+                f"修改的文件：{', '.join(changed_files) if changed_files else '无'}\n"
+                f"审查结果：{'通过' if result.review_passed else '未通过'}\n"
+                f"耗时：{result.duration_sec:.1f}s\n\n"
+                "请用一两句自然的中文总结你做了什么，不要列文件清单，不要重复任务描述。"
+                "简洁友好，像同事汇报工作一样。"
+            )
+        else:
+            error_msg = result.error or result.review_notes or "未知原因"
+            user_prompt = (
+                f"任务：{task.description[:500]}\n\n"
+                f"很遗憾任务没有完成。失败原因：{error_msg[:300]}\n"
+                "请用一两句自然的中文向用户说明情况，简洁友好。"
+            )
+
+        messages = [
+            {
+                "role": "system",
+                "content": (
+                    "你是编程助手。请用自然的中文回复，像正常对话一样说话。"
+                    "回复不超过 80 字，写成一两句连贯的话，不要换行，不要用 markdown，不要用代码块。"
+                ),
+            },
+            {"role": "user", "content": user_prompt},
+        ]
+
+        # 检查是否支持流式
+        llm_type = type(self._llm).__name__ if self._llm else "None"
+        has_stream = hasattr(self._llm, "stream_complete") if self._llm else False
+        print(f"[stream_summary] LLM={llm_type}, has_stream_complete={has_stream}", flush=True)
+        if not has_stream:
+            # 降级：一次性发送
+            fallback = self._build_completion_message(task, result)
+            if fallback:
+                await self._emit(CodingAgentEvent(type="message", content=fallback))
+            return
+
+        try:
+            print(f"[stream_summary] starting stream_complete, msg_count={len(messages)}", flush=True)
+            # 在现有内容前加段落分隔
+            await self._emit(CodingAgentEvent(type="message", content="\n\n"))
+            chunk_count = 0
+            async for chunk in self._llm.stream_complete({"messages": messages}):
+                if chunk:
+                    chunk_count += 1
+                    await self._emit(CodingAgentEvent(type="message", content=chunk))
+            print(f"[stream_summary] done, total_chunks={chunk_count}", flush=True)
+        except Exception as e:
+            print(f"[stream_summary] FAILED: {type(e).__name__}: {e}", flush=True)
+            import traceback; traceback.print_exc()
+            # 降级：一次性发送
+            fallback = self._build_completion_message(task, result)
+            if fallback:
+                await self._emit(CodingAgentEvent(type="message", content=fallback))
+
+    def _build_completion_message(
+        self, task: CodingTask, result: TaskResult
+    ) -> str:
+        """生成人类可读的任务完成摘要, 用于聊天区的 AI 回复消息。
+
+        成功时: 简洁确认（审查详情已在审查消息中发送）
+        失败时: 说明失败原因
+        """
+        # 收集变更文件列表
+        changed_files: list[str] = []
+        for step in (result.plan or []):
+            if step.action in ("write", "edit") and step.target:
+                if step.target not in changed_files:
+                    changed_files.append(step.target)
+
+        if result.status == TaskStatus.COMPLETED:
+            parts = ["✅ 任务已完成"]
+            if changed_files:
+                if len(changed_files) == 1:
+                    parts.append(f"已修改文件：`{changed_files[0]}`")
+                else:
+                    file_list = "\n".join(f"- `{f}`" for f in changed_files)
+                    parts.append(f"已修改 {len(changed_files)} 个文件：\n{file_list}")
+            duration = result.duration_sec
+            if duration > 0:
+                parts.append(f"耗时 {duration:.1f}s")
+            return "\n\n".join(parts)
+        else:
+            parts = ["❌ 任务未完成"]
+            if result.error:
+                parts.append(f"原因：{result.error[:300]}")
+            elif result.review_notes:
+                parts.append(f"审查未通过：{result.review_notes[:300]}")
+            if changed_files:
+                file_list = "\n".join(f"- `{f}`" for f in changed_files)
+                parts.append(f"已修改的文件：\n{file_list}")
+            return "\n\n".join(parts)
 
     # ========================================================================
     # 计划解析

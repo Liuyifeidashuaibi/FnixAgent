@@ -1,20 +1,23 @@
 /**
  * Copyright (C) 2026 FnixAgent. All rights reserved.
  * Software Name: FnixAgent 智能工作台系统 V1.0
- * This software and its source code are proprietary and confidential.
+ * This software and its source code is proprietary and confidential.
  * Unauthorized copying, modification, distribution, or use is strictly prohibited.
  */
 
 /**
- * ThinkingBlock — collapsible "Thinking..." section.
+ * ThinkingBlock — 简洁的"思考中"状态标签（参考 Cursor/Trae）
  *
- * During streaming: auto-expanded, shows animated spinner + streaming content.
- * When complete: collapsed by default with a summary chevron.
+ * 设计原则：
+ * - 不暴露模型内部 CoT（chain-of-thought）内容
+ * - 流式时显示 spinner + 状态文字
+ * - 完成后只显示一行简短摘要，不可展开
+ * - 不泄露内部架构（规划/执行/审查等阶段名）
  */
 
-import React, { useState } from "react";
-import { ChevronDown, ChevronRight, Loader2 } from "lucide-react";
-import "./ThinkingBlock.css";
+import React from 'react';
+import { Loader2, Sparkles } from 'lucide-react';
+import './ThinkingBlock.css';
 
 interface Props {
   content: string;
@@ -22,46 +25,33 @@ interface Props {
 }
 
 const ThinkingBlock = React.memo(function ThinkingBlock({ content, isStreaming = true }: Props) {
-  // 分析内容默认折叠：优先展示可验证行动，避免把模型内部文本包装成权威 CoT。
-  const [open, setOpen] = useState(false);
-
-  // D2 产品化打磨：摘要去掉模型内部的 "(Step N)" 前缀与半词截断，
-  // 避免泄露 raw CoT 的元措辞（如 "Wait, I need to…"）给用户。
+  // 清理内容：去掉模型内部的前缀和换行，只取干净的状态文字
   const sanitized = content
-    .replace(/^\s*\(Step\s*\d+\)\s*/g, "")
-    .replace(/\n+/g, " ")
+    .replace(/^\s*\(Step\s*\d+\)\s*/g, '')
+    .replace(/\n+/g, ' ')
     .trim();
-  let head = sanitized.slice(0, 60);
-  const lastSpace = head.lastIndexOf(" ");
-  if (head.length === 60 && lastSpace > 30) head = head.slice(0, lastSpace);
-  const summary = head + (sanitized.length > 60 ? "…" : "");
+  let head = sanitized.slice(0, 80);
+  const lastSpace = head.lastIndexOf(' ');
+  if (head.length === 80 && lastSpace > 40) head = head.slice(0, lastSpace);
+  const summary = head + (sanitized.length > 80 ? '…' : '');
 
   return (
-    <div className={`cl-thinking ${isStreaming ? "streaming" : "complete"}`}>
-      <button
-        className="cl-thinking-toggle"
-        onClick={() => setOpen(!open)}
-        type="button"
-        aria-label={open ? "收起分析摘要" : "展开分析摘要"}
-      >
-        {isStreaming ? (
-          <Loader2 size={12} className="spin cl-thinking-spinner" />
-        ) : open ? (
-          <ChevronDown size={12} />
-        ) : (
-          <ChevronRight size={12} />
-        )}
-        <span className="cl-thinking-label">{isStreaming ? "正在分析" : "分析摘要"}</span>
-        {!open && !isStreaming && (
+    <div className={`cl-thinking ${isStreaming ? 'streaming' : 'complete'}`}>
+      <div className="cl-thinking-bar">
+        <span className="cl-thinking-icon" aria-hidden>
+          {isStreaming ? (
+            <Loader2 size={12} className="spin cl-thinking-spinner" />
+          ) : (
+            <Sparkles size={12} />
+          )}
+        </span>
+        <span className="cl-thinking-label">
+          {isStreaming ? '思考中' : '分析完成'}
+        </span>
+        {!isStreaming && summary && (
           <span className="cl-thinking-summary">{summary}</span>
         )}
-      </button>
-      {open && (
-        <div className="cl-thinking-body">
-          <p className="cl-thinking-caveat">模型内部分析，可能与实际行为不完全一致，请以产物为准</p>
-          <p>{content}{isStreaming && <span className="cl-cursor">▍</span>}</p>
-        </div>
-      )}
+      </div>
     </div>
   );
 });

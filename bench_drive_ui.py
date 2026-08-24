@@ -47,10 +47,10 @@ def _safe(s: str) -> str:
 
 
 FRONTEND = "http://127.0.0.1:5175"
-RESULTS = ROOT / "bench_ui_results.jsonl"
+RESULTS = ROOT / "benchmark_results" / "bench_ui_results.jsonl"
 DATASET_ROOT = ROOT / "benchmarks" / "benchforge" / "datasets"
 WS_ROOT = Path.home() / ".fnix" / "workspaces"
-SHOTS = ROOT / "outputs" / "bench_ui_shots"
+SHOTS = ROOT / "benchmark_results" / "shots"
 RUN_TAG = time.strftime("%Y%m%d-%H%M%S")
 
 INFRA_KEYWORDS = (
@@ -404,8 +404,8 @@ def _run_one(driver: UiDriver, task, ws: str, args, counters: dict,
     ws_dir = _workspace_dir(ws)
     res = {
         "dataset": task.dataset, "task_id": task.task_id, "subset": task.subset,
-        "workspace": ws, "status": "unknown", "detail": "",
-        "duration_s": 0.0, "files_written": [], "artifacts": [],
+        "workspace": ws, "status": "unknown", "detail": "", "prompt": task.prompt[:300],
+        "duration_s": 0.0, "files_written": [], "artifacts": [], "shots": [],
         "ts": time.strftime("%Y-%m-%dT%H:%M:%S"),
     }
     try:
@@ -449,10 +449,12 @@ def _run_one(driver: UiDriver, task, ws: str, args, counters: dict,
     if do_shot:
         safe = f"{_slug(task.dataset)}__{_slug(task.task_id)}"
         driver.screenshot(SHOTS / f"{safe}.png")
+        res["shots"].append(f"shots/{safe}.png")
     if (args.preview_sample > 0 and res["status"] == "success"
-            and res["files_written"] and shot_ix % args.preview_sample == 0):
+            and res["files_written"] and shot_ix % args.preview_shot == 0):
         safe = f"{_slug(task.dataset)}__{_slug(task.task_id)}__preview"
         driver.preview_shot(SHOTS / f"{safe}.png")
+        res["shots"].append(f"shots/{safe}__preview.png")
     return n_success, shot_ix
 
 

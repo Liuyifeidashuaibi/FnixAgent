@@ -444,8 +444,13 @@ export async function streamWork(opts: {
       (obj) => {
         guard.touch();
         // 结构化 block 流：每个 NDJSON 事件都尝试转为 StructuredBlock 注入消息气泡
-        emitStructuredBlock(opts.handlers, obj);
-        const chunk = String(obj.chunk_type || obj.type || '');
+        // 注意：text/message 类型跳过 emitStructuredBlock，让文本走打字机路径（appendText），
+        // 否则 text block 瞬间渲染会覆盖打字机效果
+        const chunk0 = String(obj.chunk_type || obj.type || '');
+        if (chunk0 !== 'text' && chunk0 !== 'message') {
+          emitStructuredBlock(opts.handlers, obj);
+        }
+        const chunk = chunk0;
         const content = obj.content;
         if (chunk === 'error') {
           opts.handlers.onError?.(typeof content === 'string' ? content : JSON.stringify(content));
@@ -1014,8 +1019,13 @@ export async function streamCode(opts: {
       (obj) => {
         guard.touch();
         // 结构化 block 流：每个 NDJSON 事件都尝试转为 StructuredBlock 注入消息气泡
-        emitStructuredBlock(opts.handlers, obj);
-        const t = String(obj.type || '');
+        // 注意：message 类型跳过 emitStructuredBlock，让文本走打字机路径（appendText），
+        // 否则 text block 瞬间渲染会覆盖打字机效果
+        const t0 = String(obj.type || '');
+        if (t0 !== 'message' && t0 !== 'text') {
+          emitStructuredBlock(opts.handlers, obj);
+        }
+        const t = t0;
         if (t === 'status') {
           const statusVal = String(obj.data || obj.status || '');
           const isDone = statusVal === 'completed' || statusVal === 'failed';
@@ -1048,13 +1058,10 @@ export async function streamCode(opts: {
           return;
         }
         if (t === 'thinking') {
+          // thinking 事件只更新状态文本 + thinking block（已在上方 emitStructuredBlock 统一处理）
+          // 不创建活动条目——LLM 输出的 JSON chunk 不应出现在时间线中（如 "}" 之类的残片）
           const label = String(obj.content || '思考中…').slice(0, 120);
           opts.handlers.onStatus?.(label);
-          emitActivity(opts.handlers, {
-            kind: 'think',
-            title: label,
-            status: 'running',
-          });
           return;
         }
         if (t === 'plan') {
@@ -1151,7 +1158,11 @@ export async function streamCode(opts: {
         }
         if (t === 'message') {
           const c = String(obj.content || '');
-          if (c) opts.handlers.onText?.(c);
+          if (c) {
+            // 直接传给 onText（打字机 appendText 会累积到 m.content）
+            // 段落分隔由后端在 _stream_completion_summary 中发送 "\n\n" 前缀实现
+            opts.handlers.onText?.(c);
+          }
           return;
         }
         if (t === 'done') {

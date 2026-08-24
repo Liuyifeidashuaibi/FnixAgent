@@ -23,6 +23,7 @@ import json
 import os
 import re
 import time
+from collections.abc import AsyncGenerator
 from typing import Any
 
 from fnixagent.core.exceptions import LLMError
@@ -252,6 +253,98 @@ class OpenAICompatibleProvider(BaseLLMProvider):
             f"[{self._name}] request failed after {self._max_retries} retries "
             f"(model={model_for_err}): {last_error}"
         )
+
+    async def _do_stream(
+        self, request: LLMRequest, messages: list[dict]
+    ) -> AsyncGenerator[str, None]:
+        """流式调用 OpenAI 兼容 Chat Completions API (SSE)。
+
+        使用 httpx 流式读取 SSE 事件，逐 chunk 产出 content delta 文本。
+        失败时回退到同步 _do_chat 整段返回（基类默认行为）。
+
+        Args:
+            request: LLM 调用请求。
+            messages: 已预处理的消息列表。
+
+        Yields:
+            str: 模型生成的文本片段 (content delta)。
+        """
+        if not self._api_key:
+            raise LLMError(f"[{self._name}] API key not configured")
+
+        # 构建请求体 (与 _do_chat 一致，但加 stream=True)
+        payload: dict[str, Any] = {
+            "model": request.model or self._model_name,
+            "messages": messages,
+            "temperature": request.temperature,
+            "max_tokens": request.max_tokens,
+            "stream": True,
+        }
+        if request.tools:
+            payload["tools"] = request.tools
+            payload["tool_choice"] = request.tool_choice
+        if request.stop:
+            payload["stop"] = request.stop
+
+        # 透传 provider 专属参数（如 enable_thinking）
+        if request.extra:
+            for k, v in request.extra.items():
+                if v is not None and k not in payload:
+                    payload[k] = v
+
+        headers = {
+            "Authorization": f"Bearer {self._api_key}",
+            "Content-Type": "application/json",
+        }
+        url = f"{self._base_url}/chat/completions"
+        model_for_err = request.model or self._model_name
+
+        import json as _json
+
+        try:
+            import httpx
+        except ImportError as exc:
+            raise LLMError("httpx is required for streaming") from exc
+
+        import ssl as _ssl
+
+        _ssl_ctx = _ssl.create_default_context()
+        _legacy_reneg = getattr(_ssl, "OP_LEGACY_SERVER_CONNECT", None)
+        if _legacy_reneg is not None:
+            _ssl_ctx.options |= _legacy_reneg
+
+        # 使用独立 client 以支持流式读取（避免与 _get_client 的同步 client 冲突）
+        async with httpx.AsyncClient(
+            timeout=self._timeout, verify=_ssl_ctx
+        ) as async_client:
+            async with async_client.stream(
+                "POST", url, json=payload, headers=headers
+            ) as resp:
+                if resp.status_code >= 400:
+                    body = await resp.aread()
+                    raise LLMError(
+                        f"[{self._name}] stream HTTP {resp.status_code} "
+                        f"(model={model_for_err}): {body[:500]}"
+                    )
+
+                async for line in resp.aiter_lines():
+                    line = line.strip()
+                    if not line or not line.startswith("data:"):
+                        continue
+                    data_str = line[5:].strip()
+                    if data_str == "[DONE]":
+                        break
+                    try:
+                        chunk_data = _json.loads(data_str)
+                    except _json.JSONDecodeError:
+                        continue
+                    choices = chunk_data.get("choices", [])
+                    if not choices:
+                        continue
+                    delta = choices[0].get("delta", {})
+                    content_chunk = delta.get("content")
+                    if content_chunk:
+                        yield content_chunk
 
     @staticmethod
     def _classify_error(exc: Exception) -> tuple[bool, str]:

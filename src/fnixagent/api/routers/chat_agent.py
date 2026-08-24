@@ -113,6 +113,22 @@ class _AdapterLLMBackend:
         message = choices[0].get("message") or {}
         return str(message.get("content") or "")
 
+    async def stream_complete(self, payload: Any, **kwargs: Any):
+        """流式调用 LLM，逐 chunk 产出文本。
+
+        Args:
+            payload: {"messages": [...]} 或直接 messages list
+
+        Yields:
+            str: LLM 生成的文本片段
+        """
+        from collections.abc import AsyncGenerator
+
+        messages = payload.get("messages", []) if isinstance(payload, dict) else payload
+        msg_list = messages if isinstance(messages, list) else []
+        async for chunk in self._adapter.stream_chat(msg_list):
+            yield chunk
+
 
 # ============================================================================
 # 流式响应辅助

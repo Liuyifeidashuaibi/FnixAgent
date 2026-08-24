@@ -230,8 +230,12 @@ function titleFrom(text: string) {
 }
 
 /**
- * 创建流式输出所需的本地状态闭包（buf + RAF + assistantId 引用）。
- * send / resume 共享同一套 flush / appendText / finalize 实现，避免 ~70 行重复。
+ * 创建流式输出所需的本地状态闭包。
+ * send / resume 共享同一套 appendText / finalize 实现。
+ *
+ * 自然流式：后端 chunk 到达就立即追加到 DOM，零人为延迟。
+ * LLM 的生成速度就是用户看到的显示速度——和 Cursor/ChatGPT 一样。
+ * 闪烁光标在 streaming 期间显示在文字末尾，提示"还在生成"。
  */
 interface StreamLocalState {
   flushStreamBuf: () => void;
@@ -248,11 +252,15 @@ function createStreamLocalState(
   streamRafRef: { current: number | null },
   streamAssistantIdRef: { current: string | null },
 ): StreamLocalState {
+  // RAF 批处理：多个 chunk 在同一帧内到达时只 commit 一次，避免高频 React re-render
+  let rafId: number | null = null;
+
   const flushStreamBuf = () => {
     const buffered = streamBufRef.current;
     const aid = streamAssistantIdRef.current;
     streamBufRef.current = "";
     streamRafRef.current = null;
+    rafId = null;
     if (!buffered || !aid) return;
     commitMessages(
       messagesRef.current.map((m) => (m.id === aid ? { ...m, content: m.content + buffered } : m)),
@@ -261,9 +269,14 @@ function createStreamLocalState(
 
   const appendText = (delta: string) => {
     if (!delta) return;
-    streamBufRef.current += delta;
-    if (streamRafRef.current !== null) return;
-    streamRafRef.current = requestAnimationFrame(flushStreamBuf);
+    const aid = streamAssistantIdRef.current;
+    if (!aid) return;
+    // 直接追加到 m.content（自然流式，零延迟）
+    // 段落分隔由后端控制：在 _stream_completion_summary 开头发 \n\n，
+    // _build_review_message 前由后端加 \n\n 前缀
+    commitMessages(
+      messagesRef.current.map((m) => (m.id === aid ? { ...m, content: m.content + delta } : m)),
+    );
   };
 
   const appendStructuredBlock = (block: StructuredBlock) => {
@@ -279,10 +292,11 @@ function createStreamLocalState(
   };
 
   const cancelRaf = () => {
-    if (streamRafRef.current !== null) {
-      cancelAnimationFrame(streamRafRef.current);
-      streamRafRef.current = null;
+    if (rafId !== null) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
     }
+    streamRafRef.current = null;
   };
 
   const finalize = () => {

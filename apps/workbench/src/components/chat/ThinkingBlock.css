@@ -1,86 +1,72 @@
-/* ThinkingBlock — 可折叠"分析摘要"样式（D6 修复：此前无样式表，文本挤压裸奔） */
+/* ThinkingBlock — 简洁"思考中"状态标签样式（参考 Cursor/Trae） */
 
 .cl-thinking {
   margin: 4px 0 8px;
-  border: 1px solid var(--border, #2a2f3a);
   border-radius: 8px;
-  background: var(--bg-muted, rgba(128, 128, 160, 0.06));
   font-size: 12px;
   line-height: 1.5;
   overflow: hidden;
 }
 
-.cl-thinking-toggle {
+.cl-thinking.streaming {
+  background: var(--fnix-blue-50, #eff6ff);
+  border: 1px solid var(--fnix-blue-200, #bfdbfe);
+}
+
+.cl-thinking.complete {
+  background: var(--fnix-bg-surface, #f8f9fa);
+  border: 1px solid var(--fnix-border-subtle, #e5e7eb);
+}
+
+.cl-thinking-bar {
   display: flex;
   align-items: center;
   gap: 6px;
-  width: 100%;
   padding: 6px 10px;
-  border: none;
-  background: transparent;
-  color: var(--canvas-muted, #9aa3b2);
-  cursor: pointer;
-  text-align: left;
-  font-size: 12px;
+  min-height: 28px;
 }
 
-.cl-thinking-toggle:hover {
-  background: var(--bg-soft, rgba(128, 128, 160, 0.1));
+.cl-thinking-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
-.cl-thinking-toggle svg {
-  flex: 0 0 auto;
+.cl-thinking.streaming .cl-thinking-icon {
+  color: var(--fnix-blue-500, #3b82f6);
+}
+
+.cl-thinking.complete .cl-thinking-icon {
+  color: var(--fnix-text-tertiary, #9ca3af);
 }
 
 .cl-thinking-label {
-  font-weight: 600;
+  font-weight: 500;
   white-space: nowrap;
-  flex: 0 0 auto;
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--fnix-text-secondary, #6b7280);
+}
+
+.cl-thinking.streaming .cl-thinking-label {
+  color: var(--fnix-blue-600, #2563eb);
 }
 
 .cl-thinking-summary {
-  opacity: 0.75;
+  color: var(--fnix-text-tertiary, #9ca3af);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   min-width: 0;
-}
-
-.cl-thinking-body {
-  padding: 8px 12px 10px;
-  border-top: 1px solid var(--border, #2a2f3a);
-  color: var(--canvas-ink, #d5dae3);
-}
-
-.cl-thinking-body p {
-  margin: 0;
-  white-space: pre-wrap;
-  word-break: break-word;
-  font-family: inherit;
-}
-
-.cl-thinking-caveat {
+  flex: 1;
   font-size: 11px;
-  color: var(--canvas-muted, #9aa3b2);
-  opacity: 0.8;
-  margin-bottom: 6px !important;
-  font-style: italic;
-}
-
-.cl-cursor {
-  color: var(--brand, #6c8cff);
-  animation: cl-blink 1s step-end infinite;
 }
 
 .cl-thinking-spinner.spin {
   animation: cl-spin 1s linear infinite;
-  color: var(--brand, #6c8cff);
 }
 
 @keyframes cl-spin {
   to { transform: rotate(360deg); }
-}
-
-@keyframes cl-blink {
-  50% { opacity: 0; }
 }

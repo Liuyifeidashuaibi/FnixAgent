@@ -443,6 +443,11 @@ async def code_agent_source(agent: Any, task: Any) -> AsyncIterator[dict[str, An
                     "status": getattr(ev, "status", None),
                 },
             }
+        elif et == "message":
+            # Agent emits message events with a human-readable content string
+            # (e.g. task completion summary). Extract content to avoid dumping
+            # the entire dataclass __dict__ as the data payload.
+            yield {"type": "message", "data": str(getattr(ev, "content", "") or "")}
         elif et == "done":
             result = getattr(ev, "result", None)
             status = getattr(result, "status", None)

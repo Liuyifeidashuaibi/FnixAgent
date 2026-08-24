@@ -365,6 +365,14 @@ export function appendBlock(
         { ...last, content: newBlock.content, isStreaming: newBlock.isStreaming },
       ];
     }
+    // 初始占位文本 "正在分析你的需求…" 被第一个真实 chunk 替换而非拼接
+    const placeholderPattern = /^正在分析你的需求[…\.]*\s*$/;
+    if (placeholderPattern.test(last.content.trim())) {
+      return [
+        ...blocks.slice(0, -1),
+        { ...last, content: newBlock.content, isStreaming: newBlock.isStreaming },
+      ];
+    }
     return [
       ...blocks.slice(0, -1),
       { ...last, content: last.content + newBlock.content, isStreaming: newBlock.isStreaming },

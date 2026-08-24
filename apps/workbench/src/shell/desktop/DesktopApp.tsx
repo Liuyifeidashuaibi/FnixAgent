@@ -15,7 +15,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { open } from '@tauri-apps/plugin-dialog';
 import {
   Activity,
-  BookOpen,
   ChevronDown,
   FolderOpen,
   GitCompare,
@@ -62,7 +61,7 @@ import { MessageList } from './MessageList';
 import { DesktopSettings } from './DesktopSettings';
 import { FullChainBenchmarkPanel } from './FullChainBenchmarkPanel';
 import { OnboardingWizard, isOnboardingDone, markOnboardingDone } from './OnboardingWizard';
-import { ProcessTimeline } from './ProcessTimeline';
+import { StatusLine } from './StatusLine';
 import { ProjectHome, ProjectsLibrary, projectDisplayName } from './ProjectsPane';
 import { ReviewView } from './ReviewView';
 import { ResultsView } from './ResultsView';
@@ -153,8 +152,6 @@ function saveWorkModeForThread(storageKey: string, threadId: string, mode: WorkE
 interface ChatHeadProps {
   onToggleAside: () => void;
   onNewChat: () => void;
-  skillsOpen: boolean;
-  onToggleSkills: () => void;
   /** Studio Panel（右侧统一工作台面）开关 */
   inspectorOpen: boolean;
   onToggleInspector: () => void;
@@ -174,8 +171,6 @@ interface ChatHeadProps {
 function ChatHead({
   onToggleAside,
   onNewChat,
-  skillsOpen,
-  onToggleSkills,
   inspectorOpen,
   onToggleInspector,
   inspectorBadge,
@@ -206,14 +201,6 @@ function ChatHead({
         ) : null}
         <button
           type="button"
-          className={`fnix-ibtn sm${skillsOpen ? ' on' : ''}`}
-          onClick={onToggleSkills}
-          title="技能管理"
-        >
-          <BookOpen size={15} />
-        </button>
-        <button
-          type="button"
           className={`fnix-ibtn sm${inspectorOpen ? ' on' : ''}`}
           onClick={onToggleInspector}
           title="工作台面 (Ctrl+\)"
@@ -221,9 +208,6 @@ function ChatHead({
           <PanelRight size={16} />
           {inspectorBadge ? <span className="fnix-ibtn-badge">{inspectorBadge}</span> : null}
           {inspectorDot ? <span className={`fnix-ibtn-dot ${inspectorDot}`} aria-hidden /> : null}
-        </button>
-        <button type="button" className="fnix-ibtn sm" onClick={onNewChat} title="新任务">
-          <Plus size={16} />
         </button>
       </div>
     </div>
@@ -1077,18 +1061,12 @@ export default function DesktopApp() {
               <ChatHead
                 onToggleAside={() => setAsideOpen((v) => !v)}
                 onNewChat={startNewChat}
-                skillsOpen={skillsOpen}
-                onToggleSkills={() => {
-                  setSkillsOpen((v) => !v);
-                  if (!skillsOpen) setJobsOpen(false);
-                }}
                 inspectorOpen={inspectorOpen}
                 onToggleInspector={toggleInspectorUser}
                 jobsOpen={jobsOpen}
                 activeJobCount={activeJobCount}
                 onToggleJobs={() => {
                   setJobsOpen((v) => !v);
-                  if (!jobsOpen) setSkillsOpen(false);
                 }}
                 projectPath={projectPath}
                 projectLabel={projectLabel}
@@ -1104,12 +1082,11 @@ export default function DesktopApp() {
                 onPin={pinArtifact}
                 onSendPrompt={(t) => void chat.send(t)}
               />
-              <ProcessTimeline
+              <StatusLine
                 key={`${chat.activeId}-${chat.goalStartedAt || 0}`}
                 items={chat.activities}
                 streaming={chat.streaming}
                 onStop={chat.stop}
-                compact
               />
               <div className="fnix-chat-dock">
                 <Composer
@@ -1243,11 +1220,6 @@ export default function DesktopApp() {
               <ChatHead
                 onToggleAside={() => setAsideOpen((v) => !v)}
                 onNewChat={startNewChat}
-                skillsOpen={skillsOpen}
-                onToggleSkills={() => {
-                  setSkillsOpen((v) => !v);
-                  if (!skillsOpen) setJobsOpen(false);
-                }}
                 inspectorOpen={inspectorOpen}
                 onToggleInspector={toggleInspectorUser}
                 inspectorBadge={pendingChanges.length || undefined}
@@ -1269,16 +1241,11 @@ export default function DesktopApp() {
                 onPin={pinArtifact}
                 onSendPrompt={(t) => void chat.send(t)}
               />
-              <ProcessTimeline
+              <StatusLine
                 key={`${chat.activeId}-${chat.goalStartedAt || 0}`}
                 items={chat.activities}
                 streaming={chat.streaming}
                 onStop={chat.stop}
-                compact
-                onOpenDiff={(path) => {
-                  setInspectorTab('review');
-                  setReviewPath(path);
-                }}
               />
               <div className="fnix-chat-dock">
                 <Composer
@@ -1298,7 +1265,7 @@ export default function DesktopApp() {
                 sendDisabled={mode === 'code' && !projectPath}
                 autoFocus
               />
-                <p className="fnix-disclaimer">Code · 预览 → 确认写盘</p>
+
               </div>
             </div>
             {inspectorOpen ? (

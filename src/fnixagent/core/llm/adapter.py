@@ -450,6 +450,83 @@ class LLMAdapter:
 
         return result
 
+    async def stream_chat(
+        self,
+        messages: list[dict],
+        model: str = "",
+        temperature: float = 0.7,
+        max_tokens: int = 4096,
+    ) -> Any:
+        """流式对话接口，逐 chunk 产出文本。
+
+        与 chat() 返回 dict 不同，此方法为 async generator，
+        每次 yield 一个 str 文本片段。
+
+        Args:
+            messages: 消息列表 [{"role": "...", "content": "..."}]
+            model: 模型名 (为空使用默认)
+            temperature: 温度
+            max_tokens: 最大 token 数
+
+        Yields:
+            str: 模型生成的文本片段
+        """
+        from collections.abc import AsyncGenerator
+
+        self._auto_detect()
+        if self._provider is None:
+            raise LLMError(
+                "未配置 LLM API Key。请在 .env 文件中设置环境变量。"
+            )
+
+        msg_objects = [
+            Message(
+                role=MessageRole(m.get("role", "user")),
+                content=str(m.get("content", "")),
+                name=m.get("name"),
+                tool_calls=m.get("tool_calls") or None,
+                tool_call_id=m.get("tool_call_id"),
+            )
+            for m in messages
+        ]
+
+        model_name = (model or self._model_name or "").lower()
+        enable_thinking_models = (
+            "qwen3-",
+            "qwq",
+            "qwen-plus-latest",
+            "qwen-turbo-latest",
+            "qwen3-max",
+            "qwen-plus-2025",
+            "qwen-turbo-2025",
+            "deepseek-r1",
+            "deepseek-v3.1",
+            "deepseek-v3.2",
+            "glm-4.5",
+            "glm-4.6",
+            "glm-5",
+        )
+        should_enable_thinking = any(m in model_name for m in enable_thinking_models)
+        is_glm47 = "glm-4.7" in model_name or model_name == "glm-4.7"
+
+        extra_params: dict[str, Any] = {}
+        if should_enable_thinking:
+            extra_params["enable_thinking"] = True
+        elif "qwen3." in model_name or "qwen3-" in model_name or is_glm47:
+            extra_params["enable_thinking"] = False
+
+        request = LLMRequest(
+            model=model or self._model_name or "",
+            messages=msg_objects,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            tools=[],
+            extra=extra_params,
+        )
+
+        async for chunk in self._provider.stream_chat(request):
+            yield chunk
+
 
 def create_llm_adapter(
     api_key: str = "",

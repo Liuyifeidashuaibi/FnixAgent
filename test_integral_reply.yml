@@ -1,0 +1,236 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e3]:
+      - complementary [ref=e11]:
+        - generic [ref=e12]:
+          - link "FNIXSTUDY" [ref=e13] [cursor=pointer]:
+            - /url: /chat
+            - img [ref=e15]
+            - generic [ref=e18]: FNIXSTUDY
+          - button "收起侧栏" [ref=e19]:
+            - img [ref=e20]
+        - navigation [ref=e23]:
+          - link "FNIX 助手" [ref=e26] [cursor=pointer]:
+            - /url: /chat
+            - img [ref=e28]
+            - generic [ref=e31]: FNIX 助手
+            - img [ref=e32]
+          - generic [ref=e34]:
+            - generic [ref=e35]: 学习
+            - generic [ref=e36]:
+              - link "试卷" [ref=e37] [cursor=pointer]:
+                - /url: /exam
+                - img [ref=e38]
+                - generic [ref=e41]: 试卷
+              - link "错题本" [ref=e42] [cursor=pointer]:
+                - /url: /wrong-questions
+                - img [ref=e43]
+                - generic [ref=e45]: 错题本
+              - link "番茄钟" [ref=e46] [cursor=pointer]:
+                - /url: /study/tomato
+                - img [ref=e47]
+                - generic [ref=e50]: 番茄钟
+          - generic [ref=e51]:
+            - generic [ref=e52]: 考研
+            - link "择校" [ref=e54] [cursor=pointer]:
+              - /url: /choose-school
+              - img [ref=e55]
+              - generic [ref=e58]: 择校
+          - generic [ref=e59]:
+            - generic [ref=e60]: 工具
+            - link "翻译" [ref=e62] [cursor=pointer]:
+              - /url: /translator
+              - img [ref=e63]
+              - generic [ref=e67]: 翻译
+          - generic [ref=e68]:
+            - generic [ref=e69]: 社区
+            - link "社区" [ref=e71] [cursor=pointer]:
+              - /url: /community
+              - img [ref=e72]
+              - generic [ref=e77]: 社区
+          - generic [ref=e78]:
+            - generic [ref=e79]: 我的
+            - link "我的" [ref=e81] [cursor=pointer]:
+              - /url: /profile
+              - img [ref=e82]
+              - generic [ref=e85]: 我的
+        - generic [ref=e87]:
+          - generic [ref=e88]: FNIXSTUDY · v1.0
+          - button "切换主题(当前:跟随系统)" [ref=e90]:
+            - img
+      - main [ref=e92]:
+        - generic [ref=e95]:
+          - complementary [ref=e96]:
+            - button "Open sidebar" [ref=e97]:
+              - img [ref=e98]
+            - button "New chat" [ref=e100]:
+              - img [ref=e101]
+          - generic:
+            - complementary:
+              - generic:
+                - button "Close sidebar":
+                  - img
+              - generic:
+                - button "新对话":
+                  - img
+                  - text: 新对话
+                - generic:
+                  - img
+                  - textbox "搜索对话..."
+              - generic:
+                - generic:
+                  - generic:
+                    - button "求不定积分 ∫ x·e^x dx":
+                      - img
+                      - generic: 求不定积分 ∫ x·e^x dx
+                    - button "Delete session":
+                      - img
+                  - generic:
+                    - button "帮我解答这道题：求极限 lim(x→0) (e^x - 1 - x - x²/2) / x³":
+                      - img
+                      - generic: 帮我解答这道题：求极限 lim(x→0) (e^x - 1 - x - x²/2) / x³
+                    - button "Delete session":
+                      - img
+                  - generic:
+                    - button "求极限 lim(x→0) (tan x - x) / x³":
+                      - img
+                      - generic: 求极限 lim(x→0) (tan x - x) / x³
+                    - button "Delete session":
+                      - img
+                  - generic:
+                    - button "帮我制定一个考研复习计划，从现在到12月考试，我考数学三、英语一、政治和计算机专业课。":
+                      - img
+                      - generic: 帮我制定一个考研复习计划，从现在到12月考试，我考数学三、英语一、政治和计算机专业课。
+                    - button "Delete session":
+                      - img
+                  - generic:
+                    - button "简述马克思主义实践观的基本内容，并说明实践在认识中的决定作用。":
+                      - img
+                      - generic: 简述马克思主义实践观的基本内容，并说明实践在认识中的决定作用。
+                    - button "Delete session":
+                      - img
+                  - generic:
+                    - button "Please explain the difference between \"in spite of...":
+                      - img
+                      - generic: Please explain the difference between "in spite of...
+                    - button "Delete session":
+                      - img
+                  - generic:
+                    - button "求极限 lim(x→0) (e^x - 1 - x) / x²":
+                      - img
+                      - generic: 求极限 lim(x→0) (e^x - 1 - x) / x²
+                    - button "Delete session":
+                      - img
+                  - generic:
+                    - button "5个不同的球放入3个不同的盒子，每个盒子至少1个球，有多少种放法？":
+                      - img
+                      - generic: 5个不同的球放入3个不同的盒子，每个盒子至少1个球，有多少种放法？
+                    - button "Delete session":
+                      - img
+          - generic [ref=e104]:
+            - button "试卷解析" [ref=e106]:
+              - img
+              - text: 试卷解析
+            - generic [ref=e2830]:
+              - generic [ref=e2859]:
+                - generic [ref=e2863]: 求不定积分 ∫ x·e^x dx
+                - generic [ref=e2864]: 22:00
+              - generic [ref=e2865]:
+                - generic [ref=e2867]:
+                  - generic [ref=e2868]:
+                    - generic [ref=e2869]:
+                      - generic [ref=e2870]: F
+                      - generic [ref=e2871]: Fnix AI
+                      - generic [ref=e2872]: 内容由 AI 生成，仅供参考
+                    - generic [ref=e2874]:
+                      - generic [ref=e2877]: 答案
+                      - paragraph [ref=e2878]: _这一步推理很扎实。_
+                      - paragraph [ref=e2879]:
+                        - generic [ref=e2881]:
+                          - generic [ref=e2882]: ">"
+                          - generic [ref=e2883]: ∗ ∗
+                          - generic [ref=e2884]:
+                            - generic [ref=e2885]:
+                              - text: e
+                              - generic [ref=e2891]: x
+                            - text: (x −
+                          - generic [ref=e2892]: 1) +
+                          - generic [ref=e2893]: C ∗
+                          - generic [ref=e2894]: ∗
+                        - text: —— 使用分部积分法，多项式部分选作 u，指数函数部分选作 dv
+                      - generic [ref=e2897]: 推导
+                      - paragraph [ref=e2898]:
+                        - text: 设
+                        - generic [ref=e2900]:
+                          - generic [ref=e2901]: u =
+                          - generic [ref=e2902]: x
+                        - text: ，
+                        - generic [ref=e2904]:
+                          - generic [ref=e2905]: dv =
+                          - generic [ref=e2906]:
+                            - generic [ref=e2907]:
+                              - text: e
+                              - generic [ref=e2912]: x
+                            - text: dx
+                        - text: （因为多项式部分通常选作 u，指数函数部分选作 dv） 则
+                        - generic [ref=e2914]:
+                          - generic [ref=e2915]: du =
+                          - generic [ref=e2916]: dx
+                        - text: ，
+                        - generic [ref=e2918]:
+                          - generic [ref=e2919]: v =∈
+                          - generic [ref=e2920]:
+                            - text: t
+                            - generic [ref=e2921]:
+                              - text: e
+                              - generic [ref=e2926]: x
+                            - text: dx =
+                          - generic [ref=e2928]:
+                            - text: e
+                            - generic [ref=e2933]: x
+                      - paragraph [ref=e2934]:
+                        - text: 应用分部积分公式
+                        - generic [ref=e2936]:
+                          - generic [ref=e2937]: ∈
+                          - generic [ref=e2938]: tudv =
+                          - generic [ref=e2939]: uv− ∈
+                          - generic [ref=e2940]: tvdu
+                        - text: ： \in t x e^x dx = x e^x - \in t e^x dx$= x e^x - e^x + C$= e^x(x - 1) + C
+                      - heading "顿悟点 💡" [level=2] [ref=e2941]
+                      - paragraph [ref=e2942]: 分部积分就像"剥洋葱"：先处理多项式部分（x），让它降次，最后剩下简单的指数积分。记住口诀："多项在前，指数在后，交换位置，降次求解"。
+                      - generic [ref=e2945]: 易错提醒
+                      - list [ref=e2946]:
+                        - listitem [ref=e2947]: 忘记加积分常数 C - 选择 u 和 dv 时搞反了，导致积分变得更复杂
+                        - listitem [ref=e2948]: 最后一步合并同类项时容易漏掉负号
+                      - blockquote [ref=e2949]:
+                        - paragraph [ref=e2950]:
+                          - text: 💡
+                          - strong [ref=e2951]: 自我检查
+                          - text: ：这一步最容易踩的坑是什么？你能在推导过程中指出哪一步是关键转折？
+                      - blockquote [ref=e2952]:
+                        - paragraph [ref=e2953]:
+                          - text: 💡
+                          - strong [ref=e2954]: 公式有点密
+                          - text: ：上面连续几行都是公式，建议在每行公式后用一句话解释这步变形用了什么定理或方法，帮助理解。
+                  - generic [ref=e2955]:
+                    - button "Copy" [ref=e2956]:
+                      - img
+                    - button "Like" [ref=e2957]:
+                      - img
+                    - button "Dislike" [ref=e2958]:
+                      - img
+                    - button "Regenerate" [ref=e2959]:
+                      - img
+                - generic [ref=e2960]: 22:00
+            - generic [ref=e144]:
+              - generic [ref=e145]:
+                - button "添加附件" [ref=e146]:
+                  - img [ref=e147]
+                - textbox "输入你的问题…" [active] [ref=e2961]
+                - button "发送" [disabled] [ref=e2962]:
+                  - img [ref=e2963]
+              - paragraph [ref=e154]: Enter 发送 · Shift + Enter 换行
+    - button "反馈" [ref=e155]:
+      - img
+      - generic [ref=e156]: 反馈
+  - alert [ref=e157]

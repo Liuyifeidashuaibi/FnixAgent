@@ -374,12 +374,16 @@ function MessageBubbleInner({
               )}
             </div>
             {m.content && !m.blocks.some((block) => block.kind === 'text') ? (
-              <div className="fnix-asst-text">{renderContent(soft.text, !live)}</div>
+              <div className="fnix-asst-text">
+                {renderContent(soft.text, !live)}
+                {live ? <span className="fnix-cursor" aria-hidden /> : null}
+              </div>
             ) : null}
           </>
         ) : m.content ? (
           <>
             {renderContent(soft.text, !live)}
+            {live ? <span className="fnix-cursor" aria-hidden /> : null}
             {soft.truncated ? (
               <button type="button" className="fnix-expand-msg" onClick={() => setExpanded(true)}>
                 Show full message ({m.content.length.toLocaleString()} chars)
