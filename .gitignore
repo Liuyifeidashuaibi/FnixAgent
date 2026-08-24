@@ -153,3 +153,6 @@ down.sql
 pyright*.txt
 unit-result.txt
 unit-final.txt
+
+# --- Agent temp workspace ---
+.temp/

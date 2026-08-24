@@ -10,6 +10,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ArrowDown } from "lucide-react";
 import type { ChatMsg } from "./useChatFlow";
 import type { CodeFileChange } from "./fnixRuntime";
 import { sendFeedback } from "./fnixRuntime";
@@ -43,6 +44,9 @@ export function MessageList({
   const feedRef = useRef<HTMLDivElement>(null);
   const pinnedRef = useRef(true);
   const [showJump, setShowJump] = useState(false);
+  // 用户滚上去后新增的消息计数（流式 + 非流式）
+  const [newCount, setNewCount] = useState(0);
+  const lastMsgCountRef = useRef(messages.length);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [vote, setVote] = useState<Record<string, "up" | "down" | undefined>>({});
   const [showAll, setShowAll] = useState(false);
@@ -61,6 +65,7 @@ export function MessageList({
       const near = feed.scrollHeight - feed.scrollTop - feed.clientHeight < 80;
       pinnedRef.current = near;
       setShowJump(!near);
+      if (near) setNewCount(0);
     };
     feed.addEventListener("scroll", onScroll, { passive: true });
     return () => feed.removeEventListener("scroll", onScroll);
@@ -73,8 +78,13 @@ export function MessageList({
     // scrolled up to read, leave them alone (no interrupting jumps).
     if (pinnedRef.current) {
       feed.scrollTop = feed.scrollHeight;
+    } else {
+      // User is reading history — count new messages since they scrolled away
+      const delta = messages.length - lastMsgCountRef.current;
+      if (delta > 0) setNewCount((c) => c + delta);
     }
-  }, [visible, streaming, status]);
+    lastMsgCountRef.current = messages.length;
+  }, [visible, streaming, status, messages.length]);
 
   const jumpToLatest = useCallback(() => {
     const feed = feedRef.current;
@@ -155,8 +165,17 @@ export function MessageList({
       </div>
       {showJump ? (
         <div className="fnix-jump-latest">
-          <button type="button" className="fnix-jump-btn" onClick={jumpToLatest}>
-            ↓ 回到底部
+          <button
+            type="button"
+            className="fnix-jump-btn"
+            title="回到最新"
+            aria-label="回到最新"
+            onClick={jumpToLatest}
+          >
+            <ArrowDown size={18} />
+            {newCount > 0 ? (
+              <span className="fnix-jump-badge">{newCount > 99 ? "99+" : newCount}</span>
+            ) : null}
           </button>
         </div>
       ) : null}

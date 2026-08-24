@@ -1574,11 +1574,9 @@ export function DesktopSettings({
               </div>
 
               <div className="fnix-about-hero">
-                <div className="fnix-about-logo" aria-hidden>
-                  <Sparkles size={20} color="#fff" strokeWidth={2.2} />
-                </div>
+                <div className="fnix-about-logo" aria-hidden />
                 <div className="fnix-about-meta">
-                  <b>FnixAgent Workbench</b>
+                  <b>Fnix Nastasia</b>
                   <span>
                     v{FNIX_VERSION} · {FNIX_BUILD_NUMBER}
                   </span>

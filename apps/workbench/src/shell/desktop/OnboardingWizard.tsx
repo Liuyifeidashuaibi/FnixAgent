@@ -154,11 +154,11 @@ export function OnboardingWizard({
   };
 
   return (
-    <div className="fnix-onboard-root" role="dialog" aria-label="欢迎使用 Fnix">
+    <div className="fnix-onboard-root" role="dialog" aria-label="欢迎使用 Fnix Nastasia">
       <div className="fnix-onboard-card">
         <header className="fnix-onboard-head">
           <div>
-            <h1>欢迎使用 Fnix</h1>
+            <h1>欢迎使用 Fnix Nastasia</h1>
             <p>填自己的 API Key → 选文件夹 → 开始 Work / Code</p>
           </div>
           <button type="button" className="fnix-ibtn" onClick={skipWithGuard} aria-label="跳过">

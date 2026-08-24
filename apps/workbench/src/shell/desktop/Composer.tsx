@@ -20,7 +20,7 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from 'react';
-import type { ChatAttachment } from '../../utils/tauri';
+import type { ChatAttachment, RecentProject } from '../../utils/tauri';
 import { GlassComposer } from '../../ui/glass';
 import { AttachMenu } from './AttachMenu';
 import { isTauriDesktop } from './desktopEnv';
@@ -45,6 +45,10 @@ interface Props {
   projectPath?: string;
   /** 工作区显示名（传入加号菜单显示当前 workspace） */
   projectLabel?: string;
+  /** 最近打开的工作区列表（用于下拉切换） */
+  recentProjects?: RecentProject[];
+  /** 切换到指定工作区 */
+  onSwitchWorkspace?: (path: string) => void;
   /** 外部禁用发送（如 Code 模式未打开仓库时） */
   sendDisabled?: boolean;
 }
@@ -229,6 +233,8 @@ export function Composer({
   onPickFolder,
   projectPath,
   projectLabel,
+  recentProjects,
+  onSwitchWorkspace,
   sendDisabled,
 }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -450,6 +456,8 @@ export function Composer({
               onPickFolder={onPickFolder}
               projectPath={projectPath}
               projectLabel={projectLabel}
+              recentProjects={recentProjects}
+              onSwitchWorkspace={onSwitchWorkspace}
             />
             {leftExtraSlot}
           </>

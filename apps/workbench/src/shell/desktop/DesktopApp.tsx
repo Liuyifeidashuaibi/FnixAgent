@@ -718,7 +718,7 @@ export default function DesktopApp() {
           recentProjects.find((p) => p.path === projectPath) || { path: projectPath },
         )
       : '';
-    const title = mode === 'code' ? (projectPath ? `Fnix Code —${label}` : 'Fnix Code') : 'Fnix';
+    const title = mode === 'code' ? (projectPath ? `Fnix Nastasia —${label}` : 'Fnix Nastasia') : 'Fnix Nastasia';
     void setDesktopWindowTitle(title);
     document.title = title;
   }, [mode, projectPath, recentProjects]);
@@ -1019,18 +1019,14 @@ export default function DesktopApp() {
           />
         )}
 
-        {/* ── Work home — 上品牌 / 下输入框 ── */}
+        {/* ── Work home — 品牌 / 下 Composer ── */}
         {mode === 'work' && pane === 'home' && !hasSession && (
           <div className="fnix-chat-home wb-home">
             <div className="fnix-home-hero">
               <div className="fnix-home-brand" aria-hidden>
                 <span className="fnix-home-logo" />
-                <span className="fnix-home-name">Fnix</span>
+                <span className="fnix-home-name">Fnix Nastasia</span>
               </div>
-              <h1>有什么可以帮你？</h1>
-              <p className="fnix-chat-home-sub">
-                {workMode === 'ask' ? '随意提问 — 不会写入文件' : '规划并交付文档、网站与分析'}
-              </p>
             </div>
             <div className="fnix-home-dock">
               <Composer
@@ -1048,6 +1044,8 @@ export default function DesktopApp() {
                 onRemoveAttachment={removeAttachment}
                 projectPath={projectPath}
                 projectLabel={projectLabel}
+                recentProjects={recentProjects}
+                onSwitchWorkspace={(path) => void openProject(path)}
                 autoFocus
               />
             </div>
@@ -1098,15 +1096,17 @@ export default function DesktopApp() {
                   placeholder={workModePlaceholder(workMode)}
                   modelSlot={modelControl}
                   leftExtraSlot={workModeControl}
-                  onPickFolder={() => void pickFolder()}
-                  onPickFiles={handlePickFiles}
-                  attachments={attachments}
-                  onRemoveAttachment={removeAttachment}
-                  projectPath={projectPath}
-                  projectLabel={projectLabel}
-                  compact
-                />
-                {/* 进化辅助信息（KTG/STP/MFP）与 Craft 写入提示已移至设置 → Diagnostics「进化内核」卡片，主界面保持简洁 */}
+                onPickFolder={() => void pickFolder()}
+                onPickFiles={handlePickFiles}
+                attachments={attachments}
+                onRemoveAttachment={removeAttachment}
+                projectPath={projectPath}
+                projectLabel={projectLabel}
+                recentProjects={recentProjects}
+                onSwitchWorkspace={(path) => void openProject(path)}
+                compact
+              />
+              {/* 进化辅助信息（KTG/STP/MFP）与 Craft 写入提示已移至设置 → Diagnostics「进化内核」卡片，主界面保持简洁 */}
               </div>
             </div>
             {inspectorOpen ? (
@@ -1167,24 +1167,14 @@ export default function DesktopApp() {
           </section>
         )}
 
-        {/* ── Code home — 与 Work 同构：上品牌 / 下 Composer ── */}
+        {/* ── Code home — 品牌 / 下 Composer ── */}
         {mode === 'code' && pane === 'home' && !hasSession && (
           <div className="fnix-chat-home wb-home">
             <div className="fnix-home-hero">
               <div className="fnix-home-brand" aria-hidden>
                 <span className="fnix-home-logo code" />
-                <span className="fnix-home-name">Fnix Code</span>
+                <span className="fnix-home-name">Fnix Nastasia</span>
               </div>
-              <h1>有什么可以帮你？</h1>
-              <p className="fnix-chat-home-sub">
-                {projectPath ? `仓库 · ${projectLabel}` : '先打开一个仓库，然后描述要修改的内容'}
-              </p>
-              {projectPath ? null : (
-                <button type="button" className="fnix-primary" onClick={() => void pickFolder()}>
-                  <FolderOpen size={15} />
-                  打开仓库
-                </button>
-              )}
             </div>
             <div className="fnix-home-dock">
               <Composer
@@ -1195,15 +1185,17 @@ export default function DesktopApp() {
                 streaming={chat.streaming}
                 placeholder="描述要做的代码修改…"
                   modelSlot={modelControl}
-                  onPickFolder={() => void pickFolder()}
-                  onPickFiles={handlePickFiles}
-                  attachments={attachments}
-                  onRemoveAttachment={removeAttachment}
-                  projectPath={projectPath}
-                  projectLabel={projectLabel}
-                  sendDisabled={mode === 'code' && !projectPath}
-                  compact
-                />
+                onPickFolder={() => void pickFolder()}
+                onPickFiles={handlePickFiles}
+                attachments={attachments}
+                onRemoveAttachment={removeAttachment}
+                projectPath={projectPath}
+                projectLabel={projectLabel}
+                recentProjects={recentProjects}
+                onSwitchWorkspace={(path) => void openProject(path)}
+                sendDisabled={mode === 'code' && !projectPath}
+                compact
+              />
               {!projectPath && (repoHint || draft.trim()) ? (
                 <div className="fnix-inline-hint" role="status">
                   请先在左侧打开一个仓库，再发送代码修改任务
@@ -1262,6 +1254,8 @@ export default function DesktopApp() {
                 onRemoveAttachment={removeAttachment}
                 projectPath={projectPath}
                 projectLabel={projectLabel}
+                recentProjects={recentProjects}
+                onSwitchWorkspace={(path) => void openProject(path)}
                 sendDisabled={mode === 'code' && !projectPath}
                 autoFocus
               />

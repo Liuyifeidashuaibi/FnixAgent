@@ -6,13 +6,18 @@
  */
 
 /**
- * Composer 「+」菜单 — 上传附件 + 选择工作区文件夹，统一入口。
+ * Composer 「+」菜单 — 上传附件 + 选择/切换工作区文件夹，统一入口。
  * 复用浏览器/WebView 原生 <input type=file>，在桌面端(Tauri WebView)与浏览器预览下均可工作。
+ *
+ * 工作区列表：用户通过"+"添加但未发消息的 workspace 只出现在这里，
+ * 不出现在左侧任务栏。发送消息后 workspace 才进入左侧任务栏。
  */
 
 import { useEffect, useRef, useState } from "react";
-import { FileUp, FolderOpen, Plus, Check } from "lucide-react";
+import { FileUp, FolderOpen, Plus, Check, Layers } from "lucide-react";
 import { GlassIconButton } from "../../ui/glass";
+import { projectDisplayName } from "./ProjectsPane";
+import type { RecentProject } from "../../utils/tauri";
 
 interface Props {
   compact?: boolean;
@@ -22,9 +27,21 @@ interface Props {
   projectPath?: string;
   /** 当前工作区显示名 */
   projectLabel?: string;
+  /** 最近打开的工作区列表（用于下拉切换） */
+  recentProjects?: RecentProject[];
+  /** 切换到指定工作区 */
+  onSwitchWorkspace?: (path: string) => void;
 }
 
-export function AttachMenu({ compact, onPickFiles, onPickFolder, projectPath, projectLabel }: Props) {
+export function AttachMenu({
+  compact,
+  onPickFiles,
+  onPickFolder,
+  projectPath,
+  projectLabel,
+  recentProjects,
+  onSwitchWorkspace,
+}: Props) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -42,6 +59,11 @@ export function AttachMenu({ compact, onPickFiles, onPickFolder, projectPath, pr
     setOpen(false);
     fileInputRef.current?.click();
   };
+
+  // 除了当前 projectPath 之外的其他 workspace（最多 8 个）
+  const otherWorkspaces = (recentProjects || [])
+    .filter((p) => p.path !== projectPath)
+    .slice(0, 8);
 
   return (
     <div className="fnix-attach" ref={ref}>
@@ -81,15 +103,40 @@ export function AttachMenu({ compact, onPickFiles, onPickFolder, projectPath, pr
             }}
           >
             <FolderOpen size={15} />
+            <span className="fnix-attach-ws-label">
+              {projectPath ? projectLabel || projectPath : "选择工作区文件夹"}
+            </span>
             {projectPath ? (
-              <span className="fnix-attach-ws">
-                <span className="fnix-attach-ws-name">{projectLabel || projectPath}</span>
-                <Check size={13} className="fnix-attach-ws-check" />
-              </span>
-            ) : (
-              "选择工作区文件夹"
-            )}
+              <Check size={13} className="fnix-attach-ws-check" />
+            ) : null}
           </button>
+
+          {/* 工作区切换列表 */}
+          {otherWorkspaces.length > 0 && (
+            <>
+              <div className="fnix-attach-divider" role="separator" />
+              <div className="fnix-attach-ws-list" role="group" aria-label="切换工作区">
+                {otherWorkspaces.map((p) => (
+                  <button
+                    key={p.path}
+                    type="button"
+                    role="menuitem"
+                    className="fnix-attach-ws-item"
+                    title={p.path}
+                    onClick={() => {
+                      setOpen(false);
+                      onSwitchWorkspace?.(p.path);
+                    }}
+                  >
+                    <Layers size={13} />
+                    <span className="fnix-attach-ws-name">
+                      {projectDisplayName(p)}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>

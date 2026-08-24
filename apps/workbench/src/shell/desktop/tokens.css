@@ -1749,16 +1749,11 @@ body,
   border-radius: 13px;
   display: grid;
   place-items: center;
-  background: linear-gradient(150deg, #14b887, #0d8f6a);
-  box-shadow: 0 8px 22px rgba(13, 143, 106, 0.28);
+  background: url("/nastasia.png") center / cover no-repeat;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.12);
 }
 .fnix-home-logo::after {
-  content: '';
-  width: 16px;
-  height: 16px;
-  border-radius: 5px;
-  border: 2.5px solid #fff;
-  transform: rotate(12deg);
+  content: none;
 }
 .fnix-home-name {
   font-size: 24px;
@@ -2948,12 +2943,12 @@ body,
 /* "Jump to latest" pill — shown only when the user scrolled up (see MessageList.tsx) */
 .fnix-jump-latest {
   position: sticky;
-  bottom: 10px;
+  bottom: 24px;
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
   margin-top: 6px;
   pointer-events: none;
-  z-index: 5;
+  z-index: 10;
 }
 .fnix-jump-btn {
   pointer-events: auto;
@@ -2961,16 +2956,53 @@ body,
   border: 1px solid var(--border);
   background: var(--bg);
   color: var(--text);
-  border-radius: 999px;
-  padding: 6px 14px;
-  font: inherit;
-  font-size: 12.5px;
-  font-weight: 600;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
   cursor: pointer;
+  position: relative;
+  animation: fnix-jump-in 0.2s var(--ease-soft);
+  transition:
+    background 0.15s var(--ease-soft),
+    box-shadow 0.15s var(--ease-soft),
+    transform 0.15s var(--ease-spring);
 }
 .fnix-jump-btn:hover {
   background: var(--bg-soft);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.16);
+  transform: scale(1.05);
+}
+.fnix-jump-btn:active {
+  transform: scale(0.92);
+}
+.fnix-jump-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  padding: 0 5px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  color: #fff;
+  background: #e5484d;
+  box-shadow: 0 1px 4px rgba(229, 72, 77, 0.4);
+}
+@keyframes fnix-jump-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 .fnix-turn {
   width: 100%;
@@ -2998,16 +3030,12 @@ body,
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: conic-gradient(from 210deg, #0d0d0d 0 40%, #5d5d5d 40% 70%, #0d0d0d 70% 100%);
-  mask: radial-gradient(circle at 50% 50%, transparent 30%, #000 31%);
-  -webkit-mask: radial-gradient(circle at 50% 50%, transparent 30%, #000 31%);
+  background: url("/nastasia.png") center / cover no-repeat;
   flex-shrink: 0;
   margin-top: 2px;
 }
 .fnix-codex .fnix-asst-mark {
-  background: conic-gradient(from 180deg, #7c3aed 0 35%, #0d0d0d 35% 70%, #7c3aed 70% 100%);
-  mask: radial-gradient(circle at 50% 50%, transparent 30%, #000 31%);
-  -webkit-mask: radial-gradient(circle at 50% 50%, transparent 30%, #000 31%);
+  background: url("/nastasia.png") center / cover no-repeat;
 }
 .fnix-asst-body {
   flex: 1;
@@ -4132,8 +4160,8 @@ button.fnix-diffview-more:hover {
   padding-bottom: 8px;
 }
 .fnix-empty-codex .fnix-home-logo.codex,
-.fnix-home-logo.codex {
-  background: conic-gradient(from 180deg, #7c3aed 0 35%, #0d0d0d 35% 70%, #7c3aed 70% 100%);
+.fnix-home-logo.code {
+  background: url("/nastasia.png") center / cover no-repeat;
 }
 .fnix-codex-suggests {
   display: flex;
@@ -8592,15 +8620,12 @@ button.fnix-agent-process-hidden {
 .fnix-asst-mark {
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
 }
+/* fnix-jump-btn 样式已在前面定义，此处保留精修阴影过渡 */
 .fnix-jump-btn {
-  box-shadow: var(--elev-2);
   transition:
+    background var(--dur-1) var(--ease-soft),
     box-shadow var(--dur-1) var(--ease-soft),
     transform var(--dur-1) var(--ease-soft);
-}
-.fnix-jump-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--elev-3);
 }
 
 /* 代码块质感 */
@@ -10722,4 +10747,57 @@ body.fnx-studio-resizing .fnx-studio {
   font-weight: 500;
   opacity: 0.5;
   flex-shrink: 0;
+}
+
+/* ── 加号菜单 workspace 切换列表 ── */
+.fnix-attach-ws-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 180px;
+}
+.fnix-attach-divider {
+  height: 1px;
+  background: var(--border-2);
+  margin: 4px 8px;
+}
+.fnix-attach-ws-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.fnix-attach-ws-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 13px;
+  text-align: left;
+  transition: background 90ms var(--ease-soft), color 90ms var(--ease-soft);
+}
+.fnix-attach-ws-item:hover {
+  background: var(--hover-bg);
+  color: var(--text);
+}
+.fnix-attach-ws-item svg {
+  flex-shrink: 0;
+  opacity: 0.5;
+}
+.fnix-attach-ws-item:hover svg {
+  opacity: 0.8;
+}
+.theme-dark .fnix-attach-ws-item {
+  color: var(--faint);
+}
+.theme-dark .fnix-attach-ws-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.9);
+}
+.theme-dark .fnix-attach-divider {
+  background: rgba(255, 255, 255, 0.08);
 }
