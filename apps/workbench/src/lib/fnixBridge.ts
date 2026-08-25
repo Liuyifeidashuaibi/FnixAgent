@@ -812,3 +812,152 @@ export async function applyArtifactPatch(input: {
     return { ok: false, error: String(e) };
   }
 }
+
+// ===========================================================================
+// HITL 人机协同审批（Human-in-the-Loop）
+// ===========================================================================
+
+/** 待审批的高危工具调用条目。 */
+export interface FnixHitlToolApproval {
+  idempotency_key: string;
+  tool: string;
+  risk: string;
+  timestamp: string;
+}
+
+/** 待审批的流程守门（gate）条目。 */
+export interface FnixHitlGate {
+  id: string;
+  gate: string;
+  context: string;
+  timestamp: string;
+  status: string;
+}
+
+/** GET /api/v1/hitl/pending 响应体。 */
+export interface FnixHitlPending {
+  tool_approvals: FnixHitlToolApproval[];
+  gates: FnixHitlGate[];
+  /** 已配置自动放行（无需人工确认）的守门名称列表。 */
+  auto_approve_gates: string[];
+}
+
+/** 构造空的待审批结构（请求失败时兜底，避免 UI 判空）。 */
+function emptyHitlPending(): FnixHitlPending {
+  return { tool_approvals: [], gates: [], auto_approve_gates: [] };
+}
+
+/** 拉取 HITL 待审批队列（高危工具调用 + 流程守门）。 */
+export async function listHitlPending(): Promise<{
+  ok: boolean;
+  pending: FnixHitlPending;
+  error?: string;
+}> {
+  try {
+    const res = await fnixFetch("/api/v1/hitl/pending", {
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!res.ok) {
+      return {
+        ok: false,
+        pending: emptyHitlPending(),
+        error: await res.text().catch(() => res.statusText),
+      };
+    }
+    const data = (await res.json().catch(() => null)) as Partial<FnixHitlPending> | null;
+    return {
+      ok: true,
+      pending: {
+        tool_approvals: data?.tool_approvals || [],
+        gates: data?.gates || [],
+        auto_approve_gates: data?.auto_approve_gates || [],
+      },
+    };
+  } catch (e) {
+    return { ok: false, pending: emptyHitlPending(), error: String(e) };
+  }
+}
+
+/** 批准待审批的工具调用（按幂等键，可附带反馈）。 */
+export async function approveHitlTool(
+  key: string,
+  feedback = "",
+): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fnixFetch(`/api/v1/hitl/tool/${encodeURIComponent(key)}/approve`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ feedback }),
+      signal: AbortSignal.timeout(6000),
+    });
+    if (!res.ok) {
+      return { ok: false, error: await res.text().catch(() => res.statusText) };
+    }
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+/** 拒绝待审批的工具调用（可附带理由）。 */
+export async function rejectHitlTool(
+  key: string,
+  reason = "",
+): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fnixFetch(`/api/v1/hitl/tool/${encodeURIComponent(key)}/reject`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reason }),
+      signal: AbortSignal.timeout(6000),
+    });
+    if (!res.ok) {
+      return { ok: false, error: await res.text().catch(() => res.statusText) };
+    }
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+/** 批准流程守门请求（可附带反馈）。 */
+export async function approveHitlGate(
+  requestId: string,
+  feedback = "",
+): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fnixFetch(`/api/v1/hitl/gate/${encodeURIComponent(requestId)}/approve`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ feedback }),
+      signal: AbortSignal.timeout(6000),
+    });
+    if (!res.ok) {
+      return { ok: false, error: await res.text().catch(() => res.statusText) };
+    }
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+/** 拒绝流程守门请求（需给出理由）。 */
+export async function rejectHitlGate(
+  requestId: string,
+  reason = "",
+): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fnixFetch(`/api/v1/hitl/gate/${encodeURIComponent(requestId)}/reject`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reason }),
+      signal: AbortSignal.timeout(6000),
+    });
+    if (!res.ok) {
+      return { ok: false, error: await res.text().catch(() => res.statusText) };
+    }
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}

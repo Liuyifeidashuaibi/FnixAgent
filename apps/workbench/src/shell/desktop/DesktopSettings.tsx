@@ -25,6 +25,7 @@ import {
   Info,
   CheckCircle2,
   XCircle,
+  ShieldCheck,
   Sparkles,
   Zap,
   type LucideIcon,
@@ -61,6 +62,7 @@ import {
   type McpTrustServerRow,
 } from '../../lib/fnixBridge';
 import { LOCAL_LLM, localProviderConfig, updateLocalLlm } from './localLlm';
+import { ApprovalPanel } from './ApprovalPanel';
 import {
   FNIX_VERSION,
   FNIX_BUILD_NUMBER,
@@ -71,7 +73,7 @@ import {
 } from '../../config/alpha';
 import './DesktopSettings.css';
 
-type Section = 'general' | 'models' | 'about' | 'diagnostics' | 'mcp' | 'memory' | 'skills';
+type Section = 'general' | 'models' | 'about' | 'diagnostics' | 'mcp' | 'memory' | 'skills' | 'hitl';
 
 const NAV_GROUPS: { label: string; items: [Section, string][] }[] = [
   { label: '偏好', items: [['general', 'General']] },
@@ -87,6 +89,7 @@ const NAV_GROUPS: { label: string; items: [Section, string][] }[] = [
   {
     label: '系统',
     items: [
+      ['hitl', 'Approvals'],
       ['diagnostics', 'Diagnostics'],
       ['about', 'About'],
     ],
@@ -102,6 +105,11 @@ const SECTION_META: Record<Section, { title: string; desc: string; icon: LucideI
     icon: Boxes,
   },
   skills: { title: '技能', desc: '技能市场生命周期：草稿 → 审核 → 发布。', icon: Wrench },
+  hitl: {
+    title: 'HITL 审批',
+    desc: '人工在环审批队列：高危工具调用与流程守门的批准 / 拒绝。',
+    icon: ShieldCheck,
+  },
   memory: { title: '记忆', desc: '三层本地记忆：短期 / 长期 / 实体。', icon: Brain },
   diagnostics: {
     title: '诊断',
@@ -1374,6 +1382,13 @@ export function DesktopSettings({
                   </>
                 );
               })()}
+            </div>
+          )}
+
+          {section === 'hitl' && (
+            <div className="fnix-set-title">
+              <SectionHeader section="hitl" />
+              <ApprovalPanel />
             </div>
           )}
 
