@@ -6,6 +6,8 @@
 # This software and its source code are proprietary and confidential.
 # Unauthorized copying, modification, distribution, or use is strictly prohibited.
 
+from fnixagent.core.llm.providers.anthropic import AnthropicProvider
+from fnixagent.core.llm.providers.gemini import GeminiProvider
 from fnixagent.core.llm.providers.openai import (
     GLMProvider,
     MockLLMProvider,
@@ -20,4 +22,7 @@ __all__ = [
     "OpenAICompatibleProvider",
     "OpenAIProvider",
     "QwenProvider",
+    # 原生协议 Provider(非 OpenAI 兼容层)
+    "AnthropicProvider",
+    "GeminiProvider",
 ]

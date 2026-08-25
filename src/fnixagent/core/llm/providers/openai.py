@@ -118,6 +118,7 @@ class OpenAICompatibleProvider(BaseLLMProvider):
         base_url: str = "https://api.openai.com/v1/",
         timeout: float = 120.0,
         max_retries: int = 3,
+        response_format_support: bool = True,
     ):
         """初始化 OpenAI 兼容 Provider。
 
@@ -128,6 +129,10 @@ class OpenAICompatibleProvider(BaseLLMProvider):
             base_url: API 基础 URL(末尾 / 可选)。
             timeout: 请求超时秒数,必须为正。
             max_retries: 最大重试次数(仅对 5xx/429/网络错误重试),必须为非负整数。
+            response_format_support: 是否把 request.response_format 直传为请求体
+                response_format 字段(OpenAI 风格)。默认 True;不支持该字段的
+                兼容网关(GLM/Qwen/DeepSeek 等子类如不支持)可在各自 __init__
+                传 False 关闭,关闭后 response_format 被忽略,payload 不变。
 
         Raises:
             TypeError: timeout/max_retries 类型错误。
@@ -146,6 +151,7 @@ class OpenAICompatibleProvider(BaseLLMProvider):
         self._base_url = base_url.rstrip("/")
         self._timeout = timeout
         self._max_retries = max_retries
+        self._response_format_support = bool(response_format_support)
         self._client = None  # 延迟初始化
 
     def _get_client(self):
@@ -170,6 +176,55 @@ class OpenAICompatibleProvider(BaseLLMProvider):
             self._client = httpx.Client(timeout=self._timeout, verify=_ssl_ctx)
         return self._client
 
+    # -- 请求体构建 ---------------------------------------------------------
+
+    def _build_payload(
+        self,
+        request: LLMRequest,
+        messages: list[dict],
+        stream: bool = False,
+    ) -> dict[str, Any]:
+        """构建 OpenAI Chat Completions 请求体(非流式/流式共用)。
+
+        Args:
+            request: LLM 调用请求。
+            messages: 已预处理的消息列表。
+            stream: 是否流式调用(仅追加 stream=True,其余字段一致)。
+
+        Returns:
+            OpenAI Chat Completions 请求体 dict。
+        """
+        payload: dict[str, Any] = {
+            "model": request.model or self._model_name,
+            "messages": messages,
+            "temperature": request.temperature,
+            "max_tokens": request.max_tokens,
+        }
+        if stream:
+            payload["stream"] = True
+        if request.tools:
+            payload["tools"] = request.tools
+            payload["tool_choice"] = request.tool_choice
+        if request.stop:
+            payload["stop"] = request.stop
+
+        # 结构化输出:request.response_format 直传为 response_format 字段。
+        # 仅当构造时声明支持(response_format_support=True)才注入;
+        # request.response_format 为 None 时 payload 与历史行为完全一致。
+        rf = getattr(request, "response_format", None)
+        if self._response_format_support and isinstance(rf, dict):
+            payload["response_format"] = rf
+
+        # Spec 2: 透传 provider 专属参数（如 DashScope enable_thinking / OpenAI reasoning_effort）
+        # — request.extra 由上层 (LLMAdapter / AgenticLoop) 注入，用于触发思考模式
+        # — 思考模式开启后，response.message.reasoning_content 会被 _parse_response 提取
+        if request.extra:
+            for k, v in request.extra.items():
+                if v is not None and k not in payload:
+                    payload[k] = v
+
+        return payload
+
     def _do_chat(self, request: LLMRequest, messages: list[dict]) -> LLMResponse:
         """调用 OpenAI 兼容的 Chat Completions API。
 
@@ -189,26 +244,8 @@ class OpenAICompatibleProvider(BaseLLMProvider):
         if not self._api_key:
             raise LLMError(f"[{self._name}] API key not configured")
 
-        # 构建请求体
-        payload: dict[str, Any] = {
-            "model": request.model or self._model_name,
-            "messages": messages,
-            "temperature": request.temperature,
-            "max_tokens": request.max_tokens,
-        }
-        if request.tools:
-            payload["tools"] = request.tools
-            payload["tool_choice"] = request.tool_choice
-        if request.stop:
-            payload["stop"] = request.stop
-
-        # Spec 2: 透传 provider 专属参数（如 DashScope enable_thinking / OpenAI reasoning_effort）
-        # — request.extra 由上层 (LLMAdapter / AgenticLoop) 注入，用于触发思考模式
-        # — 思考模式开启后，response.message.reasoning_content 会被 _parse_response 提取
-        if request.extra:
-            for k, v in request.extra.items():
-                if v is not None and k not in payload:
-                    payload[k] = v
+        # 构建请求体(非流式/流式/usage 精确化共用 _build_payload)
+        payload = self._build_payload(request, messages, stream=False)
 
         headers = {
             "Authorization": f"Bearer {self._api_key}",
@@ -272,25 +309,8 @@ class OpenAICompatibleProvider(BaseLLMProvider):
         if not self._api_key:
             raise LLMError(f"[{self._name}] API key not configured")
 
-        # 构建请求体 (与 _do_chat 一致，但加 stream=True)
-        payload: dict[str, Any] = {
-            "model": request.model or self._model_name,
-            "messages": messages,
-            "temperature": request.temperature,
-            "max_tokens": request.max_tokens,
-            "stream": True,
-        }
-        if request.tools:
-            payload["tools"] = request.tools
-            payload["tool_choice"] = request.tool_choice
-        if request.stop:
-            payload["stop"] = request.stop
-
-        # 透传 provider 专属参数（如 enable_thinking）
-        if request.extra:
-            for k, v in request.extra.items():
-                if v is not None and k not in payload:
-                    payload[k] = v
+        # 构建请求体 (与 _do_chat 共用 _build_payload,追加 stream=True)
+        payload = self._build_payload(request, messages, stream=True)
 
         headers = {
             "Authorization": f"Bearer {self._api_key}",
@@ -345,6 +365,193 @@ class OpenAICompatibleProvider(BaseLLMProvider):
                     content_chunk = delta.get("content")
                     if content_chunk:
                         yield content_chunk
+
+    async def stream_chat_full(
+        self,
+        request: LLMRequest,
+        on_chunk: Any = None,
+    ) -> LLMResponse:
+        """完整流式调用：逐 chunk 回调 content，同时累积 tool_calls / reasoning / usage。
+
+        与 stream_chat 只产文本不同，此方法在流结束后返回与 chat() 等价的
+        LLMResponse（含 tool_calls、reasoning_content、usage），供 AgenticLoop
+        在保持工具调用能力的前提下获得 token 级流式体验。
+
+        Args:
+            request: LLM 调用请求。
+            on_chunk: 可选回调 on_chunk(text)，每个 content delta 调用一次。
+                回调可以是同步函数或 coroutine 函数。
+
+        Returns:
+            LLMResponse: 与非流式 chat() 结构一致的完整响应。
+
+        Raises:
+            LLMError: 流式调用失败（HTTP 错误在首个 chunk 前抛出）。
+        """
+        import inspect as _inspect
+
+        messages = self._prepare_messages(request)
+        content_parts: list[str] = []
+        reasoning_parts: list[str] = []
+        tc_slots: dict[int, dict] = {}
+        usage_data: dict = {}
+        finish_reason = "stop"
+        model_seen = ""
+        emitted = False
+
+        async def _emit(text: str) -> None:
+            nonlocal emitted
+            if not text:
+                return
+            content_parts.append(text)
+            if on_chunk is not None:
+                emitted = True
+                out = on_chunk(text)
+                if _inspect.isawaitable(out):
+                    await out
+
+        try:
+            async for raw_line in self._aiter_sse_lines(request, messages):
+                choices = raw_line.get("choices", [])
+                if raw_line.get("usage"):
+                    usage_data = raw_line["usage"]
+                if raw_line.get("model"):
+                    model_seen = raw_line["model"]
+                if not choices:
+                    continue
+                choice = choices[0]
+                delta = choice.get("delta", {}) or {}
+                if choice.get("finish_reason"):
+                    finish_reason = choice["finish_reason"]
+
+                content_chunk = delta.get("content")
+                if content_chunk:
+                    await _emit(content_chunk)
+
+                rc = delta.get("reasoning_content") or delta.get("reasoning")
+                if isinstance(rc, str) and rc:
+                    reasoning_parts.append(rc)
+
+                for tc_delta in delta.get("tool_calls") or []:
+                    idx = tc_delta.get("index", 0)
+                    slot = tc_slots.setdefault(
+                        idx,
+                        {
+                            "id": "",
+                            "type": "function",
+                            "function": {"name": "", "arguments": ""},
+                        },
+                    )
+                    if tc_delta.get("id"):
+                        slot["id"] = tc_delta["id"]
+                    fn = tc_delta.get("function") or {}
+                    if fn.get("name"):
+                        slot["function"]["name"] += fn["name"]
+                    if fn.get("arguments"):
+                        slot["function"]["arguments"] += fn["arguments"]
+        except Exception as exc:
+            from fnixagent.core.exceptions import LLMError
+
+            # 已向外发过正文中途断流：无安全重试点，直接上抛
+            raise LLMError(
+                f"[{self._name}] stream_chat_full failed: {exc}"
+            ) from exc
+
+        # 组装成 OpenAI 非流式响应结构，复用 _parse_response 的标准化解构
+        # （含 <think> 内联思考剥离、tool arguments JSON 解析、cache token 提取）
+        message: dict[str, Any] = {
+            "role": "assistant",
+            "content": "".join(content_parts),
+        }
+        if reasoning_parts:
+            message["reasoning_content"] = "".join(reasoning_parts)
+        if tc_slots:
+            message["tool_calls"] = [tc_slots[i] for i in sorted(tc_slots)]
+        data: dict[str, Any] = {
+            "model": model_seen or request.model or self._model_name,
+            "choices": [
+                {"message": message, "finish_reason": finish_reason}
+            ],
+            "usage": usage_data,
+        }
+        response = self._parse_response(data)
+        response.model = response.model or self._model_name
+        if response.usage.total_tokens == 0:
+            response.usage = self._estimate_usage(messages, response.content)
+        return response
+
+    async def _aiter_sse_lines(
+        self, request: LLMRequest, messages: list[dict]
+    ) -> AsyncGenerator[dict, None]:
+        """逐条产出 SSE 数据帧（解析后的 dict）。
+
+        与 _do_stream 共用请求构建逻辑；HTTP 错误在首个产出前抛出，
+        保证调用方可以用"是否已产出 chunk"判断是否可安全重试。
+        """
+        if not self._api_key:
+            from fnixagent.core.exceptions import LLMError
+
+            raise LLMError(f"[{self._name}] API key not configured")
+
+        payload = self._build_payload(request, messages, stream=True)
+
+        # Usage 精确化:按 OpenAI stream_options 规范请求服务端在流中回报
+        # 真实 usage(通常在最后一个 chunk),stream_chat_full 会优先读取该值;
+        # 取不到时才回退基类的字符粗估。
+        # 个别严格网关若拒绝未知参数导致 400,可通过
+        # request.extra["stream_options"] = False 关闭(合并逻辑会先写入 False,
+        # 使下方默认注入跳过)。
+        if "stream_options" not in payload:
+            payload["stream_options"] = {"include_usage": True}
+
+        headers = {
+            "Authorization": f"Bearer {self._api_key}",
+            "Content-Type": "application/json",
+        }
+        url = f"{self._base_url}/chat/completions"
+        model_for_err = request.model or self._model_name
+
+        import json as _json
+
+        try:
+            import httpx
+        except ImportError as exc:
+            from fnixagent.core.exceptions import LLMError
+
+            raise LLMError("httpx is required for streaming") from exc
+
+        import ssl as _ssl
+
+        _ssl_ctx = _ssl.create_default_context()
+        _legacy_reneg = getattr(_ssl, "OP_LEGACY_SERVER_CONNECT", None)
+        if _legacy_reneg is not None:
+            _ssl_ctx.options |= _legacy_reneg
+
+        async with httpx.AsyncClient(
+            timeout=self._timeout, verify=_ssl_ctx
+        ) as async_client:
+            async with async_client.stream(
+                "POST", url, json=payload, headers=headers
+            ) as resp:
+                if resp.status_code >= 400:
+                    body = await resp.aread()
+                    from fnixagent.core.exceptions import LLMError
+
+                    raise LLMError(
+                        f"[{self._name}] stream HTTP {resp.status_code} "
+                        f"(model={model_for_err}): {body[:500]}"
+                    )
+                async for line in resp.aiter_lines():
+                    line = line.strip()
+                    if not line or not line.startswith("data:"):
+                        continue
+                    data_str = line[5:].strip()
+                    if data_str == "[DONE]":
+                        break
+                    try:
+                        yield _json.loads(data_str)
+                    except _json.JSONDecodeError:
+                        continue
 
     @staticmethod
     def _classify_error(exc: Exception) -> tuple[bool, str]:

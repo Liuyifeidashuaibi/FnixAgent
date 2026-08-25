@@ -25,7 +25,9 @@ import os
 from typing import Any
 
 from fnixagent.core.exceptions import LLMError
-from fnixagent.core.llm.base import LLMRequest
+from fnixagent.core.llm.base import BaseLLMProvider, LLMRequest
+from fnixagent.core.llm.providers.anthropic import AnthropicProvider
+from fnixagent.core.llm.providers.gemini import GeminiProvider
 from fnixagent.core.llm.providers.openai import OpenAICompatibleProvider
 from fnixagent.core.types import LLMResponse, Message, MessageRole
 
@@ -55,6 +57,20 @@ _PROVIDER_CONFIGS = [
         "env_key": "DEEPSEEK_API_KEY",
         "base_url": "https://api.deepseek.com/v1/",
         "default_model": "deepseek-chat",
+    },
+    # 原生协议 provider(Anthropic Messages API / Google Gemini generateContent)
+    {
+        "name": "anthropic",
+        "env_key": "ANTHROPIC_API_KEY",
+        "base_url": "https://api.anthropic.com",
+        "default_model": "claude-sonnet-4-5",
+    },
+    {
+        "name": "gemini",
+        "env_key": "GEMINI_API_KEY",
+        "base_url": "https://generativelanguage.googleapis.com",
+        "default_model": "gemini-2.5-flash",
+        "alt_env_keys": ["GOOGLE_API_KEY"],
     },
     {
         "name": "custom",
@@ -98,7 +114,7 @@ class LLMAdapter:
                 为空时依次从 ~/.fnix/config.toml `model_fallbacks`、环境变量
                 LLM_MODEL_FALLBACKS / BENCH_MODEL_FALLBACKS (逗号分隔) 读取。
         """
-        self._provider: OpenAICompatibleProvider | None = None
+        self._provider: BaseLLMProvider | None = None
         self._provider_name = provider_name
         self._api_key = api_key
         self._base_url = base_url
@@ -107,6 +123,50 @@ class LLMAdapter:
         self._fallback_models: list[str] = list(fallback_models or [])
         self._fallback_cursor = 0
         self._configured = False
+
+    def _instantiate_provider(
+        self, name: str, model_name: str, api_key: str, base_url: str
+    ) -> BaseLLMProvider:
+        """按 provider 名实例化对应的 Provider 实例。
+
+        anthropic/gemini 走原生协议 Provider(Anthropic Messages API /
+        Google Gemini generateContent),其余走 OpenAI 兼容层。
+        base_url 规范化:OpenAI 兼容层保证尾斜杠;原生协议去掉尾斜杠
+        (anthropic.py / gemini.py 内部自行拼接 /v1/messages、/v1beta/models)。
+
+        Args:
+            name: provider 标识名(anthropic/gemini/openai/glm/qwen/deepseek/custom)。
+            model_name: 模型名。
+            api_key: API Key。
+            base_url: API 基础 URL(可为空,空则用各协议默认值)。
+
+        Returns:
+            BaseLLMProvider 实例(可直接 router.register)。
+        """
+        if name == "anthropic":
+            return AnthropicProvider(
+                api_key=api_key,
+                model_name=model_name or "claude-sonnet-4-5",
+                base_url=(base_url or "https://api.anthropic.com").rstrip("/"),
+                timeout=self._timeout,
+            )
+        if name == "gemini":
+            return GeminiProvider(
+                api_key=api_key,
+                model_name=model_name or "gemini-2.5-flash",
+                base_url=(base_url or "https://generativelanguage.googleapis.com").rstrip("/"),
+                timeout=self._timeout,
+            )
+        # OpenAI 兼容层(含 custom):保证尾斜杠
+        if base_url and not base_url.endswith("/"):
+            base_url = base_url + "/"
+        return OpenAICompatibleProvider(
+            name=name,
+            model_name=model_name,
+            api_key=api_key,
+            base_url=base_url or "https://api.openai.com/v1/",
+            timeout=self._timeout,
+        )
 
     def _auto_detect(self) -> None:
         """自动检测可用的 API 提供商"""
@@ -146,17 +206,19 @@ class LLMAdapter:
                 "openai": ("https://api.openai.com/v1/", "gpt-4o"),
                 "deepseek": ("https://api.deepseek.com/v1/", "deepseek-chat"),
                 "glm": ("https://open.bigmodel.cn/api/paas/v4/", "glm-4"),
+                "anthropic": ("https://api.anthropic.com", "claude-sonnet-4-5"),
+                "gemini": (
+                    "https://generativelanguage.googleapis.com",
+                    "gemini-2.5-flash",
+                ),
             }
             def_base, def_model = defaults.get(name, ("https://api.openai.com/v1/", "gpt-4o"))
             base = self._base_url or def_base
-            if base and not base.endswith("/"):
-                base = base + "/"
-            self._provider = OpenAICompatibleProvider(
+            self._provider = self._instantiate_provider(
                 name=name,
                 model_name=self._model_name or def_model,
                 api_key=self._api_key,
                 base_url=base,
-                timeout=self._timeout,
             )
             self._configured = True
             return
@@ -183,14 +245,11 @@ class LLMAdapter:
                     or (os.getenv("DASHSCOPE_BASE_URL") if config["name"] == "qwen" else "")
                     or config["base_url"]
                 )
-                if base and not base.endswith("/"):
-                    base = base + "/"
-                self._provider = OpenAICompatibleProvider(
+                self._provider = self._instantiate_provider(
                     name=config["name"],
                     model_name=model,
                     api_key=api_key,
                     base_url=base,
-                    timeout=self._timeout,
                 )
                 self._configured = True
                 return
@@ -257,12 +316,11 @@ class LLMAdapter:
             next_model,
         )
         self._model_name = next_model
-        self._provider = OpenAICompatibleProvider(
+        self._provider = self._instantiate_provider(
             name=self._provider._name,
             model_name=next_model,
             api_key=self._provider._api_key,
             base_url=self._provider._base_url,
-            timeout=self._timeout,
         )
         return True
 
@@ -287,6 +345,7 @@ class LLMAdapter:
         model: str = "",
         temperature: float = 0.7,
         max_tokens: int = 4096,
+        response_format: dict | None = None,
     ) -> dict:
         """
         AgenticLoop 兼容的 chat 接口。
@@ -297,6 +356,11 @@ class LLMAdapter:
             model: 模型名 (为空使用默认)
             temperature: 温度
             max_tokens: 最大 token 数
+            response_format: 结构化输出约束(OpenAI 风格,dict | None):
+                {"type":"json_object"} 或 {"type":"json_schema","json_schema":{...}}。
+                None(默认)时不约束输出,payload 与历史行为完全一致。
+                各 provider 落地方式:openai 直传 / anthropic system 注入仿真 /
+                gemini generationConfig 映射。
 
         Returns:
             {
@@ -318,6 +382,8 @@ class LLMAdapter:
                 "  GLM_API_KEY=xxx\n"
                 "  QWEN_API_KEY=xxx\n"
                 "  DEEPSEEK_API_KEY=xxx\n"
+                "  ANTHROPIC_API_KEY=xxx (Anthropic Messages API 原生协议)\n"
+                "  GEMINI_API_KEY=xxx (Google Gemini generateContent 原生协议)\n"
                 "  CUSTOM_API_KEY=xxx (需同时设置 CUSTOM_BASE_URL)"
             )
 
@@ -384,6 +450,7 @@ class LLMAdapter:
             max_tokens=max_tokens,
             tools=tools or [],
             extra=extra_params,
+            response_format=response_format,
         )
 
         # Sync httpx providers block the event loop if awaited directly —
@@ -448,6 +515,176 @@ class LLMAdapter:
                 )
             result["choices"][0]["message"]["tool_calls"] = normalized_calls
 
+        return result
+
+    async def chat_stream(
+        self,
+        messages: list[dict],
+        tools: list[dict] | None = None,
+        model: str = "",
+        temperature: float = 0.7,
+        max_tokens: int = 4096,
+        on_chunk: Any = None,
+        response_format: dict | None = None,
+    ) -> dict:
+        """流式版 chat：逐 chunk 回调正文，返回与 chat() 完全一致的 dict。
+
+        供 AgenticLoop 在保留 function calling 能力的同时获得 token 级
+        流式输出（Trae/Cursor 同架构：SSE 流式 + 流尾解析 tool_calls）。
+
+        Args:
+            messages: 消息列表 [{"role": "...", "content": "..."}]
+            tools: OpenAI tools API 格式的工具定义列表
+            model: 模型名 (为空使用默认)
+            temperature: 温度
+            max_tokens: 最大 token 数
+            on_chunk: 可选回调 on_chunk(text)，每个 content delta 调用一次，
+                可为同步函数或 coroutine 函数。
+            response_format: 结构化输出约束(OpenAI 风格,dict | None)，
+                语义与 chat() 的同名参数一致；None(默认)时零回归。
+
+        Returns:
+            与 chat() 相同的 dict 结构。
+
+        Raises:
+            LLMError: 首个 chunk 前的失败（可安全重试）。已产出 chunk 后
+                中途断流同样上抛，由调用方决定是否保留部分输出。
+        """
+        self._auto_detect()
+        if self._provider is None:
+            raise LLMError(
+                "未配置 LLM API Key。请在 .env 文件中设置环境变量。"
+            )
+
+        msg_objects = [
+            Message(
+                role=MessageRole(m.get("role", "user")),
+                content=str(m.get("content", "")),
+                name=m.get("name"),
+                tool_calls=m.get("tool_calls") or None,
+                tool_call_id=m.get("tool_call_id"),
+            )
+            for m in messages
+        ]
+
+        model_name = (model or self._model_name or "").lower()
+        enable_thinking_models = (
+            "qwen3-",
+            "qwq",
+            "qwen-plus-latest",
+            "qwen-turbo-latest",
+            "qwen3-max",
+            "qwen-plus-2025",
+            "qwen-turbo-2025",
+            "deepseek-r1",
+            "deepseek-v3.1",
+            "deepseek-v3.2",
+            "glm-4.5",
+            "glm-4.6",
+            "glm-5",
+        )
+        should_enable_thinking = any(m in model_name for m in enable_thinking_models)
+        is_glm47 = "glm-4.7" in model_name or model_name == "glm-4.7"
+
+        extra_params: dict[str, Any] = {}
+        if should_enable_thinking:
+            extra_params["enable_thinking"] = True
+        elif "qwen3." in model_name or "qwen3-" in model_name or is_glm47:
+            extra_params["enable_thinking"] = False
+
+        request = LLMRequest(
+            model=model or self._model_name or "",
+            messages=msg_objects,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            tools=tools or [],
+            extra=extra_params,
+            response_format=response_format,
+        )
+
+        emitted = False
+
+        if on_chunk is not None:
+            import inspect as _inspect
+
+            async def _guarded_on_chunk(text: str) -> None:
+                nonlocal emitted
+                emitted = True
+                out = on_chunk(text)
+                if _inspect.isawaitable(out):
+                    await out
+
+            chunk_cb: Any = _guarded_on_chunk
+        else:
+            chunk_cb = None
+
+        # 熔断兜底：与 chat() 一致。仅当尚未向外输出任何 chunk 时才允许
+        # 切换兜底模型重试；已发出部分正文的断流直接上抛，避免正文重复。
+        while True:
+            request.model = model or self._model_name or ""
+            provider = self._provider
+            if provider is None:
+                raise LLMError(
+                    f"[{self._provider_name or 'llm'}] provider not initialized"
+                )
+            try:
+                response: LLMResponse = await provider.stream_chat_full(
+                    request, on_chunk=chunk_cb
+                )
+                break
+            except LLMError as exc:
+                if (
+                    not emitted
+                    and self._is_terminal_model_error(exc)
+                    and self._try_next_fallback()
+                ):
+                    continue
+                raise
+
+        return self._build_loop_result(response)
+
+    @staticmethod
+    def _build_loop_result(response: LLMResponse) -> dict:
+        """将 LLMResponse 转换为 AgenticLoop 期望的 dict（与 chat() 尾部一致）。"""
+        result: dict[str, Any] = {
+            "choices": [
+                {
+                    "message": {
+                        "role": "assistant",
+                        "content": response.content,
+                        "reasoning_content": getattr(
+                            response, "reasoning_content", ""
+                        )
+                        or "",
+                    }
+                }
+            ],
+            "usage": {
+                "total_tokens": response.usage.total_tokens,
+                "prompt_tokens": response.usage.prompt_tokens,
+                "completion_tokens": response.usage.completion_tokens,
+                "cached_tokens": getattr(response.usage, "cached_tokens", 0) or 0,
+            },
+        }
+        if response.tool_calls:
+            import json as _json
+
+            normalized_calls = []
+            for i, tc in enumerate(response.tool_calls):
+                args = tc.get("arguments", {})
+                if not isinstance(args, str):
+                    args = _json.dumps(args or {}, ensure_ascii=False)
+                normalized_calls.append(
+                    {
+                        "id": tc.get("id", f"call_{i}"),
+                        "type": "function",
+                        "function": {
+                            "name": tc.get("name", ""),
+                            "arguments": args,
+                        },
+                    }
+                )
+            result["choices"][0]["message"]["tool_calls"] = normalized_calls
         return result
 
     async def stream_chat(

@@ -33,6 +33,9 @@ class LLMRequest:
     P2-8 新增字段:
       - think_mode: 是否启用思考模式(GLM-4.5 / DeepSeek-R1)
       - cost_preference: 成本偏好(cheap/quality/auto,影响 Router 选 provider)
+
+    结构化输出新增字段:
+      - response_format: OpenAI 风格结构化输出约束(dict | None),见字段注释
     """
 
     messages: list[Message]  # 完整对话历史
@@ -44,6 +47,13 @@ class LLMRequest:
     tool_choice: str = "auto"  # auto / none / required
     stop: list[str] = field(default_factory=list)
     extra: dict[str, Any] = field(default_factory=dict)  # provider 专属参数透传
+    # 结构化输出约束(OpenAI 风格):
+    #   - {"type": "json_object"}                     → 强制输出合法 JSON 对象
+    #   - {"type": "json_schema", "json_schema":{...}} → 按 schema 输出 JSON
+    # 各 provider 按自身协议落地(openai 直传 / anthropic system 注入仿真 /
+    # gemini responseMimeType+responseSchema 映射);None 表示不约束,
+    # 请求体与历史行为完全一致(零回归)。
+    response_format: dict[str, Any] | None = None
     user_id: str = ""  # 用于计费/限流隔离
     trace_id: str = ""  # 全链路追踪
     # -- P2-8: 思考/非思考模式 ----------------------------------------------
@@ -138,6 +148,46 @@ class BaseLLMProvider(abc.ABC):
             from fnixagent.core.exceptions import LLMError
 
             raise LLMError(f"[{self._name}] stream failed: {exc}") from exc
+
+    async def stream_chat_full(
+        self,
+        request: LLMRequest,
+        on_chunk=None,
+    ) -> LLMResponse:
+        """完整流式入口：逐 chunk 回调 content，结束后返回完整 LLMResponse。
+
+        子类（OpenAICompatibleProvider）重写以实现真正的 SSE 流式，
+        同时捕获 tool_call delta / reasoning_content / usage；默认实现
+        回退到同步 chat，将全文一次性交给 on_chunk，保证任何 provider
+        都具备该能力。
+
+        Args:
+            request: LLM 调用请求。
+            on_chunk: 可选回调 on_chunk(text)，可为同步函数或 coroutine。
+
+        Returns:
+            LLMResponse: 与 chat() 结构一致的完整响应。
+        """
+        import asyncio
+        import inspect as _inspect
+
+        if not isinstance(request, LLMRequest):
+            raise TypeError(f"request must be LLMRequest, got {type(request).__name__}")
+        messages = self._prepare_messages(request)
+        try:
+            response = await asyncio.to_thread(self._do_chat, request, messages)
+        except Exception as exc:
+            from fnixagent.core.exceptions import LLMError
+
+            raise LLMError(f"[{self._name}] stream_chat_full failed: {exc}") from exc
+        response.model = response.model or self._model_name
+        if response.usage.total_tokens == 0:
+            response.usage = self._estimate_usage(messages, response.content)
+        if on_chunk is not None and response.content:
+            out = on_chunk(response.content)
+            if _inspect.isawaitable(out):
+                await out
+        return response
 
     # -- 子类实现 ----------------------------------------------------------
 
