@@ -6,6 +6,7 @@
   - trace:    Trace 实现(一个 Trace 含多个 Span,构成树形结构)
   - scope:    基于 contextvars 的 Span 栈(支持嵌套 with 语法)
   - provider: 顶层 Provider(start_trace + span/trace exporter 注册)
+  - exporter: OTLP/HTTP JSON 导出器(FNIX_OTEL_EXPORTER_OTLP_ENDPOINT 启用)
 
 典型用法:
     from fnixagent.core.observability.tracing import get_provider
@@ -33,6 +34,7 @@ Span 类型层级:
 # This software and its source code are proprietary and confidential.
 # Unauthorized copying, modification, distribution, or use is strictly prohibited.
 
+from fnixagent.core.observability.tracing.exporter import OtlpHttpExporter
 from fnixagent.core.observability.tracing.provider import (
     TracingProvider,
     get_provider,
@@ -79,4 +81,6 @@ __all__ = [
     "SpanImpl",
     # trace
     "TraceImpl",
+    # exporter(OTLP/HTTP JSON)
+    "OtlpHttpExporter",
 ]

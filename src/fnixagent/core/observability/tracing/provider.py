@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import contextvars
 import logging
+import os
 import threading
 import uuid
 from collections.abc import Callable
@@ -188,6 +189,64 @@ class TracingProvider:
         with self._exporters_lock:
             return len(self._trace_exporters)
 
+    # -- Flush / Shutdown(OTLP 等批量 exporter 的收尾钩子)--------------------
+    @staticmethod
+    def _exporter_owner(exporter: Any) -> Any:
+        """解析 exporter 的宿主对象。
+
+        注册项可能是:实例(自带 flush/shutdown 方法)、绑定方法
+        (如 otlp_exporter.export,其 __self__ 携带收尾方法)或普通函数。
+        返回携带 flush/shutdown 方法的宿主;无则返回 None。
+        """
+        if hasattr(exporter, "flush"):
+            return exporter
+        owner = getattr(exporter, "__self__", None)
+        return owner if hasattr(owner, "flush") else None
+
+    def flush(self, timeout: float = 10.0) -> None:
+        """通知所有支持 flush 的 exporter 刷出缓冲数据。
+
+        供进程内主动刷盘(如测试断言前、优雅停机)调用。
+        exporter 未实现 flush 或 flush 抛异常时静默忽略,不影响主流程。
+
+        Args:
+            timeout: 透传给各 exporter.flush 的超时秒数。
+        """
+        with self._exporters_lock:
+            exporters = list(self._span_exporters) + list(self._trace_exporters)
+        for exporter in exporters:
+            owner = self._exporter_owner(exporter)
+            flush_fn = getattr(owner, "flush", None)
+            if not callable(flush_fn):
+                continue
+            try:
+                try:
+                    flush_fn(timeout=timeout)
+                except TypeError:
+                    flush_fn()
+            except Exception:
+                # 单个 exporter 失败不阻断其他 exporter 与主流程
+                _logger.debug('Unhandled exception', exc_info=True)
+
+    def shutdown(self, timeout: float = 5.0) -> None:
+        """通知所有支持 shutdown 的 exporter 收尾(停线程 + flush 残留)。
+
+        供应用退出路径调用;exporter 异常静默,保证关停流程不被阻断。
+
+        Args:
+            timeout: 透传给各 exporter.shutdown 的超时秒数。
+        """
+        with self._exporters_lock:
+            exporters = list(self._span_exporters) + list(self._trace_exporters)
+        for exporter in exporters:
+            owner = self._exporter_owner(exporter)
+            shutdown_fn = getattr(owner, "shutdown", None)
+            if callable(shutdown_fn):
+                try:
+                    shutdown_fn()
+                except Exception:
+                    _logger.debug('Unhandled exception', exc_info=True)
+
 
 # ---------------------------------------------------------------------------
 # 全局 Provider 管理
@@ -197,6 +256,35 @@ _global_provider: TracingProvider | None = None
 # 单例初始化锁:保证多线程下 get_provider 只创建一个实例(线程安全单例)
 _provider_lock = threading.Lock()
 
+# 自动挂载的 OTLP 导出器强引用(防止被 GC 后后台线程/队列失效)
+_otlp_exporter: Any | None = None
+
+
+def _auto_attach_otlp_exporter(provider: TracingProvider) -> None:
+    """按环境变量自动挂载 OtlpHttpExporter(provider 初始化接入点)。
+
+    仅当 ``FNIX_OTEL_EXPORTER_OTLP_ENDPOINT`` 设置时启用;导入失败或
+    构造失败均静默忽略(可观测性组件绝不影响主流程)。挂载成功后
+    保留模块级强引用,供 flush/shutdown 钩子使用。
+    """
+    global _otlp_exporter
+    if not os.getenv("FNIX_OTEL_EXPORTER_OTLP_ENDPOINT", "").strip():
+        return
+    try:
+        from fnixagent.core.observability.tracing.exporter import OtlpHttpExporter
+
+        exporter = OtlpHttpExporter()
+        if exporter.enabled:
+            # 注册实例本身(可调用对象),flush/shutdown 钩子经 __self__ 定位
+            provider.add_span_exporter(exporter)
+            _otlp_exporter = exporter
+            _logger.info(
+                "OTLP tracing exporter enabled (endpoint=%s)",
+                exporter._endpoint,
+            )
+    except Exception:
+        _logger.debug('Unhandled exception', exc_info=True)
+
 
 def get_provider() -> TracingProvider:
     """获取全局 TracingProvider(惰性初始化,线程安全)。
@@ -204,12 +292,17 @@ def get_provider() -> TracingProvider:
     首次调用时创建默认 Provider;后续调用返回同一实例。
     使用 double-checked locking 保证多线程下只创建一个实例。
     测试场景可用 set_provider() 替换。
+
+    OTLP 自动接入:若环境变量 ``FNIX_OTEL_EXPORTER_OTLP_ENDPOINT``
+    已设置,首次创建 Provider 时会自动挂载 OtlpHttpExporter
+    (未设置则完全不创建,零开销)。
     """
     global _global_provider
     if _global_provider is None:
         with _provider_lock:
             if _global_provider is None:
                 _global_provider = TracingProvider()
+                _auto_attach_otlp_exporter(_global_provider)
     return _global_provider
 
 
