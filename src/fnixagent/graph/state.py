@@ -95,6 +95,9 @@ class GraphState(TypedDict, total=False):
     final_answer: Annotated[str, last_value]
     error: Annotated[str | None, last_value]
 
+    # LLM 直答(execute 节点模型不调用工具、直接给出答案时写入)
+    llm_answer: Annotated[str, last_value]
+
 
 def create_initial_state(user_input: str) -> GraphState:
     """创建初始状态。
@@ -127,6 +130,7 @@ def create_initial_state(user_input: str) -> GraphState:
         should_continue=True,
         final_answer="",
         error=None,
+        llm_answer="",
     )
 
 

@@ -74,6 +74,7 @@ class GraphBuilder:
         registry: Any,
         binding_protocol: Any = None,
         executor: Any = None,
+        llm_call: Any = None,
     ) -> None:
         """初始化图装配器。
 
@@ -83,12 +84,16 @@ class GraphBuilder:
             registry:        ToolRegistry 实例(必填)
             binding_protocol: SkillBindingProtocol 实例(可选)
             executor:        ToolExecutor 实例(可选, 用于并行工具执行)
+            llm_call:        同步 LLM 调用 (messages, tools) -> resp(可选)。
+                提供时 execute 节点走 LLM 驱动的真 ReAct 回合;
+                缺省保持旧版盲调行为(离线/测试兼容)。
         """
         self._search_engine = search_engine
         self._scheduler = scheduler
         self._registry = registry
         self._binding_protocol = binding_protocol
         self._executor = executor
+        self._llm_call = llm_call
 
     def _add_nodes_and_edges(self, graph: Any, start: Any, end: Any) -> None:
         """向 StateGraph 添加节点与边(供 build/build_with_checkpointer 复用)。
@@ -112,7 +117,7 @@ class GraphBuilder:
         )
         graph.add_node(
             NODE_EXECUTE,
-            make_execute_node(self._registry, self._executor),
+            make_execute_node(self._registry, self._executor, llm_call=self._llm_call),
         )
         graph.add_node(NODE_REFLECT, reflect_node)
 

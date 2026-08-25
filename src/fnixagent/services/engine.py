@@ -403,15 +403,34 @@ def build_graph(config: CoreConfig | None = None) -> GraphComponents:
     # 5. LangGraph 图装配器 + 编译图
     from fnixagent.graph.builder import GraphBuilder
 
+    # 双轨收敛: execute 节点接入真 LLM(同步闭包, 复用 Router 的限流/缓存/熔断/failover)。
+    # LLM 调用失败由节点内 fail-soft 处理(退化为 legacy 行为), 不影响图编译。
+    def _graph_llm_call(messages: list[dict], tools: list[dict] | None = None):
+        from fnixagent.core.llm.base import LLMRequest
+        from fnixagent.core.types import Message as CoreMessage
+        from fnixagent.core.types import MessageRole
+
+        msgs: list[CoreMessage] = []
+        for m in messages or []:
+            role = str(m.get("role", "user"))
+            try:
+                mr = MessageRole(role)
+            except ValueError:
+                mr = MessageRole.USER
+            msgs.append(CoreMessage(role=mr, content=str(m.get("content", ""))))
+        request = LLMRequest(messages=msgs, tools=list(tools or []))
+        return llm_router.chat(request)  # 返回 LLMResponse(nodes 内归一化)
+
     graph_builder = GraphBuilder(
         search_engine=search_engine,
         scheduler=skill_scheduler,
         registry=tool_registry,
         binding_protocol=binding_protocol,
         executor=tool_executor,
+        llm_call=_graph_llm_call,
     )
     compiled_graph = graph_builder.build()
-    print("[services]   LangGraph 图已编译")
+    print("[services]   LangGraph 图已编译(LLM 驱动 execute 节点)")
 
     # 6. MFP 四飞轮 + 轨迹存储
     from fnixagent.core.flywheel.climbing import HillClimbingFlywheel

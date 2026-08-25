@@ -20,8 +20,10 @@ LangGraph 会将返回的 dict 合并到全局 State。
 
 from __future__ import annotations
 
+import json
 import time
 import uuid
+from typing import Any
 
 from fnixagent.core.tools.protocol import validate_arguments
 from fnixagent.graph.state import GraphState
@@ -189,23 +191,152 @@ def make_skill_select_node(scheduler, binding_protocol=None):
     return skill_select_node
 
 
-def make_execute_node(registry, executor=None):
-    """创建执行节点(闭包,注入 ToolRegistry 与 ToolExecutor 依赖)。
+def _normalize_llm_response(resp: Any) -> tuple[str, list[dict]]:
+    """归一化 LLM 返回为 (content, tool_calls)。
+
+    兼容两种形态:
+      - LLMResponse 对象(.content/.tool_calls 属性, Router.chat 返回)
+      - OpenAI choices 风格 dict({"choices":[{"message":{...}}]})
+    """
+    if isinstance(resp, dict):
+        choice = (resp.get("choices") or [{}])[0]
+        msg = choice.get("message") or {}
+        return str(msg.get("content") or ""), list(msg.get("tool_calls") or [])
+    content = getattr(resp, "content", "")
+    tool_calls = getattr(resp, "tool_calls", None) or []
+    return str(content or ""), list(tool_calls)
+
+
+def _build_llm_messages(state: GraphState, registry: Any) -> list[dict]:
+    """构造执行节点的 LLM 消息(目标 + STP 技能 + KTG 概念上下文)。"""
+    goal = state.get("current_goal", state.get("user_input", ""))
+    skills = state.get("selected_skills", [])[:8]
+    priorities = state.get("skill_priorities", {})
+    concepts = state.get("concept_path", [])[:8]
+
+    lines = [
+        "你是任务执行器: 围绕当前目标决定调用工具或直接回答。",
+        f"\n## 当前目标\n{goal}",
+    ]
+    if skills:
+        skill_lines = [
+            f"- {name}" + (f" (priority={priorities.get(name):.2f})" if name in priorities else "")
+            for name in skills
+            if registry.has(name)
+        ]
+        if skill_lines:
+            lines.append("\n## 推荐技能(STP 调度)\n" + "\n".join(skill_lines))
+    if concepts:
+        lines.append("\n## KTG 命中概念路径\n" + " → ".join(concepts))
+    lines.append(
+        "\n规则:\n"
+        "1. 优先用工具完成目标; 无合适技能时直接给出结构化答案\n"
+        "2. 工具参数必须符合 schema; 不要臆造参数\n"
+        "3. 完成即停, 不做多余调用"
+    )
+    return [
+        {"role": "system", "content": "\n".join(lines)},
+        {"role": "user", "content": goal},
+    ]
+
+
+def _run_single_tool(registry: Any, executor: Any, name: str, args: dict) -> dict:
+    """执行单个工具并返回结果记录(含入参校验与策略门)。"""
+    if not registry.has(name):
+        return {"name": name, "status": "failed", "error": f"技能 {name} 未注册"}
+    tool = registry.get(name)
+    valid, errors = validate_arguments(tool.metadata, args)
+    if not valid:
+        return {"name": name, "status": "failed", "error": f"入参校验失败: {errors}"}
+    try:
+        started = time.time()
+        if executor is not None:
+            result = executor.execute(name, args)
+        else:
+            result = registry.execute(name, args)  # 走 ToolPolicy 门
+        duration_ms = (time.time() - started) * 1000.0
+        return {
+            "name": name,
+            "status": "success",
+            "output": result,
+            "duration_ms": round(duration_ms, 1),
+        }
+    except Exception as e:  # noqa: BLE001 — 工具失败不炸整图
+        return {"name": name, "status": "failed", "error": str(e)}
+
+
+def make_execute_node(registry, executor=None, llm_call=None):
+    """创建执行节点(闭包,注入 ToolRegistry / ToolExecutor / LLM 依赖)。
 
     Args:
         registry: ToolRegistry 实例
         executor: 可选的 ToolExecutor 实例(并行执行)
-
-    Returns:
-        节点函数
+        llm_call: 可选的同步 LLM 调用 (messages, tools) -> resp。
+            提供时走真 ReAct 回合(LLM 决定是否调工具及参数);
+            为 None 时保留旧版盲调行为(向后兼容/离线测试)。
     """
 
-    def execute_node(state: GraphState) -> dict:
-        """执行节点: 调用选中的技能(工具)。
+    def execute_node_llm(state: GraphState) -> dict:
+        """执行节点(LLM 驱动): 模型决定工具调用与参数。"""
+        messages = _build_llm_messages(state, registry)
+        try:
+            resp = llm_call(messages, registry.list_for_llm())
+        except Exception as e:  # noqa: BLE001 — LLM 失败不炸整图,交给 reflect 决策
+            trace = state.get("trace", {})
+            trace["llm_error"] = f"{type(e).__name__}: {e}"
+            return {
+                "tool_results": [],
+                "error": f"llm_call_failed: {type(e).__name__}",
+                "trace": trace,
+            }
 
-        当前实现: 简单地调用第一个选中技能(无参数)。
-        实际部署中,这里会解析 LLM 的 tool_calls 并执行。
-        """
+        content, raw_calls = _normalize_llm_response(resp)
+
+        # 无工具调用 → 直答
+        if not raw_calls:
+            trace = state.get("trace", {})
+            return {"tool_results": [], "llm_answer": content, "trace": trace}
+
+        # 解析并执行工具调用(OpenAI function-calling 格式)
+        tool_results = []
+        executed_calls = []
+        for call in raw_calls:
+            fn = call.get("function") or {}
+            name = str(call.get("name") or fn.get("name") or "")
+            raw_args = call.get("arguments") if "arguments" in call else fn.get("arguments")
+            if isinstance(raw_args, str):
+                try:
+                    args = json.loads(raw_args) if raw_args.strip() else {}
+                except json.JSONDecodeError:
+                    args = {}
+            elif isinstance(raw_args, dict):
+                args = raw_args
+            else:
+                args = {}
+
+            result_rec = _run_single_tool(registry, executor, name, args)
+            ok = result_rec.get("status") == "success"
+            tool_results.append(result_rec)
+            executed_calls.append(
+                {
+                    "name": name,
+                    "args": args,
+                    "status": result_rec["status"],
+                    **({} if ok else {"error": result_rec.get("error", "")}),
+                }
+            )
+
+        trace = state.get("trace", {})
+        trace["tool_calls"] = executed_calls
+
+        # 工具结果回填后若模型已有正文,一并保存供 reflect 参考
+        updates: dict[str, Any] = {"tool_results": tool_results, "trace": trace}
+        if content:
+            updates["llm_answer"] = content
+        return updates
+
+    def execute_node_legacy(state: GraphState) -> dict:
+        """执行节点(legacy): 盲调选中技能(空参数), 离线/测试兼容路径。"""
         selected_skills = state.get("selected_skills", [])
         if not selected_skills:
             return {"tool_results": [], "error": "无可用技能"}
@@ -214,67 +345,13 @@ def make_execute_node(registry, executor=None):
         tool_calls = []
 
         for skill_name in selected_skills:
-            if not registry.has(skill_name):
-                tool_results.append(
-                    {
-                        "name": skill_name,
-                        "status": "failed",
-                        "error": f"技能 {skill_name} 未注册",
-                    }
-                )
-                continue
-
-            tool = registry.get(skill_name)
-            # 简单执行: 空参数(实际由 LLM 决定参数)
-            # 入参校验
-            valid, errors = validate_arguments(tool.metadata, {})
-            if not valid:
-                tool_results.append(
-                    {
-                        "name": skill_name,
-                        "status": "failed",
-                        "error": f"入参校验失败: {errors}",
-                    }
-                )
-                continue
-
-            # 执行工具
-            try:
-                if executor is not None:
-                    result = executor.execute(skill_name, {})
-                else:
-                    result = tool.func({})
-                tool_results.append(
-                    {
-                        "name": skill_name,
-                        "status": "success",
-                        "output": result,
-                        "duration_ms": 0.0,
-                    }
-                )
-                tool_calls.append(
-                    {
-                        "name": skill_name,
-                        "args": {},
-                        "status": "success",
-                    }
-                )
-            except Exception as e:
-                tool_results.append(
-                    {
-                        "name": skill_name,
-                        "status": "failed",
-                        "error": str(e),
-                    }
-                )
-                tool_calls.append(
-                    {
-                        "name": skill_name,
-                        "args": {},
-                        "status": "failed",
-                        "error": str(e),
-                    }
-                )
+            result_rec = _run_single_tool(registry, executor, skill_name, {})
+            ok = result_rec.get("status") == "success"
+            tool_results.append(result_rec)
+            record = {"name": skill_name, "args": {}, "status": result_rec["status"]}
+            if not ok:
+                record["error"] = result_rec.get("error", "")
+            tool_calls.append(record)
 
         # 更新轨迹
         trace = state.get("trace", {})
@@ -285,7 +362,9 @@ def make_execute_node(registry, executor=None):
             "trace": trace,
         }
 
-    return execute_node
+    if llm_call is not None:
+        return execute_node_llm
+    return execute_node_legacy
 
 
 def reflect_node(state: GraphState) -> dict:
@@ -299,6 +378,17 @@ def reflect_node(state: GraphState) -> dict:
     iteration = state.get("iteration", 0)
     tool_results = state.get("tool_results", [])
     max_iterations = 10  # 可配置
+
+    # LLM 直答优先: 模型未调工具直接给出答案 → 视为完成
+    llm_answer = state.get("llm_answer", "")
+    if llm_answer:
+        trace = state.get("trace", {})
+        trace["success"] = True
+        return {
+            "should_continue": False,
+            "final_answer": llm_answer,
+            "trace": trace,
+        }
 
     # 检查工具执行结果
     all_success = all(r.get("status") == "success" for r in tool_results) if tool_results else False
