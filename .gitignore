@@ -165,4 +165,5 @@ unit-final.txt
 /screenshots/
 src/data/intelligence/
 src/data/traces/
-src/data/topology/snapshots/work_*.json.tmp_trace_integration/
+src/data/topology/snapshots/work_*.json
+.tmp_trace_integration/
