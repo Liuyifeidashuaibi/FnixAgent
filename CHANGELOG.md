@@ -18,6 +18,51 @@
 
 ### Added
 
+- **AgentTeams 多角色协作层**（`core/teams/`）：Orchestrator-Worker 模式。
+  角色注册表（researcher/coder/critic 内置 + 自定义，工具白名单代码层强制）、
+  共享任务清单（pending/in_progress/completed + 依赖自动解锁 + 跨进程版本号乐观锁）、
+  信箱（JSON 收件箱 + 类型过滤消费 + 非法条目剔除）、结构化交接黑板（frontmatter Markdown）、
+  双账本编排（任务账本/进度账本五问判定，连续无进展波次超阈值触发重规划建议，
+  参考 Magentic-One ArXiv:2411.04468）。
+  主循环工具：`team_fan_out` / `team_task_status` / `team_read_inbox`；
+  工人注册表天然不含团队工具（无嵌套团队红线）。团队产物落 `{workspace}/.fnix/teams/{run_id}/`
+- **隔离子代理** `dispatch_subtask`：派生独立上下文子循环执行探索性任务，
+  contextvar 深度防护禁止递归、只读工具白名单、独立步数/墙钟预算
+- **LLM 层**：Anthropic Messages API 与 Google Gemini 原生协议适配器
+  （SSE 全事件解析、真实 usage 回报）；`response_format` 结构化输出全链路透传
+  （openai 直传 / gemini 映射 responseMimeType / anthropic 指令仿真）；
+  OpenAI 流式默认注入 `stream_options.include_usage`
+- **长期记忆混合检索**：向量语义 + BM25 关键词双路召回、RRF 融合排序；
+  纯向量命中仍过阈值、关键词命中豁免；修复 chunk_id 同毫秒碰撞覆盖缺陷
+- **KTG 语义检索融合**：TopologySearch 可选 embedder，节点向量缓存 +
+  关键词/语义加权融合，改述查询可召回（fail-open）
+- **Windows Job Object 进程沙箱**：run_command 子进程默认纳入 Job Object
+  （内存/进程数限制、整树击杀），`FNIX_SANDBOX_JOB=0` 可退，fail-open
+- **OTLP/HTTP 导出器**：自研 span → OTLP JSON 批量上报，
+  设 `FNIX_OTEL_EXPORTER_OTLP_ENDPOINT` 启用，默认零开销关闭
+- **AG-UI 协议桥**：`POST /api/v1/ag-ui/work/stream`（标准 SSE，复用 work 流单一事实来源）
+  与 `GET /api/v1/ag-ui/events`
+- **HITL 审批闭环**：ToolPolicy 待审批查询/批准/拒绝 API（`/api/v1/hitl/*`）
+  + 前端 ApprovalPanel；HumanInTheLoop 签名决策记忆（批准后同签名放行）
+  + SkillEvolver 进化守门接线；修复"高风险工具被拦截后无法放行"死锁
+- **技能进化 LLM 化**：SkillEvolver 改进生成支持 LLM 重写（三级回退模板桩）；
+  SkillEvaluator 可选 LLM 复核（0.6 启发式 + 0.4 LLM 合成）
+
+### Fixed
+
+- **高风险工具审批死锁**：非 standalone 模式下 SHELL/DESTRUCTIVE 工具被
+  ToolPolicy 拦截后无任何放行通道——新增 pending_approvals()/reject() 与
+  `/hitl/tool/{key}/approve|reject`，agent 重试即通过
+- **LongTermMemory chunk_id 同毫秒碰撞**：快速连续写入时 id 冲突互相覆盖，
+  引入单调序列号
+- **graph execute 盲调**：LangGraph 图执行节点原以空参数盲调全部选中技能，
+  现由 LLM 决定工具与参数（无 LLM 时保留旧行为）
+- **code-mode 测试漂移**：测试 mock 未跟上 `_call_llm_streaming` 流式路径
+
+<!-- ── 此前批次（同属 Unreleased）── -->
+
+### Added
+
 - **FnixForge — Agent 生产级熔炉**（`core/forge/`）：以第三方 Agent 项目为被测对象（SUT），
   提供「Benchmark 测评 → 失败聚类诊断 → Git 守卫下自动修复 → 全量回归复测」的闭环；
   修复引入回归即自动回滚，无净进步亦回滚。含 19 道生产级基准题（`benchmarks/forge/suites/core`，
