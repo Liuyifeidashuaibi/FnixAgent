@@ -26,22 +26,6 @@ interface Props {
   onStop?: () => void;
 }
 
-/**
- * 从活动列表中提取当前状态文字（只取最新一条有用的活动）
- */
-function getCurrentLabel(items: ActivityItem[]): string {
-  const useful = items.filter((item) => {
-    if (item.kind === 'mission') return false;
-    if (item.meta === 'evolution' || item.meta === 'pipeline' || item.meta === 'reflection→HERA')
-      return false;
-    if (item.title.startsWith('KTG ') || item.title.startsWith('Pipeline step')) return false;
-    if (item.title === 'tool 已完成' && !item.path) return false;
-    return true;
-  });
-  if (useful.length === 0) return '';
-  return useful[useful.length - 1].title;
-}
-
 function formatDuration(ms: number): string {
   const seconds = Math.floor(ms / 1000);
   if (seconds < 1) return '<1s';

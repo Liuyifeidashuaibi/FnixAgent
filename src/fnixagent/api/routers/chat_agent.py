@@ -22,6 +22,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import threading
 import time
 import uuid
 from collections.abc import AsyncGenerator
@@ -48,6 +49,7 @@ router = APIRouter(prefix="/chat", tags=["chat"])
 
 _server: IDEServer | None = None
 _server_workspace: str | None = None
+_server_lock = threading.Lock()
 
 
 def get_server(workspace: str | None = None) -> IDEServer:
@@ -64,9 +66,10 @@ def get_server(workspace: str | None = None) -> IDEServer:
     """
     global _server, _server_workspace
     ws = workspace or str(default_workspace())
-    if _server is None or _server_workspace != ws:
-        _server = IDEServer(project_root=ws)
-        _server_workspace = ws
+    with _server_lock:
+        if _server is None or _server_workspace != ws:
+            _server = IDEServer(project_root=ws)
+            _server_workspace = ws
     return _server
 
 

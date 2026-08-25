@@ -284,7 +284,17 @@ def get_required_caps(syscall: SyscallType) -> list[str]:
 
 
 def check_capability(syscall: SyscallType, capabilities: set[str]) -> bool:
-    """检查能力集是否包含执行该 syscall 的能力。"""
+    """检查能力集是否包含执行该 syscall 的能力。
+
+    对于高危 syscall, 还需额外验证 HIGH_RISK_REQUIRED_CAPS 中要求的能力。
+    """
+    # 高危 syscall 需要额外能力（如 admin）
+    required = HIGH_RISK_REQUIRED_CAPS.get(syscall)
+    if required:
+        # 所有 required capability 必须在 capabilities 中
+        if not all(cap in capabilities for cap in required):
+            return False
+    # 常规检查：至少一个 capability 覆盖该 syscall
     for cap in capabilities:
         allowed = CAPABILITY_SYSCALLS.get(cap, frozenset())
         if syscall in allowed:

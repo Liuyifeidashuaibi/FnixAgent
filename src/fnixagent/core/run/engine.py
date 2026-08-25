@@ -106,12 +106,9 @@ class RunEvent:
         if t == "review":
             payload = _ev_data_to_dict(d)
             notes = str(payload.get("notes") or payload.get("review_notes") or "")
-            out = (
-                {**base, "type": "message", "content": notes}
-                if notes
-                else {**base, "type": "review", **payload}
-            )
-            return out
+            # 始终保持 review 类型并在 data 中包含 notes，
+            # 不转换为 message 类型以避免前端误识别
+            return {**base, "type": "review", "notes": notes, **payload}
         if t == "heal":
             payload = _ev_data_to_dict(d)
             return {**base, "type": "heal", **payload}
@@ -171,7 +168,8 @@ class RunEngine:
         meta 参数会持久化到 runs.meta_json, resume 时用于恢复 LLM config / workspace / work_mode。
         """
         rid = run_id or self.new_run_id()
-        self._seq = 0
+        # 使用局部计数器避免并发 run_stream 竞态覆盖 self._seq
+        seq_counter = [0]
         if persist and self.store is not None:
             self.store.start_run(rid, channel=channel, session_id=session_id, meta=meta)
 
@@ -187,7 +185,7 @@ class RunEngine:
         final_status = "completed"
         try:
             async for raw in source:
-                event = self._normalize(raw, run_id=rid, channel=channel)
+                event = self._normalize(raw, run_id=rid, channel=channel, seq_counter=seq_counter)
                 # 累积 messages (Spec 4 核心改进)
                 etype = event.type
                 data = event.data
@@ -294,6 +292,7 @@ class RunEngine:
                 {"type": "error", "data": f"{type(exc).__name__}: {exc}"},
                 run_id=rid,
                 channel=channel,
+                seq_counter=seq_counter,
             )
             if persist and self.store is not None:
                 self.store.append_event(rid, event.sequence, event.type, event.to_work_dict())
@@ -317,7 +316,7 @@ class RunEngine:
                 # 最终 checkpoint (确保 done 时 messages 完整)
                 self.store.save_checkpoint(
                     rid,
-                    self._seq,
+                    seq_counter[0],
                     {
                         "messages_so_far": messages_acc,
                         "artifacts_so_far": artifacts_acc,
@@ -335,8 +334,14 @@ class RunEngine:
         *,
         run_id: str,
         channel: str,
+        seq_counter: list[int] | None = None,
     ) -> RunEvent:
-        self._seq += 1
+        if seq_counter is not None:
+            seq_counter[0] += 1
+            seq = seq_counter[0]
+        else:
+            self._seq += 1
+            seq = self._seq
         etype = str(raw.get("type") or "custom")
         data = (
             raw["data"]
@@ -364,7 +369,7 @@ class RunEngine:
             type=etype,
             data=data,
             run_id=run_id,
-            sequence=self._seq,
+            sequence=seq,
             timestamp=int(time.time() * 1000),
             channel=channel,
         )

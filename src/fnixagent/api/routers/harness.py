@@ -113,6 +113,9 @@ async def ensure_workspace(body: EnsureWorkspaceRequest):
 @router.get("/skills")
 async def list_skills(workspace: str):
     """列出 workspace/.fnix/skills 下的技能（含 frontmatter 字段 + enabled 状态）。"""
+    # 路径安全校验：拒绝路径遍历攻击
+    if ".." in workspace:
+        raise HTTPException(status_code=400, detail="workspace 路径不允许包含 '..'")
     from fnixagent.harness.skills_loader import load_workspace_skills
 
     skills = load_workspace_skills(workspace)

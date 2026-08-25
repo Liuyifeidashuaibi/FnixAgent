@@ -231,5 +231,6 @@ class Agent(abc.ABC):
             if result is not None:
                 yield result
                 trace.append(result)
+                ctx.history.append(result)
         final = await self.reflect(ctx, trace)
         yield final

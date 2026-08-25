@@ -235,7 +235,10 @@ async def work_stream(body: WorkStreamRequest, request: Request):
                     text = str(data)
                     yield _ndjson("observation", text, False, trace_id)
                     if exec_mode == "craft":
-                        for art in _extract_artifacts(data) or _extract_artifacts(text):
+                        arts = _extract_artifacts(data)
+                        if not arts:
+                            arts = _extract_artifacts(text)
+                        for art in arts:
                             merged = add_artifact(art["path"])
                             if merged:
                                 yield _ndjson("artifact", merged, False, trace_id)
@@ -554,12 +557,14 @@ async def work_read_artifact(path: str, request: Request):
     except (OSError, ValueError) as e:
         return {"ok": False, "error": f"invalid path: {e}"}
 
-    # 安全检查：必须在 workspace 下
+    # 安全检查：必须在 workspace 下（使用路径前缀比较，防 startswith 绕过）
     try:
         target.relative_to(ws_abs)
     except ValueError:
-        # 允许 .fnix/artifacts 在 workspace 同级或子目录
-        if not str(target).startswith(str(ws_abs)):
+        # 严格路径边界检查：确保 target 是 ws_abs 的子路径
+        ws_parts = ws_abs.parts
+        tgt_parts = target.parts
+        if len(tgt_parts) <= len(ws_parts) or tgt_parts[: len(ws_parts)] != ws_parts:
             return {"ok": False, "error": "path outside workspace"}
 
     if not target.exists():

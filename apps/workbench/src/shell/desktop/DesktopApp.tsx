@@ -170,7 +170,6 @@ interface ChatHeadProps {
 
 function ChatHead({
   onToggleAside,
-  onNewChat,
   inspectorOpen,
   onToggleInspector,
   inspectorBadge,
@@ -178,9 +177,6 @@ function ChatHead({
   jobsOpen,
   activeJobCount,
   onToggleJobs,
-  projectPath,
-  projectLabel,
-  onOpenProject,
 }: ChatHeadProps) {
   return (
     <div className="fnix-chat-head">
@@ -349,12 +345,16 @@ export default function DesktopApp() {
 
   const openWorkThread = useCallback(
     async (id: string) => {
+      // 先取消进行中的流式请求，避免草稿/消息与异步流式更新产生竞态
+      chat.stop();
       setPane('home');
+      // 清除 review 状态，防止旧会话的 review tab 残留
+      setReviewPath(null);
       await chat.openThread(id);
       const saved = loadWorkModeForThread(workStorageKey, id);
       if (saved) setWorkMode(saved);
     },
-    [chat, workStorageKey],
+    [chat, workStorageKey, setReviewPath],
   );
 
   const executePlan = useCallback(() => {

@@ -285,13 +285,14 @@ export function TaskBoard({ workspace, onClose }: Props) {
         return { label: "待办加载", detail: `total=${pick("total")} done=${pick("completed")}` };
       case "pipeline":
         return { label: "流水线", detail: `step=${pick("step")} kind=${pick("workspace_kind")}` };
-      default:
+      default: {
         // 兜底：从 data 提取最长的字符串字段
         const fallback = Object.values(d)
           .map((v) => (typeof v === "string" && v.trim() ? v.trim() : ""))
           .filter(Boolean)
           .sort((a, b) => b.length - a.length)[0] || "";
         return { label: t, detail: fallback.slice(0, 160) };
+      }
     }
   }, []);
 

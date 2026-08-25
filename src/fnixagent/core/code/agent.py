@@ -1427,6 +1427,28 @@ class CodingAgent:
 
         ext = target.rsplit(".", 1)[-1].lower() if "." in target else ""
 
+        # 闸 0-A: JSON/数组结构一律不是源码。LLM(尤其 reasoning 模型)常把
+        # 计划/编辑指令 JSON 误当源码返回;这类内容恰恰富含 {}()": 等结构符号,
+        # 会骗过下方启发式计数,导致 plan JSON 被当作 .py 源码落盘污染 VFS。
+        if t.startswith(("{", "[")):
+            try:
+                json.loads(t)
+            except (ValueError, TypeError):
+                pass  # 不是合法 JSON, 继续常规判定
+            else:
+                return False
+
+        # 闸 0-B: 对 Python 目标用 compile() 做权威判定——语法合法即源码。
+        # 启发式 codeish 计数会把 def add(a,b): return a - b 这类极简合法
+        # 源码(结构字符只有 2 个)误判为非源码, 触发不必要的 LLM 再生成。
+        if ext == "py":
+            try:
+                compile(t, target or "<write>", "exec")
+            except (SyntaxError, ValueError):
+                pass  # 语法不合法不代表不是源码意图, 继续启发式判定
+            else:
+                return True
+
         # 声明式 / 标记 / 配置文件：要求真实结构符号（与写入层
         # _reject_stub_source 对齐），避免把 "Write xxx.html with..." 这类
         # 任务描述误判为源码（此前 len>=20 恒真，导致 html/css 在写入层被拒）。
@@ -1870,6 +1892,14 @@ class CodingAgent:
                     content = step.result
                 target = (step.target or "").strip()
                 if content.strip() and target:
+                    if target.endswith('.py'):
+                        try:
+                            compile(content, target, 'exec')
+                        except (SyntaxError, ValueError):
+                            # str 型 step.result 通常是工具输出消息（如 “已写入: app.py”），
+                            # 并非代码内容——直接当作代码会误报“函数未实现”。
+                            # 非法 Python 源码一律丢弃，不参与完整性检查。
+                            continue
                     latest_code_by_file[target] = content
             code_contents = latest_code_by_file
 

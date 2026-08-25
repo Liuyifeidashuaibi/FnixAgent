@@ -646,6 +646,61 @@
       "skill_binding": null,
       "created_at": 1787568581.2950308,
       "last_used_at": 0.0
+    },
+    {
+      "node_id": "L2:0e3e96b5672b",
+      "layer": "L2",
+      "node_type": "concept",
+      "name": "write_file",
+      "content": "技能: write_file",
+      "weight": 0.54,
+      "confidence": 0.34,
+      "use_count": 2,
+      "freshness": 1.0,
+      "deprecated": false,
+      "version": 1,
+      "metadata": {},
+      "skill_binding": null,
+      "created_at": 1787571172.7088745,
+      "last_used_at": 1787571899.8417716
+    },
+    {
+      "node_id": "L4:acc91d924f04",
+      "layer": "L4",
+      "node_type": "fact",
+      "name": "write_file_params_0",
+      "content": "{'file_path': 'index.html', 'content': '<!DOCTYPE html>\\n<html lang=\"en\">\\n<head>\\n  <meta charset=\"UTF-8\">\\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\\n  <title>Hello World</title>\\n  <style>\\n    body {\\n      font-family: system-ui, -apple-system, sans-serif;\\n      display: flex;\\n      align-items: center;\\n      justify-content: center;\\n      min-height: 100vh;\\n      margin: 0;\\n      background: #f5f5f7;\\n      color: #1d1d1f;\\n    }\\n    h1 {\\n      font-size: 3rem;\\n      font-weight: 600;\\n    }\\n  </style>\\n</head>\\n<body>\\n  <h1>Hello, World! 👋</h1>\\n</body>\\n</html>'}",
+      "weight": 0.54,
+      "confidence": 0.34,
+      "use_count": 2,
+      "freshness": 1.0,
+      "deprecated": false,
+      "version": 1,
+      "metadata": {
+        "source": "write_file"
+      },
+      "skill_binding": null,
+      "created_at": 1787571172.7089674,
+      "last_used_at": 1787571899.8417828
+    },
+    {
+      "node_id": "L4:b9eaded1ae18",
+      "layer": "L4",
+      "node_type": "fact",
+      "name": "write_file_params_1",
+      "content": "{'file_path': '.fnix/artifacts/hello_world/index.html', 'content': '<!DOCTYPE html>\\n<html lang=\"en\">\\n<head>\\n  <meta charset=\"UTF-8\">\\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\\n  <title>Hello World</title>\\n  <style>\\n    body {\\n      font-family: system-ui, -apple-system, sans-serif;\\n      display: flex;\\n      align-items: center;\\n      justify-content: center;\\n      min-height: 100vh;\\n      margin: 0;\\n      background: #f5f5f7;\\n      color: #1d1d1f;\\n    }\\n    h1 {\\n      font-size: 3rem;\\n      font-weight: 600;\\n    }\\n  </style>\\n</head>\\n<body>\\n  <h1>Hello, World! 👋</h1>\\n</body>\\n</html>'}",
+      "weight": 0.54,
+      "confidence": 0.34,
+      "use_count": 2,
+      "freshness": 1.0,
+      "deprecated": false,
+      "version": 1,
+      "metadata": {
+        "source": "write_file"
+      },
+      "skill_binding": null,
+      "created_at": 1787571172.7089865,
+      "last_used_at": 1787571899.8417897
     }
   ],
   "edges": [

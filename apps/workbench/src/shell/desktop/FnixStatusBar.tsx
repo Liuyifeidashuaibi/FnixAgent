@@ -30,7 +30,7 @@ interface Light {
   title: string;
 }
 
-export function FnixStatusBar({ agentdOk, llmProvider, llmModel, hasApiKey, projectPath }: Props) {
+export function FnixStatusBar({ agentdOk, llmProvider, llmModel, hasApiKey }: Props) {
   // 仅在异常状态下显示信号灯，正常状态隐藏避免冗余
   // — 后端离线 → 红色警告（必须提示）
   // — 模型未配置 → 灰色提示

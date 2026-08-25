@@ -280,7 +280,7 @@ async def get_session_history(session_id: int, http_request: Request):
             "role": msg.role.value if hasattr(msg.role, "value") else str(msg.role),
             "content": msg.content,
             "content_type": "text",
-            "created_at": "2025-01-01T00:00:00",
+            "created_at": getattr(msg, "timestamp", None) or datetime.now().isoformat(),
         }
         for i, msg in enumerate(messages)
     ]

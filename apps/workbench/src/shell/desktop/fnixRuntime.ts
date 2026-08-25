@@ -437,7 +437,7 @@ export async function streamWork(opts: {
 
     let sawDone = false;
     let sawText = false;
-    const textChunks: string[] = [];
+    const textChunkSet = new Set<string>();
     await readNdjsonStream(
       res,
       guard.signal,
@@ -459,14 +459,11 @@ export async function streamWork(opts: {
         if (chunk === 'text' || chunk === 'message') {
           const t = typeof content === 'string' ? content : String(content ?? '');
           if (t) {
-            // 后端偶发重复推送整段正文时去重
-            if (textChunks.length === 1 && t === textChunks[0]) {
+            // 后端偶发重复推送整段正文时去重（O(1) 查找）
+            if (textChunkSet.has(t)) {
               return;
             }
-            if (textChunks.some((c) => c.length > 80 && c === t)) {
-              return;
-            }
-            textChunks.push(t);
+            textChunkSet.add(t);
             sawText = true;
             opts.handlers.onText?.(t);
           }
@@ -640,6 +637,39 @@ export async function streamWork(opts: {
             title: ok ? '工具执行完成' : '工具执行失败',
             status: ok ? 'done' : 'error',
             detail: text.slice(0, 200) || undefined,
+            endedAt: Date.now(),
+          });
+          return;
+        }
+        if (chunk === 'file_change') {
+          // Work 模式下也需要处理 file_change 事件——当 Work 管线的工具产生
+          // 文件变更时，后端会发送 file_change 事件，前端必须调用 onFileChange
+          // 填充 pendingChanges，否则 Accept 按钮永远不出现、文件不落盘。
+          const fc: CodeFileChange = {
+            path: String(obj.path || ''),
+            action: obj.action ? String(obj.action) : undefined,
+            diff: obj.diff ? String(obj.diff) : undefined,
+            content: obj.content != null ? String(obj.content) : undefined,
+            old_content: obj.old_content != null ? String(obj.old_content) : undefined,
+            preview: obj.preview !== false,
+          };
+          opts.handlers.onFileChange?.(fc);
+          const path = fc.path || 'file';
+          const action = (fc.action || 'edit').toLowerCase();
+          const kind =
+            action.includes('read') || action === 'read'
+              ? 'read'
+              : action.includes('write') || action === 'create'
+                ? 'write'
+                : 'edit';
+          emitActivity(opts.handlers, {
+            kind,
+            title:
+              kind === 'read' ? `读取 ${path}` : kind === 'write' ? `写入 ${path}` : `修改 ${path}`,
+            path,
+            meta: fc.action,
+            status: 'done',
+            detail: fc.diff?.slice(0, 800),
             endedAt: Date.now(),
           });
           return;

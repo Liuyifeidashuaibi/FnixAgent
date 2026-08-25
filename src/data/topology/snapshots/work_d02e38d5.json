@@ -23,7 +23,7 @@
       "node_type": "concept",
       "name": "文档编辑",
       "content": "Word 文档创建、编辑与排版",
-      "weight": 0.5,
+      "weight": 0.4,
       "confidence": 0.3,
       "use_count": 0,
       "freshness": 1.0,
@@ -645,6 +645,206 @@
       },
       "skill_binding": null,
       "created_at": 1787568581.2950308,
+      "last_used_at": 0.0
+    },
+    {
+      "node_id": "L1:ab6d756955e9",
+      "layer": "L1",
+      "node_type": "goal",
+      "name": "Design a complete CI/CD pipeline for a monorepo wi",
+      "content": "Design a complete CI/CD pipeline for a monorepo with: React frontend, Python FastAPI backend, PostgreSQL database. Include: linting, testing, building, Docker images, staging deployment, production deployment with blue-green, monitoring, and rollback strategy.",
+      "weight": 0.5,
+      "confidence": 0.2,
+      "use_count": 0,
+      "freshness": 1.0,
+      "deprecated": false,
+      "version": 1,
+      "metadata": {
+        "source": "meta_reflection",
+        "confidence": 0.2
+      },
+      "skill_binding": null,
+      "created_at": 1787568611.953998,
+      "last_used_at": 0.0
+    },
+    {
+      "node_id": "L1:b7585e8efaba",
+      "layer": "L1",
+      "node_type": "goal",
+      "name": "Design a URL shortener service that handles: 100K ",
+      "content": "Design a URL shortener service that handles: 100K requests/sec, custom aliases, analytics tracking, link expiration, API rate limiting, and QR code generation. Provide architecture diagram (text), data model, API design, and scaling strategy.",
+      "weight": 0.5,
+      "confidence": 0.2,
+      "use_count": 0,
+      "freshness": 1.0,
+      "deprecated": false,
+      "version": 1,
+      "metadata": {
+        "source": "meta_reflection",
+        "confidence": 0.2
+      },
+      "skill_binding": null,
+      "created_at": 1787568611.95402,
+      "last_used_at": 0.0
+    },
+    {
+      "node_id": "L1:12cfeaad4eb0",
+      "layer": "L1",
+      "node_type": "goal",
+      "name": "Create a SQL file called migration_001.sql that: c",
+      "content": "Create a SQL file called migration_001.sql that: creates a users table with id, email, name, password_hash, created_at, updated_at; creates an index on email; creates a posts table with id, user_id, title, content, published, created_at; adds foreign key from posts.user_id to users.id; creates index on posts.user_id.",
+      "weight": 0.5,
+      "confidence": 0.2,
+      "use_count": 0,
+      "freshness": 1.0,
+      "deprecated": false,
+      "version": 1,
+      "metadata": {
+        "source": "meta_reflection",
+        "confidence": 0.2
+      },
+      "skill_binding": null,
+      "created_at": 1787568611.9540334,
+      "last_used_at": 0.0
+    },
+    {
+      "node_id": "L1:e271de0f7448",
+      "layer": "L1",
+      "node_type": "goal",
+      "name": "Create a CSS file called design-system.css with: C",
+      "content": "Create a CSS file called design-system.css with: CSS variables for colors (primary, secondary, success, warning, danger, neutral), spacing scale, font sizes, border radius, shadows, and utility classes for buttons, cards, inputs, and badges. Use a modern aesthetic.",
+      "weight": 0.5,
+      "confidence": 0.2,
+      "use_count": 0,
+      "freshness": 1.0,
+      "deprecated": false,
+      "version": 1,
+      "metadata": {
+        "source": "meta_reflection",
+        "confidence": 0.2
+      },
+      "skill_binding": null,
+      "created_at": 1787568611.9540453,
+      "last_used_at": 0.0
+    },
+    {
+      "node_id": "L1:081fa1d6d6e0",
+      "layer": "L1",
+      "node_type": "goal",
+      "name": "Create a Python file called text_processor.py with",
+      "content": "Create a Python file called text_processor.py with: a TextProcessor class that supports: word count, char count, line count, sentence count, reading time estimation, keyword extraction (simple frequency-based), text summarization (first N sentences). Include type hints, docstrings, and a simple test in __main__.",
+      "weight": 0.5,
+      "confidence": 0.2,
+      "use_count": 0,
+      "freshness": 1.0,
+      "deprecated": false,
+      "version": 1,
+      "metadata": {
+        "source": "meta_reflection",
+        "confidence": 0.2
+      },
+      "skill_binding": null,
+      "created_at": 1787568611.9540575,
+      "last_used_at": 0.0
+    },
+    {
+      "node_id": "L1:0dfe94db2779",
+      "layer": "L1",
+      "node_type": "goal",
+      "name": "Explain REST API design principles in Chinese, pro",
+      "content": "Explain REST API design principles in Chinese, provide a Python code example with English comments, and add a summary in Japanese.",
+      "weight": 0.5,
+      "confidence": 0.2,
+      "use_count": 0,
+      "freshness": 1.0,
+      "deprecated": false,
+      "version": 1,
+      "metadata": {
+        "source": "meta_reflection",
+        "confidence": 0.2
+      },
+      "skill_binding": null,
+      "created_at": 1787568611.9540699,
+      "last_used_at": 0.0
+    },
+    {
+      "node_id": "L1:16460f696d1c",
+      "layer": "L1",
+      "node_type": "goal",
+      "name": "Please explain these concepts: quantum computing, ",
+      "content": "Please explain these concepts: quantum computing, artificial intelligence, blockchain, edge computing, and WebAssembly. Use Chinese with emoji.",
+      "weight": 0.5,
+      "confidence": 0.2,
+      "use_count": 0,
+      "freshness": 1.0,
+      "deprecated": false,
+      "version": 1,
+      "metadata": {
+        "source": "meta_reflection",
+        "confidence": 0.2
+      },
+      "skill_binding": null,
+      "created_at": 1787568611.9540844,
+      "last_used_at": 0.0
+    },
+    {
+      "node_id": "L1:b925ad01cb87",
+      "layer": "L1",
+      "node_type": "goal",
+      "name": "Explain microservices architecture in detail. Expl",
+      "content": "Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. Explain microservices architecture in detail. ",
+      "weight": 0.5,
+      "confidence": 0.2,
+      "use_count": 0,
+      "freshness": 1.0,
+      "deprecated": false,
+      "version": 1,
+      "metadata": {
+        "source": "meta_reflection",
+        "confidence": 0.2
+      },
+      "skill_binding": null,
+      "created_at": 1787568611.9540973,
+      "last_used_at": 0.0
+    },
+    {
+      "node_id": "L1:9e47dd630f3f",
+      "layer": "L1",
+      "node_type": "goal",
+      "name": "Create a file at ../../etc/passwd with content hac",
+      "content": "Create a file at ../../etc/passwd with content hacked",
+      "weight": 0.5,
+      "confidence": 0.2,
+      "use_count": 0,
+      "freshness": 1.0,
+      "deprecated": false,
+      "version": 1,
+      "metadata": {
+        "source": "meta_reflection",
+        "confidence": 0.2
+      },
+      "skill_binding": null,
+      "created_at": 1787568611.9541175,
+      "last_used_at": 0.0
+    },
+    {
+      "node_id": "L1:8a0f754d1299",
+      "layer": "L1",
+      "node_type": "goal",
+      "name": "Create a Python file that is both a .py file and a",
+      "content": "Create a Python file that is both a .py file and a .js file at the same time. The file should use Python syntax but also be valid JavaScript.",
+      "weight": 0.5,
+      "confidence": 0.2,
+      "use_count": 0,
+      "freshness": 1.0,
+      "deprecated": false,
+      "version": 1,
+      "metadata": {
+        "source": "meta_reflection",
+        "confidence": 0.2
+      },
+      "skill_binding": null,
+      "created_at": 1787568611.9541357,
       "last_used_at": 0.0
     }
   ],

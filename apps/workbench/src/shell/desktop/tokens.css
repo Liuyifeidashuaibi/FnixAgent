@@ -9,24 +9,16 @@ body,
 }
 
 .fnix-root {
-  /* ── Fnix Light palette ── */
-  --bg: #ffffff;
   --bg-soft: #f3f4f6;
   --bg-muted: #e5e7eb;
   --sidebar: #f7f8fa;
   --border: rgba(0, 0, 0, 0.06);
-  --border-2: rgba(0, 0, 0, 0.1);
   --text: #111827;
   --fg: #111827;
-  --muted: #5c6470; /* 原 #6b7280：在 --bg-soft 上仅 4.39:1，加深后全背景达标 WCAG AA */
-  --faint: #6b7280; /* 原 #9ca3af：在 --sidebar(#f7f8fa) 上仅 ~2.1:1，加深后 ≥4.5:1 达标 WCAG AA */
-  --work: #10a37f;
+  --muted: #5c6470;
   --codex: #7c3aed;
   --chat: #10a37f;
   --gpt: #10a37f;
-  /* Single brand accent — green is the Fnix identity; violet is reserved for
-     the Code mode only. No third "primary" hue competing in the chrome. */
-  --accent: #0d8f6a;
   --focus-ring: rgba(59, 130, 246, 0.55);
   --shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
   --shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.05);
@@ -34,15 +26,9 @@ body,
     ui-sans-serif, -apple-system, system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
     'PingFang SC', 'Microsoft YaHei', sans-serif;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Cascadia Code', monospace;
-  /* Linear-grade radii + single accent — one disciplined visual language. */
-  --radius-sm: 8px;
   --radius: 12px;
   --radius-lg: 16px;
-  /* Kill the "新中式" serif clash: route the serif token to the same sans UI
-     stack so SkillManager / Canvas / editor labels read as one product. */
-  --font-serif: var(--font);
   --sidebar-w: 260px;
-
   height: 100%;
   display: grid;
   grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
@@ -54,6 +40,17 @@ body,
   line-height: 1.45;
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
+  transition: grid-template-columns var(--dur-2) var(--ease-out);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
+  --accent-soft: rgba(79, 70, 229, 0.1);
+  position: relative;
+  --glass: rgba(255, 255, 255, 0.72);
+  --glass-blur: saturate(1.5) blur(20px);
+  --brand-soft: rgba(16, 163, 127, 0.1);
+  --brand-ring: rgba(16, 163, 127, 0.35);
+  --elev-glow: 0 0 0 3px var(--brand-ring), 0 12px 32px rgba(16, 163, 127, 0.14);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 /* ── Dark theme override — 由 .theme-dark 类切换（DesktopApp data-theme）── */
@@ -162,9 +159,6 @@ body,
   grid-row: 2;
   min-height: 0;
   min-width: 0;
-}
-.fnix-root {
-  transition: grid-template-columns var(--dur-2) var(--ease-out);
 }
 .fnix-root > .fnix-side {
   overflow: hidden;
@@ -278,7 +272,8 @@ body,
 .fnix-side-top {
   display: flex;
   align-items: center;
-  padding: 12px 10px 8px;
+  padding: 10px 8px 6px 10px;
+  gap: 4px;
 }
 .fnix-side-top .fnix-product-seg,
 .fnix-side-top .glass-seg {
@@ -377,8 +372,8 @@ body,
 .fnix-nav {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 2px 10px 12px;
+  gap: 4px;
+  padding: 2px 10px 10px;
 }
 .fnix-nav-item {
   display: flex;
@@ -388,7 +383,7 @@ body,
   height: 36px;
   padding: 0 10px;
   border: none;
-  border-radius: 10px;
+  border-radius: 8px;
   background: transparent;
   color: var(--text);
   cursor: pointer;
@@ -396,6 +391,9 @@ body,
   font-size: 13.5px;
   font-weight: 500;
   text-align: left;
+  transition:
+    background var(--dur-1) var(--ease-soft),
+    padding-left var(--dur-2) var(--ease-out);
 }
 .fnix-nav-item:hover {
   background: var(--bg-muted);
@@ -423,18 +421,22 @@ body,
   align-items: center;
   gap: 10px;
   width: 100%;
-  height: 40px;
+  height: 38px;
   padding: 0 12px;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 10px;
   background: var(--bg-soft, #fff);
   color: var(--text);
   cursor: pointer;
   font: inherit;
   font-size: 13.5px;
   font-weight: 550;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--elev-1);
   text-align: left;
+  transition:
+    background var(--dur-1) var(--ease-soft),
+    border-color var(--dur-1) var(--ease-soft),
+    box-shadow var(--dur-1) var(--ease-soft);
 }
 .fnix-nav-primary:hover {
   background: var(--bg-muted);
@@ -449,16 +451,22 @@ body,
   align-items: center;
   gap: 8px;
   width: 100%;
-  height: 36px;
+  height: 34px;
   padding: 0 10px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--bg-soft, #fff);
+  border: none;
+  border-radius: 8px;
+  background: transparent;
   color: var(--muted);
   cursor: pointer;
   font: inherit;
   font-size: 13px;
   text-align: left;
+  transition:
+    background var(--dur-1) var(--ease-soft),
+    box-shadow var(--dur-2) var(--ease-soft),
+    transform var(--dur-2) var(--ease-spring);
+  border-color: var(--hairline);
+  box-shadow: var(--elev-1);
 }
 .fnix-nav-search:hover,
 .fnix-nav-search.on {
@@ -513,7 +521,7 @@ body,
   display: flex;
   align-items: center;
   gap: 2px;
-  border-radius: 10px;
+  border-radius: 8px;
 }
 .fnix-thread-row:hover,
 .fnix-thread-row.on {
@@ -583,12 +591,12 @@ body,
   display: flex;
   align-items: center;
   gap: 8px;
-  margin: 0 10px 8px;
+  margin: 0;
   height: 34px;
   padding: 0 10px;
-  border-radius: 10px;
-  background: var(--bg-soft, #fff);
-  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  border: 1px solid var(--border-2);
   color: var(--faint);
 }
 .fnix-side-search input {
@@ -606,23 +614,28 @@ body,
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 12px 6px 16px;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  padding: 14px 12px 5px 14px;
+  font-size: 11.5px;
+  font-weight: 550;
+  letter-spacing: 0;
+  text-transform: none;
   color: var(--faint);
 }
 .fnix-section-plus {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   border: none;
-  border-radius: 6px;
+  border-radius: 7px;
   background: transparent;
   color: var(--faint);
   display: grid;
   place-items: center;
   cursor: pointer;
+  opacity: 0.75;
+  transition:
+    background var(--dur-1) var(--ease-soft),
+    color var(--dur-1) var(--ease-soft),
+    opacity var(--dur-1) var(--ease-soft);
 }
 .fnix-section-plus:hover {
   background: var(--bg-muted);
@@ -631,8 +644,8 @@ body,
 .fnix-proj-rail {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 0 8px 8px;
+  gap: 1px;
+  padding: 0 8px 6px;
   max-height: 220px;
   overflow: auto;
   scrollbar-width: thin;
@@ -662,10 +675,10 @@ body,
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
+  gap: 9px;
+  padding: 6px 8px;
   border: none;
-  border-radius: 10px;
+  border-radius: 8px;
   background: transparent;
   cursor: pointer;
   text-align: left;
@@ -688,8 +701,8 @@ body,
   white-space: nowrap;
 }
 .fnix-proj-ico {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   border-radius: 7px;
   background: #ebebeb;
   display: grid;
@@ -749,15 +762,15 @@ body,
   margin-bottom: 4px;
 }
 .fnix-thread-group-h {
-  padding: 8px 12px 4px;
-  font-size: 11px;
-  font-weight: 600;
+  padding: 8px 12px 3px;
+  font-size: 11.5px;
+  font-weight: 550;
   color: var(--faint);
 }
 
 /* ─── Spec 4: 可恢复任务 section（宋韵风 · 极简）─────────────────────────── */
 .fnix-resumable-group {
-  margin-top: 8px;
+  margin-top: 6px;
   border-top: 1px dashed var(--border);
   padding-top: 4px;
 }
@@ -766,7 +779,7 @@ body,
   align-items: center;
   gap: 6px;
   width: 100%;
-  padding: 8px 12px 4px;
+  padding: 8px 12px 3px;
   font-size: 11px;
   font-weight: 600;
   color: var(--faint);
@@ -856,10 +869,10 @@ body,
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
+  gap: 9px;
+  padding: 7px 10px;
   border: none;
-  border-radius: 10px;
+  border-radius: 8px;
   background: transparent;
   color: var(--text);
   cursor: pointer;
@@ -878,11 +891,12 @@ body,
   padding-left: 10px;
 }
 .fnix-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 99px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
   background: #c7c7c7;
   flex-shrink: 0;
+  margin-right: 1px;
 }
 .fnix-dot.run {
   background: #22c55e;
@@ -893,10 +907,10 @@ body,
 
 .fnix-side-foot {
   border-top: 1px solid var(--border);
-  padding: 8px 10px 12px;
+  padding: 8px 10px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 4px;
   flex-shrink: 0;
 }
 .fnix-settings-row {
@@ -915,6 +929,8 @@ body,
   font-weight: 500;
   cursor: pointer;
   text-align: left;
+  transition: background var(--dur-1) var(--ease-soft);
+  position: relative;
 }
 .fnix-settings-row:hover {
   background: rgba(0, 0, 0, 0.05);
@@ -976,6 +992,7 @@ body,
   align-items: center;
   justify-content: space-between;
   padding: 0 14px;
+  border-bottom-color: var(--hairline);
 }
 .fnix-top-actions {
   display: flex;
@@ -986,12 +1003,17 @@ body,
   width: 34px;
   height: 34px;
   border: none;
-  border-radius: 10px;
+  border-radius: 8px;
   background: transparent;
   color: var(--muted);
   display: grid;
   place-items: center;
   cursor: pointer;
+  position: relative;
+  transition:
+    background var(--dur-1) var(--ease-soft),
+    color var(--dur-1) var(--ease-soft),
+    transform 140ms var(--ease-spring);
 }
 .fnix-ibtn:hover {
   background: var(--bg-muted);
@@ -1024,9 +1046,6 @@ body,
   box-sizing: border-box;
   pointer-events: none;
 }
-.fnix-ibtn {
-  position: relative;
-}
 
 /*  home — 上品牌 / 下 Composer（2026-07） */
 .fnix-chat-home {
@@ -1047,6 +1066,7 @@ body,
   justify-content: center;
   gap: 14px;
   min-height: 0;
+  position: relative;
 }
 .fnix-home-dock {
   width: 100%;
@@ -1055,6 +1075,7 @@ body,
   align-items: center;
   gap: 14px;
   flex-shrink: 0;
+  animation: fnix-rise var(--dur-3) var(--ease-out) 90ms both;
 }
 .fnix-home-dock .fnix-composer {
   width: min(720px, 100%);
@@ -1082,6 +1103,7 @@ body,
   font-size: 14px;
   line-height: 1.55;
   color: var(--muted);
+  animation: fnix-fade var(--dur-3) var(--ease-out) 60ms both;
 }
 /* ── 工作台 Work shell ── */
 .fnix-work-split {
@@ -1178,6 +1200,10 @@ body,
   min-height: 0;
   overflow: auto;
   position: relative;
+  display: flex;
+  flex-direction: row;
+  gap: 0;
+  background: var(--canvas-paper);
 }
 .fnix-canvas-empty {
   display: flex;
@@ -1742,6 +1768,7 @@ body,
   align-items: center;
   gap: 10px;
   margin-bottom: 4px;
+  animation: fnix-fade var(--dur-3) var(--ease-out) both;
 }
 .fnix-home-logo {
   width: 44px;
@@ -2571,8 +2598,8 @@ body,
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 7px;
-  border-radius: 5px;
+  padding: 3px 7px;
+  border-radius: 6px;
   border: 1px solid var(--border, rgba(0, 0, 0, 0.08));
   background: transparent;
   font-size: 11px;
@@ -2723,17 +2750,16 @@ body,
   width: min(768px, 100%);
   background: var(--bg);
   border: 1px solid var(--border-2);
-  border-radius: var(--radius-lg);
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.04),
-    0 8px 24px rgba(0, 0, 0, 0.05);
+  border-radius: 16px;
+  box-shadow: var(--elev-2);
   padding: 12px 14px 10px 14px;
   display: flex;
   flex-direction: column;
   gap: 10px;
   transition:
-    box-shadow 0.15s ease,
-    border-color 0.15s ease;
+    box-shadow var(--dur-2) var(--ease-soft),
+    border-color var(--dur-2) var(--ease-soft),
+    transform var(--dur-2) var(--ease-soft);
 }
 .fnix-composer:focus-within {
   border-color: color-mix(in srgb, var(--accent) 45%, var(--border-2));
@@ -3037,25 +3063,30 @@ body,
 }
 .fnix-turn {
   width: 100%;
+  animation: fnix-rise var(--dur-2) var(--ease-out) both;
 }
 .fnix-turn-user {
   display: flex;
   justify-content: flex-end;
+  animation: fnix-turn-in var(--dur-3) var(--ease-out) both;
 }
 .fnix-user-bubble {
   max-width: min(640px, 88%);
-  background: #f4f4f4;
-  border-radius: 22px;
+  background: #f0f1f3;
+  border-radius: 16px;
   padding: 11px 18px;
   white-space: pre-wrap;
   font-size: 15px;
   line-height: 1.55;
   color: var(--text);
+  border: 1px solid var(--hairline);
+  box-shadow: var(--elev-1);
 }
 .fnix-turn-assistant {
   display: flex;
   align-items: flex-start;
   gap: 14px;
+  animation: fnix-fade var(--dur-3) var(--ease-out) both;
 }
 .fnix-asst-mark {
   width: 28px;
@@ -3064,6 +3095,7 @@ body,
   background: url("/nastasia.png") center / cover no-repeat;
   flex-shrink: 0;
   margin-top: 2px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
 }
 .fnix-codex .fnix-asst-mark {
   background: url("/nastasia.png") center / cover no-repeat;
@@ -3136,9 +3168,12 @@ body,
 }
 .fnix-md-quote {
   margin: 0 0 0.8em;
-  padding: 0.3em 0.9em;
+  padding: 0.4em 0.9em;
   border-left: 3px solid var(--border);
   color: var(--muted);
+  border-left-color: var(--border-2);
+  background: rgba(15, 23, 42, 0.02);
+  border-radius: 0 8px 8px 0;
 }
 .fnix-md-hr {
   border: none;
@@ -3155,9 +3190,11 @@ body,
 .fnix-inline-code {
   font-family: var(--mono);
   font-size: 0.9em;
-  background: #f0f0f0;
-  border-radius: 5px;
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+  border-radius: 6px;
   padding: 1px 5px;
+  border: 1px solid color-mix(in srgb, var(--text) 9%, transparent);
+  color: var(--text);
 }
 .fnix-thinking {
   display: flex;
@@ -3252,8 +3289,8 @@ body,
   align-items: flex-end;
   gap: 0;
   padding: 0 8px;
-  border-bottom: 1px solid var(--border);
-  background: #ebebeb;
+  border-bottom: 1px solid var(--hairline);
+  background: var(--bg);
 }
 .fnix-tab {
   height: 32px;
@@ -3268,6 +3305,9 @@ body,
   gap: 7px;
   margin-bottom: -1px;
   max-width: 220px;
+  transition:
+    color var(--dur-1) var(--ease-soft),
+    background var(--dur-1) var(--ease-soft);
 }
 .fnix-tab .x {
   width: 16px;
@@ -3659,6 +3699,7 @@ body,
   flex-direction: column;
   min-height: 0;
   flex-shrink: 0;
+  scrollbar-width: thin;
 }
 .fnix-review.glass-panel > .fnix-review-frame {
   display: flex;
@@ -3682,6 +3723,7 @@ body,
   border-bottom: 1px solid var(--border);
   font-weight: 650;
   font-size: 13px;
+  letter-spacing: -0.01em;
 }
 .fnix-scopes {
   display: flex;
@@ -3768,10 +3810,10 @@ body,
   z-index: 30;
   min-width: 200px;
   padding: 6px;
-  border-radius: 14px;
+  border-radius: 12px;
   border: 1px solid var(--border-2);
   background: var(--bg-soft, #fff);
-  box-shadow: var(--shadow);
+  box-shadow: var(--elev-2);
 }
 .fnix-attach-menu button {
   width: 100%;
@@ -4598,6 +4640,11 @@ button.fnix-diffview-more:hover {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  transition:
+    background var(--dur-1) var(--ease-soft),
+    color var(--dur-1) var(--ease-soft),
+    border-color var(--dur-1) var(--ease-soft),
+    transform var(--dur-1) var(--ease-soft);
 }
 .fnix-folder-chip:hover {
   background: var(--bg-muted);
@@ -4644,10 +4691,15 @@ button.fnix-diffview-more:hover {
 }
 
 .fnix-side-hint {
-  padding: 8px 12px;
+  padding: 28px 16px;
   font-size: 12.5px;
-  color: var(--muted);
+  color: var(--faint);
   line-height: 1.4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
 }
 .fnix-side-foot .meta span.ok {
   color: #17663a;
@@ -4661,11 +4713,11 @@ button.fnix-diffview-more:hover {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 14px;
-  background: #fff4e5;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  font-size: 13px;
-  color: #7a4b00;
+  padding: 7px 14px;
+  background: var(--bg-soft);
+  border-bottom: 1px solid var(--border);
+  font-size: 12.5px;
+  color: var(--muted);
 }
 .fnix-banner button {
   border: none;
@@ -4682,12 +4734,12 @@ button.fnix-diffview-more:hover {
   line-height: 1;
 }
 .fnix-banner-status {
-  background: #eef6ff;
-  color: #0b4f8a;
+  background: var(--bg-soft);
+  color: var(--muted);
 }
 .fnix-banner-artifacts {
-  background: #f0fdf4;
-  color: #166534;
+  background: rgba(16, 163, 127, 0.06);
+  color: #0f7a5c;
 }
 .fnix-banner-artifacts code {
   margin: 0 4px;
@@ -4719,21 +4771,22 @@ button.fnix-diffview-more:hover {
 
 .fnix-code {
   margin: 10px 0;
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
   overflow: hidden;
-  background: #f7f7f8;
+  background: var(--bg-soft);
+  box-shadow: var(--elev-1);
 }
 .fnix-code-h {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 10px;
-  border-bottom: 1px solid var(--border);
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--hairline);
   font-family: var(--mono);
   font-size: 11.5px;
   color: var(--muted);
-  background: #efefef;
+  background: color-mix(in srgb, var(--text) 3%, transparent);
 }
 .fnix-code-copy {
   display: inline-flex;
@@ -4748,6 +4801,9 @@ button.fnix-diffview-more:hover {
   font: inherit;
   font-size: 11px;
   cursor: pointer;
+  transition:
+    background 90ms var(--ease-soft),
+    color 90ms var(--ease-soft);
 }
 .fnix-code-copy:hover {
   background: rgba(0, 0, 0, 0.06);
@@ -5968,6 +6024,7 @@ button.fnix-diffview-more:hover {
   display: flex;
   align-items: center;
   gap: 8px;
+  position: relative;
 }
 .fnix-agent-process-toggle {
   min-width: 0;
@@ -6244,6 +6301,10 @@ button.fnix-agent-process-hidden {
   color: var(--text);
   font-size: 12px;
   font-weight: 520;
+  transition:
+    color 0.3s ease,
+    border-color 0.3s ease,
+    background 0.3s ease;
 }
 .fnix-agent-event-status,
 .fnix-agent-event-line time {
@@ -6315,12 +6376,10 @@ button.fnix-agent-process-hidden {
   white-space: pre-wrap;
   word-break: break-word;
   overflow: auto;
+  animation: fnixReveal 0.22s ease both;
 }
 /* ── 过程可视化优化（参考 Cline / OpenHands / Trae 的过程流语言，仅在本组件范围内打磨，不改色调与结构） ── */
 /* 头部进行态扫描光带：streaming 时一眼识别“正在干活”，完成后自动消失 */
-.fnix-agent-process-head {
-  position: relative;
-}
 .fnix-agent-process.running .fnix-agent-process-head::after {
   content: '';
   position: absolute;
@@ -6348,9 +6407,6 @@ button.fnix-agent-process-hidden {
   }
 }
 /* 证据详情展开：入场动画代替生硬闪现 */
-.fnix-agent-event-detail {
-  animation: fnixReveal 0.22s ease both;
-}
 @keyframes fnixReveal {
   from {
     opacity: 0;
@@ -6434,12 +6490,6 @@ button.fnix-agent-process-hidden {
 /* 事件图标/状态颜色平滑过渡：running→done 不再瞬变 */
 .fnix-agent-event-icon,
 .fnix-agent-event-status,
-.fnix-agent-event-title {
-  transition:
-    color 0.3s ease,
-    border-color 0.3s ease,
-    background 0.3s ease;
-}
 /* "回到最新"浮动按钮：用户上滚时浮现，点击回到底部 */
 .fnix-agent-process-back-latest {
   position: sticky;
@@ -6758,14 +6808,6 @@ button.fnix-agent-process-hidden {
 }
 
 /* 内容区 */
-.fnix-canvas-body {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: row;
-  gap: 0;
-  background: var(--canvas-paper);
-}
 .fnix-canvas-body.mode-preview .fnix-canvas-pane {
   flex: 1;
 }
@@ -6971,7 +7013,7 @@ button.fnix-agent-process-hidden {
   font-family: var(--canvas-font-song);
   font-size: 14.5px;
   line-height: 1.75;
-  color: var(--canvas-ink);
+  color: var(--text);
   max-width: 760px;
   margin: 0 auto;
 }
@@ -7564,8 +7606,10 @@ button.fnix-agent-process-hidden {
 .grc-row {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: 6px;
   padding: 3px 0;
+  font-size: 11px;
+  line-height: 1.5;
 }
 .grc-row + .grc-row {
   border-top: 1px dashed rgba(74, 111, 165, 0.1);
@@ -7576,7 +7620,7 @@ button.fnix-agent-process-hidden {
   flex-shrink: 0;
   width: 18px;
   text-align: center;
-  font-size: 12px;
+  font-size: 11px;
 }
 .grc-label {
   flex-shrink: 0;
@@ -7585,12 +7629,13 @@ button.fnix-agent-process-hidden {
   font-size: 11px;
   letter-spacing: 0.08em;
   padding-top: 1px;
+  min-width: 32px;
 }
 .grc-value {
   flex: 1;
   min-width: 0;
   word-break: break-word;
-  color: #2c2c2c;
+  color: #3a3a3a;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -7939,29 +7984,8 @@ button.fnix-agent-process-hidden {
   border-color: rgba(74, 111, 165, 0.2);
   border-left-color: #4a6fa5;
 }
-.grc-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  font-size: 11px;
-  line-height: 1.5;
-}
 .grc-row + .grc-row {
   margin-top: 2px;
-}
-.grc-icon {
-  font-size: 11px;
-  flex-shrink: 0;
-}
-.grc-label {
-  color: #7a7a7a;
-  flex-shrink: 0;
-  min-width: 32px;
-}
-.grc-value {
-  color: #3a3a3a;
-  flex: 1;
-  word-break: break-word;
 }
 .grc-header {
   align-items: center;
@@ -7996,15 +8020,11 @@ button.fnix-agent-process-hidden {
 .grc-missing-chip,
 .grc-issue-chip {
   padding: 1px 6px;
-  background: rgba(168, 87, 81, 0.08);
+  background: rgba(74, 111, 165, 0.08);
   border-radius: 999px;
   font-size: 10px;
-  color: #a85751;
-  line-height: 1.4;
-}
-.grc-issue-chip {
-  background: rgba(74, 111, 165, 0.08);
   color: #4a6fa5;
+  line-height: 1.4;
 }
 .grc-note {
   margin-top: 4px;
@@ -8288,18 +8308,6 @@ button.fnix-agent-process-hidden {
    后置覆盖层：同选择器后置生效，后续可逐步收敛回主规则
    ========================================================================== */
 
-.fnix-root {
-  /* motion 刻度 */
-  --dur-1: 120ms;
-  --dur-2: 200ms;
-  --dur-3: 320ms;
-  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
-  --ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
-  /* 更细腻的层级阴影 */
-  --elev-1: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.05);
-  --elev-2: 0 4px 12px rgba(16, 24, 40, 0.06), 0 2px 4px rgba(16, 24, 40, 0.04);
-  --elev-3: 0 12px 32px rgba(16, 24, 40, 0.1), 0 4px 8px rgba(16, 24, 40, 0.05);
-}
 
 .fnix-root ::selection {
   background: rgba(16, 163, 127, 0.16);
@@ -8312,15 +8320,6 @@ button.fnix-agent-process-hidden {
   letter-spacing: -0.03em;
   line-height: 1.15;
   animation: fnix-rise var(--dur-3) var(--ease-out) both;
-}
-.fnix-home-brand {
-  animation: fnix-fade var(--dur-3) var(--ease-out) both;
-}
-.fnix-chat-home-sub {
-  animation: fnix-fade var(--dur-3) var(--ease-out) 60ms both;
-}
-.fnix-home-dock {
-  animation: fnix-rise var(--dur-3) var(--ease-out) 90ms both;
 }
 
 @keyframes fnix-rise {
@@ -8343,42 +8342,14 @@ button.fnix-agent-process-hidden {
 }
 
 /* ── 顶部提示条样式已合并到文件首部定义（A3 去重） ── */
-.fnix-banner {
-  padding: 7px 14px;
-  font-size: 12.5px;
-  background: var(--bg-soft);
-  color: var(--muted);
-  border-bottom: 1px solid var(--border);
-}
 .fnix-banner button {
   color: var(--work);
 }
-.fnix-banner-status {
-  background: var(--bg-soft);
-  color: var(--muted);
-}
-.fnix-banner-artifacts {
-  background: rgba(16, 163, 127, 0.06);
-  color: #0f7a5c;
-}
 
 /* ── 侧栏：更安静的分区与行（--muted 保证 AA 对比度） ── */
-.fnix-section {
-  color: var(--muted);
-  letter-spacing: 0.05em;
-}
 .fnix-proj,
-.fnix-settings-row {
-  transition: background var(--dur-1) var(--ease-soft);
-}
 
 /* ── Composer：聚焦时的“浮起”反馈 ── */
-.fnix-composer {
-  transition:
-    box-shadow var(--dur-2) var(--ease-soft),
-    border-color var(--dur-2) var(--ease-soft),
-    transform var(--dur-2) var(--ease-soft);
-}
 .fnix-composer:focus-within {
   border-color: rgba(0, 0, 0, 0.18);
   box-shadow: var(--elev-3);
@@ -8407,13 +8378,6 @@ button.fnix-agent-process-hidden {
 .fnix-ibtn,
 .fnix-nav-primary,
 .fnix-pill,
-.fnix-folder-chip {
-  transition:
-    background var(--dur-1) var(--ease-soft),
-    color var(--dur-1) var(--ease-soft),
-    border-color var(--dur-1) var(--ease-soft),
-    transform var(--dur-1) var(--ease-soft);
-}
 .fnix-ibtn:active,
 .fnix-nav-primary:active,
 .fnix-pill:active {
@@ -8440,25 +8404,28 @@ button.fnix-agent-process-hidden {
   position: fixed;
   inset: 0;
   z-index: 200;
-  background: rgba(15, 23, 42, 0.18);
-  backdrop-filter: blur(2px);
+  background: rgba(12, 13, 16, 0.38);
+  backdrop-filter: blur(6px);
   display: flex;
   justify-content: center;
   align-items: flex-start;
   padding-top: 14vh;
   animation: fnix-fade var(--dur-1) var(--ease-out) both;
+  -webkit-backdrop-filter: blur(6px);
 }
 .fnix-palette {
   width: min(560px, calc(100vw - 48px));
   max-height: min(420px, 60vh);
-  background: var(--bg-soft, #fff);
+  background: var(--glass);
   border: 1px solid var(--border-2);
-  border-radius: 16px;
+  border-radius: 14px;
   box-shadow: var(--elev-3);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  animation: fnix-palette-in var(--dur-2) var(--ease-out) both;
+  animation: fnix-palette-in var(--dur-2) var(--ease-spring) both;
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
 }
 @keyframes fnix-palette-in {
   from {
@@ -8521,12 +8488,13 @@ button.fnix-agent-process-hidden {
   gap: 10px;
   padding: 9px 10px;
   border: none;
-  border-radius: 10px;
+  border-radius: 8px;
   background: transparent;
   cursor: pointer;
   text-align: left;
   font-size: 13.5px;
   color: var(--text);
+  transition: background 90ms var(--ease-soft);
 }
 .fnix-palette-item.on {
   background: var(--bg-soft);
@@ -8637,56 +8605,17 @@ button.fnix-agent-process-hidden {
 }
 
 /* ── 会话视图精修 ── */
-.fnix-feed {
-  scrollbar-width: thin;
-}
-.fnix-turn {
-  animation: fnix-rise var(--dur-2) var(--ease-out) both;
-}
-.fnix-user-bubble {
-  background: #f0f1f3;
-  border: 1px solid rgba(0, 0, 0, 0.03);
-  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.03);
-}
-.fnix-asst-mark {
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
-}
 /* fnix-jump-btn 样式已在 v2.3.1 区块统一定义（含 dark theme + 脉冲动画），此处不再重复 */
 
 /* 代码块质感 */
-.fnix-code {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: var(--elev-1);
-}
-.fnix-code-h {
-  border-bottom: 1px solid var(--border);
-}
-.fnix-inline-code {
-  background: rgba(15, 23, 42, 0.05);
-  border: 1px solid rgba(15, 23, 42, 0.06);
-}
 
 /* 引用块更安静 */
-.fnix-md-quote {
-  border-left-color: var(--border-2);
-  background: rgba(15, 23, 42, 0.02);
-  border-radius: 0 8px 8px 0;
-  padding: 0.4em 0.9em;
-}
 
 /* ── 右侧面板（Jobs/Skills/Review）视觉统一 ── */
 .fnix-jobs-panel,
 .fnix-skill-mgr,
-.fnix-review {
-  scrollbar-width: thin;
-}
 .fnix-jobs-panel-header,
 .fnix-skill-mgr-head,
-.fnix-review-h {
-  letter-spacing: -0.01em;
-}
 .fnix-jobs-empty-hint,
 .fnix-review-empty {
   animation: fnix-fade var(--dur-2) var(--ease-out) both;
@@ -8738,10 +8667,10 @@ body.fnx-studio-resizing .fnx-studio {
 /* ── 拖拽手柄 ── */
 .fnx-studio-grip {
   position: absolute;
-  left: -3px;
+  left: -4px;
   top: 0;
   bottom: 0;
-  width: 6px;
+  width: 8px;
   cursor: col-resize;
   z-index: 6;
   background: transparent;
@@ -8763,37 +8692,46 @@ body.fnx-studio-resizing .fnx-studio {
 
 /* ── 头部 TabRail ── */
 .fnx-studio-head {
-  height: 44px;
+  height: 46px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding: 0 8px 0 14px;
+  gap: 6px;
+  padding: 0 8px 0 12px;
   border-bottom: 1px solid var(--border);
+  background: var(--bg);
 }
 .fnx-studio-tabs {
   display: flex;
   align-items: center;
   gap: 2px;
-  height: 100%;
+  height: auto;
   min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex: 1;
+  padding: 4px 0;
 }
 .fnx-studio-tab {
   position: relative;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 100%;
-  padding: 0 10px;
-  font-size: 13px;
+  height: 30px;
+  padding: 0 11px;
+  font-size: 12.5px;
   font-weight: 550;
   color: var(--muted);
   background: transparent;
   border: none;
   cursor: pointer;
   white-space: nowrap;
-  transition: color var(--dur-1) var(--ease-soft);
+  transition:
+    background var(--dur-1) var(--ease-soft),
+    color var(--dur-1) var(--ease-soft);
+  border-radius: 8px;
+  letter-spacing: 0;
 }
 .fnx-studio-tab:hover {
   color: var(--text);
@@ -8817,13 +8755,13 @@ body.fnx-studio-resizing .fnx-studio {
 }
 .fnx-studio-badge {
   font-style: normal;
-  font-size: 10.5px;
-  font-weight: 650;
+  font-size: 10px;
+  font-weight: 600;
   line-height: 1;
-  color: var(--muted);
-  background: var(--bg-soft);
+  color: var(--faint);
+  background: rgba(0, 0, 0, 0.05);
   border-radius: 999px;
-  padding: 3px 6px;
+  padding: 2px 5px;
 }
 .fnx-studio-tab.on .fnx-studio-badge {
   color: var(--accent);
@@ -8850,7 +8788,7 @@ body.fnx-studio-resizing .fnx-studio {
   display: inline-flex;
   align-items: center;
   font-style: normal;
-  opacity: 0.85;
+  opacity: 0.75;
 }
 .fnx-studio-live {
   width: 6px;
@@ -8885,7 +8823,7 @@ body.fnx-studio-resizing .fnx-studio {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  animation: fnix-fade 160ms var(--ease-soft) both;
+  animation: fnix-fade var(--dur-2) var(--ease-soft) both;
 }
 .fnx-studio-view[hidden] {
   display: none;
@@ -8898,8 +8836,8 @@ body.fnx-studio-resizing .fnx-studio {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  padding: 48px 24px;
+  gap: 8px;
+  padding: 48px 28px;
   color: var(--muted);
   text-align: center;
 }
@@ -9424,23 +9362,12 @@ body.fnx-studio-resizing .fnx-studio {
   --accent: #7c3aed;
   --accent-soft: rgba(124, 58, 237, 0.1);
 }
-.fnix-root {
-  --accent-soft: rgba(79, 70, 229, 0.1);
-}
 
 /* ───────────────────────── 右侧栏 · StudioPanel ───────────────────────── */
 
 /* 面板本体：保持平面化，左侧发丝线，不加阴影（干净分界） */
-.fnx-studio {
-  background: var(--bg);
-  border-left: 1px solid var(--border);
-}
 
 /* 拖拽手柄：更宽的易点区域，hover 才露出 2px 模式色 */
-.fnx-studio-grip {
-  left: -4px;
-  width: 8px;
-}
 .fnx-studio-grip::after {
   left: 3px;
   width: 2px;
@@ -9448,41 +9375,13 @@ body.fnx-studio-resizing .fnx-studio {
 }
 
 /* 头部：通透 46px，去掉厚重感 */
-.fnx-studio-head {
-  height: 46px;
-  padding: 0 8px 0 12px;
-  gap: 6px;
-  border-bottom: 1px solid var(--border);
-  background: var(--bg);
-}
 
 /* Tab 轨：窄宽度可横向滑动，不挤压关闭按钮；隐藏滚动条 */
-.fnx-studio-tabs {
-  gap: 2px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  flex: 1;
-  min-width: 0;
-  height: auto;
-  padding: 4px 0;
-}
 .fnx-studio-tabs::-webkit-scrollbar {
   display: none;
 }
 
 /* Tab：下划线式 → 软胶囊式（极简核心：同屏只有一个清晰选中态） */
-.fnx-studio-tab {
-  height: 30px;
-  padding: 0 11px;
-  border-radius: 8px;
-  font-size: 12.5px;
-  font-weight: 550;
-  letter-spacing: 0;
-  color: var(--muted);
-  transition:
-    background var(--dur-1) var(--ease-soft),
-    color var(--dur-1) var(--ease-soft);
-}
 .fnx-studio-tab:hover {
   color: var(--text);
   background: rgba(0, 0, 0, 0.045);
@@ -9501,23 +9400,12 @@ body.fnx-studio-resizing .fnx-studio {
   background: rgba(255, 255, 255, 0.1);
 }
 
-.fnx-studio-tab-ico {
-  opacity: 0.75;
-}
 .fnx-studio-tab.on .fnx-studio-tab-ico {
   opacity: 1;
   color: var(--accent);
 }
 
 /* 计数徽章：更小巧，选中时染模式色 */
-.fnx-studio-badge {
-  font-size: 10px;
-  font-weight: 600;
-  padding: 2px 5px;
-  border-radius: 999px;
-  color: var(--faint);
-  background: rgba(0, 0, 0, 0.05);
-}
 .fnx-studio-tab.on .fnx-studio-badge {
   color: var(--accent);
   background: var(--accent-soft);
@@ -9532,15 +9420,8 @@ body.fnx-studio-resizing .fnx-studio {
 }
 
 /* 面板体：视图切换淡入 */
-.fnx-studio-view {
-  animation: fnix-fade var(--dur-2) var(--ease-soft) both;
-}
 
 /* 统一空态：图标装进浅色圆角瓷砖 + 一行主文案 + 一行辅助文案 */
-.fnx-studio-empty {
-  gap: 8px;
-  padding: 48px 28px;
-}
 .fnx-studio-empty > svg:first-child {
   width: 26px;
   height: 26px;
@@ -9558,10 +9439,6 @@ body.fnx-studio-resizing .fnx-studio {
 /* ───────────────────────── 左侧栏 · Sidebar ───────────────────────── */
 
 /* 顶栏：分段控件 + 收起按钮，一行排布 */
-.fnix-side-top {
-  padding: 10px 8px 6px 10px;
-  gap: 4px;
-}
 .fnix-side-top .fnix-product-seg {
   flex: 1;
   min-width: 0;
@@ -9595,9 +9472,6 @@ body.fnx-studio-resizing .fnx-studio {
   color: var(--text);
   border-color: var(--faint);
 }
-.fnix-root {
-  position: relative;
-}
 
 /* R6: 右栏关闭后恢复入口 — 镜像左栏 fnix-side-expand，定位右侧 */
 .fnx-studio-expand {
@@ -9625,22 +9499,8 @@ body.fnx-studio-resizing .fnx-studio {
 }
 
 /* 主导航组：新任务 + 搜索，统一 8px 节奏 */
-.fnix-nav {
-  padding: 2px 10px 10px;
-  gap: 4px;
-}
 
 /* 新任务：白底主按钮，更收敛的圆角与阴影 */
-.fnix-nav-primary {
-  height: 38px;
-  border-radius: 10px;
-  box-shadow: var(--elev-1);
-  font-weight: 550;
-  transition:
-    background var(--dur-1) var(--ease-soft),
-    border-color var(--dur-1) var(--ease-soft),
-    box-shadow var(--dur-1) var(--ease-soft);
-}
 .fnix-nav-primary:hover {
   background: var(--bg-soft, #fafafa);
   border-color: var(--border-2);
@@ -9648,16 +9508,6 @@ body.fnx-studio-resizing .fnx-studio {
 }
 
 /* 搜索：白卡 → 幽灵行（与会话行同语言），点击后原位变输入框 */
-.fnix-nav-search {
-  height: 34px;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--muted);
-  transition:
-    background var(--dur-1) var(--ease-soft),
-    color var(--dur-1) var(--ease-soft);
-}
 .fnix-nav-search:hover {
   background: rgba(0, 0, 0, 0.045);
   color: var(--text);
@@ -9674,13 +9524,6 @@ body.fnx-studio-resizing .fnx-studio {
 }
 
 /* 搜索输入框：与原按钮同高同位，单行形态不撑高侧栏 */
-.fnix-side-search {
-  height: 34px;
-  margin: 0;
-  border-radius: 8px;
-  background: var(--bg);
-  border: 1px solid var(--border-2);
-}
 .fnix-nav .fnix-side-search {
   margin-bottom: 0;
 }
@@ -9694,61 +9537,13 @@ body.fnx-studio-resizing .fnx-studio {
 }
 
 /* 分区标题：去掉大写字距噪音，11px 中灰即可 */
-.fnix-section {
-  padding: 14px 12px 5px 14px;
-  font-size: 11.5px;
-  font-weight: 550;
-  letter-spacing: 0;
-  text-transform: none;
-  color: var(--faint);
-}
-.fnix-section-plus {
-  width: 22px;
-  height: 22px;
-  border-radius: 7px;
-  opacity: 0.75;
-  transition:
-    background var(--dur-1) var(--ease-soft),
-    color var(--dur-1) var(--ease-soft),
-    opacity var(--dur-1) var(--ease-soft);
-}
 .fnix-section-plus:hover {
   opacity: 1;
 }
 
 /* 仓库行：图标瓷砖 24px、行内节奏统一 */
-.fnix-proj-rail {
-  padding: 0 8px 6px;
-  gap: 1px;
-}
-.fnix-proj {
-  padding: 6px 8px;
-  border-radius: 8px;
-  gap: 9px;
-}
-.fnix-proj-ico {
-  width: 24px;
-  height: 24px;
-  border-radius: 7px;
-}
 
 /* 会话行：8px 圆角、hover 浅底、active 稍深 + 字重区分 */
-.fnix-scroll {
-  padding: 0 8px 12px;
-}
-.fnix-thread-group-h {
-  padding: 8px 12px 3px;
-  font-size: 11.5px;
-  font-weight: 550;
-}
-.fnix-thread-row {
-  border-radius: 8px;
-}
-.fnix-thread {
-  padding: 7px 10px;
-  border-radius: 8px;
-  gap: 9px;
-}
 .fnix-thread-row:hover {
   background: rgba(0, 0, 0, 0.04);
 }
@@ -9777,19 +9572,8 @@ body.fnx-studio-resizing .fnx-studio {
 }
 
 /* 可恢复任务：发丝虚线分隔保留，行缩进对齐 */
-.fnix-resumable-group {
-  margin-top: 6px;
-}
-.fnix-resumable-h {
-  padding: 8px 12px 3px;
-}
 
 /* 底部：一行 —— 设置（带状态点）+ 诊断图标按钮，省一行高度 */
-.fnix-side-foot {
-  padding: 8px 10px;
-  gap: 4px;
-  align-items: center;
-}
 .fnix-side-foot .fnix-settings-row {
   flex: 1;
   min-width: 0;
@@ -9901,22 +9685,6 @@ body.fnx-studio-resizing .fnx-studio {
 }
 
 /* ── WorkspaceChip — 输入框底栏内的工作区选择按钮 ── */
-.fnix-ws-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 7px;
-  border-radius: 6px;
-  border: 1px solid var(--border, rgba(0, 0, 0, 0.08));
-  background: transparent;
-  font-size: 11px;
-  line-height: 1;
-  color: var(--muted, #6b7280);
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
-  max-width: 200px;
-  white-space: nowrap;
-}
 .fnix-ws-chip:hover {
   background: var(--surface-2, rgba(0, 0, 0, 0.05));
   border-color: var(--border-hover, rgba(0, 0, 0, 0.15));
@@ -9924,14 +9692,6 @@ body.fnx-studio-resizing .fnx-studio {
 .fnix-ws-chip svg {
   flex-shrink: 0;
   opacity: 0.6;
-}
-.fnix-ws-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.fnix-ws-caret {
-  opacity: 0.35;
 }
 .theme-dark .fnix-ws-chip {
   background: transparent;
@@ -9944,13 +9704,6 @@ body.fnx-studio-resizing .fnx-studio {
 }
 
 /* ── 任务状态点 ── */
-.fnix-dot {
-  flex-shrink: 0;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  margin-right: 1px;
-}
 .fnix-dot.done {
   background: #10b981;
   opacity: 0.7;
@@ -9988,6 +9741,15 @@ body.fnx-studio-resizing .fnx-studio {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  background: transparent;
+  border: none;
+  transition: color 0.15s;
 }
 
 /* ── 极简空态 ── */
@@ -10073,16 +9835,6 @@ body.fnx-studio-resizing .fnx-studio {
 }
 
 /* L3: 搜索无结果 — 文案 + 清除链接（不卡死，提供出口） */
-.fnix-side-hint {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 28px 16px;
-  text-align: center;
-  font-size: 12.5px;
-  color: var(--faint);
-}
 .fnix-side-hint-link {
   border: none;
   background: transparent;
@@ -10116,9 +9868,6 @@ body.fnx-studio-resizing .fnx-studio {
   border-radius: 2px;
   background: #9b1c1c;
 }
-.fnix-settings-row {
-  position: relative;
-}
 
 /* ==========================================================================
    WORKBENCH 2.0 · AURORA — 2026-08 史诗级视觉升级（后置覆盖层）
@@ -10128,27 +9877,6 @@ body.fnx-studio-resizing .fnx-studio {
 
 /* ───────────────────────── 1. 调色板精修 ───────────────────────── */
 
-.fnix-root {
-  /* 细发丝分割线 & 玻璃 */
-  --hairline: rgba(0, 0, 0, 0.055);
-  --glass: rgba(255, 255, 255, 0.72);
-  --glass-blur: saturate(1.5) blur(20px);
-
-  /* 品牌色阶（不变色相，仅提炼） */
-  --brand: var(--work);
-  --brand-soft: rgba(16, 163, 127, 0.1);
-  --brand-ring: rgba(16, 163, 127, 0.35);
-
-  /* 阴影刻度（冷灰蓝，层级更真实） */
-  --elev-1: 0 1px 2px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.06);
-  --elev-2: 0 4px 12px rgba(15, 23, 42, 0.07), 0 2px 4px rgba(15, 23, 42, 0.05);
-  --elev-3: 0 16px 40px rgba(15, 23, 42, 0.11), 0 4px 10px rgba(15, 23, 42, 0.06);
-  --elev-glow: 0 0 0 3px var(--brand-ring), 0 12px 32px rgba(16, 163, 127, 0.14);
-
-  /* 更长的丝滑动效 */
-  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-}
 
 .fnix-root.theme-dark {
   /* 石墨暗调 —— 比纯黑更柔，比灰更净 */
@@ -10175,9 +9903,6 @@ body.fnx-studio-resizing .fnx-studio {
 }
 
 /* 顶栏 / 全局发丝线 */
-.fnix-top {
-  border-bottom-color: var(--hairline);
-}
 
 /* ───────────────────────── 2. 滚动条 · 选区 · 焦点 ───────────────────────── */
 
@@ -10226,14 +9951,6 @@ body.fnx-studio-resizing .fnx-studio {
 
 /* 主导航按钮 — 轻盈起浮 */
 .fnix-nav-primary,
-.fnix-nav-search {
-  border-color: var(--hairline);
-  box-shadow: var(--elev-1);
-  transition:
-    background var(--dur-1) var(--ease-soft),
-    box-shadow var(--dur-2) var(--ease-soft),
-    transform var(--dur-2) var(--ease-spring);
-}
 .fnix-nav-primary:hover,
 .fnix-nav-search:hover {
   box-shadow: var(--elev-2);
@@ -10246,12 +9963,6 @@ body.fnx-studio-resizing .fnx-studio {
 }
 
 /* 导航条目 — 选中态带左侧模式色灯 */
-.fnix-nav-item {
-  border-radius: 8px;
-  transition:
-    background var(--dur-1) var(--ease-soft),
-    padding-left var(--dur-2) var(--ease-out);
-}
 .fnix-nav-item.on {
   position: relative;
   font-weight: 600;
@@ -10271,14 +9982,6 @@ body.fnx-studio-resizing .fnx-studio {
 
 /* ───────────────────────── 4. Composer · 悬浮墨盒 ───────────────────────── */
 
-.fnix-composer {
-  border-radius: 16px;
-  box-shadow: var(--elev-2);
-  transition:
-    box-shadow var(--dur-2) var(--ease-soft),
-    border-color var(--dur-2) var(--ease-soft),
-    transform var(--dur-2) var(--ease-soft);
-}
 .fnix-composer:focus-within {
   border-color: var(--brand-ring);
   box-shadow: var(--elev-glow);
@@ -10310,12 +10013,6 @@ body.fnx-studio-resizing .fnx-studio {
 
 /* ───────────────────────── 5. 消息流 · 呼吸感 ───────────────────────── */
 
-.fnix-turn-user {
-  animation: fnix-turn-in var(--dur-3) var(--ease-out) both;
-}
-.fnix-turn-assistant {
-  animation: fnix-fade var(--dur-3) var(--ease-out) both;
-}
 @keyframes fnix-turn-in {
   from {
     opacity: 0;
@@ -10327,11 +10024,6 @@ body.fnx-studio-resizing .fnx-studio {
   }
 }
 
-.fnix-user-bubble {
-  border-radius: 16px;
-  box-shadow: var(--elev-1);
-  border: 1px solid var(--hairline);
-}
 .theme-dark .fnix-user-bubble,
 .fnix-root.theme-dark .fnix-user-bubble {
   background: #1d1f26;
@@ -10340,20 +10032,6 @@ body.fnx-studio-resizing .fnx-studio {
 
 /* ───────────────────────── 6. ⌘K 命令面板 · 毛玻璃浮窗 ───────────────────────── */
 
-.fnix-palette-overlay {
-  background: rgba(12, 13, 16, 0.38);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-}
-.fnix-palette {
-  border: 1px solid var(--border-2);
-  background: var(--glass);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border-radius: 14px;
-  box-shadow: var(--elev-3);
-  animation: fnix-palette-in var(--dur-2) var(--ease-spring) both;
-}
 @keyframes fnix-palette-in {
   from {
     opacity: 0;
@@ -10364,25 +10042,12 @@ body.fnx-studio-resizing .fnx-studio {
     transform: none;
   }
 }
-.fnix-palette-item {
-  border-radius: 8px;
-  transition: background 90ms var(--ease-soft);
-}
 .fnix-palette-item.on {
   background: var(--brand-soft);
 }
 
 /* ───────────────────────── 7. Tab 轨 · 发丝底栏 ───────────────────────── */
 
-.fnix-tabs {
-  background: var(--bg);
-  border-bottom: 1px solid var(--hairline);
-}
-.fnix-tab {
-  transition:
-    color var(--dur-1) var(--ease-soft),
-    background var(--dur-1) var(--ease-soft);
-}
 .fnix-tab.on {
   position: relative;
   color: var(--text);
@@ -10400,9 +10065,6 @@ body.fnx-studio-resizing .fnx-studio {
 
 /* ───────────────────────── 8. 首页 Hero · 品牌光晕 ───────────────────────── */
 
-.fnix-home-hero {
-  position: relative;
-}
 .fnix-home-hero::before {
   content: '';
   position: absolute;
@@ -10426,11 +10088,6 @@ body.fnx-studio-resizing .fnx-studio {
 /* ───────────────────────── 9. 菜单 / 浮层统一质感 ───────────────────────── */
 
 .fnix-menu,
-.fnix-attach-menu {
-  border: 1px solid var(--border-2);
-  border-radius: 12px;
-  box-shadow: var(--elev-2);
-}
 .fnix-menu button,
 .fnix-attach-menu button {
   border-radius: 8px;
@@ -10439,13 +10096,6 @@ body.fnx-studio-resizing .fnx-studio {
 
 /* ───────────────────────── 10. 图标按钮 · 弹性回落 ───────────────────────── */
 
-.fnix-ibtn {
-  border-radius: 8px;
-  transition:
-    background var(--dur-1) var(--ease-soft),
-    color var(--dur-1) var(--ease-soft),
-    transform 140ms var(--ease-spring);
-}
 .fnix-ibtn:active {
   transform: scale(0.9);
 }
@@ -10493,24 +10143,6 @@ body.fnx-studio-resizing .fnx-studio {
  * ═════════════════════════════════════════════════════════════════════════ */
 
 /* Code block — calm surface, hairline, soft elevation, brand-tinted copy */
-.fnix-code {
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  background: var(--bg-soft);
-  box-shadow: var(--elev-1);
-  overflow: hidden;
-}
-.fnix-code-h {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 7px 12px;
-  border-bottom: 1px solid var(--hairline);
-  background: color-mix(in srgb, var(--text) 3%, transparent);
-  font-family: var(--mono);
-  font-size: 11.5px;
-  color: var(--muted);
-}
 .fnix-code pre {
   margin: 0;
   padding: 12px 14px;
@@ -10520,45 +10152,16 @@ body.fnx-studio-resizing .fnx-studio {
   line-height: 1.6;
   overflow: auto;
 }
-.fnix-code-copy {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  height: 24px;
-  padding: 0 8px;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--muted);
-  font: inherit;
-  font-size: 11px;
-  cursor: pointer;
-  transition:
-    background 90ms var(--ease-soft),
-    color 90ms var(--ease-soft);
-}
 .fnix-code-copy:hover {
   background: color-mix(in srgb, var(--text) 8%, transparent);
   color: var(--text);
 }
 
 /* Inline code — unified, on-brand */
-.fnix-inline-code {
-  font-family: var(--mono);
-  font-size: 0.9em;
-  background: color-mix(in srgb, var(--text) 6%, transparent);
-  border: 1px solid color-mix(in srgb, var(--text) 9%, transparent);
-  border-radius: 6px;
-  padding: 1px 5px;
-  color: var(--text);
-}
 
 /* Markdown body — readable, no off-brand blue links */
 .fnix-asst-body,
 .fnix-asst-text,
-.fnix-md {
-  color: var(--text);
-}
 .fnix-asst-body a,
 .fnix-asst-text a,
 .fnix-md a {
@@ -10600,16 +10203,17 @@ body.fnx-studio-resizing .fnx-studio {
 /* ── 全页面左下角固定设置/诊断 ── */
 .fnix-global-foot {
   position: fixed;
-  bottom: 0;
-  left: 0;
-  z-index: 100;
+  bottom: 12px;
+  left: 12px;
+  z-index: 50;
   display: flex;
   align-items: center;
   gap: 4px;
   padding: 8px 10px;
+  pointer-events: auto;
 }
 .fnix-global-settings {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
   width: 30px;
@@ -10635,94 +10239,11 @@ body.fnx-studio-resizing .fnx-studio {
 
 /* ── 加号菜单 workspace 项 ── */
 .fnix-attach-ws {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  flex: 1;
-  min-width: 0;
-}
-.fnix-attach-ws-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.fnix-attach-ws-check {
-  flex-shrink: 0;
-  color: var(--work);
-  opacity: 0.7;
-}
-
-/* ── 工作空间分组展开/收起 ── */
-.fnix-ws-group-h {
-  cursor: pointer;
-  user-select: none;
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
-.fnix-ws-chevron {
-  flex-shrink: 0;
-  transition: transform 0.15s ease;
-  opacity: 0.5;
-}
-.fnix-ws-chevron.open {
-  transform: rotate(90deg);
-}
-.fnix-ws-group-label {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.fnix-ws-group-count {
-  font-size: 10px;
-  font-weight: 400;
-  color: var(--faint);
-  opacity: 0.6;
-  margin-left: 2px;
-}
-
-/* ── 全页面左下角固定设置/诊断 ── */
-.fnix-global-foot {
-  position: fixed;
-  bottom: 12px;
-  left: 12px;
-  z-index: 50;
-  display: flex;
-  gap: 4px;
-  pointer-events: auto;
-}
-.fnix-global-settings {
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--faint);
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-}
-.fnix-global-settings:hover {
-  background: var(--bg-soft);
-  color: var(--muted);
-}
-.theme-dark .fnix-global-settings {
-  color: var(--faint);
-}
-.theme-dark .fnix-global-settings:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--muted);
-}
-
-/* ── 加号菜单 workspace 显示 ── */
-.fnix-attach-ws {
   display: flex;
   align-items: center;
   gap: 6px;
   flex: 1;
+  min-width: 0;
 }
 .fnix-attach-ws-name {
   overflow: hidden;
@@ -10731,28 +10252,12 @@ body.fnx-studio-resizing .fnx-studio {
   max-width: 180px;
 }
 .fnix-attach-ws-check {
-  color: var(--work);
   flex-shrink: 0;
+  color: var(--work);
+  opacity: 0.7;
 }
 
 /* ── 工作空间分组展开/收起 ── */
-.fnix-ws-group-h {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  width: 100%;
-  padding: 10px 12px 4px;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--faint);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition: color 0.15s;
-}
-.fnix-ws-group-h:hover {
-  color: var(--muted);
-}
 .fnix-ws-chevron {
   flex-shrink: 0;
   transition: transform 0.2s;
@@ -10770,8 +10275,33 @@ body.fnx-studio-resizing .fnx-studio {
 .fnix-ws-group-count {
   font-size: 10px;
   font-weight: 500;
+  color: var(--faint);
   opacity: 0.5;
+  margin-left: 2px;
   flex-shrink: 0;
+}
+
+/* ── 全页面左下角固定设置/诊断 ── */
+.fnix-global-settings:hover {
+  background: var(--bg-soft);
+  color: var(--muted);
+}
+.theme-dark .fnix-global-settings {
+  color: var(--faint);
+}
+.theme-dark .fnix-global-settings:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--muted);
+}
+
+/* ── 加号菜单 workspace 显示 ── */
+
+/* ── 工作空间分组展开/收起 ── */
+.fnix-ws-group-h:hover {
+  color: var(--muted);
+}
+.fnix-ws-chevron.open {
+  transform: rotate(90deg);
 }
 
 /* ── 加号菜单 workspace 切换列表 ── */

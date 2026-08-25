@@ -22,6 +22,7 @@ MCP 工具 (统一端点):
 import contextlib
 import io
 import os
+import threading
 from typing import Any
 
 from fastapi import APIRouter, Depends, Query
@@ -36,10 +37,14 @@ router = APIRouter(prefix="/coding", tags=["coding"])
 
 # ===========================================================================
 # IDEServer 单例管理
+# TODO: 此处 get_server 与 chat_agent.py 中的实现重复，两模块各自维护独立
+# 全局变量。若后续需共享同一单例，可从 chat_agent 导入 get_server（签名兼容），
+# 但需注意两模块鉴权依赖不同（verify_jwt_token vs verify_jwt_token_optional）。
 # ===========================================================================
 
 _server: IDEServer | None = None
 _server_workspace: str | None = None
+_server_lock = threading.Lock()
 
 
 def get_server(workspace: str | None = None) -> IDEServer:
@@ -56,9 +61,10 @@ def get_server(workspace: str | None = None) -> IDEServer:
     """
     global _server, _server_workspace
     ws = workspace or str(default_workspace())
-    if _server is None or _server_workspace != ws:
-        _server = IDEServer(project_root=ws)
-        _server_workspace = ws
+    with _server_lock:
+        if _server is None or _server_workspace != ws:
+            _server = IDEServer(project_root=ws)
+            _server_workspace = ws
     return _server
 
 

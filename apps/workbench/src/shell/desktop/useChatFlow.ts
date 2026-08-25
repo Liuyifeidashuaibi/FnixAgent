@@ -263,7 +263,20 @@ function createStreamLocalState(
     rafId = null;
     if (!buffered || !aid) return;
     commitMessages(
-      messagesRef.current.map((m) => (m.id === aid ? { ...m, content: m.content + buffered } : m)),
+      messagesRef.current.map((m) => {
+        if (m.id !== aid) return m;
+        // 正文开始上屏 = 思考阶段结束：把仍在 streaming 的 thinking 块收尾为
+        // 「分析完成」（Trae/Cursor 行为），避免出现「转圈块 + 正文同时滚动」
+        const patch: Partial<ChatMsg> = { content: m.content + buffered };
+        if (m.blocks?.some((b) => b.kind === "thinking" && b.isStreaming !== false)) {
+          patch.blocks = m.blocks.map((b) =>
+            b.kind === "thinking" && b.isStreaming !== false
+              ? { ...b, isStreaming: false, isComplete: true }
+              : b,
+          );
+        }
+        return { ...m, ...patch };
+      }),
     );
   };
 
@@ -271,12 +284,16 @@ function createStreamLocalState(
     if (!delta) return;
     const aid = streamAssistantIdRef.current;
     if (!aid) return;
-    // 直接追加到 m.content（自然流式，零延迟）
+    // RAF 帧批处理：chunk 先进缓冲，下一帧统一 commit 到 React。
+    // 同一帧内到达的多个 chunk 合并为一次 re-render（渲染风暴根治），
+    // 文字依然 16ms 内上屏——LLM 生成速度 = 用户看到速度，无卡顿无等待。
     // 段落分隔由后端控制：在 _stream_completion_summary 开头发 \n\n，
     // _build_review_message 前由后端加 \n\n 前缀
-    commitMessages(
-      messagesRef.current.map((m) => (m.id === aid ? { ...m, content: m.content + delta } : m)),
-    );
+    streamBufRef.current += delta;
+    if (rafId === null) {
+      rafId = requestAnimationFrame(() => flushStreamBuf());
+      streamRafRef.current = rafId;
+    }
   };
 
   const appendStructuredBlock = (block: StructuredBlock) => {
@@ -471,6 +488,9 @@ export function useChatFlow(opts: {
   const workspace = (opts.workspace || "").trim() || FALLBACK_WORKSPACE;
   const storageKey = `${workspace}::${opts.mode}`;
   const workMode = opts.workMode || "craft";
+  // opts 是每次渲染新建的对象，用 ref 保持最新引用，避免作为 useCallback 依赖导致 send 每次重建
+  const optsRef = useRef(opts);
+  optsRef.current = opts;
   const [threads, setThreads] = useState<ChatThread[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMsg[]>([]);
@@ -706,18 +726,18 @@ export function useChatFlow(opts: {
       const runPhase = useRunStore.getState().phase;
       if (runPhase === "streaming" || runPhase === "stopping") return;
 
-      const llm = pickFnixLlm(opts.providers, opts.apiKey, opts.providerName, opts.model);
+      const llm = pickFnixLlm(optsRef.current.providers, optsRef.current.apiKey, optsRef.current.providerName, optsRef.current.model);
       if (!llm?.api_key && llm?.provider !== "ollama") {
         setError("请先在「设置」中配置 API Key（BYOK），再发送。");
         return;
       }
 
-      if (opts.mode === "code" && workspace === FALLBACK_WORKSPACE) {
+      if (optsRef.current.mode === "code" && workspace === FALLBACK_WORKSPACE) {
         setError("请先在左侧打开一个仓库，再发送代码修改任务。");
         return;
       }
 
-      const backend = pickChatBackend(opts.mode, workMode, workspace, trimmed);
+      const backend = pickChatBackend(optsRef.current.mode, workMode, workspace, trimmed);
       if (backend === "code" && workspace === FALLBACK_WORKSPACE) {
         setError("请先在左侧打开一个仓库，再执行代码修改。");
         return;
@@ -882,7 +902,7 @@ export function useChatFlow(opts: {
         void persist(threadId!, title, messagesRef.current);
       }
     },
-    [activeId, opts, persist, streaming, workMode, workspace, commitMessages],
+    [activeId, persist, streaming, workMode, workspace, commitMessages],
   );
 
   /**

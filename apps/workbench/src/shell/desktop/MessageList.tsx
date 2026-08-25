@@ -94,9 +94,16 @@ export function MessageList({
     feed.scrollTop = feed.scrollHeight;
   }, []);
 
-  // Reset window when switching threads (length shrinks a lot)
+  // Reset window and scroll state when switching threads (length shrinks a lot)
   useEffect(() => {
     if (messages.length <= MESSAGE_WINDOW) setShowAll(false);
+    // 会话切换：消息数量骤降时重置滚动状态，避免残留 jump 按钮、新消息计数、pinned 标记
+    if (messages.length < lastMsgCountRef.current) {
+      setShowJump(false);
+      setNewCount(0);
+      pinnedRef.current = true;
+    }
+    lastMsgCountRef.current = messages.length;
   }, [messages.length]);
 
   const onCopy = useCallback((id: string, text: string) => {

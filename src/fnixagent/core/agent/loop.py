@@ -355,10 +355,15 @@ class AgenticLoop:
         system_prompt: str | None = None,
         force_tool_delivery: bool = False,
         max_reflect_rounds: int = 3,
+        llm_stream_call: Callable[..., Any] | None = None,
     ):
         """
         Args:
             llm_call: LLM 调用函数 (messages, tools) -> response
+            llm_stream_call: 可选的流式 LLM 调用函数
+                async (messages, tools, on_chunk) -> response，与 llm_call
+                返回同样的 dict，同时在生成过程中通过 on_chunk(text) 逐
+                chunk 回调正文，实现 token 级流式输出（Trae/Cursor 体验）。
             tool_executor: 工具执行器 (tool_name, args) -> ToolResult
             workspace_root: 工作区根目录
             max_steps: 最大执行步数 (防止无限循环)
@@ -373,6 +378,7 @@ class AgenticLoop:
                 当连续工具失败 ≥2 次时，触发一次自反思并注入到下轮上下文。
         """
         self._llm = llm_call
+        self._llm_stream = llm_stream_call
         self._tools = tool_executor
         self.workspace_root = str(Path(workspace_root).resolve())
         self.max_steps = max_steps
@@ -873,6 +879,7 @@ class AgenticLoop:
                 Message(
                     role=MessageRole(str(msg.get("role", "user")).lower()),
                     content=str(msg.get("content", "")),
+                    tool_call_id=msg.get("tool_call_id") if msg.get("role", "").lower() == "tool" else None,
                 )
                 for msg in resume_from["messages"]
             ]
@@ -977,13 +984,28 @@ class AgenticLoop:
                 _hb_task = asyncio.create_task(_heartbeat())
 
                 llm_result = None
+                # 流式状态: on_chunk 回调会把它置位, 用于后文跳过整段重发
+                stream_state = {"emitted": False}
+
+                def _on_llm_chunk(_text: str) -> None:
+                    # 流式正文 chunk 直接进入心跳队列, 由下方消费循环立即
+                    # yield 给前端, 实现 token 级上屏(不再等整段生成完)。
+                    if _text:
+                        stream_state["emitted"] = True
+                        _hb_queue.put_nowait(("text", _text))
+
                 try:
                     # 把 _call_llm 与心跳消费合并: 任意一方完成都唤醒
                     # 注意: llm_task 本身已是 Task, 直接放入 asyncio.wait 等待集合即可
                     # (asyncio.wait 在 FIRST_COMPLETED 下不会取消未完成的 task)。
                     # 不能用 asyncio.create_task(asyncio.shield(llm_task)) —— shield 返回
                     # Future 而非 coroutine, create_task 会抛 "a coroutine was expected"。
-                    llm_task = asyncio.create_task(self._call_llm(messages_for_llm))
+                    if self._llm_stream is not None:
+                        llm_task = asyncio.create_task(
+                            self._call_llm_stream(messages_for_llm, _on_llm_chunk)
+                        )
+                    else:
+                        llm_task = asyncio.create_task(self._call_llm(messages_for_llm))
                     while True:
                         hb_task = asyncio.create_task(_hb_queue.get())
                         try:
@@ -1076,8 +1098,9 @@ class AgenticLoop:
                 thought_data = ""
                 if reasoning_content and reasoning_content.strip():
                     thought_data = reasoning_content[:2000]
-                elif text_content and tool_calls:
+                elif text_content and tool_calls and not stream_state["emitted"]:
                     # ReAct 决策独白：LLM 在调用工具前给出的"我要做什么"说明
+                    # （流式模式下独白已逐 chunk 上屏为 text，不再重复发 thought）
                     thought_data = strip_pseudo_tool_markup(text_content)[:500] or ""
 
                 if thought_data:
@@ -1094,7 +1117,9 @@ class AgenticLoop:
                             or "已将源码写入 `.fnix/artifacts/`，可直接打开 index.html 验收。"
                         )
                         await _aflush_step()
-                        yield {"type": "text", "data": display}
+                        if not stream_state["emitted"]:
+                            # 流式模式下正文已逐 chunk 上屏，跳过整段重发
+                            yield {"type": "text", "data": display}
                         # AG-UI StepFinished — 标记当前步骤完成，ProgressStrip 显示 ✓
                         yield {
                             "type": "step_end",
@@ -1129,7 +1154,9 @@ class AgenticLoop:
 
                     display = strip_pseudo_tool_markup(text_content) or text_content
                     await _aflush_step()
-                    yield {"type": "text", "data": display}
+                    if not stream_state["emitted"]:
+                        # 流式模式下正文已逐 chunk 上屏，跳过整段重发
+                        yield {"type": "text", "data": display}
                     # AG-UI StepFinished — 标记当前步骤完成，ProgressStrip 显示 ✓
                     yield {
                         "type": "step_end",
@@ -1803,6 +1830,90 @@ class AgenticLoop:
                     return None
             self._last_llm_error = f"LLM 调用失败: {err}"[:1200]
             return None
+
+    async def _call_llm_stream(
+        self,
+        messages: list[dict],
+        on_chunk: Callable[[str], Any],
+    ) -> dict | None:
+        """流式调用 LLM：正文逐 chunk 经 on_chunk 流出，返回与 _call_llm 相同结果。
+
+        错误语义与 _call_llm 对齐：
+          - 未产出任何 chunk 时出错：完整回退到非流式 _call_llm（含 tools
+            被拒降级重试），保证流式路径不降低可靠性；
+          - 已产出部分 chunk 后中途断流：无法安全重试（重试会导致正文
+            重复），记录错误返回 None，由主循环发 error 事件，前端已显示
+            的部分正文保留。
+        """
+        state = {"emitted": False}
+
+        def _chunk(text: str) -> None:
+            if text:
+                state["emitted"] = True
+            on_chunk(text)
+
+        try:
+            tools = (
+                self._tools.get_tool_definitions()
+                if hasattr(self._tools, "get_tool_definitions")
+                else None
+            )
+            self._last_llm_error = None
+            self._tools_degraded_this_step = False
+            try:
+                result = await self._llm_stream(messages, tools, _chunk)
+                return result
+            except Exception as e:
+                err = str(e)
+                err_lower = err.lower()
+                sequence_error = any(
+                    token in err_lower
+                    for token in (
+                        "must be a response to",
+                        "preceeding message",
+                        "preceding message",
+                        "tool_call_id",
+                    )
+                )
+                tools_rejected = not sequence_error and any(
+                    token in err_lower
+                    for token in ("tool", "function calling", "function_call", "tool_choice")
+                )
+                if tools_rejected and not state["emitted"]:
+                    logger.warning(
+                        "LLM stream rejected tools payload; retrying without tools: %s",
+                        err[:400],
+                    )
+                    self._tools_degraded_this_step = True
+                    try:
+                        return await self._llm_stream(messages, None, _chunk)
+                    except Exception as e2:
+                        if state["emitted"]:
+                            self._last_llm_error = f"LLM 调用失败: {e2}"[:1200]
+                            return None
+                        # 降级流式也失败且未产出 → 落入非流式兜底
+                        logger.warning(
+                            "Degraded stream failed; falling back to non-stream: %s",
+                            str(e2)[:400],
+                        )
+                elif state["emitted"]:
+                    # 中途断流：正文已部分上屏，保留现场不再重试
+                    self._last_llm_error = f"LLM 流式中断: {err}"[:1200]
+                    return None
+                else:
+                    logger.warning(
+                        "Stream call failed before first chunk; falling back to non-stream: %s",
+                        err[:400],
+                    )
+        except Exception as e:
+            self._last_llm_error = f"LLM 调用失败: {e}"[:1200]
+            return None
+        # 非流式兜底（首个 chunk 前失败）——复用 _call_llm 全套错误处理。
+        # 注意：上面已清空 _last_llm_error/_tools_degraded_this_step，
+        # 若 _call_llm 内部触发降级会重新置位。
+        if not state["emitted"]:
+            return await self._call_llm(messages)
+        return None
 
     def _parse_llm_response(self, llm_result: dict) -> tuple[str, list[dict] | None, str]:
         """解析 LLM 响应，提取文本、工具调用（含伪 XML 恢复）与 reasoning_content。

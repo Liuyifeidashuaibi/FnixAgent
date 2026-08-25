@@ -184,7 +184,7 @@ export function ReviewView({
               拒绝
             </button>
           )}
-          {selected && onAcceptFile && changes.length > 1 ? (
+          {selected && onAcceptFile && changes.length >= 1 ? (
             <button
               type="button"
               className="fnix-review-btn ghost"

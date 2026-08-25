@@ -208,6 +208,10 @@ class AgentKernel:
         alive_pids = [pid for pid, p in self._processes.items() if p.is_alive]
         for pid in alive_pids:
             await self.scheduler.suspend(pid)
+            # 标记为非存活，保留进程记录供审计 (不删除)
+            proc = self._processes.get(pid)
+            if proc is not None:
+                proc.is_alive = False
 
         # 2. 停止调度器
         await self.scheduler.stop()
@@ -434,6 +438,8 @@ class AgentKernel:
                 duration_ms=(time.monotonic() - start_time) * 1000,
             )
         # MODIFY: 更新 args (类型安全: 不破坏 messages 列表结构)
+        # 先浅拷贝 req.args 避免直接修改传入对象
+        req.args = dict(req.args)
         if input_result.modified and input_result.modified_content is not None:
             modified = input_result.modified_content
             if "content" in req.args:
@@ -701,11 +707,14 @@ class AgentKernel:
         name = req.args.get("name", "child")
         capabilities = set(req.args.get("capabilities", []))
         priority_str = req.args.get("priority", "normal")
-        priority = (
-            AgentPriority[priority_str.upper()]
-            if isinstance(priority_str, str)
-            else AgentPriority(int(priority_str))
-        )
+        try:
+            priority = (
+                AgentPriority[priority_str.upper()]
+                if isinstance(priority_str, str)
+                else AgentPriority(int(priority_str))
+            )
+        except (KeyError, ValueError):
+            return SyscallResponse.err(f"无效的优先级: {priority_str}")
         pid = await self.spawn(
             name=name,
             parent_pid=req.caller_pid,
