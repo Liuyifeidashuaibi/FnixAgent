@@ -156,3 +156,13 @@ unit-final.txt
 
 # --- Agent temp workspace ---
 .temp/
+
+# --- env backups (never commit) ---
+.env.*
+!.env.example
+
+# --- runtime artifacts (never commit) ---
+/screenshots/
+src/data/intelligence/
+src/data/traces/
+src/data/topology/snapshots/work_*.json.tmp_trace_integration/
