@@ -1067,6 +1067,17 @@ def build_work_agent_loop(
                     temperature=temperature,
                     max_tokens=max_tokens,
                 )
+
+            async def llm_stream_call(messages, tools=None, on_chunk=None):
+                # 真·token 级流式：正文逐 chunk 上屏，工具调用从流尾解析，
+                # 返回结构与 llm_call 完全一致（Trae/Cursor 同架构）。
+                return await adapter.chat_stream(
+                    messages,
+                    tools=tools,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    on_chunk=on_chunk,
+                )
         else:
             # 未配置请求级 LLM 时, 回退到全局调度器的 LLMRouter (含 MockLLMProvider)。
             # 这样在无 API Key 的离线/测试环境下, 仍能用 MockLLM 完成完整流程验证。
@@ -1083,8 +1094,41 @@ def build_work_agent_loop(
                 async def llm_call(messages, tools=None):
                     raise RuntimeError(_not_configured_msg)
 
+        _llm_stream = llm_stream_call if adapter.is_configured else None
+
+        # 子代理: 派生隔离子循环执行探索性子任务(只读工具集), 保护主上下文预算
+        try:
+            from fnixagent.core.agent.subagent import register_subagent_tool
+
+            register_subagent_tool(
+                registry,
+                root,
+                make_llm=lambda: (
+                    llm_call,
+                    llm_stream_call if adapter.is_configured else None,
+                ),
+            )
+        except Exception as exc:
+            logger.warning("subagent tool register skipped: %s", exc)
+
+        # AgentTeams: 多角色并行协作(fan_out/任务清单/信箱), 仅主循环可调度
+        try:
+            from fnixagent.core.teams.runner import register_team_tools
+
+            register_team_tools(
+                registry,
+                root,
+                make_llm=lambda: (
+                    llm_call,
+                    llm_stream_call if adapter.is_configured else None,
+                ),
+            )
+        except Exception as exc:
+            logger.warning("team tools register skipped: %s", exc)
+
         loop = AgenticLoop(
             llm_call=llm_call,
+            llm_stream_call=_llm_stream,
             tool_executor=tool_executor,
             workspace_root=root,
             max_steps=max_steps,
