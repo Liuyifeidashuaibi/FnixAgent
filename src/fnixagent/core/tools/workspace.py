@@ -240,7 +240,50 @@ class ToolResult:
 
 
 # ============================================================
-# 工作区上下文
+# Windows Job Object 软沙箱接入 (run_command 子进程树兜底)
+# ============================================================
+
+
+def _attach_job_sandbox(pid: int) -> Any | None:
+    """把刚 spawn 的子进程纳入 per-call 的 Job Object 软沙箱。
+
+    行为约定:
+      - 默认开启; 设置环境变量 FNIX_SANDBOX_JOB=0 可显式退出
+      - 仅 Windows 生效, 其他平台直接返回 None
+      - fail-open: 任何失败只记 warning 并返回 None, 绝不影响命令执行
+      - 返回的 job 必须作为调用方局部变量使用(不可跨协程共享),
+        命令结束后由调用方 close(); 超时 kill 场景先 kill() 再 close()
+
+    Args:
+        pid: 子进程 PID
+
+    Returns:
+        WinJobObject 实例; 沙箱不可用/被禁用/失败时返回 None
+    """
+    try:
+        if os.name != "nt":
+            return None
+        if str(os.environ.get("FNIX_SANDBOX_JOB", "")).strip() == "0":
+            return None
+
+        # 延迟导入: 非 Windows / 循环导入场景都安全
+        from fnixagent.core.sandbox import WinJobObject
+
+        job = WinJobObject()
+        if not job.create():
+            return None
+        if not job.assign_pid(pid):
+            job.close()
+            return None
+        _logger.debug("run_command 子进程已纳入 Job Object 沙箱: pid=%s", pid)
+        return job
+    except Exception as exc:  # fail-open: 沙箱故障绝不阻塞业务
+        _logger.warning("Job Object 沙箱接入失败(fail-open, 不影响执行): %s", exc)
+        return None
+
+
+# ============================================================
+# 核心工具
 # ============================================================
 
 
@@ -679,6 +722,9 @@ class WorkspaceTools:
     ) -> ToolResult:
         """执行 Shell 命令
 
+        Windows 下默认将子进程树纳入 Job Object 软沙箱(整树兜底击杀);
+        设置环境变量 FNIX_SANDBOX_JOB=0 可显式关闭。
+
         Args:
             command: 要执行的命令
             cwd: 工作目录 (相对于 workspace_root)
@@ -705,11 +751,37 @@ class WorkspaceTools:
                 cwd=work_dir,
             )
 
+            # 软沙箱: spawn 成功后把子进程树纳入 per-call Job Object。
+            # 局部变量保证并发调用互不干扰; 接入失败返回 None(fail-open)。
+            sandbox_job = _attach_job_sandbox(process.pid)
+
             try:
                 stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=timeout)
             except TimeoutError:
-                process.kill()
+                # 优先用 TerminateJobObject 终结整棵进程树(比 taskkill 更快更可靠,
+                # 且天然覆盖沙箱接入后新生的孙子进程); 沙箱不可用时回退 taskkill
+                if sandbox_job is not None:
+                    sandbox_job.kill()
+                # Windows 上 process.kill() 只终止主进程不终止子进程树，
+                # 使用 taskkill /F /T /PID 确保终止整个进程树
+                if os.name == "nt" and process.pid:
+                    try:
+                        import subprocess as _sp
+                        _sp.run(
+                            ["taskkill", "/F", "/T", "/PID", str(process.pid)],
+                            capture_output=True,
+                            timeout=5,
+                        )
+                    except Exception:
+                        process.kill()
+                else:
+                    process.kill()
                 return ToolResult(success=False, error=f"命令超时 ({timeout}s)")
+            finally:
+                # 命令结束(正常/超时)后释放 job 句柄;
+                # KILL_ON_JOB_CLOSE 兜底确保不遗留孤儿进程树
+                if sandbox_job is not None:
+                    sandbox_job.close()
 
             output = stdout.decode("utf-8", errors="replace").strip()
             error_output = stderr.decode("utf-8", errors="replace").strip()
@@ -816,7 +888,7 @@ class WorkspaceTools:
                                 if m:
                                     url = unquote(m.group(1))
                             results.append(f"[{i + 1}] {title_clean}\n    URL: {url}")
-                    except Exception:
+                    except Exception:  # noqa: S110 — HTML 版失败时静默降级
                         pass  # HTML 版失败时静默降级
 
                 return ToolResult(
