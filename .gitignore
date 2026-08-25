@@ -171,4 +171,4 @@ src/data/topology/snapshots/work_*.json
 apps/workbench/data/intelligence/
 apps/workbench/data/traces/
 apps/workbench/data/topology/snapshots/work_*.json
-.tmp_trace_integration/
+.tmp_trace_integration/.tmp/fullchain-ws/
