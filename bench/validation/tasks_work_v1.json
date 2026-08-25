@@ -1,0 +1,123 @@
+{
+  "version": "work-v1",
+  "description": "FnixAgent Work 模式真实任务验证清单 v1 — 12 任务覆盖文件创建/多产物/修改/中文语义/确定性计算/Office",
+  "notes": "checks.type: file_exists | contains | regex | not_contains；全部为确定性判定（Forge 哲学：无 LLM 裁判）",
+  "tasks": [
+    {
+      "id": "W01_regex_note",
+      "difficulty": "easy",
+      "prompt": "创建 regex_note.md，内容包括：正则表达式的一句话定义、一个常用元字符速查表（至少含 \\d \\w .* 三行）、一个 Python re 示例代码块。",
+      "checks": [
+        {"type": "file_exists", "path": "regex_note.md"},
+        {"type": "contains", "path": "regex_note.md", "value": "\\d"},
+        {"type": "contains", "path": "regex_note.md", "value": "```"}
+      ]
+    },
+    {
+      "id": "W02_sales_csv",
+      "difficulty": "easy",
+      "prompt": "创建 sales_q3.csv，第一行为表头（month,region,amount），下面写 5 行示例销售数据，金额为数字。",
+      "checks": [
+        {"type": "file_exists", "path": "sales_q3.csv"},
+        {"type": "contains", "path": "sales_q3.csv", "value": "month,region,amount"}
+      ]
+    },
+    {
+      "id": "W03_html_page",
+      "difficulty": "easy",
+      "prompt": "创建单页 personal_intro.html：包含 <!DOCTYPE html>、<title>、一个 <h1> 标题和一段 <p> 自我介绍示例文字。",
+      "checks": [
+        {"type": "file_exists", "path": "personal_intro.html"},
+        {"type": "contains", "path": "personal_intro.html", "value": "<!DOCTYPE html>"},
+        {"type": "regex", "path": "personal_intro.html", "value": "<h1>.+</h1>"}
+      ]
+    },
+    {
+      "id": "W04_fizzbuzz_py",
+      "difficulty": "medium",
+      "prompt": "创建 fizzbuzz.py：实现标准 FizzBuzz（1 到 100，3 的倍数打印 Fizz，5 的倍数打印 Buzz，两者倍数打印 FizzBuzz），并带 if __name__ == \"__main__\" 入口。",
+      "checks": [
+        {"type": "file_exists", "path": "fizzbuzz.py"},
+        {"type": "contains", "path": "fizzbuzz.py", "value": "FizzBuzz"},
+        {"type": "contains", "path": "fizzbuzz.py", "value": "__main__"}
+      ]
+    },
+    {
+      "id": "W05_config_json",
+      "difficulty": "easy",
+      "prompt": "创建 config.json：合法 JSON，包含字段 name(字符串)、version(字符串)、features(字符串数组，至少 3 项)。",
+      "checks": [
+        {"type": "file_exists", "path": "config.json"},
+        {"type": "json_valid", "path": "config.json"},
+        {"type": "json_array_min", "path": "config.json", "key": "features", "min": 3}
+      ]
+    },
+    {
+      "id": "W06_two_files",
+      "difficulty": "medium",
+      "prompt": "一次任务创建两个文件：README.md 写项目简介一句话；notes.md 列出 3 条待办事项（用 - 开头的列表）。",
+      "checks": [
+        {"type": "file_exists", "path": "README.md"},
+        {"type": "file_exists", "path": "notes.md"},
+        {"type": "regex", "path": "notes.md", "value": "(?m)^-\\s"}
+      ]
+    },
+    {
+      "id": "W07_sort_compare_table",
+      "difficulty": "medium",
+      "prompt": "创建 compare.md：用 Markdown 表格对比快速排序、归并排序、冒泡排序的平均时间复杂度、最坏时间复杂度、是否稳定。表格需使用标准 Markdown 表头分隔行。",
+      "checks": [
+        {"type": "file_exists", "path": "compare.md"},
+        {"type": "regex", "path": "compare.md", "value": "\\|[-\\s:]+\\|"},
+        {"type": "contains", "path": "compare.md", "value": "O(n log n)"}
+      ]
+    },
+    {
+      "id": "W08_excel_sheet",
+      "difficulty": "hard",
+      "prompt": "创建 Excel 文件 inventory.xlsx：Sheet 名为 stock，表头四列：商品、数量、单价、金额，并填入 3 行示例商品数据。",
+      "checks": [
+        {"type": "xlsx_exists", "path": "inventory.xlsx"}
+      ]
+    },
+    {
+      "id": "W09_docx_resume",
+      "difficulty": "hard",
+      "prompt": "创建 Word 简历模板 resume.docx：包含姓名占位（如 【姓名】）、一节教育经历、一节工作经历，每节至少一个小标题和一行正文。",
+      "checks": [
+        {"type": "docx_exists", "path": "resume.docx"}
+      ]
+    },
+    {
+      "id": "W10_edit_existing",
+      "difficulty": "medium",
+      "pre_seed": {
+        "draft.txt": "第一行：项目草稿。\n第二行：待补充结论。\n"
+      },
+      "prompt": "工作区已有 draft.txt。请读取它，在文件末尾追加一行新内容：\"结论：本项目已通过验证。\"，保留原有两行不变。",
+      "checks": [
+        {"type": "file_exists", "path": "draft.txt"},
+        {"type": "contains", "path": "draft.txt", "value": "第一行：项目草稿"},
+        {"type": "contains", "path": "draft.txt", "value": "结论：本项目已通过验证"}
+      ]
+    },
+    {
+      "id": "W11_snow_poem_zh",
+      "difficulty": "easy",
+      "prompt": "创作一首关于雪的四行中文短诗，保存为 poem.txt，每行一句。",
+      "checks": [
+        {"type": "file_exists", "path": "poem.txt"},
+        {"type": "contains", "path": "poem.txt", "value": "雪"}
+      ]
+    },
+    {
+      "id": "W12_primes_count",
+      "difficulty": "hard",
+      "prompt": "计算 100 以内素数的个数，把结果写入 primes.txt，内容为一句话说明个数并列出这些素数。",
+      "checks": [
+        {"type": "file_exists", "path": "primes.txt"},
+        {"type": "contains", "path": "primes.txt", "value": "25"}
+      ]
+    }
+  ]
+}

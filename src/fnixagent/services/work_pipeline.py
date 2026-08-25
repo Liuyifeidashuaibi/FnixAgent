@@ -1929,6 +1929,32 @@ async def run_work_stream(
         prev=evo_state,
     )
     yield {"type": "evolution", "data": evo_state}
+
+    # Craft 产物回填自然路径：Office 专家等工具只写 `.fnix/artifacts/`，
+    # 这里把成品镜像回工作区根的对应相对路径（对齐 write_file 的
+    # 「自然路径 + artifacts 镜像」契约），保证用户在工作区直接看到最终文档。
+    try:
+        import shutil as _shutil
+
+        _prefix = ".fnix/artifacts/"
+        for _a in artifacts or []:
+            _p = str((_a or {}).get("path") or "").replace("\\", "/")
+            if not _p.startswith(_prefix):
+                continue
+            _natural = _p[len(_prefix) :].lstrip("/")
+            if not _natural or _natural.startswith(".fnix/"):
+                continue
+            _src = Path(workspace) / _p
+            _dst = Path(workspace) / _natural
+            try:
+                if _src.is_file() and not _dst.exists():
+                    _dst.parent.mkdir(parents=True, exist_ok=True)
+                    _shutil.copy2(_src, _dst)
+            except Exception:
+                _logger.debug("artifact backfill skipped: %s", _natural, exc_info=True)
+    except Exception:
+        _logger.debug("artifact backfill stage failed", exc_info=True)
+
     yield {
         "type": "done",
         "data": {
