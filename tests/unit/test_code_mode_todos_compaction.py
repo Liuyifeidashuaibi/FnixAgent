@@ -125,8 +125,16 @@ class TestCodeModeTodoStore:
         built_ctx.messages = [{"role": "system", "content": "sys"}]
         ctx_builder = MagicMock()
         ctx_builder.build_context = AsyncMock(return_value=built_ctx)
-        llm = MagicMock()
-        llm.complete = AsyncMock(return_value='{"steps":[]}')
+        # 注意: 不能用 MagicMock() — 它会自动生成 stream_complete 属性,
+        # 使 _call_llm_streaming 走流式分支(同步 mock 不可迭代 → 异常被吞)。
+        # 用仅带 complete 的后端对象, 走 _call_llm_with_progress 降级路径。
+        class _NonStreamLLM:
+            def __init__(self):
+                from unittest.mock import AsyncMock
+
+                self.complete = AsyncMock(return_value='{"steps":[]}')
+
+        llm = _NonStreamLLM()
 
         agent = CodingAgent(tools, ctx_builder, llm, workspace=str(tmp_path))
 
@@ -137,6 +145,7 @@ class TestCodeModeTodoStore:
 
         # 验证 todos_block 被注入到 messages
         call_args = llm.complete.call_args
+        assert call_args is not None, "complete 应被调用(降级路径)"
         messages = call_args.kwargs.get("messages") or call_args.args[0].get("messages")
         assert messages is not None
         # 应有一个 system 消息包含 todos_block
