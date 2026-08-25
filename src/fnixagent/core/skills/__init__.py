@@ -30,6 +30,8 @@ from fnixagent.core.skills.evolver import (
     EvolutionResult,
     HumanInTheLoop,
     SkillEvolver,
+    get_hitl,
+    reset_hitl_for_tests,
 )
 from fnixagent.core.skills.injector import format_builtin_skills_block
 from fnixagent.core.skills.library import CapturedSkill, SkillLibrary
@@ -70,6 +72,8 @@ __all__ = [
     "EvolutionResult",
     "EvolutionRecord",
     "HumanInTheLoop",
+    "get_hitl",
+    "reset_hitl_for_tests",
 ]
 
 

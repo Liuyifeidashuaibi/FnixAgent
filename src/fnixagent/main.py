@@ -10,6 +10,7 @@ FastAPI 主入口 - fnixagent 智能办公助手服务。
 # This software and its source code are proprietary and confidential.
 # Unauthorized copying, modification, distribution, or use is strictly prohibited.
 
+import logging
 import os
 import sys
 import uuid
@@ -17,6 +18,8 @@ from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 
 import yaml
+
+_logger = logging.getLogger(__name__)
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -30,6 +33,7 @@ apply_profile_defaults()
 
 from fnixagent.api.routers import (
     admin,
+    ag_ui,
     agentos,
     audit,
     auth,
@@ -41,6 +45,7 @@ from fnixagent.api.routers import (
     documents,
     forge,
     harness,
+    hitl,
     memory,
     privacy,
     rbac,
@@ -333,6 +338,8 @@ app.include_router(benchmark.router, prefix="/api/v1")
 app.include_router(forge.router, prefix="/api/v1")
 app.include_router(skills.router, prefix="/api/v1")
 app.include_router(memory.router, prefix="/api/v1")
+app.include_router(ag_ui.router, prefix="/api/v1")
+app.include_router(hitl.router, prefix="/api/v1")
 
 
 # ---------------------------------------------------------------------------
@@ -410,9 +417,6 @@ import logging
 from fnixagent.core.gateway.capability import CapabilityMiddleware
 from fnixagent.core.gateway.middleware import GatewayMiddleware
 from fnixagent.core.profile import is_standalone
-
-_logger = logging.getLogger(__name__)
-
 
 _settings = Settings()
 # Standalone / debug：本机模式无需 JWT（自主设计 自托管）

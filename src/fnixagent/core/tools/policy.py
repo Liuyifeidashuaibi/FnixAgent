@@ -150,10 +150,44 @@ class ToolPolicy:
         self._lock = threading.Lock()
         # Explicit one-shot approvals: idempotency_key → True
         self._approvals: set[str] = set()
+        # Explicit user rejections (sticky until approved)
+        self._denied: set[str] = set()
 
     def approve(self, idempotency_key: str) -> None:
         with self._lock:
             self._approvals.add(idempotency_key)
+            self._denied.discard(idempotency_key)
+
+    def reject(self, idempotency_key: str) -> None:
+        """显式拒绝: 后续同参调用不再进入待审批列表。"""
+        with self._lock:
+            self._denied.add(idempotency_key)
+            self._approvals.discard(idempotency_key)
+
+    def pending_approvals(self, limit: int = 50) -> list[dict[str, Any]]:
+        """当前等待人工审批的高风险调用(未批准/未拒绝/未执行)。"""
+        items: list[dict[str, Any]] = []
+        with self._lock:
+            for e in reversed(self._audit[-200:]):
+                if len(items) >= limit:
+                    break
+                if e.allowed or e.risk not in (ToolRisk.SHELL, ToolRisk.DESTRUCTIVE):
+                    continue
+                key = e.idempotency_key
+                if key in self._approvals or key in self._denied:
+                    continue
+                ts, _ = self._cache.get(key, (0.0, None))
+                if ts:
+                    continue  # 已批准并执行过
+                items.append(
+                    {
+                        "idempotency_key": key,
+                        "tool": e.tool,
+                        "risk": e.risk.value,
+                        "timestamp": e.timestamp,
+                    }
+                )
+        return items
 
     def evaluate(
         self,
@@ -190,6 +224,22 @@ class ToolPolicy:
                     del self._cache[key]
 
         requires = risk in {ToolRisk.SHELL, ToolRisk.DESTRUCTIVE}
+        if (
+            requires
+            and key in self._denied
+            and not (approved or self.auto_approve_high or key in self._approvals)
+        ):
+            # 用户已显式拒绝: 保持拦截并给出明确原因
+            decision = PolicyDecision(
+                allowed=False,
+                risk=risk,
+                reason="denied_by_user",
+                requires_approval=False,
+                idempotency_key=key,
+                summary=f"{tool_name}:{risk.value}:denied",
+            )
+            self._record(tool_name, decision)
+            return decision
         if requires and not (approved or self.auto_approve_high or key in self._approvals):
             decision = PolicyDecision(
                 allowed=False,
@@ -245,13 +295,7 @@ class ToolPolicy:
         - 全局缓存会让并发/后续任务命中其他任务的路径结果，导致工作区串号
           （实测：task-7 的 ls 结果被 task-8 命中，agent 看到错误的目录内容）
         """
-        try:
-            from fnixagent.core.tools.policy import classify_risk
-
-            return classify_risk(tool_name) != ToolRisk.READ
-        except Exception:
-            # 兜底：无法判定风险时保守不缓存（宁可多执行一次，不串号）
-            return False
+        return classify_risk(tool_name) != ToolRisk.READ
 
     def recent_audit(self, limit: int = 50) -> list[dict[str, Any]]:
         with self._lock:

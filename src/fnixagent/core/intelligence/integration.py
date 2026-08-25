@@ -349,6 +349,33 @@ class IntelligenceIntegrator:
         except Exception:
             _logger.debug('Unhandled exception', exc_info=True)
 
+        # ---- 6b. STP 结晶闭环: 相关记忆积累到阈值 → 结晶为可复用技能 ----
+        # 触发条件: 成功任务 + 召回相关记忆 ≥5 条(NudgeEngine 同款阈值) + 无同名技能。
+        # 失败静默, 不阻塞主路径。
+        try:
+            if success and user_input.strip():
+                task_name = user_input.strip()[:50]
+                recalled_for_crystal = self.memory.recall(user_input, top_k=8)
+                mem_contents = []
+                for m in recalled_for_crystal or []:
+                    c = (
+                        m.get("content", "")
+                        if isinstance(m, dict)
+                        else getattr(m, "content", "")
+                    )
+                    if c:
+                        mem_contents.append(str(c))
+                if len(mem_contents) >= 5 and not self.skill_market.search(task_name):
+                    crystal = self.skill_market.crystallize_from_memories(
+                        memory_entries=mem_contents,
+                        task_name=task_name,
+                    )
+                    if crystal is not None:
+                        result["skill_crystallized"] = True
+                        result["crystallized_skill_id"] = crystal.skill_id
+        except Exception:
+            _logger.debug('Unhandled exception', exc_info=True)
+
         self._history.append(
             {
                 "ts": _now_iso(),

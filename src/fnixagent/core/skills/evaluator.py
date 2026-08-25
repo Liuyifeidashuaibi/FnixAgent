@@ -19,6 +19,11 @@ Skill Evaluator - 技能 9 维评估器。
 - DROP TABLE
 - sudo chmod 777
 - 等等
+
+LLM 复核（可选）：
+参考 bench/judge.py 的两级判定模式 —— 启发式全量打分，可选让 LLM 对
+"内容质量/可执行性/安全性"三个维度做语义复核，按 0.6/0.4 加权合成。
+任何 LLM 失败（超时/解析错误/异常）均静默回退纯启发式结果，零回归。
 """
 
 # -*- coding: utf-8 -*-
@@ -29,10 +34,19 @@ Skill Evaluator - 技能 9 维评估器。
 
 from __future__ import annotations
 
+import asyncio
+import json
+import logging
 import re
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Protocol
+
+_logger = logging.getLogger(__name__)
+
+# LLM 单次复核超时（秒），可经 config["llm_timeout"] 覆盖
+DEFAULT_LLM_TIMEOUT = 30.0
 
 
 class SkillProtocol(Protocol):
@@ -92,6 +106,7 @@ class DimensionScore:
     score: float  # 0.0 - 100.0
     reason: str = ""
     suggestions: list[str] = field(default_factory=list)
+    source: str = "heuristic"  # 评分来源: heuristic / llm_blend
 
 
 @dataclass
@@ -166,7 +181,22 @@ class SkillEvaluator:
         "limitations",
     ]
 
-    def __init__(self, config: dict[str, Any] = None):
+    # LLM 复核维度 → 评估维度的映射
+    JUDGE_DIMENSION_MAP = {
+        "content_quality": Dimension.STRUCTURE_QUALITY,      # 内容质量 → 结构质量
+        "executability": Dimension.ACTIONABLE_SPECIFICITY,   # 可执行性 → 可执行具体性
+        "safety": Dimension.REGRESSION_SAFETY,               # 安全性   → 回归安全性
+    }
+
+    # 合成权重：final = 0.6 * 启发式 + 0.4 * LLM（LLM 可用时）
+    BLEND_WEIGHT_HEURISTIC = 0.6
+    BLEND_WEIGHT_LLM = 0.4
+
+    def __init__(
+        self,
+        config: dict[str, Any] = None,
+        llm: Callable[..., Any] | None = None,
+    ):
         """初始化评估器。
 
         Args:
@@ -174,8 +204,12 @@ class SkillEvaluator:
                 - weights: 自定义维度权重
                 - blacklist: 自定义黑名单
                 - passing_threshold: 通过阈值 (默认 60)
+                - llm_timeout: LLM 复核超时秒数 (默认 30)
+            llm: 可选的评审模型调用函数 (async, OpenAI 兼容签名，
+                 约定同 bench/judge.Judge)。为 None 时行为与纯启发式完全一致。
         """
         self.config = config or {}
+        self.llm = llm
 
         # 合并权重
         self.weights = dict(self.DIMENSION_WEIGHTS)
@@ -188,6 +222,7 @@ class SkillEvaluator:
             self.blacklist.extend(self.config["blacklist"])
 
         self.passing_threshold = self.config.get("passing_threshold", 60)
+        self.llm_timeout = float(self.config.get("llm_timeout", DEFAULT_LLM_TIMEOUT))
 
     async def evaluate(
         self,
@@ -262,6 +297,167 @@ class SkillEvaluator:
             failure_modes=failure_modes,
             blacklist_violations=blacklist_violations,
             suggestions=suggestions,
+        )
+
+    # ------------------------------------------------------------------
+    # LLM 复核（参考 bench/judge.py 的两级判定模式）
+    # ------------------------------------------------------------------
+
+    async def evaluate_with_judge(
+        self,
+        skill: SkillProtocol,
+        trace: TraceProtocol = None,
+        llm: Callable[..., Any] | None = None,
+    ) -> SkillScore:
+        """启发式打分 + 可选 LLM 复核的两级评估。
+
+        流程：
+          1. 先跑现有启发式 9 维打分（与 evaluate() 完全一致）
+          2. 若有可用 LLM，构造紧凑 prompt 让其对内容质量/可执行性/安全性
+             三维度给 0-100 分和一句理由（严格 JSON 输出）
+          3. 对命中的三个维度按 0.6*启发式 + 0.4*LLM 合成，
+             DimensionScore.source 标注为 llm_blend，其余维度保持 heuristic
+
+        任何 LLM 失败（超时/异常/JSON 解析失败）均静默回退纯启发式结果。
+
+        Args:
+            skill: 技能实例
+            trace: 执行轨迹（可选）
+            llm: 本次复核使用的 LLM callable；为 None 时回退构造函数传入的 self.llm
+
+        Returns:
+            SkillScore: 综合评分
+        """
+        base = await self.evaluate(skill, trace)
+        judge_llm = llm or self.llm
+        if judge_llm is None:
+            return base
+
+        try:
+            llm_scores = await asyncio.wait_for(
+                self._llm_judge_scores(skill, trace, judge_llm),
+                timeout=self.llm_timeout,
+            )
+        except Exception as exc:
+            _logger.warning("LLM 技能复核不可用，退回纯启发式: %s", exc)
+            return base
+
+        if not llm_scores:
+            return base
+        return self._blend_with_llm(base, llm_scores)
+
+    def _build_judge_prompt(self, skill: SkillProtocol, trace: TraceProtocol) -> str:
+        """构造紧凑的 LLM 复核 prompt。"""
+        content = skill.content[:2000]
+        trace_summary = "无执行轨迹"
+        if trace is not None:
+            trace_summary = (
+                f"success={getattr(trace, 'success', None)}, "
+                f"duration_ms={getattr(trace, 'duration_ms', 0)}, "
+                f"tokens_used={getattr(trace, 'tokens_used', 0)}, "
+                f"errors={list(getattr(trace, 'errors', []) or [])[:5]}"
+            )
+        return f"""你是技能质量评审专家。请对以下技能文档做三个维度的语义评估。
+
+【技能名称】{skill.name}
+【技能描述】{(skill.description or '')[:300]}
+【技能内容（截断）】
+{content}
+
+【最近一次执行摘要】
+{trace_summary}
+
+请严格只输出如下 JSON（不要输出其他任何内容）：
+{{
+  "content_quality": {{"score": <0-100>, "reason": "<一句话理由>"}},
+  "executability": {{"score": <0-100>, "reason": "<一句话理由>"}},
+  "safety": {{"score": <0-100>, "reason": "<一句话理由>"}}
+}}
+判定标准：
+- content_quality: 结构完整性、表述清晰度、信息密度
+- executability: 指令是否明确可照做、步骤与输入输出是否完备
+- safety: 是否含高风险命令、是否给出必要的警告与防护"""
+
+    async def _llm_judge_scores(
+        self,
+        skill: SkillProtocol,
+        trace: TraceProtocol,
+        judge_llm: Callable[..., Any],
+    ) -> dict[str, dict[str, Any]] | None:
+        """调用 LLM 获取三维度评分；失败返回 None（静默回退）。"""
+        prompt = self._build_judge_prompt(skill, trace)
+        try:
+            resp = await judge_llm([{"role": "user", "content": prompt}], tools=None)
+            content = ""
+            if isinstance(resp, dict):
+                choices = resp.get("choices") or []
+                if choices:
+                    content = (choices[0].get("message") or {}).get("content", "") or ""
+            elif hasattr(resp, "content"):
+                content = resp.content or ""
+            payload = _extract_json(content)
+            if not payload:
+                _logger.warning("LLM 复核返回无法解析的 JSON，退回纯启发式")
+                return None
+            return payload
+        except Exception as exc:
+            _logger.warning("LLM 复核调用失败，退回纯启发式: %s", exc)
+            return None
+
+    def _blend_with_llm(
+        self,
+        base: SkillScore,
+        llm_scores: dict[str, dict[str, Any]],
+    ) -> SkillScore:
+        """将 LLM 三维评分与启发式结果按 0.6/0.4 加权合成。"""
+        blended_dims: dict[Dimension, DimensionScore] = {}
+        for dim, dim_score in base.dimensions.items():
+            blended_dims[dim] = DimensionScore(
+                dimension=dim_score.dimension,
+                score=dim_score.score,
+                reason=dim_score.reason,
+                suggestions=list(dim_score.suggestions),
+                source=dim_score.source,
+            )
+
+        for key, dim in self.JUDGE_DIMENSION_MAP.items():
+            entry = llm_scores.get(key)
+            if not isinstance(entry, dict):
+                continue  # 该维度 LLM 未给出 → 保持启发式分
+            try:
+                llm_score = float(entry.get("score"))
+            except (TypeError, ValueError):
+                continue
+            llm_score = min(100.0, max(0.0, llm_score))
+            heuristic = blended_dims[dim]
+            final = (
+                self.BLEND_WEIGHT_HEURISTIC * heuristic.score
+                + self.BLEND_WEIGHT_LLM * llm_score
+            )
+            llm_reason = str(entry.get("reason", "")).strip()[:120]
+            blended_dims[dim] = DimensionScore(
+                dimension=dim,
+                score=min(100.0, max(0.0, final)),
+                reason=(
+                    f"{heuristic.reason}; LLM: {llm_reason}"
+                    if llm_reason else heuristic.reason
+                ),
+                suggestions=list(heuristic.suggestions),
+                source="llm_blend",
+            )
+
+        total = self._calculate_total(blended_dims)
+
+        # 黑名单违规降级逻辑与 evaluate() 保持一致
+        if base.blacklist_violations:
+            total = max(0, total - 30)
+
+        return SkillScore(
+            total=total,
+            dimensions=blended_dims,
+            failure_modes=list(base.failure_modes),
+            blacklist_violations=list(base.blacklist_violations),
+            suggestions=list(base.suggestions),
         )
 
     def _evaluate_structure(self, skill: SkillProtocol) -> DimensionScore:
@@ -581,3 +777,15 @@ class SkillEvaluator:
             suggestions.append("CRITICAL: Remove high-risk commands from skill")
 
         return suggestions[:10]  # 最多 10 条建议
+
+
+def _extract_json(text: str) -> dict[str, Any]:
+    """从 LLM 回复中提取 JSON 对象（容忍 markdown 围栏），同 bench/judge.py。"""
+    text = re.sub(r"```(?:json)?\s*|\s*```", "", text or "")
+    match = re.search(r"\{.*\}", text, re.S)
+    if not match:
+        return {}
+    try:
+        return json.loads(match.group(0))
+    except json.JSONDecodeError:
+        return {}

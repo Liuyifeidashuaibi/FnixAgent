@@ -95,6 +95,8 @@ class SkillEvolver:
         evaluator: SkillEvaluator = None,
         min_improvement: float = 2.0,
         max_evolution_attempts: int = 3,
+        llm: Any = None,
+        llm_timeout_s: float = 30.0,
     ):
         """初始化进化器。
 
@@ -102,13 +104,22 @@ class SkillEvolver:
             evaluator: 技能评估器
             min_improvement: 最小改进幅度（分），低于此值视为无改进
             max_evolution_attempts: 最大进化尝试次数
+            llm: 可选的同步 LLM 调用 (messages, tools=None) -> resp。
+                提供时 _generate_improvement 走 LLM 重写(失败回退模板桩);
+                为 None 保持旧版纯模板行为(零回归)。
+            llm_timeout_s: 单次 LLM 改写超时秒数
         """
         self.evaluator = evaluator or SkillEvaluator()
         self.min_improvement = min_improvement
         self.max_evolution_attempts = max_evolution_attempts
+        self.llm = llm
+        self.llm_timeout_s = float(llm_timeout_s)
 
         # 进化历史记录
         self.history: list[EvolutionRecord] = []
+
+        # HITL 守关: before_skill_evolution 门(可选注入, 默认用全局单例)
+        self.hitl = get_hitl()
 
     async def evolve(
         self,
@@ -124,6 +135,28 @@ class SkillEvolver:
         Returns:
             EvolutionResult: 进化结果
         """
+        # 0. HITL 守关: before_skill_evolution(批准过/自动批准则放行, 否则挂起)
+        try:
+            gate = await self.hitl.check_gate(
+                "before_skill_evolution",
+                {"skill": skill.name, "version": skill.version},
+            )
+        except Exception:
+            gate = {"approved": True}  # 守关自身故障不阻塞进化(fail-open)
+        if not gate.get("approved"):
+            return EvolutionResult(
+                accepted=False,
+                baseline_score=0.0,
+                improved_score=0.0,
+                score_delta=0.0,
+                reason=(
+                    f"HITL gate before_skill_evolution: "
+                    f"{gate.get('reason', 'awaiting approval')}"
+                    + (f" (request_id={gate['request_id']})" if gate.get("request_id") else "")
+                ),
+                rollback_reason="human_in_the_loop_gate",
+            )
+
         # 1. 基线评估
         baseline_score = await self.evaluator.evaluate(skill, test_trace)
 
@@ -185,8 +218,62 @@ class SkillEvolver:
     ) -> str:
         """生成改进版本。
 
-        基于评估结果生成改进建议。
+        LLM 可用时: 让模型基于评估短板重写完整技能内容(失败回退模板);
+        否则: 旧版模板桩策略(按最弱维度追加占位段落)。
         """
+        if self.llm is not None:
+            improved = await self._generate_improvement_llm(skill, baseline_score)
+            if improved:
+                return improved
+        return await self._generate_improvement_template(skill, baseline_score)
+
+    async def _generate_improvement_llm(
+        self,
+        skill: SkillProtocol,
+        baseline_score: SkillScore,
+    ) -> str | None:
+        """LLM 驱动的技能改写。任何失败返回 None(调用方回退模板)。"""
+        import asyncio
+
+        weak = sorted(baseline_score.dimensions.items(), key=lambda x: x[1].score)[:3]
+        weak_lines = [
+            f"- {name}: {dim.score:.0f}/100 — {'; '.join(dim.suggestions[:3]) or '无建议'}"
+            for name, dim in weak
+        ]
+        system = (
+            "你是技能文档进化器。根据评估短板重写技能文档, 只输出重写后的完整 Markdown,"
+            "不要解释、不要代码围栏包裹全文。改进必须实质解决列出的短板。"
+        )
+        user = (
+            f"## 当前技能内容\n{skill.content[:6000]}\n\n"
+            f"## 评估短板\n" + "\n".join(weak_lines) + "\n\n"
+            "请输出改进后的完整技能内容。"
+        )
+        messages = [{"role": "system", "content": system}, {"role": "user", "content": user}]
+        try:
+            # 同步 llm 调用放线程池, 带超时保护
+            resp = await asyncio.wait_for(
+                asyncio.to_thread(self.llm, messages),
+                timeout=self.llm_timeout_s,
+            )
+            content, _ = _normalize_llm_content(resp)
+            content = (content or "").strip()
+        except Exception:
+            return None
+        # 校验: 非空 / 与原文不同 / 长度合理(防截断与复读)
+        if not content or content == skill.content:
+            return None
+        min_len = max(100, int(len(skill.content) * 0.3))
+        if len(content) < min_len or len(content) > 20000:
+            return None
+        return content
+
+    async def _generate_improvement_template(
+        self,
+        skill: SkillProtocol,
+        baseline_score: SkillScore,
+    ) -> str:
+        """旧版模板桩改进(离线/测试兼容路径)。"""
         content = skill.content
 
         # 根据最弱维度生成改进
@@ -280,6 +367,20 @@ class HumanInTheLoop:
         """
         self.auto_approve_gates = auto_approve_gates or []
         self.pending_approvals: dict[str, dict[str, Any]] = {}
+        # 决策记忆: (gate, context签名) → approved/rejected, 使"批准后重试"可闭环
+        self._decisions: dict[str, str] = {}
+
+    @staticmethod
+    def _context_signature(gate: str, context: dict[str, Any] = None) -> str:
+        """生成稳定的守关签名(同门类+同上下文 → 同一审批)。"""
+        import hashlib
+        import json as _json
+
+        try:
+            raw = _json.dumps(context or {}, sort_keys=True, ensure_ascii=False, default=str)
+        except Exception:
+            raw = str(context)
+        return f"{gate}:{hashlib.sha256(raw.encode('utf-8')).hexdigest()[:16]}"
 
     async def check_gate(
         self,
@@ -293,7 +394,10 @@ class HumanInTheLoop:
             context: 上下文信息
 
         Returns:
-            守关结果
+            守关结果:
+              - {"approved": True}                     自动批准 / 已有批准决策
+              - {"approved": False, "request_id": ...}  需人工审批(非阻塞)
+              - {"approved": False, "rejected": True}   曾被显式拒绝
         """
         if gate not in self.GATES:
             return {"approved": True, "reason": "Unknown gate type"}
@@ -302,11 +406,37 @@ class HumanInTheLoop:
         if gate in self.auto_approve_gates:
             return {"approved": True, "reason": "Auto-approved"}
 
-        # 创建审批请求
-        request_id = f"approval_{int(time.time())}"
+        sig = self._context_signature(gate, context)
+
+        # 复用既有决策: 批准过直接放行, 拒绝过快速失败
+        prior = self._decisions.get(sig)
+        if prior == "approved":
+            return {"approved": True, "reason": "Previously approved"}
+        if prior == "rejected":
+            return {
+                "approved": False,
+                "rejected": True,
+                "reason": "Previously rejected",
+            }
+
+        # 创建审批请求(同签名复用未决请求, 避免重复堆叠)
+        for existing in self.pending_approvals.values():
+            if existing.get("signature") == sig and existing.get("status") == "pending":
+                return {
+                    "approved": False,
+                    "reason": "Awaiting user approval",
+                    "request_id": next(
+                        k
+                        for k, v in self.pending_approvals.items()
+                        if v is existing
+                    ),
+                }
+
+        request_id = f"approval_{int(time.time())}_{len(self.pending_approvals)}"
         self.pending_approvals[request_id] = {
             "gate": gate,
             "context": context or {},
+            "signature": sig,
             "timestamp": time.time(),
             "status": "pending",
         }
@@ -328,11 +458,13 @@ class HumanInTheLoop:
         Returns:
             是否批准成功
         """
-        if request_id not in self.pending_approvals:
+        entry = self.pending_approvals.get(request_id)
+        if entry is None:
             return False
 
-        self.pending_approvals[request_id]["status"] = "approved"
-        self.pending_approvals[request_id]["feedback"] = feedback
+        entry["status"] = "approved"
+        entry["feedback"] = feedback
+        self._decisions[entry.get("signature", entry["gate"])] = "approved"
         return True
 
     async def reject(self, request_id: str, reason: str = "") -> bool:
@@ -345,11 +477,13 @@ class HumanInTheLoop:
         Returns:
             是否拒绝成功
         """
-        if request_id not in self.pending_approvals:
+        entry = self.pending_approvals.get(request_id)
+        if entry is None:
             return False
 
-        self.pending_approvals[request_id]["status"] = "rejected"
-        self.pending_approvals[request_id]["reason"] = reason
+        entry["status"] = "rejected"
+        entry["reason"] = reason
+        self._decisions[entry.get("signature", entry["gate"])] = "rejected"
         return True
 
     def get_pending_approvals(self) -> list[dict[str, Any]]:
@@ -357,3 +491,53 @@ class HumanInTheLoop:
         return [
             {"id": k, **v} for k, v in self.pending_approvals.items() if v["status"] == "pending"
         ]
+
+
+# ── 模块级辅助 ─────────────────────────────────────────────────
+
+
+def _normalize_llm_content(resp: Any) -> tuple[str, list[dict]]:
+    """归一化 LLM 返回为 (content, tool_calls)。
+
+    兼容 LLMResponse 对象(.content/.tool_calls)与 OpenAI choices 风格 dict。
+    """
+    if isinstance(resp, dict):
+        choice = (resp.get("choices") or [{}])[0]
+        msg = choice.get("message") or {}
+        return str(msg.get("content") or ""), list(msg.get("tool_calls") or [])
+    content = getattr(resp, "content", "")
+    tool_calls = getattr(resp, "tool_calls", None) or []
+    return str(content or ""), list(tool_calls)
+
+
+_DEFAULT_HITL: HumanInTheLoop | None = None
+
+
+def get_hitl() -> HumanInTheLoop:
+    """进程级 HumanInTheLoop 单例。
+
+    环境变量 FNIX_HITL_AUTO_APPROVE 控制默认放行的门类:
+      - "all"                          → 所有门自动批准(等价旧行为)
+      - 逗号分隔门名                    → 指定门自动批准
+      - 空/未设置                       → 全部需要人工审批(fail-closed)
+    """
+    global _DEFAULT_HITL
+    if _DEFAULT_HITL is None:
+        import os
+
+        raw = (os.getenv("FNIX_HITL_AUTO_APPROVE") or "").strip().lower()
+        if raw == "all":
+            auto = list(HumanInTheLoop.GATES)
+        elif raw:
+            auto = [g.strip() for g in raw.split(",") if g.strip() in HumanInTheLoop.GATES]
+        else:
+            auto = []
+        _DEFAULT_HITL = HumanInTheLoop(auto_approve_gates=auto)
+    return _DEFAULT_HITL
+
+
+def reset_hitl_for_tests() -> HumanInTheLoop:
+    """测试辅助: 重置为全自动批准单例。"""
+    global _DEFAULT_HITL
+    _DEFAULT_HITL = HumanInTheLoop(auto_approve_gates=list(HumanInTheLoop.GATES))
+    return _DEFAULT_HITL
