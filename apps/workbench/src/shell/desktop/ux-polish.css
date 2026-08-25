@@ -1,0 +1,234 @@
+/*
+ * UX-POLISH — OpenCode 式极简打磨（P0 批次）
+ * 原则：信息按需出现，平时零占用；不改变既有布局与视觉体系。
+ * 覆盖：会话累计小字 / 气泡 meta 行 / 工具耗时 / 同工具聚合 / ⋮ 更多菜单 / 内联审批卡
+ */
+
+/* ── UX P0-1: Composer 旁会话累计 tokens（暗色小字，非按钮） ── */
+.fnix-session-usage {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 2px;
+  color: var(--muted, #8e8e8e);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  user-select: none;
+}
+
+/* ── UX P0-1/P0-6: 气泡右下 meta 行（tokens · 用时 · 时间戳） ── */
+.fnix-msg-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: auto;
+  font-size: 10.5px;
+  color: var(--muted, #9ca3af);
+  font-variant-numeric: tabular-nums;
+}
+.fnix-msg-meta-ts {
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+.fnix-turn-assistant:hover .fnix-msg-meta-ts,
+.fnix-msg-meta-ts:focus-visible {
+  opacity: 1;
+}
+/* actions 行本身是 flex — meta 放最左，按钮组靠右 */
+.fnix-actions {
+  justify-content: space-between;
+}
+.fnix-actions .fnix-ibtn {
+  margin-left: 0;
+}
+
+/* ── UX P0-3: 工具卡右侧耗时小字 ── */
+.cl-tool-call-duration {
+  margin-left: auto;
+  padding-right: 4px;
+  font-size: 10.5px;
+  color: var(--fnix-text-tertiary, #9ca3af);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.cl-tool-call-header {
+  position: relative;
+}
+.cl-tool-call-status {
+  order: 1;
+}
+
+/* ── UX P0-3: 同名工具折叠组「read_file ×5 (2.1s)」 ── */
+.cl-tool-group {
+  margin: 3px 0;
+  border: 1px solid var(--fnix-border-subtle, #e5e7eb);
+  border-radius: 8px;
+  background: var(--fnix-bg-surface, #f8f9fa);
+  overflow: hidden;
+}
+.cl-tool-group-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 10px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--fnix-text-secondary, #6b7280);
+  text-align: left;
+}
+.cl-tool-group-row:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+.cl-tool-group-name {
+  font-weight: 500;
+}
+.cl-tool-group-count {
+  color: var(--fnix-text-tertiary, #9ca3af);
+  font-variant-numeric: tabular-nums;
+}
+.cl-tool-group-row svg {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.cl-tool-group-items {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 2px 6px 6px;
+  border-top: 1px dashed var(--fnix-border-subtle, #e5e7eb);
+}
+
+/* ── UX ⋮ 更多菜单（ChatHead 右侧唯一新增常驻图标） ── */
+.fnix-more-wrap {
+  position: relative;
+}
+.fnix-more-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 60;
+  min-width: 176px;
+  padding: 4px;
+  background: var(--card, #fff);
+  border: 1px solid var(--border, rgba(0, 0, 0, 0.1));
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  display: flex;
+  flex-direction: column;
+}
+.fnix-more-menu button {
+  display: block;
+  width: 100%;
+  padding: 7px 10px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  text-align: left;
+  font-size: 12.5px;
+  color: var(--foreground, #1a1a1a);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.fnix-more-menu button:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+/* ── UX P0-4: HITL 内联审批卡（Composer 上方，仅有待审批时渲染） ── */
+.fnix-approval-inline {
+  margin: 0 0 8px;
+  padding: 8px 10px;
+  border: 1px solid rgba(217, 119, 6, 0.35);
+  border-radius: 10px;
+  background: rgba(255, 251, 235, 0.92);
+  backdrop-filter: blur(6px);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.fnix-approval-inline-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #92400e;
+}
+.fnix-approval-inline-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.fnix-approval-inline-name {
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--foreground, #1a1a1a);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11.5px;
+}
+.fnix-approval-inline-risk {
+  font-size: 10.5px;
+  padding: 1px 6px;
+  border-radius: 99px;
+  border: 1px solid currentColor;
+}
+.fnix-approval-inline-risk.high,
+.fnix-approval-inline-risk.critical {
+  color: #b91c1c;
+}
+.fnix-approval-inline-risk.medium {
+  color: #b45309;
+}
+.fnix-approval-inline-risk.low {
+  color: #15803d;
+}
+.fnix-approval-inline-risk.unknown {
+  color: #6b7280;
+}
+.fnix-approval-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 26px;
+  padding: 0 10px;
+  margin-left: auto;
+  border-radius: 99px;
+  border: none;
+  font-size: 11.5px;
+  cursor: pointer;
+}
+.fnix-approval-btn.ok {
+  background: #111827;
+  color: #fff;
+}
+.fnix-approval-btn.ok:hover:not(:disabled) {
+  background: #000;
+}
+.fnix-approval-btn.no {
+  background: transparent;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  color: var(--foreground, #1a1a1a);
+  margin-left: 0;
+}
+.fnix-approval-btn.no:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.05);
+}
+.fnix-approval-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.fnix-approval-inline-more,
+.fnix-approval-inline-err {
+  font-size: 11px;
+  color: #92400e;
+}
+.fnix-approval-inline-err {
+  color: #b91c1c;
+}

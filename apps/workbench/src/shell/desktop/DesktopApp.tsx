@@ -21,6 +21,7 @@ import {
   Globe,
   Layers,
   LayoutPanelLeft,
+  MoreHorizontal,
   PanelLeftClose,
   PanelLeftOpen,
   PanelRight,
@@ -62,6 +63,7 @@ import { DesktopSettings } from './DesktopSettings';
 import { FullChainBenchmarkPanel } from './FullChainBenchmarkPanel';
 import { OnboardingWizard, isOnboardingDone, markOnboardingDone } from './OnboardingWizard';
 import { StatusLine } from './StatusLine';
+import { InlineApprovalCard } from './InlineApprovalCard';
 import { ProjectHome, ProjectsLibrary, projectDisplayName } from './ProjectsPane';
 import { ReviewView } from './ReviewView';
 import { ResultsView } from './ResultsView';
@@ -98,6 +100,8 @@ import { resolveShellTheme, type ShellThemeResolved } from './theme';
 import './tokens.css';
 /* Glass kit after shell tokens so frost styles win under .fnix-glass */
 import '../../ui/glass';
+/* UX-POLISH (OpenCode-style P0 batch): session usage / meta row / tool duration / ⋮ menu / inline approval */
+import './ux-polish.css';
 
 const IS_DESKTOP = isTauriDesktop();
 
@@ -147,7 +151,9 @@ function saveWorkModeForThread(storageKey: string, threadId: string, mode: WorkE
 /**
  * ChatHead — Work / Code session 共用的顶部工具栏。
  * 抽取自原 Work session 和 Code session 重复的 chat-head 结构（~50 行 × 2）。
- * 按钮统一顺序：侧栏 · [jobs?] [skills] [inspector] [projectChip?] [newChat]
+ * 按钮统一顺序：侧栏 · [jobs?] [inspector] [projectChip?] [newChat] · [⋮ 更多]
+ * UX：⋮ 为全方案唯一新增图标 — 低频入口（设置/诊断/快捷键/导出）收进一处，
+ * 对齐 OpenCode「一切皆命令」的极简哲学。
  */
 interface ChatHeadProps {
   onToggleAside: () => void;
@@ -166,6 +172,11 @@ interface ChatHeadProps {
   projectPath?: string;
   projectLabel?: string;
   onOpenProject: () => void;
+  /** ⋮ 菜单动作（由父级注入，避免 ChatHead 直接依赖全局状态）*/
+  onOpenSettings?: () => void;
+  onOpenDiagnostics?: () => void;
+  onOpenShortcuts?: () => void;
+  onExportTranscript?: () => void;
 }
 
 function ChatHead({
@@ -177,7 +188,29 @@ function ChatHead({
   jobsOpen,
   activeJobCount,
   onToggleJobs,
+  onOpenSettings,
+  onOpenDiagnostics,
+  onOpenShortcuts,
+  onExportTranscript,
 }: ChatHeadProps) {
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!moreOpen) return;
+    const close = (e: MouseEvent) => {
+      if (!moreRef.current?.contains(e.target as Node)) setMoreOpen(false);
+    };
+    window.addEventListener('mousedown', close);
+    return () => window.removeEventListener('mousedown', close);
+  }, [moreOpen]);
+
+  const moreItems = [
+    { id: 'settings', label: '设置', show: Boolean(onOpenSettings), act: onOpenSettings },
+    { id: 'diag', label: '诊断', show: Boolean(onOpenDiagnostics), act: onOpenDiagnostics },
+    { id: 'keys', label: '快捷键 (?)', show: Boolean(onOpenShortcuts), act: onOpenShortcuts },
+    { id: 'export', label: '导出会话 Markdown', show: Boolean(onExportTranscript), act: onExportTranscript },
+  ].filter((m) => m.show);
+
   return (
     <div className="fnix-chat-head">
       <button type="button" className="fnix-ibtn sm" title="侧栏" onClick={onToggleAside}>
@@ -205,6 +238,39 @@ function ChatHead({
           {inspectorBadge ? <span className="fnix-ibtn-badge">{inspectorBadge}</span> : null}
           {inspectorDot ? <span className={`fnix-ibtn-dot ${inspectorDot}`} aria-hidden /> : null}
         </button>
+        {/* UX：低频功能统一收进 ⋮ — 全 shell 唯一新增常驻图标 */}
+        {moreItems.length > 0 ? (
+          <div className="fnix-more-wrap" ref={moreRef}>
+            <button
+              type="button"
+              className={`fnix-ibtn sm${moreOpen ? ' on' : ''}`}
+              aria-haspopup="menu"
+              aria-expanded={moreOpen}
+              aria-label="更多操作"
+              title="更多"
+              onClick={() => setMoreOpen((v) => !v)}
+            >
+              <MoreHorizontal size={16} />
+            </button>
+            {moreOpen ? (
+              <div className="fnix-more-menu" role="menu" aria-label="更多操作">
+                {moreItems.map((m) => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setMoreOpen(false);
+                      m.act?.();
+                    }}
+                  >
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
       </div>
     </div>
   );
@@ -469,16 +535,33 @@ export default function DesktopApp() {
     [setRecentProjects],
   );
 
+  /** UX P0-1: OpenCode 式会话累计 — 模型 pill 左侧一枚暗色小字，零按钮 */
+  const sessionUsageControl =
+    chat.sessionUsage > 0 ? (
+      <span
+        className="fnix-session-usage"
+        title={`本次会话累计 ≈${chat.sessionUsage.toLocaleString()} tokens`}
+        aria-label={`会话累计 ${chat.sessionUsage} tokens`}
+      >
+        ≈{chat.sessionUsage >= 1000
+          ? `${(chat.sessionUsage / 1000).toFixed(1).replace(/\.0$/, '')}k`
+          : chat.sessionUsage}
+      </span>
+    ) : null;
+
   /** Composer pill: show active model name; click opens Settings (no model catalog). */
   const modelControl = (
-    <button
-      type="button"
-      className="fnix-pill"
-      onClick={() => openSettings('models')}
-      title="模型设置"
-    >
-      {modelLabel} <ChevronDown size={12} />
-    </button>
+    <>
+      {sessionUsageControl}
+      <button
+        type="button"
+        className="fnix-pill"
+        onClick={() => openSettings('models')}
+        title="模型设置"
+      >
+        {modelLabel} <ChevronDown size={12} />
+      </button>
+    </>
   );
 
   /** WorkModePicker — Work 模式下放在 Composer 左侧（加号旁边） */
@@ -803,6 +886,80 @@ export default function DesktopApp() {
     setDraft('');
   }, [chat]);
 
+  /** UX ⋮菜单: 导出当前会话为 Markdown（OpenCode /export 对齐；浏览器下载，零后端依赖） */
+  const exportTranscript = useCallback(() => {
+    const msgs = chat.messages;
+    if (msgs.length === 0) return;
+    const lines: string[] = [`# ${chat.goalTitle || '会话记录'}`, ''];
+    for (const m of msgs) {
+      const who = m.role === 'user' ? '🧑 用户' : '🤖 助手';
+      const ts = m.ts ? ` (${new Date(m.ts).toLocaleString()})` : '';
+      lines.push(`## ${who}${ts}`, '', m.content || '', '');
+      if (m.usage?.total) {
+        lines.push(`> ≈${m.usage.total} tokens`, '');
+      }
+    }
+    const blob = new Blob([lines.join('\n')], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `fnix-session-${new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-')}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [chat.messages, chat.goalTitle]);
+
+  /** UX P0-5: Shift+Tab 循环 Ask→Plan→Craft（OpenCode Tab-cycle / CC Shift+Tab 心智）。
+   * 仅当事件源在输入框/编辑器内时劫持，避免破坏全局快捷键与无焦点场景。 */
+  const cycleWorkMode = useCallback(() => {
+    setWorkMode((cur) => (cur === 'ask' ? 'plan' : cur === 'plan' ? 'craft' : 'ask'));
+  }, []);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab' || !e.shiftKey) return;
+      const t = e.target as HTMLElement | null;
+      if (!t || !t.closest('input, textarea, [contenteditable="true"]')) return;
+      e.preventDefault();
+      cycleWorkMode();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [cycleWorkMode]);
+
+  // UX P0-6: 失焦通知 — 任务结束/需审批且窗口不在前台时发系统通知（零 UI 占用）。
+  useEffect(() => {
+    if (typeof Notification === 'undefined') return;
+    if (Notification.permission === 'default') {
+      // 在首次用户交互后请求权限（浏览器要求手势）；拒绝也完全无感
+      const ask = () => {
+        void Notification.requestPermission();
+        window.removeEventListener('pointerdown', ask);
+      };
+      window.addEventListener('pointerdown', ask, { once: true });
+    }
+  }, []);
+  const prevStreamRef = useRef(false);
+  useEffect(() => {
+    const was = prevStreamRef.current;
+    prevStreamRef.current = chat.streaming;
+    if (was && !chat.streaming && document.hidden && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+      try {
+        new Notification('Fnix Nastasia', { body: '任务已完成 — 回来看看结果', silent: false });
+      } catch { /* ignore */ }
+    }
+  }, [chat.streaming]);
+  useEffect(() => {
+    if (
+      chat.pendingApprovals.length > 0 &&
+      document.hidden &&
+      typeof Notification !== 'undefined' &&
+      Notification.permission === 'granted'
+    ) {
+      try {
+        new Notification('Fnix Nastasia', { body: `需要你的审批 · ${chat.pendingApprovals.length} 项` });
+      } catch { /* ignore */ }
+    }
+  }, [chat.pendingApprovals.length]);
+
   const sendDraft = () => {
     const t = draft.trim();
     if (!t && attachments.length === 0) return;
@@ -1069,6 +1226,10 @@ export default function DesktopApp() {
                 projectPath={projectPath}
                 projectLabel={projectLabel}
                 onOpenProject={() => setPane('project')}
+                onOpenSettings={() => openSettings('models')}
+                onOpenDiagnostics={() => setShowBenchmark(true)}
+                onOpenShortcuts={() => setKeysOpen(true)}
+                onExportTranscript={exportTranscript}
               />
 
               <MessageList
@@ -1087,6 +1248,12 @@ export default function DesktopApp() {
                 onStop={chat.stop}
               />
               <div className="fnix-chat-dock">
+                <InlineApprovalCard
+                  items={chat.pendingApprovals}
+                  onResolved={() => {
+                    /* 轮询 effect 会在 ≤3s 内刷新队列；操作成功即刻感知 */
+                  }}
+                />
                 <Composer
                   value={draft}
                   onChange={setDraft}
@@ -1219,6 +1386,10 @@ export default function DesktopApp() {
                 projectPath={projectPath}
                 projectLabel={projectLabel}
                 onOpenProject={() => setPane('project')}
+                onOpenSettings={() => openSettings('models')}
+                onOpenDiagnostics={() => setShowBenchmark(true)}
+                onOpenShortcuts={() => setKeysOpen(true)}
+                onExportTranscript={exportTranscript}
               />
               <MessageList
                 messages={chat.messages}

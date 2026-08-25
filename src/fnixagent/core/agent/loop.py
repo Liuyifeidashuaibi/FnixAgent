@@ -811,6 +811,24 @@ class AgenticLoop:
         self.reset()
         start_time = time.time()
 
+        # UX P0-1: 流式路径 token 累计 — 每 step 的 usage.total_tokens 求和,
+        # done 事件透传 {total_tokens, prompt_tokens, completion_tokens, cached_tokens},
+        # 让前端实现 OpenCode 式「会话成本可见」(气泡 meta 行 + Composer 累计)。
+        total_tokens = 0
+        _usage_acc = {"prompt_tokens": 0, "completion_tokens": 0, "cached_tokens": 0}
+
+        def _usage_done_payload() -> dict:
+            return {
+                "steps": len(self.traces),
+                "duration_ms": (time.time() - start_time) * 1000,
+                "usage": {
+                    "total_tokens": int(total_tokens),
+                    "prompt_tokens": int(_usage_acc["prompt_tokens"]),
+                    "completion_tokens": int(_usage_acc["completion_tokens"]),
+                    "cached_tokens": int(_usage_acc["cached_tokens"]),
+                },
+            }
+
         system_prompt = self._get_system_prompt()
 
         # P0-1: CheckpointManager 句柄 (task_id 为空时降级为 no-op)
@@ -1087,6 +1105,18 @@ class AgenticLoop:
 
                 text_content, tool_calls, reasoning_content = self._parse_llm_response(llm_result)
 
+                # UX P0-1: 累计本 step 的 token usage (含 cache 命中), done 时透传前端
+                try:
+                    _usage = (llm_result or {}).get("usage", {}) or {}
+                    total_tokens += int(_usage.get("total_tokens", 0) or 0)
+                    _usage_acc["prompt_tokens"] += int(_usage.get("prompt_tokens", 0) or 0)
+                    _usage_acc["completion_tokens"] += int(
+                        _usage.get("completion_tokens", 0) or 0
+                    )
+                    _usage_acc["cached_tokens"] += int(_usage.get("cached_tokens", 0) or 0)
+                except Exception:
+                    _logger.debug("Unhandled exception", exc_info=True)
+
                 # Spec 2: 真实思考链可见 — thought chunk 严格区分 3 种场景：
                 #   1) reasoning_content 非空（Qwen3/o1/DeepSeek-R1/GLM-4.5 thinking）：
                 #      发 reasoning_content 作为 thought（这才是模型"在想什么"）
@@ -1129,13 +1159,7 @@ class AgenticLoop:
                                 "description": f"Step {step_idx + 1}/{self.max_steps} (done)",
                             },
                         }
-                        yield {
-                            "type": "done",
-                            "data": {
-                                "steps": len(self.traces),
-                                "duration_ms": (time.time() - start_time) * 1000,
-                            },
-                        }
+                        yield {"type": "done", "data": _usage_done_payload()}
                         return
                     if self._should_nudge_for_tools(text_content, step_idx):
                         messages_for_llm.append(
@@ -1166,13 +1190,7 @@ class AgenticLoop:
                             "description": f"Step {step_idx + 1}/{self.max_steps} (done)",
                         },
                     }
-                    yield {
-                        "type": "done",
-                        "data": {
-                            "steps": len(self.traces),
-                            "duration_ms": (time.time() - start_time) * 1000,
-                        },
-                    }
+                    yield {"type": "done", "data": _usage_done_payload()}
                     return
 
                 # 工具调用
@@ -1439,13 +1457,7 @@ class AgenticLoop:
                                 "type": "text",
                                 "data": "任务已完成，文件已成功写入。",
                             }
-                            yield {
-                                "type": "done",
-                                "data": {
-                                    "steps": len(self.traces),
-                                    "duration_ms": (time.time() - start_time) * 1000,
-                                },
-                            }
+                            yield {"type": "done", "data": _usage_done_payload()}
                             return
                         elif not self._file_nudge_injected:
                             # 第 2 次写入相同内容 → 注入完成提示，给模型最后一次机会
@@ -1468,13 +1480,7 @@ class AgenticLoop:
                                 "type": "text",
                                 "data": "任务已完成，文件已成功写入。",
                             }
-                            yield {
-                                "type": "done",
-                                "data": {
-                                    "steps": len(self.traces),
-                                    "duration_ms": (time.time() - start_time) * 1000,
-                                },
-                            }
+                            yield {"type": "done", "data": _usage_done_payload()}
                             return
                     if self._tool_repeat_count >= self._LOOP_NUDGE_AT and not self._loop_nudge_used:
                         self._loop_nudge_used = True
@@ -1549,13 +1555,7 @@ class AgenticLoop:
                             "type": "text",
                             "data": "已将源码写入 `.fnix/artifacts/`，可直接打开 index.html 验收。",
                         }
-                        yield {
-                            "type": "done",
-                            "data": {
-                                "steps": len(self.traces),
-                                "duration_ms": (time.time() - start_time) * 1000,
-                            },
-                        }
+                        yield {"type": "done", "data": _usage_done_payload()}
                         return
 
             # Spec 6 VMAO: 达到最大步数前最后一次反思机会
@@ -1583,14 +1583,7 @@ class AgenticLoop:
             wrapup = self._build_wrapup(step_idx + 1, self._written_file_paths)
             await _aflush_step()
             yield {"type": "text", "data": wrapup}
-            yield {
-                "type": "done",
-                "data": {
-                    "steps": len(self.traces),
-                    "duration_ms": (time.time() - start_time) * 1000,
-                    "exhausted": True,
-                },
-            }
+            yield {"type": "done", "data": {**_usage_done_payload(), "exhausted": True}}
 
         except Exception as e:
             # P0-1: 异常退出前 best-effort flush, 保留崩溃现场

@@ -10,6 +10,7 @@
  *
  * Shows the tool name with an icon, optional collapsible params,
  * and a status indicator (loading spinner, success checkmark, or error ❌).
+ * UX P0-3: 完成后右侧追加耗时小字（`1.2s`），OpenCode 式一行紧凑渲染。
  */
 
 import { useState } from "react";
@@ -20,6 +21,8 @@ interface Props {
   params?: string;
   isComplete: boolean;
   isError?: boolean;
+  /** UX P0-3: 工具耗时（毫秒）— 完成后右侧显示 `1.2s` */
+  durationMs?: number;
 }
 
 const TOOL_ICONS: Record<string, string> = {
@@ -49,11 +52,20 @@ function parseParamsLabel(params: string): string {
   }
 }
 
-export default function ToolCallCard({ name, params, isComplete, isError }: Props) {
+/** 毫秒 → 紧凑耗时（OpenCode 式：<1s 显示 ms，其余 s，一位小数） */
+function formatDuration(ms?: number): string {
+  if (ms === undefined || !Number.isFinite(ms) || ms < 0) return "";
+  if (ms < 1000) return `${Math.max(1, Math.round(ms))}ms`;
+  const s = ms / 1000;
+  return `${s < 60 ? s.toFixed(1).replace(/\.0$/, "") : Math.round(s)}s`;
+}
+
+export default function ToolCallCard({ name, params, isComplete, isError, durationMs }: Props) {
   const [paramsOpen, setParamsOpen] = useState(false);
   const icon = TOOL_ICONS[name] || TOOL_ICONS.default;
   const label = TOOL_ACTION_LABELS[name] || TOOL_ACTION_LABELS.default;
   const paramsLabel = params ? parseParamsLabel(params) : "";
+  const durationText = isComplete && !isError ? formatDuration(durationMs) : "";
 
   return (
     <div
@@ -65,6 +77,7 @@ export default function ToolCallCard({ name, params, isComplete, isError }: Prop
         {paramsLabel && (
           <span className="cl-tool-call-target">{paramsLabel}</span>
         )}
+        {durationText && <span className="cl-tool-call-duration">{durationText}</span>}
         <span className="cl-tool-call-status">
           {isError ? (
             <X size={12} className="cl-tool-error-icon" />

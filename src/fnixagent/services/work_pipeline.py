@@ -1370,6 +1370,8 @@ async def run_work_stream(
     tool_calls: list[dict] = []
     success = True
     artifacts: list[dict] = []
+    # UX P0-1: AgenticLoop done 事件里的 token usage 累计 (可能多轮 Reflexion 多次 done)
+    loop_usage: dict | None = None
 
     # 提取产物路径
     async for event in pipeline.step6_run_agent_stream(ctx, resume_from=resume_from):
@@ -1426,6 +1428,21 @@ async def run_work_stream(
                 answer = f"执行失败：{err_text}"
             yield event
         elif et == "done":
+            # UX P0-1: 接住 AgenticLoop done 内的 usage 累计, 合并进本管线最终 done
+            # (原逻辑直接 continue 丢弃, 前端永远拿不到 token 数)
+            _u = data.get("usage") if isinstance(data, dict) else None
+            if isinstance(_u, dict):
+                prev = loop_usage or {}
+                loop_usage = {
+                    "total_tokens": int(prev.get("total_tokens", 0) or 0)
+                    + int(_u.get("total_tokens", 0) or 0),
+                    "prompt_tokens": int(prev.get("prompt_tokens", 0) or 0)
+                    + int(_u.get("prompt_tokens", 0) or 0),
+                    "completion_tokens": int(prev.get("completion_tokens", 0) or 0)
+                    + int(_u.get("completion_tokens", 0) or 0),
+                    "cached_tokens": int(prev.get("cached_tokens", 0) or 0)
+                    + int(_u.get("cached_tokens", 0) or 0),
+                }
             continue
         elif et == "reflection":
             # Spec 7+ 四维闭环: VMAO 反思 → HERA 写入"失败技能"
@@ -1955,17 +1972,22 @@ async def run_work_stream(
     except Exception:
         _logger.debug("artifact backfill stage failed", exc_info=True)
 
+    _done_payload: dict = {
+        "result": answer,
+        "artifacts": artifacts,
+        "workspace_kind": ctx.workspace_kind,
+        "trace_id": trace_id,
+        "session_id": sid,
+        "mfp": persist.get("mfp"),
+        "persist": persist,
+    }
+    # UX P0-1: 最终 done 透传 token usage — 前端气泡 meta 行 + 会话累计的数据源
+    if loop_usage:
+        _done_payload["usage"] = loop_usage
+
     yield {
         "type": "done",
-        "data": {
-            "result": answer,
-            "artifacts": artifacts,
-            "workspace_kind": ctx.workspace_kind,
-            "trace_id": trace_id,
-            "session_id": sid,
-            "mfp": persist.get("mfp"),
-            "persist": persist,
-        },
+        "data": _done_payload,
     }
 
     store.update(

@@ -91,7 +91,38 @@ type StreamHandlers = {
    * 调研：AG-UI 16 种标准事件类型 + 事件溯源 + 逐块渲染
    */
   onStructuredBlock?: (block: import('../../utils/structuredBlocks').StructuredBlock) => void;
+  /**
+   * UX P0-1 会话成本可见：done.usage → {total_tokens, prompt_tokens, completion_tokens, cached_tokens}。
+   * 每轮任务结束时触发一次；useChatFlow 累计为会话总量并写入气泡 meta 行。
+   */
+  onUsage?: (usage: RunTokenUsage, payload: unknown) => void;
 };
+
+/** done 事件透传的 token 用量（后端 AgenticLoop._usage_done_payload）。 */
+export type RunTokenUsage = {
+  total_tokens: number;
+  prompt_tokens: number;
+  completion_tokens: number;
+  cached_tokens: number;
+};
+
+/** 从 done payload 提取 usage（字段缺失/类型异常时返回 null，调用方静默跳过）。 */
+export function extractRunUsage(payload: unknown): RunTokenUsage | null {
+  if (!payload || typeof payload !== 'object') return null;
+  const u = (payload as { usage?: unknown }).usage;
+  if (!u || typeof u !== 'object') return null;
+  const r = u as Record<string, unknown>;
+  const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : 0);
+  const total = num(r.total_tokens);
+  if (total <= 0) return null;
+  return {
+    total_tokens: total,
+    prompt_tokens: num(r.prompt_tokens),
+    completion_tokens: num(r.completion_tokens),
+    cached_tokens: num(r.cached_tokens),
+  };
+}
+
 
 function emitActivity(
   handlers: StreamHandlers,
@@ -975,6 +1006,9 @@ export async function streamWork(opts: {
         }
         if (chunk === 'done') {
           sawDone = true;
+          // UX P0-1: done.usage → onUsage（气泡 meta 行 + 会话累计的数据源）
+          const usage = extractRunUsage(content);
+          if (usage) opts.handlers.onUsage?.(usage, content);
           // Only use done.result when no text chunks arrived (avoid duplicating the reply)
           if (!sawText && content && typeof content === 'object') {
             const result = (content as { result?: unknown }).result;
@@ -1197,6 +1231,9 @@ export async function streamCode(opts: {
         }
         if (t === 'done') {
           sawDone = true;
+          // UX P0-1: done.usage → onUsage（Code 模式同样透传）
+          const usage = extractRunUsage(obj);
+          if (usage) opts.handlers.onUsage?.(usage, obj);
           if (obj.error) {
             opts.handlers.onError?.(String(obj.error));
           }

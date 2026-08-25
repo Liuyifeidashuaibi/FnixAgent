@@ -65,6 +65,8 @@ export interface ToolCallBlock {
   params: string;
   /** 是否完成（参数已全部到达） */
   isComplete: boolean;
+  /** UX P0-3: 工具耗时（毫秒，observation.duration_ms），卡片右侧显示 `1.2s` */
+  durationMs?: number;
 }
 
 export interface ToolResultBlock {
@@ -72,6 +74,8 @@ export interface ToolResultBlock {
   content: string;
   /** 验证状态 */
   verificationStatus?: 'verified' | 'failed';
+  /** UX P0-3: 工具耗时（毫秒，observation.duration_ms），回填到配对的 tool_call 卡片 */
+  durationMs?: number;
 }
 
 export interface DiffBlock {
@@ -247,10 +251,13 @@ export function ndjsonEventToBlock(obj: Record<string, unknown>): StructuredBloc
       const d = typeof data === 'object' && data ? (data as Record<string, unknown>) : {};
       const summary = String(d.summary || d.content || '');
       const success = d.success !== false;
+      // UX P0-3: 携带 duration_ms — appendBlock 时回填配对 tool_call 卡片
+      const durMs = Number(d.duration_ms);
       return {
         kind: 'tool_result',
         content: redactSensitiveText(summary || (typeof data === 'string' ? data : '')),
         verificationStatus: success ? 'verified' : 'failed',
+        ...(Number.isFinite(durMs) && durMs >= 0 ? { durationMs: Math.round(durMs) } : {}),
       };
     }
 
@@ -396,6 +403,28 @@ export function appendBlock(
     newBlock.content === last.content
   ) {
     return blocks;
+  }
+
+  // UX P0-3: tool_result 携带 durationMs 时，回填到配对的（最后一个未计时的）tool_call 卡片。
+  // 不可变实现：新建数组 + 替换目标 block，保持 Event Sourcing 的追加语义观感。
+  if (newBlock.kind === 'tool_result' && typeof newBlock.durationMs === 'number') {
+    for (let i = blocks.length - 1; i >= 0; i--) {
+      const b = blocks[i];
+      if (!b) break;
+      if (b.kind === 'tool_call') {
+        const tc = b as import('./structuredBlocks').ToolCallBlock;
+        if (tc.durationMs === undefined && tc.isComplete !== false) {
+          const patched = blocks.slice();
+          patched[i] = { ...tc, durationMs: newBlock.durationMs };
+          return [...patched, newBlock];
+        }
+        break; // 已有耗时不覆盖；非完成态不回填
+      }
+      if (b.kind === 'tool_result' || b.kind === 'thinking' || b.kind === 'progress') {
+        continue; // 跳过紧邻的同类/状态块，找到配对的 tool_call
+      }
+      break; // 其他 block 隔断 — 视为无配对
+    }
   }
 
   // progress block: 始终替换最后一个 progress block（单一进度条更新 UX）

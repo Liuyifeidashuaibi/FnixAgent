@@ -10,7 +10,7 @@
  */
 
 import { memo, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Check, Copy, RefreshCw, ThumbsDown, ThumbsUp } from 'lucide-react';
+import { Check, ChevronDown, ChevronRight, Copy, RefreshCw, ThumbsDown, ThumbsUp } from 'lucide-react';
 import hljs from 'highlight.js/lib/core';
 import javascript from 'highlight.js/lib/languages/javascript';
 import typescript from 'highlight.js/lib/languages/typescript';
@@ -170,99 +170,227 @@ function renderBlocks(
   onSendPrompt?: (text: string) => void,
   onRetry?: () => void,
 ): ReactNode {
-  return blocks.map((block, i) => {
-    switch (block.kind) {
-      case 'thinking':
-        return (
-          <ThinkingBlock
-            key={`think-${i}`}
-            content={block.content}
-            isStreaming={live && block.isStreaming !== false}
-          />
-        );
-      case 'progress':
-        return (
-          <ProgressStrip
-            key={`prog-${i}`}
-            currentStep={block.currentStep}
-            totalSteps={block.totalSteps}
-            description={block.description}
-            isComplete={block.isComplete}
-          />
-        );
-      case 'tool_call': {
-        // 从紧随其后的 tool_result 推断 isError：AG-UI 协议中 tool_call 和 tool_result
-        // 通过顺序配对（同一次工具调用的 result 紧跟在 call 后）。若 result 验证失败，
-        // 对应的 tool_call 卡片应显示错误状态（红色 ❌），而非恒为成功
-        const next = blocks[i + 1];
-        const isError = next?.kind === 'tool_result' && next.verificationStatus === 'failed';
-        return (
-          <ToolCallCard
-            key={`tc-${i}`}
-            name={block.name}
-            params={block.params}
-            isComplete={block.isComplete}
-            isError={isError}
-          />
-        );
+  // UX P0-3: 连续同名 tool_call ≥3 → 折叠为单行「read_file ×5」，点击展开逐条
+  type Segment =
+    | { kind: 'single'; block: StructuredBlock; idx: number }
+    | {
+        kind: 'group';
+        blocks: { block: StructuredBlock; idx: number }[];
+        name: string;
+        totalMs: number;
+      };
+  const segments: Segment[] = [];
+  let i = 0;
+  while (i < blocks.length) {
+    const b = blocks[i];
+    if (b?.kind === 'tool_call') {
+      let j = i;
+      const group: { block: StructuredBlock; idx: number }[] = [];
+      while (j < blocks.length) {
+        const nb = blocks[j];
+        if (
+          nb?.kind === 'tool_call' &&
+          (nb as { name?: string }).name === (b as { name?: string }).name
+        ) {
+          group.push({ block: nb, idx: j });
+          j++;
+        } else break;
       }
-      case 'tool_result':
-        return (
-          <ToolResultCard
-            key={`tr-${i}`}
-            content={block.content}
-            verificationStatus={block.verificationStatus}
-          />
-        );
-      case 'diff': {
-        // DiffBlock 需要 entries 数组，单文件包装
-        // 消息气泡内只读展示：Accept/Reject 必须在评审面板操作，
-        // 否则用户误以为点 Accept 已写盘（实际未传 onAccept，不会调用后端）
-        const entries = [
-          {
-            path: block.path,
-            added: block.added,
-            removed: block.removed,
-            diff: block.diff,
-          },
-        ];
-        return <DiffBlock key={`diff-${i}`} entries={entries} onPin={onPin} readOnly />;
+      if (group.length >= 3) {
+        const totalMs = group.reduce((acc, g) => {
+          const d = (g.block as { durationMs?: number }).durationMs;
+          return acc + (typeof d === 'number' ? d : 0);
+        }, 0);
+        segments.push({ kind: 'group', blocks: group, name: (b as { name?: string }).name || 'tool', totalMs });
+        i = j;
+        continue;
       }
-      case 'error':
-        return (
-          <ErrorBlock
-            key={`err-${i}`}
-            title={block.title}
-            detail={block.detail}
-            suggestion={block.suggestion}
-            toolName={block.toolName}
-            severity={block.severity}
-            retryCount={block.retryCount}
-            maxRetries={block.maxRetries}
-            onRetry={onRetry}
-          />
-        );
-      case 'text':
-        return (
-          <div key={`text-${i}`} className="fnix-asst-text">
-            {renderContent(block.content, deferHighlight)}
-          </div>
-        );
-      case 'widget':
-        // AI 内联可视化（动态 UI 渲染）— iframe sandbox 渲染，
-        // widget 内 sendPrompt 按钮经 postMessage 回灌为新用户消息
-        return (
-          <WidgetBlock
-            key={`widget-${block.widgetId}`}
-            block={block}
-            live={live}
-            onSendPrompt={onSendPrompt}
-          />
-        );
-      default:
-        return null;
+      for (const g of group) segments.push({ kind: 'single', block: g.block, idx: g.idx });
+      i = j;
+      continue;
     }
-  });
+    segments.push({ kind: 'single', block: b!, idx: i });
+    i++;
+  }
+
+  return (
+    <>
+      {segments.map((seg) => {
+        if (seg.kind === 'group')
+          return <ToolCallGroup key={`tgroup-${seg.blocks[0]?.idx ?? 0}`} seg={seg} />;
+        return renderSingleBlock(
+          seg.block,
+          seg.idx,
+          live,
+          deferHighlight,
+          blocks,
+          onPin,
+          onSendPrompt,
+          onRetry,
+        );
+      })}
+    </>
+  );
+}
+
+/** UX P0-3: 同名工具折叠组 —「read_file ×5 (2.1s)」单行，点击展开逐条卡片 */
+function ToolCallGroup({
+  seg,
+}: {
+  seg: {
+    blocks: { block: StructuredBlock; idx: number }[];
+    name: string;
+    totalMs: number;
+  };
+}) {
+  const [open, setOpen] = useState(false);
+  const n = seg.blocks.length;
+  const durText =
+    seg.totalMs > 0
+      ? seg.totalMs < 1000
+        ? `${Math.round(seg.totalMs)}ms`
+        : `${(seg.totalMs / 1000).toFixed(1).replace(/\.0$/, '')}s`
+      : '';
+  return (
+    <div className="cl-tool-group" data-open={open || undefined}>
+      <button
+        type="button"
+        className="cl-tool-group-row"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <span className="cl-tool-call-icon">{TOOL_GROUP_ICONS[seg.name] || TOOL_GROUP_ICONS.default}</span>
+        <span className="cl-tool-group-name">{seg.name}</span>
+        <span className="cl-tool-group-count">×{n}</span>
+        {durText && <span className="cl-tool-call-duration">{durText}</span>}
+        {open ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
+      </button>
+      {open && (
+        <div className="cl-tool-group-items">
+          {seg.blocks.map(({ block, idx }) => (
+            <ToolCallCard
+              key={`tg-${idx}`}
+              name={block.kind === 'tool_call' ? block.name : 'tool'}
+              params={block.kind === 'tool_call' ? block.params : undefined}
+              isComplete={(block as { isComplete?: boolean }).isComplete !== false}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const TOOL_GROUP_ICONS: Record<string, string> = {
+  read_file: "📖",
+  write_file: "✏️",
+  execute_command: "▶️",
+  search_code: "🔍",
+  default: "🔧",
+};
+
+function renderSingleBlock(
+  block: StructuredBlock,
+  i: number,
+  live: boolean,
+  deferHighlight: boolean,
+  blocks: StructuredBlock[],
+  onPin?: (path: string) => void,
+  onSendPrompt?: (text: string) => void,
+  onRetry?: () => void,
+): ReactNode {
+  switch (block.kind) {
+    case 'thinking':
+      return (
+        <ThinkingBlock
+          key={`think-${i}`}
+          content={block.content}
+          isStreaming={live && block.isStreaming !== false}
+        />
+      );
+    case 'progress':
+      return (
+        <ProgressStrip
+          key={`prog-${i}`}
+          currentStep={block.currentStep}
+          totalSteps={block.totalSteps}
+          description={block.description}
+          isComplete={block.isComplete}
+        />
+      );
+    case 'tool_call': {
+      // 从紧随其后的 tool_result 推断 isError：AG-UI 协议中 tool_call 和 tool_result
+      // 通过顺序配对（同一次工具调用的 result 紧跟在 call 后）。若 result 验证失败，
+      // 对应的 tool_call 卡片应显示错误状态（红色 ❌），而非恒为成功
+      const next = blocks[i + 1];
+      const isError = next?.kind === 'tool_result' && next.verificationStatus === 'failed';
+      return (
+        <ToolCallCard
+          key={`tc-${i}`}
+          name={block.name}
+          params={block.params}
+          isComplete={block.isComplete}
+          isError={isError}
+          durationMs={block.durationMs}
+        />
+      );
+    }
+    case 'tool_result':
+      return (
+        <ToolResultCard
+          key={`tr-${i}`}
+          content={block.content}
+          verificationStatus={block.verificationStatus}
+        />
+      );
+    case 'diff': {
+      // DiffBlock 需要 entries 数组，单文件包装
+      // 消息气泡内只读展示：Accept/Reject 必须在评审面板操作，
+      // 否则用户误以为点 Accept 已写盘（实际未传 onAccept，不会调用后端）
+      const entries = [
+        {
+          path: block.path,
+          added: block.added,
+          removed: block.removed,
+          diff: block.diff,
+        },
+      ];
+      return <DiffBlock key={`diff-${i}`} entries={entries} onPin={onPin} readOnly />;
+    }
+    case 'error':
+      return (
+        <ErrorBlock
+          key={`err-${i}`}
+          title={block.title}
+          detail={block.detail}
+          suggestion={block.suggestion}
+          toolName={block.toolName}
+          severity={block.severity}
+          retryCount={block.retryCount}
+          maxRetries={block.maxRetries}
+          onRetry={onRetry}
+        />
+      );
+    case 'text':
+      return (
+        <div key={`text-${i}`} className="fnix-asst-text">
+          {renderContent(block.content, deferHighlight)}
+        </div>
+      );
+    case 'widget':
+      // AI 内联可视化（动态 UI 渲染）— iframe sandbox 渲染，
+      // widget 内 sendPrompt 按钮经 postMessage 回灌为新用户消息
+      return (
+        <WidgetBlock
+          key={`widget-${block.widgetId}`}
+          block={block}
+          live={live}
+          onSendPrompt={onSendPrompt}
+        />
+      );
+    default:
+      return null;
+  }
 }
 
 function AttachmentChip({ att }: { att: ChatAttachment }) {
@@ -425,6 +553,34 @@ function MessageBubbleInner({
 
         {m.content && !live ? (
           <div className="fnix-actions">
+            {/* UX P0-1/P0-6: OpenCode 式 meta 行 — tokens · 耗时 · 时间戳，hover 才显时间 */}
+            <span className="fnix-msg-meta">
+              {m.usage && m.usage.total > 0 ? (
+                <span className="fnix-msg-meta-usage">
+                  ≈{m.usage.total >= 1000
+                    ? `${(m.usage.total / 1000).toFixed(1).replace(/\.0$/, '')}k`
+                    : m.usage.total}{' '}
+                  tok
+                  {m.usage.durationMs ? (
+                    <>
+                      {' · '}
+                      {m.usage.durationMs < 60_000
+                        ? `${Math.round(m.usage.durationMs / 1000)}s`
+                        : `${Math.floor(m.usage.durationMs / 60_000)}m${Math.round((m.usage.durationMs % 60_000) / 1000)}s`}
+                    </>
+                  ) : null}
+                </span>
+              ) : null}
+              {m.ts ? (
+                <time
+                  className="fnix-msg-meta-ts"
+                  dateTime={new Date(m.ts).toISOString()}
+                  title={new Date(m.ts).toLocaleString()}
+                >
+                  {new Date(m.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </time>
+              ) : null}
+            </span>
             <button
               type="button"
               className="fnix-ibtn sm"

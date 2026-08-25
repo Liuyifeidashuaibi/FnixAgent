@@ -34,11 +34,12 @@ import {
   streamWork,
   type CodeFileChange,
   type EvolutionInfo,
+  type RunTokenUsage,
   type WorkExecMode,
   type WorkMission,
   type WorkPipelineInfo,
 } from "./fnixRuntime";
-import { getFnixApiBase } from "../../lib/fnixBridge";
+import { getFnixApiBase, listHitlPending } from "../../lib/fnixBridge";
 import { useReviewStore } from "./reviewStore";
 import { useRunStore } from "./runStore";
 import { canApplyReview, canUndoReview } from "./shellFsm";
@@ -90,6 +91,10 @@ export interface ChatMsg {
    * 追加 only（Event Sourcing），不修改已有 block。
    */
   blocks?: StructuredBlock[];
+  /** UX P0-6: 创建时间（epoch ms）— 气泡角标显示 HH:mm */
+  ts?: number;
+  /** UX P0-1: 本轮 assistant 回复的 token 用量与耗时（气泡右下 meta 行，OpenCode 式）*/
+  usage?: { total: number; cached?: number; durationMs?: number };
 }
 
 export interface ChatThread {
@@ -363,8 +368,16 @@ function createStreamHandlers(
     goalStartedAtRef: { current: number | null };
     runStore: { setStatus: (s: string) => void; setError: (e: string | null) => void };
     reviewStore: { setPending: (c: CodeFileChange[]) => void };
+    /** UX P0-1: 本轮 usage 累加器（onDone 时读取并写入气泡） */
+    lastUsageRef?: { current: RunTokenUsage | null };
+    /** UX P0-1: assistant 消息 id ref（onDone 时定位气泡） */
+    streamAssistantIdRef?: { current: string | null };
+    commitMessages: (next: ChatMsg[]) => void;
+    messagesRef: { current: ChatMsg[] };
     /** send 模式下过滤 "Something went wrong" 前缀文本，resume 不过滤 */
     suppressSomethingPrefix?: boolean;
+    /** UX P0-1: 本轮 token 累计接收器（send/resume 各自持有累加器 ref） */
+    onUsage?: (u: RunTokenUsage) => void;
   },
 ) {
   const {
@@ -386,11 +399,17 @@ function createStreamHandlers(
     runStore,
     reviewStore,
     suppressSomethingPrefix = false,
+    lastUsageRef,
+    streamAssistantIdRef: assistantIdRef,
+    commitMessages,
+    messagesRef,
   } = opts;
 
   return {
     onText: local.appendText,
     onStructuredBlock: local.appendStructuredBlock,
+    // UX P0-1: done.usage → 累加器（气泡 meta 行 + Composer 会话累计的数据源）
+    onUsage: (u: RunTokenUsage) => opts.onUsage?.(u),
     onStatus: (label: string) => {
       setStatus(label);
       runStore.setStatus(label);
@@ -456,6 +475,26 @@ function createStreamHandlers(
         // Defer to microtask so the zustand set() runs after React's render phase.
         Promise.resolve().then(() => reviewStore.setPending(merged));
       }
+      // UX P0-1: 把本轮 usage + 耗时写入 assistant 气泡 meta 行（OpenCode 式小字）
+      const aid = assistantIdRef?.current;
+      const u = lastUsageRef?.current;
+      const startedAt = goalStartedAtRef.current;
+      if (aid && u) {
+        commitMessages(
+          messagesRef.current.map((m) =>
+            m.id === aid
+              ? {
+                  ...m,
+                  usage: {
+                    total: m.usage?.total ?? u.total_tokens,
+                    cached: u.cached_tokens,
+                    durationMs: startedAt ? Date.now() - startedAt : undefined,
+                  },
+                }
+              : m,
+          ),
+        );
+      }
       setActivities((prev) => finishRunning(prev, "done"));
       setEvolutionHistory((prev) => {
         const last = evolutionRef.current;
@@ -510,6 +549,13 @@ export function useChatFlow(opts: {
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [goalTitle, setGoalTitle] = useState<string>("");
   const [goalStartedAt, setGoalStartedAt] = useState<number | null>(null);
+  // UX P0-1: 会话累计 token（OpenCode 式 — Composer 旁一枚小字，点击无操作纯展示）
+  const [sessionUsage, setSessionUsage] = useState(0);
+  const lastUsageRef = useRef<RunTokenUsage | null>(null);
+  // UX P0-4: 流式期间轮询 /hitl/pending 的待审批数（>0 时 Composer 上方出现内联审批卡）
+  const [pendingApprovals, setPendingApprovals] = useState<
+    import('../../lib/fnixBridge').FnixHitlToolApproval[]
+  >([]);
   const abortRef = useRef<AbortController | null>(null);
   const messagesRef = useRef(messages);
   messagesRef.current = messages;
@@ -535,6 +581,8 @@ export function useChatFlow(opts: {
 
   const persist = useCallback(
     async (id: string, title: string, msgs: ChatMsg[]) => {
+      // UX P0-1: 持久化真实累计 token（原硬编码 0），供会话列表/统计使用
+      const tokens = msgs.reduce((acc, m) => acc + (m.usage?.total || 0), 0);
       const rec: ChatSessionRecord = {
         id,
         project_path: storageKey,
@@ -542,7 +590,7 @@ export function useChatFlow(opts: {
         provider: opts.providerName,
         model: opts.model,
         messages: JSON.stringify(msgs),
-        token_count: 0,
+        token_count: tokens,
         cost: 0,
         created_at: Date.now(),
         updated_at: Date.now(),
@@ -576,6 +624,9 @@ export function useChatFlow(opts: {
     setActivities([]);
     setGoalTitle("");
     setGoalStartedAt(null);
+    // UX P0-1: 会话切换重置累计
+    setSessionUsage(0);
+    lastUsageRef.current = null;
     void (async () => {
       try {
         await initChatDb();
@@ -618,6 +669,30 @@ export function useChatFlow(opts: {
     };
   }, []);
 
+  // UX P0-4: HITL 内联审批 — 流式期间轮询待审批队列（OpenCode 式：权限请求在最需要的位置出现）。
+  // 仅流式时轮询（3s），空闲时不产生任何请求；失败静默降级为无审批卡。
+  useEffect(() => {
+    if (!streaming) return;
+    let alive = true;
+    const poll = () => {
+      listHitlPending()
+        .then((res) => {
+          if (alive) setPendingApprovals(res.pending?.tool_approvals || []);
+        })
+        .catch(() => {
+          /* 后端离线/旧版本无此接口 — 静默 */
+        });
+    };
+    poll();
+    const id = window.setInterval(poll, 3000);
+    return () => {
+      alive = false;
+      window.clearInterval(id);
+      // 流式结束后清空审批卡（异步回调内 setState，不触发级联渲染警告）
+      window.setTimeout(() => setPendingApprovals([]), 0);
+    };
+  }, [streaming]);
+
   const newChat = useCallback(() => {
     abortRef.current?.abort();
     setStreaming(false);
@@ -634,6 +709,9 @@ export function useChatFlow(opts: {
     setActivities([]);
     setGoalTitle("");
     setGoalStartedAt(null);
+    // UX P0-1: 新会话清零累计
+    setSessionUsage(0);
+    lastUsageRef.current = null;
     setActiveId(null);
     setMessages([]);
   }, []);
@@ -769,6 +847,7 @@ export function useChatFlow(opts: {
         id: uid("u"),
         role: "user",
         content: trimmed,
+        ts: Date.now(),
         attachments: attachments && attachments.length > 0 ? attachments : undefined,
       };
       const assistantId = uid("a");
@@ -780,7 +859,15 @@ export function useChatFlow(opts: {
         isStreaming: true,
         isComplete: false,
       };
-      const assistantMsg: ChatMsg = { id: assistantId, role: "assistant", content: "", blocks: [initialBlock] };
+      const assistantMsg: ChatMsg = {
+        id: assistantId,
+        role: "assistant",
+        content: "",
+        ts: Date.now(),
+        blocks: [initialBlock],
+      };
+      // UX P0-1: 每轮重置 usage 累加器
+      lastUsageRef.current = null;
       const nextMsgs = [...messagesRef.current, userMsg, assistantMsg];
       commitMessages(nextMsgs);
       const title = titleFrom(trimmed);
@@ -822,8 +909,26 @@ export function useChatFlow(opts: {
         goalStartedAtRef,
         runStore: useRunStore.getState(),
         reviewStore: useReviewStore.getState(),
+        // UX P0-1: 累加器 + 气泡定位（onDone 写入 meta 行）
+        lastUsageRef,
+        streamAssistantIdRef,
+        commitMessages,
+        messagesRef,
         // send 模式：后端可能已写入 "Something went wrong: ..." 占位，跳过追加避免重复
         suppressSomethingPrefix: true,
+        onUsage: (u) => {
+          const prev = lastUsageRef.current;
+          lastUsageRef.current = prev
+            ? {
+                total_tokens: prev.total_tokens + u.total_tokens,
+                prompt_tokens: prev.prompt_tokens + u.prompt_tokens,
+                completion_tokens: prev.completion_tokens + u.completion_tokens,
+                cached_tokens: prev.cached_tokens + u.cached_tokens,
+              }
+            : u;
+          // Reflexion 多轮会多次 done → 全部累加进会话总量
+          setSessionUsage((n) => n + u.total_tokens);
+        },
       });
 
       try {
@@ -947,16 +1052,20 @@ export function useChatFlow(opts: {
         id: assistantId,
         role: "assistant",
         content: `▸ 从 checkpoint 恢复任务 ${shortId}…\n\n`,
+        ts: Date.now(),
       };
       const systemNote: ChatMsg = {
         id: uid("s"),
         role: "user",
         content: `(系统：恢复中断的任务 ${shortId}，无需重新输入)`,
+        ts: Date.now(),
       };
       const nextMsgs = [systemNote, assistantMsg];
       commitMessages(nextMsgs);
       const title = `恢复: ${shortId}`;
       void persist(threadId, title, nextMsgs);
+      // UX P0-1: 每轮重置 usage 累加器
+      lastUsageRef.current = null;
 
       const ac = new AbortController();
       abortRef.current = ac;
@@ -994,8 +1103,25 @@ export function useChatFlow(opts: {
         goalStartedAtRef,
         runStore: useRunStore.getState(),
         reviewStore: useReviewStore.getState(),
+        // UX P0-1: 累加器 + 气泡定位（onDone 写入 meta 行）
+        lastUsageRef,
+        streamAssistantIdRef,
+        commitMessages,
+        messagesRef,
         // resume 模式：不重复追加 ⚠️ 错误提示（后端未写入 "Something went wrong" 占位）
         suppressSomethingPrefix: false,
+        onUsage: (u) => {
+          const prev = lastUsageRef.current;
+          lastUsageRef.current = prev
+            ? {
+                total_tokens: prev.total_tokens + u.total_tokens,
+                prompt_tokens: prev.prompt_tokens + u.prompt_tokens,
+                completion_tokens: prev.completion_tokens + u.completion_tokens,
+                cached_tokens: prev.cached_tokens + u.cached_tokens,
+              }
+            : u;
+          setSessionUsage((n) => n + u.total_tokens);
+        },
       });
 
       try {
@@ -1220,6 +1346,10 @@ export function useChatFlow(opts: {
     lastChangesetId,
     workspace,
     workMode,
+    // UX P0-1: 会话累计 tokens（OpenCode 式小字展示）
+    sessionUsage,
+    // UX P0-4: 流式期间的待审批队列（内联审批卡数据源）
+    pendingApprovals,
     newChat,
     openThread,
     deleteThread,
