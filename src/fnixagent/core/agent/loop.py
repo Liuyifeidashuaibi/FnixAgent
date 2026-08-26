@@ -180,15 +180,18 @@ def _coerce_tool_arguments(raw: Any) -> dict[str, Any]:
             return {"raw": raw}
         if isinstance(parsed, dict):
             return parsed
-        # 双重编码：provider 把 arguments 序列化了两层（JSON 字符串里再包 JSON 字符串）。
-        # 再解一层；若仍是标量才落入 {"value": ...} 兜底。
-        if isinstance(parsed, str):
+        # 多重编码：provider 可能把 arguments 序列化 2~N 层（JSON 字符串层层嵌套）。
+        # 迭代解码直到得到 dict；若解不动（非 JSON 或标量）才落入 {"value": ...} 兜底。
+        for _ in range(8):
+            if not isinstance(parsed, str):
+                break
             try:
-                parsed2 = json.loads(parsed)
+                nxt = json.loads(parsed)
             except json.JSONDecodeError:
-                parsed2 = None
-            if isinstance(parsed2, dict):
-                return parsed2
+                break
+            if isinstance(nxt, dict):
+                return nxt
+            parsed = nxt
         return {"value": parsed}
     return {"value": raw}
 
