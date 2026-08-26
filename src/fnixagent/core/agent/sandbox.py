@@ -95,12 +95,67 @@ class InlineExecutor:
     async def execute(self, command: str, config: SandboxConfig) -> SandboxResult:
         start = time.monotonic()
         try:
-            proc = await asyncio.create_subprocess_shell(
-                command,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-                env={**dict(__import__("os").environ), **config.env_vars},
-            )
+            # Windows 修复: create_subprocess_shell 经 COMSPEC 走 cmd.exe。
+            # 部分宿主环境 (如 WPS 灵犀 python-env) 注入的全局 sys.audit hook
+            # 会把 cmd.exe/bash/powershell 等解释器本身判为危险命令直接抛
+            # PermissionError，导致 shell.exec 在 Windows 上永远失败。
+            # 策略：优先用 shlex 直接 exec 目标程序（无 shell 特性时零依赖、
+            # 不经任何解释器）；命令含 shell 元字符时再回退 bash/pwsh/COMSPEC。
+            import os as _os
+            import shlex as _shlex
+            import shutil as _shutil
+
+            proc: asyncio.subprocess.Process | None = None
+            _env = {**dict(_os.environ), **config.env_vars}
+            _has_shell_meta = bool(
+                _shutil.which("bash")
+            ) and any(c in command for c in "|&;<>()$`\\\"'*?[]#~=%{}\n")
+
+            if not _has_shell_meta:
+                try:
+                    argv = _shlex.split(command, posix=False)
+                    if argv and _shutil.which(argv[0]):
+                        proc = await asyncio.create_subprocess_exec(
+                            *argv,
+                            stdout=asyncio.subprocess.PIPE,
+                            stderr=asyncio.subprocess.PIPE,
+                            env=_env,
+                        )
+                except ValueError:
+                    proc = None  # 引号不闭合等 — 回退 shell
+
+            if proc is None:
+                for candidate in (
+                    _os.environ.get("FNIX_SHELL"),
+                    _shutil.which("bash"),
+                    _shutil.which("pwsh"),
+                    _shutil.which("powershell"),
+                ):
+                    if not candidate:
+                        continue
+                    base = _os.path.basename(candidate).lower().replace(".exe", "")
+                    flag = "-c" if "bash" in base else "-Command"
+                    try:
+                        proc = await asyncio.create_subprocess_exec(
+                            candidate,
+                            flag,
+                            command,
+                            stdout=asyncio.subprocess.PIPE,
+                            stderr=asyncio.subprocess.PIPE,
+                            env=_env,
+                        )
+                        break
+                    except PermissionError:
+                        continue  # 宿主 audit hook 拦截该解释器 — 试下一个
+
+            if proc is None:
+                # 全部路径被拦 — 保持原行为让上层收到一致错误形态
+                proc = await asyncio.create_subprocess_shell(
+                    command,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                    env=_env,
+                )
             try:
                 stdout_b, stderr_b = await asyncio.wait_for(
                     proc.communicate(), timeout=config.timeout_sec

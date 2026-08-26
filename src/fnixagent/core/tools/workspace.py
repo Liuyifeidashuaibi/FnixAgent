@@ -881,13 +881,28 @@ class WorkspaceTools:
                             re.DOTALL,
                         )
                         titles2 = title_pattern2.findall(html2)
+                        # P2: 同时解析 result__snippet 摘要块 — DDG HTML 版中
+                        # snippet 与标题按结果顺序一一对应
+                        snippet_pattern2 = re.compile(
+                            r'<a[^>]+class="result__snippet"[^>]*>(.*?)</a>',
+                            re.DOTALL | re.IGNORECASE,
+                        )
+                        snippets2 = snippet_pattern2.findall(html2)
                         for i, (url, title) in enumerate(titles2[:num]):
                             title_clean = _strip_tags(title)
                             if "uddg=" in url:
                                 m = re.search(r"uddg=([^&]+)", url)
                                 if m:
                                     url = unquote(m.group(1))
-                            results.append(f"[{i + 1}] {title_clean}\n    URL: {url}")
+                            snippet_clean = (
+                                _strip_tags(snippets2[i]).strip()[:300]
+                                if i < len(snippets2)
+                                else ""
+                            )
+                            entry = f"[{i + 1}] {title_clean}\n    URL: {url}"
+                            if snippet_clean:
+                                entry += f"\n    {snippet_clean}"
+                            results.append(entry)
                     except Exception:  # noqa: S110 — HTML 版失败时静默降级
                         pass  # HTML 版失败时静默降级
 

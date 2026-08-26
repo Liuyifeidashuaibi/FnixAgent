@@ -286,14 +286,11 @@ def get_required_caps(syscall: SyscallType) -> list[str]:
 def check_capability(syscall: SyscallType, capabilities: set[str]) -> bool:
     """检查能力集是否包含执行该 syscall 的能力。
 
-    对于高危 syscall, 还需额外验证 HIGH_RISK_REQUIRED_CAPS 中要求的能力。
+    高危 syscall 的额外把关统一在 PolicyEngine.authorize() 完成
+    （HIGH_RISK_REQUIRED_CAPS 的 any 语义）。此处曾错误地重复实现
+    all(required) 检查，导致 fs.delete / mem.forget 等域内高危操作
+    被静默要求 admin 能力，与 authorize() 及 e2e 契约矛盾。
     """
-    # 高危 syscall 需要额外能力（如 admin）
-    required = HIGH_RISK_REQUIRED_CAPS.get(syscall)
-    if required:
-        # 所有 required capability 必须在 capabilities 中
-        if not all(cap in capabilities for cap in required):
-            return False
     # 常规检查：至少一个 capability 覆盖该 syscall
     for cap in capabilities:
         allowed = CAPABILITY_SYSCALLS.get(cap, frozenset())

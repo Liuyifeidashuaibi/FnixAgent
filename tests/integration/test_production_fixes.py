@@ -72,15 +72,34 @@ def test_p1_1_llm_not_configured_raises():
 
 
 def test_p1_3_policy_default_fail_closed():
-    """P1-3: ToolPolicy 默认 auto_approve_high=False (fail-closed)。"""
+    """P1-3: ToolPolicy 默认策略 — 云端 fail-closed / standalone 显式放行。
+
+    契约更新 (2daa741): 本地单机 (standalone, 产品默认形态) 无人工审批通道,
+    SHELL/DESTRUCTIVE 默认放行以保可用性; 云端/生产仍严格 fail-closed。
+    """
     # 清理环境变量
     for k in ("FNIX_TOOL_AUTO_APPROVE", "FNIXAGENT_PROFILE", "SERVICE_DEBUG", "DEBUG"):
         os.environ.pop(k, None)
+    from fnixagent.core.profile import is_standalone
     from fnixagent.core.tools.policy import ToolPolicy
 
     policy = ToolPolicy()
-    assert policy.auto_approve_high is False, "P1-3 默认应 fail-closed"
-    print("[P1-3] policy 默认 fail-closed 验证通过")
+    if is_standalone():
+        # standalone 默认放行（本地优先产品决策）
+        assert policy.auto_approve_high is True, (
+            "standalone 默认应 auto_approve_high=True (本地无审批通道)"
+        )
+    else:
+        assert policy.auto_approve_high is False, "云端默认应 fail-closed"
+
+    # 云端 profile 下必须 fail-closed
+    os.environ["FNIXAGENT_PROFILE"] = "cloud"
+    try:
+        cloud_policy = ToolPolicy()
+        assert cloud_policy.auto_approve_high is False, "云端默认应 fail-closed"
+    finally:
+        os.environ.pop("FNIXAGENT_PROFILE", None)
+    print("[P1-3] policy 默认策略验证通过 (standalone 放行 / cloud fail-closed)")
 
 
 def test_p1_4_dangerous_commands_extended():
@@ -129,7 +148,11 @@ def test_p1_2_tauri_dev_mode_conditional():
 
 
 def test_p0_1_frontend_timeout_extended():
-    """P0-1: 前端 idle timeout 应从 60s 提升到 5 分钟。"""
+    """P0-1: 前端 idle timeout 应从 60s 提升到 5 分钟以上。
+
+    实现已按 P0-2 进一步演进到 600_000 (10 分钟, 见 fnixRuntime.ts
+    createStreamGuard 注释) — 断言对齐现契约: idleMs >= 5 分钟。
+    """
     runtime_ts = (
         ROOT / "apps" / "workbench" / "src" / "shell" / "desktop" / "fnixRuntime.ts"
     )
@@ -137,8 +160,9 @@ def test_p0_1_frontend_timeout_extended():
         print("[P0-1 前端] 跳过: fnixRuntime.ts 不存在")
         return
     content = runtime_ts.read_text(encoding="utf-8")
-    assert "300_000" in content, "P0-1 前端 idle timeout 应为 300000ms (5min)"
-    assert "60_000" not in content or "300_000" in content, "P0-1 应已替换 60s"
+    # 现实现为 600_000 (10min)；只要 >= 300_000 即满足 P0-1 意图
+    assert "600_000" in content, "P0-1 前端 idle timeout 应为 600000ms (10min, P0-2 演进)"
+    assert "idleMs = 600_000" in content, "createStreamGuard 默认 idleMs 应为 10min"
     print("[P0-1 前端] idle timeout 5 分钟验证通过")
 
 

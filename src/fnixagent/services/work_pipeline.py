@@ -1373,6 +1373,14 @@ async def run_work_stream(
     # UX P0-1: AgenticLoop done 事件里的 token usage 累计 (可能多轮 Reflexion 多次 done)
     loop_usage: dict | None = None
 
+    def _merge_loop_usage(prev: dict | None, u: dict) -> dict:
+        """合并一次 AgenticLoop done 的 usage 到累计器（外层 + Reflexion 内循环共用）。"""
+        p = prev or {}
+        return {
+            k: int(p.get(k, 0) or 0) + int(u.get(k, 0) or 0)
+            for k in ("total_tokens", "prompt_tokens", "completion_tokens", "cached_tokens")
+        }
+
     # 提取产物路径
     async for event in pipeline.step6_run_agent_stream(ctx, resume_from=resume_from):
         et = event.get("type", "")
@@ -1432,17 +1440,7 @@ async def run_work_stream(
             # (原逻辑直接 continue 丢弃, 前端永远拿不到 token 数)
             _u = data.get("usage") if isinstance(data, dict) else None
             if isinstance(_u, dict):
-                prev = loop_usage or {}
-                loop_usage = {
-                    "total_tokens": int(prev.get("total_tokens", 0) or 0)
-                    + int(_u.get("total_tokens", 0) or 0),
-                    "prompt_tokens": int(prev.get("prompt_tokens", 0) or 0)
-                    + int(_u.get("prompt_tokens", 0) or 0),
-                    "completion_tokens": int(prev.get("completion_tokens", 0) or 0)
-                    + int(_u.get("completion_tokens", 0) or 0),
-                    "cached_tokens": int(prev.get("cached_tokens", 0) or 0)
-                    + int(_u.get("cached_tokens", 0) or 0),
-                }
+                loop_usage = _merge_loop_usage(loop_usage, _u)
             continue
         elif et == "reflection":
             # Spec 7+ 四维闭环: VMAO 反思 → HERA 写入"失败技能"
@@ -1640,6 +1638,11 @@ async def run_work_stream(
                         success = False
                         yield event
                     elif et == "done":
+                        # UX P0-1: Reflexion 修复轮的 done 同样接住 usage 累计
+                        # （与外层 done 分支同构 — 否则修复轮 token 数丢失）
+                        _u2 = data.get("usage") if isinstance(data, dict) else None
+                        if isinstance(_u2, dict):
+                            loop_usage = _merge_loop_usage(loop_usage, _u2)
                         continue
                     else:
                         yield event

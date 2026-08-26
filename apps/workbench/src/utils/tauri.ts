@@ -117,7 +117,10 @@ export const setProjectRoot = async (path: string) => {
           .then(({ enhanceSymbolIndexWithTreeSitter }) => enhanceSymbolIndexWithTreeSitter())
           .then((stats) => {
             if (stats.filesProcessed > 0) {
-              console.log(`[Index] Tree-sitter enhanced ${stats.filesProcessed} files, ${stats.symbolsExtracted} symbols`);
+              // 生产环境不刷 console — 仅 dev 下输出索引增强统计
+              if (import.meta.env?.DEV) {
+                console.debug(`[Index] Tree-sitter enhanced ${stats.filesProcessed} files, ${stats.symbolsExtracted} symbols`);
+              }
             }
           })
           .catch(() => {});

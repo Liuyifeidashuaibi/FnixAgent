@@ -27,6 +27,14 @@
   color: var(--muted, #9ca3af);
   font-variant-numeric: tabular-nums;
 }
+/* 差距修补: AI 回答可溯源 — 模型名与 usage 同色同级，克制呈现 */
+.fnix-msg-meta-model {
+  opacity: 0.85;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .fnix-msg-meta-ts {
   opacity: 0;
   transition: opacity 0.12s ease;

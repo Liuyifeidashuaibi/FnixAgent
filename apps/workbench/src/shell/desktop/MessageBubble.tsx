@@ -553,8 +553,9 @@ function MessageBubbleInner({
 
         {m.content && !live ? (
           <div className="fnix-actions">
-            {/* UX P0-1/P0-6: OpenCode 式 meta 行 — tokens · 耗时 · 时间戳，hover 才显时间 */}
+            {/* UX P0-1/P0-6: OpenCode 式 meta 行 — 模型 · tokens · 耗时 · 时间戳 */}
             <span className="fnix-msg-meta">
+              {m.model ? <span className="fnix-msg-meta-model">{m.model}</span> : null}
               {m.usage && m.usage.total > 0 ? (
                 <span className="fnix-msg-meta-usage">
                   ≈{m.usage.total >= 1000

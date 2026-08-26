@@ -57,7 +57,7 @@ from fnixagent.core.agent.memory import MemoryManager
 from fnixagent.core.agent.messaging import A2ABus, A2AMessage, AgentCard
 from fnixagent.core.agent.observability import ObservabilityManager
 from fnixagent.core.agent.policy import PolicyEngine, PolicyRule
-from fnixagent.core.agent.process import AgentProcess
+from fnixagent.core.agent.process import AgentProcess, AgentState
 from fnixagent.core.agent.sandbox import SandboxManager
 from fnixagent.core.agent.scheduler import AgentScheduler
 from fnixagent.core.agent.syscall import (
@@ -208,10 +208,18 @@ class AgentKernel:
         alive_pids = [pid for pid, p in self._processes.items() if p.is_alive]
         for pid in alive_pids:
             await self.scheduler.suspend(pid)
-            # 标记为非存活，保留进程记录供审计 (不删除)
+            # 标记为非存活，保留进程记录供审计 (不删除)。
+            # 修复: is_alive 是只读 property（由 state 派生），不能直接赋值 —
+            # 原 `proc.is_alive = False` 抛 AttributeError 使 shutdown 崩溃。
+            # 通过状态机转换到 TERMINATED（SUSPENDED→TERMINATED 合法）达成同样效果。
             proc = self._processes.get(pid)
             if proc is not None:
-                proc.is_alive = False
+                try:
+                    proc.transition(AgentState.TERMINATED)
+                except ValueError:
+                    # 已处于终态等边缘情况 — 保底直接置终态字段
+                    proc.state = AgentState.TERMINATED
+                    proc.finished_at = proc.finished_at or utcnow_iso()
 
         # 2. 停止调度器
         await self.scheduler.stop()

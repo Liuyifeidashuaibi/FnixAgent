@@ -47,10 +47,15 @@ describe("shellFsm", () => {
     ).toBe(true);
   });
 
-  it("review open only in code with pending", () => {
-    expect(canOpenReview({ mode: "work", hasPending: true })).toBe(false);
-    expect(canOpenReview({ mode: "code", hasPending: false })).toBe(false);
+  it("review opens whenever pending changes exist (any mode)", () => {
+    // BUG-6 fix 后的契约：pickChatBackend 可能将 Work 模式路由到 Code 管线
+    // （如 Work 模式下输入仓库级改码任务），此时 fileChanges 会填充，
+    // 评审面板必须能打开，否则 Accept 按钮永不出现、preview 写盘无法落盘。
+    expect(canOpenReview({ mode: "work", hasPending: true })).toBe(true);
     expect(canOpenReview({ mode: "code", hasPending: true })).toBe(true);
+    // 无待审变更时任何模式都不打开
+    expect(canOpenReview({ mode: "work", hasPending: false })).toBe(false);
+    expect(canOpenReview({ mode: "code", hasPending: false })).toBe(false);
   });
 
   it("canStartRun allows idle/error/done", () => {

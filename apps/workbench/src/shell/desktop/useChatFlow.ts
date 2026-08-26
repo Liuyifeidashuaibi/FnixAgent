@@ -95,6 +95,8 @@ export interface ChatMsg {
   ts?: number;
   /** UX P0-1: 本轮 assistant 回复的 token 用量与耗时（气泡右下 meta 行，OpenCode 式）*/
   usage?: { total: number; cached?: number; durationMs?: number };
+  /** 差距修补: 生成该回复的模型名 — 成熟产品（Claude/ChatGPT/Cursor）的信任基线：AI 回答可溯源 */
+  model?: string;
 }
 
 export interface ChatThread {
@@ -370,6 +372,8 @@ function createStreamHandlers(
     reviewStore: { setPending: (c: CodeFileChange[]) => void };
     /** UX P0-1: 本轮 usage 累加器（onDone 时读取并写入气泡） */
     lastUsageRef?: { current: RunTokenUsage | null };
+    /** 差距修补: 本轮使用的模型名（onDone 时写入气泡 meta 行） */
+    runModelRef?: { current: string | null };
     /** UX P0-1: assistant 消息 id ref（onDone 时定位气泡） */
     streamAssistantIdRef?: { current: string | null };
     commitMessages: (next: ChatMsg[]) => void;
@@ -400,6 +404,7 @@ function createStreamHandlers(
     reviewStore,
     suppressSomethingPrefix = false,
     lastUsageRef,
+    runModelRef,
     streamAssistantIdRef: assistantIdRef,
     commitMessages,
     messagesRef,
@@ -485,6 +490,7 @@ function createStreamHandlers(
             m.id === aid
               ? {
                   ...m,
+                  model: m.model ?? runModelRef?.current ?? undefined,
                   usage: {
                     total: m.usage?.total ?? u.total_tokens,
                     cached: u.cached_tokens,
@@ -552,6 +558,8 @@ export function useChatFlow(opts: {
   // UX P0-1: 会话累计 token（OpenCode 式 — Composer 旁一枚小字，点击无操作纯展示）
   const [sessionUsage, setSessionUsage] = useState(0);
   const lastUsageRef = useRef<RunTokenUsage | null>(null);
+  // 差距修补: 记录本轮实际使用的模型名（写入气泡 meta 行，AI 回答可溯源）
+  const runModelRef = useRef<string | null>(null);
   // UX P0-4: 流式期间轮询 /hitl/pending 的待审批数（>0 时 Composer 上方出现内联审批卡）
   const [pendingApprovals, setPendingApprovals] = useState<
     import('../../lib/fnixBridge').FnixHitlToolApproval[]
@@ -805,6 +813,8 @@ export function useChatFlow(opts: {
       if (runPhase === "streaming" || runPhase === "stopping") return;
 
       const llm = pickFnixLlm(optsRef.current.providers, optsRef.current.apiKey, optsRef.current.providerName, optsRef.current.model);
+      // 差距修补: 记录本轮模型名 → done 时写入气泡 meta 行
+      runModelRef.current = llm?.model || optsRef.current.model || null;
       if (!llm?.api_key && llm?.provider !== "ollama") {
         setError("请先在「设置」中配置 API Key（BYOK），再发送。");
         return;
@@ -911,6 +921,7 @@ export function useChatFlow(opts: {
         reviewStore: useReviewStore.getState(),
         // UX P0-1: 累加器 + 气泡定位（onDone 写入 meta 行）
         lastUsageRef,
+        runModelRef,
         streamAssistantIdRef,
         commitMessages,
         messagesRef,
@@ -1105,6 +1116,7 @@ export function useChatFlow(opts: {
         reviewStore: useReviewStore.getState(),
         // UX P0-1: 累加器 + 气泡定位（onDone 写入 meta 行）
         lastUsageRef,
+        runModelRef,
         streamAssistantIdRef,
         commitMessages,
         messagesRef,

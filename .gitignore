@@ -112,6 +112,11 @@ debug_craft.py
 
 # --- Benchmark seeds (large test data) ---
 benchmarks/code/seed/
+# BenchForge 运行产物与垃圾目录（数据集/报告保留，runs/_trash 永不入库）
+benchmarks/benchforge/runs/
+benchmarks/benchforge/_trash/
+bench_results/
+benchmark_results/
 
 # --- Generated HTML docs ---
 docs/*.html
@@ -171,4 +176,8 @@ src/data/topology/snapshots/work_*.json
 apps/workbench/data/intelligence/
 apps/workbench/data/traces/
 apps/workbench/data/topology/snapshots/work_*.json
-.tmp_trace_integration/.tmp/fullchain-ws/
+.tmp/fullchain-ws/
+
+# --- 前端本地截图/测试产物（Playwright 冒烟等，仅本地查看不入库）---
+.tmp/
+apps/workbench/.tmp/

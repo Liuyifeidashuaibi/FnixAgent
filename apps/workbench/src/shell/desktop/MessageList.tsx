@@ -137,7 +137,15 @@ export function MessageList({
 
   return (
     <div className="fnix-feed" ref={feedRef}>
-      <div className="fnix-feed-inner">
+      {/* a11y: role=log 隐含 aria-live=polite — 流式新消息按序播报且不打断用户；
+          aria-atomic=false 确保只播报新增内容而非整段重读 */}
+      <div
+        className="fnix-feed-inner"
+        role="log"
+        aria-live="polite"
+        aria-atomic="false"
+        aria-label="对话消息"
+      >
         {hidden > 0 ? (
           <div className="fnix-feed-window">
             <button type="button" className="fnix-expand-msg" onClick={() => setShowAll(true)}>
