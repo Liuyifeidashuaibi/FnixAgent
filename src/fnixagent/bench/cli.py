@@ -69,6 +69,8 @@ def _probe_quota(model: str) -> tuple[bool, str]:
             api_key=os.getenv("BENCH_API_KEY", ""),
             base_url=os.getenv("BENCH_BASE_URL", ""),
             model_name=model,
+            # 与 runner 同款隔离：探测被测模型本身，不走 .env fallback 链
+            fallback_models=[m.strip() for m in os.getenv("BENCH_MODEL_FALLBACKS", "").split(",") if m.strip()],
         )
         if not adapter.is_configured:
             return False, "LLM 未配置"

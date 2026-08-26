@@ -220,6 +220,9 @@ class BenchRunner:
             api_key=os.getenv("BENCH_API_KEY", ""),
             base_url=os.getenv("BENCH_BASE_URL", ""),
             model_name=os.getenv("BENCH_MODEL", ""),
+            # 评测隔离: 禁用 fallback 链（.env 的 LLM_MODEL_FALLBACKS 指向的
+            # 备用模型可能已下线/无权限，会让评测任务以 infra_skip 告终）
+            fallback_models=[m.strip() for m in os.getenv("BENCH_MODEL_FALLBACKS", "").split(",") if m.strip()],
         )
         if not adapter.is_configured:
             raise RuntimeError(

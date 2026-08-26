@@ -224,7 +224,11 @@ failure_type 仅在 success=false 时填写。判定标准：输出结果是否�
                            evidence="最终回复出现上下文丢失特征表述", method="heuristic")
 
         if run.steps and len(run.steps) >= 25 and not run.files_written:
-            last_actions = [s.get("action", "") for s in run.steps[-5:]]
+            # steps 元素来自 to_summary()（str）或 dict（resume 反序列化），两种形态都兼容
+            last_actions = [
+                s.get("action", "") if isinstance(s, dict) else str(s)
+                for s in run.steps[-5:]
+            ]
             if len(set(last_actions)) <= 2:
                 return Verdict(TaskStatus.FAILURE, FailureType.PLANNING_ERROR.value,
                                evidence="步数耗尽且陷入重复动作循环", method="heuristic")

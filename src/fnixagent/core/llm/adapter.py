@@ -192,8 +192,11 @@ class LLMAdapter:
             if isinstance(cfg_fb, (list, tuple)):
                 self._fallback_models = [str(m) for m in cfg_fb if str(m).strip()]
             else:
-                env_fb = os.getenv("LLM_MODEL_FALLBACKS", "") or os.getenv(
-                    "BENCH_MODEL_FALLBACKS", ""
+                # Bench 场景优先: BENCH_MODEL_FALLBACKS 显式覆盖 LLM_MODEL_FALLBACKS
+                # （bench runner 设置 BENCH_* 隔离评测配置时，不应被 .env 的
+                #  LLM_* fallback 链污染 — 曾导致评测任务打到已下线的模型）
+                env_fb = os.getenv("BENCH_MODEL_FALLBACKS", "") or os.getenv(
+                    "LLM_MODEL_FALLBACKS", ""
                 )
                 if env_fb:
                     self._fallback_models = [m.strip() for m in env_fb.split(",") if m.strip()]
