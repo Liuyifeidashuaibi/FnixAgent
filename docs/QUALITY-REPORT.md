@@ -318,3 +318,39 @@ uv run python .tmp/run_full_dsv4_fixed.py
 ```
 
 *记录时间：2026-08-27 01:55 JST*
+
+---
+
+## 第四轮：judge 判定修复 + 超时题重跑（2026-08-27）
+
+### 一、修复内容
+
+**修复④：mcpcallerror 判定优化（src/fnixagent/bench/judge.py）**
+
+原逻辑：`fail_ratio >= 0.5 and len(calls) >= 2` 即判 MCP_CALL_ERROR 失败——即使任务最终产出了完整文件，前几步工具失败也会被判死。
+
+修复：追加 `and not run.files_written` 条件。任务有产出文件时不再因工具失败率判死，改由后续 golden-match / LLM judge 判定。
+
+验证：`pytest tests/benchmark/` 26/26 通过，无回归。
+
+**修复⑤：超时题重跑（timeout 900→1800s）**
+
+- 新 runner：`.tmp/run_bench_timeout_rerun.py`（deepseek-v4-pro-0813，timeout 1800s）
+- 临时数据集：`benchmarks/benchforge/datasets/vibe-timeout2/tasks.jsonl`（仅 case_22_flowchart、case_35_data_pipeline）
+- 输出：`benchmarks/benchforge/runs/acceptance-timeout-rerun/`
+
+### 二、结果
+
+（重跑完成后填写）
+
+### 三、复现命令
+
+```bash
+# 单测
+uv run pytest tests/benchmark/ -q
+
+# 超时题重跑
+uv run python .tmp/run_bench_timeout_rerun.py
+```
+
+*更新时间：2026-08-27 03:40 JST*

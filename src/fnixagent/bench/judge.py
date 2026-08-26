@@ -208,7 +208,7 @@ failure_type 仅在 success=false 时填写。判定标准：输出结果是否�
             failed = [c for c in calls if not c.get("success")]
             fail_ratio = len(failed) / len(calls)
             joined_err = " ".join(str(c.get("output_preview", "")) for c in failed[:5])
-            if fail_ratio >= 0.5 and len(calls) >= 2:
+            if fail_ratio >= 0.5 and len(calls) >= 2 and not run.files_written:
                 if _PATH_PAT.search(joined_err):
                     return Verdict(TaskStatus.FAILURE, FailureType.PATH_ERROR.value,
                                    evidence=f"工具失败率{fail_ratio:.0%}，路径错误特征",
