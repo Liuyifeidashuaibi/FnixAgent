@@ -1,0 +1,173 @@
+........................................................................ [  3%]
+........................................................................ [  7%]
+........................................................................ [ 11%]
+........................................................................ [ 15%]
+........................................................................ [ 19%]
+........................................................................ [ 23%]
+........................................................................ [ 27%]
+........................................................................ [ 31%]
+........................................................................ [ 35%]
+........................................................................ [ 39%]
+........................................................................ [ 43%]
+............................................F...F....................... [ 47%]
+........................................................................ [ 51%]
+........................................................................ [ 55%]
+........................................................................ [ 59%]
+........................................................................ [ 63%]
+........................................................................ [ 67%]
+........................................................................ [ 71%]
+........................................................................ [ 75%]
+........................................................................ [ 79%]
+........................................................................ [ 83%]
+........................................................................ [ 87%]
+........................................................................ [ 91%]
+........................................................................ [ 95%]
+....................................................................FF.. [ 99%]
+..................                                                       [100%]
+================================== FAILURES ===================================
+________ TestOfflineSqlGeneration.test_upgrade_creates_expected_tables ________
+
+self = <tests.unit.test_migrations.test_initial_migration.TestOfflineSqlGeneration object at 0x000001A070019A90>
+upgrade_sql = "BEGIN;\n\nCREATE TABLE alembic_version (\n    version_num VARCHAR(32) NOT NULL, \n    CONSTRAINT alembic_version_pkc ...nUPDATE alembic_version SET version_num='0002_rbac' WHERE alembic_version.version_num = '0001_initial';\n\nCOMMIT;\n\n"
+downgrade_sql = "BEGIN;\n\n-- Running downgrade 0002_rbac -> 0001_initial\n\nDROP TABLE user_roles;\n\nDROP TABLE role_permissions;\n\...FROM alembic_version WHERE alembic_version.version_num = '0001_initial';\n\nDROP TABLE alembic_version;\n\nCOMMIT;\n\n"
+
+    def test_upgrade_creates_expected_tables(self, upgrade_sql: str, downgrade_sql: str) -> None:
+        """upgrade 创建的表数量应与 downgrade 删除的表数量一致(迁移可逆)。
+    
+        注: alembic 内部版本表 alembic_version 仅出现在 upgrade 离线 SQL 中
+        (alembic 按设计在 downgrade 后保留自身版本表),计数时需排除。
+        """
+        created = upgrade_sql.count("CREATE TABLE") - upgrade_sql.count(
+            "CREATE TABLE alembic_version"
+        )
+        dropped = downgrade_sql.count("DROP TABLE")
+>       assert created == dropped, (
+            f"upgrade CREATE TABLE ({created}) 与 downgrade DROP TABLE ({dropped}) 数量不一致"
+        )
+E       AssertionError: upgrade CREATE TABLE (24) 与 downgrade DROP TABLE (25) 数量不一致
+E       assert 24 == 25
+
+tests\unit\test_migrations\test_initial_migration.py:274: AssertionError
+__________ TestOfflineSqlGeneration.test_downgrade_drops_all_tables ___________
+
+self = <tests.unit.test_migrations.test_initial_migration.TestOfflineSqlGeneration object at 0x000001A070088290>
+upgrade_sql = "BEGIN;\n\nCREATE TABLE alembic_version (\n    version_num VARCHAR(32) NOT NULL, \n    CONSTRAINT alembic_version_pkc ...nUPDATE alembic_version SET version_num='0002_rbac' WHERE alembic_version.version_num = '0001_initial';\n\nCOMMIT;\n\n"
+downgrade_sql = "BEGIN;\n\n-- Running downgrade 0002_rbac -> 0001_initial\n\nDROP TABLE user_roles;\n\nDROP TABLE role_permissions;\n\...FROM alembic_version WHERE alembic_version.version_num = '0001_initial';\n\nDROP TABLE alembic_version;\n\nCOMMIT;\n\n"
+
+    def test_downgrade_drops_all_tables(self, upgrade_sql: str, downgrade_sql: str) -> None:
+        """downgrade 删除的表数量应与 upgrade 创建的表数量一致(可逆)。
+    
+        排除 alembic_version(alembic 内部版本表,按设计不随 downgrade 删除)。
+        """
+        created = upgrade_sql.count("CREATE TABLE") - upgrade_sql.count(
+            "CREATE TABLE alembic_version"
+        )
+        dropped = downgrade_sql.count("DROP TABLE")
+>       assert dropped == created, (
+            f"downgrade DROP TABLE ({dropped}) 与 upgrade CREATE TABLE ({created}) 数量不一致"
+        )
+E       AssertionError: downgrade DROP TABLE (25) 与 upgrade CREATE TABLE (24) 数量不一致
+E       assert 25 == 24
+
+tests\unit\test_migrations\test_initial_migration.py:308: AssertionError
+_________________ test_run_command_timeout_kills_tree_via_job _________________
+
+tmp_path = WindowsPath('C:/Users/liuyi/AppData/Local/Temp/pytest-of-unknown/pytest-3/test_run_command_timeout_kills0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001A0705B5BE0>
+
+    def test_run_command_timeout_kills_tree_via_job(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """超时路径: TerminateJobObject 终结整树 + finally close, 不留孤儿。"""
+        import asyncio as _aio
+    
+        from fnixagent.core.tools.workspace import WorkspaceTools
+    
+        proc = _spawn_blocking_child()
+        captured = _capture_sandbox_job(monkeypatch, proc.pid)
+        fake = _FakeProc(pid=proc.pid, hang=True)
+    
+        async def _fake_exec(*args: object, **kwargs: object) -> _FakeProc:
+            return fake
+    
+        monkeypatch.setattr(_aio, "create_subprocess_exec", _fake_exec)
+    
+        async def _scenario() -> object:
+            tools = WorkspaceTools(str(tmp_path))
+            return await tools.run_command("hang-forever", timeout=1)
+    
+        result = asyncio.run(_scenario())
+        assert result.success is False  # type: ignore[attr-defined]
+        assert "超时" in (result.error or "")  # type: ignore[attr-defined]
+>       assert fake.killed is True, "超时时应回退 kill 主进程对象"
+E       AssertionError: 超时时应回退 kill 主进程对象
+E       assert False is True
+E        +  where False = <tests.unit.test_win_job_sandbox._FakeProc object at 0x000001A07061AAD0>.killed
+
+tests\unit\test_win_job_sandbox.py:320: AssertionError
+________________________ test_run_command_env_opt_out _________________________
+
+tmp_path = WindowsPath('C:/Users/liuyi/AppData/Local/Temp/pytest-of-unknown/pytest-3/test_run_command_env_opt_out0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001A0704C2DD0>
+
+    def test_run_command_env_opt_out(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """FNIX_SANDBOX_JOB=0 时显式退出沙箱, 不创建任何 job。"""
+        from fnixagent.core.tools.workspace import WorkspaceTools, _attach_job_sandbox
+    
+        monkeypatch.setenv("FNIX_SANDBOX_JOB", "0")
+        assert _attach_job_sandbox(0) is None  # env 关闭时直接返回 None
+    
+        async def _scenario() -> object:
+            tools = WorkspaceTools(str(tmp_path))
+            return await tools.run_command("echo opt-out-ok", timeout=60)
+    
+        result = asyncio.run(_scenario())
+>       assert result.success is False  # 本机 powershell 被 env 层拦截, 仅验证不抛异常
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: assert True is False
+E        +  where True = ToolResult(success=True, content='opt-out-ok', error='', metadata={'exit_code': 0, 'duration_ms': 0}).success
+
+tests\unit\test_win_job_sandbox.py:338: AssertionError
+============================== warnings summary ===============================
+..\..\Environments\Lib\site-packages\fastapi\testclient.py:1
+  E:\Environments\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+tests/unit/test_api/test_auth.py: 16 warnings
+tests/unit/test_audit/test_audit.py: 12 warnings
+tests/unit/test_chat_agent_apply.py: 1 warning
+tests/unit/test_dashboard/test_dashboard.py: 27 warnings
+tests/unit/test_ldap/test_ldap.py: 8 warnings
+tests/unit/test_mfa/test_mfa.py: 37 warnings
+tests/unit/test_privacy/test_privacy.py: 19 warnings
+tests/unit/test_rbac/test_rbac_core.py: 1 warning
+tests/unit/test_security/test_auth_flow.py: 16 warnings
+tests/unit/test_sms_login/test_sms_login.py: 12 warnings
+tests/unit/test_sso/test_sso.py: 15 warnings
+  <string>:11: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+
+tests/unit/test_api/test_auth.py::TestApiKey::test_create_apikey
+tests/unit/test_api/test_auth.py::TestApiKey::test_list_apikeys
+tests/unit/test_api/test_auth.py::TestApiKey::test_list_apikeys
+tests/unit/test_api/test_auth.py::TestApiKey::test_revoke_apikey
+  <string>:8: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+
+tests/unit/test_api/test_documents.py: 20 warnings
+  <string>:13: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+
+tests/unit/test_api/test_tasks.py: 19 warnings
+  <string>:12: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+
+tests/unit/test_storage_pg/test_pg_apikey_store.py: 33 warnings
+tests/unit/test_storage_pg/test_pg_document_store.py: 27 warnings
+tests/unit/test_storage_pg/test_pg_task_store.py: 120 warnings
+tests/unit/test_storage_pg/test_pg_user_store.py: 42 warnings
+  E:\Environments\Lib\site-packages\sqlalchemy\sql\schema.py:3623: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    return util.wrap_callable(lambda ctx: fn(), fn)  # type: ignore
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/unit/test_migrations/test_initial_migration.py::TestOfflineSqlGeneration::test_upgrade_creates_expected_tables
+FAILED tests/unit/test_migrations/test_initial_migration.py::TestOfflineSqlGeneration::test_downgrade_drops_all_tables
+FAILED tests/unit/test_win_job_sandbox.py::test_run_command_timeout_kills_tree_via_job
+FAILED tests/unit/test_win_job_sandbox.py::test_run_command_env_opt_out - Ass...

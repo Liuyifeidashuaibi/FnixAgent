@@ -1,0 +1,110 @@
+..............F...F............FF                                        [100%]
+================================== FAILURES ===================================
+________ TestOfflineSqlGeneration.test_upgrade_creates_expected_tables ________
+
+self = <tests.unit.test_migrations.test_initial_migration.TestOfflineSqlGeneration object at 0x000002E24ECE5BD0>
+upgrade_sql = "BEGIN;\n\nCREATE TABLE alembic_version (\n    version_num VARCHAR(32) NOT NULL, \n    CONSTRAINT alembic_version_pkc ...nUPDATE alembic_version SET version_num='0002_rbac' WHERE alembic_version.version_num = '0001_initial';\n\nCOMMIT;\n\n"
+downgrade_sql = "BEGIN;\n\n-- Running downgrade 0002_rbac -> 0001_initial\n\nDROP TABLE user_roles;\n\nDROP TABLE role_permissions;\n\...FROM alembic_version WHERE alembic_version.version_num = '0001_initial';\n\nDROP TABLE alembic_version;\n\nCOMMIT;\n\n"
+
+    def test_upgrade_creates_expected_tables(self, upgrade_sql: str, downgrade_sql: str) -> None:
+        """upgrade 创建的表数量应与 downgrade 删除的表数量一致(迁移可逆)。
+    
+        注: alembic 内部版本表 alembic_version 仅出现在 upgrade 离线 SQL 中
+        (alembic 按设计在 downgrade 后保留自身版本表),计数时需排除。
+        """
+        created = upgrade_sql.count("CREATE TABLE") - upgrade_sql.count(
+            "CREATE TABLE alembic_version"
+        )
+        dropped = downgrade_sql.count("DROP TABLE")
+>       assert created == dropped, (
+            f"upgrade CREATE TABLE ({created}) 与 downgrade DROP TABLE ({dropped}) 数量不一致"
+        )
+E       AssertionError: upgrade CREATE TABLE (24) 与 downgrade DROP TABLE (25) 数量不一致
+E       assert 24 == 25
+
+tests\unit\test_migrations\test_initial_migration.py:274: AssertionError
+__________ TestOfflineSqlGeneration.test_downgrade_drops_all_tables ___________
+
+self = <tests.unit.test_migrations.test_initial_migration.TestOfflineSqlGeneration object at 0x000002E24ED51FD0>
+upgrade_sql = "BEGIN;\n\nCREATE TABLE alembic_version (\n    version_num VARCHAR(32) NOT NULL, \n    CONSTRAINT alembic_version_pkc ...nUPDATE alembic_version SET version_num='0002_rbac' WHERE alembic_version.version_num = '0001_initial';\n\nCOMMIT;\n\n"
+downgrade_sql = "BEGIN;\n\n-- Running downgrade 0002_rbac -> 0001_initial\n\nDROP TABLE user_roles;\n\nDROP TABLE role_permissions;\n\...FROM alembic_version WHERE alembic_version.version_num = '0001_initial';\n\nDROP TABLE alembic_version;\n\nCOMMIT;\n\n"
+
+    def test_downgrade_drops_all_tables(self, upgrade_sql: str, downgrade_sql: str) -> None:
+        """downgrade 删除的表数量应与 upgrade 创建的表数量一致(可逆)。
+    
+        排除 alembic_version(alembic 内部版本表,按设计不随 downgrade 删除)。
+        """
+        created = upgrade_sql.count("CREATE TABLE") - upgrade_sql.count(
+            "CREATE TABLE alembic_version"
+        )
+        dropped = downgrade_sql.count("DROP TABLE")
+>       assert dropped == created, (
+            f"downgrade DROP TABLE ({dropped}) 与 upgrade CREATE TABLE ({created}) 数量不一致"
+        )
+E       AssertionError: downgrade DROP TABLE (25) 与 upgrade CREATE TABLE (24) 数量不一致
+E       assert 25 == 24
+
+tests\unit\test_migrations\test_initial_migration.py:308: AssertionError
+_________________ test_run_command_timeout_kills_tree_via_job _________________
+
+tmp_path = WindowsPath('C:/Users/liuyi/AppData/Local/Temp/pytest-of-unknown/pytest-4/test_run_command_timeout_kills0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002E24C60DD90>
+
+    def test_run_command_timeout_kills_tree_via_job(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """超时路径: TerminateJobObject 终结整树 + finally close, 不留孤儿。"""
+        import asyncio as _aio
+    
+        from fnixagent.core.tools.workspace import WorkspaceTools
+    
+        proc = _spawn_blocking_child()
+        captured = _capture_sandbox_job(monkeypatch, proc.pid)
+        fake = _FakeProc(pid=proc.pid, hang=True)
+    
+        async def _fake_exec(*args: object, **kwargs: object) -> _FakeProc:
+            return fake
+    
+        monkeypatch.setattr(_aio, "create_subprocess_exec", _fake_exec)
+    
+        async def _scenario() -> object:
+            tools = WorkspaceTools(str(tmp_path))
+            return await tools.run_command("hang-forever", timeout=1)
+    
+        result = asyncio.run(_scenario())
+        assert result.success is False  # type: ignore[attr-defined]
+        assert "超时" in (result.error or "")  # type: ignore[attr-defined]
+>       assert fake.killed is True, "超时时应回退 kill 主进程对象"
+E       AssertionError: 超时时应回退 kill 主进程对象
+E       assert False is True
+E        +  where False = <tests.unit.test_win_job_sandbox._FakeProc object at 0x000002E24C63D090>.killed
+
+tests\unit\test_win_job_sandbox.py:320: AssertionError
+________________________ test_run_command_env_opt_out _________________________
+
+tmp_path = WindowsPath('C:/Users/liuyi/AppData/Local/Temp/pytest-of-unknown/pytest-4/test_run_command_env_opt_out0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002E24FA2BCE0>
+
+    def test_run_command_env_opt_out(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """FNIX_SANDBOX_JOB=0 时显式退出沙箱, 不创建任何 job。"""
+        from fnixagent.core.tools.workspace import WorkspaceTools, _attach_job_sandbox
+    
+        monkeypatch.setenv("FNIX_SANDBOX_JOB", "0")
+        assert _attach_job_sandbox(0) is None  # env 关闭时直接返回 None
+    
+        async def _scenario() -> object:
+            tools = WorkspaceTools(str(tmp_path))
+            return await tools.run_command("echo opt-out-ok", timeout=60)
+    
+        result = asyncio.run(_scenario())
+>       assert result.success is False  # 本机 powershell 被 env 层拦截, 仅验证不抛异常
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: assert True is False
+E        +  where True = ToolResult(success=True, content='opt-out-ok', error='', metadata={'exit_code': 0, 'duration_ms': 0}).success
+
+tests\unit\test_win_job_sandbox.py:338: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/unit/test_migrations/test_initial_migration.py::TestOfflineSqlGeneration::test_upgrade_creates_expected_tables
+FAILED tests/unit/test_migrations/test_initial_migration.py::TestOfflineSqlGeneration::test_downgrade_drops_all_tables
+FAILED tests/unit/test_win_job_sandbox.py::test_run_command_timeout_kills_tree_via_job
+FAILED tests/unit/test_win_job_sandbox.py::test_run_command_env_opt_out - Ass...
