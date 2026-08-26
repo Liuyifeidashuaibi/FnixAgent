@@ -319,11 +319,26 @@ class LLMAdapter:
             next_model,
         )
         self._model_name = next_model
+        # 修复：fallback 切模型时，按模型的命名空间重新决定 provider/base_url/api_key。
+        # 之前这里无条件复用上一个 provider 的 base_url/key，导致 SiliconFlow 命名空间
+        # 的模型（如 Qwen/Qwen2.5-7B-Instruct）被错误地发到百炼 dashscope 域名，返回 401。
+        fb_name = self._provider._name
+        fb_api_key = self._provider._api_key
+        fb_base_url = self._provider._base_url
+        fb_model_l = (next_model or "").lower()
+        _SF_PREFIXES = ("qwen/", "deepseek-ai/", "moonshotai/", "zai-org/",
+                        "meituan-longcat/", "pro/", "lora/")
+        if fb_model_l.startswith(_SF_PREFIXES) or "/" in (next_model or ""):
+            _sf_key = os.environ.get("SILICONFLOW_API_KEY", "").strip()
+            if _sf_key:
+                fb_name = "siliconflow"
+                fb_api_key = _sf_key
+                fb_base_url = "https://api.siliconflow.cn/v1/"
         self._provider = self._instantiate_provider(
-            name=self._provider._name,
+            name=fb_name,
             model_name=next_model,
-            api_key=self._provider._api_key,
-            base_url=self._provider._base_url,
+            api_key=fb_api_key,
+            base_url=fb_base_url,
         )
         return True
 

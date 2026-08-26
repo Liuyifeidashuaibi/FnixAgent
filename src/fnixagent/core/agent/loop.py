@@ -178,6 +178,21 @@ def _coerce_tool_arguments(raw: Any) -> dict[str, Any]:
             parsed = json.loads(raw)
         except json.JSONDecodeError:
             return {"raw": raw}
+        # 修复：模型偶发把整个参数对象序列化后塞进 {"value": "..."} 单层壳，
+        # 导致 write_file 拿到 {"value": "{\"file_path\": ...}"} 而报"路径为空"。
+        # 此处先对单 "value" 键且值为字符串的 dict 向内解包，再决定是否直接返回。
+        for _ in range(8):
+            if (
+                isinstance(parsed, dict)
+                and set(parsed.keys()) == {"value"}
+                and isinstance(parsed.get("value"), str)
+            ):
+                try:
+                    parsed = json.loads(parsed["value"])
+                except json.JSONDecodeError:
+                    break
+            else:
+                break
         if isinstance(parsed, dict):
             return parsed
         # 多重编码：provider 可能把 arguments 序列化 2~N 层（JSON 字符串层层嵌套）。

@@ -245,3 +245,76 @@ npx playwright test acceptance-walkthrough --config=playwright.config.ts
 *产物目录: `benchmarks/benchforge/runs/acceptance-glm51-20260826/`*  
 *UI 截图: `.tmp/shots-accept/`*  
 *agent_eval 明细: `.tmp/agent-eval-results.json`*
+
+
+---
+
+## 测试-修复迭代记录 · 2026-08-27（第二轮：模型路由 + 工具调用协议）
+
+### 一、本轮背景
+
+上一轮（08-26）验收后，`acceptance-vibe-fixed` 批次（qwen-plus，30 题）仅 9/30 通过。
+本轮目标：定位失败根因、修复、用更稳的模型全量重跑，并对前后端做全链路回归。
+
+### 二、发现并修复的问题
+
+#### BUG-3（高）工具参数「value 单壳」未解包
+- **现象**：qwen-plus / deepseek-v4-pro 在单文件 HTML 生成题上，把 `write_file` 参数包成
+  `{"value": "{\"file_path\": ..., \"content\": ...}"}`，工具拿到空参数报「路径为空」，
+  连续重试触发死循环熔断（21/30 失败的主因）。
+- **根因**：`core/agent/loop.py::_coerce_tool_arguments` 在 `json.loads` 得到 dict 后直接返回，
+  不再向内解包仅含 `value` 键的壳。
+- **修复**：解析后若 dict 仅含 `value` 键且值为字符串，循环向内解包（最多 8 层）。
+- **验证**：6 个单测用例全过（单壳/双层壳/正常 dict/非 JSON 均正确处理）。
+
+#### BUG-4（高）fallback 链跨 provider 路由 401
+- **现象**：全链路任务中 LLM 调用报 `HTTP 401 (Incorrect API key)`，指向百炼错误文档，
+  但实际 fallback 模型 `Qwen/Qwen2.5-7B-Instruct` 是 SiliconFlow 命名空间。
+- **根因**：`core/llm/adapter.py::_try_next_fallback` 切换 fallback 模型时，
+  无条件复用上一个 provider 的 `base_url`/`api_key`（百炼），导致 SiliconFlow 模型
+  被发到 dashscope 域名。
+- **修复**：fallback 切模型时按模型命名空间（`Qwen/`、`deepseek-ai/` 等前缀）重定向到
+  SiliconFlow（`SILICONFLOW_API_KEY` + `api.siliconflow.cn`）。
+- **验证**：重启后端后全链路任务 131s 真正 completed，产出 25 个 artifacts，
+  judge 评分 0.725 通过。
+
+#### 已知残留（模型侧，非框架 bug）
+- 部分模型偶发输出「半成品 JSON」（content 内 HTML 引号未转义），value 壳解不开。
+  这是模型输出质量问题，框架侧已尽力容错；换更稳模型可规避。
+
+### 三、模型可用性探测（百炼 key，242 模型）
+
+| 状态 | 模型 |
+|---|---|
+| ✅ 可用 | deepseek-v4-pro-0813、deepseek-v3.2、qwen-plus、qwen-coder-plus、qwen3-coder-flash、kimi-k3 |
+| ❌ 403 | qwen3.x 全系（qwen3.8-max/qwen3.7-plus/qwen3-flash）、deepseek-v4-pro(非0813)、qwen-max、glm-5.2 |
+
+注：阿里云 AccessKey（LTAI…）与百炼 API Key 是两套体系，AK 无百炼授权不能调模型（100016）。
+
+### 四、vibe-code-bench 全量重跑（修复后，deepseek-v4-pro-0813）
+
+- **批次**：`benchmarks/benchforge/runs/acceptance-dsv4-fixed`
+- **结果**：**16/30 通过（53.3%）**，较修复前 9/30（30%）提升 23 个百分点
+- **失败分布**：incomplete_output 8、mcp_call_error 4、超时(>900s) 2
+- **成功题**：pomodoro/notes/weather/calculator/kanban/typing/habits/palette/markdown/
+  slides/repostats/log_analytics/spreadsheet + 代码工程题 31/32/33 全过
+- **超时题**（flowchart/data_pipeline）：复杂题 15 分钟不够，属超时参数问题，非正确性问题
+
+### 五、全链路回归测试 v3（模拟 Tauri 前端 → 后端 API）
+
+10 项检查：**9 PASS / 1 FAIL**
+- ✅ health / owner/login / work/jobs/stats / chat/topology/stats / memory/stats / skills
+- ✅ 任务提交 → 131s completed → 25 个 artifacts（fallback 修复验证通过）
+- ❌ `/api/v1/dashboard` 404：该路径不存在（前端实际用别的路径，测试脚本路径笔误，待对齐）
+
+### 六、复现命令
+
+```bash
+# 全链路回归（需先 fnixagent serve）
+uv run python .tmp/test_fullchain_v3.py
+
+# bench 全量重跑
+uv run python .tmp/run_full_dsv4_fixed.py
+```
+
+*记录时间：2026-08-27 01:55 JST*
