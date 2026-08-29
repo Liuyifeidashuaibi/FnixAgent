@@ -80,24 +80,24 @@ class DirtyPolicy(Policy):
     都是意图级的：一个真人看着页面也会这么做，不需要任何 DOM 知识。
     """
 
-    async def click_near(self, anchor: str, button: str) -> tuple[bool, str, list[str]]:
-        """点"锚点旁边那个按钮"——读快照时的自然做法。
+    def _pick_near(
+        self, snap: Any, anchor: str, button: str
+    ) -> tuple[Any | None, str]:
+        """在一帧快照里定位"锚点之后最贴合的那个按钮"。
 
-        按快照顺序（自上而下、自左而右）取锚点之后第一个匹配的按钮。
-        这就是人在紧凑文本里定位"商品 12 右边的加入购物车"的方式。
+        抽出来给 click_near 与 scroll_click_near 共用——两边必须逐帧一致，
+        否则"找到的标准"和"点到的标准"会在重排页上悄悄分叉。
         """
         from fnixagent.core.tools.browser_healing import _rank_name_match
 
-        snap = await self.session.snapshot_ref()
         ordered = sorted(snap.refs, key=lambda r: (r.y, r.x))
-
         anchor_idx = -1
         for i, r in enumerate(ordered):
             if anchor and anchor in (r.name or ""):
                 anchor_idx = i
                 break
         if anchor_idx < 0:
-            return False, f"快照里找不到「{anchor}」", []
+            return None, f"快照里找不到「{anchor}」"
 
         # 锚点之后的候选要**先排档位再取第一个**。照 DOM 顺序取第一个包含
         # 匹配的话，"加入购物车"会被排版在前面的"加入购物车并结算"截胡——
@@ -108,18 +108,84 @@ class DirtyPolicy(Policy):
             if _rank_name_match(r.name or "", button) > 0 and not r.disabled
         ]
         if not candidates:
-            return False, f"「{anchor}」之后找不到「{button}」", []
+            return None, f"「{anchor}」之后找不到「{button}」"
         candidates.sort(key=lambda t: (-t[0], -t[1]))
-        target = candidates[0][2]
+        return candidates[0][2], ""
 
-        result = await self.healer.click(ref=target.ref)
-        return result.ok, result.error, list(result.recovery_used)
+    async def click_near(
+        self, anchor: str, button: str, retries: int = 1
+    ) -> tuple[bool, str, list[str]]:
+        """点"锚点旁边那个按钮"——读快照时的自然做法。
+
+        重排型页面会在"取完快照"与"执行点击"之间把 DOM 重建，ref 作废是页面
+        的固有性质，不是策略选错了目标。人在这种情况下的动作是"重新看一眼再
+        点"，策略也这么干——重试有界（retries），每次都基于全新快照重新定位，
+        绝不拿旧 ref 硬点（那是 F5 明确禁止的）。
+        """
+        last_err = "未开始"
+        recs: list[str] = []
+        for _ in range(max(1, retries)):
+            snap = await self.session.snapshot_ref()
+            target, err = self._pick_near(snap, anchor, button)
+            if target is None:
+                last_err = err
+                continue
+            result = await self.healer.click(ref=target.ref)
+            recs.extend(result.recovery_used)
+            if result.ok:
+                return True, result.error, recs
+            last_err = result.error
+        return False, last_err, recs
+
+    async def scroll_click_near(
+        self, anchor: str, button: str, max_scrolls: int
+    ) -> tuple[bool, str, list[str]]:
+        """扫掠到目标后在**同一帧快照**里完成点击——消灭两步之间的 TOCTOU。
+
+        scroll_until + click_near 分两步走时，中间隔着一次动作后等待；在每秒
+        都在重排的叠加页上，这段时间足够目标被搬出视口（实测：1.5s 重排周期
+        下命中率不到一半）。合并成一步：每帧快照先看锚点与按钮是否同时在场，
+        在就直接点（点失利也走 healer 自愈），不在才继续扫掠。扫掠纪律与
+        scroll_until 相同：贴底/贴顶即掉头。
+        """
+        direction = "down"
+        last_err = f"滚动 {max_scrolls} 次（含往返扫掠）仍未出现「{anchor}」"
+        recs: list[str] = []
+        for i in range(max_scrolls):
+            snap = await self.session.snapshot_ref()
+            target, err = self._pick_near(snap, anchor, button)
+            if target is not None:
+                result = await self.healer.click(ref=target.ref)
+                recs.extend(result.recovery_used)
+                if result.ok:
+                    return True, f"滚动 {i} 次后找到并点击成功", recs
+                last_err = result.error
+                # 点击失败的帧里目标明明在场——ref 多半已被重排作废，继续扫
+            else:
+                last_err = err
+            await self.session.scroll(direction, 900)
+            await asyncio.sleep(_SCROLL_PAUSE)
+            try:
+                pos = await self.session.scroll_offsets()
+            except Exception:  # noqa: BLE001
+                continue
+            if direction == "down" and pos.get("at_bottom"):
+                direction = "up"
+            elif direction == "up" and pos.get("at_top"):
+                direction = "down"
+        return False, last_err, recs
 
     async def scroll_until(self, text: str, max_scrolls: int) -> tuple[bool, str, list[str]]:
-        """一路往下滚，直到文本出现在快照里。
+        """往返扫掠，直到文本出现在快照里。
 
-        懒加载和无限滚动没有这个动作就无解——内容根本还没被创建出来。
+        懒加载和无限滚动没有滚动这个动作就无解——内容根本还没被创建出来。
+        但"一路只朝下"在重排型页面是死路：目标可能已经渲染过，却被重排搬
+        回了视口上方，继续朝下滚永远不会再见到它。贴着底/顶就掉头再扫一遍，
+        扫满预算还没找到才算真不在——这与人在长页上找东西的姿势一致。
+
+        "贴底没有"问 scroll_offsets 的布局事实，不靠 DOM 变没变来猜。
         """
+        direction = "down"
         for i in range(max_scrolls):
             snap = await self.session.snapshot_ref()
             if any(text in (r.name or "") for r in snap.refs):
@@ -129,10 +195,40 @@ class DirtyPolicy(Policy):
             # 刻意不回退到"正文里有没有"：懒加载元素会因为 rootMargin 提前
             # 渲染，正文里有 ≠ 眼睛看得到。以正文为准会让下一步的点击去点一个
             # 根本不在视口里的目标，失败原因还很难查。
-            await self.session.scroll("down", 900)
+            await self.session.scroll(direction, 900)
             await asyncio.sleep(_SCROLL_PAUSE)
-        return False, f"滚动 {max_scrolls} 次仍未出现「{text}」", []
+            try:
+                pos = await self.session.scroll_offsets()
+            except Exception:  # noqa: BLE001
+                continue  # 位置读不到不换向，维持原方向把预算花完
+            if direction == "down" and pos.get("at_bottom"):
+                direction = "up"
+            elif direction == "up" and pos.get("at_top"):
+                direction = "down"
+        return False, f"滚动 {max_scrolls} 次（含往返扫掠）仍未出现「{text}」", []
 
+    async def upload_to(self, needle: str, filename: str) -> tuple[bool, str, list[str]]:
+        """把本地文件交给名称含 needle 的控件。
+
+        不判断控件类型是不是 file input——那是被测对象该自己说实话的地
+        方：对普通按钮执行 set_input_files，驱动层必须报错，而不是没动作
+        却被当成功。fixtures 目录内的文件名是刻意的：测试数据和页面一起
+        进版本库，基线才真的可复现。
+        """
+        from fnixagent.core.tools.browser_healing import select_by_name
+
+        snap = await self.session.snapshot_ref()
+        pool = [el for el in select_by_name(snap.refs, needle) if not el.disabled]
+        if not pool:
+            return False, f"快照里找不到「{needle}」", []
+        path = (Path(__file__).parent / "fixtures" / filename).resolve()
+        if not path.is_file():
+            return False, f"fixture 不存在: {path}", []
+        try:
+            state = await self.session.upload_ref(pool[0].ref, str(path))
+        except Exception as e:  # noqa: BLE001
+            return False, f"上传异常: {e}", []
+        return (not state.error), (state.error or ""), []
 
 def _free_port() -> int:
     with socket.socket() as s:
@@ -186,6 +282,15 @@ async def run_task(session: Any, base: str, task: DirtyTask) -> DirtyResult:
                 )
             elif kind == "scroll_until":
                 ok, detail, rec = await policy.scroll_until(step[1], step[2])
+            elif kind == "scroll_click_near":
+                ok, detail, rec = await asyncio.wait_for(
+                    policy.scroll_click_near(step[1], step[2], step[3]),
+                    timeout=_STEP_TIMEOUT,
+                )
+            elif kind == "upload":
+                ok, detail, rec = await asyncio.wait_for(
+                    policy.upload_to(step[1], step[2]), timeout=_STEP_TIMEOUT
+                )
             elif kind == "wait_text":
                 state = await session.wait_for(text=step[1], timeout_ms=6000)
                 ok, detail, rec = (not state.error), (state.error or ""), []

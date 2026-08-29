@@ -59,6 +59,11 @@ def server() -> Any:
     tmp.mkdir(exist_ok=True)
     (tmp / "actions.html").write_text(PAGE, encoding="utf-8")
     (tmp / "loop.html").write_text(LOOP_PAGE, encoding="utf-8")
+    (tmp / "tall.html").write_text(
+        """<!doctype html><html><head><meta charset='utf-8'><title>高页</title></head>
+<body><div>顶部</div><div style='height:5000px'></div><div>底部</div></body></html>""",
+        encoding="utf-8",
+    )
     with socket.socket() as s:
         s.bind(("127.0.0.1", 0))
         port = s.getsockname()[1]
@@ -107,6 +112,24 @@ async def test_state_wait_catches_delayed_change(session: Any) -> None:
     out = await session._page.evaluate("() => document.getElementById('out').textContent")
     assert out == "slow-done"
 
+
+async def test_scroll_offsets_report_truth(session: Any) -> None:
+    """滚动位置必须如实上报——"到底了"是扫掠策略的决策依据，不许猜。
+
+    高页初始 y=0 且不贴底；滚 900 后 y>0；连续滚到底部后 at_bottom=True。
+    反向护栏：初始时 at_bottom 必须为 False（页面确实还有 5000px 没滚）。
+    """
+    base = str(session._state.url).rsplit("/", 1)[0]
+    await session.navigate(f"{base}/tall.html")
+    top = await session.scroll_offsets()
+    assert top["y"] == 0.0 and top["at_top"] is True
+    assert top["height"] > top["viewport"], "测试页必须比视口高，否则断言无意义"
+    assert top["at_bottom"] is False
+    for _ in range(12):
+        await session.scroll("down", 900)
+    bottom = await session.scroll_offsets()
+    assert bottom["at_bottom"] is True, f"滚了 12 次应贴底: {bottom}"
+    assert bottom["y"] > 0
 
 async def test_url_changed_flag_on_navigation(session: Any) -> None:
     """锚点跳转不改 DOM 但改 URL，必须被 url_changed 捕获（不能只靠 DOM 签名）。"""

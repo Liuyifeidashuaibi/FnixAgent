@@ -1070,6 +1070,30 @@ class BrowserSession:
 
         return await self._act("scroll", direction, _fn)
 
+    async def scroll_offsets(self) -> dict[str, float]:
+        """回答一个只有浏览器能回答的问题：滚到哪了、页面有多高。
+
+        "到底了没有"不能靠"DOM 没变"猜——滚动本身不改 DOM，无限滚动页却会
+        在贴底之后继续长（IntersectionObserver 追加批次），而重排型页面即使
+        滚不动内容也天天在变。底盘多高、视口在哪、是否贴底，必须直接问布局。
+        这是只读内省，不产生副作用，因此不经过动作后验证（changed 判定）那
+        一套——它什么都不改变，谈何"改了没有"。
+        """
+        async with self._lock:
+            page = await self._ensure()
+            vals = await page.evaluate(
+                "[window.scrollY, window.innerHeight,"
+                " document.documentElement.scrollHeight]"
+            )
+            y, view, height = (float(v) for v in vals)
+            return {
+                "y": y,
+                "viewport": view,
+                "height": height,
+                "at_top": y <= 2.0,
+                "at_bottom": y + view >= height - 2.0,
+            }
+
     async def history(self, op: str) -> BrowserState:
         """back / forward / refresh。"""
 
@@ -1233,6 +1257,30 @@ class BrowserSession:
 
         return await self._act("clear_obstruction", ref, _fn)
 
+    async def upload_ref(self, ref: str, file_path: str) -> BrowserState:
+        """按 ref 定位文件输入框并设置本地文件。
+
+        上传是唯一不能用"点击 + 键盘"完成的用户动作：文件选择框是操作系统
+        组件，不属于页面，ref 与坐标都够不到它。`set_input_files` 走的仍是
+        浏览器对 input[type=file] 的标准接口——对页面来说等价于用户在对
+        话框里选完文件点了确定，收到的是同一个 change 事件，不是一条绕过
+        用户的捷径。
+
+        file_path 用 `;` 分隔可传多个文件。文件不存在是参数错误（F2），
+        不是元素问题——两条故障的恢复路径完全不同，别混在一锅。
+        """
+        paths = [p.strip() for p in str(file_path).split(";") if p.strip()]
+        for p in paths:
+            if not Path(p).is_file():
+                raise ValueError(f"要上传的文件不存在: {p}")
+
+        async def _fn(page: Any) -> None:
+            loc = await self._resolve_ref(page, ref)
+            await self._clear_obstruction(loc, ref)
+            await loc.set_input_files(paths[0] if len(paths) == 1 else paths, timeout=8_000)
+
+        return await self._act("upload_ref", ref, _fn)
+
     def _ref_is_obscured(self, ref: str) -> bool:
         """上一次快照是否把这个 ref 标记为被遮挡。
 
@@ -1323,7 +1371,8 @@ class BrowserSession:
 # Phase 5：收敛后的两个正交原语（暴露给 LLM）
 # ============================================================================
 
-_ACTIONS = ("goto", "click", "type", "scroll", "back", "forward", "refresh", "wait", "viewport")
+_ACTIONS = ("goto", "click", "type", "scroll", "back", "forward", "refresh", "wait",
+            "upload", "viewport")
 
 
 async def browser_view(args: dict) -> ToolResult:
@@ -1409,6 +1458,30 @@ async def browser_act(args: dict) -> ToolResult:
             else:
                 state = await session.type_text(text, submit)
             return _act_state_result(state)
+
+        if action == "upload":
+            ref = args.get("ref")
+            path = str(args.get("path", "")).strip()
+            if not ref or not path:
+                return ToolResult(success=False, error="upload 需要 ref 与 path（本地文件路径）")
+            expect = args.get("expect")
+            try:
+                state = await session.upload_ref(str(ref), path)
+            except ValueError as e:
+                # 文件不存在属于参数错误，如实返回，不要伪装成"元素找不到"
+                return ToolResult(success=False, error=str(e), metadata={"error_class": "F2"})
+            result = _act_state_result(state)
+            if result.success and expect:
+                chk = await session.wait_for(text=str(expect), timeout_ms=4_000)
+                if chk.error:
+                    # 文件挂上去了但预期文本没出现——changed 证明不了"动对了"
+                    return ToolResult(
+                        success=False,
+                        content=result.content,
+                        error=f"上传后未看到预期文本「{expect}」（F6 证据矛盾）",
+                        metadata={"error_class": "F6"},
+                    )
+            return result
 
         if action == "scroll":
             state = await session.scroll(
@@ -1802,6 +1875,7 @@ def register_browser_tools(registry: Any) -> None:
             "- scroll:  direction=up|down，amount=像素\n"
             "- back / forward / refresh\n"
             "- wait:    text=等待出现的文本（页面异步加载时用它，别靠猜时间）\n"
+            "- upload:  ref=@e3（文件输入框），path=本地文件路径（多个用 ; 分隔）\n"
             "- viewport: width, height\n\n"
             "会返回页面是否真的变了（changed）。点了没反应会被判定为失败并提示换目标——"
             "不要当成成功继续往下走。\n\n"
@@ -1817,7 +1891,7 @@ def register_browser_tools(registry: Any) -> None:
                         "enum": [
                             "goto", "click", "type", "scroll",
                             "back", "forward", "refresh",
-                            "wait", "viewport",
+                            "wait", "upload", "viewport",
                         ],
                         "description": "要执行的动作",
                     },
@@ -1827,6 +1901,7 @@ def register_browser_tools(registry: Any) -> None:
                     "into": {"type": "string", "description": "action=type 时也可用 placeholder/label/选择器定位"},
                     "expect": {"type": "string", "description": "动作成功后页面上应当出现的文本；看不到就判失败（点击/输入均适用）"},
                     "submit": {"type": "boolean", "default": False, "description": "action=type 时是否回车提交"},
+                    "path": {"type": "string", "description": "action=upload 时的本地文件路径（多个用 ; 分隔）"},
                     "direction": {"type": "string", "enum": ["up", "down"], "default": "down"},
                     "amount": {"type": "integer", "default": 480},
                     "width": {"type": "integer"},

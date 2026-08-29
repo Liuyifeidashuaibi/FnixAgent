@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-30 00:42:14",
+  "generated_at": "2026-08-30 00:58:09",
   "total": 35,
   "positive_tasks": 32,
   "negative_tasks": 3,
@@ -10,7 +10,7 @@
   "silent_failures": 0,
   "silent_failure_rate_pct": 0.0,
   "lied": 0,
-  "avg_task_ms": 2509.9,
+  "avg_task_ms": 2510.4,
   "recovery_used_total": 78,
   "tasks": [
     {
@@ -20,7 +20,7 @@
       "verified": true,
       "silent_failure": false,
       "error": "",
-      "elapsed_ms": 1884.7,
+      "elapsed_ms": 1884.5,
       "recovery": []
     },
     {
@@ -30,7 +30,7 @@
       "verified": true,
       "silent_failure": false,
       "error": "",
-      "elapsed_ms": 2331.6,
+      "elapsed_ms": 2328.2,
       "recovery": []
     },
     {
@@ -40,7 +40,7 @@
       "verified": true,
       "silent_failure": false,
       "error": "",
-      "elapsed_ms": 1064.3,
+      "elapsed_ms": 1081.5,
       "recovery": []
     },
     {
@@ -50,7 +50,7 @@
       "verified": true,
       "silent_failure": false,
       "error": "",
-      "elapsed_ms": 967.5,
+      "elapsed_ms": 948.8,
       "recovery": []
     },
     {
@@ -60,7 +60,7 @@
       "verified": true,
       "silent_failure": false,
       "error": "",
-      "elapsed_ms": 1816.7,
+      "elapsed_ms": 1814.4,
       "recovery": []
     },
     {
@@ -70,7 +70,7 @@
       "verified": true,
       "silent_failure": false,
       "error": "",
-      "elapsed_ms": 1914.4,
+      "elapsed_ms": 1869.7,
       "recovery": []
     },
     {
@@ -80,7 +80,7 @@
       "verified": true,
       "silent_failure": false,
       "error": "",
-      "elapsed_ms": 1099.4,
+      "elapsed_ms": 1096.7,
       "recovery": []
     },
     {
@@ -90,7 +90,7 @@
       "verified": true,
       "silent_failure": false,
       "error": "",
-      "elapsed_ms": 1880.8,
+      "elapsed_ms": 1886.8,
       "recovery": []
     },
     {
@@ -100,7 +100,7 @@
       "verified": true,
       "silent_failure": false,
       "error": "",
-      "elapsed_ms": 1359.5,
+      "elapsed_ms": 1363.9,
       "recovery": [
         "substitute",
         "substitute"
@@ -113,7 +113,7 @@
       "verified": true,
       "silent_failure": false,
       "error": "",
-      "elapsed_ms": 2595.6,
+      "elapsed_ms": 2584.2,
       "recovery": [
         "substitute",
         "substitute"
@@ -126,7 +126,7 @@
       "verified": true,
       "silent_failure": false,
       "error": "",
-      "elapsed_ms": 2614.1,
+      "elapsed_ms": 2594.7,
       "recovery": [
         "substitute",
         "substitute"
@@ -139,7 +139,7 @@
       "verified": true,
       "silent_failure": false,
       "error": "",
-      "elapsed_ms": 5063.1,
+      "elapsed_ms": 5081.4,
       "recovery": [
         "substitute",
         "substitute",
@@ -158,7 +158,7 @@
       "verified": true,
       "silent_failure": false,
       "error": "",
-      "elapsed_ms": 2230.9,
+      "elapsed_ms": 2279.4,
       "recovery": [
         "substitute",
         "substitute"
@@ -171,7 +171,7 @@
       "verified": true,
       "silent_failure": false,
       "error": "",
-      "elapsed_ms": 1767.8,
+      "elapsed_ms": 1732.7,
       "recovery": [
         "substitute",
         "substitute"
@@ -184,7 +184,7 @@
       "verified": true,
       "silent_failure": false,
       "error": "",
-      "elapsed_ms": 2584.3,
+      "elapsed_ms": 2581.4,
       "recovery": [
         "substitute",
         "substitute"
@@ -197,7 +197,7 @@
       "verified": true,
       "silent_failure": false,
       "error": "",
-      "elapsed_ms": 3481.1,
+      "elapsed_ms": 3547.9,
       "recovery": [
         "substitute",
         "substitute",
@@ -214,7 +214,7 @@
       "verified": true,
       "silent_failure": false,
       "error": "",
-      "elapsed_ms": 1082.7,
+      "elapsed_ms": 1078.3,
       "recovery": []
     },
     {
@@ -224,7 +224,7 @@
       "verified": true,
       "silent_failure": false,
       "error": "",
-      "elapsed_ms": 3113.8,
+      "elapsed_ms": 3079.8,
       "recovery": [
         "substitute",
         "substitute",
@@ -239,7 +239,7 @@
       "verified": true,
       "silent_failure": false,
       "error": "",
-      "elapsed_ms": 6063.7,
+      "elapsed_ms": 6063.6,
       "recovery": [
         "substitute",
         "substitute",
@@ -266,7 +266,7 @@
       "verified": true,
       "silent_failure": false,
       "error": "",
-      "elapsed_ms": 2314.1,
+      "elapsed_ms": 2315.2,
       "recovery": []
     },
     {
@@ -276,7 +276,7 @@
       "verified": true,
       "silent_failure": false,
       "error": "",
-      "elapsed_ms": 2433.2,
+      "elapsed_ms": 2431.5,
       "recovery": []
     },
     {
@@ -286,7 +286,7 @@
       "verified": true,
       "silent_failure": false,
       "error": "",
-      "elapsed_ms": 3616.3,
+      "elapsed_ms": 3648.9,
       "recovery": [
         "substitute",
         "substitute",
@@ -303,7 +303,7 @@
       "verified": true,
       "silent_failure": false,
       "error": "",
-      "elapsed_ms": 2429.7,
+      "elapsed_ms": 2428.1,
       "recovery": []
     },
     {
@@ -313,7 +313,7 @@
       "verified": true,
       "silent_failure": false,
       "error": "",
-      "elapsed_ms": 3230.8,
+      "elapsed_ms": 3197.3,
       "recovery": []
     },
     {
@@ -323,7 +323,7 @@
       "verified": true,
       "silent_failure": false,
       "error": "",
-      "elapsed_ms": 3196.4,
+      "elapsed_ms": 3195.9,
       "recovery": []
     },
     {
@@ -333,7 +333,7 @@
       "verified": true,
       "silent_failure": false,
       "error": "",
-      "elapsed_ms": 1097.4,
+      "elapsed_ms": 1063.1,
       "recovery": []
     },
     {
@@ -343,7 +343,7 @@
       "verified": true,
       "silent_failure": false,
       "error": "",
-      "elapsed_ms": 4062.1,
+      "elapsed_ms": 4048.2,
       "recovery": [
         "substitute",
         "substitute",
@@ -358,7 +358,7 @@
       "verified": true,
       "silent_failure": false,
       "error": "",
-      "elapsed_ms": 5744.2,
+      "elapsed_ms": 5763.6,
       "recovery": [
         "substitute",
         "substitute",
@@ -379,7 +379,7 @@
       "verified": true,
       "silent_failure": false,
       "error": "",
-      "elapsed_ms": 5298.8,
+      "elapsed_ms": 5337.2,
       "recovery": [
         "substitute",
         "substitute",
@@ -400,7 +400,7 @@
       "verified": true,
       "silent_failure": false,
       "error": "",
-      "elapsed_ms": 2150.2,
+      "elapsed_ms": 2147.2,
       "recovery": [
         "substitute",
         "substitute"
@@ -413,7 +413,7 @@
       "verified": true,
       "silent_failure": false,
       "error": "快照里找不到名称含「量子隐形斗篷」的 link",
-      "elapsed_ms": 556.9,
+      "elapsed_ms": 559.2,
       "recovery": []
     },
     {
@@ -423,7 +423,7 @@
       "verified": true,
       "silent_failure": false,
       "error": "快照里找不到名称含「提交订单」的 button",
-      "elapsed_ms": 1085.7,
+      "elapsed_ms": 1101.9,
       "recovery": []
     },
     {
@@ -433,7 +433,7 @@
       "verified": true,
       "silent_failure": false,
       "error": "",
-      "elapsed_ms": 2314.4,
+      "elapsed_ms": 2302.1,
       "recovery": []
     },
     {
@@ -443,7 +443,7 @@
       "verified": true,
       "silent_failure": false,
       "error": "",
-      "elapsed_ms": 1880.8,
+      "elapsed_ms": 1927.8,
       "recovery": []
     },
     {
@@ -453,7 +453,7 @@
       "verified": true,
       "silent_failure": false,
       "error": "快照里找不到名称含「加入购物车」的 button",
-      "elapsed_ms": 1519.0,
+      "elapsed_ms": 1499.5,
       "recovery": []
     }
   ]
