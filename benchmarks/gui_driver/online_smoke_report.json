@@ -1,0 +1,233 @@
+{
+  "generated_at": "2026-08-30 04:50:18",
+  "purpose": "在线只读冒烟：发现性质，不做门禁（见文件头部纪律）",
+  "total_sites": 7,
+  "observed": 7,
+  "unreachable": 0,
+  "driver_failure": 0,
+  "sites_with_frames": 0,
+  "sites_with_canvas": 1,
+  "snapshots_truncated": 1,
+  "empty_snapshots": 0,
+  "sites": [
+    {
+      "id": "example_com",
+      "url": "https://example.com",
+      "note": "RFC 2606 示例页。2026-08-30 实测其内容已漂移：链接文案由「More information...」变为「Learn more」——正是真实站点不可当门禁的实证，期望按当前内容更新",
+      "kind": "观察完成",
+      "title": "Example Domain",
+      "elapsed_ms": 5873.9,
+      "refs": 1,
+      "truncated": false,
+      "total_on_page": 1,
+      "frames": 0,
+      "frame_elements": 0,
+      "canvas": {
+        "count": 0,
+        "large": 0,
+        "webgl": false
+      },
+      "checks": [
+        {
+          "expect": "title_contains",
+          "want": "Example Domain",
+          "ok": true,
+          "detail": "标题「Example Domain」"
+        },
+        {
+          "expect": "link_name_contains",
+          "want": "Learn more",
+          "ok": true,
+          "detail": "名称含「Learn more」的元素 1 个"
+        },
+        {
+          "expect": "min_refs",
+          "want": "1",
+          "ok": true,
+          "detail": "快照元素 1 个（期望 ≥1）"
+        }
+      ],
+      "all_expects_met": true
+    },
+    {
+      "id": "python_org",
+      "url": "https://www.python.org",
+      "note": "顶部导航十年未大改",
+      "kind": "观察完成",
+      "title": "Welcome to Python.org",
+      "elapsed_ms": 6077.8,
+      "refs": 23,
+      "truncated": false,
+      "total_on_page": 232,
+      "frames": 0,
+      "frame_elements": 0,
+      "canvas": {
+        "count": 0,
+        "large": 0,
+        "webgl": false
+      },
+      "checks": [
+        {
+          "expect": "link_name_contains",
+          "want": "Downloads",
+          "ok": true,
+          "detail": "名称含「Downloads」的元素 1 个"
+        },
+        {
+          "expect": "title_contains",
+          "want": "Python",
+          "ok": true,
+          "detail": "标题「Welcome to Python.org」"
+        },
+        {
+          "expect": "min_refs",
+          "want": "10",
+          "ok": true,
+          "detail": "快照元素 23 个（期望 ≥10）"
+        }
+      ],
+      "all_expects_met": true
+    },
+    {
+      "id": "zh_wikipedia",
+      "url": "https://zh.wikipedia.org",
+      "note": "首页，预期有搜索框；观察 iframe/模板复杂度",
+      "kind": "观察完成",
+      "title": "维基百科，自由的百科全书",
+      "elapsed_ms": 2643.5,
+      "refs": 60,
+      "truncated": true,
+      "total_on_page": 686,
+      "frames": 0,
+      "frame_elements": 0,
+      "canvas": {
+        "count": 0,
+        "large": 0,
+        "webgl": false
+      },
+      "checks": [
+        {
+          "expect": "has_role",
+          "want": "textbox",
+          "ok": true,
+          "detail": "role=textbox 的元素 1 个"
+        },
+        {
+          "expect": "min_refs",
+          "want": "20",
+          "ok": true,
+          "detail": "快照元素 60 个（期望 ≥20）"
+        }
+      ],
+      "all_expects_met": true
+    },
+    {
+      "id": "mdn",
+      "url": "https://developer.mozilla.org/en-US/",
+      "note": "MDN 首页（导航常改版，只量测不断言具体文案）",
+      "kind": "观察完成",
+      "title": "MDN Web Docs",
+      "elapsed_ms": 2120.8,
+      "refs": 22,
+      "truncated": false,
+      "total_on_page": 196,
+      "frames": 0,
+      "frame_elements": 0,
+      "canvas": {
+        "count": 0,
+        "large": 0,
+        "webgl": false
+      },
+      "checks": [
+        {
+          "expect": "min_refs",
+          "want": "20",
+          "ok": true,
+          "detail": "快照元素 22 个（期望 ≥20）"
+        }
+      ],
+      "all_expects_met": true
+    },
+    {
+      "id": "github",
+      "url": "https://github.com",
+      "note": "可能被反爬拦——拦截本身也是要记录的真实分布性质",
+      "kind": "观察完成",
+      "title": "GitHub · Change is constant. GitHub keeps you ahead. · GitHub",
+      "elapsed_ms": 3960.1,
+      "refs": 14,
+      "truncated": false,
+      "total_on_page": 182,
+      "frames": 0,
+      "frame_elements": 0,
+      "canvas": {
+        "count": 6,
+        "large": 6,
+        "webgl": true
+      },
+      "checks": [
+        {
+          "expect": "min_refs",
+          "want": "10",
+          "ok": true,
+          "detail": "快照元素 14 个（期望 ≥10）"
+        }
+      ],
+      "all_expects_met": true
+    },
+    {
+      "id": "gitee",
+      "url": "https://gitee.com",
+      "note": "国内站点对照",
+      "kind": "观察完成",
+      "title": "Gitee - 基于 Git 的代码托管和研发协作平台",
+      "elapsed_ms": 2137.2,
+      "refs": 11,
+      "truncated": false,
+      "total_on_page": 112,
+      "frames": 0,
+      "frame_elements": 0,
+      "canvas": {
+        "count": 0,
+        "large": 0,
+        "webgl": false
+      },
+      "checks": [
+        {
+          "expect": "min_refs",
+          "want": "10",
+          "ok": true,
+          "detail": "快照元素 11 个（期望 ≥10）"
+        }
+      ],
+      "all_expects_met": true
+    },
+    {
+      "id": "w3_org",
+      "url": "https://www.w3.org",
+      "note": "",
+      "kind": "观察完成",
+      "title": "请稍候…",
+      "elapsed_ms": 5439.5,
+      "refs": 2,
+      "truncated": false,
+      "total_on_page": 2,
+      "frames": 0,
+      "frame_elements": 0,
+      "canvas": {
+        "count": 0,
+        "large": 0,
+        "webgl": false
+      },
+      "checks": [
+        {
+          "expect": "min_refs",
+          "want": "5",
+          "ok": false,
+          "detail": "快照元素 2 个（期望 ≥5）"
+        }
+      ],
+      "all_expects_met": false
+    }
+  ]
+}
