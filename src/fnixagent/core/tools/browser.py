@@ -36,6 +36,7 @@ from fnixagent.core.tools.browser_refs import (
     RefStaleError,
     collect_refs,
     locator_for,
+    locator_scope_for,
     parse_ref,
 )
 from fnixagent.core.tools.browser_policy import (
@@ -1006,11 +1007,29 @@ class BrowserSession:
     # -- Phase 2：状态等待 + 动作后验证 ----------------------------------
 
     async def _digest(self, page: Any) -> tuple[str, str]:
-        """(url, dom 签名)——动作前后各取一次，用来判定页面是否真的变了。"""
+        """(url, dom 签名)——动作前后各取一次，用来判定页面是否真的变了。
+
+        签名覆盖**主文档 + 各附加帧**：点击发生在 iframe 内时，变化也发生在
+        帧里，主文档的 title/DOM 不会动——只签主文档会把"点对了但没反应"
+        误报给编排层（F4 换目标），把一次本可成功的操作判死。帧内容经 CDP
+        读取，与同源策略无关。
+        """
         try:
             sig = str(await page.evaluate(_DOM_SIG_JS))
         except Exception:  # noqa: BLE001
             sig = ""
+        frame_bits: list[str] = []
+        for fr in page.frames:
+            if fr == page.main_frame:
+                continue
+            try:
+                fs = str(await fr.evaluate(_DOM_SIG_JS))
+            except Exception:  # noqa: BLE001
+                fs = ""
+            if fs:
+                frame_bits.append(fs)
+        if frame_bits:
+            sig = sig + "#" + "|".join(frame_bits)
         return (page.url or "", sig)
 
     async def _arm_mutations(self, page: Any) -> None:
@@ -1355,11 +1374,22 @@ class BrowserSession:
             return snap
 
     async def _resolve_ref(self, page: Any, ref: str) -> Any:
-        """ref → 元素定位器；失效时抛 RefStaleError（可被编排层按 F5 分类恢复）。"""
+        """ref → 元素定位器；失效时抛 RefStaleError（可被编排层按 F5 分类恢复）。
+
+        元素若在 iframe 内（快照时记录了帧路径），定位器经 `frame_locator`
+        链进入对应帧文档——对调用方完全透明，按 ref 操作即可。帧寻址属性与
+        元素 ref 同生共死：重渲染后一并消失，解析失败按 F5 处理。
+        """
         target = (ref or "").lstrip("@")
         if not target:
             raise ValueError("需要提供元素 ref（如 @e3）")
-        loc = page.locator(locator_for(target)).first
+        frame_path: list[str] = []
+        if self._last_snapshot is not None:
+            el = self._last_snapshot.get(target)
+            if el is not None:
+                frame_path = el.frame
+        scope = locator_scope_for(page, frame_path)
+        loc = scope.locator(locator_for(target)).first
         if await loc.count() == 0:
             raise RefStaleError(target)
         return loc
@@ -1517,11 +1547,36 @@ class BrowserSession:
 
         async def _fn(page: Any) -> None:
             if text:
-                await page.get_by_text(text, exact=False).first.wait_for(
-                    state="visible", timeout=timeout_ms
-                )
+                # 文本可能在主文档，也可能在任一附加帧（跨 frame 寻址落地后，
+                # 动作结果出现在帧内是常态）——逐帧轮询，任一帧可见即算等到。
+                deadline = time.time() + timeout_ms / 1000
+                while True:
+                    scopes: list[Any] = [page] + [
+                        f for f in page.frames if f != page.main_frame
+                    ]
+                    for scope in scopes:
+                        try:
+                            locs = scope.get_by_text(text, exact=False)
+                            n = await locs.count()
+                            for i in range(min(n, 5)):
+                                if await locs.nth(i).is_visible():
+                                    return
+                        except Exception:  # noqa: BLE001
+                            continue
+                    if time.time() >= deadline:
+                        raise TimeoutError(
+                            f"等待文本「{text}」出现超时 timeout（{timeout_ms}ms 未出现）"
+                        )
+                    await page.wait_for_timeout(120)
             elif ref:
-                await page.locator(locator_for(ref.lstrip("@"))).first.wait_for(
+                target = ref.lstrip("@")
+                frame_path: list[str] = []
+                if self._last_snapshot is not None:
+                    el = self._last_snapshot.get(target)
+                    if el is not None:
+                        frame_path = el.frame
+                scope = locator_scope_for(page, frame_path)
+                await scope.locator(locator_for(target)).first.wait_for(
                     state="visible", timeout=timeout_ms
                 )
             elif selector:
@@ -1532,16 +1587,23 @@ class BrowserSession:
                     f"**/*{url}*" if "://" not in url else url, timeout=timeout_ms
                 )
             elif absent_text:
-                # 文本消失要等"一个都不剩"，`.first` 变 hidden 不代表全部消失。
-                # 轮询计数：消失是终态，等到了立刻返回；等不到如实超时。
-                loc = page.get_by_text(absent_text, exact=False)
+                # 文本消失要等"所有帧里一个都不剩"，`.first` 变 hidden 不代表
+                # 全部消失。轮询计数：消失是终态，等到了立刻返回；等不到如实超时。
                 deadline = time.time() + timeout_ms / 1000
                 while True:
-                    if await loc.count() == 0:
+                    total = 0
+                    scopes = [page] + [f for f in page.frames if f != page.main_frame]
+                    for scope in scopes:
+                        try:
+                            total += await scope.get_by_text(absent_text, exact=False).count()
+                        except Exception:  # noqa: BLE001
+                            continue
+                    if total == 0:
                         return
                     if time.time() >= deadline:
                         raise TimeoutError(
-                            f"等待文本「{absent_text}」消失超时（{timeout_ms}ms 后仍存在）"
+                            f"等待文本「{absent_text}」消失超时 timeout"
+                            f"（{timeout_ms}ms 后仍存在）"
                         )
                     await page.wait_for_timeout(120)
 

@@ -25,12 +25,18 @@
 
 from __future__ import annotations
 
+import logging
 import re
 from dataclasses import dataclass, field
+
+_logger = logging.getLogger(__name__)
 
 # 注入到 DOM 的属性，动作阶段据此精确解析元素
 REF_ATTR = "data-fnix-ref"
 REF_PREFIX = "e"
+# iframe 自身的寻址属性：帧路径的每一级都指向一个带该属性的 iframe 元素。
+# 与元素 ref 同生共死——快照注入、快照清理，重渲染后一样按 F5 处理。
+FRAME_ATTR = "data-fnix-frame"
 
 # 可交互元素选择器（与旧实现的坐标采集保持一致，去掉了过于宽泛的 [onclick]）
 _INTERACTIVE_SELECTOR = (
@@ -42,7 +48,7 @@ _INTERACTIVE_SELECTOR = (
 
 # 收集脚本：返回视口内可交互元素的结构化描述，并注入 ref 属性。
 #
-# 三件事是后来被真实页面逼出来的，都不是设计时的构想：
+# 几件事都是后来被真实页面逼出来的，都不是设计时的构想：
 #
 #   1. **穿透 open shadow root**。Web Components 的按钮不在 document 树里，
 #      querySelectorAll 扫不到——模型看不见就无从点击，表现为"页面上明明有个
@@ -51,10 +57,13 @@ _INTERACTIVE_SELECTOR = (
 #   2. **标记被遮挡的元素**。固定顶栏、弹窗遮罩下面的按钮，点下去事件被上面
 #      那层接走，驱动层可能一句错都不报——这是静默失败的温床。宁可多给一个
 #      标记，让模型/编排层知道"这个元素现在点不到"。
-#   3. **报告 iframe 盲区**。同源 iframe 里的元素当前不在 ref 寻址范围内，
-#      但必须让调用方**看见这个盲区**，而不是当作世界上没有那些元素。
+#   3. **跨 frame 寻址的坐标与编号**。本脚本在调用方给定的 frame 里执行
+#      （主文档或任一 iframe 的执行上下文），坐标是 frame 内的局部值——
+#      调用方传入该 frame 在整页上的绝对偏移 (ox, oy) 与全局编号起点
+#      (refStart)，保证多 frame 收集出的坐标可比、ref 全局唯一。
+#      iframe 本身是否存在、如何到达，由调用方用 Playwright 的 frame 树编排。
 #
-_COLLECT_JS = """([selector, refAttr, viewportOnly, limit]) => {
+_COLLECT_JS = """([selector, refAttr, viewportOnly, limit, ox, oy, refStart, forceObscured]) => {
   const out = [];
   const vw = window.innerWidth || 1280;
   const vh = window.innerHeight || 800;
@@ -138,9 +147,10 @@ _COLLECT_JS = """([selector, refAttr, viewportOnly, limit]) => {
       if (el.disabled || el.getAttribute('aria-disabled') === 'true') states.push('disabled');
       if (el.checked) states.push('checked');
       if (el.getAttribute('aria-expanded') === 'true') states.push('expanded');
-      if (isObscured(el, r)) states.push('obscured');
+      // 所在 iframe 被外层盖住时，里面的一切都点不到——遮挡沿帧继承
+      if (forceObscured || isObscured(el, r)) states.push('obscured');
 
-      const ref = 'e' + n;
+      const ref = 'e' + (refStart + n);
       el.setAttribute(refAttr, ref);
 
       out.push({
@@ -150,8 +160,8 @@ _COLLECT_JS = """([selector, refAttr, viewportOnly, limit]) => {
         value: (el.value !== undefined && tag !== 'a' && tag !== 'button') ? String(el.value).slice(0, 40) : '',
         states: states,
         in_shadow: inShadow,
-        x: Math.round(r.x + r.width / 2),
-        y: Math.round(r.y + r.height / 2),
+        x: Math.round(ox + r.x + r.width / 2),
+        y: Math.round(oy + r.y + r.height / 2),
         w: Math.round(r.width),
         h: Math.round(r.height),
       });
@@ -174,28 +184,6 @@ _COLLECT_JS = """([selector, refAttr, viewportOnly, limit]) => {
   };
 
   collectInto(document, false);
-
-  // iframe 盲区：当前不枚举 frame 内元素，但必须让调用方知道那里有东西。
-  // 静默的感知盲区比显式的能力缺口危险得多。
-  const frames = [];
-  for (const f of document.querySelectorAll('iframe')) {
-    let count = -1;
-    try {
-      const d = f.contentDocument;
-      if (d) count = d.querySelectorAll(selector).length;
-    } catch (e) {
-      count = -1;
-    }
-    const r = f.getBoundingClientRect();
-    if (r.width < 2 || r.height < 2) continue;
-    frames.push({
-      src: (f.getAttribute('src') || '').slice(0, 120),
-      reachable: count >= 0,
-      count: count,
-      w: Math.round(r.width),
-      h: Math.round(r.height),
-    });
-  }
 
   // Canvas / WebGL 盲区检测。
   //
@@ -221,17 +209,25 @@ _COLLECT_JS = """([selector, refAttr, viewportOnly, limit]) => {
 
   return {
     refs: out,
-    frames: frames,
     canvas: { count: canvasCount, large: canvasLarge, webgl: webgl },
   };
 }"""
 
-# 清理旧 ref 属性（避免上一个快照的残留被误解析）。同样要穿透 shadow root，
-# 否则上一轮留在 Web Components 内部的 ref 会被下一次动作误命中。
-_CLEAR_JS = """(refAttr) => {
+# 清理旧注入属性（元素 ref + 帧寻址属性）。同样要穿透 shadow root 与
+# 同源 iframe 文档——上一轮留在 Web Components 内部或框架文档里的属性，
+# 若不清掉会被下一次动作误命中。frameAttr 必须清到每一层文档：嵌套 iframe
+# 的 iframe 元素位于其父帧的文档里。
+_CLEAR_JS = """([refAttr, frameAttr]) => {
   const clearIn = (root) => {
     for (const el of root.querySelectorAll('[' + refAttr + ']')) {
       el.removeAttribute(refAttr);
+    }
+    for (const el of root.querySelectorAll('[' + frameAttr + ']')) {
+      el.removeAttribute(frameAttr);
+    }
+    for (const f of root.querySelectorAll('iframe')) {
+      const d = f.contentDocument;
+      if (d) clearIn(d);
     }
     for (const host of root.querySelectorAll('*')) {
       if (host.shadowRoot) clearIn(host.shadowRoot);
@@ -281,6 +277,14 @@ class ElementRef:
     y: int = 0
     w: int = 0
     h: int = 0
+    # 帧路径：空 = 主文档；非空 = 每级一个 iframe 选择器
+    # （`iframe[data-fnix-frame="fN"]`），动作阶段据此构建 frame_locator 链。
+    # 对模型透明——按 @ref 操作即可，帧由解析侧处理。
+    frame: list[str] = field(default_factory=list)
+
+    @property
+    def in_frame(self) -> bool:
+        return bool(self.frame)
 
     @property
     def disabled(self) -> bool:
@@ -307,6 +311,8 @@ class ElementRef:
             bits.append(f"={self.value}")
         if self.states:
             bits.append("[" + ",".join(self.states) + "]")
+        if self.frame:
+            bits.append("(iframe内)")
         return " ".join(bits)
 
 
@@ -335,9 +341,9 @@ class RefSnapshot:
     viewport_only: bool = True
     truncated: bool = False  # 达到上限被截断
     total_on_page: int = -1  # 页面可交互元素总数（含视口外）
-    # iframe 盲区。当前不枚举 frame 内元素，但**必须**让调用方看见这里有
-    # 内容——感知层的静默盲区比显式的能力缺口危险：前者会让模型以为世界上
-    # 没有那个按钮，后者至少还能让人去补。
+    # iframe 清单。跨 frame 寻址落地后，已附加的帧内容都会并入元素清单
+    # （元素带 "(iframe内)" 标记）；这里报告的是每个帧的覆盖状态——
+    # 未覆盖的帧（未附加/超深/预算耗尽）仍必须让调用方看见。
     frames: list[dict] = field(default_factory=list)
     # Canvas / WebGL 盲区。没有无障碍树，ref 寻址天然不可用——必须说出来，
     # 否则空快照会被理解成"页面上没东西"。
@@ -345,8 +351,16 @@ class RefSnapshot:
 
     @property
     def hidden_frame_count(self) -> int:
-        """iframe 里当前看不到但确实存在的可交互元素数。"""
-        return sum(int(f.get("count") or 0) for f in self.frames if f.get("reachable"))
+        """未被覆盖的帧里已知的可交互元素数（-1 表示未知时不计）。"""
+        return sum(
+            int(f.get("count") or 0)
+            for f in self.frames
+            if not f.get("covered") and int(f.get("count") or 0) > 0
+        )
+
+    @property
+    def uncovered_frames(self) -> list[dict]:
+        return [f for f in self.frames if not f.get("covered")]
 
     def get(self, ref: str) -> ElementRef | None:
         target = ref.lstrip("@")
@@ -372,11 +386,11 @@ class RefSnapshot:
                 f"  ⚠ 页面主体由 {kind} 绘制，**没有无障碍树**，ref 寻址在这里"
                 "不可用——不要据此认为页面上没有内容。需要操作请走视觉通道（截图）。"
             )
-        if self.frames:
+        if self.uncovered_frames:
             return (
-                f"  ⚠ 当前视口没有可交互元素，但页面有 {len(self.frames)} 个 iframe，"
-                f"内含约 {self.hidden_frame_count} 个可交互元素——内容在框架里，"
-                "ref 寻址未覆盖。"
+                f"  ⚠ 当前视口没有可交互元素，但页面还有 {len(self.uncovered_frames)} 个"
+                "未覆盖的 iframe（未附加/嵌套过深/快照预算耗尽）——不要据此认为"
+                "页面上没有内容，滚动或重新快照后再看。"
             )
         if self.total_on_page > 0:
             return (
@@ -422,17 +436,17 @@ class RefSnapshot:
                 "ref 寻址覆盖不到——不要假设画布里没有可操作的东西"
             )
         if self.frames:
-            reachable = [f for f in self.frames if f.get("reachable")]
-            cross = [f for f in self.frames if not f.get("reachable")]
-            if reachable:
-                n = self.hidden_frame_count
+            covered = [f for f in self.frames if f.get("covered")]
+            blind = self.uncovered_frames
+            if covered:
                 lines.append(
-                    f"  ⚠ 页面有 {len(reachable)} 个 iframe，内含约 {n} 个可交互元素，"
-                    "当前 ref 寻址未覆盖——需要操作它们时请说明，不要假设它们不存在"
+                    f"  （{len(covered)} 个 iframe 的内容已并入上方元素清单，"
+                    "标有 (iframe内) 的条目按 @ref 操作即可）"
                 )
-            if cross:
+            if blind:
                 lines.append(
-                    f"  ⚠ 另有 {len(cross)} 个跨域 iframe，内容不可达"
+                    f"  ⚠ 另有 {len(blind)} 个 iframe 未覆盖"
+                    "（未附加/嵌套过深/预算耗尽）——不要假设里面没有内容"
                 )
         return "\n".join(lines)
 
@@ -450,49 +464,211 @@ def locator_for(ref: str) -> str:
     return f'[{REF_ATTR}="{ref.lstrip("@")}"]'
 
 
+def locator_scope_for(page: object, frame_path: list[str]) -> object:
+    """按帧路径把寻址范围收窄到元素所在的 frame。
+
+    frame_path 为空返回 page 本身（主文档元素）；非空则逐级套
+    `frame_locator`——Playwright 会沿 iframe 链进入各级帧文档，最终的
+    `.locator(...)` 只在目标帧内解析。帧选择器指向快照时注入的
+    `data-fnix-frame` 属性，与元素 ref 同生共死：页面重渲染后属性消失，
+    解析自然拿不到元素——按 F5 上下文过期处理，重新快照再来。
+    """
+    scope = page
+    for sel in frame_path or []:
+        scope = scope.frame_locator(sel)
+    return scope
+
+
+# iframe 递归收集的最大深度。真实页面的框架嵌套很少超过两层；深度不设限的
+# 话，一个恶意/异常的自嵌框架就能把快照拖死。超深的框架按盲区如实上报。
+_MAX_FRAME_DEPTH = 3
+
+
 async def collect_refs(
     page: object,
     viewport_only: bool = True,
     limit: int = 60,
 ) -> CollectedRefs:
-    """采集可交互元素并注入 ref 属性。
+    """采集可交互元素并注入 ref 属性——覆盖主文档、open shadow root 与 iframe。
 
-    穿透 open shadow root：Web Components 的可交互元素不在 document 树里，
+    **穿透 open shadow root**：Web Components 的可交互元素不在 document 树里，
     不递归就永远看不见。解析侧无需改动——Playwright 的 CSS 引擎本来就穿透
     open shadow root，`[data-fnix-ref=eN]` 照样定位得到。
 
-    除了元素本身，还回两处**感知盲区的量测**：iframe 内够不到但确实存在的
-    元素、以及画在 canvas/WebGL 上根本没有无障碍树的内容。这两处都不在
-    ref 寻址范围内，但快照必须把它们说出来——否则空快照会被读成"页面上
-    没有东西"，而那正是模型开始编造的时刻。
+    **跨 frame 寻址**（把"看得见但够不着"的盲区变成能力）：iframe 里的元素
+    由本函数经 Playwright 帧树逐帧收集——JS 只在各自 frame 的执行上下文里
+    干活（局部坐标、局部编号，遮挡判断天然按帧正确），本函数给每个 frame 传
+    绝对偏移与全局编号起点，并往 iframe 元素上注入 `data-fnix-frame` 寻址
+    属性。收集出的元素自带帧路径，动作阶段据此构建 `frame_locator` 链。
+    跨域 iframe 同样覆盖——驱动经 CDP 可达任意已附加的帧，与页面同源策略
+    无关（真人点击框架内容也与来源无关）。
+
+    仍如实报告两类**感知盲区**：canvas/WebGL 内容（根本没有无障碍树），
+    与收集未能覆盖的框架（未附加/超深/预算耗尽）。感知层的静默盲区比显式
+    的能力缺口危险：前者让模型以为世界上没有那个按钮。
     """
-    await page.evaluate(_CLEAR_JS, REF_ATTR)
-    raw = await page.evaluate(
-        _COLLECT_JS,
-        [_INTERACTIVE_SELECTOR, REF_ATTR, viewport_only, limit],
-    )
-    items = (raw or {}).get("refs") or []
-    frames = list((raw or {}).get("frames") or [])
-    canvas = dict((raw or {}).get("canvas") or {})
-    refs = [
-        ElementRef(
-            ref=str(item.get("ref", "")),
-            role=str(item.get("role", "generic")),
-            name=str(item.get("name", "")),
-            value=str(item.get("value", "")),
-            states=list(item.get("states", [])),
-            in_shadow=bool(item.get("in_shadow", False)),
-            x=int(item.get("x", 0)),
-            y=int(item.get("y", 0)),
-            w=int(item.get("w", 0)),
-            h=int(item.get("h", 0)),
-        )
-        for item in items
-    ]
+    await page.evaluate(_CLEAR_JS, [REF_ATTR, FRAME_ATTR])
+
+    refs: list[ElementRef] = []
+    frames_report: list[dict] = []
+    canvas: dict = {}
+    budget = int(limit)
+    ref_seq = 0
+    frame_seq = 0
+
+    from collections import deque
+
+    # BFS：(frame, 帧路径, 深度)。bounding_box 天然相对主视口，无需累积偏移。
+    queue: deque = deque([(page.main_frame, [], 0)])
+    unvisited: deque = deque()  # 预算耗尽后未收集的帧 → 如实报盲区
+
+    while queue:
+        frame, path, depth = queue.popleft()
+        main = frame == page.main_frame
+
+        if budget <= 0:
+            unvisited.append((frame, path))
+            continue
+
+        # 帧自身的可见框（绝对坐标）。非主帧先做两项父级检查：
+        #   1) iframe 整个不在视口内 → 收也白收
+        #   2) iframe 被外层（主文档里）的层盖住 → 里面一切都点不到，
+        #      遮挡沿帧继承为每个元素的 obscured 标记
+        ox = oy = 0.0
+        force_obscured = False
+        box = None
+        if not main:
+            try:
+                el = await frame.frame_element()
+                box = await el.bounding_box() if el else None
+            except Exception:  # noqa: BLE001
+                box = None
+            if box:
+                ox, oy = float(box["x"]), float(box["y"])
+                if viewport_only:
+                    try:
+                        vp = await page.evaluate("() => ({w: innerWidth, h: innerHeight})")
+                        if (ox + box["width"] < 0 or oy + box["height"] < 0
+                                or ox > vp["w"] or oy > vp["h"]):
+                            continue
+                    except Exception:  # noqa: BLE001
+                        pass
+                try:
+                    force_obscured = await page.evaluate(
+                        """([cx, cy]) => {
+                            const x = Math.max(0, Math.min(cx, window.innerWidth - 1));
+                            const y = Math.max(0, Math.min(cy, window.innerHeight - 1));
+                            const top = document.elementFromPoint(x, y);
+                            if (!top) return true;
+                            return top.tagName !== 'IFRAME';
+                        }""",
+                        [ox + box["width"] / 2, oy + box["height"] / 2],
+                    )
+                except Exception:  # noqa: BLE001
+                    force_obscured = False
+
+        # 在本帧执行上下文内收集（局部坐标 + 偏移 = 绝对坐标；编号全局连续）
+        raw = None
+        try:
+            raw = await frame.evaluate(
+                _COLLECT_JS,
+                [_INTERACTIVE_SELECTOR, REF_ATTR, viewport_only, budget,
+                 ox, oy, ref_seq, force_obscured],
+            )
+        except Exception as e:  # noqa: BLE001
+            _logger.debug("frame collect failed (path=%s): %s", path, e)
+        if raw:
+            items = raw.get("refs") or []
+            for item in items:
+                refs.append(
+                    ElementRef(
+                        ref=str(item.get("ref", "")),
+                        role=str(item.get("role", "generic")),
+                        name=str(item.get("name", "")),
+                        value=str(item.get("value", "")),
+                        states=list(item.get("states", [])),
+                        in_shadow=bool(item.get("in_shadow", False)),
+                        x=int(item.get("x", 0)),
+                        y=int(item.get("y", 0)),
+                        w=int(item.get("w", 0)),
+                        h=int(item.get("h", 0)),
+                        frame=list(path),
+                    )
+                )
+            ref_seq += len(items)
+            budget -= len(items)
+            if main:
+                canvas = dict(raw.get("canvas") or {})
+            if not main:
+                frames_report.append({
+                    "src": (frame.url or "")[:120],
+                    "reachable": True,
+                    "covered": True,
+                    "count": len(items),
+                    "w": int(box["width"]) if box else 0,
+                    "h": int(box["height"]) if box else 0,
+                })
+        else:
+            frames_report.append({
+                "src": (frame.url or "")[:120],
+                "reachable": False,
+                "covered": False,
+                "count": -1,
+                "w": int(box["width"]) if box else 0,
+                "h": int(box["height"]) if box else 0,
+            })
+
+        # 子帧入队：注入帧寻址属性、记录选择器
+        if depth < _MAX_FRAME_DEPTH:
+            for child in frame.child_frames:
+                try:
+                    child_el = await child.frame_element()
+                    child_box = await child_el.bounding_box() if child_el else None
+                except Exception:  # noqa: BLE001
+                    child_el = None
+                    child_box = None
+                if child_el is None or not child_box:
+                    frames_report.append({
+                        "src": (child.url or "")[:120], "reachable": False,
+                        "covered": False, "count": -1, "w": 0, "h": 0,
+                    })
+                    continue
+                if child_box["width"] < 2 or child_box["height"] < 2:
+                    continue
+                fid = f"f{frame_seq}"
+                frame_seq += 1
+                try:
+                    await child_el.evaluate(
+                        "(el, a) => el.setAttribute(a[0], a[1])", [FRAME_ATTR, fid]
+                    )
+                except Exception:  # noqa: BLE001
+                    frames_report.append({
+                        "src": (child.url or "")[:120], "reachable": False,
+                        "covered": False, "count": -1,
+                        "w": int(child_box["width"]), "h": int(child_box["height"]),
+                    })
+                    continue
+                sel = f'iframe[{FRAME_ATTR}="{fid}"]'
+                queue.append((child, path + [sel], depth + 1))
+        else:
+            for child in frame.child_frames:
+                frames_report.append({
+                    "src": (child.url or "")[:120], "reachable": False,
+                    "covered": False, "count": -1, "w": 0, "h": 0,
+                })
+
+    # 预算耗尽留下的帧：如实报"看见了但没覆盖"
+    while unvisited:
+        frame, _path = unvisited.popleft()
+        frames_report.append({
+            "src": (frame.url or "")[:120], "reachable": True,
+            "covered": False, "count": -1, "w": 0, "h": 0,
+        })
+
     total = await page.evaluate(_TOTAL_JS, _INTERACTIVE_SELECTOR)
     return CollectedRefs(
         refs=refs,
         total_on_page=int(total or 0),
-        frames=frames,
+        frames=frames_report,
         canvas=canvas,
     )
