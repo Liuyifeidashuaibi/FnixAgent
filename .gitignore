@@ -121,14 +121,18 @@ benchmark_results/
 # --- Generated HTML docs ---
 docs/*.html
 docs/internal/
+!docs/internal/GUI_DRIVER_*.md
 docs/转载用研究资料/
 
 # --- Experimental code ---
 experiments/
 ops-memory-mcp/
 
-# --- One-shot test scripts ---
-test_*.py
+# --- One-shot test scripts（仅限仓库根目录；tests/ 下的测试套件必须入库，
+# 此前这条无锚规则把全部 test_*.py 都屏蔽了，导致测试套件从未入库） ---
+/test_*.py
+# 测试运行时生成的临时目录
+tests/unit/_*_tmp/
 verify_*.py
 test.jsonl
 
