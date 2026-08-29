@@ -229,24 +229,28 @@ async def test_unobscured_element_is_not_flagged(session: Any, server: str) -> N
 
 
 async def test_same_origin_frame_is_reported(session: Any, server: str) -> None:
-    """不枚举 frame 内元素，但必须让调用方知道那里有东西。"""
+    """同源帧必须被覆盖：帧报告在场，且帧内元素真的进了快照。
+
+    跨 frame 寻址落地后，同源帧不再是盲区——这条从"报告盲区"演进为
+    "内容可得"。未覆盖帧的如实报告由 test_browser_frames 的超深用例把守。
+    """
     await session.navigate(f"{server}/frame.html")
     snap = await session.snapshot_ref()
 
-    assert snap.frames, "iframe 盲区没被报告"
-    reachable = [f for f in snap.frames if f.get("reachable")]
-    assert reachable, snap.frames
-    assert snap.hidden_frame_count >= 2, snap.hidden_frame_count
+    assert snap.frames, "iframe 没有被报告"
+    covered = [f for f in snap.frames if f.get("covered")]
+    assert covered, snap.frames
+    assert any(r.frame for r in snap.refs), "帧内元素没有被枚举进快照"
 
 
 async def test_frame_blind_spot_is_in_snapshot_text(session: Any, server: str) -> None:
-    """提示必须真的出现在模型读到的文本里——写在字段里但没人读等于没有。"""
+    """帧的覆盖状态必须真的出现在模型读到的文本里——写在字段里没人读等于没有。"""
     await session.navigate(f"{server}/frame.html")
     snap = await session.snapshot_ref()
 
     text = snap.to_text()
     assert "iframe" in text, text
-    assert "未覆盖" in text, text
+    assert "并入" in text, text
 
 
 async def test_outer_elements_still_enumerated(session: Any, server: str) -> None:
