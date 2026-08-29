@@ -120,7 +120,7 @@ benchmark_results/
 
 # --- Generated HTML docs ---
 docs/*.html
-docs/internal/
+docs/internal/*
 !docs/internal/GUI_DRIVER_*.md
 docs/转载用研究资料/
 
