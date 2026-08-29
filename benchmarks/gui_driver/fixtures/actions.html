@@ -1,0 +1,9 @@
+<!doctype html><html lang='zh-CN'><head><meta charset='utf-8'>
+<title>动作延迟页</title></head><body>
+<h1>动作延迟页</h1>
+<button id='fast' onclick="document.getElementById('out').textContent='fast-done'">立即改变</button>
+<button id='slow' onclick="setTimeout(function(){
+  document.getElementById('out').textContent='slow-done';}, 700)">延迟改变</button>
+<button id='inert'>点了没反应</button>
+<div id='out'>initial</div>
+</body></html>

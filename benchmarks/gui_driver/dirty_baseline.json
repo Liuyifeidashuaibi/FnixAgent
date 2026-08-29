@@ -1,0 +1,255 @@
+{
+  "generated_at": "2026-08-30 00:40:16",
+  "total": 15,
+  "positive_tasks": 10,
+  "negative_tasks": 5,
+  "positive_success_rate_pct": 100.0,
+  "correct_reject_rate_pct": 100.0,
+  "silent_failures": 0,
+  "silent_failure_rate_pct": 0.0,
+  "lied": 0,
+  "avg_task_ms": 4045.8,
+  "recovery_used_total": 2,
+  "by_trait": {
+    "全屏遮罩": {
+      "total": 2,
+      "verified": 2,
+      "lied": 0
+    },
+    "懒加载": {
+      "total": 2,
+      "verified": 2,
+      "lied": 0
+    },
+    "无限滚动": {
+      "total": 2,
+      "verified": 2,
+      "lied": 0
+    },
+    "DOM 重排": {
+      "total": 1,
+      "verified": 1,
+      "lied": 0
+    },
+    "固定层遮挡": {
+      "total": 1,
+      "verified": 1,
+      "lied": 0
+    },
+    "Shadow DOM": {
+      "total": 1,
+      "verified": 1,
+      "lied": 0
+    },
+    "近似名干扰": {
+      "total": 1,
+      "verified": 1,
+      "lied": 0
+    },
+    "折叠面板": {
+      "total": 2,
+      "verified": 2,
+      "lied": 0
+    },
+    "延迟渲染": {
+      "total": 1,
+      "verified": 1,
+      "lied": 0
+    },
+    "虚拟列表": {
+      "total": 1,
+      "verified": 1,
+      "lied": 0
+    },
+    "iframe 内容": {
+      "total": 1,
+      "verified": 1,
+      "lied": 0
+    }
+  },
+  "tasks": [
+    {
+      "id": "d01",
+      "name": "先关掉 cookie 弹窗再加购",
+      "trait": "全屏遮罩",
+      "steps_ok": true,
+      "verified": true,
+      "silent_failure": false,
+      "expect_failure": false,
+      "error": "",
+      "elapsed_ms": 2079.9,
+      "recovery": []
+    },
+    {
+      "id": "d02",
+      "name": "懒加载：滚到商品 12 再加购",
+      "trait": "懒加载",
+      "steps_ok": true,
+      "verified": true,
+      "silent_failure": false,
+      "expect_failure": false,
+      "error": "",
+      "elapsed_ms": 3157.1,
+      "recovery": []
+    },
+    {
+      "id": "d03",
+      "name": "无限滚动：找到商品 24 再加购",
+      "trait": "无限滚动",
+      "steps_ok": true,
+      "verified": true,
+      "silent_failure": false,
+      "expect_failure": false,
+      "error": "",
+      "elapsed_ms": 3213.0,
+      "recovery": []
+    },
+    {
+      "id": "d04",
+      "name": "动态重排：列表每 400ms 重建时加购",
+      "trait": "DOM 重排",
+      "steps_ok": true,
+      "verified": true,
+      "silent_failure": false,
+      "expect_failure": false,
+      "error": "",
+      "elapsed_ms": 1818.6,
+      "recovery": []
+    },
+    {
+      "id": "d05",
+      "name": "锚点跳转后目标被固定顶栏盖住时加购",
+      "trait": "固定层遮挡",
+      "steps_ok": true,
+      "verified": true,
+      "silent_failure": false,
+      "expect_failure": false,
+      "error": "",
+      "elapsed_ms": 1654.0,
+      "recovery": []
+    },
+    {
+      "id": "d06",
+      "name": "Shadow DOM：点 Web Components 里的按钮",
+      "trait": "Shadow DOM",
+      "steps_ok": true,
+      "verified": true,
+      "silent_failure": false,
+      "expect_failure": false,
+      "error": "",
+      "elapsed_ms": 1720.5,
+      "recovery": []
+    },
+    {
+      "id": "d07",
+      "name": "近似名干扰：目标是「加入购物车」不是「加入购物车并结算」",
+      "trait": "近似名干扰",
+      "steps_ok": true,
+      "verified": true,
+      "silent_failure": false,
+      "expect_failure": false,
+      "error": "",
+      "elapsed_ms": 1608.4,
+      "recovery": []
+    },
+    {
+      "id": "d08",
+      "name": "折叠面板：先展开规格参数再加购",
+      "trait": "折叠面板",
+      "steps_ok": true,
+      "verified": true,
+      "silent_failure": false,
+      "expect_failure": false,
+      "error": "",
+      "elapsed_ms": 1985.6,
+      "recovery": []
+    },
+    {
+      "id": "d09",
+      "name": "延迟渲染：等商品出现后再加购",
+      "trait": "延迟渲染",
+      "steps_ok": true,
+      "verified": true,
+      "silent_failure": false,
+      "expect_failure": false,
+      "error": "",
+      "elapsed_ms": 3411.8,
+      "recovery": []
+    },
+    {
+      "id": "d10",
+      "name": "虚拟列表：滚动到商品 47 再加购",
+      "trait": "虚拟列表",
+      "steps_ok": true,
+      "verified": true,
+      "silent_failure": false,
+      "expect_failure": false,
+      "error": "",
+      "elapsed_ms": 3914.7,
+      "recovery": []
+    },
+    {
+      "id": "n04",
+      "name": "折叠面板没展开就想加购——不该成功",
+      "trait": "折叠面板",
+      "steps_ok": false,
+      "verified": true,
+      "silent_failure": false,
+      "expect_failure": true,
+      "error": "快照里找不到「笔记本电脑 Pro 14」",
+      "elapsed_ms": 9.0,
+      "recovery": []
+    },
+    {
+      "id": "n05",
+      "name": "目标在 iframe 里点不到——不该硬凑成功",
+      "trait": "iframe 内容",
+      "steps_ok": false,
+      "verified": true,
+      "silent_failure": false,
+      "expect_failure": true,
+      "error": "快照里找不到「笔记本电脑 Pro 14」",
+      "elapsed_ms": 7.6,
+      "recovery": []
+    },
+    {
+      "id": "n01",
+      "name": "不处理弹窗就想加购——不该成功",
+      "trait": "全屏遮罩",
+      "steps_ok": false,
+      "verified": true,
+      "silent_failure": false,
+      "expect_failure": true,
+      "error": "click_ref 失败: Locator.click: Timeout 8000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-fnix-ref=\\\"e3\\\"]\").first\n    - locator resolved to <button data-fnix-ref=\"e3\" onclick=\"addToCart('p01','笔记本电脑 Pro 14')\">加入购物车</button>\n  - attempting click action\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div id=\"mask\">…</div> intercepts pointer events\n    - retrying click action\n    - waiting 20ms\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div id=\"mask\">…</div> intercepts pointer events\n    - retrying click action\n      - waiting 100ms\n    15 × waiting for element to be visible, enabled and stable\n       - element is visible, enabled and stable\n       - scrolling into view if needed\n       - done scrolling\n       - <div id=\"mask\">…</div> intercepts pointer events\n     - retrying click action\n       - waiting 500ms\n",
+      "elapsed_ms": 8069.3,
+      "recovery": [
+        "refresh",
+        "escalate"
+      ]
+    },
+    {
+      "id": "n02",
+      "name": "无限滚动里找不存在的第 999 件",
+      "trait": "无限滚动",
+      "steps_ok": false,
+      "verified": true,
+      "silent_failure": false,
+      "expect_failure": true,
+      "error": "滚动 12 次仍未出现「商品 999」",
+      "elapsed_ms": 8785.2,
+      "recovery": []
+    },
+    {
+      "id": "n03",
+      "name": "懒加载页面上找不存在的商品 99",
+      "trait": "懒加载",
+      "steps_ok": false,
+      "verified": true,
+      "silent_failure": false,
+      "expect_failure": true,
+      "error": "滚动 30 次仍未出现「商品 99」",
+      "elapsed_ms": 19252.0,
+      "recovery": []
+    }
+  ]
+}

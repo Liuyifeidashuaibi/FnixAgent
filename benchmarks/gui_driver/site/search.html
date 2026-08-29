@@ -1,0 +1,80 @@
+<!doctype html><html lang='zh-CN'><head><meta charset='utf-8'><title>示例商城 · 搜索</title>
+<style>
+  body{font-family:system-ui;margin:0;color:#1a1a1a}
+  .nav{display:flex;gap:14px;align-items:center;padding:12px 20px;background:#f5f5f5;
+       border-bottom:1px solid #e5e5e5}
+  .nav .brand{font-weight:600;margin-right:8px}
+  .nav .search{margin-left:auto}
+  main{padding:20px;max-width:960px}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .card{border:1px solid #e5e5e5;border-radius:8px;padding:12px}
+  .card h3{margin:0 0 6px;font-size:15px}
+  .price{color:#c0392b;font-weight:600}
+  .row{display:flex;gap:10px;align-items:center;margin:10px 0}
+  button{cursor:pointer;padding:6px 12px;border:1px solid #ccc;border-radius:6px;background:#fff}
+  button.primary{background:#2563eb;color:#fff;border-color:#2563eb}
+  input,select{padding:6px 8px;border:1px solid #ccc;border-radius:6px}
+  .pager{margin:18px 0;display:flex;gap:8px}
+  .empty{padding:30px;color:#666;border:1px dashed #ccc;border-radius:8px}
+  .banner{background:#fff7ed;border:1px solid #fdba74;padding:10px 12px;border-radius:6px;margin:10px 0}
+  table{border-collapse:collapse;width:100%}
+  td,th{border-bottom:1px solid #eee;padding:8px;text-align:left}
+</style>
+</head><body>
+<script>
+  function readCart() {
+    try { return JSON.parse(localStorage.getItem('cart') || '{}'); } catch (e) { return {}; }
+  }
+  function cartCount() { var c = readCart(), n = 0; for (var k in c) { n += c[k]; } return n; }
+  function updateBadge() {
+    var el = document.getElementById('cart-count');
+    if (el) { el.textContent = '(' + cartCount() + ')'; }
+  }
+  function writeCart(c) {
+    localStorage.setItem('cart', JSON.stringify(c));
+    updateBadge();
+  }
+  function addToCart(id, n) {
+    var c = readCart();
+    c[id] = (c[id] || 0) + (n || 1);
+    writeCart(c);
+    var msg = document.getElementById('added-msg');
+    if (msg) { msg.textContent = '已加入购物车，当前共 ' + cartCount() + ' 件'; }
+  }
+  function isLoggedIn() { return localStorage.getItem('user') !== null; }
+  document.addEventListener('DOMContentLoaded', updateBadge);
+  updateBadge();
+</script>
+
+<nav class='nav'>
+  <a href='index.html' class='brand'>示例商城</a>
+  <a href='index.html'>首页</a>
+  <a href='cart.html' id='cart-link'>购物车<span id='cart-count'></span></a>
+  <a href='login.html'>登录</a>
+  <form class='search' action='search.html' method='get'>
+    <input name='q' id='q' placeholder='搜索商品' aria-label='搜索商品'>
+    <button type='submit'>搜索</button>
+  </form>
+</nav>
+<main><h1>搜索结果</h1><div id='result' class='grid'></div><div id='no-result' class='empty' style='display:none'>没有找到相关商品</div><script>var PRODUCTS = [["p01", "笔记本电脑 Pro 14", "电脑", 7999], ["p02", "笔记本电脑 Air 13", "电脑", 5999], ["p03", "游戏本 锐龙版", "电脑", 6899], ["p04", "无线鼠标 静音版", "配件", 129], ["p05", "机械键盘 87 键", "配件", 399], ["p06", "显示器 27 寸 4K", "配件", 2199], ["p07", "降噪耳机 头戴式", "音频", 1499], ["p08", "蓝牙音箱 便携", "音频", 299], ["p09", "移动固态硬盘 1T", "存储", 549], ["p10", "U盘 128G", "存储", 89], ["p11", "USB-C 扩展坞", "配件", 259], ["p12", "摄像头 1080P", "配件", 199]];
+        var q = new URLSearchParams(location.search).get('q') || '';
+        var hits = PRODUCTS.filter(function (p) {
+          return p[1].indexOf(q) >= 0 || p[2].indexOf(q) >= 0;
+        });
+        var box = document.getElementById('result');
+        var none = document.getElementById('no-result');
+        if (!q || hits.length === 0) {
+          none.style.display = 'block';
+        } else {
+          hits.forEach(function (p) {
+            var d = document.createElement('div');
+            d.className = 'card';
+            d.innerHTML = "<h3><a href='product.html?id=" + p[0] + "'>" + p[1] + "</a></h3>"
+              + "<div class='price'>" + p[3] + "</div>"
+              + "<div class='row'><button class='decoy'>加入购物车</button>"
+              + "<button class='primary' onclick=\"addToCart('" + p[0] + "',1)\">加入购物车</button>"
+              + "</div>";
+            box.appendChild(d);
+          });
+        }
+        </script></main></body></html>

@@ -1,0 +1,328 @@
+"""脏页面跑分（Phase 6）——回答"上真实网站会不会崩"。
+
+口径与 Phase 0 完全一致，一个数都不减：
+
+  **成功率**    verifier 判定真实结果达成（查 localStorage，不查"有没有报错"）
+  **静默失败率** 全部步骤都"没报错"，但 verifier 说结果不对
+  **谎报数**    负例被报成成功——不可能完成的任务说成做完了
+
+第三个数最关键。只测正例的评测无法区分"真能干"和"永远说自己干成了"，而后者
+在用户那里的表现就是 Agent 兴高采烈地汇报"已经加进购物车了"，其实什么都没做。
+
+执行策略同样是**固定策略**：只消费快照 + 按名称匹配，不使用选择器、不查 DOM
+结构。BYOK 模式下模型由用户提供，harness 的度量必须把模型变量固定住。
+click_near 用的是"阅读顺序上离锚点最近的按钮"——这正是人读紧凑快照时的做法，
+与模型所见信息等价。
+"""
+
+# -*- coding: utf-8 -*-
+# Copyright (C) 2026 FnixAgent. All rights reserved.
+# Software Name: FnixAgent 智能工作台系统 V1.0
+# This software and its source code is proprietary and confidential.
+# Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
+from __future__ import annotations
+
+import asyncio
+import functools
+import http.server
+import json
+import socket
+import threading
+import time
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any
+
+import dirtysite
+from dirty_tasks import TASKS, DirtyTask
+from run_tasks import Policy  # 复用 Phase 0 的策略基类与它的意图级原语
+
+_STEP_TIMEOUT = 30.0
+_SCROLL_PAUSE = 0.25
+
+
+@dataclass
+class StepResult:
+    index: int
+    kind: str
+    ok: bool
+    detail: str = ""
+    elapsed_ms: float = 0.0
+    recovery: list[str] = field(default_factory=list)
+
+
+@dataclass
+class DirtyResult:
+    task_id: str
+    name: str
+    trait: str
+    steps_ok: bool
+    verified: bool
+    error: str = ""
+    expect_failure: bool = False
+    elapsed_ms: float = 0.0
+    steps: list[StepResult] = field(default_factory=list)
+    recovery_used: list[str] = field(default_factory=list)
+
+    @property
+    def silent_failure(self) -> bool:
+        return (not self.expect_failure) and self.steps_ok and not self.verified
+
+    @property
+    def lied(self) -> bool:
+        return self.expect_failure and self.steps_ok
+
+
+class DirtyPolicy(Policy):
+    """在 Phase 0 策略上加两个脏页面必需的原语。
+
+    都是意图级的：一个真人看着页面也会这么做，不需要任何 DOM 知识。
+    """
+
+    async def click_near(self, anchor: str, button: str) -> tuple[bool, str, list[str]]:
+        """点"锚点旁边那个按钮"——读快照时的自然做法。
+
+        按快照顺序（自上而下、自左而右）取锚点之后第一个匹配的按钮。
+        这就是人在紧凑文本里定位"商品 12 右边的加入购物车"的方式。
+        """
+        from fnixagent.core.tools.browser_healing import _rank_name_match
+
+        snap = await self.session.snapshot_ref()
+        ordered = sorted(snap.refs, key=lambda r: (r.y, r.x))
+
+        anchor_idx = -1
+        for i, r in enumerate(ordered):
+            if anchor and anchor in (r.name or ""):
+                anchor_idx = i
+                break
+        if anchor_idx < 0:
+            return False, f"快照里找不到「{anchor}」", []
+
+        # 锚点之后的候选要**先排档位再取第一个**。照 DOM 顺序取第一个包含
+        # 匹配的话，"加入购物车"会被排版在前面的"加入购物车并结算"截胡——
+        # 那是真实电商页面上的常见排版，也是会真扣款的一类误点。
+        candidates = [
+            (_rank_name_match(r.name or "", button), -len(r.name or ""), r)
+            for r in ordered[anchor_idx + 1:]
+            if _rank_name_match(r.name or "", button) > 0 and not r.disabled
+        ]
+        if not candidates:
+            return False, f"「{anchor}」之后找不到「{button}」", []
+        candidates.sort(key=lambda t: (-t[0], -t[1]))
+        target = candidates[0][2]
+
+        result = await self.healer.click(ref=target.ref)
+        return result.ok, result.error, list(result.recovery_used)
+
+    async def scroll_until(self, text: str, max_scrolls: int) -> tuple[bool, str, list[str]]:
+        """一路往下滚，直到文本出现在快照里。
+
+        懒加载和无限滚动没有这个动作就无解——内容根本还没被创建出来。
+        """
+        for i in range(max_scrolls):
+            snap = await self.session.snapshot_ref()
+            if any(text in (r.name or "") for r in snap.refs):
+                return True, f"滚动 {i} 次后找到", []
+            if any(text in (r.value or "") for r in snap.refs):
+                return True, f"滚动 {i} 次后找到", []
+            # 刻意不回退到"正文里有没有"：懒加载元素会因为 rootMargin 提前
+            # 渲染，正文里有 ≠ 眼睛看得到。以正文为准会让下一步的点击去点一个
+            # 根本不在视口里的目标，失败原因还很难查。
+            await self.session.scroll("down", 900)
+            await asyncio.sleep(_SCROLL_PAUSE)
+        return False, f"滚动 {max_scrolls} 次仍未出现「{text}」", []
+
+
+def _free_port() -> int:
+    with socket.socket() as s:
+        s.bind(("127.0.0.1", 0))
+        return int(s.getsockname()[1])
+
+
+def serve_site() -> http.server.ThreadingHTTPServer:
+    port = _free_port()
+    handler = functools.partial(
+        http.server.SimpleHTTPRequestHandler, directory=str(dirtysite.SITE_DIR)
+    )
+    httpd = http.server.ThreadingHTTPServer(("127.0.0.1", port), handler)
+    httpd.daemon_threads = True
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+    httpd.port = port  # type: ignore[attr-defined]
+    return httpd
+
+
+async def run_task(session: Any, base: str, task: DirtyTask) -> DirtyResult:
+    policy = DirtyPolicy(session)
+    steps: list[StepResult] = []
+    recovery: list[str] = []
+    steps_ok = True
+    error = ""
+
+    # 任务之间必须清空购物车，否则基线不可信
+    await session.navigate(f"{base}/{task.page}")
+    try:
+        await session._page.evaluate("() => { localStorage.clear(); }")
+        await session.navigate(f"{base}/{task.page}")
+    except Exception as e:  # noqa: BLE001
+        return DirtyResult(task.id, task.name, task.trait, False, False, f"起始导航失败: {e}")
+
+    t0 = time.perf_counter()
+    for i, step in enumerate(task.steps):
+        kind = step[0]
+        ts = time.perf_counter()
+        try:
+            if kind == "goto":
+                await session.navigate(f"{base}/{step[1]}")
+                ok, detail, rec = True, "", []
+            elif kind == "click":
+                ok, detail, rec = await asyncio.wait_for(
+                    policy.click(step[1], step[2] if len(step) > 2 else ""),
+                    timeout=_STEP_TIMEOUT,
+                )
+            elif kind == "click_near":
+                ok, detail, rec = await asyncio.wait_for(
+                    policy.click_near(step[1], step[2]), timeout=_STEP_TIMEOUT
+                )
+            elif kind == "scroll_until":
+                ok, detail, rec = await policy.scroll_until(step[1], step[2])
+            elif kind == "wait_text":
+                state = await session.wait_for(text=step[1], timeout_ms=6000)
+                ok, detail, rec = (not state.error), (state.error or ""), []
+            else:
+                ok, detail, rec = False, f"未知步骤类型 {kind}", []
+        except asyncio.TimeoutError:
+            ok, detail, rec = False, f"步骤超时（{_STEP_TIMEOUT}s）", []
+        except Exception as e:  # noqa: BLE001
+            ok, detail, rec = False, f"步骤异常: {e}", []
+
+        recovery += rec
+        elapsed = (time.perf_counter() - ts) * 1000
+        steps.append(StepResult(i, kind, ok, detail, round(elapsed, 1), list(rec)))
+        if not ok:
+            steps_ok = False
+            error = detail
+            break
+
+    verified = False
+    if task.expect_failure:
+        verified = not steps_ok
+        if steps_ok:
+            error = "不可能完成的任务被报成了成功（谎报）"
+    elif steps_ok:
+        try:
+            verified = bool(await session._page.evaluate(task.verify_js))
+        except Exception as e:  # noqa: BLE001
+            verified = False
+            error = f"校验异常: {e}"
+
+    return DirtyResult(
+        task_id=task.id,
+        name=task.name,
+        trait=task.trait,
+        steps_ok=steps_ok,
+        verified=verified,
+        error=error,
+        expect_failure=task.expect_failure,
+        elapsed_ms=round((time.perf_counter() - t0) * 1000, 1),
+        steps=steps,
+        recovery_used=recovery,
+    )
+
+
+async def main(only: str | None = None) -> dict:
+    changed = dirtysite.ensure_site()
+    if changed:
+        print(f"[site] 生成/更新 {len(changed)} 个页面: {', '.join(changed)}")
+    httpd = serve_site()
+    base = f"http://127.0.0.1:{httpd.port}"
+    print(f"[server] 脏页面站点 {base}\n")
+
+    from fnixagent.core.tools.browser import BrowserSession
+
+    session = BrowserSession()
+    results: list[DirtyResult] = []
+    try:
+        for task in TASKS:
+            if only and task.id != only:
+                continue
+            r = await run_task(session, base, task)
+            results.append(r)
+            flag = ("谎报" if r.lied else "OK  " if r.verified
+                    else "静默" if r.silent_failure else "FAIL")
+            mark = "负例" if r.expect_failure else "    "
+            print(f"  {flag} {mark} {r.task_id} {r.name[:26]:<28} "
+                  f"{r.elapsed_ms:>7.0f}ms {r.error[:44]}")
+        await session.close()
+    finally:
+        httpd.shutdown()
+
+    pos = [r for r in results if not r.expect_failure]
+    neg = [r for r in results if r.expect_failure]
+    silent = sum(1 for r in results if r.silent_failure)
+    lied = sum(1 for r in results if r.lied)
+
+    by_trait: dict[str, dict[str, int]] = {}
+    for r in results:
+        slot = by_trait.setdefault(r.trait, {"total": 0, "verified": 0, "lied": 0})
+        slot["total"] += 1
+        slot["verified"] += 1 if r.verified else 0
+        slot["lied"] += 1 if r.lied else 0
+
+    out = {
+        "generated_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+        "total": len(results),
+        "positive_tasks": len(pos),
+        "negative_tasks": len(neg),
+        "positive_success_rate_pct": (
+            round(sum(1 for r in pos if r.verified) / len(pos) * 100, 1) if pos else 0.0
+        ),
+        "correct_reject_rate_pct": (
+            round(sum(1 for r in neg if r.verified) / len(neg) * 100, 1) if neg else 0.0
+        ),
+        "silent_failures": silent,
+        "silent_failure_rate_pct": round(silent / len(pos) * 100, 1) if pos else 0.0,
+        "lied": lied,
+        "avg_task_ms": round(sum(r.elapsed_ms for r in results) / len(results), 1) if results else 0,
+        "recovery_used_total": sum(len(r.recovery_used) for r in results),
+        "by_trait": by_trait,
+        "tasks": [
+            {
+                "id": r.task_id,
+                "name": r.name,
+                "trait": r.trait,
+                "steps_ok": r.steps_ok,
+                "verified": r.verified,
+                "silent_failure": r.silent_failure,
+                "expect_failure": r.expect_failure,
+                "error": r.error,
+                "elapsed_ms": r.elapsed_ms,
+                "recovery": r.recovery_used,
+            }
+            for r in results
+        ],
+    }
+    out_path = Path(__file__).parent / "dirty_baseline.json"
+    out_path.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    print("\n── 脏页面基线（真实网站泛化能力的可控代理指标）──")
+    print(f"  正例成功率:   {out['positive_success_rate_pct']}%  "
+          f"({sum(1 for r in pos if r.verified)}/{len(pos)})")
+    print(f"  静默失败率:   {out['silent_failure_rate_pct']}%  ({silent}/{len(pos)})")
+    print(f"  负例正确拒绝: {out['correct_reject_rate_pct']}%  "
+          f"({sum(1 for r in neg if r.verified)}/{len(neg)})")
+    print(f"  谎报成功:     {lied} 条" + ("  ← 严重：不可能的任务被说成做完了" if lied else ""))
+    print(f"  平均任务耗时: {out['avg_task_ms']}ms")
+    print(f"  自愈触发次数: {out['recovery_used_total']}")
+    print("\n  按性质拆分:")
+    for trait, s in by_trait.items():
+        print(f"    {trait:<12} {s['verified']}/{s['total']} 通过"
+              + (f"  谎报 {s['lied']}" if s["lied"] else ""))
+    print(f"\n已写入 {out_path}")
+    return out
+
+
+if __name__ == "__main__":
+    import sys
+
+    asyncio.run(main(sys.argv[1] if len(sys.argv) > 1 else None))

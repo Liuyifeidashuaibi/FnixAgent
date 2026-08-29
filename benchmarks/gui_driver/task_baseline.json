@@ -1,0 +1,460 @@
+{
+  "generated_at": "2026-08-30 00:42:14",
+  "total": 35,
+  "positive_tasks": 32,
+  "negative_tasks": 3,
+  "verified": 35,
+  "success_rate_pct": 100.0,
+  "positive_success_rate_pct": 100.0,
+  "correct_reject_rate_pct": 100.0,
+  "silent_failures": 0,
+  "silent_failure_rate_pct": 0.0,
+  "lied": 0,
+  "avg_task_ms": 2509.9,
+  "recovery_used_total": 78,
+  "tasks": [
+    {
+      "id": "t01",
+      "name": "搜索「笔记本」并确认结果数量",
+      "steps_ok": true,
+      "verified": true,
+      "silent_failure": false,
+      "error": "",
+      "elapsed_ms": 1884.7,
+      "recovery": []
+    },
+    {
+      "id": "t02",
+      "name": "搜索后点进第一个结果",
+      "steps_ok": true,
+      "verified": true,
+      "silent_failure": false,
+      "error": "",
+      "elapsed_ms": 2331.6,
+      "recovery": []
+    },
+    {
+      "id": "t03",
+      "name": "搜索不存在的词显示空状态",
+      "steps_ok": true,
+      "verified": true,
+      "silent_failure": false,
+      "error": "",
+      "elapsed_ms": 1064.3,
+      "recovery": []
+    },
+    {
+      "id": "t04",
+      "name": "翻到第 2 页",
+      "steps_ok": true,
+      "verified": true,
+      "silent_failure": false,
+      "error": "",
+      "elapsed_ms": 967.5,
+      "recovery": []
+    },
+    {
+      "id": "t05",
+      "name": "从第 2 页点开商品详情",
+      "steps_ok": true,
+      "verified": true,
+      "silent_failure": false,
+      "error": "",
+      "elapsed_ms": 1816.7,
+      "recovery": []
+    },
+    {
+      "id": "t06",
+      "name": "详情页返回上一页",
+      "steps_ok": true,
+      "verified": true,
+      "silent_failure": false,
+      "error": "",
+      "elapsed_ms": 1914.4,
+      "recovery": []
+    },
+    {
+      "id": "t07",
+      "name": "空搜索词显示空状态",
+      "steps_ok": true,
+      "verified": true,
+      "silent_failure": false,
+      "error": "",
+      "elapsed_ms": 1099.4,
+      "recovery": []
+    },
+    {
+      "id": "t08",
+      "name": "按分类搜索「配件」",
+      "steps_ok": true,
+      "verified": true,
+      "silent_failure": false,
+      "error": "",
+      "elapsed_ms": 1880.8,
+      "recovery": []
+    },
+    {
+      "id": "t09",
+      "name": "首页直接加购第一个商品",
+      "steps_ok": true,
+      "verified": true,
+      "silent_failure": false,
+      "error": "",
+      "elapsed_ms": 1359.5,
+      "recovery": [
+        "substitute",
+        "substitute"
+      ]
+    },
+    {
+      "id": "t10",
+      "name": "详情页加购",
+      "steps_ok": true,
+      "verified": true,
+      "silent_failure": false,
+      "error": "",
+      "elapsed_ms": 2595.6,
+      "recovery": [
+        "substitute",
+        "substitute"
+      ]
+    },
+    {
+      "id": "t11",
+      "name": "详情页选数量 2 再加购",
+      "steps_ok": true,
+      "verified": true,
+      "silent_failure": false,
+      "error": "",
+      "elapsed_ms": 2614.1,
+      "recovery": [
+        "substitute",
+        "substitute"
+      ]
+    },
+    {
+      "id": "t12",
+      "name": "加购两件不同商品",
+      "steps_ok": true,
+      "verified": true,
+      "silent_failure": false,
+      "error": "",
+      "elapsed_ms": 5063.1,
+      "recovery": [
+        "substitute",
+        "substitute",
+        "substitute",
+        "substitute",
+        "substitute",
+        "substitute",
+        "substitute",
+        "substitute"
+      ]
+    },
+    {
+      "id": "t13",
+      "name": "搜索结果页加购",
+      "steps_ok": true,
+      "verified": true,
+      "silent_failure": false,
+      "error": "",
+      "elapsed_ms": 2230.9,
+      "recovery": [
+        "substitute",
+        "substitute"
+      ]
+    },
+    {
+      "id": "t14",
+      "name": "第 2 页加购",
+      "steps_ok": true,
+      "verified": true,
+      "silent_failure": false,
+      "error": "",
+      "elapsed_ms": 1767.8,
+      "recovery": [
+        "substitute",
+        "substitute"
+      ]
+    },
+    {
+      "id": "t15",
+      "name": "加购后提示文案正确",
+      "steps_ok": true,
+      "verified": true,
+      "silent_failure": false,
+      "error": "",
+      "elapsed_ms": 2584.3,
+      "recovery": [
+        "substitute",
+        "substitute"
+      ]
+    },
+    {
+      "id": "t16",
+      "name": "加购后去购物车删除",
+      "steps_ok": true,
+      "verified": true,
+      "silent_failure": false,
+      "error": "",
+      "elapsed_ms": 3481.1,
+      "recovery": [
+        "substitute",
+        "substitute",
+        "substitute",
+        "substitute",
+        "substitute",
+        "substitute"
+      ]
+    },
+    {
+      "id": "t17",
+      "name": "空购物车显示空状态",
+      "steps_ok": true,
+      "verified": true,
+      "silent_failure": false,
+      "error": "",
+      "elapsed_ms": 1082.7,
+      "recovery": []
+    },
+    {
+      "id": "t18",
+      "name": "购物车合计金额正确",
+      "steps_ok": true,
+      "verified": true,
+      "silent_failure": false,
+      "error": "",
+      "elapsed_ms": 3113.8,
+      "recovery": [
+        "substitute",
+        "substitute",
+        "substitute",
+        "substitute"
+      ]
+    },
+    {
+      "id": "t19",
+      "name": "删掉其中一件留一件",
+      "steps_ok": true,
+      "verified": true,
+      "silent_failure": false,
+      "error": "",
+      "elapsed_ms": 6063.7,
+      "recovery": [
+        "substitute",
+        "substitute",
+        "substitute",
+        "substitute",
+        "substitute",
+        "substitute",
+        "substitute",
+        "substitute",
+        "substitute",
+        "substitute",
+        "substitute",
+        "substitute",
+        "substitute",
+        "substitute",
+        "substitute",
+        "substitute"
+      ]
+    },
+    {
+      "id": "t20",
+      "name": "错误密码登录被拒绝",
+      "steps_ok": true,
+      "verified": true,
+      "silent_failure": false,
+      "error": "",
+      "elapsed_ms": 2314.1,
+      "recovery": []
+    },
+    {
+      "id": "t21",
+      "name": "正确凭据登录成功",
+      "steps_ok": true,
+      "verified": true,
+      "silent_failure": false,
+      "error": "",
+      "elapsed_ms": 2433.2,
+      "recovery": []
+    },
+    {
+      "id": "t22",
+      "name": "未登录结算被引导去登录",
+      "steps_ok": true,
+      "verified": true,
+      "silent_failure": false,
+      "error": "",
+      "elapsed_ms": 3616.3,
+      "recovery": [
+        "substitute",
+        "substitute",
+        "substitute",
+        "substitute",
+        "substitute",
+        "substitute"
+      ]
+    },
+    {
+      "id": "t23",
+      "name": "登录后回到确认页",
+      "steps_ok": true,
+      "verified": true,
+      "silent_failure": false,
+      "error": "",
+      "elapsed_ms": 2429.7,
+      "recovery": []
+    },
+    {
+      "id": "t24",
+      "name": "登录后提交订单",
+      "steps_ok": true,
+      "verified": true,
+      "silent_failure": false,
+      "error": "",
+      "elapsed_ms": 3230.8,
+      "recovery": []
+    },
+    {
+      "id": "t25",
+      "name": "提交订单后购物车清空",
+      "steps_ok": true,
+      "verified": true,
+      "silent_failure": false,
+      "error": "",
+      "elapsed_ms": 3196.4,
+      "recovery": []
+    },
+    {
+      "id": "t26",
+      "name": "未登录访问确认页提示登录",
+      "steps_ok": true,
+      "verified": true,
+      "silent_failure": false,
+      "error": "",
+      "elapsed_ms": 1097.4,
+      "recovery": []
+    },
+    {
+      "id": "t27",
+      "name": "搜索 → 详情 → 加购 → 购物车",
+      "steps_ok": true,
+      "verified": true,
+      "silent_failure": false,
+      "error": "",
+      "elapsed_ms": 4062.1,
+      "recovery": [
+        "substitute",
+        "substitute",
+        "substitute",
+        "substitute"
+      ]
+    },
+    {
+      "id": "t28",
+      "name": "加购 → 结算 → 登录 → 提交",
+      "steps_ok": true,
+      "verified": true,
+      "silent_failure": false,
+      "error": "",
+      "elapsed_ms": 5744.2,
+      "recovery": [
+        "substitute",
+        "substitute",
+        "substitute",
+        "substitute",
+        "substitute",
+        "substitute",
+        "substitute",
+        "substitute",
+        "substitute",
+        "substitute"
+      ]
+    },
+    {
+      "id": "t29",
+      "name": "两次搜索分别加购",
+      "steps_ok": true,
+      "verified": true,
+      "silent_failure": false,
+      "error": "",
+      "elapsed_ms": 5298.8,
+      "recovery": [
+        "substitute",
+        "substitute",
+        "substitute",
+        "substitute",
+        "substitute",
+        "substitute",
+        "substitute",
+        "substitute",
+        "substitute",
+        "substitute"
+      ]
+    },
+    {
+      "id": "t30",
+      "name": "翻页后返回第 1 页再加购",
+      "steps_ok": true,
+      "verified": true,
+      "silent_failure": false,
+      "error": "",
+      "elapsed_ms": 2150.2,
+      "recovery": [
+        "substitute",
+        "substitute"
+      ]
+    },
+    {
+      "id": "t31",
+      "name": "点一个根本不存在的商品",
+      "steps_ok": false,
+      "verified": true,
+      "silent_failure": false,
+      "error": "快照里找不到名称含「量子隐形斗篷」的 link",
+      "elapsed_ms": 556.9,
+      "recovery": []
+    },
+    {
+      "id": "t32",
+      "name": "未登录时点提交订单（按钮不存在）",
+      "steps_ok": false,
+      "verified": true,
+      "silent_failure": false,
+      "error": "快照里找不到名称含「提交订单」的 button",
+      "elapsed_ms": 1085.7,
+      "recovery": []
+    },
+    {
+      "id": "t33",
+      "name": "错误密码不应产生登录态",
+      "steps_ok": true,
+      "verified": true,
+      "silent_failure": false,
+      "error": "",
+      "elapsed_ms": 2314.4,
+      "recovery": []
+    },
+    {
+      "id": "t34",
+      "name": "不填密码直接登录不应产生登录态",
+      "steps_ok": true,
+      "verified": true,
+      "silent_failure": false,
+      "error": "",
+      "elapsed_ms": 1880.8,
+      "recovery": []
+    },
+    {
+      "id": "t35",
+      "name": "搜索不到结果时不该硬点第一个",
+      "steps_ok": false,
+      "verified": true,
+      "silent_failure": false,
+      "error": "快照里找不到名称含「加入购物车」的 button",
+      "elapsed_ms": 1519.0,
+      "recovery": []
+    }
+  ]
+}

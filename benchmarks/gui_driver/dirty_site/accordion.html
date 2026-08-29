@@ -1,0 +1,63 @@
+<!doctype html><html lang='zh-CN'><head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width,initial-scale=1'>
+<title>折叠面板</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 0 0 200px; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 16px; }
+  .card { border: 1px solid #ddd; border-radius: 8px; padding: 12px 16px;
+           margin: 12px 0; display: flex; align-items: center;
+           justify-content: space-between; gap: 12px; }
+  button { padding: 8px 14px; font-size: 14px; cursor: pointer; }
+  .hint { color: #666; font-size: 13px; }
+  #toast { position: fixed; right: 16px; bottom: 16px; background: #222;
+            color: #fff; padding: 10px 16px; border-radius: 6px;
+            opacity: 0; transition: opacity .2s; pointer-events: none; }
+  #toast.show { opacity: 1; }
+</style></head><body>
+<div class='wrap'><h1>折叠面板</h1><p class='hint'>目标藏在折叠起来的面板里，不展开就看不见</p>
+
+<details id='spec'>
+  <summary>规格参数</summary>
+  <div class='card'><a id='p01' href='#p01'>笔记本电脑 Pro 14</a>
+    <button onclick="addToCart('p01','笔记本电脑 Pro 14')">加入购物车</button></div>
+  <div class='card'><a id='p04' href='#p04'>无线鼠标 静音版</a>
+    <button onclick="addToCart('p04','无线鼠标 静音版')">加入购物车</button></div>
+</details>
+<details id='review' open>
+  <summary>用户评价</summary>
+  <div class='card'><a href='#r1'>好评：手感很好</a>
+    <button onclick="toast('已点赞')">点赞</button></div>
+</details>
+<details id='ship'>
+  <summary>配送与售后</summary>
+  <div class='card'><a href='#s1'>顺丰包邮</a>
+    <button onclick="wishlist('ship')">加入购物车并结算</button></div>
+</details>
+<p id='count' class='hint'></p>
+<script>
+function wishlist(id) { localStorage.setItem('wishlist', id); toast('已加入收藏'); }
+</script>
+
+</div>
+<div id='toast'></div>
+<script>
+window.__cart = JSON.parse(localStorage.getItem('cart') || '{}');
+function toast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(function () { t.classList.remove('show'); }, 1200);
+}
+function addToCart(id, name) {
+  if (window.__blocked) { toast('请先在弹窗里做出选择'); return; }
+  window.__cart[id] = (window.__cart[id] || 0) + 1;
+  localStorage.setItem('cart', JSON.stringify(window.__cart));
+  toast('已加入购物车：' + name);
+  var n = document.getElementById('count');
+  if (n) n.textContent = '购物车 ' + Object.keys(window.__cart).length + ' 件';
+}
+function resetCart() { window.__cart = {}; localStorage.removeItem('cart'); }
+window.__resetCart = resetCart;
+// iframe 内的按钮走这条桥接写回外层购物车。同源共享 localStorage，所以
+// "加购成功"的判定与外层任务完全一致——负例失败时不会被算成"其实成功了"。
+window.__frameAdd = function (id, name) { addToCart(id, name); };
+</script>

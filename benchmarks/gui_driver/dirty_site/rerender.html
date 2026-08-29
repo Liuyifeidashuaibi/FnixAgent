@@ -1,0 +1,65 @@
+<!doctype html><html lang='zh-CN'><head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width,initial-scale=1'>
+<title>动态重排</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 0 0 200px; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 16px; }
+  .card { border: 1px solid #ddd; border-radius: 8px; padding: 12px 16px;
+           margin: 12px 0; display: flex; align-items: center;
+           justify-content: space-between; gap: 12px; }
+  button { padding: 8px 14px; font-size: 14px; cursor: pointer; }
+  .hint { color: #666; font-size: 13px; }
+  #toast { position: fixed; right: 16px; bottom: 16px; background: #222;
+            color: #fff; padding: 10px 16px; border-radius: 6px;
+            opacity: 0; transition: opacity .2s; pointer-events: none; }
+  #toast.show { opacity: 1; }
+</style></head><body>
+<div class='wrap'><h1>动态重排</h1><p class='hint'>列表每 400ms 整体重建并随机排序，ref 持续失效</p>
+
+<div id='list'></div>
+<p id='count' class='hint'></p>
+<script>
+var NAMES = ['笔记本电脑 Pro 14', '无线鼠标 静音版', '机械键盘 87 键',
+             '降噪耳机 头戴式', '移动固态硬盘 1T', '显示器 27 寸 4K'];
+var IDS = ['p01', 'p04', 'p05', 'p07', 'p09', 'p06'];
+var list = document.getElementById('list');
+function paint() {
+  // 整块重建 + 随机顺序：上一秒拿到的 ref 在这一秒全部失效
+  var order = IDS.map(function (v, i) { return i; });
+  order.sort(function () { return Math.random() - 0.5; });
+  list.innerHTML = '';
+  order.forEach(function (i) {
+    var d = document.createElement('div');
+    d.className = 'card';
+    d.innerHTML = '<a href="#' + IDS[i] + '">' + NAMES[i] + '</a>' +
+      '<button onclick="addToCart(\'' + IDS[i] + '\',\'' + NAMES[i] + '\')">加入购物车</button>';
+    list.appendChild(d);
+  });
+}
+paint();
+setInterval(paint, 400);
+</script>
+
+</div>
+<div id='toast'></div>
+<script>
+window.__cart = JSON.parse(localStorage.getItem('cart') || '{}');
+function toast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(function () { t.classList.remove('show'); }, 1200);
+}
+function addToCart(id, name) {
+  if (window.__blocked) { toast('请先在弹窗里做出选择'); return; }
+  window.__cart[id] = (window.__cart[id] || 0) + 1;
+  localStorage.setItem('cart', JSON.stringify(window.__cart));
+  toast('已加入购物车：' + name);
+  var n = document.getElementById('count');
+  if (n) n.textContent = '购物车 ' + Object.keys(window.__cart).length + ' 件';
+}
+function resetCart() { window.__cart = {}; localStorage.removeItem('cart'); }
+window.__resetCart = resetCart;
+// iframe 内的按钮走这条桥接写回外层购物车。同源共享 localStorage，所以
+// "加购成功"的判定与外层任务完全一致——负例失败时不会被算成"其实成功了"。
+window.__frameAdd = function (id, name) { addToCart(id, name); };
+</script>

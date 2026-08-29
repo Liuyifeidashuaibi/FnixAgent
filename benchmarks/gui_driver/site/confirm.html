@@ -1,0 +1,69 @@
+<!doctype html><html lang='zh-CN'><head><meta charset='utf-8'><title>示例商城 · 确认订单</title>
+<style>
+  body{font-family:system-ui;margin:0;color:#1a1a1a}
+  .nav{display:flex;gap:14px;align-items:center;padding:12px 20px;background:#f5f5f5;
+       border-bottom:1px solid #e5e5e5}
+  .nav .brand{font-weight:600;margin-right:8px}
+  .nav .search{margin-left:auto}
+  main{padding:20px;max-width:960px}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .card{border:1px solid #e5e5e5;border-radius:8px;padding:12px}
+  .card h3{margin:0 0 6px;font-size:15px}
+  .price{color:#c0392b;font-weight:600}
+  .row{display:flex;gap:10px;align-items:center;margin:10px 0}
+  button{cursor:pointer;padding:6px 12px;border:1px solid #ccc;border-radius:6px;background:#fff}
+  button.primary{background:#2563eb;color:#fff;border-color:#2563eb}
+  input,select{padding:6px 8px;border:1px solid #ccc;border-radius:6px}
+  .pager{margin:18px 0;display:flex;gap:8px}
+  .empty{padding:30px;color:#666;border:1px dashed #ccc;border-radius:8px}
+  .banner{background:#fff7ed;border:1px solid #fdba74;padding:10px 12px;border-radius:6px;margin:10px 0}
+  table{border-collapse:collapse;width:100%}
+  td,th{border-bottom:1px solid #eee;padding:8px;text-align:left}
+</style>
+</head><body>
+<script>
+  function readCart() {
+    try { return JSON.parse(localStorage.getItem('cart') || '{}'); } catch (e) { return {}; }
+  }
+  function cartCount() { var c = readCart(), n = 0; for (var k in c) { n += c[k]; } return n; }
+  function updateBadge() {
+    var el = document.getElementById('cart-count');
+    if (el) { el.textContent = '(' + cartCount() + ')'; }
+  }
+  function writeCart(c) {
+    localStorage.setItem('cart', JSON.stringify(c));
+    updateBadge();
+  }
+  function addToCart(id, n) {
+    var c = readCart();
+    c[id] = (c[id] || 0) + (n || 1);
+    writeCart(c);
+    var msg = document.getElementById('added-msg');
+    if (msg) { msg.textContent = '已加入购物车，当前共 ' + cartCount() + ' 件'; }
+  }
+  function isLoggedIn() { return localStorage.getItem('user') !== null; }
+  document.addEventListener('DOMContentLoaded', updateBadge);
+  updateBadge();
+</script>
+
+<nav class='nav'>
+  <a href='index.html' class='brand'>示例商城</a>
+  <a href='index.html'>首页</a>
+  <a href='cart.html' id='cart-link'>购物车<span id='cart-count'></span></a>
+  <a href='login.html'>登录</a>
+  <form class='search' action='search.html' method='get'>
+    <input name='q' id='q' placeholder='搜索商品' aria-label='搜索商品'>
+    <button type='submit'>搜索</button>
+  </form>
+</nav>
+<main><h1>确认订单</h1><div id='need-login' class='empty' style='display:none'>请先登录后再结算</div><div id='ok' style='display:none'><p>收货信息已确认。</p><div class='row'><button class='primary' id='place'>提交订单</button></div><p id='done'></p></div><script>
+        if (!isLoggedIn()) {
+          document.getElementById('need-login').style.display = 'block';
+        } else {
+          document.getElementById('ok').style.display = 'block';
+          document.getElementById('place').onclick = function () {
+            writeCart({});
+            document.getElementById('done').textContent = '订单已提交，感谢购买';
+          };
+        }
+        </script></main></body></html>

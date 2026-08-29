@@ -1,0 +1,134 @@
+{
+  "generated_at": "2026-08-29 22:55:57",
+  "token_method": "tiktoken/cl100k_base",
+  "pages": [
+    {
+      "page": "simple_form.html",
+      "title": "简单表单",
+      "dom_interactive_elements": 15,
+      "snapshot_chars": 1282,
+      "snapshot_tokens": 496,
+      "token_method": "tiktoken/cl100k_base",
+      "ref_snapshot_tokens": 167,
+      "ref_snapshot_chars": 396,
+      "ref_count": 15,
+      "ref_truncated": false,
+      "token_reduction_pct": 66.3,
+      "nav_ms": 7007.2,
+      "snapshot_ms": 38.9,
+      "ref_snapshot_ms": 10.6,
+      "screenshot_b64_kb": 33.1
+    },
+    {
+      "page": "mid_list.html",
+      "title": "中等列表",
+      "dom_interactive_elements": 70,
+      "snapshot_chars": 3625,
+      "snapshot_tokens": 1661,
+      "token_method": "tiktoken/cl100k_base",
+      "ref_snapshot_tokens": 313,
+      "ref_snapshot_chars": 627,
+      "ref_count": 22,
+      "ref_truncated": false,
+      "token_reduction_pct": 81.2,
+      "nav_ms": 546.7,
+      "snapshot_ms": 33.6,
+      "ref_snapshot_ms": 10.4,
+      "screenshot_b64_kb": 58.5
+    },
+    {
+      "page": "complex_portal.html",
+      "title": "复杂门户",
+      "dom_interactive_elements": 317,
+      "snapshot_chars": 3614,
+      "snapshot_tokens": 1600,
+      "token_method": "tiktoken/cl100k_base",
+      "ref_snapshot_tokens": 319,
+      "ref_snapshot_chars": 691,
+      "ref_count": 25,
+      "ref_truncated": false,
+      "token_reduction_pct": 80.1,
+      "nav_ms": 535.2,
+      "snapshot_ms": 53.3,
+      "ref_snapshot_ms": 11.4,
+      "screenshot_b64_kb": 58.8
+    },
+    {
+      "page": "heavy_spa.html",
+      "title": "重型页面",
+      "dom_interactive_elements": 979,
+      "snapshot_chars": 3609,
+      "snapshot_tokens": 1576,
+      "token_method": "tiktoken/cl100k_base",
+      "ref_snapshot_tokens": 304,
+      "ref_snapshot_chars": 676,
+      "ref_count": 25,
+      "ref_truncated": false,
+      "token_reduction_pct": 80.7,
+      "nav_ms": 550.7,
+      "snapshot_ms": 93.7,
+      "ref_snapshot_ms": 14.1,
+      "screenshot_b64_kb": 60.0
+    },
+    {
+      "page": "zh_site.html",
+      "title": "中文站点",
+      "dom_interactive_elements": 257,
+      "snapshot_chars": 3177,
+      "snapshot_tokens": 1747,
+      "token_method": "tiktoken/cl100k_base",
+      "ref_snapshot_tokens": 389,
+      "ref_snapshot_chars": 662,
+      "ref_count": 28,
+      "ref_truncated": false,
+      "token_reduction_pct": 77.7,
+      "nav_ms": 539.4,
+      "snapshot_ms": 46.8,
+      "ref_snapshot_ms": 11.3,
+      "screenshot_b64_kb": 62.2
+    }
+  ],
+  "summary": {
+    "max_snapshot_tokens": 1747,
+    "heavy_page_tokens": 1576,
+    "heavy_page_elements": 979,
+    "avg_nav_ms": 1835.8,
+    "avg_snapshot_ms": 53.3,
+    "avg_token_reduction_pct": 77.2,
+    "max_ref_snapshot_tokens": 389,
+    "heavy_page_ref_tokens": 304
+  },
+  "actions": {
+    "instant_state_wait": {
+      "elapsed_ms": 417.0,
+      "changed": true,
+      "error": null
+    },
+    "instant_fixed_sleep": {
+      "elapsed_ms": 675.1,
+      "changed": true,
+      "error": null
+    },
+    "delayed_state_wait": {
+      "elapsed_ms": 1149.2,
+      "changed": true,
+      "error": null
+    },
+    "delayed_fixed_sleep": {
+      "elapsed_ms": 680.4,
+      "changed": false,
+      "error": null
+    },
+    "inert_state_wait": {
+      "elapsed_ms": 385.2,
+      "changed": false,
+      "error": null
+    },
+    "summary": {
+      "instant_speedup_pct": 38.2,
+      "delayed_caught_state_wait": true,
+      "delayed_caught_fixed_sleep": false,
+      "inert_correctly_reported": true
+    }
+  }
+}

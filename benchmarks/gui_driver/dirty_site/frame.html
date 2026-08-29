@@ -1,0 +1,48 @@
+<!doctype html><html lang='zh-CN'><head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width,initial-scale=1'>
+<title>iframe 内容</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 0 0 200px; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 16px; }
+  .card { border: 1px solid #ddd; border-radius: 8px; padding: 12px 16px;
+           margin: 12px 0; display: flex; align-items: center;
+           justify-content: space-between; gap: 12px; }
+  button { padding: 8px 14px; font-size: 14px; cursor: pointer; }
+  .hint { color: #666; font-size: 13px; }
+  #toast { position: fixed; right: 16px; bottom: 16px; background: #222;
+            color: #fff; padding: 10px 16px; border-radius: 6px;
+            opacity: 0; transition: opacity .2s; pointer-events: none; }
+  #toast.show { opacity: 1; }
+</style></head><body>
+<div class='wrap'><h1>iframe 内容</h1><p class='hint'>目标按钮在同源 iframe 里，主文档快照扫不到</p>
+
+<h2>外层页面</h2>
+<p class='hint'>商品列表嵌在下方的框架里（同源）。</p>
+<button onclick="toast('这是外层的按钮')">外层按钮</button>
+<iframe src='frame_inner.html' width='720' height='320'
+        style='border:1px solid #ddd;margin-top:12px'></iframe>
+<p id='count' class='hint'></p>
+
+</div>
+<div id='toast'></div>
+<script>
+window.__cart = JSON.parse(localStorage.getItem('cart') || '{}');
+function toast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(function () { t.classList.remove('show'); }, 1200);
+}
+function addToCart(id, name) {
+  if (window.__blocked) { toast('请先在弹窗里做出选择'); return; }
+  window.__cart[id] = (window.__cart[id] || 0) + 1;
+  localStorage.setItem('cart', JSON.stringify(window.__cart));
+  toast('已加入购物车：' + name);
+  var n = document.getElementById('count');
+  if (n) n.textContent = '购物车 ' + Object.keys(window.__cart).length + ' 件';
+}
+function resetCart() { window.__cart = {}; localStorage.removeItem('cart'); }
+window.__resetCart = resetCart;
+// iframe 内的按钮走这条桥接写回外层购物车。同源共享 localStorage，所以
+// "加购成功"的判定与外层任务完全一致——负例失败时不会被算成"其实成功了"。
+window.__frameAdd = function (id, name) { addToCart(id, name); };
+</script>

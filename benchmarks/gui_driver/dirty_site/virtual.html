@@ -1,0 +1,70 @@
+<!doctype html><html lang='zh-CN'><head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width,initial-scale=1'>
+<title>虚拟列表</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 0 0 200px; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 16px; }
+  .card { border: 1px solid #ddd; border-radius: 8px; padding: 12px 16px;
+           margin: 12px 0; display: flex; align-items: center;
+           justify-content: space-between; gap: 12px; }
+  button { padding: 8px 14px; font-size: 14px; cursor: pointer; }
+  .hint { color: #666; font-size: 13px; }
+  #toast { position: fixed; right: 16px; bottom: 16px; background: #222;
+            color: #fff; padding: 10px 16px; border-radius: 6px;
+            opacity: 0; transition: opacity .2s; pointer-events: none; }
+  #toast.show { opacity: 1; }
+</style></head><body>
+<div class='wrap'><h1>虚拟列表</h1><p class='hint'>只渲染视口附近的行，滚动时 DOM 节点被复用替换</p>
+
+<style>
+  #vbox { position: relative; height: 12000px; border: 1px solid #eee; }
+  #rows { position: absolute; top: 0; left: 0; right: 0; will-change: transform; }
+  .vrow { height: 60px; margin: 0; display: flex; align-items: center;
+          justify-content: space-between; padding: 0 16px; border-bottom: 1px solid #f0f0f0; }
+</style>
+<div id='vbox'><div id='rows'></div></div>
+<p id='count' class='hint'></p>
+<script>
+var vbox = document.getElementById('vbox');
+var rows = document.getElementById('rows');
+var ROW = 60, VISIBLE = 14, TOTAL = 200;
+function render() {
+  // 只渲染视口附近的行：其余的行根本不存在于 DOM 里，ref 无从编号
+  var top = vbox.getBoundingClientRect().top;
+  var first = Math.max(0, Math.floor(-top / ROW) - 2);
+  var html = '';
+  for (var i = first; i < first + VISIBLE && i < TOTAL; i++) {
+    html += '<div class="vrow" data-idx="' + i + '">' +
+      '<a href="#p' + i + '">商品 ' + i + '</a>' +
+      '<button onclick="addToCart(\'p' + i + '\',\'商品 ' + i + '\')">加入购物车</button></div>';
+  }
+  rows.innerHTML = html;
+  rows.style.transform = 'translateY(' + (first * ROW) + 'px)';
+}
+window.addEventListener('scroll', render);
+render();
+</script>
+
+</div>
+<div id='toast'></div>
+<script>
+window.__cart = JSON.parse(localStorage.getItem('cart') || '{}');
+function toast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(function () { t.classList.remove('show'); }, 1200);
+}
+function addToCart(id, name) {
+  if (window.__blocked) { toast('请先在弹窗里做出选择'); return; }
+  window.__cart[id] = (window.__cart[id] || 0) + 1;
+  localStorage.setItem('cart', JSON.stringify(window.__cart));
+  toast('已加入购物车：' + name);
+  var n = document.getElementById('count');
+  if (n) n.textContent = '购物车 ' + Object.keys(window.__cart).length + ' 件';
+}
+function resetCart() { window.__cart = {}; localStorage.removeItem('cart'); }
+window.__resetCart = resetCart;
+// iframe 内的按钮走这条桥接写回外层购物车。同源共享 localStorage，所以
+// "加购成功"的判定与外层任务完全一致——负例失败时不会被算成"其实成功了"。
+window.__frameAdd = function (id, name) { addToCart(id, name); };
+</script>
