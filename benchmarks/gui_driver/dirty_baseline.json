@@ -1,15 +1,15 @@
 {
-  "generated_at": "2026-08-30 01:21:37",
+  "generated_at": "2026-08-30 04:12:12",
   "total": 24,
   "positive_tasks": 16,
   "negative_tasks": 8,
-  "positive_success_rate_pct": 87.5,
+  "positive_success_rate_pct": 100.0,
   "correct_reject_rate_pct": 100.0,
   "silent_failures": 0,
   "silent_failure_rate_pct": 0.0,
   "lied": 0,
-  "avg_task_ms": 5269.7,
-  "recovery_used_total": 8,
+  "avg_task_ms": 3856.7,
+  "recovery_used_total": 4,
   "by_trait": {
     "全屏遮罩": {
       "total": 2,
@@ -28,7 +28,7 @@
     },
     "DOM 重排": {
       "total": 1,
-      "verified": 0,
+      "verified": 1,
       "lied": 0
     },
     "固定层遮挡": {
@@ -63,7 +63,7 @@
     },
     "叠加：懒+无限+重排": {
       "total": 1,
-      "verified": 0,
+      "verified": 1,
       "lied": 0
     },
     "叠加：顶栏+弹窗": {
@@ -107,7 +107,7 @@
       "silent_failure": false,
       "expect_failure": false,
       "error": "",
-      "elapsed_ms": 3369.8,
+      "elapsed_ms": 2196.4,
       "recovery": []
     },
     {
@@ -119,7 +119,7 @@
       "silent_failure": false,
       "expect_failure": false,
       "error": "",
-      "elapsed_ms": 4581.9,
+      "elapsed_ms": 3203.1,
       "recovery": []
     },
     {
@@ -131,25 +131,20 @@
       "silent_failure": false,
       "expect_failure": false,
       "error": "",
-      "elapsed_ms": 4464.4,
+      "elapsed_ms": 3228.3,
       "recovery": []
     },
     {
       "id": "d04",
       "name": "动态重排：列表每 400ms 重建时加购",
       "trait": "DOM 重排",
-      "steps_ok": false,
-      "verified": false,
+      "steps_ok": true,
+      "verified": true,
       "silent_failure": false,
       "expect_failure": false,
-      "error": "click_ref 失败: ref e3 已失效，请重新获取快照后再操作",
-      "elapsed_ms": 1761.0,
-      "recovery": [
-        "refresh",
-        "substitute",
-        "substitute",
-        "escalate"
-      ]
+      "error": "",
+      "elapsed_ms": 1835.4,
+      "recovery": []
     },
     {
       "id": "d05",
@@ -160,7 +155,7 @@
       "silent_failure": false,
       "expect_failure": false,
       "error": "",
-      "elapsed_ms": 2636.6,
+      "elapsed_ms": 1680.4,
       "recovery": []
     },
     {
@@ -172,7 +167,7 @@
       "silent_failure": false,
       "expect_failure": false,
       "error": "",
-      "elapsed_ms": 2164.2,
+      "elapsed_ms": 1710.5,
       "recovery": []
     },
     {
@@ -184,7 +179,7 @@
       "silent_failure": false,
       "expect_failure": false,
       "error": "",
-      "elapsed_ms": 2198.3,
+      "elapsed_ms": 1605.0,
       "recovery": []
     },
     {
@@ -196,7 +191,7 @@
       "silent_failure": false,
       "expect_failure": false,
       "error": "",
-      "elapsed_ms": 3247.9,
+      "elapsed_ms": 2103.7,
       "recovery": []
     },
     {
@@ -208,7 +203,7 @@
       "silent_failure": false,
       "expect_failure": false,
       "error": "",
-      "elapsed_ms": 3905.3,
+      "elapsed_ms": 3319.8,
       "recovery": []
     },
     {
@@ -220,19 +215,19 @@
       "silent_failure": false,
       "expect_failure": false,
       "error": "",
-      "elapsed_ms": 5377.6,
+      "elapsed_ms": 3803.6,
       "recovery": []
     },
     {
       "id": "d11",
       "name": "叠加信息流：滚到商品 30 再加购",
       "trait": "叠加：懒+无限+重排",
-      "steps_ok": false,
-      "verified": false,
+      "steps_ok": true,
+      "verified": true,
       "silent_failure": false,
       "expect_failure": false,
-      "error": "快照里找不到「商品 30」",
-      "elapsed_ms": 6861.1,
+      "error": "",
+      "elapsed_ms": 6237.0,
       "recovery": []
     },
     {
@@ -244,7 +239,7 @@
       "silent_failure": false,
       "expect_failure": false,
       "error": "",
-      "elapsed_ms": 3466.6,
+      "elapsed_ms": 2140.7,
       "recovery": []
     },
     {
@@ -256,7 +251,7 @@
       "silent_failure": false,
       "expect_failure": false,
       "error": "",
-      "elapsed_ms": 2119.9,
+      "elapsed_ms": 1599.6,
       "recovery": []
     },
     {
@@ -268,7 +263,7 @@
       "silent_failure": false,
       "expect_failure": false,
       "error": "",
-      "elapsed_ms": 3102.2,
+      "elapsed_ms": 2235.8,
       "recovery": []
     },
     {
@@ -280,7 +275,7 @@
       "silent_failure": false,
       "expect_failure": false,
       "error": "",
-      "elapsed_ms": 2214.3,
+      "elapsed_ms": 1717.8,
       "recovery": []
     },
     {
@@ -292,7 +287,7 @@
       "silent_failure": false,
       "expect_failure": false,
       "error": "",
-      "elapsed_ms": 2368.4,
+      "elapsed_ms": 1609.8,
       "recovery": []
     },
     {
@@ -303,8 +298,8 @@
       "verified": true,
       "silent_failure": false,
       "expect_failure": true,
-      "error": "快照里找不到「笔记本电脑 Pro 14」",
-      "elapsed_ms": 90.3,
+      "error": "快照里找不到「笔记本电脑 Pro 14」（全页快照也未找到：快照里找不到「笔记本电脑 Pro 14」）",
+      "elapsed_ms": 805.8,
       "recovery": []
     },
     {
@@ -315,8 +310,8 @@
       "verified": true,
       "silent_failure": false,
       "expect_failure": true,
-      "error": "快照里找不到「笔记本电脑 Pro 14」",
-      "elapsed_ms": 107.9,
+      "error": "快照里找不到「笔记本电脑 Pro 14」（全页快照也未找到：快照里找不到「笔记本电脑 Pro 14」）",
+      "elapsed_ms": 804.6,
       "recovery": []
     },
     {
@@ -327,8 +322,8 @@
       "verified": true,
       "silent_failure": false,
       "expect_failure": true,
-      "error": "click_ref 失败: Locator.click: Timeout 8000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-fnix-ref=\\\"e2\\\"]\").first\n    - locator resolved to <button data-fnix-ref=\"e2\" onclick=\"addToCart('p10','商品 10 旗舰套装')\">加入购物车</button>\n  - attempting click action\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div id=\"mask\">…</div> intercepts pointer events\n    - retrying click action\n    - waiting 20ms\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div id=\"mask\">…</div> intercepts pointer events\n    - retrying click action\n      - waiting 100ms\n    13 × waiting for element to be visible, enabled and stable\n       - element is visible, enabled and stable\n       - scrolling into view if needed\n       - done scrolling\n       - <div id=\"mask\">…</div> intercepts pointer events\n     - retrying click action\n       - waiting 500ms\n",
-      "elapsed_ms": 8794.8,
+      "error": "click_ref 失败: Locator.click: Timeout 8000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-fnix-ref=\\\"e2\\\"]\").first\n    - locator resolved to <button data-fnix-ref=\"e2\" onclick=\"addToCart('p10','商品 10 旗舰套装')\">加入购物车</button>\n  - attempting click action\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div id=\"mask\">…</div> intercepts pointer events\n    - retrying click action\n    - waiting 20ms\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div id=\"mask\">…</div> intercepts pointer events\n    - retrying click action\n      - waiting 100ms\n    15 × waiting for element to be visible, enabled and stable\n       - element is visible, enabled and stable\n       - scrolling into view if needed\n       - done scrolling\n       - <div id=\"mask\">…</div> intercepts pointer events\n     - retrying click action\n       - waiting 500ms\n",
+      "elapsed_ms": 8096.4,
       "recovery": [
         "refresh",
         "escalate"
@@ -343,7 +338,7 @@
       "silent_failure": false,
       "expect_failure": true,
       "error": "滚动 10 次（含往返扫掠）仍未出现「商品 15」",
-      "elapsed_ms": 10543.3,
+      "elapsed_ms": 6253.9,
       "recovery": []
     },
     {
@@ -355,7 +350,7 @@
       "silent_failure": false,
       "expect_failure": true,
       "error": "upload_ref 失败: Locator.set_input_files: Error: Node is not an HTMLInputElement\nCall log:\n  - waiting for locator(\"[data-fnix-ref=\\\"e3\\\"]\").first\n    - locator resolved to <button data-fnix-ref=\"e3\" onclick=\"toast('这不是文件输入框')\">选择扫描件</button>\n",
-      "elapsed_ms": 454.0,
+      "elapsed_ms": 65.6,
       "recovery": []
     },
     {
@@ -366,8 +361,8 @@
       "verified": true,
       "silent_failure": false,
       "expect_failure": true,
-      "error": "click_ref 失败: Locator.click: Timeout 8000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-fnix-ref=\\\"e3\\\"]\").first\n    - locator resolved to <button data-fnix-ref=\"e3\" onclick=\"addToCart('p01','笔记本电脑 Pro 14')\">加入购物车</button>\n  - attempting click action\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div id=\"mask\">…</div> intercepts pointer events\n    - retrying click action\n    - waiting 20ms\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div id=\"mask\">…</div> intercepts pointer events\n    - retrying click action\n      - waiting 100ms\n    13 × waiting for element to be visible, enabled and stable\n       - element is visible, enabled and stable\n       - scrolling into view if needed\n       - done scrolling\n       - <div id=\"mask\">…</div> intercepts pointer events\n     - retrying click action\n       - waiting 500ms\n",
-      "elapsed_ms": 8607.1,
+      "error": "click_ref 失败: Locator.click: Timeout 8000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-fnix-ref=\\\"e3\\\"]\").first\n    - locator resolved to <button data-fnix-ref=\"e3\" onclick=\"addToCart('p01','笔记本电脑 Pro 14')\">加入购物车</button>\n  - attempting click action\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div id=\"mask\">…</div> intercepts pointer events\n    - retrying click action\n    - waiting 20ms\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div id=\"mask\">…</div> intercepts pointer events\n    - retrying click action\n      - waiting 100ms\n    15 × waiting for element to be visible, enabled and stable\n       - element is visible, enabled and stable\n       - scrolling into view if needed\n       - done scrolling\n       - <div id=\"mask\">…</div> intercepts pointer events\n     - retrying click action\n       - waiting 500ms\n",
+      "elapsed_ms": 8077.2,
       "recovery": [
         "refresh",
         "escalate"
@@ -382,7 +377,7 @@
       "silent_failure": false,
       "expect_failure": true,
       "error": "滚动 12 次（含往返扫掠）仍未出现「商品 999」",
-      "elapsed_ms": 12879.6,
+      "elapsed_ms": 8788.7,
       "recovery": []
     },
     {
@@ -394,7 +389,7 @@
       "silent_failure": false,
       "expect_failure": true,
       "error": "滚动 30 次（含往返扫掠）仍未出现「商品 99」",
-      "elapsed_ms": 31155.4,
+      "elapsed_ms": 19442.5,
       "recovery": []
     }
   ]

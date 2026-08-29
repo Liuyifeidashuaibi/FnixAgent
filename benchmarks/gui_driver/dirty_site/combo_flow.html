@@ -1,0 +1,87 @@
+<!doctype html><html lang='zh-CN'><head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width,initial-scale=1'>
+<title>叠加：信息流</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 0 0 200px; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 16px; }
+  .card { border: 1px solid #ddd; border-radius: 8px; padding: 12px 16px;
+           margin: 12px 0; display: flex; align-items: center;
+           justify-content: space-between; gap: 12px; }
+  button { padding: 8px 14px; font-size: 14px; cursor: pointer; }
+  .hint { color: #666; font-size: 13px; }
+  #toast { position: fixed; right: 16px; bottom: 16px; background: #222;
+            color: #fff; padding: 10px 16px; border-radius: 6px;
+            opacity: 0; transition: opacity .2s; pointer-events: none; }
+  #toast.show { opacity: 1; }
+</style></head><body>
+<div class='wrap'><h1>叠加：信息流</h1><p class='hint'>懒加载 + 无限滚动 + 动态重排同时发生</p>
+
+<div id='list'></div>
+<div id='sentinel' class='hint' style='height:40px'>向下滚动加载更多…</div>
+<p id='count' class='hint'></p>
+<script>
+var list = document.getElementById('list');
+var next = 1;
+var TOTAL = 80;
+function makeCard(i) {
+  var d = document.createElement('div');
+  d.className = 'card';
+  d.style.minHeight = '100px';
+  d.dataset.idx = i;
+  d.innerHTML = '<span style="color:#999">占位 ' + i + '</span>';
+  return d;
+}
+function batch() {
+  for (var k = 0; k < 10 && next <= TOTAL; k++, next++) list.appendChild(makeCard(next));
+  if (next > TOTAL) document.getElementById('sentinel').textContent = '没有更多了';
+  document.querySelectorAll('#list .card').forEach(function (c) {
+    if (!c.dataset.rendered) io.observe(c);
+  });
+}
+// 性质一：内容滚动进视口才真正渲染
+var io = new IntersectionObserver(function (entries) {
+  entries.forEach(function (e) {
+    if (!e.isIntersecting) return;
+    var i = e.target.dataset.idx;
+    e.target.innerHTML = '<a href="#p' + i + '">商品 ' + i + '</a>' +
+      '<button onclick="addToCart(\'p' + i + '\',\'商品 ' + i + '\')">加入购物车</button>';
+    e.target.dataset.rendered = '1';
+    io.unobserve(e.target);
+  });
+}, { rootMargin: '80px' });
+batch();
+// 性质二：滚动到底部才追加下一批
+new IntersectionObserver(function (entries) {
+  if (entries[0].isIntersecting) batch();
+}, { rootMargin: '200px' }).observe(document.getElementById('sentinel'));
+// 性质三：已渲染卡片每 1.5s 随机调换顺序——刚拿到的 ref 随时会漂
+setInterval(function () {
+  var cards = Array.prototype.slice.call(list.children);
+  cards.sort(function () { return Math.random() - 0.5; });
+  cards.forEach(function (c) { list.appendChild(c); });
+}, 1500);
+</script>
+
+</div>
+<div id='toast'></div>
+<script>
+window.__cart = JSON.parse(localStorage.getItem('cart') || '{}');
+function toast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(function () { t.classList.remove('show'); }, 1200);
+}
+function addToCart(id, name) {
+  if (window.__blocked) { toast('请先在弹窗里做出选择'); return; }
+  window.__cart[id] = (window.__cart[id] || 0) + 1;
+  localStorage.setItem('cart', JSON.stringify(window.__cart));
+  toast('已加入购物车：' + name);
+  var n = document.getElementById('count');
+  if (n) n.textContent = '购物车 ' + Object.keys(window.__cart).length + ' 件';
+}
+function resetCart() { window.__cart = {}; localStorage.removeItem('cart'); }
+window.__resetCart = resetCart;
+// iframe 内的按钮走这条桥接写回外层购物车。同源共享 localStorage，所以
+// "加购成功"的判定与外层任务完全一致——负例失败时不会被算成"其实成功了"。
+window.__frameAdd = function (id, name) { addToCart(id, name); };
+</script>
