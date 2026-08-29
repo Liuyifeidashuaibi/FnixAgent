@@ -113,28 +113,51 @@ class DirtyPolicy(Policy):
         return candidates[0][2], ""
 
     async def click_near(
-        self, anchor: str, button: str, retries: int = 1
+        self, anchor: str, button: str, retries: int = 3
     ) -> tuple[bool, str, list[str]]:
         """点"锚点旁边那个按钮"——读快照时的自然做法。
 
         重排型页面会在"取完快照"与"执行点击"之间把 DOM 重建，ref 作废是页面
         的固有性质，不是策略选错了目标。人在这种情况下的动作是"重新看一眼再
-        点"，策略也这么干——重试有界（retries），每次都基于全新快照重新定位，
-        绝不拿旧 ref 硬点（那是 F5 明确禁止的）。
+        点"，策略也这么干——重试有界（retries），每次都基于全新快照按锚点
+        重新定位，绝不拿旧 ref 硬点（那正是 F5 明确禁止的）。
+
+        两条实测出来的纪律：
+
+        - **重试敢开 3 次，前提是编排层不猜**。retries 一度被压回 1 当绕过：
+          旧接线下失败触发的 F5 会走到 substitute，在列表页的同名按钮里轮换，
+          点到别的商品还要报成功（静默失败，2026-08-30 实测复现）。编排层把
+          F5 阶梯改成不含 substitute、refresh 拒绝歧义重映射之后，失败会如实
+          升级，重试才重新成为正当的恢复手段。
+        - **锚点不在视口快照里时退回全页快照再找**。失败点击的滚动与页面重建
+          都可能把目标暂时挪出视口，"不在视口"不等于"不存在"——重新定位这一
+          步不能被滚动位置摆布。
         """
+        from fnixagent.core.tools.driver_errors import F1_TIMEOUT, F5_STALE_CONTEXT
+
         last_err = "未开始"
         recs: list[str] = []
-        for _ in range(max(1, retries)):
+        for attempt in range(max(1, retries)):
             snap = await self.session.snapshot_ref()
             target, err = self._pick_near(snap, anchor, button)
             if target is None:
-                last_err = err
-                continue
+                full = await self.session.snapshot_ref(viewport_only=False, limit=400)
+                target, err_full = self._pick_near(full, anchor, button)
+                if target is None:
+                    last_err = f"{err}（全页快照也未找到：{err_full}）"
+                    await asyncio.sleep(_SCROLL_PAUSE)
+                    continue
             result = await self.healer.click(ref=target.ref)
             recs.extend(result.recovery_used)
             if result.ok:
                 return True, result.error, recs
             last_err = result.error
+            # 确定性失败不值得重试：够不着 / 结果矛盾 / 原地打转，不会因"再看
+            # 一眼"而变好，重试只是烧步骤超时；F5（失去踪迹）与超时值得再来
+            # 一轮——全新快照是一次真正意义上的新机会。
+            if result.failure_class not in ("", F1_TIMEOUT, F5_STALE_CONTEXT):
+                break
+            await asyncio.sleep(_SCROLL_PAUSE)
         return False, last_err, recs
 
     async def scroll_click_near(

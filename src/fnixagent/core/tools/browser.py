@@ -1209,6 +1209,23 @@ class BrowserSession:
             raise RefStaleError(target)
         return loc
 
+    async def _rethrow_if_stale(self, loc: Any, ref: str) -> None:
+        """动作等待失败后，区分"元素没了"与"元素还在但点不动"。
+
+        重排页面会在等待中途整块重建，注入的 ref 属性随之丢失。这属于
+        **上下文过期**（F5）——目标没有被证明是错的，只是失去了踪迹。若把
+        它留给措辞分类，Playwright 的超时文本含 "waiting for" / "locator"，
+        会被判成 F4"目标选错"并触发同名候选轮换——列表页上同名按钮个个是
+        真的、各属于不同实体，轮换必然点到另一个实体的按钮：页面变了、一个
+        错都不报，一次诚实的失败就此变成无人发现的做错。
+        """
+        try:
+            still_there = await loc.count() > 0
+        except Exception:  # noqa: BLE001
+            still_there = False  # 连定位器都无法计数（文档已替换）= 上下文过期
+        if not still_there:
+            raise RefStaleError(ref)
+
     async def click_ref(self, ref: str) -> BrowserState:
         """按 ref 点击（替代坐标点击，抗页面漂移）。
 
@@ -1224,7 +1241,11 @@ class BrowserSession:
         async def _fn(page: Any) -> None:
             loc = await self._resolve_ref(page, ref)
             await self._clear_obstruction(loc, ref)
-            await loc.click(timeout=8_000)
+            try:
+                await loc.click(timeout=8_000)
+            except Exception:  # noqa: BLE001
+                await self._rethrow_if_stale(loc, ref)
+                raise
 
         return await self._act("click_ref", ref, _fn)
 
@@ -1234,10 +1255,14 @@ class BrowserSession:
         async def _fn(page: Any) -> None:
             loc = await self._resolve_ref(page, ref)
             await self._clear_obstruction(loc, ref)
-            await loc.click(timeout=5_000)
-            await loc.fill(text)
-            if submit:
-                await loc.press("Enter")
+            try:
+                await loc.click(timeout=5_000)
+                await loc.fill(text)
+                if submit:
+                    await loc.press("Enter")
+            except Exception:  # noqa: BLE001
+                await self._rethrow_if_stale(loc, ref)
+                raise
 
         return await self._act("type_ref", ref, _fn)
 
@@ -1277,7 +1302,11 @@ class BrowserSession:
         async def _fn(page: Any) -> None:
             loc = await self._resolve_ref(page, ref)
             await self._clear_obstruction(loc, ref)
-            await loc.set_input_files(paths[0] if len(paths) == 1 else paths, timeout=8_000)
+            try:
+                await loc.set_input_files(paths[0] if len(paths) == 1 else paths, timeout=8_000)
+            except Exception:  # noqa: BLE001
+                await self._rethrow_if_stale(loc, ref)
+                raise
 
         return await self._act("upload_ref", ref, _fn)
 

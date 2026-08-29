@@ -90,7 +90,18 @@ RECOVERY_LADDER: dict[str, tuple[str, ...]] = {
     F2_ARGUMENT: (FIX_ARGS, REPLAN, ESCALATE),
     F3_OUTPUT: (RESCHEMA, REPLAN, ESCALATE),
     F4_TOOL_CHOICE: (SUBSTITUTE, REFRESH, REPLAN, ESCALATE),
-    F5_STALE_CONTEXT: (REFRESH, SUBSTITUTE, REPLAN, ESCALATE),
+    # 上下文过期：**刻意不含 SUBSTITUTE**。
+    #
+    # 过期 ≠ 选错：目标只是失去了踪迹，没有任何证据说明它"不对"。此时在同名
+    # 候选里轮换是纯赌博——列表页上同名按钮个个是真的、各属于不同实体
+    # （每个商品的"加入购物车"），轮换必定点到另一个实体的按钮：页面变了、
+    # 一个错都不报，一次诚实的失败就此变成无人发现的做错（400ms 整块重建页
+    # 实测，d04）。
+    #
+    # 唯一仍在"找原目标"的恢复是 refresh 的按名重映射（歧义纪律见
+    # _on_refresh）；映射不了就如实上报——知道锚点的调用方（策略层）拿全新
+    # 快照能重新定位。SUBSTITUTE 留给 F4（目标已被证明无效）专用。
+    F5_STALE_CONTEXT: (REFRESH, REPLAN, ESCALATE),
     # 证据矛盾（结果没通过验证器）：**刻意不含 REFRESH**。
     #
     # 这里踩过一次：动作本身已经成功了（changed=True），只是结果不对。带

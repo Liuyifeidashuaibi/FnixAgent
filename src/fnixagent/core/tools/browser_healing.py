@@ -34,7 +34,11 @@ from collections.abc import Callable
 from typing import Any
 
 from fnixagent.core.tools.browser_refs import RefSnapshot
-from fnixagent.core.tools.driver_errors import F4_TOOL_CHOICE, F8_UNREACHABLE
+from fnixagent.core.tools.driver_errors import (
+    F4_TOOL_CHOICE,
+    F5_STALE_CONTEXT,
+    F8_UNREACHABLE,
+)
 from fnixagent.core.tools.orchestrator import (
     CLEAR_OBSTRUCTION,
     REFRESH,
@@ -202,24 +206,46 @@ class BrowserHealer:
 
         ref 的数字编号会随 DOM 变化漂移，所以重新快照后不能直接复用旧编号，
         要用**元素名**把旧目标映射到新编号——否则刷新等于白刷。
+
+        两条纪律，都是脏页面（整块重排）实测出来的：
+
+        1. **名字从哪儿来**。ref 路径的点击从不给 `self._snapshot` 赋值，旧实现
+           在这里拿不到旧目标的名字，refresh 一律空手而归。会话保留着最近一次
+           快照（`_last_snapshot`），回退到它去找"旧目标是谁"。
+        2. **同名歧义不许猜**。重映射只在**恰好一个**同名候选时进行。列表页上
+           每个商品的按钮都叫"加入购物车"，旧目标失效后随便挑一个同名按钮点
+           下去，加的可能是别的商品——动作不报错、页面还变了，这是最典型的
+           静默失败。宁可如实上报"映射不了"，让带锚点上下文的那一层（策略的
+           重新定位）来决定，也不在这里赌。**找不到 ≠ 可以换一个凑合。**
         """
         ref = _as_ref(ctx.get("target"))
         old_name = ""
-        if ref and self._snapshot:
-            el = self._snapshot.get(ref)
-            old_name = el.name if el else ""
+        if ref:
+            # 先用自愈层自己缓存的快照，再回退到会话最近一次快照
+            src = self._snapshot or getattr(self._session, "_last_snapshot", None)
+            if src is not None:
+                el = src.get(ref)
+                old_name = el.name if el else ""
 
         try:
             self._snapshot = await self._session.snapshot_ref()
         except Exception as exc:  # noqa: BLE001
             return StepOutcome.from_exception(exc, hint=REFRESH)
 
-        # 按名字找到新编号；找不到就以"刷新完成但目标已消失"返回，交由阶梯下一级
-        if old_name and self._snapshot:
-            for el in self._snapshot.refs:
-                if el.name and el.name == old_name:
-                    state = await self._session.click_ref(el.ref)
-                    return _outcome_from(state, target=el.ref, require_change=True)
+        if not (old_name and self._snapshot):
+            return None
+
+        # 按名字找新编号。只在**唯一**命中时重映射——多个同名候选说明无法从
+        # "名字"区分到底是哪一个，猜测 = 拿别的实体冒充原目标（见 docstring）。
+        matches = [el for el in self._snapshot.refs if el.name and el.name == old_name]
+        if len(matches) == 1:
+            state = await self._session.click_ref(matches[0].ref)
+            return _outcome_from(state, target=matches[0].ref, require_change=True)
+        if len(matches) > 1:
+            _logger.info(
+                "refresh 无法重映射：旧目标「%s」在新快照里有 %d 个同名候选，"
+                "拒绝猜测、交由上层重新定位", old_name, len(matches),
+            )
         return None
 
     async def _on_clear_obstruction(self, ctx: dict[str, Any]) -> StepOutcome | None:
@@ -268,6 +294,16 @@ class BrowserHealer:
                 "「够不着」伪装成「做成了别的」", target, ctx.get("failure_class"),
             )
             return None
+        # 失去踪迹的目标也不换。上下文过期 ≠ 选错了，没有任何证据说明原目标
+        # "不对"；在同名候选里轮换是拿别的实体冒充原目标（列表页实测会加错
+        # 商品且零报错）。F5 的正路是按名重映射（见 _on_refresh），映射不了
+        # 就如实上报，由带锚点信息的调用方重新定位。
+        if _is_stale(ctx):
+            _logger.info(
+                "substitute 跳过：目标 %s 属于上下文过期（%s），换同名候选不是"
+                "自愈而是猜测", target, ctx.get("failure_class"),
+            )
+            return None
         snap = await self._snapshot_or_fetch()
         if not snap:
             return None
@@ -301,6 +337,18 @@ def _is_unreachable(ctx: dict[str, Any]) -> bool:
         return True
     outcome = ctx.get("outcome")
     return str(getattr(outcome, "failure_class", "") or "") == F8_UNREACHABLE
+
+
+def _is_stale(ctx: dict[str, Any]) -> bool:
+    """这次失败是不是"上下文过期"（ref 失效 / 页面已重渲染）。
+
+    与 `_is_unreachable` 同理：判定依据是分类结果而非异常文本。上下文过期
+    与"目标选错"是两回事——前者只是失去了目标踪迹，后者才有"换一个"的理由。
+    """
+    if str(ctx.get("failure_class") or "") == F5_STALE_CONTEXT:
+        return True
+    outcome = ctx.get("outcome")
+    return str(getattr(outcome, "failure_class", "") or "") == F5_STALE_CONTEXT
 
 
 def _as_ref(target: Any) -> str | None:
