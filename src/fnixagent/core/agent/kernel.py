@@ -794,8 +794,31 @@ class AgentKernel:
     # --- COMPUTER 处理器 ---
 
     async def _handle_computer_use(self, req: SyscallRequest) -> SyscallResponse:
-        # 预留: 实际接入 OpenAI Operator / browser-use
-        return SyscallResponse.err("computer.use 需接入 browser-use (预留接口)")
+        # 接入驱动路由器（GUI_DRIVER_DESIGN.md P1）：统一路由浏览器/桌面，降级事件 + 审计
+        args = req.args if isinstance(req.args, dict) else {}
+        op = str(args.get("op") or "").strip()
+        if not op:
+            return SyscallResponse.err("computer.use 需要 op 参数", request_id=req.request_id)
+        try:
+            from fnixagent.core.tools.driver_router import get_driver_router
+
+            router = get_driver_router()
+            result = await router.execute(args)
+        except Exception as e:  # noqa: BLE001
+            _logger.debug("computer.use execute failed: %s", e)
+            return SyscallResponse.err(
+                f"computer.use 执行失败: {e}", request_id=req.request_id
+            )
+        if result.ok:
+            return SyscallResponse.ok(
+                {
+                    "summary": result.summary,
+                    "degraded": result.degraded,
+                    "driver_mode": result.driver_mode,
+                },
+                request_id=req.request_id,
+            )
+        return SyscallResponse.err(result.error or "computer.use 失败", request_id=req.request_id)
 
     async def _handle_shell_exec(self, req: SyscallRequest) -> SyscallResponse:
         command = req.args.get("command", "")

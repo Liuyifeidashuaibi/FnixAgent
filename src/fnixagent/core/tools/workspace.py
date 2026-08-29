@@ -111,6 +111,30 @@ def _is_dangerous_command(cmd: str) -> bool:
     return False
 
 
+# 内置浏览器优先：识别"用系统默认浏览器打开网址"的命令形态
+# （start/explorer/xdg-open/open/Start-Process/Invoke-Item + http(s):// 或 www.）。
+# 这类命令会唤起用户的系统浏览器、抢走焦点，违反"不干扰用户"原则。
+_OPEN_URL_IN_SYSTEM_BROWSER = re.compile(
+    r"""(?ix)
+    ^\s*
+    (?:cmd(?:\.exe)?\s+/c\s+)?              # 可选 cmd /c 前缀
+    (?:
+        start(?:-process)?\s+(?:"[^"]*"\s+)?   # start ["标题"] / Start-Process
+      | explorer(?:\.exe)?\s+                  # explorer <url>
+      | xdg-open\s+                            # Linux
+      | invoke-item\s+                         # PowerShell
+      | open\s+                                # macOS
+    )
+    ["']?(?:https?://|www\.)                   # 目标是网址
+    """
+)
+
+
+def _opens_url_in_system_browser(cmd: str) -> bool:
+    """命令是否会唤起系统默认浏览器打开网址（内置浏览器优先策略检查点）。"""
+    return bool(_OPEN_URL_IN_SYSTEM_BROWSER.match((cmd or "").strip()))
+
+
 def _safe_path(workspace_root: str, rel_path: str) -> Path:
     """安全解析路径，防止路径遍历与同前缀兄弟目录逃逸。"""
     root = Path(workspace_root).resolve()
@@ -732,6 +756,18 @@ class WorkspaceTools:
         """
         if _is_dangerous_command(command):
             return ToolResult(success=False, error=f"危险命令被拦截: {command[:50]}")
+
+        # 内置浏览器优先：禁止用系统浏览器打开网页（start/explorer + URL），
+        # 引导走 browser_act(action="goto") —— 页面在内置浏览器面板中打开，不打扰用户默认浏览器
+        if _opens_url_in_system_browser(command):
+            return ToolResult(
+                success=False,
+                error=(
+                    "打开网页请使用内置浏览器工具 browser_act(action=\"goto\", url=...)："
+                    "url 可直接传网址或搜索关键词，页面会在应用内置浏览器中打开并展示截图。"
+                    "禁止用 start / explorer 等命令唤起系统浏览器（会打扰用户）。"
+                ),
+            )
 
         try:
             work_dir = self.workspace_root

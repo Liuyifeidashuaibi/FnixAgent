@@ -38,10 +38,12 @@ from fnixagent.api.routers import (
     audit,
     auth,
     benchmark,
+    browser,
     chat,
     chat_agent,
     coding,
     dashboard,
+    desktop,
     documents,
     forge,
     harness,
@@ -338,6 +340,8 @@ app.include_router(benchmark.router, prefix="/api/v1")
 app.include_router(forge.router, prefix="/api/v1")
 app.include_router(skills.router, prefix="/api/v1")
 app.include_router(memory.router, prefix="/api/v1")
+app.include_router(browser.router, prefix="/api/v1")
+app.include_router(desktop.router, prefix="/api/v1")
 app.include_router(ag_ui.router, prefix="/api/v1")
 app.include_router(hitl.router, prefix="/api/v1")
 
