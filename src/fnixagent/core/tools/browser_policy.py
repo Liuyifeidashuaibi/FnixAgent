@@ -65,6 +65,15 @@ MODE_LABELS = {
     MODE_OPEN: "除拒绝列表外全部放行",
 }
 
+# L1（接管用户浏览器）的偏好记忆（N1：首次引导后记住，不反复问）。
+#   ""             未选择——每次启动仍会探测调试端口
+#   "user_browser" 用户希望复用登录态：优先探测并引导开启调试端口
+#   "managed_only" 用户选择独立托管浏览器：永远跳过探测（不打扰用户浏览器）
+L1_CHOICE_UNSET = ""
+L1_CHOICE_USER_BROWSER = "user_browser"
+L1_CHOICE_MANAGED_ONLY = "managed_only"
+L1_CHOICES = (L1_CHOICE_UNSET, L1_CHOICE_USER_BROWSER, L1_CHOICE_MANAGED_ONLY)
+
 # 本机地址：本地开发与基准测试都在这些地址上，任何模式都不得拦截
 _LOCAL_HOSTS = frozenset({"localhost", "127.0.0.1", "0.0.0.0", "::1", "[::1]"})
 
@@ -106,10 +115,14 @@ class BrowserPolicy:
     persist_approvals: bool = True
     # 会话内已批准的域名（不落盘那部分）由调用方维护，这里只存持久化的
     approved: list[str] = field(default_factory=list)
+    # L1 偏好（首次引导后记住，见本模块 L1_CHOICE_* 常量）
+    l1_choice: str = L1_CHOICE_UNSET
 
     def __post_init__(self) -> None:
         if self.mode not in MODES:
             self.mode = MODE_ASK_NEW
+        if self.l1_choice not in L1_CHOICES:
+            self.l1_choice = L1_CHOICE_UNSET
 
     # -- 判定 ---------------------------------------------------------
 
@@ -171,7 +184,56 @@ class BrowserPolicy:
             "denied": list(self.denied),
             "persist_approvals": self.persist_approvals,
             "approved": list(self.approved),
+            "l1_choice": self.l1_choice,
         }
+
+
+# ── N1 引导：让用户一条命令把自己的浏览器开成可接管 ─────────────────────
+#
+# L1 复用登录态的前提是浏览器开着调试端口，而 99% 的用户不知道怎么开。
+# 引导层把"一键命令"准备好交给前端弹层，而不是让用户自己查文档。两条纪律：
+#   1. 一律用**独立 user-data-dir**——调试端口直接开在日常 profile 上，等于
+#      把登录态暴露给本机任意进程，安全上不可接受（Chrome 136+ 也默认禁止
+#      在默认 profile 上开调试端口，独立目录是唯一既安全又能用的做法）；
+#   2. 命令按 浏览器 × 操作系统 给出，不猜用户装的是哪个。
+def debug_port_guide(port: int = 9222) -> dict:
+    """生成"开启浏览器调试端口"的一键命令指引（只读，不改任何状态）。"""
+    profile_win = "$env:LOCALAPPDATA\\FnixAgent\\browser-profile"
+    profile_mac = "$HOME/Library/Application Support/FnixAgent/browser-profile"
+    profile_linux = "$HOME/.local/share/fnixagent/browser-profile"
+    flag = f"--remote-debugging-port={int(port)}"
+    return {
+        "port": int(port),
+        "why": "复用你浏览器里的登录态需要开启调试端口。下面的命令会用"
+               "独立配置目录启动浏览器，不影响你的日常使用；开着它，AI 就能"
+               "直接在你已登录的浏览器里干活。",
+        "browsers": {
+            "chrome": {
+                "windows": (
+                    f'Start-Process "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" '
+                    f'-ArgumentList "{flag}","--user-data-dir={profile_win}"'
+                ),
+                "macos": (
+                    f'open -na "Google Chrome" --args {flag} '
+                    f'--user-data-dir="{profile_mac}"'
+                ),
+                "linux": f'google-chrome {flag} --user-data-dir="{profile_linux}" &',
+            },
+            "edge": {
+                "windows": (
+                    f'Start-Process "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe" '
+                    f'-ArgumentList "{flag}","--user-data-dir={profile_win}"'
+                ),
+                "macos": (
+                    f'open -na "Microsoft Edge" --args {flag} '
+                    f'--user-data-dir="{profile_mac}"'
+                ),
+                "linux": f'microsoft-edge {flag} --user-data-dir="{profile_linux}" &',
+            },
+        },
+        "note": "端口被占用时换一个（如 9223）；命令里的配置目录是独立的，"
+                "删掉它等于重置这个调试浏览器。",
+    }
 
 
 def load_policy() -> BrowserPolicy:
@@ -185,6 +247,7 @@ def load_policy() -> BrowserPolicy:
                 denied=list(data.get("denied") or []),
                 persist_approvals=bool(data.get("persist_approvals", True)),
                 approved=list(data.get("approved") or []),
+                l1_choice=str(data.get("l1_choice", L1_CHOICE_UNSET)),
             )
     except Exception as e:  # noqa: BLE001
         _logger.warning("browser policy load failed, using default: %s", e)

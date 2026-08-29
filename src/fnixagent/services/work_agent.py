@@ -50,7 +50,7 @@ WORK_SYSTEM_PROMPT = """你是 FnixAgent 办公工作台助手（对齐行业最
 9. 若加载了「项目技能」，优先匹配技能描述
 10. 回复简洁，说明产物路径与下一步可验收点
 11. **对齐现有项目结构**：写盘前先 `ls` / `glob` 工作区，了解既有目录约定。若任务描述的相对路径（如 `components/...`、`src/...`、`app/...`）与脚手架已有目录不一致，优先把文件放到「约定目录」下（例如源码都在 `src/` 下就写到 `src/components/...`），不要凭空在工作区根新建同名目录；若任务指向的「组件/模块」在脚手架中已存在，直接编辑原文件而非新建同名文件。
-12. **内置浏览器优先**：搜索网页 / 浏览网页 / 读取页面内容 / 操作页面元素时，用两个正交原语——`browser_view`（只读看页面，what=refs|text|all）与 `browser_act`（写操作页面，action=goto|click|type|scroll|back|forward|refresh|wait|viewport）。调 `browser_act(action="goto", url=...)` 可直接传网址或搜索关键词，搜索与浏览都在应用内置浏览器中完成并展示给用户；典型节奏是 `browser_view` 看一眼 → `browser_act` 操作 → 再 `browser_view` 确认。**严禁**用 run_command 的 start/explorer 或 desktop_launch 打开 Edge/Chrome 等系统浏览器打扰用户。需要操控电脑原生应用（打开软件、点击桌面程序、输入登录等）时才用 `desktop_*` 工具。
+12. **内置浏览器优先**：搜索网页 / 浏览网页 / 读取页面内容 / 操作页面元素时，用两个正交原语——`browser_view`（只读看页面，what=refs|text|all|tabs）与 `browser_act`（写操作页面，action=goto|click|type|scroll|back|forward|refresh|wait|upload|viewport|tab_open|tab_switch|tab_close）。调 `browser_act(action="goto", url=...)` 可直接传网址或搜索关键词，搜索与浏览都在应用内置浏览器中完成并展示给用户；典型节奏是 `browser_view` 看一眼 → `browser_act` 操作 → 再 `browser_view` 确认。需要同时打开多个页面（对比资料、边查边填）时用 `tab_open` / `tab_switch` / `tab_close`，`browser_view(what="tabs")` 列出所有标签页。**严禁**用 run_command 的 start/explorer 或 desktop_launch 打开 Edge/Chrome 等系统浏览器打扰用户。需要操控电脑原生应用（打开软件、点击桌面程序、输入登录等）时才用 `desktop_*` 工具。
 
 你当前的工作目录是: {workspace_root}
 """
@@ -123,8 +123,8 @@ _CRAFT_CODE_TOOL_ALLOW = frozenset(
         "web_fetch",
         "show_widget",
         # 内置浏览器（Phase 5 收敛为两个正交原语）：建站/编码任务可打开参考网站或实时预览页面
-        #   browser_view = 只读（看页面，what=refs|text|all）
-        #   browser_act  = 写操作（action=goto|click|type|scroll|back|forward|refresh|wait|viewport）
+        #   browser_view = 只读（看页面，what=refs|text|all|tabs）
+        #   browser_act  = 写操作（action=goto|click|type|scroll|back|forward|refresh|wait|upload|viewport|tab_open|tab_switch|tab_close）
         "browser_view",
         "browser_act",
     }

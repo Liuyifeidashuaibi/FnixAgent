@@ -24,6 +24,7 @@ import base64
 import json
 import logging
 import os
+import random
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -40,6 +41,8 @@ from fnixagent.core.tools.browser_refs import (
 from fnixagent.core.tools.browser_policy import (
     ALLOW,
     DENY,
+    L1_CHOICE_MANAGED_ONLY,
+    debug_port_guide,
     load_policy,
     save_policy,
 )
@@ -192,6 +195,49 @@ _PROBE_INIT_JS = """(() => {
         var self = this;
         self.addEventListener('loadend', _dec, { once: true });
         try { return _send.apply(self, arguments); } catch (e) { _dec(); throw e; }
+      };
+    }
+  } catch (e) {}
+})();"""
+
+# 自动化痕迹掩藏（context 级 init script）。
+#
+# Playwright 控制下的浏览器默认把 `navigator.webdriver=true` 等信号明晃晃挂在
+# 页面上，真实站点的反爬一看就把我们当机器人拦掉——这不是"能力问题"，是
+# "连门都进不去"。产品立场要讲清楚：**这不是对用户的欺骗**（用户全程看得见
+# agent 在操作，驱动事件还有审计落盘），只是让浏览器像普通用户的浏览器一样
+# 被对待；不撒谎的纪律约束的是"动作结果怎么上报给用户"，不是"指纹给不给
+# 网站看"。只做最常用的五项掩藏，不做完整反检测对抗（那是军备竞赛，不做）。
+_STEALTH_JS = """(() => {
+  try {
+    Object.defineProperty(navigator, 'webdriver', { get: () => undefined, configurable: true });
+  } catch (e) {}
+  try {
+    Object.defineProperty(navigator, 'languages', { get: () => ['zh-CN', 'zh', 'en'] });
+  } catch (e) {}
+  try {
+    if (!navigator.plugins || navigator.plugins.length === 0) {
+      Object.defineProperty(navigator, 'plugins', {
+        get: () => [
+          { name: 'PDF Viewer', filename: 'internal-pdf-viewer', description: 'Portable Document Format' },
+          { name: 'Chrome PDF Viewer', filename: 'internal-pdf-viewer', description: 'Portable Document Format' },
+        ],
+      });
+    }
+  } catch (e) {}
+  try {
+    if (!window.chrome && /Chrome/.test(navigator.userAgent)) {
+      window.chrome = { runtime: {}, loadTimes: () => ({}), csi: () => ({}) };
+    }
+  } catch (e) {}
+  try {
+    var _q = window.navigator.permissions && window.navigator.permissions.query;
+    if (_q) {
+      window.navigator.permissions.query = function (parameters) {
+        if (parameters && parameters.name === 'notifications') {
+          return Promise.resolve({ state: Notification.permission });
+        }
+        return _q.call(window.navigator.permissions, parameters);
       };
     }
   } catch (e) {}
@@ -363,6 +409,12 @@ class BrowserState:
     url_changed: bool = False
     # Phase 3 地基：故障分类 F1-F7，供编排层定向恢复
     error_class: str = ""
+    # 多标签页（N3）：页面池的可见投影，前端据此画 tab 条
+    tabs: list[dict[str, Any]] = field(default_factory=list)
+    active_tab: str = ""
+    # N1 引导：未在接管模式时给出"如何把浏览器开成可接管"的指引
+    # （为空 = 已接管或不需要引导）
+    debug_guide: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self, include_screenshot: bool = True) -> dict[str, Any]:
         payload: dict[str, Any] = {
@@ -383,6 +435,9 @@ class BrowserState:
             "changed": self.changed,
             "url_changed": self.url_changed,
             "error_class": self.error_class,
+            "tabs": self.tabs,
+            "active_tab": self.active_tab,
+            "debug_guide": self.debug_guide,
         }
         if include_screenshot:
             payload["screenshot"] = self.screenshot_b64
@@ -415,6 +470,13 @@ class BrowserSession:
         # 把用户的浏览器窗口关了。只有自己 new_page() 出来的才归我们关。
         self._owns_page: bool = False
         self._attach_kind: str = ""
+        # 多标签页（N3）：_page 恒等于活动 tab 的 page，既有逻辑对多 tab 零感知。
+        # 注册表额外记每个 tab 的归属——我们 new_page() 出来的才归我们关，
+        # 接管的（用户浏览器 / 真实渲染窗口里的）永不关。归属语义与会话关闭
+        # 的铁律完全一致，只是从"单页"推广到"每页"。
+        self._tabs: dict[str, dict[str, Any]] = {}
+        self._tab_seq: int = 0
+        self._active_tab: str = ""
         # 最近一次 ref 快照。执行层据此判断目标是否被遮挡——感知层给出的信号
         # 必须被消费，否则标记只是装饰。
         self._last_snapshot: RefSnapshot | None = None
@@ -494,6 +556,13 @@ class BrowserSession:
         """
         if self._page is not None:
             return self._page
+        # N1 首次引导记忆：用户明确选过"只用独立托管浏览器"就不再探测用户浏览器
+        # ——尊重选择，不在每次启动时打扰。
+        try:
+            if load_policy().l1_choice == L1_CHOICE_MANAGED_ONLY:
+                return await self._ensure_managed()
+        except Exception:  # noqa: BLE001
+            pass
         # L1：优先接管真实渲染窗口，其次接管用户浏览器
         from fnixagent.core.tools.driver_router import get_driver_router
 
@@ -532,11 +601,22 @@ class BrowserSession:
         self._browser = await self._pw.chromium.connect_over_cdp(endpoint)
         ctx = self._browser.contexts[0] if self._browser.contexts else await self._browser.new_context()
         self._context = ctx
+        # 自动化痕迹掩藏：我们开的每个页面都从第一次导航起就不露 webdriver 指纹
+        try:
+            await ctx.add_init_script(_STEALTH_JS)
+        except Exception as e:  # noqa: BLE001
+            _logger.debug("stealth init script install failed: %s", e)
 
         self._page = await self._pick_attach_page(ctx, attach_kind)
         # 真实渲染窗口的页面永远不归会话关闭——哪怕它是我们兜底新建的：
         # 关掉它等于把用户的浏览器窗口关了，这比泄漏一个 page 严重得多。
         self._owns_page = attach_kind != "builtin"
+        # 首个接管页登记为 t1（之后的新 tab 从 t2 起）
+        self._tabs = {
+            "t1": {"page": self._page, "owns": self._owns_page, "kind": attach_kind}
+        }
+        self._tab_seq = 1
+        self._active_tab = "t1"
         await self._install_probe()
         self._mode = "cdp-attach"
         self._cdp_endpoint = endpoint
@@ -598,7 +678,16 @@ class BrowserSession:
             locale="zh-CN",
             storage_state=state,
         )
+        # 自动化痕迹掩藏：托管模式是真实站点的第一入口，指纹必须像普通浏览器
+        try:
+            await self._context.add_init_script(_STEALTH_JS)
+        except Exception as e:  # noqa: BLE001
+            _logger.debug("stealth init script install failed: %s", e)
         self._page = await self._context.new_page()
+        # 托管模式的第一个页面登记为 t1（我们开的，归我们关）
+        self._tabs = {"t1": {"page": self._page, "owns": True, "kind": "managed"}}
+        self._tab_seq = 1
+        self._active_tab = "t1"
         await self._install_probe()
         self._mode = "managed"
         self._state.driver_mode = "managed"
@@ -627,8 +716,21 @@ class BrowserSession:
         self._cdp_endpoint = None
         self._owns_page = False
         self._attach_kind = ""
+        self._tabs = {}
+        self._tab_seq = 0
+        self._active_tab = ""
         self._mode = "none"
         self._state.driver_mode = "none"
+
+    def _register_tab(self, page: Any, owns: bool, kind: str = "") -> str:
+        """把 page 收进标签池并设为活动页（持锁调用）。"""
+        self._tab_seq += 1
+        tab_id = f"t{self._tab_seq}"
+        self._tabs[tab_id] = {"page": page, "owns": owns, "kind": kind}
+        self._active_tab = tab_id
+        self._page = page
+        self._owns_page = owns
+        return tab_id
 
     async def _persist_state(self) -> None:
         """保存 cookie/storage 供下次启动恢复（持锁调用）。
@@ -656,12 +758,15 @@ class BrowserSession:
             self._state.busy = True
             try:
                 if self._mode == "cdp-attach":
-                    # 只关自己 new_page() 出来的 page；其余一律保持不动
-                    if self._page is not None and self._owns_page:
-                        try:
-                            await self._page.close()
-                        except Exception:  # noqa: BLE001
-                            pass
+                    # 只关自己 new_page() 出来的 page；其余一律保持不动。
+                    # 多标签池里逐个判断归属，语义与单页时代完全一致。
+                    for tab in self._tabs.values():
+                        page = tab["page"]
+                        if tab["owns"] and not page.is_closed():
+                            try:
+                                await page.close()
+                            except Exception:  # noqa: BLE001
+                                pass
                     if self._pw is not None:
                         await self._pw.stop()
                 else:
@@ -690,6 +795,11 @@ class BrowserSession:
                 self._state.pending_url = ""
                 self._state.requires_confirmation = False
                 self._state.confirmation_id = None
+                self._state.tabs = []
+                self._state.active_tab = ""
+                self._tabs = {}
+                self._tab_seq = 0
+                self._active_tab = ""
                 self._state.version += 1
                 self._state.updated_at = time.time()
                 _logger.info("browser session closed")
@@ -750,11 +860,13 @@ class BrowserSession:
         )
         # 降级时同样只关自己的 page。真实渲染窗口的页面被关掉的话，用户会看到
         # 窗口白屏，而降级本该是"静默换一条更稳的路"，不是制造新的可见故障。
-        if self._page is not None and self._owns_page:
-            try:
-                await self._page.close()
-            except Exception:  # noqa: BLE001
-                pass
+        for tab in self._tabs.values():
+            page = tab["page"]
+            if tab["owns"] and not page.is_closed():
+                try:
+                    await page.close()
+                except Exception:  # noqa: BLE001
+                    pass
         if self._pw is not None:
             try:
                 await self._pw.stop()
@@ -786,6 +898,31 @@ class BrowserSession:
             _logger.debug("screenshot refresh failed: %s", e)
         self._state.error = error
         self._state.busy = False
+        # 多标签池投影：前端凭它画 tab 条。标题逐个取——标签数量是个位数，
+        # 开销可忽略；取不到（页面正在卸载等）就留空，不阻塞状态刷新。
+        tabs_payload: list[dict[str, Any]] = []
+        for tid, tab in self._tabs.items():
+            page = tab["page"]
+            entry: dict[str, Any] = {
+                "id": tid,
+                "owned": bool(tab["owns"]),
+                "active": tid == self._active_tab,
+                "url": "",
+                "title": "",
+            }
+            try:
+                if not page.is_closed():
+                    entry["url"] = page.url or ""
+                    entry["title"] = (await page.title() or "")[:120]
+            except Exception:  # noqa: BLE001
+                pass
+            tabs_payload.append(entry)
+        self._state.tabs = tabs_payload
+        self._state.active_tab = self._active_tab
+        # N1 引导：只有"没在接管用户浏览器"时才需要告诉用户怎么开调试端口
+        self._state.debug_guide = (
+            {} if self._mode == "cdp-attach" else debug_port_guide()
+        )
         self._state.version += 1
         self._state.updated_at = time.time()
         return self._state
@@ -1064,9 +1201,27 @@ class BrowserSession:
         return await self._act("type_into", selector_or_label, _fn)
 
     async def scroll(self, direction: str = "down", amount: int = 480) -> BrowserState:
+        """滚动。像人一样滚：拆成多个小滚轮事件 + 随机步长，而不是一次大跳。
+
+        三个理由，前两个都是真实站点逼出来的：
+        1. 懒加载/无限滚动页按"收到滚轮事件"决定加载批次，单次大 delta 触发
+           的批次数和真实用户体验不一致；
+        2. 单次大位移滚轮是反爬识别自动化的特征之一；
+        3. 动作拟人化是"像正常人用浏览器"的产品承诺——不撒谎约束的是结果
+           上报，动作形态应当与人一致。
+        总位移保持精确等于 amount——拟人化不许以改变语义为代价。
+        """
         async def _fn(page: Any) -> None:
-            dy = abs(int(amount)) if direction == "down" else -abs(int(amount))
-            await page.mouse.wheel(0, dy)
+            total = abs(int(amount))
+            sign = 1 if direction == "down" else -1
+            rng = random.Random()
+            remaining = total
+            while remaining > 0:
+                step = min(remaining, rng.randint(160, 320))
+                await page.mouse.wheel(0, sign * step)
+                remaining -= step
+                if remaining > 0:
+                    await page.wait_for_timeout(rng.randint(30, 90))
 
         return await self._act("scroll", direction, _fn)
 
@@ -1343,19 +1498,21 @@ class BrowserSession:
         ref: str | None = None,
         url: str | None = None,
         selector: str | None = None,
+        absent_text: str | None = None,
         timeout_ms: int = _WAIT_TIMEOUT_MS,
     ) -> BrowserState:
         """显式等待——状态等待原语，替代"点完睡一觉"的猜测。
 
-        四选一：
-          text     等待某段文本出现
-          ref      等待某个 ref 的元素出现（页面重渲染后常用）
-          url      等待 URL 变成/包含指定值
-          selector 等待选择器匹配到元素
+        五选一：
+          text        等待某段文本出现
+          ref         等待某个 ref 的元素出现（页面重渲染后常用）
+          url         等待 URL 变成/包含指定值
+          selector    等待选择器匹配到元素
+          absent_text 等待某段文本**消失**（证伪证据：删除/退出/收起后它不该在）
 
         这是给 AI 的确定性工具：不要再靠 sleep 猜页面什么时候好。
         """
-        if not any((text, ref, url, selector)):
+        if not any((text, ref, url, selector, absent_text)):
             return await self._act("wait_for", "", _noop)
 
         async def _fn(page: Any) -> None:
@@ -1374,8 +1531,33 @@ class BrowserSession:
                 await page.wait_for_url(
                     f"**/*{url}*" if "://" not in url else url, timeout=timeout_ms
                 )
+            elif absent_text:
+                # 文本消失要等"一个都不剩"，`.first` 变 hidden 不代表全部消失。
+                # 轮询计数：消失是终态，等到了立刻返回；等不到如实超时。
+                loc = page.get_by_text(absent_text, exact=False)
+                deadline = time.time() + timeout_ms / 1000
+                while True:
+                    if await loc.count() == 0:
+                        return
+                    if time.time() >= deadline:
+                        raise TimeoutError(
+                            f"等待文本「{absent_text}」消失超时（{timeout_ms}ms 后仍存在）"
+                        )
+                    await page.wait_for_timeout(120)
 
-        return await self._act("wait_for", text or ref or url or selector or "", _fn)
+        return await self._act(
+            "wait_for", text or ref or url or selector or f"!{absent_text}", _fn
+        )
+
+    async def url_now(self) -> str:
+        """当前页面 URL（证据校验用，只读）。"""
+        async with self._lock:
+            if self._page is None:
+                return self._state.url or ""
+            try:
+                return self._page.url or ""
+            except Exception:  # noqa: BLE001
+                return self._state.url or ""
 
     async def screenshot(self) -> BrowserState:
         """仅刷新截图（不执行操作）。"""
@@ -1395,13 +1577,115 @@ class BrowserSession:
             except Exception as e:  # noqa: BLE001
                 return f"(正文提取失败: {e})"
 
+    # -- 多标签页（N3：像真人一样同时开多个页面） -------------------------
+
+    async def tab_open(self, url: str = "") -> BrowserState:
+        """新开一个标签页并切过去；给了 url 就顺带导航。
+
+        新开的页归我们（new_page 语义），与接管页的归属互不影响。导航走
+        完整的 navigate 链（域名策略、确认闸、等稳定），不抄近路——多 tab
+        不是绕过安全闸的后门。
+        """
+        async with self._lock:
+            await self._ensure()
+            if self._context is None:
+                return await self._refresh_state("浏览器尚未就绪")
+            try:
+                page = await self._context.new_page()
+            except Exception as e:  # noqa: BLE001
+                return await self._refresh_state(f"新标签页打开失败: {e}")
+            tab_id = self._register_tab(page, owns=True, kind=self._mode)
+            _logger.info("tab %s opened", tab_id)
+            if not url:
+                return await self._refresh_state()
+        return await self.navigate(url)
+
+    async def tab_list(self) -> list[dict[str, Any]]:
+        """列出所有标签页（只读）。"""
+        async with self._lock:
+            if not self._tabs:
+                return []
+            return await self._tabs_payload()
+
+    async def _tabs_payload(self) -> list[dict[str, Any]]:
+        """实时取一遍各标签页的 url/标题（持锁调用）。"""
+        out: list[dict[str, Any]] = []
+        for tid, tab in self._tabs.items():
+            page = tab["page"]
+            entry: dict[str, Any] = {
+                "id": tid, "owned": bool(tab["owns"]),
+                "active": tid == self._active_tab, "url": "", "title": "",
+            }
+            try:
+                if not page.is_closed():
+                    entry["url"] = page.url or ""
+                    entry["title"] = (await page.title() or "")[:120]
+            except Exception:  # noqa: BLE001
+                pass
+            out.append(entry)
+        return out
+
+    async def tab_switch(self, tab_id: str) -> BrowserState:
+        """切换活动标签页。此后所有快照与动作都发生在新页面上。"""
+        async with self._lock:
+            tid = (tab_id or "").strip()
+            tab = self._tabs.get(tid)
+            if tab is None:
+                return await self._refresh_state(
+                    f"标签页 {tab_id!r} 不存在（当前: {', '.join(self._tabs) or '空'}）"
+                )
+            page = tab["page"]
+            if page.is_closed():
+                self._tabs.pop(tid, None)
+                if self._active_tab == tid:
+                    self._active_tab = next(iter(self._tabs), "")
+                return await self._refresh_state(f"标签页 {tab_id!r} 已关闭")
+            self._active_tab = tid
+            self._page = page
+            self._owns_page = bool(tab["owns"])
+            _logger.info("switched to tab %s", tid)
+            return await self._refresh_state()
+
+    async def tab_close(self, tab_id: str = "") -> BrowserState:
+        """关闭标签页（缺省关当前页）。两条拒绝纪律：
+
+        - 不归我们的页不关——接管浏览器里用户正在看的页面、真实渲染窗口的
+          页面，关掉等于关用户的窗口；
+        - 最后一个标签页不关——会话没有页面就失去意义，要退出请用关闭会话。
+        """
+        async with self._lock:
+            tid = (tab_id or self._active_tab).strip()
+            tab = self._tabs.get(tid)
+            if tab is None:
+                return await self._refresh_state(f"标签页 {tab_id!r} 不存在")
+            if not tab["owns"]:
+                return await self._refresh_state(
+                    f"标签页 {tid} 不是我们打开的页面，无权关闭（归属铁律）"
+                )
+            if len(self._tabs) <= 1:
+                return await self._refresh_state("这是最后一个标签页，不关闭——需要退出请用关闭会话")
+            page = tab["page"]
+            try:
+                if not page.is_closed():
+                    await page.close()
+            except Exception as e:  # noqa: BLE001
+                return await self._refresh_state(f"关闭标签页失败: {e}")
+            self._tabs.pop(tid)
+            if self._active_tab == tid:
+                remaining = next(iter(self._tabs))
+                self._active_tab = remaining
+                self._page = self._tabs[remaining]["page"]
+                self._owns_page = bool(self._tabs[remaining]["owns"])
+            _logger.info("tab %s closed", tid)
+            return await self._refresh_state()
+
 
 # ============================================================================
 # Phase 5：收敛后的两个正交原语（暴露给 LLM）
 # ============================================================================
 
 _ACTIONS = ("goto", "click", "type", "scroll", "back", "forward", "refresh", "wait",
-            "upload", "viewport")
+            "upload", "viewport", "tab_open", "tab_switch", "tab_close")
 
 
 async def browser_view(args: dict) -> ToolResult:
@@ -1412,6 +1696,19 @@ async def browser_view(args: dict) -> ToolResult:
     if what == "text":
         text = await session.page_text(int(args.get("max_chars", 4000)))
         return ToolResult(success=True, content=_UNTRUSTED_NOTICE + text)
+
+    if what == "tabs":
+        tabs = await session.tab_list()
+        if not tabs:
+            return ToolResult(success=True, content="（当前没有打开的标签页）")
+        lines = ["当前标签页："]
+        for t in tabs:
+            mark = "*" if t["active"] else " "
+            own = "" if t["owned"] else "（非我们打开，不可关闭）"
+            lines.append(f"  {mark} {t['id']}  {t['title'] or '(无标题)'}  {t['url']}{own}")
+        lines.append("（* 为活动标签页；切换用 browser_act(action=\"tab_switch\", tab_id=...)）")
+        return ToolResult(success=True, content="\n".join(lines),
+                          metadata={"tabs": tabs})
 
     snap = await session.snapshot_ref(
         viewport_only=(what != "all"), limit=int(args.get("limit", 60))
@@ -1457,10 +1754,17 @@ async def browser_act(args: dict) -> ToolResult:
             healer = BrowserHealer(session)
             ref, text = args.get("ref"), args.get("text")
             expect = args.get("expect")
+            expect_url = args.get("expect_url")
+            expect_absent = args.get("expect_absent")
+            evidence = {
+                "expect_text": str(expect) if expect else None,
+                "expect_url": str(expect_url) if expect_url else None,
+                "expect_absent_text": str(expect_absent) if expect_absent else None,
+            }
             if ref:
-                result = await healer.click(ref=str(ref), expect_text=str(expect) if expect else None)
+                result = await healer.click(ref=str(ref), **evidence)
             elif text:
-                result = await healer.click(text=str(text), expect_text=str(expect) if expect else None)
+                result = await healer.click(text=str(text), **evidence)
             else:
                 return ToolResult(success=False, error="click 需要 ref 或 text")
             return _heal_result(result)
@@ -1480,6 +1784,8 @@ async def browser_act(args: dict) -> ToolResult:
                 result = await BrowserHealer(session).type_text(
                     parsed, text, submit=submit,
                     expect_text=str(expect) if expect else None,
+                    expect_url=str(args["expect_url"]) if args.get("expect_url") else None,
+                    expect_absent_text=str(args["expect_absent"]) if args.get("expect_absent") else None,
                 )
                 return _heal_result(result)
             if target:
@@ -1530,6 +1836,24 @@ async def browser_act(args: dict) -> ToolResult:
                 return ToolResult(success=False, error="wait 需要 text（要等待出现的文本）")
             state = await session.wait_for(text=str(text))
             return _act_state_result(state)
+
+        if action in ("tab_open", "tab_switch", "tab_close"):
+            if action == "tab_open":
+                state = await session.tab_open(str(args.get("url", "") or ""))
+            elif action == "tab_switch":
+                tab_id = str(args.get("tab_id", "") or "")
+                if not tab_id:
+                    return ToolResult(
+                        success=False,
+                        error="tab_switch 需要 tab_id（用 browser_view(what='tabs') 查看）",
+                    )
+                state = await session.tab_switch(tab_id)
+            else:
+                state = await session.tab_close(str(args.get("tab_id", "") or ""))
+            result = _act_state_result(state)
+            result.metadata["tabs"] = state.tabs
+            result.metadata["active_tab"] = state.active_tab
+            return result
 
         # viewport
         state = await session.set_viewport(
@@ -1869,13 +2193,14 @@ def register_browser_tools(registry: Any) -> None:
             "后续用 browser_act 按 ref 操作——ref 由快照确定性生成，比坐标抗漂移。\n"
             "what=text: 返回页面正文文本（读长文/抽取内容用）。\n"
             "what=all: 连视口外的元素一起返回（元素很多时才用，会显著变长）。\n"
+            "what=tabs: 列出所有标签页（id/标题/地址，* 为当前页）。\n"
             "典型节奏：browser_view 看一眼 → browser_act 操作 → 需要时再 browser_view 确认。",
             {
                 "type": "object",
                 "properties": {
                     "what": {
                         "type": "string",
-                        "enum": ["refs", "text", "all"],
+                        "enum": ["refs", "text", "all", "tabs"],
                         "default": "refs",
                         "description": "要看什么",
                     },
@@ -1905,13 +2230,18 @@ def register_browser_tools(registry: Any) -> None:
             "- back / forward / refresh\n"
             "- wait:    text=等待出现的文本（页面异步加载时用它，别靠猜时间）\n"
             "- upload:  ref=@e3（文件输入框），path=本地文件路径（多个用 ; 分隔）\n"
-            "- viewport: width, height\n\n"
+            "- viewport: width, height\n"
+            "- tab_open: url=可选（新开标签页并切过去，像人一样多页并行）\n"
+            "- tab_switch: tab_id=标签页 id（browser_view(what='tabs') 可列出）\n"
+            "- tab_close: tab_id=可选，缺省关当前页（只能关我们打开的页）\n\n"
             "会返回页面是否真的变了（changed）。点了没反应会被判定为失败并提示换目标——"
             "不要当成成功继续往下走。\n\n"
             "**expect=成功之后页面上该出现的文本**（可选，但强烈建议在对结果有要求时用）。"
             "changed 只能证明「页面动了」，证明不了「动对了」——点了「加入购物车并结算」，"
             "页面当然也会动。传 expect=「已加入购物车」，看不到这段文本就判失败并如实上报，"
-            "而不是当成成功继续往下走。",
+            "而不是当成成功继续往下走。跳转类动作可传 **expect_url**（动作后 URL 应包含的片段），"
+            "删除/退出/收起类动作可传 **expect_absent**（动作后必须消失的文本）——三类证据任一"
+            "不满足都判失败。",
             {
                 "type": "object",
                 "properties": {
@@ -1921,14 +2251,18 @@ def register_browser_tools(registry: Any) -> None:
                             "goto", "click", "type", "scroll",
                             "back", "forward", "refresh",
                             "wait", "upload", "viewport",
+                            "tab_open", "tab_switch", "tab_close",
                         ],
                         "description": "要执行的动作",
                     },
-                    "url": {"type": "string", "description": "action=goto 时的网址"},
+                    "url": {"type": "string", "description": "action=goto 时的网址（tab_open 时可选）"},
+                    "tab_id": {"type": "string", "description": "action=tab_switch/tab_close 的标签页 id（browser_view(what='tabs') 可列出）"},
                     "ref": {"type": "string", "description": "元素 ref，如 @e3"},
                     "text": {"type": "string", "description": "可见文本（click 按文本点 / type 要输入的内容 / wait 要等到的文本）"},
                     "into": {"type": "string", "description": "action=type 时也可用 placeholder/label/选择器定位"},
                     "expect": {"type": "string", "description": "动作成功后页面上应当出现的文本；看不到就判失败（点击/输入均适用）"},
+                    "expect_url": {"type": "string", "description": "动作成功后 URL 应包含的片段（跳转类动作的证据）；不满足就判失败"},
+                    "expect_absent": {"type": "string", "description": "动作成功后必须消失的文本（删除/退出/收起的证据）；仍存在就判失败"},
                     "submit": {"type": "boolean", "default": False, "description": "action=type 时是否回车提交"},
                     "path": {"type": "string", "description": "action=upload 时的本地文件路径（多个用 ; 分隔）"},
                     "direction": {"type": "string", "enum": ["up", "down"], "default": "down"},

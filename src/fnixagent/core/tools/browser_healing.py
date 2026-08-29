@@ -29,6 +29,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from collections.abc import Callable
 from typing import Any
@@ -95,19 +96,25 @@ class BrowserHealer:
         text: str | None = None,
         require_change: bool = True,
         expect_text: str | None = None,
+        expect_url: str | None = None,
+        expect_absent_text: str | None = None,
     ) -> OrchestratorResult:
         """点击，失败时自愈。
 
         `require_change` 是静默失败闸门：点了页面毫无反应（changed=False 且
         url 未变）时判失败，归到 F4（目标选错）触发换目标，而不是当成成功。
 
-        `expect_text` 是**更强的一道闸**，也是"成功是真成功"在生产里真正落地
-        的地方。`require_change` 只能证明"页面动了"，证明不了"动对了"——点了
-        "加入购物车并结算"，页面当然也会动。传 `expect_text="已加入购物车"`，
-        点击后必须看到这段文本才算成功，否则归 F6（证据矛盾）如实上报。
+        证据三闸是**更强的闸**，也是"成功是真成功"在生产里真正落地的地方——
+        `require_change` 只能证明"页面动了"，证明不了"动对了"（点了"加入购物
+        车并结算"，页面当然也会动）。每一步的成功标准必须由调用方给出：
 
-        只有调用方知道成功长什么样，所以这一层必须把口子开出去：驱动层替
-        调用方猜预期，等于把"不说谎"这条承诺换成一次猜测。
+          - `expect_text`        证实：动作后这段文本必须出现
+          - `expect_url`         证实：动作后 URL 必须包含它（跳转类动作）
+          - `expect_absent_text` 证伪：动作后这段文本必须消失（删除/退出/收起）
+
+        任一不满足即判 F6（证据矛盾）如实上报——宁可承认失败，也不把"动了但
+        动错了"汇报成成功。只有调用方知道成功长什么样，所以这一层必须把口子
+        开出去：驱动层替调用方猜预期，等于把"不说谎"这条承诺换成一次猜测。
 
         文本寻址会先解析成 ref 再点击——这样"换目标"才有可枚举的候选集。
         直接用 click_text 的话，Playwright 的 `.first` 每次都命中同一个元素，
@@ -116,7 +123,7 @@ class BrowserHealer:
         """
         if not ref and not text:
             raise ValueError("click 需要 ref 或 text 之一")
-        verifier = self._text_verifier(expect_text)
+        verifier = self._evidence_verifier(expect_text, expect_url, expect_absent_text)
 
         self._tried = set()
         if ref:
@@ -150,6 +157,8 @@ class BrowserHealer:
         *,
         submit: bool = False,
         expect_text: str | None = None,
+        expect_url: str | None = None,
+        expect_absent_text: str | None = None,
     ) -> OrchestratorResult:
         """按 ref 输入，失败时自愈。"""
 
@@ -159,22 +168,49 @@ class BrowserHealer:
             return _outcome_from(state, target=ref, require_change=False)
 
         return await self._orch.execute(
-            "type_ref", _call, target=ref, verifier=self._text_verifier(expect_text)
+            "type_ref", _call, target=ref,
+            verifier=self._evidence_verifier(expect_text, expect_url, expect_absent_text),
         )
 
-    def _text_verifier(self, expect_text: str | None) -> Any:
-        """把"成功之后页面上该出现什么"编译成一个校验器。
+    def _evidence_verifier(
+        self,
+        expect_text: str | None = None,
+        expect_url: str | None = None,
+        expect_absent_text: str | None = None,
+    ) -> Any:
+        """把"成功长什么样"编译成一个校验器（可证伪证据，三选任意组合）。
 
-        不传就是 None（保持既有行为），传了才在动作之后回页面确认一遍。
-        用 `wait_for` 而不是立刻取快照，是因为真实页面点完常有延迟渲染——
-        立刻看会误判成失败，而那会制造一批假警报，反而害了这条闸门的信誉。
+        不传任何一项就是 None（保持既有行为）。每一类都带等待窗口——真实页面
+        动作后常有延迟渲染/跳转，立刻看会误判失败，制造假警报反而害了这条闸
+        门的信誉。三类证据彼此独立，按序检查，任一不满足即判动作失败。
         """
-        if not expect_text:
+        if not (expect_text or expect_url or expect_absent_text):
             return None
 
         async def _verify(_state: Any) -> bool:
-            st = await self._session.wait_for(text=expect_text, timeout_ms=_EXPECT_TIMEOUT_MS)
-            return not st.error
+            if expect_text:
+                st = await self._session.wait_for(
+                    text=expect_text, timeout_ms=_EXPECT_TIMEOUT_MS
+                )
+                if st.error:
+                    return False
+            if expect_url:
+                # URL 证据用轮询子串而不是 glob 等待——跳转后 query/hash 组合
+                # 多变，子串语义对调用方最可预期
+                deadline = asyncio.get_event_loop().time() + _EXPECT_TIMEOUT_MS / 1000
+                while True:
+                    if str(expect_url) in (await self._session.url_now()):
+                        break
+                    if asyncio.get_event_loop().time() >= deadline:
+                        return False
+                    await asyncio.sleep(0.15)
+            if expect_absent_text:
+                st = await self._session.wait_for(
+                    absent_text=expect_absent_text, timeout_ms=_EXPECT_TIMEOUT_MS
+                )
+                if st.error:
+                    return False
+            return True
 
         return _verify
 
