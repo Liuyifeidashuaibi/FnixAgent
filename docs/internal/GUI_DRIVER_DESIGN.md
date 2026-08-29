@@ -256,9 +256,9 @@ relay 子进程（`FNIX_DESKTOP_MODE=relay`）+ 高危确认弹层（就地弹�
 
 | 优先级 | 项 | 对标 | 说明 | 状态 |
 |---|---|---|---|---|
-| **N1（下一优先）** | L1 接管引导层 | Codex Chrome 扩展 / WorkBuddy BrowserSkill / Trae OpenPreview 选择框 | CDP 探测已就位；补"一键启动调试端口"引导弹层 + 首次选择记忆（前端批准按钮已在本轮实现） | ⬜ |
+| **N1（下一优先）** | L1 接管引导层 | Codex Chrome 扩展 / WorkBuddy BrowserSkill / Trae OpenPreview 选择框 | CDP 探测已就位；补"一键启动调试端口"引导弹层 + 首次选择记忆（前端批准按钮已在本轮实现） | ✅ 2026-08-30：`debug_port_guide()`（浏览器×系统命令，全部独立配置目录）+ `l1_choice` 首次记忆（选过不再探测）+ 状态携带引导；7 项护栏 |
 | N2 | 截图圈选注释 | Codex Comment Mode / Trae 十字准星 | 前端在截图上画框 → 坐标换算注入上下文（人机共驾坐标链路已有基础，增量小） | ⬜ |
-| N3 | 多 tab 并行 | Codex/百度搭子连续多站 | `BrowserSession` 页面池 `_pages: dict[str, Page]` + `browser_tab` 工具 + 面板 tab 条 | ⬜ |
+| N3 | 多 tab 并行 | Codex/百度搭子连续多站 | `BrowserSession` 页面池 `_pages: dict[str, Page]` + `browser_tab` 工具 + 面板 tab 条 | ✅ 2026-08-30：页面池 `_tabs`（归属铁律推广到每页）+ `tab_open/switch/close` + `browser_view(what="tabs")` + 状态 tabs 投影；9 项真机护栏 |
 | N4 | 录制回放 | cua-driver 原生 start_recording/replay_trajectory | "用户演示一遍，agent 重放"——QQ 登录类高频重复操作的杀手锏（V1 曾标 "P3 亮点"，校准为本项）。**Phase 5 已提前完成**：`browser_trajectory.py` + `/browser/trajectory/*` 接口；按元素名解析 ref（编号会漂移）、每步状态断言（不符即停，杜绝静默成功）、输入值默认不落盘（演示登录时那就是密码） | ✅ 已实现并验证（真 Chromium 实测：录制登录→重放后确实登录成功） |
 | N5（观察） | 跨端接力/远程 | 百度搭子手机遥控 + 锁屏不中断云端浏览器 | 远程 relay 需长连接 + 双向鉴权 + 指令白名单 + 高危人工确认，量级另立项目（评估报告 §5.4） | ⬜ 观察 |
 | — | uid/token 语义快照契约 | chrome-devtools-mcp a11y+uid | 浏览器侧当前为 ARIA 树 + 坐标/文本双通道（中文站点更稳）；token 契约作为后续增强 | ⬜ |

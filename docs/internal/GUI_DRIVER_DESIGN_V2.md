@@ -90,9 +90,9 @@ V2 确立为一级原则，与 V1 两条铁律并列：
 
 | 优先级 | 项 | 对标 | 说明 |
 |---|---|---|---|
-| **N1（下一优先）** | L1 接管引导层 | Codex Chrome 扩展 / WorkBuddy BrowserSkill | CDP 探测代码已就位；补"一键启动调试端口"引导弹层 + 首次询问记忆。零新依赖 |
+| **N1（下一优先）** | L1 接管引导层 | Codex Chrome 扩展 / WorkBuddy BrowserSkill | ✅ 2026-08-30：`debug_port_guide()` 一键命令（强制独立配置目录）+ `l1_choice` 首次记忆。零新依赖 |
 | N2 | 截图圈选注释 | Codex Comment Mode / Trae 十字准星 | 前端在截图上画框 → 坐标换算注入上下文（坐标链路已有人机共驾基础） |
-| N3 | 多 tab 并行 | Codex/百度搭子连续打开多站 | `BrowserSession` 页面池；面板 tab 条 |
+| N3 | 多 tab 并行 | Codex/百度搭子连续打开多站 | ✅ 2026-08-30：`BrowserSession` 页面池 + `tab_open/switch/close` + 面板 tab 条投影 |
 | N4 | 录制回放 | cua-driver 原生 start_recording/replay_trajectory | **Phase 5 已提前完成**：`browser_trajectory.py` + `/browser/trajectory/*`；按元素名找回漂移 ref、每步状态断言拦截静默失败、输入值默认不落盘；真 Chromium 已验证登录重放与同名诱饵拒绝 |
 | N5（观察） | 跨端接力/远程 | 百度搭子手机遥控 + 锁屏不中断 | 与 ASSESSMENT §5.4 的远程 relay 对齐：需长连接+鉴权+白名单，量级另立项目 |
 | 不做 | 视觉 grounding 模型 | — | 维持 V1 决策（GPU + CC-BY-4.0 许可证，cua `degraded` 回退已覆盖） |
