@@ -1,6 +1,6 @@
 <!doctype html><html lang='zh-CN'><head><meta charset='utf-8'>
 <meta name='viewport' content='width=device-width,initial-scale=1'>
-<title>iframe 内容</title>
+<title>iframe 超深嵌套</title>
 <style>
   body { font-family: system-ui, sans-serif; margin: 0; padding: 0 0 200px; }
   .wrap { max-width: 900px; margin: 0 auto; padding: 16px; }
@@ -14,12 +14,11 @@
             opacity: 0; transition: opacity .2s; pointer-events: none; }
   #toast.show { opacity: 1; }
 </style></head><body>
-<div class='wrap'><h1>iframe 内容</h1><p class='hint'>目标按钮在同源 iframe 里——跨 frame 寻址覆盖后可直接操作</p>
+<div class='wrap'><h1>iframe 超深嵌套</h1><p class='hint'>目标嵌在超出寻址深度上限的帧里，快照如实报未覆盖</p>
 
-<h2>外层页面</h2>
-<p class='hint'>商品列表嵌在下方的框架里（同源）。</p>
-<button onclick="toast('这是外层的按钮')">外层按钮</button>
-<iframe src='frame_inner.html' width='720' height='320'
+<div class='card'><a id='pd' href='#pd'>蓝牙键盘 便携款</a>
+  <button onclick="addToCart('pd','蓝牙键盘 便携款')">加入购物车</button></div>
+<iframe src='frame_deep_f1.html' width='720' height='300'
         style='border:1px solid #ddd;margin-top:12px'></iframe>
 <p id='count' class='hint'></p>
 

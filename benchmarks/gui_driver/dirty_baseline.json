@@ -1,14 +1,14 @@
 {
-  "generated_at": "2026-08-30 04:12:12",
-  "total": 24,
-  "positive_tasks": 16,
+  "generated_at": "2026-08-30 06:47:47",
+  "total": 25,
+  "positive_tasks": 17,
   "negative_tasks": 8,
   "positive_success_rate_pct": 100.0,
   "correct_reject_rate_pct": 100.0,
   "silent_failures": 0,
   "silent_failure_rate_pct": 0.0,
   "lied": 0,
-  "avg_task_ms": 3856.7,
+  "avg_task_ms": 4815.7,
   "recovery_used_total": 4,
   "by_trait": {
     "全屏遮罩": {
@@ -95,6 +95,11 @@
       "total": 1,
       "verified": 1,
       "lied": 0
+    },
+    "iframe 超深嵌套": {
+      "total": 1,
+      "verified": 1,
+      "lied": 0
     }
   },
   "tasks": [
@@ -107,7 +112,7 @@
       "silent_failure": false,
       "expect_failure": false,
       "error": "",
-      "elapsed_ms": 2196.4,
+      "elapsed_ms": 2055.8,
       "recovery": []
     },
     {
@@ -119,7 +124,7 @@
       "silent_failure": false,
       "expect_failure": false,
       "error": "",
-      "elapsed_ms": 3203.1,
+      "elapsed_ms": 3719.3,
       "recovery": []
     },
     {
@@ -131,7 +136,7 @@
       "silent_failure": false,
       "expect_failure": false,
       "error": "",
-      "elapsed_ms": 3228.3,
+      "elapsed_ms": 3289.9,
       "recovery": []
     },
     {
@@ -143,7 +148,7 @@
       "silent_failure": false,
       "expect_failure": false,
       "error": "",
-      "elapsed_ms": 1835.4,
+      "elapsed_ms": 2257.8,
       "recovery": []
     },
     {
@@ -155,7 +160,7 @@
       "silent_failure": false,
       "expect_failure": false,
       "error": "",
-      "elapsed_ms": 1680.4,
+      "elapsed_ms": 1690.8,
       "recovery": []
     },
     {
@@ -167,7 +172,7 @@
       "silent_failure": false,
       "expect_failure": false,
       "error": "",
-      "elapsed_ms": 1710.5,
+      "elapsed_ms": 1626.4,
       "recovery": []
     },
     {
@@ -179,7 +184,7 @@
       "silent_failure": false,
       "expect_failure": false,
       "error": "",
-      "elapsed_ms": 1605.0,
+      "elapsed_ms": 1719.0,
       "recovery": []
     },
     {
@@ -191,7 +196,7 @@
       "silent_failure": false,
       "expect_failure": false,
       "error": "",
-      "elapsed_ms": 2103.7,
+      "elapsed_ms": 2029.3,
       "recovery": []
     },
     {
@@ -203,7 +208,7 @@
       "silent_failure": false,
       "expect_failure": false,
       "error": "",
-      "elapsed_ms": 3319.8,
+      "elapsed_ms": 3029.0,
       "recovery": []
     },
     {
@@ -215,7 +220,7 @@
       "silent_failure": false,
       "expect_failure": false,
       "error": "",
-      "elapsed_ms": 3803.6,
+      "elapsed_ms": 4453.0,
       "recovery": []
     },
     {
@@ -227,7 +232,7 @@
       "silent_failure": false,
       "expect_failure": false,
       "error": "",
-      "elapsed_ms": 6237.0,
+      "elapsed_ms": 20832.5,
       "recovery": []
     },
     {
@@ -239,7 +244,7 @@
       "silent_failure": false,
       "expect_failure": false,
       "error": "",
-      "elapsed_ms": 2140.7,
+      "elapsed_ms": 2137.4,
       "recovery": []
     },
     {
@@ -251,7 +256,7 @@
       "silent_failure": false,
       "expect_failure": false,
       "error": "",
-      "elapsed_ms": 1599.6,
+      "elapsed_ms": 1584.8,
       "recovery": []
     },
     {
@@ -263,7 +268,7 @@
       "silent_failure": false,
       "expect_failure": false,
       "error": "",
-      "elapsed_ms": 2235.8,
+      "elapsed_ms": 2103.0,
       "recovery": []
     },
     {
@@ -275,7 +280,7 @@
       "silent_failure": false,
       "expect_failure": false,
       "error": "",
-      "elapsed_ms": 1717.8,
+      "elapsed_ms": 1710.1,
       "recovery": []
     },
     {
@@ -287,7 +292,19 @@
       "silent_failure": false,
       "expect_failure": false,
       "error": "",
-      "elapsed_ms": 1609.8,
+      "elapsed_ms": 1615.3,
+      "recovery": []
+    },
+    {
+      "id": "d17",
+      "name": "同源 iframe：加购框架里的商品",
+      "trait": "iframe 内容",
+      "steps_ok": true,
+      "verified": true,
+      "silent_failure": false,
+      "expect_failure": false,
+      "error": "",
+      "elapsed_ms": 1658.9,
       "recovery": []
     },
     {
@@ -299,19 +316,19 @@
       "silent_failure": false,
       "expect_failure": true,
       "error": "快照里找不到「笔记本电脑 Pro 14」（全页快照也未找到：快照里找不到「笔记本电脑 Pro 14」）",
-      "elapsed_ms": 805.8,
+      "elapsed_ms": 828.3,
       "recovery": []
     },
     {
-      "id": "n05",
-      "name": "目标在 iframe 里点不到——不该硬凑成功",
-      "trait": "iframe 内容",
+      "id": "n09",
+      "name": "超深嵌套帧里的目标——不该拿外层按钮硬凑",
+      "trait": "iframe 超深嵌套",
       "steps_ok": false,
       "verified": true,
       "silent_failure": false,
       "expect_failure": true,
-      "error": "快照里找不到「笔记本电脑 Pro 14」（全页快照也未找到：快照里找不到「笔记本电脑 Pro 14」）",
-      "elapsed_ms": 804.6,
+      "error": "快照里找不到「智能音箱 深嵌款」（全页快照也未找到：快照里找不到「智能音箱 深嵌款」）",
+      "elapsed_ms": 990.4,
       "recovery": []
     },
     {
@@ -323,7 +340,7 @@
       "silent_failure": false,
       "expect_failure": true,
       "error": "click_ref 失败: Locator.click: Timeout 8000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-fnix-ref=\\\"e2\\\"]\").first\n    - locator resolved to <button data-fnix-ref=\"e2\" onclick=\"addToCart('p10','商品 10 旗舰套装')\">加入购物车</button>\n  - attempting click action\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div id=\"mask\">…</div> intercepts pointer events\n    - retrying click action\n    - waiting 20ms\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div id=\"mask\">…</div> intercepts pointer events\n    - retrying click action\n      - waiting 100ms\n    15 × waiting for element to be visible, enabled and stable\n       - element is visible, enabled and stable\n       - scrolling into view if needed\n       - done scrolling\n       - <div id=\"mask\">…</div> intercepts pointer events\n     - retrying click action\n       - waiting 500ms\n",
-      "elapsed_ms": 8096.4,
+      "elapsed_ms": 8115.0,
       "recovery": [
         "refresh",
         "escalate"
@@ -338,7 +355,7 @@
       "silent_failure": false,
       "expect_failure": true,
       "error": "滚动 10 次（含往返扫掠）仍未出现「商品 15」",
-      "elapsed_ms": 6253.9,
+      "elapsed_ms": 8632.6,
       "recovery": []
     },
     {
@@ -350,7 +367,7 @@
       "silent_failure": false,
       "expect_failure": true,
       "error": "upload_ref 失败: Locator.set_input_files: Error: Node is not an HTMLInputElement\nCall log:\n  - waiting for locator(\"[data-fnix-ref=\\\"e3\\\"]\").first\n    - locator resolved to <button data-fnix-ref=\"e3\" onclick=\"toast('这不是文件输入框')\">选择扫描件</button>\n",
-      "elapsed_ms": 65.6,
+      "elapsed_ms": 64.3,
       "recovery": []
     },
     {
@@ -362,7 +379,7 @@
       "silent_failure": false,
       "expect_failure": true,
       "error": "click_ref 失败: Locator.click: Timeout 8000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-fnix-ref=\\\"e3\\\"]\").first\n    - locator resolved to <button data-fnix-ref=\"e3\" onclick=\"addToCart('p01','笔记本电脑 Pro 14')\">加入购物车</button>\n  - attempting click action\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div id=\"mask\">…</div> intercepts pointer events\n    - retrying click action\n    - waiting 20ms\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div id=\"mask\">…</div> intercepts pointer events\n    - retrying click action\n      - waiting 100ms\n    15 × waiting for element to be visible, enabled and stable\n       - element is visible, enabled and stable\n       - scrolling into view if needed\n       - done scrolling\n       - <div id=\"mask\">…</div> intercepts pointer events\n     - retrying click action\n       - waiting 500ms\n",
-      "elapsed_ms": 8077.2,
+      "elapsed_ms": 8095.8,
       "recovery": [
         "refresh",
         "escalate"
@@ -377,7 +394,7 @@
       "silent_failure": false,
       "expect_failure": true,
       "error": "滚动 12 次（含往返扫掠）仍未出现「商品 999」",
-      "elapsed_ms": 8788.7,
+      "elapsed_ms": 10365.9,
       "recovery": []
     },
     {
@@ -389,7 +406,7 @@
       "silent_failure": false,
       "expect_failure": true,
       "error": "滚动 30 次（含往返扫掠）仍未出现「商品 99」",
-      "elapsed_ms": 19442.5,
+      "elapsed_ms": 25787.4,
       "recovery": []
     }
   ]
