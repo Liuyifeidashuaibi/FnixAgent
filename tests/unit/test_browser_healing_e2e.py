@@ -28,7 +28,10 @@ pytest.importorskip("playwright", reason="需要 Playwright")
 
 from fnixagent.core.tools.browser import BrowserSession  # noqa: E402
 from fnixagent.core.tools.browser_healing import BrowserHealer  # noqa: E402
-from fnixagent.core.tools.driver_errors import F4_TOOL_CHOICE  # noqa: E402
+from fnixagent.core.tools.driver_errors import (  # noqa: E402
+    F4_TOOL_CHOICE,
+    F5_STALE_CONTEXT,
+)
 from fnixagent.core.tools.orchestrator import REFRESH, SUBSTITUTE  # noqa: E402
 
 pytestmark = pytest.mark.asyncio
@@ -307,3 +310,153 @@ async def test_without_expect_behaviour_is_unchanged(expect_session: Any) -> Non
 
     assert result.ok is True, result.error
     assert result.recovery_used == []
+
+
+# ── 歧义同名与元素消失：F5（上下文过期）不许猜、不许误分类 ────────────────
+#
+# 这两条都是"整块重建"类脏页面（如 400ms 重排的商品列表）逼出来的。那类页面上
+# 同名按钮个个是真的、各属于不同实体，ref 失效后任何"随便挑一个同名"的恢复，
+# 都会把一次诚实的失败换成一次无人发现的做错——这正是核心任务要压到 0 的谎报。
+
+AMBIG_PAGE = """<!doctype html><html lang='zh-CN'><head><meta charset='utf-8'>
+<title>同名歧义页</title></head><body>
+<h1>同名歧义</h1>
+<div id='zone'>
+  <button id='a'>确认</button>
+  <button id='b'>确认</button>
+</div>
+<button id='shuffle'>重排</button>
+<div id='out'>initial</div>
+<script>
+  function setOut(v) { document.getElementById('out').textContent = v; }
+  document.getElementById('a').addEventListener('click', function () { setOut('clicked-a'); });
+  document.getElementById('b').addEventListener('click', function () { setOut('clicked-b'); });
+  document.getElementById('shuffle').addEventListener('click', function () {
+    // 整块重建：旧 ref 属性全部消失，但页面上仍留着两个同名按钮——
+    // 这正是列表页的形态：每个实体一个同名控件。
+    document.getElementById('zone').innerHTML =
+      '<button id="a2">确认</button><button id="b2">确认</button>';
+    document.getElementById('a2').addEventListener('click', function () { setOut('clicked-a2'); });
+    document.getElementById('b2').addEventListener('click', function () { setOut('clicked-b2'); });
+  });
+</script>
+</body></html>"""
+
+
+@pytest.fixture(scope="module")
+def ambig_server() -> Any:
+    tmp = Path(__file__).parent / "_healing_tmp"
+    tmp.mkdir(exist_ok=True)
+    (tmp / "ambig.html").write_text(AMBIG_PAGE, encoding="utf-8")
+    with socket.socket() as s:
+        s.bind(("127.0.0.1", 0))
+        port = s.getsockname()[1]
+    handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(tmp))
+    httpd = http.server.ThreadingHTTPServer(("127.0.0.1", port), handler)
+    httpd.daemon_threads = True
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+    yield f"http://127.0.0.1:{port}"
+    httpd.shutdown()
+
+
+@pytest.fixture
+async def ambig_session(ambig_server: str) -> Any:
+    s = BrowserSession()
+    await s.navigate(f"{ambig_server}/ambig.html")
+    yield s
+    await s.close()
+
+
+async def test_refresh_refuses_to_guess_between_same_name_entities(
+    ambig_session: Any,
+) -> None:
+    """行为护栏：重建后仍有多个同名实体时，refresh 必须拒绝"随便挑一个"。
+
+    旧目标失效后若按名字找到了**多个**候选，说明无法从名字确认到底是谁——
+    随便点一个等于拿别的实体冒充原目标。这里点了、页面变了、一个错都不报，
+    却做错了一件，是最隐蔽的谎报形态。正确行为是如实上报，交给知道锚点的
+    那一层重新定位。对照：唯一同名时仍应重映射成功
+    （见 test_healer_recovers_from_stale_ref），这条护栏不该误伤它。
+    """
+    healer = BrowserHealer(ambig_session)
+    snap = await ambig_session.snapshot_ref()
+    confirm = next(r for r in snap.refs if r.name == "确认")
+    shuffle = next(r for r in snap.refs if r.name == "重排")
+
+    # 整块重建：旧 ref 全部失效，页面仍有两个"确认"
+    await ambig_session.click_ref(shuffle.ref)
+
+    result = await healer.click(ref=confirm.ref)
+
+    assert result.ok is False
+    assert result.escalated is True, "无法重映射时必须如实上报，不能自行挑选同名实体"
+    assert result.failure_class == F5_STALE_CONTEXT
+    assert REFRESH in result.recovery_used, "refresh 应被尝试（并在歧义处拒绝），而非死路"
+    assert SUBSTITUTE not in result.recovery_used, "F5 不允许换同名候选——那是猜，不是自愈"
+    # 最要紧的一条：没有任何实体被误点。两个候选谁都不该被"顺手"点掉。
+    assert await _out(ambig_session) == "initial", "歧义重映射把别的实体点掉了"
+
+
+VANISH_PAGE = """<!doctype html><html lang='zh-CN'><head><meta charset='utf-8'>
+<title>等待中消失页</title></head><body>
+<h1>等待中消失</h1>
+<button id='ghost'>幽灵按钮</button>
+<!-- 遮罩先把按钮压住：auto-wait 会持续等待（元素存在但点不到），
+     1.2 秒后按钮被移除——等待半途目标消失。 -->
+<div id='cover' style='position:fixed;left:0;top:0;right:0;bottom:0;z-index:99'></div>
+<div id='out'>initial</div>
+<script>
+  setTimeout(function () {
+    document.getElementById('ghost').remove();
+    document.getElementById('cover').remove();
+  }, 1200);
+</script>
+</body></html>"""
+
+
+@pytest.fixture(scope="module")
+def vanish_server() -> Any:
+    tmp = Path(__file__).parent / "_healing_tmp"
+    tmp.mkdir(exist_ok=True)
+    (tmp / "vanish.html").write_text(VANISH_PAGE, encoding="utf-8")
+    with socket.socket() as s:
+        s.bind(("127.0.0.1", 0))
+        port = s.getsockname()[1]
+    handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(tmp))
+    httpd = http.server.ThreadingHTTPServer(("127.0.0.1", port), handler)
+    httpd.daemon_threads = True
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+    yield f"http://127.0.0.1:{port}"
+    httpd.shutdown()
+
+
+@pytest.fixture
+async def vanish_session(vanish_server: str) -> Any:
+    s = BrowserSession()
+    await s.navigate(f"{vanish_server}/vanish.html")
+    yield s
+    await s.close()
+
+
+async def test_element_vanished_mid_wait_is_stale_not_wrong_target(
+    vanish_session: Any,
+) -> None:
+    """行为护栏：元素在点击等待中消失，必须判 F5（上下文过期），不是 F4。
+
+    Playwright 的超时措辞（含 "waiting for" / "locator"）若原样进分类，会先命中
+    F4 的关键词——而 F4 触发同名候选轮换，在列表页上就是"点一个别的实体的同
+    名按钮"。元素并没有被证明选错，只是失去了踪迹，这是 F5。此用例盯着措辞
+    分类的这个坑，确保执行层把它如实转成 RefStaleError。
+    """
+    healer = BrowserHealer(vanish_session)
+    snap = await vanish_session.snapshot_ref()
+    ghost = next(r for r in snap.refs if r.name == "幽灵按钮")
+
+    result = await healer.click(ref=ghost.ref)
+
+    assert result.ok is False
+    assert result.failure_class == F5_STALE_CONTEXT, (
+        f"等待中元素消失应归 F5，实际 {result.failure_class}"
+    )
+    assert SUBSTITUTE not in result.recovery_used, "F5 不许换同名候选"
+    assert await _out(vanish_session) == "initial"

@@ -275,8 +275,12 @@ async def test_control_loop_is_detected_and_escalated() -> None:
 async def test_dead_rung_is_not_retried() -> None:
     """钩子明确表示帮不上忙（返回 None）的那一级，不该反复扣预算。
 
-    少了这条，F5 的三级阶梯里 refresh 会把自己的 2 次预算花光才轮到
-    substitute——后面的路被前面的死路饿死。
+    少了这条，F5 阶梯里 refresh 会把自己的 2 次预算花光才轮到下一级——
+    后面的路被前面的死路饿死。
+
+    注意（2026-08-30 起）：F5 阶梯刻意不含 SUBSTITUTE（过期 ≠ 选错，详见
+    test_f5_ladder_excludes_substitute_by_design）。substitute 钩子注册了也
+    绝不能被 F5 调到——下面的断言同时守着这条。
     """
     calls: list[str] = []
     budget = Budget(refresh=2, substitute=2, replan=2, total=6)
@@ -302,8 +306,9 @@ async def test_dead_rung_is_not_retried() -> None:
 
     assert result.ok is False
     assert result.escalated is True
-    # 三级各试一次即收敛，而不是把 refresh 的 2 次预算耗完
-    assert calls == [REFRESH, SUBSTITUTE, REPLAN], f"死路被重复尝试: {calls}"
+    # 阶梯各级各试一次即收敛，而不是把 refresh 的 2 次预算耗完
+    assert calls == [REFRESH, REPLAN], f"死路被重复尝试: {calls}"
+    assert SUBSTITUTE not in calls, "F5 不允许走到 substitute——换目标是猜，不是自愈"
 
 
 async def test_verifier_blocks_silent_failure() -> None:
@@ -361,6 +366,25 @@ async def test_f6_ladder_excludes_refresh_by_design() -> None:
         "F6（结果不对）不能被刷新上下文伪装成「点了没反应」，REFRESH 不得出现在其阶梯里"
     )
     assert ladder[0] == REPLAN, "结果对不对得上，只有知道预期的那一层能救，第一级应是 REPLAN"
+
+
+async def test_f5_ladder_excludes_substitute_by_design() -> None:
+    """元约束：「上下文过期」的阶梯里刻意没有 SUBSTITUTE。
+
+    踩过的坑（2026-08-30，400ms 整块重建页实测）：ref 失效 → F5 → substitute
+    在同名候选里轮换——列表页上同名按钮个个是真的、各属于不同实体（每个商品
+    都有自己的"加入购物车"），轮换第一个就点到别的商品的按钮：页面变了、一个
+    错都不报，一次诚实的失败被换成无人发现的做错。这正是静默失败的定义。
+
+    失去踪迹 ≠ 选错了。F5 唯一的恢复是 refresh 的按名重映射（歧义时拒绝，
+    见自愈层测试），映射不了就如实上报；SUBSTITUTE 留给 F4（目标已被证明
+    无效）专用。
+    """
+    ladder = RECOVERY_LADDER[F5_STALE_CONTEXT]
+    assert SUBSTITUTE not in ladder, (
+        "F5（上下文过期）不允许换同名候选——在列表页上那是拿别的实体冒充原目标"
+    )
+    assert ladder[0] == REFRESH, "过期后唯一的正道是重新快照找原目标，第一级应是 REFRESH"
 
 async def test_verifier_failure_is_not_reclassified_as_no_response() -> None:
     """行为护栏：验证不通过时，refresh 钩子被注册了也绝不能被调到。
